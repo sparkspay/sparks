@@ -242,11 +242,11 @@
 <context>
     <name>BitcoinGUI</name>
     <message>
-        <source>A fatal error occurred. Dash Core can no longer continue safely and will quit.</source>
+        <source>A fatal error occurred. Sparks Core can no longer continue safely and will quit.</source>
         <translation>發生致命錯誤。達世幣核心軟體不再能安全地繼續運行下去，程式將會關閉。</translation>
     </message>
     <message>
-        <source>Dash Core</source>
+        <source>Sparks Core</source>
         <translation>達世幣核心</translation>
     </message>
     <message>
@@ -306,7 +306,7 @@
         <translation>結束應用程式</translation>
     </message>
     <message>
-        <source>Show information about Dash Core</source>
+        <source>Show information about Sparks Core</source>
         <translation>顯示達世幣核心的相關資訊</translation>
     </message>
     <message>
@@ -1397,7 +1397,7 @@
         <translation>此金額為關閉匿名發送的門檻。</translation>
     </message>
     <message>
-        <source>Automatically open the Dash Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <source>Automatically open the Sparks Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation>自動在路由器上開放達世幣核心客戶端的通訊埠。只有在你的路由器支援且開啓「通用即插即用」協定(UPnP)時才有作用。</translation>
     </message>
     <message>
@@ -1997,7 +1997,7 @@ https://www.transifex.com/projects/p/dash/</translation>
 <context>
     <name>QObject</name>
     <message>
-        <source>Dash Core</source>
+        <source>Sparks Core</source>
         <translation>達世幣核心</translation>
     </message>
     <message>
@@ -4941,7 +4941,7 @@ https://www.transifex.com/projects/p/dash/</translation>
         <translation>RPC 伺服器選項:</translation>
     </message>
     <message>
-        <source>Dash Core</source>
+        <source>Sparks Core</source>
         <translation>達世幣核心</translation>
     </message>
     <message>

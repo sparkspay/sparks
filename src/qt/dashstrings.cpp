@@ -9,7 +9,7 @@
 #define UNUSED
 #endif
 static const char UNUSED *dash_strings[] = {
-QT_TRANSLATE_NOOP("dash-core", "Dash Core"),
+QT_TRANSLATE_NOOP("dash-core", "Sparks Core"),
 QT_TRANSLATE_NOOP("dash-core", "The %s developers"),
 QT_TRANSLATE_NOOP("dash-core", ""
 "(1 = keep tx meta data e.g. account owner and payment request information, 2 "

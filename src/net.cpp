@@ -1480,7 +1480,7 @@ void ThreadMapPort()
             }
         }
 
-        std::string strDesc = "Dash Core " + FormatFullVersion();
+        std::string strDesc = "Sparks Core " + FormatFullVersion();
 
         try {
             while (true) {

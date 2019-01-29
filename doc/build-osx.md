@@ -24,15 +24,15 @@ If you want to build the disk image with `make deploy` (.dmg / optional), you ne
 
 NOTE: Building with Qt4 is still supported, however, doing so could result in a broken UI. Therefore, building with Qt5 is recommended.
 
-Build Dash Core
+Build Sparks Core
 ------------------------
 
-1. Clone the Dash Core source code and cd into `dash`
+1. Clone the Sparks Core source code and cd into `dash`
 
         git clone https://github.com/dashpay/dash
         cd dash
 
-2.  Build Dash Core:
+2.  Build Sparks Core:
 
     Configure and build the headless dash binaries as well as the GUI (if Qt is found).
 
@@ -53,7 +53,7 @@ Build Dash Core
 Running
 -------
 
-Dash Core is now available at `./src/dashd`
+Sparks Core is now available at `./src/dashd`
 
 Before running, it's recommended you create an RPC configuration file.
 

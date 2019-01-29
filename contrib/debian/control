@@ -37,7 +37,7 @@ Description: peer-to-peer network based digital currency - daemon
  Dash is an experimental new digital currency that enables anonymous, instant
  payments to anyone, anywhere in the world. Dash uses peer-to-peer
  technology to operate with no central authority: managing transactions
- and issuing money are carried out collectively by the network. Dash Core
+ and issuing money are carried out collectively by the network. Sparks Core
  is the name of the open source software which enables the use of this currency.
  .
  This package provides the daemon, dashd, and the CLI tool
@@ -50,7 +50,7 @@ Description: peer-to-peer network based digital currency - Qt GUI
  Dash is an experimental new digital currency that enables anonymous, instant
  payments to anyone, anywhere in the world. Dash uses peer-to-peer
  technology to operate with no central authority: managing transactions
- and issuing money are carried out collectively by the network. Dash Core
+ and issuing money are carried out collectively by the network. Sparks Core
  is the name of the open source software which enables the use of this currency.
  .
  This package provides Dash-Qt, a GUI for Dash based on Qt.
@@ -62,7 +62,7 @@ Description: peer-to-peer digital currency - standalone transaction tool
  Dash is an experimental new digital currency that enables anonymous, instant
  payments to anyone, anywhere in the world. Dash uses peer-to-peer
  technology to operate with no central authority: managing transactions
- and issuing money are carried out collectively by the network. Dash Core
+ and issuing money are carried out collectively by the network. Sparks Core
  is the name of the open source software which enables the use of this currency.
  .
  This package provides dash-tx, a command-line transaction creation

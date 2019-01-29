@@ -1,4 +1,4 @@
-Dash Core version 0.12.3.4
+Sparks Core version 0.12.3.4
 ==========================
 
 Release is now available from:
@@ -49,7 +49,7 @@ Fork/Reset testnet at block 4001
 This release is NOT required on mainnet. It is intended to be deployed on testnet and will cause a fork at block 4001.
 The plan is to restart all testing for the v0.13.0.0 upgrade process.
 
-When deployed on testnet, it is required to start with a fresh data directory or call Dash Core with `-reindex-chainstate`.
+When deployed on testnet, it is required to start with a fresh data directory or call Sparks Core with `-reindex-chainstate`.
 
 0.12.3.4 Change log
 ===================
@@ -83,6 +83,8 @@ Darkcoin was rebranded to Dash.
 Dash Core tree 0.12.0.x was a fork of Bitcoin Core tree 0.10.
 
 Dash Core tree 0.12.1.x was a fork of Bitcoin Core tree 0.12.
+
+Sparks Core tree 0.12.3.x was a fork of Dash Core tree 0.12.3.x.
 
 These release are considered obsolete. Old release notes can be found here:
 
