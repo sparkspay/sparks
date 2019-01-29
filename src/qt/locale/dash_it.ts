@@ -814,8 +814,8 @@
         <translation>Questa etichetta diventerà rossa se uno qualsiasi dei destinatari riceverà un importo inferiore alla corrente soglia minima per la movimentazione della valuta.</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 duff(s) per input.</source>
-        <translation>Può variare di +/- %1 duff per input.</translation>
+        <source>Can vary +/- %1 sprite(s) per input.</source>
+        <translation>Può variare di +/- %1 sprite per input.</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -2804,12 +2804,12 @@ https://www.transifex.com/projects/p/dash/</translation>
         <translation>InstantSend</translation>
     </message>
     <message>
-        <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Se la tariffa personalizzata è impostata su 1000 duff e la transazione è di soli 250 byte, paga solo 250 duff "per kilobyte" di Fee, &lt;br /&gt;mentre paga "almeno"  1000 duff. Per le transazioni più grandi di un kilobyte pagate entrambi per kilobyte.</translation>
+        <source>If the custom fee is set to 1000 sprites and the transaction is only 250 bytes, then "per kilobyte" only pays 250 sprites in fee,&lt;br /&gt;while "at least" pays 1000 sprites. For transactions bigger than a kilobyte both pay by kilobyte.</source>
+        <translation>Se la tariffa personalizzata è impostata su 1000 sprite e la transazione è di soli 250 byte, paga solo 250 sprite "per kilobyte" di Fee, &lt;br /&gt;mentre paga "almeno"  1000 sprite. Per le transazioni più grandi di un kilobyte pagate entrambi per kilobyte.</translation>
     </message>
     <message>
-        <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "total at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Se la tariffa personalizzata è impostata su 1000 duff e la transazione è di soli 250 byte, paga solo 250 duff "per kilobyte" di Fee, &lt;br /&gt;mentre paga "in totale almeno" 1000 duff. Per le transazioni più grandi di un kilobyte pagate entrambi per kilobyte.</translation>
+        <source>If the custom fee is set to 1000 sprites and the transaction is only 250 bytes, then "per kilobyte" only pays 250 sprites in fee,&lt;br /&gt;while "total at least" pays 1000 sprites. For transactions bigger than a kilobyte both pay by kilobyte.</source>
+        <translation>Se la tariffa personalizzata è impostata su 1000 sprite e la transazione è di soli 250 byte, paga solo 250 sprite "per kilobyte" di Fee, &lt;br /&gt;mentre paga "in totale almeno" 1000 sprite. Per le transazioni più grandi di un kilobyte pagate entrambi per kilobyte.</translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for dash transactions than the network can process.</source>
