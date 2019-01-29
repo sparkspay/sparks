@@ -19,7 +19,7 @@ Before every minor and major release:
 
 Before every major release:
 
-* Update hardcoded [seeds](/contrib/seeds/README.md). TODO: Give example PR for Dash
+* Update hardcoded [seeds](/contrib/seeds/README.md). TODO: Give example PR for Sparks
 * Update [`BLOCK_CHAIN_SIZE`](/src/qt/intro.cpp) to the current size plus some overhead.
 
 ### First time / New builders
@@ -244,9 +244,9 @@ Note: check that SHA256SUMS itself doesn't end up in SHA256SUMS, which is a spur
 
 - Announce the release:
 
-  - Release on Dash forum: https://www.sparkspay.io/forum/topic/official-announcements.54/
+  - Release on Sparks forum: https://www.sparkspay.io/forum/topic/official-announcements.54/
 
-  - Optionally Discord, twitter, reddit /r/Dashpay, ... but this will usually sort out itself
+  - Optionally Discord, twitter, reddit /r/Sparkspay, ... but this will usually sort out itself
 
   - Notify flare so that he can start building [the PPAs](https://launchpad.net/~sparkspay.io/+archive/ubuntu/sparks)
 

@@ -1,4 +1,4 @@
-Dash Core version 0.12.2.2
+Sparks Core version 0.12.2.2
 ==========================
 
 Release is now available from:
@@ -21,7 +21,7 @@ How to Upgrade
 
 If you are running an older version, shut it down. Wait until it has completely
 shut down (which might take a few minutes for older versions), then run the
-installer (on Windows) or just copy over /Applications/Dash-Qt (on Mac) or
+installer (on Windows) or just copy over /Applications/Sparks-Qt (on Mac) or
 sparksd/sparks-qt (on Linux). Because of the per-UTXO fix (see below) there is a
 one-time database upgrade operation, so expect a slightly longer startup time on
 the first run.
@@ -51,7 +51,7 @@ can cause nodes to allocate excessive amounts of memory, which leads them to a
 halt. You can read more about the fix in the original Bitcoin Core pull request
 https://github.com/bitcoin/bitcoin/pull/10195
 
-To fix this issue in Dash Core however, we had to backport a lot of other
+To fix this issue in Sparks Core however, we had to backport a lot of other
 improvements from Bitcoin Core, see full list of backports in the detailed
 change log below.
 
@@ -92,7 +92,7 @@ Other improvements and bug fixes
 --------------------------------
 
 As a result of previous intensive refactoring and some additional fixes,
-it should be possible to compile Dash Core with `--disable-wallet` option now.
+it should be possible to compile Sparks Core with `--disable-wallet` option now.
 
 This release also improves sync process and significantly lowers the time after
 which `getblocktemplate` rpc becomes available on node start.
@@ -141,7 +141,7 @@ See detailed [change log](https://github.com/sparkspay/sparks/compare/v0.12.2.1.
 - [`c81394b97`](https://github.com/sparkspay/sparks/commit/c81394b97) Backport #10195: Switch chainstate db and cache to per-txout model
 - [`d4562b5e5`](https://github.com/sparkspay/sparks/commit/d4562b5e5) Fix CCoinsViewCache::GetPriority to use new per-utxo
 - [`92bb65894`](https://github.com/sparkspay/sparks/commit/92bb65894) Fix address index to use new per-utxo DB
-- [`9ad56fe18`](https://github.com/sparkspay/sparks/commit/9ad56fe18) Dash related fixes for per-utxo DB
+- [`9ad56fe18`](https://github.com/sparkspay/sparks/commit/9ad56fe18) Sparks related fixes for per-utxo DB
 - [`4f807422f`](https://github.com/sparkspay/sparks/commit/4f807422f) Backport #10550: Don't return stale data from CCoinsViewCache::Cursor()
 - [`151c552c7`](https://github.com/sparkspay/sparks/commit/151c552c7) Backport #10537: Few Minor per-utxo assert-semantics re-adds and tweak
 - [`06aa02ff6`](https://github.com/sparkspay/sparks/commit/06aa02ff6) Backport #10559: Change semantics of HaveCoinInCache to match HaveCoin
@@ -171,7 +171,7 @@ See detailed [change log](https://github.com/sparkspay/sparks/compare/v0.12.2.1.
 - [`51b2c7501`](https://github.com/sparkspay/sparks/commit/51b2c7501) Fix WarningBitsConditionChecker (#1765)
 
 ### Network/Sync:
-- [`5d58dd90c`](https://github.com/sparkspay/sparks/commit/5d58dd90c) Make sure to clear setAskFor in Dash submodules (#1730)
+- [`5d58dd90c`](https://github.com/sparkspay/sparks/commit/5d58dd90c) Make sure to clear setAskFor in Sparks submodules (#1730)
 - [`328009749`](https://github.com/sparkspay/sparks/commit/328009749) fine-tune sync conditions in getblocktemplate (#1739)
 - [`362becbcc`](https://github.com/sparkspay/sparks/commit/362becbcc) Bump MIN_PEER_PROTO_VERSION to 70208 (#1772)
 - [`930afd7df`](https://github.com/sparkspay/sparks/commit/930afd7df) Fix mnp and mnv invs (#1775)

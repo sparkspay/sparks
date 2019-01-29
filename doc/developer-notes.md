@@ -231,7 +231,7 @@ Development guidelines
 A few non-style-related recommendations for developers, as well as points to
 pay attention to for reviewers of Sparks Core code.
 
-General Dash Core
+General Sparks Core
 ----------------------
 
 - New features should be exposed on RPC first, then can be made available in the GUI
@@ -341,7 +341,7 @@ Strings and formatting
 
 - For `strprintf`, `LogPrint`, `LogPrintf` formatting characters don't need size specifiers
 
-  - *Rationale*: Dash Core uses tinyformat, which is type safe. Leave them out to avoid confusion
+  - *Rationale*: Sparks Core uses tinyformat, which is type safe. Leave them out to avoid confusion
 
 Variable names
 --------------
@@ -429,7 +429,7 @@ directly upstream without being PRed directly against the project.  They will be
 subtree merge.
 
 Others are external projects without a tight relationship with our project.  Changes to these should also
-be sent upstream but bugfixes may also be prudent to PR against Dash Core so that they can be integrated
+be sent upstream but bugfixes may also be prudent to PR against Sparks Core so that they can be integrated
 quickly.  Cosmetic changes should be purely taken upstream.
 
 There is a tool in contrib/devtools/git-subtree-check.sh to check a subtree directory for consistency with
