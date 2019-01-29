@@ -27,14 +27,14 @@ NOTE: Building with Qt4 is still supported, however, doing so could result in a 
 Build Sparks Core
 ------------------------
 
-1. Clone the Sparks Core source code and cd into `dash`
+1. Clone the Sparks Core source code and cd into `sparks`
 
-        git clone https://github.com/dashpay/dash
-        cd dash
+        git clone https://github.com/sparkspay/sparks
+        cd sparks
 
 2.  Build Sparks Core:
 
-    Configure and build the headless dash binaries as well as the GUI (if Qt is found).
+    Configure and build the headless sparks binaries as well as the GUI (if Qt is found).
 
     You can disable the GUI build by passing `--without-gui` to configure.
 
@@ -53,15 +53,15 @@ Build Sparks Core
 Running
 -------
 
-Sparks Core is now available at `./src/dashd`
+Sparks Core is now available at `./src/sparksd`
 
 Before running, it's recommended you create an RPC configuration file.
 
-    echo -e "rpcuser=dashrpc\nrpcpassword=$(xxd -l 16 -p /dev/urandom)" > "/Users/${USER}/Library/Application Support/DashCore/dash.conf"
+    echo -e "rpcuser=sparksrpc\nrpcpassword=$(xxd -l 16 -p /dev/urandom)" > "/Users/${USER}/Library/Application Support/DashCore/sparks.conf"
 
-    chmod 600 "/Users/${USER}/Library/Application Support/DashCore/dash.conf"
+    chmod 600 "/Users/${USER}/Library/Application Support/DashCore/sparks.conf"
 
-The first time you run dashd, it will start downloading the blockchain. This process could take several hours.
+The first time you run sparksd, it will start downloading the blockchain. This process could take several hours.
 
 You can monitor the download process by looking at the debug.log file:
 
@@ -70,20 +70,20 @@ You can monitor the download process by looking at the debug.log file:
 Other commands:
 -------
 
-    ./src/dashd -daemon # Starts the dash daemon.
-    ./src/dash-cli --help # Outputs a list of command-line options.
-    ./src/dash-cli help # Outputs a list of RPC commands when the daemon is running.
+    ./src/sparksd -daemon # Starts the sparks daemon.
+    ./src/sparks-cli --help # Outputs a list of command-line options.
+    ./src/sparks-cli help # Outputs a list of RPC commands when the daemon is running.
 
 Using Qt Creator as IDE
 ------------------------
-You can use Qt Creator as an IDE, for dash development.
+You can use Qt Creator as an IDE, for sparks development.
 Download and install the community edition of [Qt Creator](https://www.qt.io/download/).
 Uncheck everything except Qt Creator during the installation process.
 
 1. Make sure you installed everything through Homebrew mentioned above
 2. Do a proper ./configure --enable-debug
 3. In Qt Creator do "New Project" -> Import Project -> Import Existing Project
-4. Enter "dash-qt" as project name, enter src/qt as location
+4. Enter "sparks-qt" as project name, enter src/qt as location
 5. Leave the file selection as it is
 6. Confirm the "summary page"
 7. In the "Projects" tab select "Manage Kits..."

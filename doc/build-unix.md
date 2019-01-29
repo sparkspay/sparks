@@ -24,7 +24,7 @@ make
 make install # optional
 ```
 
-This will build dash-qt as well if the dependencies are met.
+This will build sparks-qt as well if the dependencies are met.
 
 Dependencies
 ---------------------
@@ -107,7 +107,7 @@ ZMQ dependencies (provides ZMQ API 4.x):
 Dependencies for the GUI: Ubuntu & Debian
 -----------------------------------------
 
-If you want to build Dash-Qt, make sure that the required packages for Qt development
+If you want to build Sparks-Qt, make sure that the required packages for Qt development
 are installed. Either Qt 5 or Qt 4 are necessary to build the GUI.
 If both Qt 4 and Qt 5 are installed, Qt 5 will be used. Pass `--with-gui=qt4` to configure to choose Qt4.
 To build without GUI pass `--without-gui`.
@@ -124,7 +124,7 @@ libqrencode (optional) can be installed with:
 
     sudo apt-get install libqrencode-dev
 
-Once these are installed, they will be found by configure and a dash-qt executable will be
+Once these are installed, they will be found by configure and a sparks-qt executable will be
 built by default.
 
 Dependency Build Instructions: Fedora
@@ -147,7 +147,7 @@ libqrencode (optional) can be installed with:
 
 Notes
 -----
-The release is built with GCC and then "strip dashd" to strip the debug
+The release is built with GCC and then "strip sparksd" to strip the debug
 symbols, which reduces the executable size by about 90%.
 
 
@@ -168,10 +168,10 @@ Berkeley DB
 It is recommended to use Berkeley DB 4.8. If you have to build it yourself:
 
 ```bash
-DASH_ROOT=$(pwd)
+SPARKS_ROOT=$(pwd)
 
-# Pick some path to install BDB to, here we create a directory within the dash directory
-BDB_PREFIX="${DASH_ROOT}/db4"
+# Pick some path to install BDB to, here we create a directory within the sparks directory
+BDB_PREFIX="${SPARKS_ROOT}/db4"
 mkdir -p $BDB_PREFIX
 
 # Fetch the source and verify that it is not tampered with
@@ -187,7 +187,7 @@ cd db-4.8.30.NC/build_unix/
 make install
 
 # Configure Sparks Core to use our own-built instance of BDB
-cd $DASH_ROOT
+cd $SPARKS_ROOT
 ./autogen.sh
 ./configure LDFLAGS="-L${BDB_PREFIX}/lib/" CPPFLAGS="-I${BDB_PREFIX}/include/" # (other args...)
 ```
@@ -205,7 +205,7 @@ If you need to build Boost yourself:
 
 Security
 --------
-To help make your Dash installation more secure by making certain attacks impossible to
+To help make your Sparks installation more secure by making certain attacks impossible to
 exploit even if a vulnerability is found, binaries are hardened by default.
 This can be disabled with:
 
@@ -229,7 +229,7 @@ Hardening enables the following features:
 
     To test that you have built PIE executable, install scanelf, part of paxutils, and use:
 
-    	scanelf -e ./dashd
+    	scanelf -e ./sparksd
 
     The output should contain:
 
@@ -244,7 +244,7 @@ Hardening enables the following features:
     executable without the non-executable stack protection.
 
     To verify that the stack is non-executable after compiling use:
-    `scanelf -e ./dashd`
+    `scanelf -e ./sparksd`
 
     the output should contain:
 	STK/REL/PTL
@@ -276,8 +276,8 @@ Setup and Build Example: Arch Linux
 This example lists the steps necessary to setup and build a command line only, non-wallet distribution of the latest changes on Arch Linux:
 
     pacman -S git base-devel boost libevent python
-    git clone https://github.com/dashpay/dash.git
-    cd dash/
+    git clone https://github.com/sparkspay/sparks.git
+    cd sparks/
     ./autogen.sh
     ./configure --disable-wallet --without-gui --without-miniupnpc
     make check

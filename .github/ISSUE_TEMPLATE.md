@@ -2,9 +2,9 @@
 
 This issue tracker is only for technical issues related to Sparks Core.
 
-General Dash questions and/or support requests and are best directed to the [Dashpay Reddit](https://www.reddit.com/r/dashpay/).
+General Sparks questions and/or support requests and are best directed to the [SparksPay Reddit](https://www.reddit.com/r/sparkspay/).
 
-To report critical security issues, email infosec@dash.org instead of creating Github issues.
+To report critical security issues, email admin@sparkspay.io instead of creating Github issues.
 
 ### Describe the issue
 
