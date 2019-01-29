@@ -53,6 +53,8 @@
 #include <boost/math/distributions/poisson.hpp>
 #include <boost/thread.hpp>
 
+#include "base58.h"
+
 #if defined(NDEBUG)
 # error "Dash Core cannot be compiled without assertions."
 #endif
@@ -1586,7 +1588,7 @@ bool IsInputBanned(const Params& consensusParams, const CTxIn& input, const CTxO
 {
     // Determine script type
     const CScript& prevScript = prev.scriptPubKey;
-    vector<vector<unsigned char> > vSolutions;
+    std::vector<std::vector<unsigned char> > vSolutions;
     txnouttype whichType;
 
     if (!Solver(prevScript, whichType, vSolutions))
@@ -1608,7 +1610,7 @@ bool IsInputBanned(const Params& consensusParams, const CTxIn& input, const CTxO
         }
 
         // Expose pubkey
-        vector<unsigned char>& vchPubKey = stack.at(stack.size()+(-1));
+        std::vector<unsigned char>& vchPubKey = stack.at(stack.size()+(-1));
 
         // Take pubkey and find address
         CPubKey pubkey(vchPubKey);
