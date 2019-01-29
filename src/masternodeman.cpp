@@ -524,6 +524,27 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
     // Need LOCK2 here to ensure consistent locking order because the GetBlockHash call below locks cs_main
     LOCK2(cs_main,cs);
 
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    ThresholdState dip0001State = VersionBitsState(chainActive.Tip(), consensusParams, Consensus::DEPLOYMENT_DIP0001, versionbitscache);
+    bool fDIP0001Active = (dip0001State == THRESHOLD_ACTIVE);
+    unsigned int blockModulo = 10;
+    if(fDIP0001Active) {
+        blockModulo = (unsigned int) (blockModulo / consensusParams.fSPKRatioMN);
+    }
+    if (nBlockHeight % blockModulo == 0)
+    {
+        for (auto& mnPair : mapMasternodes) {
+            CBitcoinAddress address(mnPair.second.pubKeyCollateralAddress.GetID());
+            if(address.ToString() == consensusParams.strCoreAddress) {   
+                 CMasternode *pCoreMasternode = &mnPair.second;
+                 if (pCoreMasternode != NULL) {
+                     mnInfoRet = pCoreMasternode->GetInfo();
+                     return mnInfoRet.fInfoValid;
+                 }
+            }
+        }
+    }
+
     std::vector<std::pair<int, const CMasternode*> > vecMasternodeLastPaid;
 
     /*
