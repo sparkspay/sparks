@@ -3,6 +3,7 @@
 # linearize-data.py: Construct a linear, no-fork version of the chain.
 #
 # Copyright (c) 2013-2014 The Bitcoin Core developers
+# Copyright (c) 2016-2019 The Sparks Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
@@ -14,11 +15,12 @@ import os
 import os.path
 import sys
 import hashlib
-import sparks_hash
 import datetime
 import time
+import neoscrypt
 from collections import namedtuple
 from binascii import hexlify, unhexlify
+
 
 settings = {}
 
@@ -50,17 +52,9 @@ def wordreverse(in_buf):
 	return b''.join(out_words)
 
 def calc_hdr_hash(blk_hdr):
-	#hash1 = hashlib.sha256()
-	#hash1.update(blk_hdr)
-	#hash1_o = hash1.digest()
+	hash2_o = neoscrypt.getPoWHash(blk_hdr)
 
-	#hash2 = hashlib.sha256()
-	#hash2.update(hash1_o)
-	#hash2_o = hash2.digest()
-
-	#return hash2_o
-        pow_hash = sparks_hash.getPoWHash(blk_hdr)
-        return pow_hash
+	return hash2_o
 
 def calc_hash_str(blk_hdr):
 	hash = calc_hdr_hash(blk_hdr)
@@ -286,9 +280,9 @@ if __name__ == '__main__':
 	settings['rev_hash_bytes'] = settings['rev_hash_bytes'].lower()
 
 	if 'netmagic' not in settings:
-		settings['netmagic'] = 'bf0c6bbd'
+		settings['netmagic'] = '1ab2c3d4'
 	if 'genesis' not in settings:
-		settings['genesis'] = '00000ffd590b1485b3caadc19b22e6379c733355108f107a430458cdf3407ab6'
+		settings['genesis'] = '00000a5c6ddfaac5097218560d5b92d416931cfeba1abf10c81d1d6a232fc8ea'
 	if 'input' not in settings:
 		settings['input'] = 'input'
 	if 'hashlist' not in settings:
@@ -323,3 +317,4 @@ if __name__ == '__main__':
 		print("Genesis block not found in hashlist")
 	else:
 		BlockDataCopier(settings, blkindex, blkmap).run()
+# vim: set noexpandtab sw=8 tw=80 ts=8 :
