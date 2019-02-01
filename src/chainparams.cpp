@@ -347,10 +347,10 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nThreshold = 50; // 50% of 100
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x000000000000000000000000000000000000000000000000000000000ce0010a");
+        consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000000000000000100010");
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x00000b625d0b8e0c182b38bc94427b874a1c9001d78c330bf34bb07044cbe934");
+        consensus.defaultAssumeValid = uint256S("0x000005f15ec2b9e4495efb539fb5b113338df946291cccd8dfd192bb68cd6dcf");
 
         //Sparks stuff
         consensus.nSPKHeight = 100;
@@ -407,7 +407,7 @@ public:
         nPoolMaxTransactions = 3;
         nFulfilledRequestExpireTime = 5*60; // fulfilled requests expire in 5 minutes
 
-        strSporkAddress = "yjPtiKh2uwk3bDutTEA2q9mCtXyiZRWn55";
+        strSporkAddress = "n7ntRMZ83MKzu9Krwp9W5rKGeTBRyVrVjc";
 
         checkpointData = (CCheckpointData) {
             boost::assign::map_list_of
@@ -612,7 +612,7 @@ public:
         consensus.nSPKSubsidyLegacy = 18;
         consensus.nSPKSubidyReborn = 20;
         consensus.nSPKBlocksPerMonth = 1;
-        consensus.strCoreAddress = "944ZZRFxKxoUdqvEaFQqukPzGFzPwdamFz";
+        consensus.strCoreAddress = "n7ntRMZ83MKzu9Krwp9W5rKGeTBRyVrVjc";
 
         pchMessageStart[0] = 0xa1;
         pchMessageStart[1] = 0xb3;
@@ -640,7 +640,7 @@ public:
         nFulfilledRequestExpireTime = 5*60; // fulfilled requests expire in 5 minutes
 
         // privKey: cP4EKFyJsHT39LDqgdcB43Y3YXjNyjb5Fuas1GQSeAtjnZWmZEQK
-        strSporkAddress = "yj949n1UH6fDhw6HtVE5VMj2iSTaSWBMcW";
+        strSporkAddress = "n7ntRMZ83MKzu9Krwp9W5rKGeTBRyVrVjc";
 
         checkpointData = (CCheckpointData){
             boost::assign::map_list_of
