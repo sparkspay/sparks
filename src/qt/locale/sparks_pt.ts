@@ -757,8 +757,8 @@ Endereço: %4
         <translation>média-alta</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 duff(s) per input.</source>
-        <translation>Pode variar +/- %1 duff(s) por input</translation>
+        <source>Can vary +/- %1 sprite(s) per input.</source>
+        <translation>Pode variar +/- %1 sprite(s) por input</translation>
     </message>
     <message>
         <source>n/a</source>
