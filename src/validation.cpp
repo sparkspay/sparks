@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2016-2019 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -59,7 +60,7 @@
 #include <boost/thread.hpp>
 
 #if defined(NDEBUG)
-# error "Dash Core cannot be compiled without assertions."
+# error "Sparks Core cannot be compiled without assertions."
 #endif
 
 /**
@@ -623,6 +624,22 @@ std::string FormatStateMessage(const CValidationState &state)
         state.GetRejectCode());
 }
 
+bool static IsSPKHardForkEnabled(const Consensus::Params& params, int nHeight) {
+    return nHeight >= params.nSPKHeight;
+}
+
+bool IsSPKHardForkEnabled(const Consensus::Params& params, const CBlockIndex *pindexPrev) {
+    if (pindexPrev == NULL) {
+        return false;
+    }
+    return IsSPKHardForkEnabled(params, pindexPrev->nHeight);
+}
+
+bool IsSPKHardForkEnabledForCurrentBlock(const Consensus::Params& params) {
+    AssertLockHeld(cs_main);
+    return IsSPKHardForkEnabled(params, chainActive.Tip());
+}
+
 static bool IsCurrentForFeeEstimation()
 {
     AssertLockHeld(cs_main);
@@ -1147,74 +1164,115 @@ NOTE:   unlike bitcoin we are using PREVIOUS block height here,
 */
 CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params& consensusParams, bool fSuperblockPartOnly)
 {
-    double dDiff;
-    CAmount nSubsidyBase;
-
-    if (nPrevHeight <= 4500 && Params().NetworkIDString() == CBaseChainParams::MAIN) {
-        /* a bug which caused diff to not be correctly calculated */
-        dDiff = (double)0x0000ffff / (double)(nPrevBits & 0x00ffffff);
-    } else {
-        dDiff = ConvertBitsToDouble(nPrevBits);
+    CAmount nSubsidy = 0;
+    if (IsSPKHardForkEnabled(consensusParams, nPrevHeight)) {    
+        nSubsidy = GetRebornSubsidy(nPrevHeight, consensusParams);
     }
-
-    if (nPrevHeight < 5465) {
-        // Early ages...
-        // 1111/((x+1)^2)
-        nSubsidyBase = (1111.0 / (pow((dDiff+1.0),2.0)));
-        if(nSubsidyBase > 500) nSubsidyBase = 500;
-        else if(nSubsidyBase < 1) nSubsidyBase = 1;
-    } else if (nPrevHeight < 17000 || (dDiff <= 75 && nPrevHeight < 24000)) {
-        // CPU mining era
-        // 11111/(((x+51)/6)^2)
-        nSubsidyBase = (11111.0 / (pow((dDiff+51.0)/6.0,2.0)));
-        if(nSubsidyBase > 500) nSubsidyBase = 500;
-        else if(nSubsidyBase < 25) nSubsidyBase = 25;
-    } else {
-        // GPU/ASIC mining era
-        // 2222222/(((x+2600)/9)^2)
-        nSubsidyBase = (2222222.0 / (pow((dDiff+2600.0)/9.0,2.0)));
-        if(nSubsidyBase > 25) nSubsidyBase = 25;
-        else if(nSubsidyBase < 5) nSubsidyBase = 5;
+    else {
+        nSubsidy = GetLegacySubsidy(nPrevHeight, consensusParams);
     }
+    LogPrintf("GetBlockSubsidy -- Reward for prevblock %d is %lld\n", nPrevHeight, nSubsidy);
+    return fSuperblockPartOnly ? 0 : nSubsidy;
+}
 
-    // LogPrintf("height %u diff %4.2f reward %d\n", nPrevHeight, dDiff, nSubsidyBase);
-    CAmount nSubsidy = nSubsidyBase * COIN;
-
-    // yearly decline of production by ~7.1% per year, projected ~18M coins max by year 2050+.
-    for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval) {
-        nSubsidy -= nSubsidy/14;
+CAmount GetLegacySubsidy(int nPrevHeight, const Consensus::Params& consensusParams)
+{
+    CAmount nSubsidy = 0;
+    if (nPrevHeight == 0) {
+        nSubsidy = consensusParams.nSPKPremine * COIN;
     }
-
-    // this is only active on devnets
-    if (nPrevHeight < consensusParams.nHighSubsidyBlocks) {
-        nSubsidy *= consensusParams.nHighSubsidyFactor;
+    else {
+        nSubsidy = consensusParams.nSPKSubsidyLegacy * COIN;
     }
+    return nSubsidy;
+}
 
-    // Hard fork to reduce the block reward by 10 extra percent (allowing budget/superblocks)
-    CAmount nSuperblockPart = (nPrevHeight > consensusParams.nBudgetPaymentsStartBlock) ? nSubsidy/10 : 0;
-
-    return fSuperblockPartOnly ? nSuperblockPart : nSubsidy - nSuperblockPart;
+CAmount GetRebornSubsidy(int nPrevHeight, const Consensus::Params& consensusParams)
+{
+    CAmount nSubsidy = 0;
+    if(nPrevHeight == consensusParams.nSPKHeight)
+    {
+        nSubsidy = (consensusParams.nSPKSubidyReborn + consensusParams.nSPKPostmine) * COIN;
+    }
+    else
+    {
+        unsigned int nLuckyBlock = nPrevHeight - consensusParams.nSPKHeight;
+        switch(nLuckyBlock)
+        {
+            case 21600 * 1:
+            case 21600 * 2:
+            case 21600 * 3:
+                nSubsidy = 1000 * COIN;
+                break;
+            case 21600 * 4:
+            case 21600 * 5:
+            case 21600 * 6:
+                nSubsidy = 1500 * COIN;
+                break;
+            case 21600 * 7:
+            case 21600 * 8:
+            case 21600 * 9:
+                nSubsidy = 2000 * COIN;
+                break;
+            case 21600 * 10:
+            case 21600 * 11:
+            case 21600 * 12:
+                nSubsidy = 2500 * COIN;
+                break;
+            case 21600 * 24:
+                nSubsidy = 3500 * COIN;
+                break;
+            case 21600 * 36:
+                nSubsidy = 5500 * COIN;
+                break;
+            case 21600 * 48:
+                nSubsidy = 9000 * COIN;
+                break;
+            case 21600 * 60:
+                nSubsidy = 15000 * COIN;
+                break;
+            default:
+                nSubsidy = consensusParams.nSPKSubidyReborn * COIN;
+                // yearly decline of production by 12% per year, projected 136m coins max by year 2050+.
+                for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval) {
+                    nSubsidy -= nSubsidy/12;
+                }
+                break;
+        }
+    }
+    return nSubsidy;
 }
 
 CAmount GetMasternodePayment(int nHeight, CAmount blockValue)
 {
-    CAmount ret = blockValue/5; // start at 20%
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    bool fDIP0001Active = (VersionBitsState(chainActive.Tip(), consensusParams, Consensus::DEPLOYMENT_DIP0001, versionbitscache) == THRESHOLD_ACTIVE);
+    if(!fDIP0001Active)
+    {
+        CAmount corePayment = GetCorePayment(nHeight, blockValue);
+        CAmount masterNodePayment = (blockValue - corePayment) / 2;
+        LogPrintf("GetMasternodePayment: height is %d, blockValue is %d, corePayment is %d, masternodePayment is %d\n", nHeight, blockValue, corePayment, masterNodePayment);
+        return masterNodePayment;
+    }
+    else
+    {
+        CAmount masterNodePayment = blockValue * consensusParams.fSPKRatioMN;
+        LogPrintf("GetMasternodePayment: DIP0001 active, height is %d, blockValue is %d, masternodePayment is %d\n", nHeight, blockValue, masterNodePayment);
+        return masterNodePayment;
+    }
+}
 
-    int nMNPIBlock = Params().GetConsensus().nMasternodePaymentsIncreaseBlock;
-    int nMNPIPeriod = Params().GetConsensus().nMasternodePaymentsIncreasePeriod;
-
-                                                                      // mainnet:
-    if(nHeight > nMNPIBlock)                  ret += blockValue / 20; // 158000 - 25.0% - 2014-10-24
-    if(nHeight > nMNPIBlock+(nMNPIPeriod* 1)) ret += blockValue / 20; // 175280 - 30.0% - 2014-11-25
-    if(nHeight > nMNPIBlock+(nMNPIPeriod* 2)) ret += blockValue / 20; // 192560 - 35.0% - 2014-12-26
-    if(nHeight > nMNPIBlock+(nMNPIPeriod* 3)) ret += blockValue / 40; // 209840 - 37.5% - 2015-01-26
-    if(nHeight > nMNPIBlock+(nMNPIPeriod* 4)) ret += blockValue / 40; // 227120 - 40.0% - 2015-02-27
-    if(nHeight > nMNPIBlock+(nMNPIPeriod* 5)) ret += blockValue / 40; // 244400 - 42.5% - 2015-03-30
-    if(nHeight > nMNPIBlock+(nMNPIPeriod* 6)) ret += blockValue / 40; // 261680 - 45.0% - 2015-05-01
-    if(nHeight > nMNPIBlock+(nMNPIPeriod* 7)) ret += blockValue / 40; // 278960 - 47.5% - 2015-06-01
-    if(nHeight > nMNPIBlock+(nMNPIPeriod* 9)) ret += blockValue / 40; // 313520 - 50.0% - 2015-08-03
-
-    return ret;
+CAmount GetCorePayment(int nHeight, CAmount blockValue)
+{
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    LogPrintf("GetCorePayment: height is %d, consensus height is %d\n", nHeight, consensusParams.nSPKHeight);
+    if(nHeight <= consensusParams.nSPKHeight) {
+        return 0;
+    }else if(nHeight == consensusParams.nSPKHeight + 1) {
+        return consensusParams.nSPKPostmine * COIN;
+    } else {
+        return blockValue * 0.1;
+    }
 }
 
 bool IsInitialBlockDownload()
@@ -1387,6 +1445,59 @@ int GetSpendHeight(const CCoinsViewCache& inputs)
 }
 
 namespace Consensus {
+bool IsInputBanned(const Params& consensusParams, const CTxIn& input, const CTxOut &prev)
+{
+    // Determine script type
+    const CScript& prevScript = prev.scriptPubKey;
+    std::vector<std::vector<unsigned char> > vSolutions;
+    txnouttype whichType;
+
+    if (!Solver(prevScript, whichType, vSolutions))
+    {
+        LogPrintf("IsInputBanned() : Solver returned false\n");
+        return true;
+    }
+    // LogPrintf("IsInputBanned() : whichType = %d\n", whichType);
+
+    // Evaluate P2PKH script
+    // <sig> <pubkey>
+    if (whichType == TX_PUBKEYHASH)
+    {
+        std::vector<std::vector<unsigned char> > stack;
+        if (!EvalScript(stack, input.scriptSig, SCRIPT_VERIFY_P2SH, BaseSignatureChecker()))
+        {
+            LogPrintf("IsInputBanned() : EvalScript returned false\n");
+            return true;
+        }
+
+        // Expose pubkey
+        std::vector<unsigned char>& vchPubKey = stack.at(stack.size()+(-1));
+
+        // Take pubkey and find address
+        CPubKey pubkey(vchPubKey);
+        if (!pubkey.IsValid())
+        {
+            LogPrintf("IsInputBanned() : pubKey is not valid\n");
+            return true;
+        }
+
+        CBitcoinAddress address;
+        address.Set(pubkey.GetID());
+        // LogPrintf("IsInputBanned() : sender address is %s\n", address.ToString().c_str());
+        // Check address against blacklist
+        BOOST_FOREACH(std::string bannedAddress, consensusParams.vBannedAddresses)
+        {
+            if (address.Get() == CBitcoinAddress(bannedAddress).Get())
+            {
+                LogPrintf("IsInputBanned() : sender address %s is BANNED\n", address.ToString().c_str());
+                return true;
+            }
+        }
+    }
+    // Not banned!
+    return false;
+}
+
 bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight)
 {
         // This doesn't trigger the DoS code on purpose; if it did, it would make it easier
@@ -1396,6 +1507,7 @@ bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoins
 
         CAmount nValueIn = 0;
         CAmount nFees = 0;
+        const Consensus::Params& consensusParams = ::Params().GetConsensus();
         for (unsigned int i = 0; i < tx.vin.size(); i++)
         {
             const COutPoint &prevout = tx.vin[i].prevout;
@@ -1414,7 +1526,9 @@ bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoins
             nValueIn += coin.out.nValue;
             if (!MoneyRange(coin.out.nValue) || !MoneyRange(nValueIn))
                 return state.DoS(100, false, REJECT_INVALID, "bad-txns-inputvalues-outofrange");
-
+            // Check for banned inputs
+            if (nSpendHeight >= consensusParams.nSPKHeight && IsInputBanned(consensusParams, tx.vin[i], coin.out))
+                return state.DoS(100, false, REJECT_INVALID, "bad-txns-in-banned");
         }
 
         if (nValueIn < tx.GetValueOut())

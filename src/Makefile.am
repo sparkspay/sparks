@@ -354,6 +354,7 @@ crypto_libdash_crypto_a_SOURCES += \
   crypto/shavite.c \
   crypto/simd.c \
   crypto/skein.c \
+  crypto/neoscrypt.c \
   crypto/sph_blake.h \
   crypto/sph_bmw.h \
   crypto/sph_cubehash.h \
@@ -365,6 +366,7 @@ crypto_libdash_crypto_a_SOURCES += \
   crypto/sph_shavite.h \
   crypto/sph_simd.h \
   crypto/sph_skein.h \
+  crypto/neoscrypt.h \
   crypto/sph_types.h
 
 # consensus: shared between all executables that validate any consensus rules.

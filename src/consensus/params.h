@@ -129,6 +129,16 @@ struct Params {
     int BIP66Height;
     /** Block height at which DIP0001 becomes active */
     int DIP0001Height;
+
+    int nSPKHeight;
+    unsigned int nSPKPremine;
+    unsigned int nSPKPostmine;
+    unsigned int nSPKSubsidyLegacy;
+    unsigned int nSPKSubidyReborn;
+    unsigned int nSPKBlocksPerMonth;
+    std::string strCoreAddress;
+    std::vector<std::string> vBannedAddresses;
+    float fSPKRatioMN;
     /**
      * Minimum blocks including miner confirmation of the total of nMinerConfirmationWindow blocks in a retargeting period,
      * (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.
