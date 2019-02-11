@@ -11,12 +11,17 @@
 #include "utilstrencodings.h"
 #include "crypto/common.h"
 
+#include "crypto/neoscrypt.h"
+
 uint256 CBlockHeader::GetHash() const
 {
+    uint256 thash;
+    unsigned int profile = 0x0;
     std::vector<unsigned char> vch(80);
     CVectorWriter ss(SER_NETWORK, PROTOCOL_VERSION, vch, 0);
     ss << *this;
-    return HashX11((const char *)vch.data(), (const char *)vch.data() + vch.size());
+    neoscrypt((const unsigned char *) vch.data(), (unsigned char *) &thash, profile);
+    return thash;
 }
 
 std::string CBlock::ToString() const
