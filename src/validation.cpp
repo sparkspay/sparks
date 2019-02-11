@@ -59,6 +59,8 @@
 #include <boost/math/distributions/poisson.hpp>
 #include <boost/thread.hpp>
 
+#include "base58.h"
+
 #if defined(NDEBUG)
 # error "Sparks Core cannot be compiled without assertions."
 #endif
