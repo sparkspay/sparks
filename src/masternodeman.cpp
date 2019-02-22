@@ -526,8 +526,7 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
     LOCK2(cs_main,cs);
 
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    ThresholdState dip0001State = VersionBitsState(chainActive.Tip(), consensusParams, Consensus::DEPLOYMENT_DIP0001, versionbitscache);
-    bool fDIP0001Active = (dip0001State == THRESHOLD_ACTIVE);
+    bool fDIP0001Active = nBlockHeight >= consensusParams.DIP0001Height;
     unsigned int blockModulo = 10;
     if(fDIP0001Active) {
         blockModulo = (unsigned int) (blockModulo / consensusParams.fSPKRatioMN);

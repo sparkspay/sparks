@@ -1372,13 +1372,24 @@ CAmount GetRebornSubsidy(int nPrevHeight, const Consensus::Params& consensusPara
                 nSubsidy = 15000 * COIN;
                 break;
             default:
-                nSubsidy = consensusParams.nSPKSubidyReborn * COIN;
-                // yearly decline of production by 12% per year, projected 136m coins max by year 2050+.
-                for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval) {
-                    nSubsidy -= nSubsidy/12;
-                }
+                nSubsidy = GetDecreasedSubsidy(nPrevHeight, consensusParams);
                 break;
         }
+    }
+    return nSubsidy;
+}
+
+CAmount GetDecreasedSubsidy(int nPrevHeight, const Consensus::Params& consensusParams)
+{
+    CAmount nSubsidy = consensusParams.nSPKSubidyReborn * COIN;
+    // yearly decline of production by 12% per year, projected 136m coins max by year 2050+.
+    for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval) {
+        nSubsidy -= nSubsidy/12;
+    }
+    ThresholdState guardianState = VersionBitsState(chainActive.Tip(), consensusParams, Consensus::DEPLOYMENT_GUARDIAN_NODES, versionbitscache);
+    bool fGuardianActive = (guardianState == THRESHOLD_ACTIVE);
+    if(fGuardianActive){
+        nSubsidy /= 1.5;
     }
     return nSubsidy;
 }
@@ -1386,7 +1397,7 @@ CAmount GetRebornSubsidy(int nPrevHeight, const Consensus::Params& consensusPara
 CAmount GetMasternodePayment(int nHeight, CAmount blockValue)
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    bool fDIP0001Active = (VersionBitsState(chainActive.Tip(), consensusParams, Consensus::DEPLOYMENT_DIP0001, versionbitscache) == THRESHOLD_ACTIVE);
+    bool fDIP0001Active = nHeight >= consensusParams.DIP0001Height;
     if(!fDIP0001Active)
     {
         CAmount corePayment = GetCorePayment(nHeight, blockValue);
