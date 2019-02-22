@@ -176,6 +176,13 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nWindowSize = 4032;
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nThreshold = 3226; // 80% of 4032
 
+        // Deployment of Guardian Nodes
+        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].bit = 3;
+        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nStartTime = 1554076800; // April 1st, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nTimeout = 1585699200; // April 1st, 2020
+        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nWindowSize = 1000;
+        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nThreshold = 800; // 80% of 1000
+
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000eee93cb0b1f4be");//269664
 
