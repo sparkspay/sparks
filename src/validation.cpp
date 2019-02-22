@@ -56,6 +56,10 @@
 
 #include "base58.h"
 
+void komodo_disconnect(CBlockIndex *pindex,CBlock *block);
+int32_t komodo_checkpoint(int32_t *notarized_heightp,int32_t nHeight,uint256 hash);
+void komodo_connectblock(CBlockIndex *pindex,CBlock& block);
+
 #if defined(NDEBUG)
 # error "Sparks Core cannot be compiled without assertions."
 #endif
@@ -1871,6 +1875,8 @@ static DisconnectResult DisconnectBlock(const CBlock& block, CValidationState& s
 {
     assert(pindex->GetBlockHash() == view.GetBestBlock());
 
+    komodo_disconnect((CBlockIndex *)pindex,(CBlock *)&block);
+
     bool fClean = true;
 
     CBlockUndo blockUndo;
@@ -2503,6 +2509,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     GetMainSignals().UpdatedTransaction(hashPrevBestCoinBase);
     hashPrevBestCoinBase = block.vtx[0]->GetHash();
 
+    komodo_connectblock(pindex,*(CBlock *)&block);
 
     int64_t nTime6 = GetTimeMicros(); nTimeCallbacks += nTime6 - nTime5;
     LogPrint("bench", "    - Callbacks: %.2fms [%.2fs]\n", 0.001 * (nTime6 - nTime5), nTimeCallbacks * 0.000001);
@@ -3521,6 +3528,10 @@ static bool CheckIndexAgainstCheckpoint(const CBlockIndex* pindexPrev, CValidati
 bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev, int64_t nAdjustedTime)
 {
     const int nHeight = pindexPrev == NULL ? 0 : pindexPrev->nHeight + 1;
+
+    uint256 hash = block.GetHash();
+    int32_t notarized_height;
+
     // Check proof of work
     if(Params().NetworkIDString() == CBaseChainParams::MAIN && nHeight <= 68589){
         // architecture issues with DGW v1 and v2)
@@ -3550,6 +3561,17 @@ bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& sta
        (block.nVersion < 4 && nHeight >= consensusParams.BIP65Height))
             return state.Invalid(false, REJECT_OBSOLETE, strprintf("bad-version(0x%08x)", block.nVersion),
                                  strprintf("rejected nVersion=0x%08x block", block.nVersion));
+                                 
+    // Prevent re-organizing of notarized blocks
+    if (komodo_checkpoint(&notarized_height,(int32_t)nHeight,hash) < 0) {
+        CBlockIndex *heightblock = chainActive[nHeight];
+        fprintf(stderr, "notarized_height=%d\n", notarized_height);
+        if (heightblock != 0 && heightblock->GetBlockHash() == hash) {
+            fprintf(stderr,"got a pre notarization block that matches height.%d\n",(int32_t)nHeight);
+            return true;
+        }
+        else return state.DoS(100, error("%s: forked chain %d older than last notarized (height %d) vs %d", __func__,nHeight, notarized_height));
+    }
 
     return true;
 }

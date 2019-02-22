@@ -816,6 +816,9 @@ bool AppInitServers(boost::thread_group& threadGroup)
 // Parameter interaction based on rules
 void InitParameterInteraction()
 {
+    int32_t komodo_init();
+    komodo_init();
+
     // when specifying an explicit binding address, you want to listen on it
     // even when -connect or -proxy is specified
     if (IsArgSet("-bind")) {

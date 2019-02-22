@@ -32,6 +32,8 @@
 int64_t nWalletUnlockTime;
 static CCriticalSection cs_nWalletUnlockTime;
 
+int32_t komodo_dpowconfs(int32_t height,int32_t numconfs);
+
 std::string HelpRequiringPassphrase()
 {
     return pwalletMain && pwalletMain->IsCrypted()
@@ -61,16 +63,18 @@ void WalletTxToJSON(const CWalletTx& wtx, UniValue& entry)
 {
     int confirms = wtx.GetDepthInMainChain(false);
     bool fLocked = instantsend.IsLockedInstantSendTransaction(wtx.GetHash());
-    entry.push_back(Pair("confirmations", confirms));
+    entry.push_back(Pair("rawconfirmations", confirms));
     entry.push_back(Pair("instantlock", fLocked));
     if (wtx.IsCoinBase())
         entry.push_back(Pair("generated", true));
     if (confirms > 0)
     {
+        entry.push_back(Pair("confirmations", komodo_dpowconfs((int32_t)mapBlockIndex[wtx.hashBlock]->nHeight,confirms)));
         entry.push_back(Pair("blockhash", wtx.hashBlock.GetHex()));
         entry.push_back(Pair("blockindex", wtx.nIndex));
         entry.push_back(Pair("blocktime", mapBlockIndex[wtx.hashBlock]->GetBlockTime()));
     } else {
+        entry.push_back(Pair("confirmations", confirms));
         entry.push_back(Pair("trusted", wtx.IsTrusted()));
     }
     uint256 hash = wtx.GetHash();
@@ -1164,9 +1168,11 @@ struct tallyitem
     int nConf;
     std::vector<uint256> txids;
     bool fIsWatchonly;
+    int nHeight;
     tallyitem()
     {
         nAmount = 0;
+        nHeight = 0;
         nConf = std::numeric_limits<int>::max();
         fIsWatchonly = false;
     }
@@ -1240,9 +1246,11 @@ UniValue ListReceived(const UniValue& params, bool fByAccounts)
         CAmount nAmount = 0;
         int nConf = std::numeric_limits<int>::max();
         bool fIsWatchonly = false;
+        int nHeight = 0;
         if (it != mapTally.end())
         {
             nAmount = (*it).second.nAmount;
+            nHeight = (*it).second.nHeight;
             nConf = (*it).second.nConf;
             fIsWatchonly = (*it).second.fIsWatchonly;
         }
@@ -1262,7 +1270,8 @@ UniValue ListReceived(const UniValue& params, bool fByAccounts)
             obj.push_back(Pair("address",       address.ToString()));
             obj.push_back(Pair("account",       strAccount));
             obj.push_back(Pair("amount",        ValueFromAmount(nAmount)));
-            obj.push_back(Pair("confirmations", (nConf == std::numeric_limits<int>::max() ? 0 : nConf)));
+            obj.push_back(Pair("rawconfirmations", (nConf == std::numeric_limits<int>::max() ? 0 : nConf)));
+            obj.push_back(Pair("confirmations", (nConf == std::numeric_limits<int>::max() ? 0 : komodo_dpowconfs(nHeight, nConf))));
             if (!fByAccounts)
                 obj.push_back(Pair("label", strAccount));
             UniValue transactions(UniValue::VARR);
@@ -1289,7 +1298,8 @@ UniValue ListReceived(const UniValue& params, bool fByAccounts)
                 obj.push_back(Pair("involvesWatchonly", true));
             obj.push_back(Pair("account",       (*it).first));
             obj.push_back(Pair("amount",        ValueFromAmount(nAmount)));
-            obj.push_back(Pair("confirmations", (nConf == std::numeric_limits<int>::max() ? 0 : nConf)));
+            obj.push_back(Pair("rawconfirmations", (nConf == std::numeric_limits<int>::max() ? 0 : nConf)));
+            obj.push_back(Pair("confirmations", (nConf == std::numeric_limits<int>::max() ? 0 : komodo_dpowconfs(nHeight, nConf))));
             ret.push_back(obj);
         }
     }
@@ -2643,9 +2653,14 @@ UniValue listunspent(const JSONRPCRequest& request)
             }
         }
 
+        int32_t txheight = 0;
+        if ( chainActive.Tip() != NULL )
+            txheight = (chainActive.Tip()->nHeight - out.nDepth - 1);
+
         entry.push_back(Pair("scriptPubKey", HexStr(scriptPubKey.begin(), scriptPubKey.end())));
         entry.push_back(Pair("amount", ValueFromAmount(out.tx->tx->vout[out.i].nValue)));
-        entry.push_back(Pair("confirmations", out.nDepth));
+        entry.push_back(Pair("rawconfirmations", out.nDepth));
+        entry.push_back(Pair("confirmations", komodo_dpowconfs(txheight,out.nDepth)));
         entry.push_back(Pair("spendable", out.fSpendable));
         entry.push_back(Pair("solvable", out.fSolvable));
         entry.push_back(Pair("ps_rounds", pwalletMain->GetOutpointPrivateSendRounds(COutPoint(out.tx->GetHash(), out.i))));
