@@ -293,6 +293,7 @@ double ConvertBitsToDouble(unsigned int nBits);
 CAmount GetBlockSubsidy(int nBits, int nHeight, const Consensus::Params& consensusParams, bool fSuperblockPartOnly = false);
 CAmount GetLegacySubsidy(int nPrevHeight, const Consensus::Params& consensusParams);
 CAmount GetRebornSubsidy(int nPrevHeight, const Consensus::Params& consensusParams);
+CAmount GetDecreasedSubsidy(int nPrevHeight, const Consensus::Params& consensusParams);
 CAmount GetMasternodePayment(int nHeight, CAmount blockValue);
 CAmount GetCorePayment(int nHeight, CAmount blockValue);
 

@@ -56,9 +56,7 @@
 
 #include "base58.h"
 
-void komodo_disconnect(CBlockIndex *pindex,CBlock *block);
-int32_t komodo_checkpoint(int32_t *notarized_heightp,int32_t nHeight,uint256 hash);
-void komodo_connectblock(CBlockIndex *pindex,CBlock& block);
+#include "komodo_validation012.h"
 
 #if defined(NDEBUG)
 # error "Sparks Core cannot be compiled without assertions."
@@ -1376,13 +1374,19 @@ CAmount GetRebornSubsidy(int nPrevHeight, const Consensus::Params& consensusPara
                 nSubsidy = 15000 * COIN;
                 break;
             default:
-                nSubsidy = consensusParams.nSPKSubidyReborn * COIN;
-                // yearly decline of production by 12% per year, projected 136m coins max by year 2050+.
-                for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval) {
-                    nSubsidy -= nSubsidy/12;
-                }
+                nSubsidy = GetDecreasedSubsidy(nPrevHeight, consensusParams);
                 break;
         }
+    }
+    return nSubsidy;
+}
+
+CAmount GetDecreasedSubsidy(int nPrevHeight, const Consensus::Params& consensusParams)
+{
+    CAmount nSubsidy = consensusParams.nSPKSubidyReborn * COIN;
+    // yearly decline of production by 12% per year, projected 136m coins max by year 2050+.
+    for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval) {
+        nSubsidy -= nSubsidy/12;
     }
     return nSubsidy;
 }
