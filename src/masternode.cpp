@@ -101,6 +101,24 @@ arith_uint256 CMasternode::CalculateScore(const uint256& blockHash) const
     return UintToArith256(ss.GetHash());
 }
 
+bool CMasternode::IsGuardian(const COutPoint& outpoint) const
+{
+    Coin coin;
+    if(!GetUTXOCoin(outpoint, coin))
+    {
+        return false;
+    }
+
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    ThresholdState guardianState = VersionBitsState(chainActive.Tip(), consensusParams, Consensus::DEPLOYMENT_GUARDIAN_NODES, versionbitscache);
+    bool fGuardianActive = (guardianState == THRESHOLD_ACTIVE);
+    if(fGuardianActive && coin.out.nValue == GUARDIAN_COLLATERL_SIZE * COIN)
+    {
+        return true;
+    }
+    return false;
+}
+
 CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outpoint, const CPubKey& pubkey)
 {
     int nHeight;
@@ -120,11 +138,16 @@ CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outp
     ThresholdState guardianState = VersionBitsState(chainActive.Tip(), consensusParams, Consensus::DEPLOYMENT_GUARDIAN_NODES, versionbitscache);
     bool fGuardianActive = (guardianState == THRESHOLD_ACTIVE);
 
-    if(fGuardianActive && coin.out.nValue != MASTERNODE_COLLATERAL_SIZE * COIN || coin.out.nValue != GUARDIAN_COLLATERL_SIZE * COIN) {
+    if(fGuardianActive && (coin.out.nValue != MASTERNODE_COLLATERAL_SIZE * COIN || coin.out.nValue != GUARDIAN_COLLATERL_SIZE * COIN))
+    {
+        LogPrintf("CMasternode::CheckCollateral -- invalid collateral value: %ld\n", coin.out.nValue);
         return COLLATERAL_INVALID_AMOUNT;
     }
-    else {
-        if(coin.out.nValue != MASTERNODE_COLLATERAL_SIZE * COIN) {
+    else
+    {
+        if(coin.out.nValue != MASTERNODE_COLLATERAL_SIZE * COIN)
+        {
+            LogPrintf("CMasternode::CheckCollateral -- invalid collateral value: %ld\n", coin.out.nValue);
             return COLLATERAL_INVALID_AMOUNT;
         }
     }

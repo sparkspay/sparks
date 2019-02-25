@@ -1306,7 +1306,7 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 {
     CAmount nSubsidy = 0;
     if (IsSPKHardForkEnabled(consensusParams, nPrevHeight)) {    
-        nSubsidy = GetRebornSubsidy(nPrevHeight, consensusParams);
+        nSubsidy = GetRebornSubsidy(nPrevHeight, consensusParams, fSuperblockPartOnly);
     }
     else {
         nSubsidy = GetLegacySubsidy(nPrevHeight, consensusParams);
@@ -1327,7 +1327,7 @@ CAmount GetLegacySubsidy(int nPrevHeight, const Consensus::Params& consensusPara
     return nSubsidy;
 }
 
-CAmount GetRebornSubsidy(int nPrevHeight, const Consensus::Params& consensusParams)
+CAmount GetRebornSubsidy(int nPrevHeight, const Consensus::Params& consensusParams, bool fSuperblockPartOnly)
 {
     CAmount nSubsidy = 0;
     if(nPrevHeight == consensusParams.nSPKHeight)
@@ -1372,26 +1372,38 @@ CAmount GetRebornSubsidy(int nPrevHeight, const Consensus::Params& consensusPara
                 nSubsidy = 15000 * COIN;
                 break;
             default:
-                nSubsidy = GetDecreasedSubsidy(nPrevHeight, consensusParams);
+                nSubsidy = GetDecreasedSubsidy(nPrevHeight, consensusParams, fSuperblockPartOnly);
                 break;
         }
     }
     return nSubsidy;
 }
 
-CAmount GetDecreasedSubsidy(int nPrevHeight, const Consensus::Params& consensusParams)
+CAmount GetDecreasedSubsidy(int nPrevHeight, const Consensus::Params& consensusParams, bool fSuperblockPartOnly)
 {
     CAmount nSubsidy = consensusParams.nSPKSubidyReborn * COIN;
-    // yearly decline of production by 12% per year, projected 136m coins max by year 2050+.
-    for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval) {
-        nSubsidy -= nSubsidy/12;
-    }
+
     ThresholdState guardianState = VersionBitsState(chainActive.Tip(), consensusParams, Consensus::DEPLOYMENT_GUARDIAN_NODES, versionbitscache);
     bool fGuardianActive = (guardianState == THRESHOLD_ACTIVE);
-    if(fGuardianActive){
-        nSubsidy /= 1.5;
+    if(fGuardianActive)
+    {
+        for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval)
+        {
+            nSubsidy /= 1.5;
+        }
     }
-    return nSubsidy;
+    else
+    {
+        for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval)
+        {
+            nSubsidy -= nSubsidy/12;
+        }
+    }
+
+    // Hard fork to reduce the block reward by 10 extra percent (allowing budget/superblocks)
+    CAmount nSuperblockPart = (nPrevHeight > consensusParams.nBudgetPaymentsStartBlock) ? nSubsidy/10 : 0;
+
+    return fSuperblockPartOnly ? nSuperblockPart : nSubsidy - nSuperblockPart;
 }
 
 CAmount GetMasternodePayment(int nHeight, CAmount blockValue)

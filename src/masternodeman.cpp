@@ -397,6 +397,36 @@ int CMasternodeMan::CountEnabled(int nProtocolVersion)
 
     return nCount;
 }
+int CMasternodeMan::CountGuardians(int nProtocolVersion)
+{
+    LOCK(cs);
+    int nCount = 0;
+    nProtocolVersion = nProtocolVersion == -1 ? mnpayments.GetMinMasternodePaymentsProto() : nProtocolVersion;
+
+    for (const auto& mnpair : mapMasternodes) {
+        if(mnpair.second.nProtocolVersion < nProtocolVersion) continue;
+        if(!mnpair.second.IsGuardian(mnpair.first)) continue;
+        nCount++;
+    }
+
+    return nCount;
+}
+
+int CMasternodeMan::CountGuardiansEnabled(int nProtocolVersion)
+{
+    LOCK(cs);
+    int nCount = 0;
+    nProtocolVersion = nProtocolVersion == -1 ? mnpayments.GetMinMasternodePaymentsProto() : nProtocolVersion;
+
+    for (const auto& mnpair : mapMasternodes) {
+        if(mnpair.second.nProtocolVersion < nProtocolVersion || !mnpair.second.IsEnabled()) continue;
+        if(!mnpair.second.IsGuardian(mnpair.first)) continue;
+        nCount++;
+    }
+
+    return nCount;
+}
+
 
 /* Only IPv4 masternodes are allowed in 12.1, saving this for later
 int CMasternodeMan::CountByIP(int nNetworkType)
@@ -528,19 +558,32 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
     const Consensus::Params& consensusParams = Params().GetConsensus();
     bool fDIP0001Active = nBlockHeight >= consensusParams.DIP0001Height;
     unsigned int blockModulo = 10;
-    if(fDIP0001Active) {
-        blockModulo = (unsigned int) (blockModulo / consensusParams.fSPKRatioMN);
-    }
-    if (nBlockHeight % blockModulo == 0)
+    if(fDIP0001Active)
     {
-        for (auto& mnPair : mapMasternodes) {
-            CBitcoinAddress address(mnPair.second.pubKeyCollateralAddress.GetID());
-            if(address.ToString() == consensusParams.strCoreAddress) {   
-                 CMasternode *pCoreMasternode = &mnPair.second;
-                 if (pCoreMasternode != NULL) {
-                     mnInfoRet = pCoreMasternode->GetInfo();
-                     return mnInfoRet.fInfoValid;
-                 }
+        ThresholdState guardianState = VersionBitsState(chainActive.Tip(), consensusParams, Consensus::DEPLOYMENT_GUARDIAN_NODES, versionbitscache);
+        bool fGuardianActive = (guardianState == THRESHOLD_ACTIVE);
+        if(fGuardianActive)
+        {
+            blockModulo = (unsigned int) (blockModulo / 1.4);
+        }
+        else
+        {
+            blockModulo = (unsigned int) (blockModulo / consensusParams.fSPKRatioMN);
+        }
+        if (nBlockHeight % blockModulo == 0)
+        {
+            for (auto& mnPair : mapMasternodes)
+            {
+                CBitcoinAddress address(mnPair.second.pubKeyCollateralAddress.GetID());
+                if(address.ToString() == consensusParams.strCoreAddress)
+                {
+                    CMasternode *pCoreMasternode = &mnPair.second;
+                    if (pCoreMasternode != NULL)
+                    {
+                        mnInfoRet = pCoreMasternode->GetInfo();
+                        return mnInfoRet.fInfoValid;
+                    }
+                }
             }
         }
     }
