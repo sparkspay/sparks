@@ -1306,13 +1306,22 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 {
     CAmount nSubsidy = 0;
     if (IsSPKHardForkEnabled(consensusParams, nPrevHeight)) {    
-        nSubsidy = GetRebornSubsidy(nPrevHeight, consensusParams, fSuperblockPartOnly);
+        nSubsidy = GetRebornSubsidy(nPrevHeight, consensusParams);
     }
     else {
         nSubsidy = GetLegacySubsidy(nPrevHeight, consensusParams);
     }
-    LogPrintf("GetBlockSubsidy -- Reward for prevblock %d is %lld\n", nPrevHeight, nSubsidy);
-    return fSuperblockPartOnly ? 0 : nSubsidy;
+    // LogPrintf("GetBlockSubsidy -- Reward for prevblock %d is %lld\n", nPrevHeight, nSubsidy);
+    // Hard fork to reduce the block reward by 10 extra percent (allowing budget/superblocks)
+    if(sporkManager.IsSporkActive(SPORK_9_SUPERBLOCKS_ENABLED))
+    {
+        CAmount nSuperblockPart = (nPrevHeight > consensusParams.nBudgetPaymentsStartBlock) ? nSubsidy/10 : 0;
+        return fSuperblockPartOnly ? nSuperblockPart : nSubsidy - nSuperblockPart;
+    }
+    else
+    {
+        return fSuperblockPartOnly ? 0 : nSubsidy;
+    }
 }
 
 CAmount GetLegacySubsidy(int nPrevHeight, const Consensus::Params& consensusParams)
@@ -1327,7 +1336,7 @@ CAmount GetLegacySubsidy(int nPrevHeight, const Consensus::Params& consensusPara
     return nSubsidy;
 }
 
-CAmount GetRebornSubsidy(int nPrevHeight, const Consensus::Params& consensusParams, bool fSuperblockPartOnly)
+CAmount GetRebornSubsidy(int nPrevHeight, const Consensus::Params& consensusParams)
 {
     CAmount nSubsidy = 0;
     if(nPrevHeight == consensusParams.nSPKHeight)
@@ -1372,14 +1381,14 @@ CAmount GetRebornSubsidy(int nPrevHeight, const Consensus::Params& consensusPara
                 nSubsidy = 15000 * COIN;
                 break;
             default:
-                nSubsidy = GetDecreasedSubsidy(nPrevHeight, consensusParams, fSuperblockPartOnly);
+                nSubsidy = GetDecreasedSubsidy(nPrevHeight, consensusParams);
                 break;
         }
     }
     return nSubsidy;
 }
 
-CAmount GetDecreasedSubsidy(int nPrevHeight, const Consensus::Params& consensusParams, bool fSuperblockPartOnly)
+CAmount GetDecreasedSubsidy(int nPrevHeight, const Consensus::Params& consensusParams)
 {
     CAmount nSubsidy = consensusParams.nSPKSubidyReborn * COIN;
 
@@ -1399,11 +1408,7 @@ CAmount GetDecreasedSubsidy(int nPrevHeight, const Consensus::Params& consensusP
             nSubsidy -= nSubsidy/12;
         }
     }
-
-    // Hard fork to reduce the block reward by 10 extra percent (allowing budget/superblocks)
-    CAmount nSuperblockPart = (nPrevHeight > consensusParams.nBudgetPaymentsStartBlock) ? nSubsidy/10 : 0;
-
-    return fSuperblockPartOnly ? nSuperblockPart : nSubsidy - nSuperblockPart;
+    return nSubsidy;
 }
 
 CAmount GetMasternodePayment(int nHeight, CAmount blockValue)
