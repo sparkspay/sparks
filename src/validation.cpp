@@ -1419,13 +1419,13 @@ CAmount GetMasternodePayment(int nHeight, CAmount blockValue)
     {
         CAmount corePayment = GetCorePayment(nHeight, blockValue);
         CAmount masterNodePayment = (blockValue - corePayment) / 2;
-        LogPrintf("GetMasternodePayment: height is %d, blockValue is %d, corePayment is %d, masternodePayment is %d\n", nHeight, blockValue, corePayment, masterNodePayment);
+        //LogPrintf("GetMasternodePayment: height is %d, blockValue is %d, corePayment is %d, masternodePayment is %d\n", nHeight, blockValue, corePayment, masterNodePayment);
         return masterNodePayment;
     }
     else
     {
         CAmount masterNodePayment = blockValue * consensusParams.fSPKRatioMN;
-        LogPrintf("GetMasternodePayment: DIP0001 active, height is %d, blockValue is %d, masternodePayment is %d\n", nHeight, blockValue, masterNodePayment);
+        //LogPrintf("GetMasternodePayment: DIP0001 active, height is %d, blockValue is %d, masternodePayment is %d\n", nHeight, blockValue, masterNodePayment);
         return masterNodePayment;
     }
 }

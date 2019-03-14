@@ -194,9 +194,9 @@ UniValue masternode(const JSONRPCRequest& request)
         if (request.params.size() > 2)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Too many parameters");
 
-        int nCount;
+        int nCount, nGuardiansCount;
         masternode_info_t mnInfo;
-        mnodeman.GetNextMasternodeInQueueForPayment(true, nCount, mnInfo);
+        mnodeman.GetNextMasternodeInQueueForPayment(true, nCount, nGuardiansCount, mnInfo);
 
         int total = mnodeman.size();
         int ps = mnodeman.CountEnabled(MIN_PRIVATESEND_PEER_PROTO_VERSION);
@@ -234,7 +234,7 @@ UniValue masternode(const JSONRPCRequest& request)
 
     if (strCommand == "current" || strCommand == "winner")
     {
-        int nCount;
+        int nCount, nGuardiansCount;
         int nHeight;
         masternode_info_t mnInfo;
         CBlockIndex* pindex = NULL;
@@ -245,7 +245,7 @@ UniValue masternode(const JSONRPCRequest& request)
         nHeight = pindex->nHeight + (strCommand == "current" ? 1 : 10);
         mnodeman.UpdateLastPaid(pindex);
 
-        if(!mnodeman.GetNextMasternodeInQueueForPayment(nHeight, true, nCount, mnInfo))
+        if(!mnodeman.GetNextMasternodeInQueueForPayment(nHeight, true, nCount, nGuardiansCount, mnInfo))
             return "unknown";
 
         UniValue obj(UniValue::VOBJ);
@@ -505,7 +505,9 @@ UniValue guardian(const JSONRPCRequest& request)
         if (request.params.size() > 2)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Too many parameters");
 
-        int nCount;
+        int nCount, nGuardiansCount;
+        masternode_info_t mnInfo;
+        mnodeman.GetNextMasternodeInQueueForPayment(true, nCount, nGuardiansCount, mnInfo);
 
         int total = mnodeman.CountGuardians();
         int ps = mnodeman.CountGuardiansEnabled(MIN_PRIVATESEND_PEER_PROTO_VERSION);
@@ -517,7 +519,7 @@ UniValue guardian(const JSONRPCRequest& request)
             obj.push_back(Pair("total", total));
             obj.push_back(Pair("ps_compatible", ps));
             obj.push_back(Pair("enabled", enabled));
-            obj.push_back(Pair("qualify", nCount));
+            obj.push_back(Pair("qualify", nGuardiansCount));
 
             return obj;
         }

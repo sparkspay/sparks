@@ -263,6 +263,7 @@ public:
     }
 
     bool IsGuardian(const COutPoint& outpoint) const;
+    bool IsGuardian() const;
     bool IsEnabled() const { return nActiveState == MASTERNODE_ENABLED; }
     bool IsPreEnabled() const { return nActiveState == MASTERNODE_PRE_ENABLED; }
     bool IsPoSeBanned() const { return nActiveState == MASTERNODE_POSE_BAN; }

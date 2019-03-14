@@ -380,7 +380,6 @@ int CMasternodeMan::CountMasternodes(int nProtocolVersion)
         if(mnpair.second.nProtocolVersion < nProtocolVersion) continue;
         nCount++;
     }
-
     return nCount;
 }
 
@@ -405,7 +404,7 @@ int CMasternodeMan::CountGuardians(int nProtocolVersion)
 
     for (const auto& mnpair : mapMasternodes) {
         if(mnpair.second.nProtocolVersion < nProtocolVersion) continue;
-        if(!mnpair.second.IsGuardian(mnpair.first)) continue;
+        if(!mnpair.second.IsGuardian()) continue;
         nCount++;
     }
 
@@ -420,7 +419,7 @@ int CMasternodeMan::CountGuardiansEnabled(int nProtocolVersion)
 
     for (const auto& mnpair : mapMasternodes) {
         if(mnpair.second.nProtocolVersion < nProtocolVersion || !mnpair.second.IsEnabled()) continue;
-        if(!mnpair.second.IsGuardian(mnpair.first)) continue;
+        if(!mnpair.second.IsGuardian()) continue;
         nCount++;
     }
 
@@ -537,15 +536,16 @@ bool CMasternodeMan::Has(const COutPoint& outpoint)
 //
 // Deterministically select the oldest/best masternode to pay on the network
 //
-bool CMasternodeMan::GetNextMasternodeInQueueForPayment(bool fFilterSigTime, int& nCountRet, masternode_info_t& mnInfoRet)
+bool CMasternodeMan::GetNextMasternodeInQueueForPayment(bool fFilterSigTime, int& nCountRet, int& nCountGuardiansRet, masternode_info_t& mnInfoRet)
 {
-    return GetNextMasternodeInQueueForPayment(nCachedBlockHeight, fFilterSigTime, nCountRet, mnInfoRet);
+    return GetNextMasternodeInQueueForPayment(nCachedBlockHeight, fFilterSigTime, nCountRet, nCountGuardiansRet, mnInfoRet);
 }
 
-bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool fFilterSigTime, int& nCountRet, masternode_info_t& mnInfoRet)
+bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool fFilterSigTime, int& nCountRet, int& nCountGuardiansRet, masternode_info_t& mnInfoRet)
 {
     mnInfoRet = masternode_info_t();
     nCountRet = 0;
+    nCountGuardiansRet = 0;
 
     if (!masternodeSync.IsWinnersListSynced()) {
         // without winner list we can't reliably find the next winner anyway
@@ -588,7 +588,9 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
         }
     }
 
-    std::vector<std::pair<int, const CMasternode*> > vecMasternodeLastPaid;
+    std::vector<std::pair<int, const CMasternode*>> vecMasternodeLastPaid;
+
+    std::vector<std::pair<int, const CMasternode*>> vecGuardianLastPaid;
 
     /*
         Make a vector with all of the last paid times
@@ -611,42 +613,78 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
         //make sure it has at least as many confirmations as there are masternodes
         if(GetUTXOConfirmations(mnpair.first) < nMnCount) continue;
 
-        vecMasternodeLastPaid.push_back(std::make_pair(mnpair.second.GetLastPaidBlock(), &mnpair.second));
+        if(mnpair.second.IsGuardian()) {
+            vecGuardianLastPaid.push_back(std::make_pair(mnpair.second.GetLastPaidBlock(), &mnpair.second));
+        }
+        else {
+            vecMasternodeLastPaid.push_back(std::make_pair(mnpair.second.GetLastPaidBlock(), &mnpair.second));
+        }
     }
 
     nCountRet = (int)vecMasternodeLastPaid.size();
+    
+    nCountGuardiansRet = (int)vecGuardianLastPaid.size();
+
+    int cycleLength = nCountGuardiansRet * 25 + nCountRet;
+    int mnModulo = (unsigned int) (cycleLength / nCountRet);
 
     //when the network is in the process of upgrading, don't penalize nodes that recently restarted
     if(fFilterSigTime && nCountRet < nMnCount/3)
-        return GetNextMasternodeInQueueForPayment(nBlockHeight, false, nCountRet, mnInfoRet);
+        return GetNextMasternodeInQueueForPayment(nBlockHeight, false, nCountRet, nCountGuardiansRet, mnInfoRet);
 
     // Sort them low to high
     sort(vecMasternodeLastPaid.begin(), vecMasternodeLastPaid.end(), CompareLastPaidBlock());
-
+    if(nCountGuardiansRet > 0) {
+        sort(vecGuardianLastPaid.begin(), vecMasternodeLastPaid.end(), CompareLastPaidBlock());
+    }
+    
     uint256 blockHash;
     if(!GetBlockHash(blockHash, nBlockHeight - 101)) {
         LogPrintf("CMasternode::GetNextMasternodeInQueueForPayment -- ERROR: GetBlockHash() failed at nBlockHeight %d\n", nBlockHeight - 101);
         return false;
     }
-    // Look at 1/10 of the oldest nodes (by last payment), calculate their scores and pay the best one
-    //  -- This doesn't look at who is being paid in the +8-10 blocks, allowing for double payments very rarely
-    //  -- 1/100 payments should be a double payment on mainnet - (1/(3000/10))*2
-    //  -- (chance per block * chances before IsScheduled will fire)
-    int nTenthNetwork = nMnCount/10;
-    int nCountTenth = 0;
-    arith_uint256 nHighest = 0;
-    const CMasternode *pBestMasternode = NULL;
-    for (const auto& s : vecMasternodeLastPaid) {
-        arith_uint256 nScore = s.second->CalculateScore(blockHash);
-        if(nScore > nHighest){
-            nHighest = nScore;
-            pBestMasternode = s.second;
+
+    LogPrintf("CMasternode::GetNextMasternodeInQueueForPayment -- nMnCount: %d nCountRet: %d nCountGuardians: %d cycleLength: %d mnModulo: %d\n", nMnCount, nCountRet, nCountGuardiansRet, cycleLength, mnModulo);
+    if(mnModulo == 1 || nBlockHeight % mnModulo == 0) {
+        LogPrintf("CMasternode::GetNextMasternodeInQueueForPayment -- nBlockHeight %% mnModulo == 0\n");
+        // Look at 1/10 of the oldest nodes (by last payment), calculate their scores and pay the best one
+        //  -- This doesn't look at who is being paid in the +8-10 blocks, allowing for double payments very rarely
+        //  -- 1/100 payments should be a double payment on mainnet - (1/(3000/10))*2
+        //  -- (chance per block * chances before IsScheduled will fire)
+        int nTenthNetwork = nMnCount/10;
+        int nCountTenth = 0;
+        arith_uint256 nHighest = 0;
+        const CMasternode *pBestMasternode = NULL;
+        for (const auto& s : vecMasternodeLastPaid) {
+            arith_uint256 nScore = s.second->CalculateScore(blockHash);
+            if(nScore > nHighest){
+                nHighest = nScore;
+                pBestMasternode = s.second;
+            }
+            nCountTenth++;
+            if(nCountTenth >= nTenthNetwork) break;
         }
-        nCountTenth++;
-        if(nCountTenth >= nTenthNetwork) break;
+        if (pBestMasternode) {
+            mnInfoRet = pBestMasternode->GetInfo();
+        }
     }
-    if (pBestMasternode) {
-        mnInfoRet = pBestMasternode->GetInfo();
+    else {
+        int nTenthNetwork = nCountGuardiansRet/10;
+        int nCountTenth = 0;
+        arith_uint256 nHighest = 0;
+        const CMasternode *pBestGuardian = NULL;
+        for (const auto& s : vecGuardianLastPaid) {
+            arith_uint256 nScore = s.second->CalculateScore(blockHash);
+            if(nScore > nHighest){
+                nHighest = nScore;
+                pBestGuardian = s.second;
+            }
+            nCountTenth++;
+            if(nCountTenth >= nTenthNetwork) break;
+        }
+        if (pBestGuardian) {
+            mnInfoRet = pBestGuardian->GetInfo();
+        }
     }
     return mnInfoRet.fInfoValid;
 }

@@ -101,6 +101,11 @@ arith_uint256 CMasternode::CalculateScore(const uint256& blockHash) const
     return UintToArith256(ss.GetHash());
 }
 
+bool CMasternode::IsGuardian() const
+{
+    return IsGuardian(outpoint);
+}
+
 bool CMasternode::IsGuardian(const COutPoint& outpoint) const
 {
     Coin coin;
