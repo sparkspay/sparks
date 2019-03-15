@@ -625,7 +625,7 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
     
     nCountGuardiansRet = (int)vecGuardianLastPaid.size();
 
-    int cycleLength = nCountGuardiansRet * 25 + nCountRet;
+    int cycleLength = nCountGuardiansRet * 26.75 + nCountRet;
     int mnModulo = (unsigned int) (cycleLength / nCountRet);
 
     //when the network is in the process of upgrading, don't penalize nodes that recently restarted
