@@ -192,6 +192,7 @@ public:
     int nPoSeBanHeight{};
     bool fAllowMixingTx{};
     bool fUnitTest = false;
+    bool fGuardian{};
 
     // KEEP TRACK OF GOVERNANCE ITEMS EACH MASTERNODE HAS VOTE UPON FOR RECALCULATION
     std::map<uint256, int> mapGovernanceObjectsVotedOn;
@@ -239,6 +240,7 @@ public:
         READWRITE(fAllowMixingTx);
         READWRITE(fUnitTest);
         READWRITE(mapGovernanceObjectsVotedOn);
+        READWRITE(fGuardian);
     }
 
     // CALCULATE A RANK AGAINST OF GIVEN BLOCK
@@ -246,8 +248,8 @@ public:
 
     bool UpdateFromNewBroadcast(CMasternodeBroadcast& mnb, CConnman& connman);
 
-    static CollateralStatus CheckCollateral(const COutPoint& outpoint, const CPubKey& pubkey);
-    static CollateralStatus CheckCollateral(const COutPoint& outpoint, const CPubKey& pubkey, int& nHeightRet);
+    static CollateralStatus CheckCollateral(const COutPoint& outpoint, const CPubKey& pubkey, bool& isGuardian);
+    static CollateralStatus CheckCollateral(const COutPoint& outpoint, const CPubKey& pubkey, int& nHeightRet, bool& isGuardian);
     void Check(bool fForce = false);
 
     bool IsBroadcastedWithin(int nSeconds) { return GetAdjustedTime() - sigTime < nSeconds; }
@@ -262,8 +264,7 @@ public:
         return nTimeToCheckAt - lastPing.sigTime < nSeconds;
     }
 
-    bool IsGuardian(const COutPoint& outpoint) const;
-    bool IsGuardian() const;
+    bool IsGuardian() const { return fGuardian; }
     bool IsEnabled() const { return nActiveState == MASTERNODE_ENABLED; }
     bool IsPreEnabled() const { return nActiveState == MASTERNODE_PRE_ENABLED; }
     bool IsPoSeBanned() const { return nActiveState == MASTERNODE_POSE_BAN; }
@@ -332,6 +333,7 @@ public:
         fAllowMixingTx = from.fAllowMixingTx;
         fUnitTest = from.fUnitTest;
         mapGovernanceObjectsVotedOn = from.mapGovernanceObjectsVotedOn;
+        fGuardian = from.fGuardian;
         return *this;
     }
 };
