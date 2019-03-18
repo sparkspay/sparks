@@ -612,6 +612,7 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
         if(GetUTXOConfirmations(mnpair.first) < nTotalNodeCount) continue;
 
         if(mnpair.second.IsGuardian()) {
+            LogPrintf("CMasternode::GetNextMasternodeInQueueForPayment -- found Guardian: %s", mnpair.second.outpoint.ToString());
             vecGuardianLastPaid.push_back(std::make_pair(mnpair.second.GetLastPaidBlock(), &mnpair.second));
         }
         else {
@@ -651,7 +652,7 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
         GetNextNodeInQueueForPayment(blockHash, nTotalNodeCount, vecMasternodeLastPaid, mnInfoRet);
     }
     else {
-        if(nBlockHeight % mnModulo == 0) {
+        if(nBlockHeight % mnModulo == 0 || nTotalGnCount == 0) {
             //Mns
             GetNextNodeInQueueForPayment(blockHash, nTotalMnCount, vecMasternodeLastPaid, mnInfoRet);
         }
