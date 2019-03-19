@@ -22,6 +22,9 @@ static const int GETHEADERS_VERSION = 70077;
 //! disconnect from peers older than this proto version
 static const int MIN_PEER_PROTO_VERSION = 70210;
 
+//! disconnect from peers which don't support Guardian nodes
+static const int GUARDIAN_PROTOCOL_VERSION = 70212;
+
 //! nTime field added to CAddress, starting with this version;
 //! if possible, avoid requesting addresses nodes older than this
 static const int CADDR_TIME_VERSION = 31402;

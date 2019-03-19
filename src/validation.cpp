@@ -2243,7 +2243,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     CBlockIndex *pindexBIP34height = pindex->pprev->GetAncestor(chainparams.GetConsensus().BIP34Height);
     //Only continue to enforce if we're below BIP34 activation height or the block hash at that height doesn't correspond.
     fEnforceBIP30 = fEnforceBIP30 && (!pindexBIP34height || !(pindexBIP34height->GetBlockHash() == chainparams.GetConsensus().BIP34Hash));
-
+    LogPrintf("ConnectBlock: fEnforceBIP30: %d\n", fEnforceBIP30);
     if (fEnforceBIP30) {
         for (const auto& tx : block.vtx) {
             for (size_t o = 0; o < tx->vout.size(); o++) {
@@ -2274,11 +2274,13 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
 
     // Start enforcing the DERSIG (BIP66) rule
     if (pindex->nHeight >= chainparams.GetConsensus().BIP66Height) {
+        LogPrintf("ConnectBlock: SCRIPT_VERIFY_DERSIG\n");
         flags |= SCRIPT_VERIFY_DERSIG;
     }
 
     // Start enforcing CHECKLOCKTIMEVERIFY (BIP65) rule
     if (pindex->nHeight >= chainparams.GetConsensus().BIP65Height) {
+        LogPrintf("ConnectBlock: SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY\n");
         flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
     }
 
@@ -2287,10 +2289,12 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     if (VersionBitsState(pindex->pprev, chainparams.GetConsensus(), Consensus::DEPLOYMENT_CSV, versionbitscache) == THRESHOLD_ACTIVE) {
         flags |= SCRIPT_VERIFY_CHECKSEQUENCEVERIFY;
         nLockTimeFlags |= LOCKTIME_VERIFY_SEQUENCE;
+        LogPrintf("ConnectBlock: SCRIPT_VERIFY_CHECKSEQUENCEVERIFY\n");
     }
 
     if (VersionBitsState(pindex->pprev, chainparams.GetConsensus(), Consensus::DEPLOYMENT_BIP147, versionbitscache) == THRESHOLD_ACTIVE) {
         flags |= SCRIPT_VERIFY_NULLDUMMY;
+        LogPrintf("ConnectBlock: SCRIPT_VERIFY_NULLDUMMY\n");
     }
 
     int64_t nTime2 = GetTimeMicros(); nTimeForks += nTime2 - nTime1;
@@ -2463,11 +2467,16 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     if (!IsBlockValueValid(block, pindex->nHeight, blockReward, strError)) {
         return state.DoS(0, error("ConnectBlock(SPARKS): %s", strError), REJECT_INVALID, "bad-cb-amount");
     }
+    else {
+        LogPrintf("ConnectBlock: IsBlockValueValid value :%d\n", blockReward);
+    }
 
     if (!IsBlockPayeeValid(*block.vtx[0], pindex->nHeight, blockReward)) {
         mapRejectedBlocks.insert(std::make_pair(block.GetHash(), GetTime()));
         return state.DoS(0, error("ConnectBlock(SPARKS): couldn't find masternode or superblock payments"),
                                 REJECT_INVALID, "bad-cb-payee");
+    } else{
+        LogPrintf("ConnectBlock: IsBlockPayeeValid value :%d\n", blockReward);
     }
     // END SPARKS
 
