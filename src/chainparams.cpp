@@ -138,10 +138,10 @@ public:
         consensus.nGovernanceMinQuorum = 10;
         consensus.nGovernanceFilterElements = 20000;
         consensus.nMasternodeMinimumConfirmations = 15;
-        consensus.BIP34Height = 150000;
-        consensus.BIP34Hash = uint256S("0x0000000005f483c970c60293a8d0508cfe6a4500359d26f84abdf302328f413d");
-        consensus.BIP65Height = 150000; // 00000000000b1fa2dfa312863570e13fae9ca7b5566cb27e55422620b469aefa
-        consensus.BIP66Height = 150000; // 00000000000b1fa2dfa312863570e13fae9ca7b5566cb27e55422620b469aefa
+        consensus.BIP34Height = 1;
+        consensus.BIP34Hash = uint256S("0x00000892299773ac1f4f8bd1408949d81d5b893b7d4d03067d519de13ef377ef");
+        consensus.BIP65Height = 1;
+        consensus.BIP66Height = 1;
         consensus.DIP0001Height = 119000;
         consensus.powLimit = uint256S("00000fffff000000000000000000000000000000000000000000000000000000");
 
