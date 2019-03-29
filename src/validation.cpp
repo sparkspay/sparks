@@ -1419,13 +1419,13 @@ CAmount GetMasternodePayment(int nHeight, CAmount blockValue)
     {
         CAmount corePayment = GetCorePayment(nHeight, blockValue);
         CAmount masterNodePayment = (blockValue - corePayment) / 2;
-        LogPrintf("GetMasternodePayment: height is %d, blockValue is %d, corePayment is %d, masternodePayment is %d\n", nHeight, blockValue, corePayment, masterNodePayment);
+        // LogPrintf("GetMasternodePayment: height is %d, blockValue is %d, corePayment is %d, masternodePayment is %d\n", nHeight, blockValue, corePayment, masterNodePayment);
         return masterNodePayment;
     }
     else
     {
         CAmount masterNodePayment = blockValue * consensusParams.fSPKRatioMN;
-        LogPrintf("GetMasternodePayment: DIP0001 active, height is %d, blockValue is %d, masternodePayment is %d\n", nHeight, blockValue, masterNodePayment);
+        // LogPrintf("GetMasternodePayment: DIP0001 active, height is %d, blockValue is %d, masternodePayment is %d\n", nHeight, blockValue, masterNodePayment);
         return masterNodePayment;
     }
 }
@@ -1433,7 +1433,7 @@ CAmount GetMasternodePayment(int nHeight, CAmount blockValue)
 CAmount GetCorePayment(int nHeight, CAmount blockValue)
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    LogPrintf("GetCorePayment: height is %d, consensus height is %d\n", nHeight, consensusParams.nSPKHeight);
+    // LogPrintf("GetCorePayment: height is %d, consensus height is %d\n", nHeight, consensusParams.nSPKHeight);
     if(nHeight <= consensusParams.nSPKHeight) {
         return 0;
     }else if(nHeight == consensusParams.nSPKHeight + 1) {
@@ -2230,9 +2230,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     // Now that the whole chain is irreversibly beyond that time it is applied to all blocks except the
     // two in the chain that violate it. This prevents exploiting the issue against nodes during their
     // initial block download.
-    bool fEnforceBIP30 = (!pindex->phashBlock) || // Enforce on CreateNewBlock invocations which don't have a hash.
-                          !((pindex->nHeight==91842 && pindex->GetBlockHash() == uint256S("0x00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec")) ||
-                           (pindex->nHeight==91880 && pindex->GetBlockHash() == uint256S("0x00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721")));
+    bool fEnforceBIP30 = !pindex->phashBlock;
 
     // Once BIP34 activated it was not possible to create new duplicate coinbases and thus other than starting
     // with the 2 existing duplicate coinbase pairs, not possible to create overwriting txs.  But by the
@@ -2243,7 +2241,6 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     CBlockIndex *pindexBIP34height = pindex->pprev->GetAncestor(chainparams.GetConsensus().BIP34Height);
     //Only continue to enforce if we're below BIP34 activation height or the block hash at that height doesn't correspond.
     fEnforceBIP30 = fEnforceBIP30 && (!pindexBIP34height || !(pindexBIP34height->GetBlockHash() == chainparams.GetConsensus().BIP34Hash));
-    LogPrintf("ConnectBlock: fEnforceBIP30: %d\n", fEnforceBIP30);
     if (fEnforceBIP30) {
         for (const auto& tx : block.vtx) {
             for (size_t o = 0; o < tx->vout.size(); o++) {
@@ -2274,13 +2271,11 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
 
     // Start enforcing the DERSIG (BIP66) rule
     if (pindex->nHeight >= chainparams.GetConsensus().BIP66Height) {
-        LogPrintf("ConnectBlock: SCRIPT_VERIFY_DERSIG\n");
         flags |= SCRIPT_VERIFY_DERSIG;
     }
 
     // Start enforcing CHECKLOCKTIMEVERIFY (BIP65) rule
     if (pindex->nHeight >= chainparams.GetConsensus().BIP65Height) {
-        LogPrintf("ConnectBlock: SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY\n");
         flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
     }
 
@@ -2289,12 +2284,10 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     if (VersionBitsState(pindex->pprev, chainparams.GetConsensus(), Consensus::DEPLOYMENT_CSV, versionbitscache) == THRESHOLD_ACTIVE) {
         flags |= SCRIPT_VERIFY_CHECKSEQUENCEVERIFY;
         nLockTimeFlags |= LOCKTIME_VERIFY_SEQUENCE;
-        LogPrintf("ConnectBlock: SCRIPT_VERIFY_CHECKSEQUENCEVERIFY\n");
     }
 
     if (VersionBitsState(pindex->pprev, chainparams.GetConsensus(), Consensus::DEPLOYMENT_BIP147, versionbitscache) == THRESHOLD_ACTIVE) {
         flags |= SCRIPT_VERIFY_NULLDUMMY;
-        LogPrintf("ConnectBlock: SCRIPT_VERIFY_NULLDUMMY\n");
     }
 
     int64_t nTime2 = GetTimeMicros(); nTimeForks += nTime2 - nTime1;
@@ -2467,16 +2460,11 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     if (!IsBlockValueValid(block, pindex->nHeight, blockReward, strError)) {
         return state.DoS(0, error("ConnectBlock(SPARKS): %s", strError), REJECT_INVALID, "bad-cb-amount");
     }
-    else {
-        LogPrintf("ConnectBlock: IsBlockValueValid value :%d\n", blockReward);
-    }
 
     if (!IsBlockPayeeValid(*block.vtx[0], pindex->nHeight, blockReward)) {
         mapRejectedBlocks.insert(std::make_pair(block.GetHash(), GetTime()));
         return state.DoS(0, error("ConnectBlock(SPARKS): couldn't find masternode or superblock payments"),
                                 REJECT_INVALID, "bad-cb-payee");
-    } else{
-        LogPrintf("ConnectBlock: IsBlockPayeeValid value :%d\n", blockReward);
     }
     // END SPARKS
 
