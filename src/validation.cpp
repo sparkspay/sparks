@@ -1311,8 +1311,17 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
     else {
         nSubsidy = GetLegacySubsidy(nPrevHeight, consensusParams);
     }
-    LogPrintf("GetBlockSubsidy -- Reward for prevblock %d is %lld\n", nPrevHeight, nSubsidy);
-    return fSuperblockPartOnly ? 0 : nSubsidy;
+    // LogPrintf("GetBlockSubsidy -- Reward for prevblock %d is %lld\n", nPrevHeight, nSubsidy);
+    // Hard fork to reduce the block reward by 10 extra percent (allowing budget/superblocks)
+    if(sporkManager.IsSporkActive(SPORK_9_SUPERBLOCKS_ENABLED))
+    {
+        CAmount nSuperblockPart = (nPrevHeight > consensusParams.nSuperblockStartBlock) ? nSubsidy/10 : 0;
+        return fSuperblockPartOnly ? nSuperblockPart : nSubsidy - nSuperblockPart;
+    }
+    else
+    {
+        return fSuperblockPartOnly ? 0 : nSubsidy;
+    }
 }
 
 CAmount GetLegacySubsidy(int nPrevHeight, const Consensus::Params& consensusParams)
@@ -1372,12 +1381,31 @@ CAmount GetRebornSubsidy(int nPrevHeight, const Consensus::Params& consensusPara
                 nSubsidy = 15000 * COIN;
                 break;
             default:
-                nSubsidy = consensusParams.nSPKSubidyReborn * COIN;
-                // yearly decline of production by 12% per year, projected 136m coins max by year 2050+.
-                for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval) {
-                    nSubsidy -= nSubsidy/12;
-                }
+                nSubsidy = GetDecreasedSubsidy(nPrevHeight, consensusParams);
                 break;
+        }
+    }
+    return nSubsidy;
+}
+
+CAmount GetDecreasedSubsidy(int nPrevHeight, const Consensus::Params& consensusParams)
+{
+    CAmount nSubsidy = consensusParams.nSPKSubidyReborn * COIN;
+
+    ThresholdState guardianState = VersionBitsState(chainActive.Tip(), consensusParams, Consensus::DEPLOYMENT_GUARDIAN_NODES, versionbitscache);
+    bool fGuardianActive = (guardianState == THRESHOLD_ACTIVE);
+    if(fGuardianActive)
+    {
+        for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval)
+        {
+            nSubsidy /= 1.5;
+        }
+    }
+    else
+    {
+        for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval)
+        {
+            nSubsidy -= nSubsidy/12;
         }
     }
     return nSubsidy;
@@ -1386,18 +1414,18 @@ CAmount GetRebornSubsidy(int nPrevHeight, const Consensus::Params& consensusPara
 CAmount GetMasternodePayment(int nHeight, CAmount blockValue)
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    bool fDIP0001Active = (VersionBitsState(chainActive.Tip(), consensusParams, Consensus::DEPLOYMENT_DIP0001, versionbitscache) == THRESHOLD_ACTIVE);
+    bool fDIP0001Active = nHeight >= consensusParams.DIP0001Height;
     if(!fDIP0001Active)
     {
         CAmount corePayment = GetCorePayment(nHeight, blockValue);
         CAmount masterNodePayment = (blockValue - corePayment) / 2;
-        LogPrintf("GetMasternodePayment: height is %d, blockValue is %d, corePayment is %d, masternodePayment is %d\n", nHeight, blockValue, corePayment, masterNodePayment);
+        // LogPrintf("GetMasternodePayment: height is %d, blockValue is %d, corePayment is %d, masternodePayment is %d\n", nHeight, blockValue, corePayment, masterNodePayment);
         return masterNodePayment;
     }
     else
     {
         CAmount masterNodePayment = blockValue * consensusParams.fSPKRatioMN;
-        LogPrintf("GetMasternodePayment: DIP0001 active, height is %d, blockValue is %d, masternodePayment is %d\n", nHeight, blockValue, masterNodePayment);
+        // LogPrintf("GetMasternodePayment: DIP0001 active, height is %d, blockValue is %d, masternodePayment is %d\n", nHeight, blockValue, masterNodePayment);
         return masterNodePayment;
     }
 }
@@ -1405,7 +1433,7 @@ CAmount GetMasternodePayment(int nHeight, CAmount blockValue)
 CAmount GetCorePayment(int nHeight, CAmount blockValue)
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    LogPrintf("GetCorePayment: height is %d, consensus height is %d\n", nHeight, consensusParams.nSPKHeight);
+    // LogPrintf("GetCorePayment: height is %d, consensus height is %d\n", nHeight, consensusParams.nSPKHeight);
     if(nHeight <= consensusParams.nSPKHeight) {
         return 0;
     }else if(nHeight == consensusParams.nSPKHeight + 1) {
@@ -2202,9 +2230,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     // Now that the whole chain is irreversibly beyond that time it is applied to all blocks except the
     // two in the chain that violate it. This prevents exploiting the issue against nodes during their
     // initial block download.
-    bool fEnforceBIP30 = (!pindex->phashBlock) || // Enforce on CreateNewBlock invocations which don't have a hash.
-                          !((pindex->nHeight==91842 && pindex->GetBlockHash() == uint256S("0x00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec")) ||
-                           (pindex->nHeight==91880 && pindex->GetBlockHash() == uint256S("0x00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721")));
+    bool fEnforceBIP30 = !pindex->phashBlock;
 
     // Once BIP34 activated it was not possible to create new duplicate coinbases and thus other than starting
     // with the 2 existing duplicate coinbase pairs, not possible to create overwriting txs.  But by the
@@ -2215,7 +2241,6 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     CBlockIndex *pindexBIP34height = pindex->pprev->GetAncestor(chainparams.GetConsensus().BIP34Height);
     //Only continue to enforce if we're below BIP34 activation height or the block hash at that height doesn't correspond.
     fEnforceBIP30 = fEnforceBIP30 && (!pindexBIP34height || !(pindexBIP34height->GetBlockHash() == chainparams.GetConsensus().BIP34Hash));
-
     if (fEnforceBIP30) {
         for (const auto& tx : block.vtx) {
             for (size_t o = 0; o < tx->vout.size(); o++) {
