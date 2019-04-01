@@ -22,6 +22,9 @@ static const int MASTERNODE_NEW_START_REQUIRED_SECONDS  = 180 * 60;
 
 static const int MASTERNODE_POSE_BAN_MAX_SCORE          = 5;
 
+static const CAmount MASTERNODE_COLLATERAL_SIZE = 1000L;
+static const CAmount GUARDIAN_COLLATERL_SIZE = 25000L;
+
 //
 // The Masternode Ping Class : Contains a different serialize method for sending pings from masternodes throughout the network
 //
@@ -151,7 +154,7 @@ struct masternode_info_t
 };
 
 //
-// The Masternode Class. For managing the Darksend process. It contains the input of the 1000DRK, signature to prove
+// The Masternode Class. For managing the Darksend process. It contains the input of the 1000SPK, signature to prove
 // it's the one who own that ip address and code for calculating the payment election.
 //
 class CMasternode : public masternode_info_t
@@ -189,6 +192,7 @@ public:
     int nPoSeBanHeight{};
     bool fAllowMixingTx{};
     bool fUnitTest = false;
+    bool fGuardian{};
 
     // KEEP TRACK OF GOVERNANCE ITEMS EACH MASTERNODE HAS VOTE UPON FOR RECALCULATION
     std::map<uint256, int> mapGovernanceObjectsVotedOn;
@@ -236,6 +240,7 @@ public:
         READWRITE(fAllowMixingTx);
         READWRITE(fUnitTest);
         READWRITE(mapGovernanceObjectsVotedOn);
+        READWRITE(fGuardian);
     }
 
     // CALCULATE A RANK AGAINST OF GIVEN BLOCK
@@ -243,8 +248,8 @@ public:
 
     bool UpdateFromNewBroadcast(CMasternodeBroadcast& mnb, CConnman& connman);
 
-    static CollateralStatus CheckCollateral(const COutPoint& outpoint, const CPubKey& pubkey);
-    static CollateralStatus CheckCollateral(const COutPoint& outpoint, const CPubKey& pubkey, int& nHeightRet);
+    static CollateralStatus CheckCollateral(const COutPoint& outpoint, const CPubKey& pubkey, bool& isGuardian);
+    static CollateralStatus CheckCollateral(const COutPoint& outpoint, const CPubKey& pubkey, int& nHeightRet, bool& isGuardian);
     void Check(bool fForce = false);
 
     bool IsBroadcastedWithin(int nSeconds) { return GetAdjustedTime() - sigTime < nSeconds; }
@@ -259,6 +264,7 @@ public:
         return nTimeToCheckAt - lastPing.sigTime < nSeconds;
     }
 
+    bool IsGuardian() const { return fGuardian; }
     bool IsEnabled() const { return nActiveState == MASTERNODE_ENABLED; }
     bool IsPreEnabled() const { return nActiveState == MASTERNODE_PRE_ENABLED; }
     bool IsPoSeBanned() const { return nActiveState == MASTERNODE_POSE_BAN; }
@@ -327,6 +333,7 @@ public:
         fAllowMixingTx = from.fAllowMixingTx;
         fUnitTest = from.fUnitTest;
         mapGovernanceObjectsVotedOn = from.mapGovernanceObjectsVotedOn;
+        fGuardian = from.fGuardian;
         return *this;
     }
 };
