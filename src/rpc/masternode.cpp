@@ -542,6 +542,24 @@ UniValue guardian(const JSONRPCRequest& request)
             return strprintf("Total: %d (PS Compatible: %d / Enabled: %d / Qualify: %d)",
                 total, ps, enabled, nCount);
     }
+    #ifdef ENABLE_WALLET
+    if (strCommand == "outputs") {
+        if (!EnsureWalletIsAvailable(request.fHelp))
+            return NullUniValue;
+
+        // Find possible candidates
+        std::vector<COutput> vPossibleCoins;
+        pwalletMain->AvailableCoins(vPossibleCoins, true, NULL, false, ONLY_25000);
+
+        UniValue obj(UniValue::VOBJ);
+        for (const auto& out : vPossibleCoins) {
+            obj.push_back(Pair(out.tx->GetHash().ToString(), strprintf("%d", out.i)));
+        }
+
+        return obj;
+    }
+    #endif // ENABLE_WALLET
+
     return NullUniValue;
 }
 
