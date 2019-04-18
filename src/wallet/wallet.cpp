@@ -2617,7 +2617,7 @@ void CWallet::AvailableCoins(std::vector<COutput>& vCoins, bool fOnlyConfirmed, 
                 } else if(nCoinType == ONLY_25000) {
                     found = pcoin->tx->vout[i].nValue == GUARDIAN_COLLATERL_SIZE * COIN;
                 } else if (nCoinType == ONLY_ALL_NODES) {
-                    found = pcoin->tx->vout[i].nValue == (GUARDIAN_COLLATERL_SIZE * COIN) || (MASTERNODE_COLLATERAL_SIZE * COIN);
+                    found = (pcoin->tx->vout[i].nValue == GUARDIAN_COLLATERL_SIZE * COIN) || (pcoin->tx->vout[i].nValue == MASTERNODE_COLLATERAL_SIZE * COIN);
                 } else if(nCoinType == ONLY_PRIVATESEND_COLLATERAL) {
                     found = CPrivateSend::IsCollateralAmount(pcoin->tx->vout[i].nValue);
                 } else {
@@ -2627,7 +2627,7 @@ void CWallet::AvailableCoins(std::vector<COutput>& vCoins, bool fOnlyConfirmed, 
 
                 isminetype mine = IsMine(pcoin->tx->vout[i]);
                 if (!(IsSpent(wtxid, i)) && mine != ISMINE_NO &&
-                    (!IsLockedCoin((*it).first, i) || nCoinType == ONLY_1000 || nCoinType == ONLY_25000) &&
+                    (!IsLockedCoin((*it).first, i) || nCoinType == ONLY_1000 || nCoinType == ONLY_25000 || nCoinType == ONLY_ALL_NODES) &&
                     (pcoin->tx->vout[i].nValue > 0 || fIncludeZeroValue) &&
                     (!coinControl || !coinControl->HasSelected() || coinControl->fAllowOtherInputs || coinControl->IsSelected(COutPoint((*it).first, i))))
                         vCoins.push_back(COutput(pcoin, i, nDepth,

@@ -122,11 +122,11 @@ CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outp
     bool fGuardianActive = (guardianState == THRESHOLD_ACTIVE);
 
     if(fGuardianActive) {
-        if(coin.out.nValue != MASTERNODE_COLLATERAL_SIZE * COIN || coin.out.nValue != GUARDIAN_COLLATERL_SIZE * COIN) {
+        if(coin.out.nValue != MASTERNODE_COLLATERAL_SIZE * COIN && coin.out.nValue != GUARDIAN_COLLATERL_SIZE * COIN) {
             LogPrintf("CMasternode::CheckCollateral -- fGuardianActive -- invalid collateral value: %ld\n", coin.out.nValue);
             return COLLATERAL_INVALID_AMOUNT;
         }
-        if(coin.out.nValue == GUARDIAN_COLLATERL_SIZE * COIN){
+        if(coin.out.nValue == GUARDIAN_COLLATERL_SIZE * COIN) {
             isGuardian = true;
         }
     }
