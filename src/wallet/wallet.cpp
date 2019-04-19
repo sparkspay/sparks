@@ -2615,9 +2615,9 @@ void CWallet::AvailableCoins(std::vector<COutput>& vCoins, bool fOnlyConfirmed, 
                 } else if(nCoinType == ONLY_1000) {
                     found = pcoin->tx->vout[i].nValue == MASTERNODE_COLLATERAL_SIZE * COIN;
                 } else if(nCoinType == ONLY_25000) {
-                    found = pcoin->tx->vout[i].nValue == GUARDIAN_COLLATERL_SIZE * COIN;
+                    found = pcoin->tx->vout[i].nValue == GUARDIAN_COLLATERAL_SIZE * COIN;
                 } else if (nCoinType == ONLY_ALL_NODES) {
-                    found = (pcoin->tx->vout[i].nValue == GUARDIAN_COLLATERL_SIZE * COIN) || (pcoin->tx->vout[i].nValue == MASTERNODE_COLLATERAL_SIZE * COIN);
+                    found = (pcoin->tx->vout[i].nValue == GUARDIAN_COLLATERAL_SIZE * COIN) || (pcoin->tx->vout[i].nValue == MASTERNODE_COLLATERAL_SIZE * COIN);
                 } else if(nCoinType == ONLY_PRIVATESEND_COLLATERAL) {
                     found = CPrivateSend::IsCollateralAmount(pcoin->tx->vout[i].nValue);
                 } else {
