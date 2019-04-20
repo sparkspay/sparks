@@ -92,6 +92,7 @@ int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 bool fEnableReplacement = DEFAULT_ENABLE_REPLACEMENT;
 
 std::atomic<bool> fDIP0001ActiveAtTip{false};
+std::atomic<bool> fGuardianActiveAtTip{false};
 
 uint256 hashAssumeValid;
 
@@ -1392,9 +1393,7 @@ CAmount GetDecreasedSubsidy(int nPrevHeight, const Consensus::Params& consensusP
 {
     CAmount nSubsidy = consensusParams.nSPKSubidyReborn * COIN;
 
-    ThresholdState guardianState = VersionBitsState(chainActive.Tip(), consensusParams, Consensus::DEPLOYMENT_GUARDIAN_NODES, versionbitscache);
-    bool fGuardianActive = (guardianState == THRESHOLD_ACTIVE);
-    if(fGuardianActive)
+    if(fGuardianActiveAtTip)
     {
         for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval)
         {
@@ -1414,8 +1413,7 @@ CAmount GetDecreasedSubsidy(int nPrevHeight, const Consensus::Params& consensusP
 CAmount GetMasternodePayment(int nHeight, CAmount blockValue)
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    bool fDIP0001Active = nHeight >= consensusParams.DIP0001Height;
-    if(!fDIP0001Active)
+    if(!fDIP0001ActiveAtTip)
     {
         CAmount corePayment = GetCorePayment(nHeight, blockValue);
         CAmount masterNodePayment = (blockValue - corePayment) / 2;

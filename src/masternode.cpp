@@ -117,11 +117,7 @@ CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outp
         return COLLATERAL_UTXO_NOT_FOUND;
     }
 
-    const Consensus::Params& consensusParams = Params().GetConsensus();
-    ThresholdState guardianState = VersionBitsState(chainActive.Tip(), consensusParams, Consensus::DEPLOYMENT_GUARDIAN_NODES, versionbitscache);
-    bool fGuardianActive = (guardianState == THRESHOLD_ACTIVE);
-
-    if(fGuardianActive) {
+    if(fGuardianActiveAtTip) {
         if(coin.out.nValue != MASTERNODE_COLLATERAL_SIZE * COIN && coin.out.nValue != GUARDIAN_COLLATERAL_SIZE * COIN) {
             LogPrintf("CMasternode::CheckCollateral -- fGuardianActive -- invalid collateral value: %ld\n", coin.out.nValue);
             return COLLATERAL_INVALID_AMOUNT;

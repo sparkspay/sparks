@@ -39,6 +39,7 @@ void CDSNotificationInterface::UpdatedBlockTip(const CBlockIndex *pindexNew, con
 
     // Update global DIP0001 activation status
     fDIP0001ActiveAtTip = pindexNew->nHeight >= Params().GetConsensus().DIP0001Height;
+    fGuardianActiveAtTip = pindexNew->nHeight >= Params().GetConsensus().GuardianHeight;
 
     if (fInitialDownload)
         return;

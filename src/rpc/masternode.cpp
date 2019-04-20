@@ -560,6 +560,37 @@ UniValue guardian(const JSONRPCRequest& request)
     }
     #endif // ENABLE_WALLET
 
+    if (strCommand == "status")
+    {
+        if (!fMasternodeMode)
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "This is not a Guardian node");
+
+        UniValue mnObj(UniValue::VOBJ);
+
+        CMasternode mn;
+        bool gotMn = mnodeman.Get(activeMasternode.outpoint, mn);
+        if(!gotMn || !mn.IsGuardian()) {
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "This is not a Guardian node");
+        }
+
+        mnObj.push_back(Pair("outpoint", activeMasternode.outpoint.ToStringShort()));
+        mnObj.push_back(Pair("service", activeMasternode.service.ToString()));
+
+        if(gotMn) {
+            mnObj.push_back(Pair("payee", CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString()));
+        }
+
+        mnObj.push_back(Pair("status", activeMasternode.GetStatus()));
+        return mnObj;
+    }
+
+    if (strCommand == "genkey")
+    {
+        CKey secret;
+        secret.MakeNewKey(false);
+        return CBitcoinSecret(secret).ToString();
+    }
+
     return NullUniValue;
 }
 

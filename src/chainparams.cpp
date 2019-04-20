@@ -140,6 +140,7 @@ public:
         consensus.BIP65Height = 1;
         consensus.BIP66Height = 1;
         consensus.DIP0001Height = 119000;
+        consensus.GuardianHeight = 316000;
         consensus.powLimit = uint256S("00000fffff000000000000000000000000000000000000000000000000000000");
 
         consensus.nPowTargetTimespan = 60 * 60; // Sparks: 1 hour, 24 blocks
@@ -258,7 +259,7 @@ public:
             ( 150000, uint256S("0x0000000005f483c970c60293a8d0508cfe6a4500359d26f84abdf302328f413d"))
             ( 200000, uint256S("0x00000000124558e8e546ebc3a45f05952cb8476c29193c0b2d130d97450f92e4"))
             ( 250000, uint256S("0x000000000c449edcdcd3fe2ea4a7f2910a13089065acc10a4bf7d15f00c5960e"))
-            ( 300000, uint256S("0x0000000003838d7aa9edf81d729633a24b3d38882471d966ad35c6c3470e49f7"))
+            ( 317500, uint256S("0x00000000074a05411efe26c57b14780103b638918927a86ee4cf683dfd23a068"))
         };
 
         chainTxData = ChainTxData{

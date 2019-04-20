@@ -558,14 +558,10 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
     LOCK2(cs_main,cs);
 
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    bool fDIP0001Active = nBlockHeight >= consensusParams.DIP0001Height;
     unsigned int blockModulo = 10;
     
-    ThresholdState guardianState = VersionBitsState(chainActive.Tip(), consensusParams, Consensus::DEPLOYMENT_GUARDIAN_NODES, versionbitscache);
-    bool fGnActive = (guardianState == THRESHOLD_ACTIVE);
-
-    if(fDIP0001Active) {
-        if(fGnActive) {
+    if(fDIP0001ActiveAtTip) {
+        if(fGuardianActiveAtTip) {
             blockModulo = (unsigned int) (blockModulo / 1.4);
         }
         else {
@@ -612,7 +608,7 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
         if(GetUTXOConfirmations(mnpair.first) < nTotalNodeCount) continue;
 
         if(mnpair.second.IsGuardian()) {
-            LogPrintf("CMasternode::GetNextMasternodeInQueueForPayment -- found Guardian: %s", mnpair.second.outpoint.ToString());
+            //LogPrintf("CMasternode::GetNextMasternodeInQueueForPayment -- found Guardian: %s\n", mnpair.second.outpoint.ToString());
             vecGuardianLastPaid.push_back(std::make_pair(mnpair.second.GetLastPaidBlock(), &mnpair.second));
         }
         else {
@@ -630,15 +626,17 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
     LogPrintf("CMasternode::GetNextMasternodeInQueueForPayment -- nTotalNodeCount: %d nTotalMnCount: %d nTotalGnCount: %d nCountMnRet: %d nCountGnRet: %d cycleLength: %d mnModulo: %d\n", nTotalNodeCount, nTotalMnCount, nTotalGnCount, nCountMnRet, nCountGnRet, cycleLength, mnModulo);
 
     //when the network is in the process of upgrading, don't penalize nodes that recently restarted
-    if(fFilterSigTime && nCountTotal < nTotalNodeCount/3)
+    if(fFilterSigTime && nCountTotal < nTotalNodeCount/3) {
+        LogPrintf("CMasternode::GetNextMasternodeInQueueForPayment -- network upgrading \n");
         return GetNextMasternodeInQueueForPayment(nBlockHeight, false, nCountMnRet, nCountGnRet, mnInfoRet);
+    }
 
     // Sort them low to high
     if(nCountMnRet > 0) {
         sort(vecMasternodeLastPaid.begin(), vecMasternodeLastPaid.end(), CompareLastPaidBlock());
     }
     if(nCountGnRet > 0) {
-        sort(vecGuardianLastPaid.begin(), vecMasternodeLastPaid.end(), CompareLastPaidBlock());
+        sort(vecGuardianLastPaid.begin(), vecGuardianLastPaid.end(), CompareLastPaidBlock());
     }
     
     uint256 blockHash;
@@ -647,18 +645,31 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
         return false;
     }
 
-    if(!fGnActive) {
-        LogPrintf("CMasternode::GetNextMasternodeInQueueForPayment -- !fGnActive\n");
+    if(!fGuardianActiveAtTip) {
         GetNextNodeInQueueForPayment(blockHash, nTotalNodeCount, vecMasternodeLastPaid, mnInfoRet);
     }
     else {
-        if(nBlockHeight % mnModulo == 0 || nTotalGnCount == 0) {
+        if(nBlockHeight % mnModulo == 0 || nCountGnRet == 0) {
             //Mns
             GetNextNodeInQueueForPayment(blockHash, nTotalMnCount, vecMasternodeLastPaid, mnInfoRet);
         }
         else {
             //Gns
             GetNextNodeInQueueForPayment(blockHash, nTotalGnCount, vecGuardianLastPaid, mnInfoRet);
+            if(mnInfoRet.fInfoValid) {
+                CBitcoinAddress address(mnInfoRet.pubKeyCollateralAddress.GetID());
+                LogPrintf("CMasternodeMan::GetNextNodeInQueueForPayment -- found GN to pay:%s\n", address.ToString());
+            }
+            else {
+                GetNextNodeInQueueForPayment(blockHash, nTotalMnCount, vecMasternodeLastPaid, mnInfoRet);
+                if(mnInfoRet.fInfoValid) {
+                    CBitcoinAddress address(mnInfoRet.pubKeyCollateralAddress.GetID());
+                    LogPrintf("CMasternodeMan::GetNextNodeInQueueForPayment -- no valid GN, paying MN:%s\n", address.ToString());
+                }
+                else{
+                    LogPrintf("CMasternodeMan::GetNextNodeInQueueForPayment -- no valid node to pay\n");
+                }
+            }
         }
     }
     return mnInfoRet.fInfoValid;
