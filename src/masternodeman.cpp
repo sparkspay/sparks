@@ -621,7 +621,10 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
     int nCountTotal = nCountMnRet + nCountGnRet;
 
     int cycleLength = nCountGnRet * 26.75 + nCountMnRet;
-    int mnModulo = (unsigned int) (cycleLength / nCountMnRet);
+    int mnModulo = 1;
+    if(nCountMnRet > 0) {
+        mnModulo = (unsigned int) (cycleLength / nCountMnRet);
+    }
 
     LogPrintf("CMasternode::GetNextMasternodeInQueueForPayment -- nTotalNodeCount: %d nTotalMnCount: %d nTotalGnCount: %d nCountMnRet: %d nCountGnRet: %d cycleLength: %d mnModulo: %d\n", nTotalNodeCount, nTotalMnCount, nTotalGnCount, nCountMnRet, nCountGnRet, cycleLength, mnModulo);
 
@@ -649,7 +652,7 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
         GetNextNodeInQueueForPayment(blockHash, nTotalNodeCount, vecMasternodeLastPaid, mnInfoRet);
     }
     else {
-        if(nBlockHeight % mnModulo == 0 || nCountGnRet == 0) {
+        if(mnModulo == 1 || nCountGnRet == 0 || nBlockHeight % mnModulo == 0) {
             //Mns
             GetNextNodeInQueueForPayment(blockHash, nTotalMnCount, vecMasternodeLastPaid, mnInfoRet);
         }
