@@ -431,11 +431,18 @@ UniValue masternode(const JSONRPCRequest& request)
 
         UniValue mnObj(UniValue::VOBJ);
 
+        CMasternode mn;
+        bool gotMn = mnodeman.Get(activeMasternode.outpoint, mn);
+        if(!gotMn) {
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "This is not a masternode");
+        }
+        if(mn.IsGuardian()) {
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "This is a Guardian node, please use \"guardian status\" instead");
+        }
         mnObj.push_back(Pair("outpoint", activeMasternode.outpoint.ToStringShort()));
         mnObj.push_back(Pair("service", activeMasternode.service.ToString()));
 
-        CMasternode mn;
-        if(mnodeman.Get(activeMasternode.outpoint, mn)) {
+        if(gotMn) {
             mnObj.push_back(Pair("payee", CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString()));
         }
 
@@ -569,10 +576,12 @@ UniValue guardian(const JSONRPCRequest& request)
 
         CMasternode mn;
         bool gotMn = mnodeman.Get(activeMasternode.outpoint, mn);
-        if(!gotMn || !mn.IsGuardian()) {
+        if(!gotMn) {
             throw JSONRPCError(RPC_INTERNAL_ERROR, "This is not a Guardian node");
         }
-
+        if (!mn.IsGuardian()) {
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "This is a masternode, use \"masternode status\" instead");
+        }
         mnObj.push_back(Pair("outpoint", activeMasternode.outpoint.ToStringShort()));
         mnObj.push_back(Pair("service", activeMasternode.service.ToString()));
 
