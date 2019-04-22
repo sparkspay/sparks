@@ -71,7 +71,7 @@ public:
     void ManageState(CConnman& connman);
 
     std::string GetStateString() const;
-    std::string GetStatus() const;
+    std::string GetStatus(bool isGuardian = false) const;
     std::string GetTypeString() const;
 
     bool UpdateSentinelPing(int version);

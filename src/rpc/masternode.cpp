@@ -589,7 +589,7 @@ UniValue guardian(const JSONRPCRequest& request)
             mnObj.push_back(Pair("payee", CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString()));
         }
 
-        mnObj.push_back(Pair("status", activeMasternode.GetStatus()));
+        mnObj.push_back(Pair("status", activeMasternode.GetStatus(true)));
         return mnObj;
     }
 
