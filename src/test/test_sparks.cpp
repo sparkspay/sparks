@@ -4,7 +4,7 @@
 
 #define BOOST_TEST_MODULE Sparks Test Suite
 
-#include "test_Sparks.h"
+#include "test_sparks.h"
 
 #include "chainparams.h"
 #include "consensus/consensus.h"
