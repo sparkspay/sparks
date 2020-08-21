@@ -3030,17 +3030,7 @@ bool CWallet::SelectPSInOutPairsByDenominations(int nDenom, CAmount nValueMin, C
     std::set<uint256> setRecentTxIds;
     std::vector<COutput> vCoins;
 
-<<<<<<< HEAD
     vecPSInOutPairsRet.clear();
-=======
-    std::random_shuffle(vCoins.rbegin(), vCoins.rend(), GetRandInt);
-
-    // ( bit on if present )
-    // bit 0 - 100SPARKS+1
-    // bit 1 - 10SPARKS+1
-    // bit 2 - 1SPARKS+1
-    // bit 3 - .1SPARKS+1
->>>>>>> refs/heads/master
 
     std::vector<int> vecBits;
     if (!CPrivateSend::GetDenominationsBits(nDenom, vecBits)) {
