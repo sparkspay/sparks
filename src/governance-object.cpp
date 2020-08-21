@@ -541,10 +541,64 @@ bool CGovernanceObject::IsValidLocally(std::string& strError, bool& fMissingMast
         return false;
     }
 
-    switch (nObjectType) {
-    case GOVERNANCE_OBJECT_WATCHDOG: {
-        // watchdogs are deprecated
-        return false;
+    switch(nObjectType) {
+        case GOVERNANCE_OBJECT_WATCHDOG: {
+            // watchdogs are deprecated
+            return false;
+        }
+        case GOVERNANCE_OBJECT_PROPOSAL: {
+            CProposalValidator validator(GetDataAsHexString());
+            // Note: It's ok to have expired proposals
+            // they are going to be cleared by CGovernanceManager::UpdateCachesAndClean()
+            // TODO: should they be tagged as "expired" to skip vote downloading?
+            if (!validator.Validate(false)) {
+                strError = strprintf("Invalid proposal data, error messages: %s", validator.GetErrorMessages());
+                return false;
+            }
+            if (fCheckCollateral && !IsCollateralValid(strError, fMissingConfirmations)) {
+                strError = "Invalid proposal collateral";
+                return false;
+            }
+            return true;
+        }
+        case GOVERNANCE_OBJECT_TRIGGER: {
+            if (!fCheckCollateral)
+                // nothing else we can check here (yet?)
+                return true;
+
+            std::string strOutpoint = masternodeOutpoint.ToStringShort();
+            masternode_info_t infoMn;
+            if (!mnodeman.GetMasternodeInfo(masternodeOutpoint, infoMn)) {
+
+                bool isGuardian;
+                CMasternode::CollateralStatus err = CMasternode::CheckCollateral(masternodeOutpoint, CPubKey(), isGuardian);
+                if (err == CMasternode::COLLATERAL_UTXO_NOT_FOUND) {
+                    strError = "Failed to find Masternode UTXO, missing masternode=" + strOutpoint + "\n";
+                } else if (err == CMasternode::COLLATERAL_INVALID_AMOUNT) {
+                    strError = "Masternode UTXO should have 1000 SPARKS, missing masternode=" + strOutpoint + "\n";
+                } else if (err == CMasternode::COLLATERAL_INVALID_PUBKEY) {
+                    fMissingMasternode = true;
+                    strError = "Masternode not found: " + strOutpoint;
+                } else if (err == CMasternode::COLLATERAL_OK) {
+                    // this should never happen with CPubKey() as a param
+                    strError = "CheckCollateral critical failure! Masternode: " + strOutpoint;
+                }
+
+                return false;
+            }
+
+            // Check that we have a valid MN signature
+            if (!CheckSignature(infoMn.pubKeyMasternode)) {
+                strError = "Invalid masternode signature for: " + strOutpoint + ", pubkey id = " + infoMn.pubKeyMasternode.GetID().ToString();
+                return false;
+            }
+
+            return true;
+        }
+        default: {
+            strError = strprintf("Invalid object type %d", nObjectType);
+            return false;
+        }
     }
     case GOVERNANCE_OBJECT_PROPOSAL: {
         CProposalValidator validator(GetDataAsHexString());

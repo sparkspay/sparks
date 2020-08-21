@@ -238,21 +238,15 @@ std::string CActiveLegacyMasternodeManager::GetStateString() const
     }
 }
 
-std::string CActiveLegacyMasternodeManager::GetStatus() const
+std::string CActiveMasternode::GetStatus(bool isGuardian) const
 {
     switch (nState) {
-    case ACTIVE_MASTERNODE_INITIAL:
-        return "Node just started, not yet activated";
-    case ACTIVE_MASTERNODE_SYNC_IN_PROCESS:
-        return "Sync in progress. Must wait until sync is complete to start Masternode";
-    case ACTIVE_MASTERNODE_INPUT_TOO_NEW:
-        return strprintf("Masternode input must have at least %d confirmations", Params().GetConsensus().nMasternodeMinimumConfirmations);
-    case ACTIVE_MASTERNODE_NOT_CAPABLE:
-        return "Not capable masternode: " + strNotCapableReason;
-    case ACTIVE_MASTERNODE_STARTED:
-        return "Masternode successfully started";
-    default:
-        return "Unknown";
+        case ACTIVE_MASTERNODE_INITIAL:         return "Node just started, not yet activated";
+        case ACTIVE_MASTERNODE_SYNC_IN_PROCESS: return strprintf("Sync in progress. Must wait until sync is complete to start %s", isGuardian ? "Guardian node" : "masternode");
+        case ACTIVE_MASTERNODE_INPUT_TOO_NEW:   return strprintf("%s input must have at least %d confirmations", isGuardian ? "Guardian node" : "Masternode", Params().GetConsensus().nMasternodeMinimumConfirmations);
+        case ACTIVE_MASTERNODE_NOT_CAPABLE:     return strprintf("Not capable %s: %s", isGuardian ? "Guardian node": "masternode", strNotCapableReason);
+        case ACTIVE_MASTERNODE_STARTED:         return strprintf("%s successfully started", isGuardian ? "Guardian node" : "Masternode");
+        default:                                return "Unknown";
     }
 }
 

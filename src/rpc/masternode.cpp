@@ -1,4 +1,5 @@
 // Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2016-2019 The Sparks Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -31,6 +32,7 @@
 #include <univalue.h>
 
 UniValue masternodelist(const JSONRPCRequest& request);
+UniValue guardianlist(const JSONRPCRequest& request);
 
 bool EnsureWalletIsAvailable(bool avoidException);
 
@@ -845,6 +847,620 @@ UniValue masternode(const JSONRPCRequest& request)
     } else {
         masternode_help();
     }
+
+    if(strCommand == "connect")
+    {
+        if (request.params.size() < 2)
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Masternode address required");
+
+        std::string strAddress = request.params[1].get_str();
+
+        CService addr;
+        if (!Lookup(strAddress.c_str(), addr, 0, false))
+            throw JSONRPCError(RPC_INTERNAL_ERROR, strprintf("Incorrect masternode address %s", strAddress));
+
+        // TODO: Pass CConnman instance somehow and don't use global variable.
+        g_connman->OpenMasternodeConnection(CAddress(addr, NODE_NETWORK));
+        if (!g_connman->IsConnected(CAddress(addr, NODE_NETWORK), CConnman::AllNodes))
+            throw JSONRPCError(RPC_INTERNAL_ERROR, strprintf("Couldn't connect to masternode %s", strAddress));
+
+        return "successfully connected";
+    }
+
+    if (strCommand == "count")
+    {
+        if (request.params.size() > 2)
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Too many parameters");
+
+        int nCount, nGuardiansCount;
+        masternode_info_t mnInfo;
+        mnodeman.GetNextMasternodeInQueueForPayment(true, nCount, nGuardiansCount, mnInfo);
+
+        int total = mnodeman.size();
+        int ps = mnodeman.CountEnabled(MIN_PRIVATESEND_PEER_PROTO_VERSION);
+        int enabled = mnodeman.CountEnabled();
+
+        if (request.params.size() == 1) {
+            UniValue obj(UniValue::VOBJ);
+
+            obj.push_back(Pair("total", total));
+            obj.push_back(Pair("ps_compatible", ps));
+            obj.push_back(Pair("enabled", enabled));
+            obj.push_back(Pair("qualify", nCount));
+
+            return obj;
+        }
+
+        std::string strMode = request.params[1].get_str();
+
+        if (strMode == "total")
+            return total;
+
+        if (strMode == "ps")
+            return ps;
+
+        if (strMode == "enabled")
+            return enabled;
+
+        if (strMode == "qualify")
+            return nCount;
+
+        if (strMode == "all")
+            return strprintf("Total: %d (PS Compatible: %d / Enabled: %d / Qualify: %d)",
+                total, ps, enabled, nCount);
+    }
+
+    if (strCommand == "current" || strCommand == "winner")
+    {
+        int nCount, nGuardiansCount;
+        int nHeight;
+        masternode_info_t mnInfo;
+        CBlockIndex* pindex = NULL;
+        {
+            LOCK(cs_main);
+            pindex = chainActive.Tip();
+        }
+        nHeight = pindex->nHeight + (strCommand == "current" ? 1 : 10);
+        mnodeman.UpdateLastPaid(pindex);
+
+        if(!mnodeman.GetNextMasternodeInQueueForPayment(nHeight, true, nCount, nGuardiansCount, mnInfo))
+            return "unknown";
+
+        UniValue obj(UniValue::VOBJ);
+
+        obj.push_back(Pair("height",        nHeight));
+        obj.push_back(Pair("IP:port",       mnInfo.addr.ToString()));
+        obj.push_back(Pair("protocol",      mnInfo.nProtocolVersion));
+        obj.push_back(Pair("outpoint",      mnInfo.outpoint.ToStringShort()));
+        obj.push_back(Pair("payee",         CBitcoinAddress(mnInfo.pubKeyCollateralAddress.GetID()).ToString()));
+        obj.push_back(Pair("lastseen",      mnInfo.nTimeLastPing));
+        obj.push_back(Pair("activeseconds", mnInfo.nTimeLastPing - mnInfo.sigTime));
+        return obj;
+    }
+
+#ifdef ENABLE_WALLET
+    if (strCommand == "start-alias")
+    {
+        if (!EnsureWalletIsAvailable(request.fHelp))
+            return NullUniValue;
+
+        if (request.params.size() < 2)
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Please specify an alias");
+
+        {
+            LOCK(pwalletMain->cs_wallet);
+            EnsureWalletIsUnlocked();
+        }
+
+        std::string strAlias = request.params[1].get_str();
+
+        bool fFound = false;
+
+        UniValue statusObj(UniValue::VOBJ);
+        statusObj.push_back(Pair("alias", strAlias));
+
+        for (const auto& mne : masternodeConfig.getEntries()) {
+            if(mne.getAlias() == strAlias) {
+                fFound = true;
+                std::string strError;
+                CMasternodeBroadcast mnb;
+
+                bool fResult = CMasternodeBroadcast::Create(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), strError, mnb);
+
+                int nDoS;
+                if (fResult && !mnodeman.CheckMnbAndUpdateMasternodeList(NULL, mnb, nDoS, *g_connman)) {
+                    strError = "Failed to verify MNB";
+                    fResult = false;
+                }
+
+                statusObj.push_back(Pair("result", fResult ? "successful" : "failed"));
+                if(!fResult) {
+                    statusObj.push_back(Pair("errorMessage", strError));
+                }
+                mnodeman.NotifyMasternodeUpdates(*g_connman);
+                break;
+            }
+        }
+
+        if(!fFound) {
+            statusObj.push_back(Pair("result", "failed"));
+            statusObj.push_back(Pair("errorMessage", "Could not find alias in config. Verify with list-conf."));
+        }
+
+        return statusObj;
+
+    }
+
+    if (strCommand == "start-all" || strCommand == "start-missing" || strCommand == "start-disabled")
+    {
+        if (!EnsureWalletIsAvailable(request.fHelp))
+            return NullUniValue;
+
+        {
+            LOCK(pwalletMain->cs_wallet);
+            EnsureWalletIsUnlocked();
+        }
+
+        if((strCommand == "start-missing" || strCommand == "start-disabled") && !masternodeSync.IsMasternodeListSynced()) {
+            throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "You can't use this command until masternode list is synced");
+        }
+
+        int nSuccessful = 0;
+        int nFailed = 0;
+
+        UniValue resultsObj(UniValue::VOBJ);
+
+        for (const auto& mne : masternodeConfig.getEntries()) {
+            std::string strError;
+
+            COutPoint outpoint = COutPoint(uint256S(mne.getTxHash()), (uint32_t)atoi(mne.getOutputIndex()));
+            CMasternode mn;
+            bool fFound = mnodeman.Get(outpoint, mn);
+            CMasternodeBroadcast mnb;
+
+            if(strCommand == "start-missing" && fFound) continue;
+            if(strCommand == "start-disabled" && fFound && mn.IsEnabled()) continue;
+
+            bool fResult = CMasternodeBroadcast::Create(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), strError, mnb);
+
+            int nDoS;
+            if (fResult && !mnodeman.CheckMnbAndUpdateMasternodeList(NULL, mnb, nDoS, *g_connman)) {
+                strError = "Failed to verify MNB";
+                fResult = false;
+            }
+
+            UniValue statusObj(UniValue::VOBJ);
+            statusObj.push_back(Pair("alias", mne.getAlias()));
+            statusObj.push_back(Pair("result", fResult ? "successful" : "failed"));
+
+            if (fResult) {
+                nSuccessful++;
+            } else {
+                nFailed++;
+                statusObj.push_back(Pair("errorMessage", strError));
+            }
+
+            resultsObj.push_back(Pair("status", statusObj));
+        }
+        mnodeman.NotifyMasternodeUpdates(*g_connman);
+
+        UniValue returnObj(UniValue::VOBJ);
+        returnObj.push_back(Pair("overall", strprintf("Successfully started %d masternodes, failed to start %d, total %d", nSuccessful, nFailed, nSuccessful + nFailed)));
+        returnObj.push_back(Pair("detail", resultsObj));
+
+        return returnObj;
+    }
+#endif // ENABLE_WALLET
+
+    if (strCommand == "genkey")
+    {
+        CKey secret;
+        secret.MakeNewKey(false);
+
+        return CBitcoinSecret(secret).ToString();
+    }
+
+    if (strCommand == "list-conf")
+    {
+        UniValue resultObj(UniValue::VOBJ);
+
+        for (const auto& mne : masternodeConfig.getEntries()) {
+            COutPoint outpoint = COutPoint(uint256S(mne.getTxHash()), (uint32_t)atoi(mne.getOutputIndex()));
+            CMasternode mn;
+            bool fFound = mnodeman.Get(outpoint, mn);
+
+            std::string strStatus = fFound ? mn.GetStatus() : "MISSING";
+
+            UniValue mnObj(UniValue::VOBJ);
+            mnObj.push_back(Pair("alias", mne.getAlias()));
+            mnObj.push_back(Pair("address", mne.getIp()));
+            mnObj.push_back(Pair("privateKey", mne.getPrivKey()));
+            mnObj.push_back(Pair("txHash", mne.getTxHash()));
+            mnObj.push_back(Pair("outputIndex", mne.getOutputIndex()));
+            mnObj.push_back(Pair("status", strStatus));
+            resultObj.push_back(Pair("masternode", mnObj));
+        }
+
+        return resultObj;
+    }
+
+#ifdef ENABLE_WALLET
+    if (strCommand == "outputs") {
+        if (!EnsureWalletIsAvailable(request.fHelp))
+            return NullUniValue;
+
+        // Find possible candidates
+        std::vector<COutput> vPossibleCoins;
+        pwalletMain->AvailableCoins(vPossibleCoins, true, NULL, false, ONLY_1000);
+
+        UniValue obj(UniValue::VOBJ);
+        for (const auto& out : vPossibleCoins) {
+            obj.push_back(Pair(out.tx->GetHash().ToString(), strprintf("%d", out.i)));
+        }
+
+        return obj;
+    }
+#endif // ENABLE_WALLET
+
+    if (strCommand == "status")
+    {
+        if (!fMasternodeMode)
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "This is not a masternode");
+
+        UniValue mnObj(UniValue::VOBJ);
+
+        CMasternode mn;
+        bool gotMn = mnodeman.Get(activeMasternode.outpoint, mn);
+        if(!gotMn) {
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "This is not a masternode");
+        }
+        if(mn.IsGuardian()) {
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "This is a Guardian node, please use \"guardian status\" instead");
+        }
+        mnObj.push_back(Pair("outpoint", activeMasternode.outpoint.ToStringShort()));
+        mnObj.push_back(Pair("service", activeMasternode.service.ToString()));
+
+        if(gotMn) {
+            mnObj.push_back(Pair("payee", CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString()));
+        }
+
+        mnObj.push_back(Pair("status", activeMasternode.GetStatus()));
+        return mnObj;
+    }
+
+    if (strCommand == "winners")
+    {
+        int nHeight;
+        {
+            LOCK(cs_main);
+            CBlockIndex* pindex = chainActive.Tip();
+            if(!pindex) return NullUniValue;
+
+            nHeight = pindex->nHeight;
+        }
+
+        int nLast = 10;
+        std::string strFilter = "";
+
+        if (request.params.size() >= 2) {
+            nLast = atoi(request.params[1].get_str());
+        }
+
+        if (request.params.size() == 3) {
+            strFilter = request.params[2].get_str();
+        }
+
+        if (request.params.size() > 3)
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Correct usage is 'masternode winners ( \"count\" \"filter\" )'");
+
+        UniValue obj(UniValue::VOBJ);
+
+        for(int i = nHeight - nLast; i < nHeight + 20; i++) {
+            std::string strPayment = GetRequiredPaymentsString(i);
+            if (strFilter !="" && strPayment.find(strFilter) == std::string::npos) continue;
+            obj.push_back(Pair(strprintf("%d", i), strPayment));
+        }
+
+        return obj;
+    }
+
+    return NullUniValue;
+}
+
+UniValue guardian(const JSONRPCRequest& request)
+{
+    std::string strCommand;
+    if (request.params.size() >= 1) {
+        strCommand = request.params[0].get_str();
+    }
+
+    if (strCommand == "list")
+    {
+        JSONRPCRequest newRequest = request;
+        newRequest.params.setArray();
+        // forward params but skip "list"
+        for (unsigned int i = 1; i < request.params.size(); i++) {
+            newRequest.params.push_back(request.params[i]);
+        }
+        return guardianlist(newRequest);
+    }
+
+    if (strCommand == "count")
+    {
+        if (request.params.size() > 2)
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Too many parameters");
+
+        int nCount, nGuardiansCount;
+        masternode_info_t mnInfo;
+        mnodeman.GetNextMasternodeInQueueForPayment(true, nCount, nGuardiansCount, mnInfo);
+
+        int total = mnodeman.CountGuardians();
+        int ps = mnodeman.CountGuardiansEnabled(MIN_PRIVATESEND_PEER_PROTO_VERSION);
+        int enabled = mnodeman.CountGuardiansEnabled();
+
+        if (request.params.size() == 1) {
+            UniValue obj(UniValue::VOBJ);
+
+            obj.push_back(Pair("total", total));
+            obj.push_back(Pair("ps_compatible", ps));
+            obj.push_back(Pair("enabled", enabled));
+            obj.push_back(Pair("qualify", nGuardiansCount));
+
+            return obj;
+        }
+
+        std::string strMode = request.params[1].get_str();
+
+        if (strMode == "total")
+            return total;
+
+        if (strMode == "ps")
+            return ps;
+
+        if (strMode == "enabled")
+            return enabled;
+
+        if (strMode == "qualify")
+            return nCount;
+
+        if (strMode == "all")
+            return strprintf("Total: %d (PS Compatible: %d / Enabled: %d / Qualify: %d)",
+                total, ps, enabled, nCount);
+    }
+    #ifdef ENABLE_WALLET
+    if (strCommand == "outputs") {
+        if (!EnsureWalletIsAvailable(request.fHelp))
+            return NullUniValue;
+
+        // Find possible candidates
+        std::vector<COutput> vPossibleCoins;
+        pwalletMain->AvailableCoins(vPossibleCoins, true, NULL, false, ONLY_25000);
+
+        UniValue obj(UniValue::VOBJ);
+        for (const auto& out : vPossibleCoins) {
+            obj.push_back(Pair(out.tx->GetHash().ToString(), strprintf("%d", out.i)));
+        }
+
+        return obj;
+    }
+    #endif // ENABLE_WALLET
+
+    if (strCommand == "status")
+    {
+        if (!fMasternodeMode)
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "This is not a Guardian node");
+
+        UniValue mnObj(UniValue::VOBJ);
+
+        CMasternode mn;
+        bool gotMn = mnodeman.Get(activeMasternode.outpoint, mn);
+        if(!gotMn) {
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "This is not a Guardian node");
+        }
+        if (!mn.IsGuardian()) {
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "This is a masternode, use \"masternode status\" instead");
+        }
+        mnObj.push_back(Pair("outpoint", activeMasternode.outpoint.ToStringShort()));
+        mnObj.push_back(Pair("service", activeMasternode.service.ToString()));
+
+        if(gotMn) {
+            mnObj.push_back(Pair("payee", CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString()));
+        }
+
+        mnObj.push_back(Pair("status", activeMasternode.GetStatus(true)));
+        return mnObj;
+    }
+
+    if (strCommand == "genkey")
+    {
+        CKey secret;
+        secret.MakeNewKey(false);
+        return CBitcoinSecret(secret).ToString();
+    }
+
+    return NullUniValue;
+}
+
+UniValue guardianlist(const JSONRPCRequest& request)
+{
+    std::string strMode = "json";
+    std::string strFilter = "";
+
+    if (request.params.size() >= 1) strMode = request.params[0].get_str();
+    if (request.params.size() == 2) strFilter = request.params[1].get_str();
+
+    if (request.fHelp || (
+                strMode != "activeseconds" && strMode != "addr" && strMode != "daemon" && strMode != "full" && strMode != "info" && strMode != "json" &&
+                strMode != "lastseen" && strMode != "lastpaidtime" && strMode != "lastpaidblock" &&
+                strMode != "protocol" && strMode != "payee" && strMode != "pubkey" &&
+                strMode != "rank" && strMode != "sentinel" && strMode != "status"))
+    {
+        throw std::runtime_error(
+                "guardianlist ( \"mode\" \"filter\" )\n"
+                "Get a list of guardian nodes in different modes\n"
+                "\nArguments:\n"
+                "1. \"mode\"      (string, optional/required to use filter, defaults = json) The mode to run list in\n"
+                "2. \"filter\"    (string, optional) Filter results. Partial match by outpoint by default in all modes,\n"
+                "                                    additional matches in some modes are also available\n"
+                "\nAvailable modes:\n"
+                "  activeseconds  - Print number of seconds guardian node recognized by the network as enabled\n"
+                "                   (since latest issued \"masternode start/start-many/start-alias\")\n"
+                "  addr           - Print ip address associated with a guardian node (can be additionally filtered, partial match)\n"
+                "  daemon         - Print daemon version of a guardian node (can be additionally filtered, exact match)\n"
+                "  full           - Print info in format 'status protocol payee lastseen activeseconds lastpaidtime lastpaidblock IP'\n"
+                "                   (can be additionally filtered, partial match)\n"
+                "  info           - Print info in format 'status protocol payee lastseen activeseconds sentinelversion sentinelstate IP'\n"
+                "                   (can be additionally filtered, partial match)\n"
+                "  json           - Print info in JSON format (can be additionally filtered, partial match)\n"
+                "  lastpaidblock  - Print the last block height a node was paid on the network\n"
+                "  lastpaidtime   - Print the last time a node was paid on the network\n"
+                "  lastseen       - Print timestamp of when a guardian node was last seen on the network\n"
+                "  payee          - Print Sparks address associated with a guardian node (can be additionally filtered,\n"
+                "                   partial match)\n"
+                "  protocol       - Print protocol of a guardian node (can be additionally filtered, exact match)\n"
+                "  pubkey         - Print the guardian node (not collateral) public key\n"
+                "  rank           - Print rank of a guardian node based on current block\n"
+                "  sentinel       - Print sentinel version of a guardian node (can be additionally filtered, exact match)\n"
+                "  status         - Print guardian node status: PRE_ENABLED / ENABLED / EXPIRED / SENTINEL_PING_EXPIRED / NEW_START_REQUIRED /\n"
+                "                   UPDATE_REQUIRED / POSE_BAN / OUTPOINT_SPENT (can be additionally filtered, partial match)\n"
+                );
+    }
+
+    if (strMode == "full" || strMode == "json" || strMode == "lastpaidtime" || strMode == "lastpaidblock") {
+        CBlockIndex* pindex = NULL;
+        {
+            LOCK(cs_main);
+            pindex = chainActive.Tip();
+        }
+        mnodeman.UpdateLastPaid(pindex);
+    }
+
+    UniValue obj(UniValue::VOBJ);
+    if (strMode == "rank") {
+        CMasternodeMan::rank_pair_vec_t vMasternodeRanks;
+        mnodeman.GetMasternodeRanks(vMasternodeRanks);
+        for (const auto& rankpair : vMasternodeRanks) {
+            if(rankpair.second.IsGuardian()) {
+                std::string strOutpoint = rankpair.second.outpoint.ToStringShort();
+                if (strFilter !="" && strOutpoint.find(strFilter) == std::string::npos) continue;
+                obj.push_back(Pair(strOutpoint, rankpair.first));
+            }
+        }
+    } else {
+        std::map<COutPoint, CMasternode> mapMasternodes = mnodeman.GetFullMasternodeMap();
+        for (const auto& mnpair : mapMasternodes) {
+            CMasternode mn = mnpair.second;
+            if(mn.IsGuardian()) {
+                std::string strOutpoint = mnpair.first.ToStringShort();
+                if (strMode == "activeseconds") {
+                    if (strFilter !="" && strOutpoint.find(strFilter) == std::string::npos) continue;
+                    obj.push_back(Pair(strOutpoint, (int64_t)(mn.lastPing.sigTime - mn.sigTime)));
+                } else if (strMode == "addr") {
+                    std::string strAddress = mn.addr.ToString();
+                    if (strFilter !="" && strAddress.find(strFilter) == std::string::npos &&
+                        strOutpoint.find(strFilter) == std::string::npos) continue;
+                    obj.push_back(Pair(strOutpoint, strAddress));
+                } else if (strMode == "daemon") {
+                    std::string strDaemon = mn.lastPing.nDaemonVersion > DEFAULT_DAEMON_VERSION ? FormatVersion(mn.lastPing.nDaemonVersion) : "Unknown";
+                    if (strFilter !="" && strDaemon.find(strFilter) == std::string::npos &&
+                        strOutpoint.find(strFilter) == std::string::npos) continue;
+                    obj.push_back(Pair(strOutpoint, strDaemon));
+                } else if (strMode == "sentinel") {
+                    std::string strSentinel = mn.lastPing.nSentinelVersion > DEFAULT_SENTINEL_VERSION ? SafeIntVersionToString(mn.lastPing.nSentinelVersion) : "Unknown";
+                    if (strFilter !="" && strSentinel.find(strFilter) == std::string::npos &&
+                        strOutpoint.find(strFilter) == std::string::npos) continue;
+                    obj.push_back(Pair(strOutpoint, strSentinel));
+                } else if (strMode == "full") {
+                    std::ostringstream streamFull;
+                    streamFull << std::setw(18) <<
+                                mn.GetStatus() << " " <<
+                                mn.nProtocolVersion << " " <<
+                                CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString() << " " <<
+                                (int64_t)mn.lastPing.sigTime << " " << std::setw(8) <<
+                                (int64_t)(mn.lastPing.sigTime - mn.sigTime) << " " << std::setw(10) <<
+                                mn.GetLastPaidTime() << " "  << std::setw(6) <<
+                                mn.GetLastPaidBlock() << " " <<
+                                mn.addr.ToString();
+                    std::string strFull = streamFull.str();
+                    if (strFilter !="" && strFull.find(strFilter) == std::string::npos &&
+                        strOutpoint.find(strFilter) == std::string::npos) continue;
+                    obj.push_back(Pair(strOutpoint, strFull));
+                } else if (strMode == "info") {
+                    std::ostringstream streamInfo;
+                    streamInfo << std::setw(18) <<
+                                mn.GetStatus() << " " <<
+                                mn.nProtocolVersion << " " <<
+                                CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString() << " " <<
+                                (int64_t)mn.lastPing.sigTime << " " << std::setw(8) <<
+                                (int64_t)(mn.lastPing.sigTime - mn.sigTime) << " " <<
+                                SafeIntVersionToString(mn.lastPing.nSentinelVersion) << " "  <<
+                                (mn.lastPing.fSentinelIsCurrent ? "current" : "expired") << " " <<
+                                mn.addr.ToString();
+                    std::string strInfo = streamInfo.str();
+                    if (strFilter !="" && strInfo.find(strFilter) == std::string::npos &&
+                        strOutpoint.find(strFilter) == std::string::npos) continue;
+                    obj.push_back(Pair(strOutpoint, strInfo));
+                } else if (strMode == "json") {
+                    std::ostringstream streamInfo;
+                    streamInfo <<  mn.addr.ToString() << " " <<
+                                CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString() << " " <<
+                                mn.GetStatus() << " " <<
+                                mn.nProtocolVersion << " " <<
+                                mn.lastPing.nDaemonVersion << " " <<
+                                SafeIntVersionToString(mn.lastPing.nSentinelVersion) << " " <<
+                                (mn.lastPing.fSentinelIsCurrent ? "current" : "expired") << " " <<
+                                (int64_t)mn.lastPing.sigTime << " " <<
+                                (int64_t)(mn.lastPing.sigTime - mn.sigTime) << " " <<
+                                mn.GetLastPaidTime() << " " <<
+                                mn.GetLastPaidBlock();
+                    std::string strInfo = streamInfo.str();
+                    if (strFilter !="" && strInfo.find(strFilter) == std::string::npos &&
+                        strOutpoint.find(strFilter) == std::string::npos) continue;
+                    UniValue objMN(UniValue::VOBJ);
+                    objMN.push_back(Pair("address", mn.addr.ToString()));
+                    objMN.push_back(Pair("payee", CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString()));
+                    objMN.push_back(Pair("status", mn.GetStatus()));
+                    objMN.push_back(Pair("protocol", mn.nProtocolVersion));
+                    objMN.push_back(Pair("daemonversion", mn.lastPing.nDaemonVersion > DEFAULT_DAEMON_VERSION ? FormatVersion(mn.lastPing.nDaemonVersion) : "Unknown"));
+                    objMN.push_back(Pair("sentinelversion", mn.lastPing.nSentinelVersion > DEFAULT_SENTINEL_VERSION ? SafeIntVersionToString(mn.lastPing.nSentinelVersion) : "Unknown"));
+                    objMN.push_back(Pair("sentinelstate", (mn.lastPing.fSentinelIsCurrent ? "current" : "expired")));
+                    objMN.push_back(Pair("lastseen", (int64_t)mn.lastPing.sigTime));
+                    objMN.push_back(Pair("activeseconds", (int64_t)(mn.lastPing.sigTime - mn.sigTime)));
+                    objMN.push_back(Pair("lastpaidtime", mn.GetLastPaidTime()));
+                    objMN.push_back(Pair("lastpaidblock", mn.GetLastPaidBlock()));
+                    obj.push_back(Pair(strOutpoint, objMN));
+                } else if (strMode == "lastpaidblock") {
+                    if (strFilter !="" && strOutpoint.find(strFilter) == std::string::npos) continue;
+                    obj.push_back(Pair(strOutpoint, mn.GetLastPaidBlock()));
+                } else if (strMode == "lastpaidtime") {
+                    if (strFilter !="" && strOutpoint.find(strFilter) == std::string::npos) continue;
+                    obj.push_back(Pair(strOutpoint, mn.GetLastPaidTime()));
+                } else if (strMode == "lastseen") {
+                    if (strFilter !="" && strOutpoint.find(strFilter) == std::string::npos) continue;
+                    obj.push_back(Pair(strOutpoint, (int64_t)mn.lastPing.sigTime));
+                } else if (strMode == "payee") {
+                    CBitcoinAddress address(mn.pubKeyCollateralAddress.GetID());
+                    std::string strPayee = address.ToString();
+                    if (strFilter !="" && strPayee.find(strFilter) == std::string::npos &&
+                        strOutpoint.find(strFilter) == std::string::npos) continue;
+                    obj.push_back(Pair(strOutpoint, strPayee));
+                } else if (strMode == "protocol") {
+                    if (strFilter !="" && strFilter != strprintf("%d", mn.nProtocolVersion) &&
+                        strOutpoint.find(strFilter) == std::string::npos) continue;
+                    obj.push_back(Pair(strOutpoint, mn.nProtocolVersion));
+                } else if (strMode == "pubkey") {
+                    if (strFilter !="" && strOutpoint.find(strFilter) == std::string::npos) continue;
+                    obj.push_back(Pair(strOutpoint, HexStr(mn.pubKeyMasternode)));
+                } else if (strMode == "status") {
+                    std::string strStatus = mn.GetStatus();
+                    if (strFilter !="" && strStatus.find(strFilter) == std::string::npos &&
+                        strOutpoint.find(strFilter) == std::string::npos) continue;
+                    obj.push_back(Pair(strOutpoint, strStatus));
+                }
+            }
+        }
+    }
+    return obj;
 }
 
 UniValue masternodelist(const JSONRPCRequest& request)
@@ -879,9 +1495,11 @@ UniValue masternodelist(const JSONRPCRequest& request)
         CMasternodeMan::rank_pair_vec_t vMasternodeRanks;
         mnodeman.GetMasternodeRanks(vMasternodeRanks);
         for (const auto& rankpair : vMasternodeRanks) {
-            std::string strOutpoint = rankpair.second.outpoint.ToStringShort();
-            if (strFilter !="" && strOutpoint.find(strFilter) == std::string::npos) continue;
-            obj.push_back(Pair(strOutpoint, rankpair.first));
+            if(!rankpair.second.IsGuardian()) {
+                std::string strOutpoint = rankpair.second.outpoint.ToStringShort();
+                if (strFilter !="" && strOutpoint.find(strFilter) == std::string::npos) continue;
+                obj.push_back(Pair(strOutpoint, rankpair.first));
+            }
         }
     } else {
         std::map<COutPoint, CMasternode> mapMasternodes = mnodeman.GetFullMasternodeMap();
@@ -1299,13 +1917,15 @@ UniValue sentinelping(const JSONRPCRequest& request)
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         okSafe argNames
   //  --------------------- ------------------------  -----------------------  ------ ----------
-    { "dash",               "masternode",             &masternode,             true,  {} },
-    { "dash",               "masternodelist",         &masternodelist,         true,  {} },
-    { "dash",               "masternodebroadcast",    &masternodebroadcast,    true,  {} },
-    { "dash",               "getpoolinfo",            &getpoolinfo,            true,  {} },
-    { "dash",               "sentinelping",           &sentinelping,           true,  {} },
+    { "sparks",               "masternode",             &masternode,             true,  {} },
+    { "sparks",               "masternodelist",         &masternodelist,         true,  {} },
+    { "sparks",               "guardian",               &guardian,               true,  {} },
+    { "sparks",               "guardianlist",           &guardianlist,           true,  {} },
+    { "sparks",               "masternodebroadcast",    &masternodebroadcast,    true,  {} },
+    { "sparks",               "getpoolinfo",            &getpoolinfo,            true,  {} },
+    { "sparks",               "sentinelping",           &sentinelping,           true,  {} },
 #ifdef ENABLE_WALLET
-    { "dash",               "privatesend",            &privatesend,            false, {} },
+    { "sparks",               "privatesend",            &privatesend,            false, {} },
 #endif // ENABLE_WALLET
 };
 

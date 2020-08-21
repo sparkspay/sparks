@@ -1,11 +1,11 @@
 Sample configuration files for:
 
-SystemD: dashd.service
-Upstart: dashd.conf
-OpenRC:  dashd.openrc
-         dashd.openrcconf
-CentOS:  dashd.init
-OS X:    org.dash.dashd.plist
+SystemD: sparksd.service
+Upstart: sparksd.conf
+OpenRC:  sparksd.openrc
+         sparksd.openrcconf
+CentOS:  sparksd.init
+OS X:    org.sparks.sparksd.plist
 
 have been made available to assist packagers in creating node packages here.
 

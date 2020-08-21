@@ -23,9 +23,9 @@ CPrivateSendClientManager privateSendClient;
 
 void CPrivateSendClientManager::ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
-    if (fMasternodeMode) return;
-    if (fLiteMode) return; // ignore all Dash related functionality
-    if (!masternodeSync.IsBlockchainSynced()) return;
+    if(fMasternodeMode) return;
+    if(fLiteMode) return; // ignore all Sparks related functionality
+    if(!masternodeSync.IsBlockchainSynced()) return;
 
     if (!CheckDiskSpace()) {
         ResetPool();
@@ -1620,8 +1620,8 @@ void CPrivateSendClientManager::UpdatedBlockTip(const CBlockIndex* pindex)
 
 void CPrivateSendClientManager::DoMaintenance(CConnman& connman)
 {
-    if (fLiteMode) return;       // disable all Dash specific functionality
-    if (fMasternodeMode) return; // no client-side mixing on masternodes
+    if(fLiteMode) return; // disable all Sparks specific functionality
+    if(fMasternodeMode) return; // no client-side mixing on masternodes
 
     if (!masternodeSync.IsBlockchainSynced() || ShutdownRequested())
         return;

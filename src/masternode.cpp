@@ -41,7 +41,8 @@ CMasternode::CMasternode(const CMasternode& other) :
     nPoSeBanScore(other.nPoSeBanScore),
     nPoSeBanHeight(other.nPoSeBanHeight),
     nMixingTxCount(other.nMixingTxCount),
-    fUnitTest(other.fUnitTest)
+    fUnitTest(other.fUnitTest),
+    fGuardian(other.fGuardian)
 {}
 
 CMasternode::CMasternode(const CMasternodeBroadcast& mnb) :
@@ -111,13 +112,13 @@ arith_uint256 CMasternode::CalculateScore(const uint256& blockHash) const
     return UintToArith256(ss.GetHash());
 }
 
-CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outpoint, const CKeyID& keyID)
+CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outpoint, const CPubKey& pubkey, bool& isGuardian)
 {
     int nHeight;
-    return CheckCollateral(outpoint, keyID, nHeight);
+    return CheckCollateral(outpoint, pubkey, nHeight, isGuardian);
 }
 
-CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outpoint, const CKeyID& keyID, int& nHeightRet)
+CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outpoint, const CPubKey& pubkey, int& nHeightRet, bool& isGuardian)
 {
     AssertLockHeld(cs_main);
 
@@ -126,8 +127,20 @@ CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outp
         return COLLATERAL_UTXO_NOT_FOUND;
     }
 
-    if(coin.out.nValue != 1000 * COIN) {
-        return COLLATERAL_INVALID_AMOUNT;
+    if(fGuardianActiveAtTip) {
+        if(coin.out.nValue != MASTERNODE_COLLATERAL_SIZE * COIN && coin.out.nValue != GUARDIAN_COLLATERAL_SIZE * COIN) {
+            LogPrintf("CMasternode::CheckCollateral -- fGuardianActive -- invalid collateral value: %ld\n", coin.out.nValue);
+            return COLLATERAL_INVALID_AMOUNT;
+        }
+        if(coin.out.nValue == GUARDIAN_COLLATERAL_SIZE * COIN) {
+            isGuardian = true;
+        }
+    }
+    else {
+        if(coin.out.nValue != MASTERNODE_COLLATERAL_SIZE * COIN) {
+            LogPrintf("CMasternode::CheckCollateral -- invalid collateral value: %ld\n", coin.out.nValue);
+            return COLLATERAL_INVALID_AMOUNT;
+        }
     }
 
     if(keyID.IsNull() || coin.out.scriptPubKey != GetScriptForDestination(keyID)) {
@@ -135,6 +148,7 @@ CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outp
     }
 
     nHeightRet = coin.nHeight;
+
     return COLLATERAL_OK;
 }
 
@@ -226,7 +240,7 @@ void CMasternode::Check(bool fForce)
             return;
         }
 
-        // part 1: expire based on dashd ping
+        // part 1: expire based on sparksd ping
         bool fSentinelPingActive = masternodeSync.IsSynced() && mnodeman.IsSentinelPingActive();
         bool fSentinelPingExpired = fSentinelPingActive && !IsPingedWithin(MASTERNODE_SENTINEL_PING_MAX_SECONDS);
         LogPrint("masternode", "CMasternode::Check -- outpoint=%s, GetAdjustedTime()=%d, fSentinelPingExpired=%d\n",
@@ -571,14 +585,15 @@ bool CMasternodeBroadcast::CheckOutpoint(int& nDos)
     AssertLockHeld(cs_main);
 
     int nHeight;
-    CollateralStatus err = CheckCollateral(outpoint, keyIDCollateralAddress, nHeight);
+    bool isGuardian = false;
+    CollateralStatus err = CheckCollateral(outpoint, pubKeyCollateralAddress, nHeight, isGuardian);
     if (err == COLLATERAL_UTXO_NOT_FOUND) {
         LogPrint("masternode", "CMasternodeBroadcast::CheckOutpoint -- Failed to find Masternode UTXO, masternode=%s\n", outpoint.ToStringShort());
         return false;
     }
 
     if (err == COLLATERAL_INVALID_AMOUNT) {
-        LogPrint("masternode", "CMasternodeBroadcast::CheckOutpoint -- Masternode UTXO should have 1000 DASH, masternode=%s\n", outpoint.ToStringShort());
+        LogPrint("masternode", "CMasternodeBroadcast::CheckOutpoint -- Masternode UTXO should have 1000 SPARKS, masternode=%s\n", outpoint.ToStringShort());
         nDos = 33;
         return false;
     }
@@ -617,7 +632,7 @@ bool CMasternodeBroadcast::CheckOutpoint(int& nDos)
 
     // remember the block hash when collateral for this masternode had minimum required confirmations
     nCollateralMinConfBlockHash = pRequiredConfIndex->GetBlockHash();
-
+    fGuardian = isGuardian;
     return true;
 }
 

@@ -51,7 +51,7 @@
 #include <boost/thread.hpp>
 
 #if defined(NDEBUG)
-# error "Dash Core cannot be compiled without assertions."
+# error "Sparks Core cannot be compiled without assertions."
 #endif
 
 std::atomic<int64_t> nTimeBestReceived(0); // Used only to inform the wallet of when we last received a block
@@ -920,7 +920,7 @@ bool static AlreadyHave(const CInv& inv) EXCLUSIVE_LOCKS_REQUIRED(cs_main)
         return mapBlockIndex.count(inv.hash);
 
     /* 
-        Dash Related Inventory Messages
+        Sparks Related Inventory Messages
 
         --
 
@@ -1467,12 +1467,16 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             return false;
         }
 
-        if (nVersion < nMinPeerProtoVersion)
+        int minVersion = MIN_PEER_PROTO_VERSION;
+        if(sporkManager.IsSporkActive(SPORK_15_REQUIRE_GUARDIAN_FLAG)) {
+            minVersion = GUARDIAN_PROTOCOL_VERSION;
+        }
+        if (nVersion < minVersion)
         {
             // disconnect from peers older than this proto version
             LogPrintf("peer=%d using obsolete version %i; disconnecting\n", pfrom->id, nVersion);
             connman.PushMessage(pfrom, CNetMsgMaker(INIT_PROTO_VERSION).Make(NetMsgType::REJECT, strCommand, REJECT_OBSOLETE,
-                               strprintf("Version must be %d or greater", nMinPeerProtoVersion)));
+                               strprintf("Version must be %d or greater", minVersion)));
             pfrom->fDisconnect = true;
             return false;
         }
