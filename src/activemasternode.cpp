@@ -238,7 +238,7 @@ std::string CActiveLegacyMasternodeManager::GetStateString() const
     }
 }
 
-std::string CActiveMasternode::GetStatus(bool isGuardian) const
+std::string CActiveLegacyMasternodeManager::GetStatus(bool isGuardian) const
 {
     switch (nState) {
         case ACTIVE_MASTERNODE_INITIAL:         return "Node just started, not yet activated";

@@ -76,14 +76,14 @@ class AutoIXMempoolTest(DashTestFramework):
 
     def get_autoix_spork_state(self):
         info = self.nodes[0].spork('active')
-        return info['SPORK_16_INSTANTSEND_AUTOLOCKS']
+        return info['SPORK_17_INSTANTSEND_AUTOLOCKS']
 
     def set_autoix_spork_state(self, state):
         if state:
             value = 0
         else:
             value = 4070908800
-        self.nodes[0].spork('SPORK_16_INSTANTSEND_AUTOLOCKS', value)
+        self.nodes[0].spork('SPORK_17_INSTANTSEND_AUTOLOCKS', value)
 
     # sends regular IX with high fee and may inputs (not-simple transaction)
     def send_regular_IX(self, sender, receiver):

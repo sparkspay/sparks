@@ -939,7 +939,7 @@ bool CInstantSend::CanAutoLock()
     if (!isAutoLockBip9Active) {
         return false;
     }
-    if (!sporkManager.IsSporkActive(SPORK_16_INSTANTSEND_AUTOLOCKS)) {
+    if (!sporkManager.IsSporkActive(SPORK_17_INSTANTSEND_AUTOLOCKS)) {
         return false;
     }
     return (mempool.UsedMemoryShare() < AUTO_IX_MEMPOOL_THRESHOLD);

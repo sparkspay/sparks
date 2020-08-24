@@ -26,13 +26,13 @@ static const int SPORK_9_SUPERBLOCKS_ENABLED                            = 10008;
 static const int SPORK_10_MASTERNODE_PAY_UPDATED_NODES                  = 10009;
 static const int SPORK_12_RECONSIDER_BLOCKS                             = 10011;
 static const int SPORK_14_REQUIRE_SENTINEL_FLAG                         = 10013;
-static const int SPORK_15_DETERMINISTIC_MNS_ENABLED                     = 10014;
-static const int SPORK_16_INSTANTSEND_AUTOLOCKS                         = 10015;
-static const int SPORK_17_QUORUM_DKG_ENABLED                            = 10016;
 static const int SPORK_15_REQUIRE_GUARDIAN_FLAG                         = 10014;
+static const int SPORK_16_DETERMINISTIC_MNS_ENABLED                     = 10015;
+static const int SPORK_17_INSTANTSEND_AUTOLOCKS                         = 10016;
+static const int SPORK_18_QUORUM_DKG_ENABLED                            = 10017;
 
 static const int SPORK_START                                            = SPORK_2_INSTANTSEND_ENABLED;
-static const int SPORK_END                                              = SPORK_17_QUORUM_DKG_ENABLED;
+static const int SPORK_END                                              = SPORK_18_QUORUM_DKG_ENABLED;
 
 extern std::map<int, int64_t> mapSporkDefaults;
 extern CSporkManager sporkManager;

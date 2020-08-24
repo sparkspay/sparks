@@ -850,7 +850,7 @@ bool CDeterministicMNManager::HasMNCollateralAtChainTip(const COutPoint& outpoin
 
 int64_t CDeterministicMNManager::GetSpork15Value()
 {
-    return sporkManager.GetSporkValue(SPORK_15_DETERMINISTIC_MNS_ENABLED);
+    return sporkManager.GetSporkValue(SPORK_16_DETERMINISTIC_MNS_ENABLED);
 }
 
 bool CDeterministicMNManager::IsProTxWithCollateral(const CTransactionRef& tx, uint32_t n)

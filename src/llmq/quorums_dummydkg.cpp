@@ -28,7 +28,7 @@ CDummyDKG* quorumDummyDKG;
 void CDummyDKG::ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
     if (strCommand == NetMsgType::QCONTRIB) {
-        if (!sporkManager.IsSporkActive(SPORK_17_QUORUM_DKG_ENABLED)) {
+        if (!sporkManager.IsSporkActive(SPORK_18_QUORUM_DKG_ENABLED)) {
             return;
         }
 
@@ -53,7 +53,7 @@ void CDummyDKG::ProcessMessage(CNode* pfrom, const std::string& strCommand, CDat
             Misbehaving(pfrom->id, 100);
             return;
         }
-        if (!sporkManager.IsSporkActive(SPORK_17_QUORUM_DKG_ENABLED)) {
+        if (!sporkManager.IsSporkActive(SPORK_18_QUORUM_DKG_ENABLED)) {
             return;
         }
 
@@ -301,7 +301,7 @@ void CDummyDKG::UpdatedBlockTip(const CBlockIndex* pindex, bool fInitialDownload
         return;
     }
 
-    if (!sporkManager.IsSporkActive(SPORK_17_QUORUM_DKG_ENABLED)) {
+    if (!sporkManager.IsSporkActive(SPORK_18_QUORUM_DKG_ENABLED)) {
         return;
     }
 

@@ -227,7 +227,7 @@ class DIP3Test(BitcoinTestFramework):
         print("activating spork15")
         height = self.nodes[0].getblockchaininfo()['blocks']
         spork15_offset = 10
-        self.nodes[0].spork('SPORK_15_DETERMINISTIC_MNS_ENABLED', height + spork15_offset)
+        self.nodes[0].spork('SPORK_16_DETERMINISTIC_MNS_ENABLED', height + spork15_offset)
         self.wait_for_sporks()
 
         print("test that MN list does not change before final spork15 activation")
@@ -343,7 +343,7 @@ class DIP3Test(BitcoinTestFramework):
 
         print("testing simple PoSe")
         self.assert_mnlists(mns_protx)
-        self.nodes[0].spork('SPORK_17_QUORUM_DKG_ENABLED', 0)
+        self.nodes[0].spork('SPORK_18_QUORUM_DKG_ENABLED', 0)
         self.wait_for_sporks()
 
         height = self.nodes[0].getblockcount()
