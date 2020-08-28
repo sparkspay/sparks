@@ -67,11 +67,6 @@ bool IsBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockRewar
 
     strErrorRet = "";
 
-    bool isBlockRewardValueMet = (block.vtx[0]->GetValueOut() <= blockReward);
-    if(fDebug) LogPrintf("block.vtx[0]->GetValueOut() %lld <= blockReward %lld\n", block.vtx[0]->GetValueOut(), blockReward);
-
-    const Consensus::Params& consensusParams = Params().GetConsensus();
-
     if(nBlockHeight < consensusParams.nSuperblockStartBlock || (nBlockHeight >= consensusParams.nSuperblockStartBlock && !sporkManager.IsSporkActive(SPORK_9_SUPERBLOCKS_ENABLED))) {
         if(!isBlockRewardValueMet) {
             strErrorRet = strprintf("coinbase pays too much at height %d (actual=%d vs limit=%d), exceeded block reward, old budgets are not activated yet",

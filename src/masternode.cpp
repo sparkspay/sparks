@@ -112,13 +112,13 @@ arith_uint256 CMasternode::CalculateScore(const uint256& blockHash) const
     return UintToArith256(ss.GetHash());
 }
 
-CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outpoint, const CPubKey& pubkey, bool& isGuardian)
+CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outpoint, const CKeyID& keyID, bool& isGuardian)
 {
     int nHeight;
-    return CheckCollateral(outpoint, pubkey, nHeight, isGuardian);
+    return CheckCollateral(outpoint, keyID, nHeight, isGuardian);
 }
 
-CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outpoint, const CPubKey& pubkey, int& nHeightRet, bool& isGuardian)
+CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outpoint, const CKeyID& keyID, int& nHeightRet, bool& isGuardian)
 {
     AssertLockHeld(cs_main);
 
@@ -586,7 +586,7 @@ bool CMasternodeBroadcast::CheckOutpoint(int& nDos)
 
     int nHeight;
     bool isGuardian = false;
-    CollateralStatus err = CheckCollateral(outpoint, pubKeyCollateralAddress, nHeight, isGuardian);
+    CollateralStatus err = CheckCollateral(outpoint, keyIDCollateralAddress, nHeight, isGuardian);
     if (err == COLLATERAL_UTXO_NOT_FOUND) {
         LogPrint("masternode", "CMasternodeBroadcast::CheckOutpoint -- Failed to find Masternode UTXO, masternode=%s\n", outpoint.ToStringShort());
         return false;

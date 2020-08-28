@@ -767,7 +767,7 @@ public:
     void UpdateBudgetParameters(int nMasternodePaymentsStartBlock, int nBudgetPaymentsStartBlock, int nSuperblockStartBlock)
     {
         consensus.nMasternodePaymentsStartBlock = nMasternodePaymentsStartBlock;
-        consensus.nBudgetPaymentsStartBlock = nBudgetPaymentsStartBlock;
+        consensus.nSuperblockStartBlock = nBudgetPaymentsStartBlock;
         consensus.nSuperblockStartBlock = nSuperblockStartBlock;
     }
 };
