@@ -99,6 +99,7 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
     ui->theme->addItem(QString("SPARKS-blue"), QVariant("drkblue"));
     ui->theme->addItem(QString("SPARKS-Crownium"), QVariant("crownium"));
     ui->theme->addItem(QString("SPARKS-traditional"), QVariant("trad"));
+    ui->theme->addItem(QString("SPARKS-2020"), QVariant("sparkspay2020"));
     
     /* Language selector */
     QDir translations(":translations");
