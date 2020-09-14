@@ -432,15 +432,9 @@ cd /path/to/gitian-builder
 LXC_ARCH=amd64 LXC_SUITE=bionic on-target -u root apt-get update
 LXC_ARCH=amd64 LXC_SUITE=bionic on-target -u root \
   -e DEBIAN_FRONTEND=noninteractive apt-get --no-install-recommends -y install \
-<<<<<<< HEAD
   $( sed -ne '/^packages:/,/[^-] .*/ {/^- .*/{s/"//g;s/- //;p}}' ../dash/contrib/gitian-descriptors/*|sort|uniq )
 LXC_ARCH=amd64 LXC_SUITE=bionic on-target -u root apt-get -q -y purge grub
 LXC_ARCH=amd64 LXC_SUITE=bionic on-target -u root -e DEBIAN_FRONTEND=noninteractive apt-get -y dist-upgrade
-=======
-  $( sed -ne '/^packages:/,/[^-] .*/ {/^- .*/{s/"//g;s/- //;p}}' ../sparks/contrib/gitian-descriptors/*|sort|uniq )
-LXC_ARCH=amd64 LXC_SUITE=trusty on-target -u root apt-get -q -y purge grub
-LXC_ARCH=amd64 LXC_SUITE=trusty on-target -u root -e DEBIAN_FRONTEND=noninteractive apt-get -y dist-upgrade
->>>>>>> refs/heads/master
 ```
 
 And then set offline mode for apt-cacher-ng:
