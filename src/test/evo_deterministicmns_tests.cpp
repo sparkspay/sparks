@@ -279,7 +279,7 @@ BOOST_FIXTURE_TEST_CASE(dip3_protx, TestChainDIP3Setup)
         nHeight++;
     }
 
-    // activate spork15
+    // activate spork16
     sporkManager.UpdateSpork(SPORK_16_DETERMINISTIC_MNS_ENABLED, chainActive.Height() + 1, *g_connman);
     CreateAndProcessBlock({}, coinbaseKey);
     deterministicMNManager->UpdatedBlockTip(chainActive.Tip());

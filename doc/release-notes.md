@@ -25,7 +25,7 @@ sparksd/sparks-qt (on Linux). If you upgrade after DIP0003 activation you will
 have to reindex (start with -reindex-chainstate or -reindex) to make sure
 your wallet has all the new data synced (only if you were using version < 0.13).
 
-As spork15 has been activated on mainnet, there is no need for `masternode start`
+As spork16 has been activated on mainnet, there is no need for `masternode start`
 anymore. Upgrading a masternode now only involves replacing binaries and restarting
 the node.
 
@@ -56,10 +56,10 @@ A fix that was introduces in the last minor version caused creation of invalid m
 nodes to ban 0.13.2 nodes. This can be observed on mobile clients which have troubles maintaining connections. This
 release fixes this issue and should allow SPV/mobile clients to sync with upgraded nodes.
 
-Hardened spork15 value to 1047200
+Hardened spork16 value to 1047200
 ---------------------------------
-We've hardened the spork15 block height to 1047200, which makes sure that syncing from scratch will always work, no
-matter if spork15 is received in-time or not.
+We've hardened the spork16 block height to 1047200, which makes sure that syncing from scratch will always work, no
+matter if spork16 is received in-time or not.
 
 Bug fixes/Other improvements
 ----------------------------
@@ -84,7 +84,7 @@ See detailed [set of changes](https://github.com/sparkspay/sparks/compare/v0.13.
 ### Other
 
 - [`25038ff36`](https://github.com/sparkspay/sparks/commit/25038ff36) Bump version to 0.13.3.0
-- [`53b2162e2`](https://github.com/sparkspay/sparks/commit/53b2162e2) Harden spork15 value to 1047200 when on mainnet (#2830)
+- [`53b2162e2`](https://github.com/sparkspay/sparks/commit/53b2162e2) Harden spork16 value to 1047200 when on mainnet (#2830)
 
 Credits
 =======

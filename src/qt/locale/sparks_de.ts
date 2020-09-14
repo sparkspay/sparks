@@ -1110,8 +1110,8 @@ Der Mixing-Prozeß läuft nach dem Start vollständig im Hintergrund, d.h. es is
         <translation>Anzahl Knoten</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list represents the legacy and non-deterministic masternode list. It is only active as long as DIP3 has not been fully activated. After SPORK15 activation, this list will be empty.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Hinweis: Diese Liste stellt eine traditionelle und keine nicht-deterministische Masternode-Liste dar. Sie bleibt nur bis zur vollständigen Aktivierung von DIP3 aktiv. Nachdem SPORK15 aktiviert wurde, wird diese Liste keinen Inhalt mehr haben.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list represents the legacy and non-deterministic masternode list. It is only active as long as DIP3 has not been fully activated. After SPORK16 activation, this list will be empty.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Hinweis: Diese Liste stellt eine traditionelle und keine nicht-deterministische Masternode-Liste dar. Sie bleibt nur bis zur vollständigen Aktivierung von DIP3 aktiv. Nachdem SPORK16 aktiviert wurde, wird diese Liste keinen Inhalt mehr haben.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>DIP3 Masternodes</source>
@@ -1138,8 +1138,8 @@ Der Mixing-Prozeß läuft nach dem Start vollständig im Hintergrund, d.h. es is
         <translation>Betreibervergütung</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list is not active yet and only for informational purposes. The network is still running in compatibility mode, which means that the non-deterministic masternode list is still active. Only after SPORK15 activation, this list will become the active one. Also, the values in the payment related fields are not used at the moment, but still updated for every block. Please ignore this until SPORK15 activation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Hinweis: Diese Liste ist noch nicht aktiv und dient nur zu Informationszwecken. Das Netzwerk läuft weiterhin im Kompatibilitätsmodus, was bedeutet, dass die nicht-deterministische Masternode-Liste weiterhin aktiv ist. Diese Liste wird erst nach SPORK15 aktiviert. Die Auszahlungswerte werden momentan nicht verwendet, auch wenn sie mit jedem Block neu berechnet werden. Bis zur Aktivierung von SPORK15 sollte diese Liste ignoriert werden.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list is not active yet and only for informational purposes. The network is still running in compatibility mode, which means that the non-deterministic masternode list is still active. Only after SPORK16 activation, this list will become the active one. Also, the values in the payment related fields are not used at the moment, but still updated for every block. Please ignore this until SPORK16 activation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Hinweis: Diese Liste ist noch nicht aktiv und dient nur zu Informationszwecken. Das Netzwerk läuft weiterhin im Kompatibilitätsmodus, was bedeutet, dass die nicht-deterministische Masternode-Liste weiterhin aktiv ist. Diese Liste wird erst nach SPORK16 aktiviert. Die Auszahlungswerte werden momentan nicht verwendet, auch wenn sie mit jedem Block neu berechnet werden. Bis zur Aktivierung von SPORK16 sollte diese Liste ignoriert werden.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Start alias</source>

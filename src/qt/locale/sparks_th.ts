@@ -1109,8 +1109,8 @@
         <translation>จำนวนโหนด:</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list represents the legacy and non-deterministic masternode list. It is only active as long as DIP3 has not been fully activated. After SPORK15 activation, this list will be empty.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;หมายเหตุ: รายการนี้แสดงทรัพย์สินและรายการ masternode แบบไม่กำหนดค่า มันเปิดใช้งานได้ตราบใดที่ DIP3 ยังไม่ได้เปิดใช้งานอย่างสมบูรณ์  หลังจากเปิดใช้งาน SPORK15 รายการนี้จะว่างเปล่า &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list represents the legacy and non-deterministic masternode list. It is only active as long as DIP3 has not been fully activated. After SPORK16 activation, this list will be empty.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;หมายเหตุ: รายการนี้แสดงทรัพย์สินและรายการ masternode แบบไม่กำหนดค่า มันเปิดใช้งานได้ตราบใดที่ DIP3 ยังไม่ได้เปิดใช้งานอย่างสมบูรณ์  หลังจากเปิดใช้งาน SPORK16 รายการนี้จะว่างเปล่า &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>DIP3 Masternodes</source>
@@ -1137,8 +1137,8 @@
         <translation>รางวัลผู้ดำเนินการ</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list is not active yet and only for informational purposes. The network is still running in compatibility mode, which means that the non-deterministic masternode list is still active. Only after SPORK15 activation, this list will become the active one. Also, the values in the payment related fields are not used at the moment, but still updated for every block. Please ignore this until SPORK15 activation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;หมายเหตุ: รายการนี้ยังไม่เปิดใช้งานและมีวัตถุประสงค์เพื่อให้ข้อมูลเท่านั้น  เครือข่ายยังคงทำงานในโหมดสอดคล้องกันได้ซึ่งหมายความว่ารายการ masternode ที่ไม่ได้กำหนดค่ายังคงทำงานอยู่ หลังจากเปิดงาน SPORK15 แล้วรายการนี้จะเปิดใช้งาน นอกจากนี้ยังไม่ได้ใช้ค่าในฟิลด์ที่เกี่ยวข้องกับการชำระเงิน แต่ยังคงได้รับการอัปเดตสำหรับทุก ๆ บล็อก โปรดเพิกเฉยต่อสิ่งนี้จนกว่าจะเปิดใช้งาน SPORK15&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list is not active yet and only for informational purposes. The network is still running in compatibility mode, which means that the non-deterministic masternode list is still active. Only after SPORK16 activation, this list will become the active one. Also, the values in the payment related fields are not used at the moment, but still updated for every block. Please ignore this until SPORK16 activation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;หมายเหตุ: รายการนี้ยังไม่เปิดใช้งานและมีวัตถุประสงค์เพื่อให้ข้อมูลเท่านั้น  เครือข่ายยังคงทำงานในโหมดสอดคล้องกันได้ซึ่งหมายความว่ารายการ masternode ที่ไม่ได้กำหนดค่ายังคงทำงานอยู่ หลังจากเปิดงาน SPORK16 แล้วรายการนี้จะเปิดใช้งาน นอกจากนี้ยังไม่ได้ใช้ค่าในฟิลด์ที่เกี่ยวข้องกับการชำระเงิน แต่ยังคงได้รับการอัปเดตสำหรับทุก ๆ บล็อก โปรดเพิกเฉยต่อสิ่งนี้จนกว่าจะเปิดใช้งาน SPORK16&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Start alias</source>

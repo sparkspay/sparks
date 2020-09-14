@@ -1410,8 +1410,8 @@ unsigned int CGovernanceManager::GetMinVoteTime()
 
 void CGovernanceManager::ClearPreDIP3Votes()
 {
-    // This removes all votes which were created before DIP3 spork15 activation
-    // All these votes are invalid immediately after spork15 activation due to the introduction of voting keys, which
+    // This removes all votes which were created before DIP3 spork16 activation
+    // All these votes are invalid immediately after spork16 activation due to the introduction of voting keys, which
     // are not equal to the old masternode private keys
 
     unsigned int minVoteTime = GetMinVoteTime();

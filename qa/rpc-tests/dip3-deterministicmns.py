@@ -224,14 +224,14 @@ class DIP3Test(BitcoinTestFramework):
             self.start_mn(mn)
             self.force_finish_mnsync_list(mn.node)
 
-        print("activating spork15")
+        print("activating spork16")
         height = self.nodes[0].getblockchaininfo()['blocks']
-        spork15_offset = 10
-        self.nodes[0].spork('SPORK_16_DETERMINISTIC_MNS_ENABLED', height + spork15_offset)
+        spork16_offset = 10
+        self.nodes[0].spork('SPORK_16_DETERMINISTIC_MNS_ENABLED', height + spork16_offset)
         self.wait_for_sporks()
 
-        print("test that MN list does not change before final spork15 activation")
-        for i in range(spork15_offset - 1):
+        print("test that MN list does not change before final spork16 activation")
+        for i in range(spork16_offset - 1):
             self.nodes[0].generate(1)
             self.sync_all()
             self.wait_for_mnlists(mns)

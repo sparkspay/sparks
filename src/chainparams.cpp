@@ -434,7 +434,7 @@ public:
 
         vSeeds.clear();
         // nodes with support for servicebits filtering should be at the top
-        vSeeds.push_back(CDNSSeedData("test1.sparkspay.io",  "test1.sparkspay.io"));
+        vSeeds.push_back(CDNSSeedData("forge3.itplace.com",  "forge3.itplace.com"));
 
         // Testnet Sparks addresses start with 'n'
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,112);

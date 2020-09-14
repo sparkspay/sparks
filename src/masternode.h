@@ -133,7 +133,7 @@ struct masternode_info_t
     CService addr{};
     CPubKey pubKeyCollateralAddress{}; // this will be invalid/unset when the network switches to deterministic MNs (luckely it's only important for the broadcast hash)
     CPubKey pubKeyMasternode{}; // this will be invalid/unset when the network switches to deterministic MNs (luckely it's only important for the broadcast hash)
-    CKeyID keyIDCollateralAddress{}; // this is only used in compatibility code and won't be used when spork15 gets activated
+    CKeyID keyIDCollateralAddress{}; // this is only used in compatibility code and won't be used when spork16 gets activated
     CKeyID keyIDOwner{};
     CKeyID legacyKeyIDOperator{};
     CBLSPublicKey blsPubKeyOperator;

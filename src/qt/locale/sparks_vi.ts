@@ -1109,8 +1109,8 @@
         <translation>Số lượng các nút:</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list represents the legacy and non-deterministic masternode list. It is only active as long as DIP3 has not been fully activated. After SPORK15 activation, this list will be empty.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Chú ý: Danh sách này liệt kê danh sách các masternode và không phải loại xác định trước. Nó chỉ hoạt động khi mà DIP3 không được kích hoạt một cách đầy đủ. Sau khi SPORK15 được kích hoạt, danh sách này sẽ bị trống.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list represents the legacy and non-deterministic masternode list. It is only active as long as DIP3 has not been fully activated. After SPORK16 activation, this list will be empty.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Chú ý: Danh sách này liệt kê danh sách các masternode và không phải loại xác định trước. Nó chỉ hoạt động khi mà DIP3 không được kích hoạt một cách đầy đủ. Sau khi SPORK16 được kích hoạt, danh sách này sẽ bị trống.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>DIP3 Masternodes</source>
@@ -1137,8 +1137,8 @@
         <translation>Phần thưởng cho người vận hành</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list is not active yet and only for informational purposes. The network is still running in compatibility mode, which means that the non-deterministic masternode list is still active. Only after SPORK15 activation, this list will become the active one. Also, the values in the payment related fields are not used at the moment, but still updated for every block. Please ignore this until SPORK15 activation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Chú ý: Danh sách này chưa được kích hoạt và chỉ có mục tiêu cung cấp thông tin. Mạng vẫn đang được chạy trong chế độ tương thích, điều đó có nghĩa là danh sách các masternode không xác định trước vẫn đang hoạt động. Chỉ sau khi SPORK15 được kích hoạt, danh sách này mới sẽ được hoạt động. Như vậy, các giá trị trong các trường liên quan đến giao dịch là hiện tại chưa được sử dụng, nhưng sẽ được cập nhật cho mỗi khối. Hãy bỏ qua điều này cho đến khi SPORK15 được kích hoạt.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list is not active yet and only for informational purposes. The network is still running in compatibility mode, which means that the non-deterministic masternode list is still active. Only after SPORK16 activation, this list will become the active one. Also, the values in the payment related fields are not used at the moment, but still updated for every block. Please ignore this until SPORK16 activation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Chú ý: Danh sách này chưa được kích hoạt và chỉ có mục tiêu cung cấp thông tin. Mạng vẫn đang được chạy trong chế độ tương thích, điều đó có nghĩa là danh sách các masternode không xác định trước vẫn đang hoạt động. Chỉ sau khi SPORK16 được kích hoạt, danh sách này mới sẽ được hoạt động. Như vậy, các giá trị trong các trường liên quan đến giao dịch là hiện tại chưa được sử dụng, nhưng sẽ được cập nhật cho mỗi khối. Hãy bỏ qua điều này cho đến khi SPORK16 được kích hoạt.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Start alias</source>

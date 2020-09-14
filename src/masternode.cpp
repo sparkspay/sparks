@@ -104,7 +104,7 @@ bool CMasternode::UpdateFromNewBroadcast(CMasternodeBroadcast& mnb, CConnman& co
 //
 arith_uint256 CMasternode::CalculateScore(const uint256& blockHash) const
 {
-    // NOTE not called when deterministic masternodes (spork15) are activated
+    // NOTE not called when deterministic masternodes (spork16) are activated
 
     // Deterministically calculate a "score" for a Masternode based on any given (block)hash
     CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);

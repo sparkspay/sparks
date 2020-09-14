@@ -479,8 +479,8 @@ bool CDeterministicMNManager::ProcessBlock(const CBlock& block, const CBlockInde
             __func__, nHeight, newList.GetAllMNsCount());
     }
 
-    if (nHeight == GetSpork15Value()) {
-        LogPrintf("CDeterministicMNManager::%s -- spork15 is active now. nHeight=%d\n", __func__, nHeight);
+    if (nHeight == GetSpork16Value()) {
+        LogPrintf("CDeterministicMNManager::%s -- spork16 is active now. nHeight=%d\n", __func__, nHeight);
     }
 
     CleanupCache(nHeight);
@@ -499,8 +499,8 @@ bool CDeterministicMNManager::UndoBlock(const CBlock& block, const CBlockIndex* 
     evoDb.Erase(std::make_pair(DB_LIST_SNAPSHOT, blockHash));
     mnListsCache.erase(blockHash);
 
-    if (nHeight == GetSpork15Value()) {
-        LogPrintf("CDeterministicMNManager::%s -- spork15 is not active anymore. nHeight=%d\n", __func__, nHeight);
+    if (nHeight == GetSpork16Value()) {
+        LogPrintf("CDeterministicMNManager::%s -- spork16 is not active anymore. nHeight=%d\n", __func__, nHeight);
     }
 
     return true;
@@ -848,7 +848,7 @@ bool CDeterministicMNManager::HasMNCollateralAtChainTip(const COutPoint& outpoin
     return dmn != nullptr;
 }
 
-int64_t CDeterministicMNManager::GetSpork15Value()
+int64_t CDeterministicMNManager::GetSpork16Value()
 {
     return sporkManager.GetSporkValue(SPORK_16_DETERMINISTIC_MNS_ENABLED);
 }
@@ -883,8 +883,8 @@ bool CDeterministicMNManager::IsDeterministicMNsSporkActive(int nHeight)
         nHeight = tipHeight;
     }
 
-    int64_t spork15Value = GetSpork15Value();
-    return nHeight >= spork15Value;
+    int64_t spork16Value = GetSpork16Value();
+    return nHeight >= spork16Value;
 }
 
 void CDeterministicMNManager::CleanupCache(int nHeight)

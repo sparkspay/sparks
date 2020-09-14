@@ -251,7 +251,7 @@ void CInstantSend::Vote(CTxLockCandidate& txLockCandidate, CConnman& connman)
             continue;
         }
         if (!deterministicMNManager->IsDeterministicMNsSporkActive()) {
-            // not used until spork15 activation
+            // not used until spork16 activation
             quorumModifierHash = uint256();
         }
 
@@ -286,7 +286,7 @@ void CInstantSend::Vote(CTxLockCandidate& txLockCandidate, CConnman& connman)
         }
 
         // we haven't voted for this outpoint yet, let's try to do this now
-        // Please note that activeMasternodeInfo.proTxHash is only valid after spork15 activation
+        // Please note that activeMasternodeInfo.proTxHash is only valid after spork16 activation
         CTxLockVote vote(txHash, outpointLockPair.first, activeMasternodeInfo.outpoint, quorumModifierHash, activeMasternodeInfo.proTxHash);
 
         if (!vote.Sign()) {
@@ -1036,7 +1036,7 @@ bool CTxLockVote::IsValid(CNode* pnode, CConnman& connman) const
     }
 
     // Verify that masternodeProTxHash belongs to the same MN referred by the collateral
-    // Only v13 nodes will send us locks with this field set, and only after spork15 activation
+    // Only v13 nodes will send us locks with this field set, and only after spork16 activation
     if (!masternodeProTxHash.IsNull()) {
         masternode_info_t mnInfo;
         if (!mnodeman.GetMasternodeInfo(masternodeProTxHash, mnInfo) || mnInfo.outpoint != outpointMasternode) {

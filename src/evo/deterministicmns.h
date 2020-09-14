@@ -489,7 +489,7 @@ public:
     bool IsDeterministicMNsSporkActive(int nHeight = -1);
 
 private:
-    int64_t GetSpork15Value();
+    int64_t GetSpork16Value();
     void CleanupCache(int nHeight);
 };
 

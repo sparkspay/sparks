@@ -271,7 +271,7 @@ See detailed [set of changes](https://github.com/dashpay/dash/compare/v0.12.3.4.
 - [`03a6865d9`](https://github.com/dashpay/dash/commit/03a6865d9) Enforce correct port on mainnet for DIP3 MNs (#2576)
 - [`3f26ed78c`](https://github.com/dashpay/dash/commit/3f26ed78c) Backport network checks missing in CActiveDeterministicMasternodeManager::Init() (#2572)
 - [`7c7500864`](https://github.com/dashpay/dash/commit/7c7500864) Also stop asking other peers for a TX when ProcessTxLockRequest fails (#2529)
-- [`19a6f718d`](https://github.com/dashpay/dash/commit/19a6f718d) Don't respond with getdata for legacy inv types when spork15 is active (#2528)
+- [`19a6f718d`](https://github.com/dashpay/dash/commit/19a6f718d) Don't respond with getdata for legacy inv types when spork16 is active (#2528)
 - [`22dcec71a`](https://github.com/dashpay/dash/commit/22dcec71a) Punish nodes which keep requesting and then rejecting blocks (#2518)
 - [`a18ca49a2`](https://github.com/dashpay/dash/commit/a18ca49a2) Disconnect peers with version < 70212 after DIP3 activation via BIP9 (#2497)
 - [`a57e9dea7`](https://github.com/dashpay/dash/commit/a57e9dea7) Fix filtering of the lock votes for SPV nodes. (#2468)
@@ -383,7 +383,7 @@ See detailed [set of changes](https://github.com/dashpay/dash/compare/v0.12.3.4.
 - [`b5947f299`](https://github.com/dashpay/dash/commit/b5947f299) Implement BuildSimplifiedDiff in CDeterministicMNList
 - [`6edad3745`](https://github.com/dashpay/dash/commit/6edad3745) Use ForEachMN and GetMN in BuildDiff instead of directly accessing mnMap
 - [`83aac461b`](https://github.com/dashpay/dash/commit/83aac461b) Allow P2SH/multisig addresses for operator rewards
-- [`f5864254c`](https://github.com/dashpay/dash/commit/f5864254c) Do not use keyIDCollateralAddress anymore when spork15 is active
+- [`f5864254c`](https://github.com/dashpay/dash/commit/f5864254c) Do not use keyIDCollateralAddress anymore when spork16 is active
 - [`5ccf556f3`](https://github.com/dashpay/dash/commit/5ccf556f3) GetMasternodeInfo with payee argument should do nothing when DIP3 is active
 - [`927e8bd79`](https://github.com/dashpay/dash/commit/927e8bd79) Also forbid reusing collateral key for owner/voting keys
 - [`826e7d063`](https://github.com/dashpay/dash/commit/826e7d063) Move internal collateral check to the else branch of the external collateral check
@@ -410,12 +410,12 @@ See detailed [set of changes](https://github.com/dashpay/dash/compare/v0.12.3.4.
 - [`6adc236d0`](https://github.com/dashpay/dash/commit/6adc236d0) Only use dataDir in CEvoDB when not in-memory (#2291)
 - [`8a878bfcf`](https://github.com/dashpay/dash/commit/8a878bfcf) Call InitializeCurrentBlockTip and activeMasternodeManager->Init after importing has finished (#2286)
 - [`6b3d65028`](https://github.com/dashpay/dash/commit/6b3d65028) After DIP3 activation, allow voting with voting keys stored in your wallet (#2281)
-- [`d8247dfff`](https://github.com/dashpay/dash/commit/d8247dfff) Use refactored payment logic when spork15 is active
+- [`d8247dfff`](https://github.com/dashpay/dash/commit/d8247dfff) Use refactored payment logic when spork16 is active
 - [`60002b7dd`](https://github.com/dashpay/dash/commit/60002b7dd) Payout and enforce operator reward payments
 - [`2c481f0f8`](https://github.com/dashpay/dash/commit/2c481f0f8) Implement deterministic version of CMasternodePayments::IsScheduled
 - [`19fbf8ab7`](https://github.com/dashpay/dash/commit/19fbf8ab7) Move cs_main lock from CMasternode::UpdateLastPaid to CMasternodeMan
 - [`dc7292afa`](https://github.com/dashpay/dash/commit/dc7292afa) Implement new MN payments logic and add compatibility code
-- [`d4530eb7d`](https://github.com/dashpay/dash/commit/d4530eb7d) Put all masternodes in MASTERNODE_ENABLED state when spork15 is active
+- [`d4530eb7d`](https://github.com/dashpay/dash/commit/d4530eb7d) Put all masternodes in MASTERNODE_ENABLED state when spork16 is active
 - [`31b4f8354`](https://github.com/dashpay/dash/commit/31b4f8354) Forbid starting of legacy masternodes with non matching ProTx collateral values
 - [`5050a9205`](https://github.com/dashpay/dash/commit/5050a9205) Add compatibility code for FindRandomNotInVec and GetMasternodeScores
 - [`cc73422f8`](https://github.com/dashpay/dash/commit/cc73422f8) Add methods to add/remove (non-)deterministic MNs
@@ -507,9 +507,9 @@ See detailed [set of changes](https://github.com/dashpay/dash/compare/v0.12.3.4.
 ### Governance
 - [`222e5b4f7`](https://github.com/dashpay/dash/commit/222e5b4f7) Remove proposal/funding votes from MNs that changed the voting key (#2570)
 - [`5185dd5b7`](https://github.com/dashpay/dash/commit/5185dd5b7) Use correct time field when removing pre-DIP3 votes (#2535)
-- [`d2ca9edde`](https://github.com/dashpay/dash/commit/d2ca9edde) Fix multiple issues with governance voting after spork15 activation (#2526)
+- [`d2ca9edde`](https://github.com/dashpay/dash/commit/d2ca9edde) Fix multiple issues with governance voting after spork16 activation (#2526)
 - [`08dc17871`](https://github.com/dashpay/dash/commit/08dc17871) Drop pre-DIP3 votes from current votes per MN per object (#2524)
-- [`0c1b683a0`](https://github.com/dashpay/dash/commit/0c1b683a0) Clear votes which were created before spork15 activation and use operator key for non-funding votes (#2512)
+- [`0c1b683a0`](https://github.com/dashpay/dash/commit/0c1b683a0) Clear votes which were created before spork16 activation and use operator key for non-funding votes (#2512)
 - [`da4b5fb16`](https://github.com/dashpay/dash/commit/da4b5fb16) Remove an unused function from governance object collateral code (#2480)
 - [`8deb8e90f`](https://github.com/dashpay/dash/commit/8deb8e90f) Modernize Gov Methods (#2326)
 - [`0471fa884`](https://github.com/dashpay/dash/commit/0471fa884) Drop MAX_GOVERNANCE_OBJECT_DATA_SIZE (and maxgovobjdatasize in rpc) (#2298)
@@ -519,7 +519,7 @@ See detailed [set of changes](https://github.com/dashpay/dash/compare/v0.12.3.4.
 
 ### GUI
 - [`858bb52ad`](https://github.com/dashpay/dash/commit/858bb52ad) Show correct operator payee address in DIP3 MN list GUI (#2563)
-- [`190863722`](https://github.com/dashpay/dash/commit/190863722) Remove legacy MN list tabs on spork15 activation (#2567)
+- [`190863722`](https://github.com/dashpay/dash/commit/190863722) Remove legacy MN list tabs on spork16 activation (#2567)
 - [`3e97b0cbd`](https://github.com/dashpay/dash/commit/3e97b0cbd) Make sure that we can get inputType and fUseInstantSend regardless of the way recipients are sorted (#2550)
 - [`1a7c29b97`](https://github.com/dashpay/dash/commit/1a7c29b97) Revert "Sort recipients in SendCoins dialog via BIP69 rule (#2546)" (#2549)
 - [`ca0aec2a3`](https://github.com/dashpay/dash/commit/ca0aec2a3) Match recipients with txouts by scriptPubKey in reassignAmounts() (#2548)

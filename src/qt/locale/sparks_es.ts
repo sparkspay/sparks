@@ -1109,8 +1109,8 @@
         <translation>Recuento de nodos:</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list represents the legacy and non-deterministic masternode list. It is only active as long as DIP3 has not been fully activated. After SPORK15 activation, this list will be empty.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Nota: Esta lista representa la lista de masternodes heredada y no determinista. Solo está activoa mientras DIP3 no se haya activado completamente. Después de la activación de SPORK15, esta lista estará vacía.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list represents the legacy and non-deterministic masternode list. It is only active as long as DIP3 has not been fully activated. After SPORK16 activation, this list will be empty.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Nota: Esta lista representa la lista de masternodes heredada y no determinista. Solo está activoa mientras DIP3 no se haya activado completamente. Después de la activación de SPORK16, esta lista estará vacía.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>DIP3 Masternodes</source>
@@ -1137,8 +1137,8 @@
         <translation>Recompensa del operador</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list is not active yet and only for informational purposes. The network is still running in compatibility mode, which means that the non-deterministic masternode list is still active. Only after SPORK15 activation, this list will become the active one. Also, the values in the payment related fields are not used at the moment, but still updated for every block. Please ignore this until SPORK15 activation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Nota: Esta lista aún no está activa y es solo para fines informativos. La red todavía se está ejecutando en el modo de compatibilidad, lo que significa que la lista de masternodes no determinista aún está activa. Solo después de la activación de SPORK15, esta lista se convertirá en la activa. Además, los valores en los campos relacionados con el pago no se utilizan en este momento, pero aún se actualizan para cada bloque. Por favor ignore esto hasta la activación de SPORK15.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list is not active yet and only for informational purposes. The network is still running in compatibility mode, which means that the non-deterministic masternode list is still active. Only after SPORK16 activation, this list will become the active one. Also, the values in the payment related fields are not used at the moment, but still updated for every block. Please ignore this until SPORK16 activation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Nota: Esta lista aún no está activa y es solo para fines informativos. La red todavía se está ejecutando en el modo de compatibilidad, lo que significa que la lista de masternodes no determinista aún está activa. Solo después de la activación de SPORK16, esta lista se convertirá en la activa. Además, los valores en los campos relacionados con el pago no se utilizan en este momento, pero aún se actualizan para cada bloque. Por favor ignore esto hasta la activación de SPORK16.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Start alias</source>

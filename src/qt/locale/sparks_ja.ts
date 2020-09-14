@@ -1110,8 +1110,8 @@
         <translation>ノード数:</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list represents the legacy and non-deterministic masternode list. It is only active as long as DIP3 has not been fully activated. After SPORK15 activation, this list will be empty.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;注：このリストは、従来の非決定論的マスターノードリストを表します。 DIP3が完全にアクティブ化されていない限り有効です。 SPORK15の有効化後、このリストは空になります。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list represents the legacy and non-deterministic masternode list. It is only active as long as DIP3 has not been fully activated. After SPORK16 activation, this list will be empty.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;注：このリストは、従来の非決定論的マスターノードリストを表します。 DIP3が完全にアクティブ化されていない限り有効です。 SPORK16の有効化後、このリストは空になります。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>DIP3 Masternodes</source>
@@ -1138,8 +1138,8 @@
         <translation>オペレーター報酬</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list is not active yet and only for informational purposes. The network is still running in compatibility mode, which means that the non-deterministic masternode list is still active. Only after SPORK15 activation, this list will become the active one. Also, the values in the payment related fields are not used at the moment, but still updated for every block. Please ignore this until SPORK15 activation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;注：このリストはまだアクティブではなく、情報提供のみを目的としています。 ネットワークはまだ互換モードで実行されています。つまり、非決定論的マスターノードリストはまだアクティブです。 SPORK15のアクティブ化後に初めて、このリストがアクティブになります。 また、支払い関連フィールドの値は現時点では使用されていませんが、ブロックごとに更新されています。 SPORK15のアクティブ化までこれを無視してください。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list is not active yet and only for informational purposes. The network is still running in compatibility mode, which means that the non-deterministic masternode list is still active. Only after SPORK16 activation, this list will become the active one. Also, the values in the payment related fields are not used at the moment, but still updated for every block. Please ignore this until SPORK16 activation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;注：このリストはまだアクティブではなく、情報提供のみを目的としています。 ネットワークはまだ互換モードで実行されています。つまり、非決定論的マスターノードリストはまだアクティブです。 SPORK16のアクティブ化後に初めて、このリストがアクティブになります。 また、支払い関連フィールドの値は現時点では使用されていませんが、ブロックごとに更新されています。 SPORK16のアクティブ化までこれを無視してください。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Start alias</source>

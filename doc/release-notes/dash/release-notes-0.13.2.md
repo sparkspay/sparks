@@ -63,7 +63,7 @@ Fix for litemode nodes to not reject specific DIP3 transactions
 Previous versions might cause litemode nodes to reject the mainnet chain after spork 15 activation. This is due to a
 consensus rule being less strict in one specific case when spork 15 is active. Litemode nodes can not know about the
 change in consensus rules as they have no knowledge about sporks. In 0.13.2.0, when litemode is enabled, we default to the
-behaviour of activated spork15 in this specific case, which fixes the issue. The restriction will be completely removed
+behaviour of activated spork16 in this specific case, which fixes the issue. The restriction will be completely removed
 in the next major release.
 
 Fix incorrect behavior for "protx diff" and the P2P message "GETMNLISTDIFF"

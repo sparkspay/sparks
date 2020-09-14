@@ -172,7 +172,7 @@ bool IsBlockPayeeValid(const CTransaction& txNew, int nBlockHeight, CAmount bloc
         if(CSuperblockManager::IsSuperblockTriggered(nBlockHeight)) {
             if(CSuperblockManager::IsValid(txNew, nBlockHeight, blockReward)) {
                 LogPrintf("IsBlockPayeeValid -- Valid superblock at height %d: %s", nBlockHeight, txNew.ToString());
-                // only allow superblock and masternode payments in the same block after spork15 activation
+                // only allow superblock and masternode payments in the same block after spork16 activation
                 if (!deterministicMNManager->IsDeterministicMNsSporkActive(nBlockHeight))
                     return true;
                 // continue validation, should also pay MN
@@ -189,14 +189,14 @@ bool IsBlockPayeeValid(const CTransaction& txNew, int nBlockHeight, CAmount bloc
         LogPrintf("IsBlockPayeeValid -- Superblocks are disabled, no superblocks allowed\n");
     }
 
-    // If this isn't a superblock or spork15 is activated, check for correct masternode payment
+    // If this isn't a superblock or spork16 is activated, check for correct masternode payment
     if(mnpayments.IsTransactionValid(txNew, nBlockHeight, blockReward)) {
         LogPrintf("mnpayments", "%s -- Valid masternode payment at height %d: %s", __func__, nBlockHeight, txNew.ToString());
         return true;
     }
 
     if (deterministicMNManager->IsDeterministicMNsSporkActive(nBlockHeight)) {
-        // always enforce masternode payments when spork15 is active
+        // always enforce masternode payments when spork16 is active
         LogPrintf("%s -- ERROR: Invalid masternode payment detected at height %d: %s", __func__, nBlockHeight, txNew.ToString());
         return false;
     } else {
@@ -222,7 +222,7 @@ void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blo
 
     bool allowSuperblockAndMNReward = deterministicMNManager->IsDeterministicMNsSporkActive(nBlockHeight);
 
-    // don't allow payments to superblocks AND masternodes before spork15 activation
+    // don't allow payments to superblocks AND masternodes before spork16 activation
     if (!voutSuperblockPaymentsRet.empty() && !allowSuperblockAndMNReward) {
         txNew.vout.insert(txNew.vout.end(), voutSuperblockPaymentsRet.begin(), voutSuperblockPaymentsRet.end());
         return;
