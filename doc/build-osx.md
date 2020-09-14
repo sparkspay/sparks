@@ -28,37 +28,7 @@ brew install librsvg
 Building
 --------
 
-<<<<<<< HEAD
 Follow the instructions in [build-generic](build-generic.md)
-=======
-NOTE: Building with Qt4 is still supported, however, doing so could result in a broken UI. Therefore, building with Qt5 is recommended.
-
-Build Sparks Core
-------------------------
-
-1. Clone the Sparks Core source code and cd into `sparks`
-
-        git clone https://github.com/sparkspay/sparks
-        cd sparks
-
-2.  Build Sparks Core:
-
-    Configure and build the headless sparks binaries as well as the GUI (if Qt is found).
-
-    You can disable the GUI build by passing `--without-gui` to configure.
-
-        ./autogen.sh
-        ./configure
-        make
-
-3.  It is recommended to build and run the unit tests:
-
-        make check
-
-4.  You can also create a .dmg that contains the .app bundle (optional):
-
-        make deploy
->>>>>>> refs/heads/master
 
 Running
 -------
