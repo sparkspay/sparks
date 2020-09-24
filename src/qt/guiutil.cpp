@@ -929,7 +929,7 @@ QString getThemeName()
     if(!theme.isEmpty()){
         return theme;
     }
-    return QString("light");  
+    return QString("sparkspay2020");  
 }
 
 // Open CSS when configured
@@ -944,8 +944,8 @@ QString loadStyleSheet()
         cssName = QString(":/css/") + theme; 
     }
     else {
-        cssName = QString(":/css/light");  
-        settings.setValue("theme", "light");
+        cssName = QString(":/css/sparkspay2020");  
+        settings.setValue("theme", "sparkspay2020");
     }
     
     QFile qFile(cssName);      
