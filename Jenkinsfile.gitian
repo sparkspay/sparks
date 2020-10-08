@@ -11,7 +11,7 @@ def OSX_SDK='10.11'
 def proc = 4
 def mem = 2000
 
-def repositoryUrl = "https://github.com/sparkspay/sparks.git"
+def repositoryUrl = "https://github.com/sparkspayofficial/sparks.git"
 
 def tasks = [:]
 for(int i = 0; i < targets.size(); i++) {
@@ -35,7 +35,7 @@ for(int i = 0; i < targets.size(); i++) {
           gitianDescriptor = readYaml file: "contrib/gitian-descriptors/gitian-${target}.yml"
         }
         dir('gitian-builder') {
-          git url: 'https://github.com/sparkspay/gitian-builder.git'
+          git url: 'https://github.com/sparkspayofficial/gitian-builder.git'
         }
         sh "mkdir -p sparkscore-binaries"
         if (target == "osx") {

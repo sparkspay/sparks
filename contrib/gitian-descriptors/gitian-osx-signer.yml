@@ -7,7 +7,7 @@ architectures:
 packages:
 - "faketime"
 remotes:
-- "url": "https://github.com/sparkspay/sparks-detached-sigs.git"
+- "url": "https://github.com/sparkspayofficial/sparks-detached-sigs.git"
   "dir": "signature"
 files:
 - "sparkscore-osx-unsigned.tar.gz"
