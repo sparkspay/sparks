@@ -31,7 +31,7 @@ packages:
 - "python3"
 - "libxkbcommon0"
 remotes:
-- "url": "https://github.com/sparkspay/sparks.git"
+- "url": "https://github.com/sparkspayofficial/sparks.git"
   "dir": "sparks"
 files: []
 script: |
