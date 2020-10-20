@@ -661,7 +661,15 @@ UniValue masternode_status(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "This is not a masternode");
 
     UniValue mnObj(UniValue::VOBJ);
-
+    
+    CMasternode mn;
+    bool gotMn = mnodeman.Get(activeMasternodeInfo.outpoint, mn);
+    if(!gotMn) {
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "This is not a masternode");
+    }
+    if(mn.IsGuardian()) {
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "This is a Guardian node, please use \"guardian status\" instead");
+    }
     // keep compatibility with legacy status for now (might get deprecated/removed later)
     mnObj.push_back(Pair("outpoint", activeMasternodeInfo.outpoint.ToStringShort()));
     mnObj.push_back(Pair("service", activeMasternodeInfo.service.ToString()));
