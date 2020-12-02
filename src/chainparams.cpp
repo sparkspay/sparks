@@ -236,6 +236,13 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nWindowSize = 1000;
         consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nThreshold = 800; // 80% of 1000
 
+        // Deployment of DIP0003
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 4;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nStartTime = 1604188800; // Nov 1st, 2020
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 1638316800; // Dec 1st, 2021
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nWindowSize = 1000;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nThreshold = 600; // 60% of 1000
+
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000eee93cb0b1f4be");//269664
 
@@ -324,6 +331,11 @@ public:
             ( 200000, uint256S("0x00000000124558e8e546ebc3a45f05952cb8476c29193c0b2d130d97450f92e4"))
             ( 250000, uint256S("0x000000000c449edcdcd3fe2ea4a7f2910a13089065acc10a4bf7d15f00c5960e"))
             ( 317500, uint256S("0x00000000074a05411efe26c57b14780103b638918927a86ee4cf683dfd23a068"))
+            ( 350000, uint256S("0x000000001d364a30921e1c208f5b2a3537c6f848cc16858976bed0dbed848244"))
+            ( 400000, uint256S("0x000000007010d10480818fabe4b47c99e4f2973b78b6ccab3e369204df679eff"))
+            ( 450000, uint256S("0x00000000cf88e545fbefa839ccbce18b24137835f02ac2b6818f8134fe1f9ca2"))
+            ( 500000, uint256S("0x00000000abd8dec8cfb87b00d78344d432b8121f21b2af8a46dd84a20b0c0b51"))
+            ( 550000, uint256S("0x00000000336504dbd915c8b17c3085ee08cc5eaef67e4ec34f1f7863f472149b"))
         };
 
         chainTxData = ChainTxData{
