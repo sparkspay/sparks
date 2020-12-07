@@ -478,7 +478,7 @@ public:
         nPoolMaxTransactions = 3;
         nFulfilledRequestExpireTime = 5*60; // fulfilled requests expire in 5 minutes
 
-        vSporkAddresses = {"n7ntRMZ83MKzu9Krwp9W5rKGeTBRyVrVjc"};
+        vSporkAddresses = {"nFnDXRQFZWscibREq3EAh5GiPuKc92D2Ac"};
         nMinSporkKeys = 1;
         fBIP9CheckMasternodesUpgraded = true;
         consensus.fLLMQAllowDummyCommitments = true;
@@ -735,7 +735,7 @@ public:
         nFulfilledRequestExpireTime = 5*60; // fulfilled requests expire in 5 minutes
 
         // privKey: cP4EKFyJsHT39LDqgdcB43Y3YXjNyjb5Fuas1GQSeAtjnZWmZEQK
-        vSporkAddresses = {"n7ntRMZ83MKzu9Krwp9W5rKGeTBRyVrVjc"};
+        vSporkAddresses = {"nCYRgPB26SYEf37EmUPnZSqT6Uy4UjqWNm"};
         nMinSporkKeys = 1;
         // regtest usually has no masternodes in most tests, so don't check for upgraged MNs
         fBIP9CheckMasternodesUpgraded = false;
