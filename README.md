@@ -1,4 +1,4 @@
-Sparks Core staging tree 0.12.3
+Sparks Core staging tree 0.13.0
 ===============================
 
 `master:` [![Build Status](https://travis-ci.org/sparkspay/sparks.svg?branch=master)](https://travis-ci.org/sparkspay/sparks) `develop:` [![Build Status](https://travis-ci.org/sparkspay/sparks.svg?branch=develop)](https://travis-ci.org/sparkspay/sparks/branches)

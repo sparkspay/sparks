@@ -1,5 +1,6 @@
 # Copyright (c) 2013-2016 The Bitcoin Core developers
 # Copyright (c) 2014-2018 The Dash Core developers
+# Copyright (c) 2016-2020 The Sparks Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,6 +9,7 @@ EXTRA_LIBRARIES += qt/libsparksqt.a
 
 # sparks qt core #
 QT_TS = \
+  qt/locale/sparks_ar.ts \
   qt/locale/sparks_bg.ts \
   qt/locale/sparks_de.ts \
   qt/locale/sparks_en.ts \
@@ -23,6 +25,8 @@ QT_TS = \
   qt/locale/sparks_ru.ts \
   qt/locale/sparks_sk.ts \
   qt/locale/sparks_sv.ts \
+  qt/locale/sparks_th.ts \
+  qt/locale/sparks_tr.ts \
   qt/locale/sparks_vi.ts \
   qt/locale/sparks_zh_CN.ts \
   qt/locale/sparks_zh_TW.ts
@@ -31,7 +35,6 @@ QT_FORMS_UI = \
   qt/forms/addressbookpage.ui \
   qt/forms/askpassphrasedialog.ui \
   qt/forms/coincontroldialog.ui \
-  qt/forms/darksendconfig.ui \
   qt/forms/editaddressdialog.ui \
   qt/forms/helpmessagedialog.ui \
   qt/forms/intro.ui \
@@ -62,7 +65,6 @@ QT_MOC_CPP = \
   qt/moc_coincontroldialog.cpp \
   qt/moc_coincontroltreewidget.cpp \
   qt/moc_csvmodelwriter.cpp \
-  qt/moc_darksendconfig.cpp \
   qt/moc_editaddressdialog.cpp \
   qt/moc_guiutil.cpp \
   qt/moc_intro.cpp \
@@ -132,7 +134,6 @@ BITCOIN_QT_H = \
   qt/coincontroldialog.h \
   qt/coincontroltreewidget.h \
   qt/csvmodelwriter.h \
-  qt/darksendconfig.h \
   qt/editaddressdialog.h \
   qt/guiconstants.h \
   qt/guiutil.h \
@@ -345,6 +346,60 @@ RES_ICONS = \
   qt/res/icons/light/fontsmaller.png \
   qt/res/icons/light/transaction_abandoned.png \
   qt/res/icons/light/network_disabled.png \
+  qt/res/icons/sparkspay2020/add.png \
+  qt/res/icons/sparkspay2020/address-book.png \
+  qt/res/icons/sparkspay2020/browse.png \
+  qt/res/icons/sparkspay2020/clock1.png \
+  qt/res/icons/sparkspay2020/clock2.png \
+  qt/res/icons/sparkspay2020/clock3.png \
+  qt/res/icons/sparkspay2020/clock4.png \
+  qt/res/icons/sparkspay2020/clock5.png \
+  qt/res/icons/sparkspay2020/configure.png \
+  qt/res/icons/sparkspay2020/connect0_16.png \
+  qt/res/icons/sparkspay2020/connect1_16.png \
+  qt/res/icons/sparkspay2020/connect2_16.png \
+  qt/res/icons/sparkspay2020/connect3_16.png \
+  qt/res/icons/sparkspay2020/connect4_16.png \
+  qt/res/icons/sparkspay2020/debugwindow.png \
+  qt/res/icons/sparkspay2020/drkblue_editpaste.png \
+  qt/res/icons/sparkspay2020/drkblue_address-book.png \
+  qt/res/icons/sparkspay2020/drkblue_editcopy.png \
+  qt/res/icons/sparkspay2020/drkblue_remove.png \
+  qt/res/icons/sparkspay2020/edit.png \
+  qt/res/icons/sparkspay2020/editcopy.png \
+  qt/res/icons/sparkspay2020/editpaste.png \
+  qt/res/icons/sparkspay2020/export.png \
+  qt/res/icons/sparkspay2020/eye.png \
+  qt/res/icons/sparkspay2020/eye_minus.png \
+  qt/res/icons/sparkspay2020/eye_plus.png \
+  qt/res/icons/sparkspay2020/filesave.png \
+  qt/res/icons/sparkspay2020/hd_disabled.png \
+  qt/res/icons/sparkspay2020/hd_enabled.png \
+  qt/res/icons/sparkspay2020/history.png \
+  qt/res/icons/sparkspay2020/key.png \
+  qt/res/icons/sparkspay2020/lock_closed.png \
+  qt/res/icons/sparkspay2020/lock_open.png \
+  qt/res/icons/sparkspay2020/masternodes.png \
+  qt/res/icons/sparkspay2020/overview.png \
+  qt/res/icons/sparkspay2020/quit.png \
+  qt/res/icons/sparkspay2020/receive.png \
+  qt/res/icons/sparkspay2020/remove.png \
+  qt/res/icons/sparkspay2020/send.png \
+  qt/res/icons/sparkspay2020/synced.png \
+  qt/res/icons/sparkspay2020/transaction0.png \
+  qt/res/icons/sparkspay2020/transaction2.png \
+  qt/res/icons/sparkspay2020/transaction_conflicted.png \
+  qt/res/icons/sparkspay2020/tx_inout.png \
+  qt/res/icons/sparkspay2020/tx_input.png \
+  qt/res/icons/sparkspay2020/tx_output.png \
+  qt/res/icons/sparkspay2020/tx_mined.png \
+  qt/res/icons/sparkspay2020/about.png \
+  qt/res/icons/sparkspay2020/about_qt.png \
+  qt/res/icons/sparkspay2020/verify.png \
+  qt/res/icons/sparkspay2020/fontbigger.png \
+  qt/res/icons/sparkspay2020/fontsmaller.png \
+  qt/res/icons/sparkspay2020/transaction_abandoned.png \
+  qt/res/icons/sparkspay2020/network_disabled.png \
   qt/res/icons/light-retro/add.png \
   qt/res/icons/light-retro/address-book.png \
   qt/res/icons/light-retro/browse.png \
@@ -487,7 +542,6 @@ BITCOIN_QT_WALLET_CPP = \
   qt/askpassphrasedialog.cpp \
   qt/coincontroldialog.cpp \
   qt/coincontroltreewidget.cpp \
-  qt/darksendconfig.cpp \
   qt/editaddressdialog.cpp \
   qt/masternodelist.cpp \
   qt/openuridialog.cpp \
@@ -560,6 +614,19 @@ RES_IMAGES = \
   qt/res/images/light/drkblue_rightArrow_small.png \
   qt/res/images/light/drkblue_qtreeview_selected.png \
   qt/res/images/light/drkblue_walletFrame_bg.png \
+  qt/res/images/sparkspay2020/about.png \
+  qt/res/images/sparkspay2020/splash.png \
+  qt/res/images/sparkspay2020/splash_testnet.png \
+  qt/res/images/sparkspay2020/sparks_logo_horizontal.png \
+  qt/res/images/sparkspay2020/unchecked.png \
+  qt/res/images/sparkspay2020/checked.png \
+  qt/res/images/sparkspay2020/drkblue_downArrow.png \
+  qt/res/images/sparkspay2020/drkblue_downArrow_small.png \
+  qt/res/images/sparkspay2020/drkblue_upArrow_small.png \
+  qt/res/images/sparkspay2020/drkblue_leftArrow_small.png \
+  qt/res/images/sparkspay2020/drkblue_rightArrow_small.png \
+  qt/res/images/sparkspay2020/drkblue_qtreeview_selected.png \
+  qt/res/images/sparkspay2020/drkblue_walletFrame_bg.png \
   qt/res/images/light-retro/about.png \
   qt/res/images/light-retro/splash.png \
   qt/res/images/light-retro/splash_testnet.png \
@@ -589,6 +656,7 @@ RES_CSS = \
   qt/res/css/drkblue.css \
   qt/res/css/crownium.css \
   qt/res/css/light.css \
+  qt/res/css/sparkspay2020.css \
   qt/res/css/light-hires.css \
   qt/res/css/light-retro.css \
   qt/res/css/light-hires-retro.css \
@@ -645,7 +713,7 @@ qt_sparks_qt_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
 endif
 qt_sparks_qt_LDADD += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_CONSENSUS) $(LIBBITCOIN_CRYPTO) $(LIBUNIVALUE) $(LIBLEVELDB) $(LIBMEMENV) \
   $(BOOST_LIBS) $(QT_LIBS) $(QT_DBUS_LIBS) $(QR_LIBS) $(PROTOBUF_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(LIBSECP256K1) \
-  $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
+  $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(BLS_LIBS)
 qt_sparks_qt_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 qt_sparks_qt_LIBTOOLFLAGS = --tag CXX
 

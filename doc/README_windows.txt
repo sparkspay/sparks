@@ -1,4 +1,4 @@
-Sparks Core 0.12.1
+Sparks Core 0.13.0
 =====================
 
 Intro

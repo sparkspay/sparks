@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) 2014-2016 The Bitcoin Core developers
 # Copyright (c) 2014-2017 The Dash Core developers
-# Copyright (c) 2016-2019 The Sparks Core developers
+# Copyright (c) 2016-2020 The Sparks Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -31,7 +31,7 @@ from .authproxy import AuthServiceProxy, JSONRPCException
 COVERAGE_DIR = None
 
 # The maximum number of nodes a single test can spawn
-MAX_NODES = 8
+MAX_NODES = 15
 # Don't assign rpc or p2p ports lower than this
 PORT_MIN = 11000
 # The number of ports to "reserve" for p2p and rpc, each
@@ -106,11 +106,15 @@ def get_mnsync_status(node):
     result = node.mnsync("status")
     return result['IsSynced']
 
-def wait_to_sync(node):
-    synced = False
-    while not synced:
+def wait_to_sync(node, fast_mnsync=False):
+    while True:
         synced = get_mnsync_status(node)
-        time.sleep(0.5)
+        if synced:
+            break
+        time.sleep(0.2)
+        if fast_mnsync:
+            # skip mnsync states
+            node.mnsync("next")
 
 def p2p_port(n):
     assert(n <= MAX_NODES)
@@ -192,9 +196,9 @@ def sync_mempools(rpc_connections, *, wait=1, timeout=60):
         timeout -= wait
     raise AssertionError("Mempool sync failed")
 
-def sync_masternodes(rpc_connections):
+def sync_masternodes(rpc_connections, fast_mnsync=False):
     for node in rpc_connections:
-        wait_to_sync(node)
+        wait_to_sync(node, fast_mnsync)
 
 bitcoind_processes = {}
 

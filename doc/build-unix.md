@@ -9,19 +9,11 @@ Note
 Always use absolute paths to configure and compile Sparks Core and the dependencies,
 for example, when specifying the path of the dependency:
 
-	../dist/configure --enable-cxx --disable-shared --with-pic --prefix=$BDB_PREFIX
+Run the following commands to install required packages:
 
-Here BDB_PREFIX must be an absolute path - it is defined using $(pwd) which ensures
-the usage of the absolute path.
-
-To Build
----------------------
-
+##### Debian/Ubuntu:
 ```bash
-./autogen.sh
-./configure
-make
-make install # optional
+$ sudo apt-get install curl build-essential libtool autotools-dev automake pkg-config python3 bsdmainutils cmake
 ```
 
 This will build sparks-qt as well if the dependencies are met.
@@ -192,16 +184,23 @@ cd $SPARKS_ROOT
 ./configure LDFLAGS="-L${BDB_PREFIX}/lib/" CPPFLAGS="-I${BDB_PREFIX}/include/" # (other args...)
 ```
 
-**Note**: You only need Berkeley DB if the wallet is enabled (see the section *Disable-Wallet mode* below).
+##### Arch Linux:
+```bash
+$ pacman -S base-devel python3 cmake
+```
 
-Boost
------
-If you need to build Boost yourself:
+##### FreeBSD/OpenBSD:
+```bash
+pkg_add gmake cmake libtool
+pkg_add autoconf # (select highest version, e.g. 2.69)
+pkg_add automake # (select highest version, e.g. 1.15)
+pkg_add python # (select highest version, e.g. 3.5)
+```
 
-	sudo su
-	./bootstrap.sh
-	./bjam install
+Building
+--------
 
+Follow the instructions in [build-generic](build-generic.md)
 
 Security
 --------
@@ -211,8 +210,8 @@ This can be disabled with:
 
 Hardening Flags:
 
-	./configure --enable-hardening
-	./configure --disable-hardening
+	./configure --prefix=<prefix> --enable-hardening
+	./configure --prefix=<prefix> --disable-hardening
 
 
 Hardening enables the following features:
@@ -257,7 +256,7 @@ Disable-wallet mode
 When the intention is to run only a P2P node without a wallet, Sparks Core may be compiled in
 disable-wallet mode with:
 
-    ./configure --disable-wallet
+    ./configure --prefix=<prefix> --disable-wallet
 
 In this case there is no dependency on Berkeley DB 4.8.
 
@@ -315,7 +314,7 @@ For further documentation on the depends system see [README.md](../depends/READM
 Building on FreeBSD
 --------------------
 
-(Updated as of FreeBSD 11.0)
+(TODO, this is untested, please report if it works and if changes to this documentation are needed)
 
 Clang is installed by default as `cc` compiler, this makes it easier to get
 started than on [OpenBSD](build-openbsd.md). Installing dependencies:
@@ -345,3 +344,29 @@ Then build using:
 *Note on debugging*: The version of `gdb` installed by default is [ancient and considered harmful](https://wiki.freebsd.org/GdbRetirement).
 It is not suitable for debugging a multi-threaded C++ program, not even for getting backtraces. Please install the package `gdb` and
 use the versioned gdb command e.g. `gdb7111`.
+
+Building on OpenBSD
+-------------------
+
+(TODO, this is untested, please report if it works and if changes to this documentation are needed)
+(TODO, clang might also be an option. Old documentation reported it to to not work due to linking errors, but we're building all dependencies now as part of the depends system, so this might have changed)
+
+Building on OpenBSD might require installation of a newer GCC version. If needed, do this with:
+
+```bash
+$ pkg_add g++ # (select newest 6.x version)
+```
+
+This compiler will not overwrite the system compiler, it will be installed as `egcc` and `eg++` in `/usr/local/bin`.
+
+Add `CC=egcc CXX=eg++ CPP=ecpp` to the dependencies build and the Dash Core build:
+```bash
+$ cd depends
+$ make CC=egcc CXX=eg++ CPP=ecpp # do not use -jX, this is broken
+$ cd ..
+$ export AUTOCONF_VERSION=2.69 # replace this with the autoconf version that you installed
+$ export AUTOMAKE_VERSION=1.15 # replace this with the automake version that you installed
+$ ./autogen.sh
+$ ./configure --prefix=<prefix> CC=egcc CXX=eg++ CPP=ecpp
+$ gmake # do not use -jX, this is broken
+```

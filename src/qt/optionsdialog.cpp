@@ -92,13 +92,14 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
     }
     
     /* Theme selector */
-    ui->theme->addItem(QString("SPARKS-light"), QVariant("light"));
-    ui->theme->addItem(QString("SPARKS-light-hires"), QVariant("light-hires"));
-    ui->theme->addItem(QString("SPARKS-light-retro"), QVariant("light-retro"));
-    ui->theme->addItem(QString("SPARKS-light-hires-retro"), QVariant("light-hires-retro"));
-    ui->theme->addItem(QString("SPARKS-blue"), QVariant("drkblue"));
-    ui->theme->addItem(QString("SPARKS-Crownium"), QVariant("crownium"));
-    ui->theme->addItem(QString("SPARKS-traditional"), QVariant("trad"));
+    // ui->theme->addItem(QString("SPARKS-light"), QVariant("light"));
+    // ui->theme->addItem(QString("SPARKS-light-hires"), QVariant("light-hires"));
+    // ui->theme->addItem(QString("SPARKS-light-retro"), QVariant("light-retro"));
+    // ui->theme->addItem(QString("SPARKS-light-hires-retro"), QVariant("light-hires-retro"));
+    // ui->theme->addItem(QString("SPARKS-blue"), QVariant("drkblue"));
+    // ui->theme->addItem(QString("SPARKS-Crownium"), QVariant("crownium"));
+    // ui->theme->addItem(QString("SPARKS-traditional"), QVariant("trad"));
+    ui->theme->addItem(QString("SPARKS-2020"), QVariant("sparkspay2020"));
     
     /* Language selector */
     QDir translations(":translations");
@@ -211,6 +212,7 @@ void OptionsDialog::setMapper()
     mapper->addMapping(ui->coinControlFeatures, OptionsModel::CoinControlFeatures);
     mapper->addMapping(ui->showMasternodesTab, OptionsModel::ShowMasternodesTab);
     mapper->addMapping(ui->showAdvancedPSUI, OptionsModel::ShowAdvancedPSUI);
+    mapper->addMapping(ui->showPrivateSendPopups, OptionsModel::ShowPrivateSendPopups);
     mapper->addMapping(ui->lowKeysWarning, OptionsModel::LowKeysWarning);
     mapper->addMapping(ui->privateSendMultiSession, OptionsModel::PrivateSendMultiSession);
     mapper->addMapping(ui->spendZeroConfChange, OptionsModel::SpendZeroConfChange);
