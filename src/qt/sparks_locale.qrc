@@ -1,5 +1,6 @@
 <!DOCTYPE RCC><RCC version="1.0">
     <qresource prefix="/translations">
+        <file alias="ar">locale/sparks_ar.qm</file>
         <file alias="bg">locale/sparks_bg.qm</file>
         <file alias="de">locale/sparks_de.qm</file>
         <file alias="en">locale/sparks_en.qm</file>

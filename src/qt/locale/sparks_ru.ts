@@ -1,249 +1,249 @@
-<TS language="ru" version="2.1">
+<TS language="pt" version="2.1">
 <context>
     <name>AddressBookPage</name>
     <message>
         <source>Right-click to edit address or label</source>
-        <translation>Для того, чтобы изменить адрес или метку, кликните по изменяемому объекту правой кнопкой мыши</translation>
+        <translation>Clique com o botão direito para editar o endereço ou o etiqueta</translation>
     </message>
     <message>
         <source>Create a new address</source>
-        <translation>Создать новый адрес</translation>
+        <translation>Criar um novo endereço</translation>
     </message>
     <message>
         <source>&amp;New</source>
-        <translation>&amp;Новый</translation>
+        <translation>&amp;Novo</translation>
     </message>
     <message>
         <source>Copy the currently selected address to the system clipboard</source>
-        <translation>Копировать текущий выделенный адрес в буфер обмена</translation>
+        <translation>Copiar o endereço selecionado para a área de transferência do sistema</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
-        <translation>&amp;Копировать</translation>
+        <translation>&amp;Copiar</translation>
     </message>
     <message>
         <source>Delete the currently selected address from the list</source>
-        <translation>Удалить выбранный адрес из списка</translation>
+        <translation>Excluir os endereços selecionados da lista</translation>
     </message>
     <message>
         <source>&amp;Delete</source>
-        <translation>&amp;Удалить</translation>
+        <translation>E&amp;xcluir</translation>
     </message>
     <message>
         <source>Export the data in the current tab to a file</source>
-        <translation>Экспортировать данные из вкладки в файл</translation>
+        <translation>Exportar os dados na aba atual para um arquivo</translation>
     </message>
     <message>
         <source>&amp;Export</source>
-        <translation>&amp;Экспорт</translation>
+        <translation>&amp;Exportar</translation>
     </message>
     <message>
         <source>C&amp;lose</source>
-        <translation>&amp;Закрыть</translation>
+        <translation>&amp;Fechar</translation>
     </message>
     <message>
         <source>Choose the address to send coins to</source>
-        <translation>Выберите адрес для отправки на него монет</translation>
+        <translation>Escolha o endereço no qual receberá as moedas</translation>
     </message>
     <message>
         <source>Choose the address to receive coins with</source>
-        <translation>Выберите адрес для получения монет</translation>
+        <translation>Escolha o endereço para receber moedas com ele</translation>
     </message>
     <message>
         <source>C&amp;hoose</source>
-        <translation>&amp;Выбрать</translation>
+        <translation>E&amp;scolha</translation>
     </message>
     <message>
         <source>Sending addresses</source>
-        <translation>Адреса отправки</translation>
+        <translation>Endereços de envio</translation>
     </message>
     <message>
         <source>Receiving addresses</source>
-        <translation>Адреса получения</translation>
+        <translation>Endereços de recebimento</translation>
     </message>
     <message>
         <source>These are your Sparks addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Это ваши адреса Sparks для отправки платежей. Всегда проверяйте количество и адрес получателя перед отправкой перевода.</translation>
+        <translation>Esses são os seus endereços para enviar pagamentos. Sempre cheque a quantia e o endereço de recebimento antes de enviar moedas,</translation>
     </message>
     <message>
         <source>These are your Sparks addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Это ваши адреса Sparks для приёма платежей. Рекомендуется использовать новый адрес получения для каждой транзакции.</translation>
+        <translation>Estes são os seus endereços para receber pagamentos. É recomendado usar um novo para cada transação.</translation>
     </message>
     <message>
         <source>&amp;Copy Address</source>
-        <translation>&amp;Копировать адрес</translation>
+        <translation>&amp;Copiar Endereço</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
-        <translation>Копировать &amp;метку</translation>
+        <translation>Copiar &amp;Rótulo</translation>
     </message>
     <message>
         <source>&amp;Edit</source>
-        <translation>&amp;Правка</translation>
+        <translation>&amp;Editar</translation>
     </message>
     <message>
         <source>Export Address List</source>
-        <translation>Экспортировать список адресов</translation>
+        <translation>Exportar lista de endereço</translation>
     </message>
     <message>
         <source>Comma separated file (*.csv)</source>
-        <translation>Текст, разделённый запятыми (*.csv)</translation>
+        <translation>Arquivo separado por vírgulas (*. csv)</translation>
     </message>
     <message>
         <source>Exporting Failed</source>
-        <translation>Экспорт не удался</translation>
+        <translation>Falha ao exportar</translation>
     </message>
     <message>
         <source>There was an error trying to save the address list to %1. Please try again.</source>
-        <translation>Произошла ошибка при сохранении адресной книги в %1. Пожалуйста, попробуйте еще раз.</translation>
+        <translation>Houve um erro ao tentar salvar a lista de endereços em %1. Por favor tente novamente.</translation>
     </message>
 </context>
 <context>
     <name>AddressTableModel</name>
     <message>
         <source>Label</source>
-        <translation>Метка</translation>
+        <translation>Rótulo</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Адрес</translation>
+        <translation>Endereço</translation>
     </message>
     <message>
         <source>(no label)</source>
-        <translation>(нет метки)</translation>
+        <translation>(sem rótulo)</translation>
     </message>
 </context>
 <context>
     <name>AskPassphraseDialog</name>
     <message>
         <source>Passphrase Dialog</source>
-        <translation>Диалог ввода пароля</translation>
+        <translation>Janela da Frase de Segurança</translation>
     </message>
     <message>
         <source>Enter passphrase</source>
-        <translation>Введите пароль</translation>
+        <translation>Digite a frase de segurança</translation>
     </message>
     <message>
         <source>New passphrase</source>
-        <translation>Новый пароль</translation>
+        <translation>Nova frase de segurança</translation>
     </message>
     <message>
         <source>Repeat new passphrase</source>
-        <translation>Повторите новый пароль</translation>
+        <translation>Repita a nova frase de segurança</translation>
     </message>
     <message>
         <source>Enter the new passphrase to the wallet.&lt;br/&gt;Please use a passphrase of &lt;b&gt;ten or more random characters&lt;/b&gt;, or &lt;b&gt;eight or more words&lt;/b&gt;.</source>
-        <translation>Введите новый пароль кошелька.&lt;br/&gt;Используйте пароль, состоящий из &lt;b&gt;десяти или более случайных символов&lt;/b&gt; или &lt;b&gt;восьми или более слов&lt;/b&gt;.</translation>
+        <translation>Insira a nova senha para a carteira.&lt;br/&gt;Favor usar uma senha com &lt;b&gt;dez ou mais caracteres aleatórios&lt;/b&gt;, ou &lt;b&gt;oito ou mais palavras&lt;/b&gt;.</translation>
     </message>
     <message>
         <source>Encrypt wallet</source>
-        <translation>Зашифровать кошелёк</translation>
+        <translation>Criptografar carteira</translation>
     </message>
     <message>
         <source>This operation needs your wallet passphrase to unlock the wallet.</source>
-        <translation>Для выполнения операции разблокирования требуется пароль вашего кошелька.</translation>
+        <translation>Esta operação precisa da sua senha para desbloquear a carteira.</translation>
     </message>
     <message>
         <source>Unlock wallet for mixing only</source>
-        <translation>Разблокировать кошелёк только для перемешивания</translation>
+        <translation>Desbloquear carteira appenas para misturar</translation>
     </message>
     <message>
         <source>Unlock wallet</source>
-        <translation>Разблокировать кошелёк</translation>
+        <translation>Desbloquear carteira</translation>
     </message>
     <message>
         <source>This operation needs your wallet passphrase to decrypt the wallet.</source>
-        <translation>Для выполнения операции расшифровки требуется пароль вашего кошелька.</translation>
+        <translation>Esta operação precisa da sua senha para descriptografar a carteira</translation>
     </message>
     <message>
         <source>Decrypt wallet</source>
-        <translation>Дешифровать кошелёк</translation>
+        <translation>Descriptografar carteira</translation>
     </message>
     <message>
         <source>Change passphrase</source>
-        <translation>Сменить пароль</translation>
+        <translation>Alterar frase de segurança</translation>
     </message>
     <message>
         <source>Enter the old passphrase and new passphrase to the wallet.</source>
-        <translation>Введите старый пароль и новый пароль для кошелька.</translation>
+        <translation>Insira a senha antiga e a nova para a carteira.</translation>
     </message>
     <message>
         <source>Confirm wallet encryption</source>
-        <translation>Подтвердите шифрование кошелька</translation>
+        <translation>Confirmar criptografia da carteira</translation>
     </message>
     <message>
         <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR SPARKS&lt;/b&gt;!</source>
-        <translation>Внимание: если Вы зашифруете кошелёк и потеряете пароль, вы &lt;b&gt;ПОТЕРЯЕТЕ ВСЕ ВАШИ SPARKS&lt;/b&gt;!</translation>
+        <translation>Aviso: Se você encriptar sua wallet e perder sua senha, você vai &lt;b&gt;PERDER TODAS AS SUAS SPARKS&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
-        <translation>Вы уверены, что хотите зашифровать ваш кошелёк?</translation>
+        <translation>Tem certeza de que deseja criptografar sua carteira?</translation>
     </message>
     <message>
         <source>Wallet encrypted</source>
-        <translation>Кошелёк зашифрован</translation>
+        <translation>Carteira criptografada</translation>
     </message>
     <message>
         <source>%1 will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your funds from being stolen by malware infecting your computer.</source>
-        <translation>Сейчас %1 закроется для завершения процесса шифрования. Помните, что шифрование вашего кошелька не может полностью защитить ваши средства от кражи с помощью инфицирования вашего компьютера вредоносным ПО.</translation>
+        <translation>A %1 irá fechar agora para terminar o processo de encriptação. Lembre-se que encriptar sua carteira não fará com que seus Sparks estejam totalmente a salvo de serem roubados por malwares que infectem seu computador.</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. Previous backups of the unencrypted wallet file contain the same HD seed and still have full access to all your funds just like the new, encrypted wallet.</source>
-        <translation>ВАЖНО: все предыдущие резервные копии Вашего кошелька должны быть заменены новым зашифрованным файлом. Предыдущие резервные копии незашифрованного кошелька содержат ту же HD-фразу и все еще имеют полный доступ к Вашим средствам, так же как и новый зашифрованный кошелёк.</translation>
+        <translation>IMPORTANTE: Todos os backups anteriores feitos do seu arquivo de carteira devem ser substituídos pelo arquivo de carteira criptografado recém-gerado. Os backups anteriores do arquivo de carteira não criptografada contêm a mesma semente HD e ainda têm acesso total a todos os seus fundos, assim como a nova carteira criptografada.</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. For security reasons, previous backups of the unencrypted wallet file will become useless as soon as you start using the new, encrypted wallet.</source>
-        <translation>ВАЖНО: все предыдущие резервные копии вашего кошелька должны быть заменены новым зашифрованным файлом. В целях безопасности предыдущие резервные копии незашифрованного кошелька станут бесполезны, как только вы начнёте использовать новый зашифрованный кошелёк.</translation>
+        <translation>IMPORTANTE: Qualquer backup prévio que você tenha feito da sua carteira deve ser substituído pelo novo e encriptado arquivo gerado. Por razões de segurança, qualquer backup do arquivo não criptografado se tornará inútil assim que você começar a usar uma nova carteira criptografada.</translation>
     </message>
     <message>
         <source>Wallet encryption failed</source>
-        <translation>Не удалось зашифровать кошелёк</translation>
+        <translation>A criptografia da carteira falhou</translation>
     </message>
     <message>
         <source>Wallet encryption failed due to an internal error. Your wallet was not encrypted.</source>
-        <translation>Шифрование кошелька не удалось из-за внутренней ошибки. Ваш кошелёк не был зашифрован.</translation>
+        <translation>Falha na criptografia devido a um erro inerno. Sua carteira não foi criptografada.</translation>
     </message>
     <message>
         <source>The supplied passphrases do not match.</source>
-        <translation>Введённые пароли не совпадают.</translation>
+        <translation>A frase de segurança fornecida não confere.</translation>
     </message>
     <message>
         <source>Wallet unlock failed</source>
-        <translation>Разблокировка кошелька не удалась</translation>
+        <translation>O desbloqueio da carteira falhou</translation>
     </message>
     <message>
         <source>The passphrase entered for the wallet decryption was incorrect.</source>
-        <translation>Указанный пароль не подходит.</translation>
+        <translation>A senha inserida para descriptografar a carteira está incorreta.</translation>
     </message>
     <message>
         <source>Wallet decryption failed</source>
-        <translation>Дешифрование кошелька не удалось</translation>
+        <translation>A descriptografia da carteira falhou</translation>
     </message>
     <message>
         <source>Wallet passphrase was successfully changed.</source>
-        <translation>Пароль кошелька успешно изменён.</translation>
+        <translation>A frase de segurança da carteira foi alterada com êxito.</translation>
     </message>
     <message>
         <source>Warning: The Caps Lock key is on!</source>
-        <translation>Внимание: включен Caps Lock!</translation>
+        <translation>Atenção: A tecla Caps Lock está ligada!</translation>
     </message>
 </context>
 <context>
     <name>BanTableModel</name>
     <message>
         <source>IP/Netmask</source>
-        <translation>IP/Netmask</translation>
+        <translation>IP/Máscara de rede</translation>
     </message>
     <message>
         <source>Banned Until</source>
-        <translation>Заблокирован до</translation>
+        <translation>Banido até</translation>
     </message>
 </context>
 <context>
     <name>BitcoinGUI</name>
     <message>
         <source>A fatal error occurred. Sparks Core can no longer continue safely and will quit.</source>
-        <translation>Произошла критическая ошибка. Дальнейшая безопасная работа Sparks Core невозможна, программа будет закрыта.</translation>
+        <translation>Ocorreu um erro fatal. A Sparks não pode mais continuar de forma segura, e irá fechar</translation>
     </message>
     <message>
         <source>Sparks Core</source>
@@ -251,909 +251,842 @@
     </message>
     <message>
         <source>Wallet</source>
-        <translation>Кошелёк</translation>
+        <translation>Carteira</translation>
     </message>
     <message>
         <source>Node</source>
-        <translation>Узел</translation>
+        <translation>Nó</translation>
     </message>
     <message>
         <source>&amp;Overview</source>
-        <translation>&amp;Обзор</translation>
+        <translation>&amp;Visão geral</translation>
     </message>
     <message>
         <source>Show general overview of wallet</source>
-        <translation>Показать общий обзор действий с кошельком</translation>
+        <translation>Mostrar visão geral da carteira</translation>
     </message>
     <message>
         <source>&amp;Send</source>
-        <translation>&amp;Отправить</translation>
+        <translation>&amp;Enviar</translation>
     </message>
     <message>
         <source>Send coins to a Sparks address</source>
-        <translation>Отправить монеты на указанный адрес Sparks</translation>
+        <translation>Envie moedas para um endereço Sparks</translation>
     </message>
     <message>
         <source>&amp;Receive</source>
-        <translation>&amp;Получить</translation>
+        <translation>&amp;Receber</translation>
     </message>
     <message>
         <source>Request payments (generates QR codes and sparks: URIs)</source>
-        <translation>Запросить платежи (создать QR-коды и sparks: URI)</translation>
+        <translation>Solicitações de pagamentos (gera códigos QR e Sparks: URIs)</translation>
     </message>
     <message>
         <source>&amp;Transactions</source>
-        <translation>&amp;Транзакции</translation>
+        <translation>&amp;Transações</translation>
     </message>
     <message>
         <source>Browse transaction history</source>
-        <translation>Показать историю транзакций</translation>
+        <translation>Navegar pelo histórico de transações</translation>
     </message>
     <message>
         <source>&amp;Masternodes</source>
-        <translation>&amp;Мастерноды</translation>
+        <translation>&amp;Masternodes</translation>
     </message>
     <message>
         <source>Browse masternodes</source>
-        <translation>Посмотреть мастерноды</translation>
+        <translation>Exibir masternodes</translation>
     </message>
     <message>
         <source>E&amp;xit</source>
-        <translation>В&amp;ыход</translation>
+        <translation>S&amp;air</translation>
     </message>
     <message>
         <source>Quit application</source>
-        <translation>Закрыть приложение</translation>
+        <translation>Sair da aplicação</translation>
     </message>
     <message>
         <source>Show information about Sparks Core</source>
-        <translation>Показать информацию о Sparks Core</translation>
+        <translation>Exibe informações sobre Sparks Core</translation>
     </message>
     <message>
         <source>About &amp;Qt</source>
-        <translation>О &amp;Qt</translation>
+        <translation>Sobre &amp;Qt</translation>
     </message>
     <message>
         <source>Show information about Qt</source>
-        <translation>Показать информацию о Qt</translation>
+        <translation>Exibe informações sobre Qt</translation>
     </message>
     <message>
         <source>&amp;Options...</source>
-        <translation>&amp;Параметры...</translation>
+        <translation>&amp;Opções...</translation>
     </message>
     <message>
         <source>&amp;About %1</source>
-        <translation>&amp;О %1</translation>
+        <translation>&amp;Sobre %1</translation>
     </message>
     <message>
         <source>Modify configuration options for %1</source>
-        <translation>Изменить параметры конфигурации %1</translation>
+        <translation>Modificar opções de configuração para o %1</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
-        <translation>&amp;Показать / Скрыть</translation>
+        <translation>&amp;Exibir/Ocultar</translation>
     </message>
     <message>
         <source>Show or hide the main Window</source>
-        <translation>Показать или скрыть главное окно</translation>
+        <translation>Mostrar ou esconder a Janela Principal.</translation>
     </message>
     <message>
         <source>&amp;Encrypt Wallet...</source>
-        <translation>За&amp;шифровать кошелёк...</translation>
+        <translation>&amp;Criptografar Carteira...</translation>
     </message>
     <message>
         <source>Encrypt the private keys that belong to your wallet</source>
-        <translation>Зашифровать закрытые ключи, содержащиеся в вашем кошельке</translation>
+        <translation>Criptografar as chaves privadas que pertencem à sua carteira</translation>
     </message>
     <message>
         <source>&amp;Backup Wallet...</source>
-        <translation>&amp;Сделать резервную копию кошелька...</translation>
+        <translation>Fazer &amp;Backup da Carteira...</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
-        <translation>Сделать резервную копию кошелька в другом месте</translation>
+        <translation>Faça o Backup da carteira para outro local</translation>
     </message>
     <message>
         <source>&amp;Change Passphrase...</source>
-        <translation>&amp;Изменить пароль...</translation>
+        <translation>Alterar frase de segurança</translation>
     </message>
     <message>
         <source>Change the passphrase used for wallet encryption</source>
-        <translation>Изменить пароль шифрования кошелька</translation>
+        <translation>Mudar a frase de segurança utilizada na criptografia da carteira</translation>
     </message>
     <message>
         <source>&amp;Unlock Wallet...</source>
-        <translation>&amp;Разблокировать кошелёк...</translation>
+        <translation>&amp;Desbloquear carteira...</translation>
     </message>
     <message>
         <source>Unlock wallet</source>
-        <translation>Разблокировать кошелёк</translation>
+        <translation>Desbloquear carteira</translation>
     </message>
     <message>
         <source>&amp;Lock Wallet</source>
-        <translation>За&amp;блокировать кошелёк</translation>
+        <translation>Bloquear carteira</translation>
     </message>
     <message>
         <source>Sign &amp;message...</source>
-        <translation>П&amp;одписать сообщение...</translation>
+        <translation>Assinar &amp;Mensagem...</translation>
     </message>
     <message>
         <source>Sign messages with your Sparks addresses to prove you own them</source>
-        <translation>Подписать сообщения вашими адресами Sparks, чтобы доказать, что вы ими владеете</translation>
+        <translation>Assine mensagens com seus endereços Sparks para provar que você é dono delas</translation>
     </message>
     <message>
         <source>&amp;Verify message...</source>
-        <translation>П&amp;роверить сообщение...</translation>
+        <translation>&amp;Verificar mensagem...</translation>
     </message>
     <message>
         <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
-        <translation>Проверить сообщения, чтобы удостовериться, что они были подписаны определёнными адресами Sparks</translation>
+        <translation>Verifique as mensagens para ter certeza de que elas foram assinadas com o endereço da Sparks especificado</translation>
     </message>
     <message>
         <source>&amp;Information</source>
-        <translation>&amp;Информация</translation>
+        <translation>&amp;Informação</translation>
     </message>
     <message>
         <source>Show diagnostic information</source>
-        <translation>Показать диагностическую информацию</translation>
+        <translation>Mostrar informação de diagnóstico</translation>
     </message>
     <message>
         <source>&amp;Debug console</source>
-        <translation>&amp;Консоль отладки</translation>
+        <translation>&amp;Console de depuração</translation>
     </message>
     <message>
         <source>Open debugging console</source>
-        <translation>Открыть консоль отладки</translation>
+        <translation>Abrir o console de depuração</translation>
     </message>
     <message>
         <source>&amp;Network Monitor</source>
-        <translation>&amp;Монитор сети</translation>
+        <translation>&amp;Monitor de Rede</translation>
     </message>
     <message>
         <source>Show network monitor</source>
-        <translation>Показать монитор сети</translation>
+        <translation>Exibe o monitor de rede</translation>
     </message>
     <message>
         <source>&amp;Peers list</source>
-        <translation>Список &amp;пиров</translation>
+        <translation>&amp;Peers</translation>
     </message>
     <message>
         <source>Show peers info</source>
-        <translation>Показать информацию о пирах</translation>
+        <translation>mostrar informações dos peers</translation>
     </message>
     <message>
         <source>Wallet &amp;Repair</source>
-        <translation>&amp;Ремонт кошелька</translation>
+        <translation>&amp;Reparar carteira</translation>
     </message>
     <message>
         <source>Show wallet repair options</source>
-        <translation>Показать варианты ремонта кошелька</translation>
+        <translation>Mostrar opções de reparação da carteira</translation>
     </message>
     <message>
         <source>Open Wallet &amp;Configuration File</source>
-        <translation>Открыть файл &amp;настроек кошелька</translation>
+        <translation>Abrir arquivo de &amp;Configuração da carteira</translation>
     </message>
     <message>
         <source>Open configuration file</source>
-        <translation>Открыть файл настроек</translation>
+        <translation>Abrir arquivo de configuração</translation>
     </message>
     <message>
         <source>Open &amp;Masternode Configuration File</source>
-        <translation>Открыть файл настроек &amp;мастернод</translation>
+        <translation>Abrir arquivo de configuração do &amp;Masternode</translation>
     </message>
     <message>
         <source>Open Masternode configuration file</source>
-        <translation>Открыть файл настроек мастернод</translation>
+        <translation>Abrir arquivo de configuração de Masternode</translation>
     </message>
     <message>
         <source>Show Automatic &amp;Backups</source>
-        <translation>Показать автоматические резервные &amp;копии</translation>
+        <translation>Mostrar &amp;backups automáticos</translation>
     </message>
     <message>
         <source>Show automatically created wallet backups</source>
-        <translation>Показать автоматически созданные резервные копии кошелька</translation>
+        <translation>Mostrar backups da carteira criados automaticamente </translation>
     </message>
     <message>
         <source>&amp;Sending addresses...</source>
-        <translation>Адреса &amp;отправки...</translation>
+        <translation>Endereço&amp;s de envio...</translation>
     </message>
     <message>
         <source>Show the list of used sending addresses and labels</source>
-        <translation>Показать список использованных адресов отправки и их меток</translation>
+        <translation>Mostrar a lista de endereços de envio e rótulos usados</translation>
     </message>
     <message>
         <source>&amp;Receiving addresses...</source>
-        <translation>Адреса &amp;получения...</translation>
+        <translation>Endereços de &amp;recebimento...</translation>
     </message>
     <message>
         <source>Show the list of used receiving addresses and labels</source>
-        <translation>Показать список использованных адресов получения и их меток</translation>
+        <translation>Mostrar a lista de endereços de recebimento usados ​​e rótulos</translation>
     </message>
     <message>
         <source>Open &amp;URI...</source>
-        <translation>Открыть &amp;URI...</translation>
+        <translation>Abrir &amp;URI...</translation>
     </message>
     <message>
         <source>Open a sparks: URI or payment request</source>
-        <translation>Открыть sparks: URI или запрос платежа</translation>
+        <translation>Abrir um Sparks: URI ou cobrança</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>
-        <translation>&amp;Параметры командной строки</translation>
+        <translation>Opções de linha de &amp;comando</translation>
     </message>
     <message>
         <source>Show the %1 help message to get a list with possible Sparks command-line options</source>
-        <translation>Показать справку по %1 со списком возможных параметров командной строки</translation>
+        <translation>Mostrar a mensagem de ajuda do %1 para obter uma lista com possíveis opções de linha de comando Sparks</translation>
     </message>
     <message>
         <source>%1 client</source>
-        <translation>Клиент %1</translation>
+        <translation>%1 cliente</translation>
     </message>
     <message>
         <source>&amp;PrivateSend information</source>
-        <translation>Информация о &amp;PrivateSend</translation>
+        <translation>Informação de Envio&amp;Privado</translation>
     </message>
     <message>
         <source>Show the PrivateSend basic information</source>
-        <translation>Показать краткую информацию о PrivateSend</translation>
+        <translation>Mostra informações básicas de EnvioPrivado</translation>
     </message>
     <message>
         <source>&amp;File</source>
-        <translation>&amp;Файл</translation>
+        <translation>&amp;Arquivo</translation>
     </message>
     <message>
         <source>&amp;Settings</source>
-        <translation>&amp;Настройки</translation>
+        <translation>&amp;Configurações</translation>
     </message>
     <message>
         <source>&amp;Tools</source>
-        <translation>&amp;Инструменты</translation>
+        <translation>&amp;Ferramentas</translation>
     </message>
     <message>
         <source>&amp;Help</source>
-        <translation>&amp;Помощь</translation>
+        <translation>&amp;Ajuda</translation>
     </message>
     <message>
         <source>Tabs toolbar</source>
-        <translation>Панель вкладок</translation>
+        <translation>Barra de ferramentas</translation>
     </message>
     <message numerus="yes">
         <source>%n active connection(s) to Sparks network</source>
-        <translation><numerusform>%n активное соединение с сетью Sparks</numerusform><numerusform>%n активных соединения с сетью Sparks</numerusform><numerusform>%n активных соединений с сетью Sparks</numerusform><numerusform>%n активных соединений с сетью Sparks</numerusform></translation>
+        <translation><numerusform>%n conexões ativas com a rede Sparks</numerusform><numerusform>%n conexões ativas com a rede Sparks</numerusform></translation>
     </message>
     <message>
         <source>Network activity disabled</source>
-        <translation>Сетевая активность отключена</translation>
+        <translation>Atividade da rede disativada</translation>
     </message>
     <message>
         <source>Syncing Headers (%1%)...</source>
-        <translation>Синхронизация заголовков (%1%)...</translation>
+        <translation>Sincronizando cabeçahos (%1%)...</translation>
     </message>
     <message>
         <source>Synchronizing with network...</source>
-        <translation>Синхронизация с сетью...</translation>
+        <translation>Sincronizando com a rede...</translation>
     </message>
     <message>
         <source>Indexing blocks on disk...</source>
-        <translation>Индексация блоков на диске...</translation>
+        <translation>Indexando blocos no disco...</translation>
     </message>
     <message>
         <source>Processing blocks on disk...</source>
-        <translation>Обработка блоков на диске...</translation>
+        <translation>Processando blocos no disco...</translation>
     </message>
     <message>
         <source>Reindexing blocks on disk...</source>
-        <translation>Идёт переиндексация блоков на диске...</translation>
+        <translation>Reindexando blocos no disco...</translation>
     </message>
     <message>
         <source>Connecting to peers...</source>
-        <translation>Подключение к пирам...</translation>
+        <translation>Conectando...</translation>
     </message>
     <message numerus="yes">
         <source>Processed %n block(s) of transaction history.</source>
-        <translation><numerusform>Обработан 1 блок из истории транзакций.</numerusform><numerusform>Обработано %n блока из истории транзакций.</numerusform><numerusform>Обработано %n блоков из истории транзакций.</numerusform><numerusform>Обработано %n блоков из истории транзакций.</numerusform></translation>
+        <translation><numerusform>Processados %n blocos do histórico de transações.</numerusform><numerusform>Processados %n blocos do histórico de transações.</numerusform></translation>
     </message>
     <message>
         <source>%1 behind</source>
-        <translation>%1 позади</translation>
+        <translation>%1 atrás</translation>
     </message>
     <message>
         <source>Catching up...</source>
-        <translation>Синхронизируется...</translation>
+        <translation>Recuperando o atraso ...</translation>
     </message>
     <message>
         <source>Last received block was generated %1 ago.</source>
-        <translation>Последний полученный блок был сгенерирован %1 назад.</translation>
+        <translation>Último bloco recebido foi gerado %1 atrás.</translation>
     </message>
     <message>
         <source>Transactions after this will not yet be visible.</source>
-        <translation>Транзакции после этого времени пока видны не будут.</translation>
+        <translation>Transações após isso ainda não estão visíveis.</translation>
     </message>
     <message>
         <source>Up to date</source>
-        <translation>Синхронизировано</translation>
+        <translation>Atualizado</translation>
     </message>
     <message>
         <source>Synchronizing additional data: %p%</source>
-        <translation>Синхронизация дополнительных данных: %p%</translation>
+        <translation>Sincronizando dados adicionais: %p%</translation>
     </message>
     <message>
         <source>Error</source>
-        <translation>Ошибка</translation>
+        <translation>Erro</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>Внимание</translation>
+        <translation>Atenção</translation>
     </message>
     <message>
         <source>Information</source>
-        <translation>Информация</translation>
+        <translation>Informação</translation>
     </message>
     <message>
         <source>Date: %1
 </source>
-        <translation>Дата: %1
+        <translation>Data: %1
 </translation>
     </message>
     <message>
         <source>Amount: %1
 </source>
-        <translation>Сумма: %1
+        <translation>Quantia: %1
 </translation>
     </message>
     <message>
         <source>Type: %1
 </source>
-        <translation>Тип: %1
+        <translation>Tipo: %1
 </translation>
     </message>
     <message>
         <source>Label: %1
 </source>
-        <translation>Метка: %1
+        <translation>Rótulo: %1
 </translation>
     </message>
     <message>
         <source>Address: %1
 </source>
-        <translation>Адрес: %1
+        <translation>Endereço: %1
 </translation>
     </message>
     <message>
         <source>Sent transaction</source>
-        <translation>Исходящая транзакция</translation>
+        <translation>Transação enviada</translation>
     </message>
     <message>
         <source>Incoming transaction</source>
-        <translation>Входящая транзакция</translation>
+        <translation>Transação recebida</translation>
     </message>
     <message>
         <source>HD key generation is &lt;b&gt;enabled&lt;/b&gt;</source>
-        <translation>Генерация HD ключей &lt;b&gt;включена&lt;/b&gt;</translation>
+        <translation>Geração de chave HD está &lt;b&gt;ativada&lt;/b&gt;</translation>
     </message>
     <message>
         <source>HD key generation is &lt;b&gt;disabled&lt;/b&gt;</source>
-        <translation>Генерация HD ключей &lt;b&gt;отключена&lt;/b&gt;</translation>
+        <translation>Geração de chave HD está &lt;b&gt;desativada&lt;/b&gt;</translation>
     </message>
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
-        <translation>Кошелёк &lt;b&gt;зашифрован&lt;/b&gt; и в настоящее время &lt;b&gt;разблокирован&lt;/b&gt;</translation>
+        <translation>Carteira está &lt;b&gt;criptografada&lt;/b&gt; e atualmente &lt;b&gt;desbloqueada&lt;/b&gt;</translation>
     </message>
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt; for mixing only</source>
-        <translation>Кошелёк &lt;b&gt;зашифрован&lt;/b&gt; и в данный момент &lt;b&gt;разблокирован&lt;/b&gt; только для перемешивания</translation>
+        <translation>A carteira está &lt;b&gt;encriptada&lt;/b&gt; e atualmente &lt;b&gt;desbloqueada&lt;/b&gt; apenas para anonimização</translation>
     </message>
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
-        <translation>Кошелёк &lt;b&gt;зашифрован&lt;/b&gt; и в настоящее время &lt;b&gt;заблокирован&lt;/b&gt;</translation>
+        <translation>Carteira está &lt;b&gt;criptografada&lt;/b&gt; e atualmente &lt;b&gt;bloqueada&lt;/b&gt;</translation>
     </message>
 </context>
 <context>
     <name>ClientModel</name>
     <message>
         <source>Total: %1 (PS compatible: %2 / Enabled: %3)</source>
-        <translation>Всего: %1 (Совместимых с PS: %2 / Активных: %3)</translation>
+        <translation>Total: %1 (Compatível c/ EP: %2 / Habilitado: %3)</translation>
     </message>
     <message>
         <source>Network Alert</source>
-        <translation>Сетевая тревога</translation>
+        <translation>Alerta da Rede</translation>
     </message>
 </context>
 <context>
     <name>CoinControlDialog</name>
     <message>
         <source>Quantity:</source>
-        <translation>Количество:</translation>
+        <translation>Quantidade:</translation>
     </message>
     <message>
         <source>Bytes:</source>
-        <translation>Байт:</translation>
+        <translation>Bytes:</translation>
     </message>
     <message>
         <source>Amount:</source>
-        <translation>Сумма:</translation>
+        <translation>Quantia:</translation>
     </message>
     <message>
         <source>Fee:</source>
-        <translation>Комиссия:</translation>
+        <translation>Taxa:</translation>
     </message>
     <message>
         <source>Coin Selection</source>
-        <translation>Выбор монет</translation>
+        <translation>Seleção da Moeda</translation>
     </message>
     <message>
         <source>Dust:</source>
-        <translation>Пыль:</translation>
+        <translation>Poeira:</translation>
     </message>
     <message>
         <source>After Fee:</source>
-        <translation>После комиссии:</translation>
+        <translation>Depois da taxa:</translation>
     </message>
     <message>
         <source>Change:</source>
-        <translation>Сдача:</translation>
+        <translation>trocar</translation>
     </message>
     <message>
         <source>(un)select all</source>
-        <translation>Выбрать все/ничего</translation>
+        <translation>(de)selecionar tudo</translation>
     </message>
     <message>
         <source>toggle lock state</source>
-        <translation>сменить блокировку</translation>
+        <translation>alternar estado de bloqueio</translation>
     </message>
     <message>
         <source>Tree mode</source>
-        <translation>Режим дерева</translation>
+        <translation>Modo árvore</translation>
     </message>
     <message>
         <source>List mode</source>
-        <translation>Режим списка</translation>
+        <translation>Modo lista</translation>
     </message>
     <message>
         <source>(1 locked)</source>
-        <translation>(1 заблокировано)</translation>
+        <translation>(1 travado)</translation>
     </message>
     <message>
         <source>Amount</source>
-        <translation>Сумма</translation>
+        <translation>Quantidade</translation>
     </message>
     <message>
         <source>Received with label</source>
-        <translation>Получено на метку</translation>
+        <translation>Recebido com rótulo</translation>
     </message>
     <message>
         <source>Received with address</source>
-        <translation>Получено на адрес</translation>
+        <translation>Recebido com endereço</translation>
     </message>
     <message>
         <source>PS Rounds</source>
-        <translation>Раунды PS</translation>
+        <translation>Rounds de EP</translation>
     </message>
     <message>
         <source>Date</source>
-        <translation>Дата</translation>
+        <translation>Data</translation>
     </message>
     <message>
         <source>Confirmations</source>
-        <translation>Подтверждений</translation>
+        <translation>Confirmações</translation>
     </message>
     <message>
         <source>Confirmed</source>
-        <translation>Подтверждено</translation>
+        <translation>Confirmado</translation>
     </message>
     <message>
         <source>Copy address</source>
-        <translation>Копировать адрес</translation>
+        <translation>Copie endereço</translation>
     </message>
     <message>
         <source>Copy label</source>
-        <translation>Копировать метку</translation>
+        <translation>Copiar rótulo</translation>
     </message>
     <message>
         <source>Copy amount</source>
-        <translation>Скопировать сумму</translation>
+        <translation>Copie quantia</translation>
     </message>
     <message>
         <source>Copy transaction ID</source>
-        <translation>Скопировать ID транзакции</translation>
+        <translation>Copie ID da transação</translation>
     </message>
     <message>
         <source>Lock unspent</source>
-        <translation>Заблокировать непотраченное</translation>
+        <translation>Bloquear não gasto</translation>
     </message>
     <message>
         <source>Unlock unspent</source>
-        <translation>Разблокировать непотраченное</translation>
+        <translation>Desbloquear não gasto</translation>
     </message>
     <message>
         <source>Copy quantity</source>
-        <translation>Копировать количество</translation>
+        <translation>Copiar quantidade</translation>
     </message>
     <message>
         <source>Copy fee</source>
-        <translation>Копировать комиссию</translation>
+        <translation>Copie taxa</translation>
     </message>
     <message>
         <source>Copy after fee</source>
-        <translation>Копировать после комиссии</translation>
+        <translation>Copiar pós taxa</translation>
     </message>
     <message>
         <source>Copy bytes</source>
-        <translation>Копировать байты</translation>
+        <translation>Copiar bytes</translation>
     </message>
     <message>
         <source>Copy dust</source>
-        <translation>Скопировать пыль</translation>
+        <translation>Copiar poeira</translation>
     </message>
     <message>
         <source>Copy change</source>
-        <translation>Копировать сдачу</translation>
+        <translation>Copiar troco</translation>
     </message>
     <message>
         <source>Please switch to "List mode" to use this function.</source>
-        <translation>Пожалуйста, переключитесь в режим списка для использования этой функции.</translation>
+        <translation>Por favor alterne para "Modo lista" para usar essa função.</translation>
     </message>
     <message>
-        <source>Non-anonymized input selected. &lt;b&gt;PrivateSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivateSend, please deselect all non-nonymized inputs first and then check PrivateSend checkbox again.</source>
-        <translation>Выбраны неанонимизированные средства. &lt;b&gt;PrivateSend будет отключен.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Если Вы все-таки хотите использовать PrivateSend, пожалуйста, снимите выделение с со всех неанонимизированных средств и заново поставьте галочку напротив PrivateSend.</translation>
+        <source>Non-anonymized input selected. &lt;b&gt;PrivateSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivateSend, please deselect all non-anonymized inputs first and then check the PrivateSend checkbox again.</source>
+        <translation>Entrada não anônima selecionada. &lt;b&gt;O PrivateSend será desativado.&lt;/b&gt; &lt;br&gt; &lt;br&gt; Se você ainda quiser usar o PrivateSend, desmarque primeiro todas as entradas não modificadas e marque a caixa de seleção PrivateSend novamente.</translation>
     </message>
     <message>
         <source>(%1 locked)</source>
-        <translation>(%1 заблокировано)</translation>
+        <translation>(%1 bloqueado)</translation>
     </message>
     <message>
         <source>yes</source>
-        <translation>да</translation>
+        <translation>sim</translation>
     </message>
     <message>
         <source>no</source>
-        <translation>нет</translation>
+        <translation>não</translation>
     </message>
     <message>
         <source>This label turns red if any recipient receives an amount smaller than the current dust threshold.</source>
-        <translation>Эта метка становится красной, если какой-либо из адресатов получает сумму меньше, чем "пыль".</translation>
+        <translation>Este texto fica vermelho se qualquer destinatário receber uma quantidade menor que que o dust.</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 sprite(s) per input.</source>
-        <translation>Может отличаться на +/- %1 sprite(ов) на каждый вход.</translation>
+        <source>Can vary +/- %1 duff(s) per input.</source>
+        <translation>Pode variar +/- %1 duff(s) por entrada.</translation>
     </message>
     <message>
         <source>(no label)</source>
-        <translation>(нет метки)</translation>
+        <translation>(sem rótulo)</translation>
     </message>
     <message>
         <source>change from %1 (%2)</source>
-        <translation>сдача с %1 (%2)</translation>
+        <translation>troco de %1 (%2)</translation>
     </message>
     <message>
         <source>(change)</source>
-        <translation>(сдача)</translation>
+        <translation>(troco)</translation>
     </message>
     <message>
         <source>n/a</source>
-        <translation>н/д</translation>
-    </message>
-</context>
-<context>
-    <name>DarksendConfig</name>
-    <message>
-        <source>Configure PrivateSend</source>
-        <translation>Настройте PrivateSend</translation>
-    </message>
-    <message>
-        <source>Basic Privacy</source>
-        <translation>Обычная приватность</translation>
-    </message>
-    <message>
-        <source>High Privacy</source>
-        <translation>Высокая приватность</translation>
-    </message>
-    <message>
-        <source>Maximum Privacy</source>
-        <translation>Максимальная приватность</translation>
-    </message>
-    <message>
-        <source>Please select a privacy level.</source>
-        <translation>Пожалуйста, выберите уровень приватности.</translation>
-    </message>
-    <message>
-        <source>Use 2 separate masternodes to mix funds up to 1000 SPARKS</source>
-        <translation>Использовать 2 отдельные мастерноды для перемешивания до 1000 SPARKS</translation>
-    </message>
-    <message>
-        <source>Use 8 separate masternodes to mix funds up to 1000 SPARKS</source>
-        <translation>Использовать 8 отдельных мастернод для перемешивания до 1000 SPARKS</translation>
-    </message>
-    <message>
-        <source>Use 16 separate masternodes</source>
-        <translation>Использовать 16 отдельных мастернод</translation>
-    </message>
-    <message>
-        <source>This option is the quickest and will cost about ~0.025 SPARKS to anonymize 1000 SPARKS</source>
-        <translation>Это самый быстрый вариант, анонимизация 1000 SPARKS будет стоить вам примерно 0.025 SPARKS</translation>
-    </message>
-    <message>
-        <source>This option is moderately fast and will cost about 0.05 SPARKS to anonymize 1000 SPARKS</source>
-        <translation>Это относительно быстрый вариант, анонимизация 1000 SPARKS будет стоить вам примерно 0.05 SPARKS</translation>
-    </message>
-    <message>
-        <source>0.1 SPARKS per 1000 SPARKS you anonymize.</source>
-        <translation>0.1 SPARKS за каждые анонимизированные 1000 SPARKS.</translation>
-    </message>
-    <message>
-        <source>This is the slowest and most secure option. Using maximum anonymity will cost</source>
-        <translation>Этот самый медленный и безопасный вариант. Анонимизация будет стоить</translation>
-    </message>
-    <message>
-        <source>PrivateSend Configuration</source>
-        <translation>Настройки PrivateSend</translation>
-    </message>
-    <message>
-        <source>PrivateSend was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening Sparks's configuration screen.</source>
-        <translation>PrivateSend успешно установлен в режим базовой приватности (%1 и 2 раунда). Вы можете изменить это в любое время, используя окно настроек.</translation>
-    </message>
-    <message>
-        <source>PrivateSend was successfully set to high (%1 and 8 rounds). You can change this at any time by opening Sparks's configuration screen.</source>
-        <translation>PrivateSend успешно установлен в режим высокой приватности (%1 и 8 раундов). Вы можете изменить это в любое время, используя окно настроек.</translation>
-    </message>
-    <message>
-        <source>PrivateSend was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening Sparks's configuration screen.</source>
-        <translation>PrivateSend успешно установлен в режим максимальной приватности (%1 и 16 раундов). Вы можете изменить это в любое время, используя окно настроек.</translation>
+        <translation>n/d</translation>
     </message>
 </context>
 <context>
     <name>EditAddressDialog</name>
     <message>
         <source>Edit Address</source>
-        <translation>Изменить адрес</translation>
+        <translation>Editar Endereço</translation>
     </message>
     <message>
         <source>&amp;Label</source>
-        <translation>&amp;Метка</translation>
+        <translation>&amp;Rótulo</translation>
     </message>
     <message>
         <source>The label associated with this address list entry</source>
-        <translation>Метка, связанная с этой записью списка адресов</translation>
+        <translation>O rótulo associado a esta entrada na lista de endereços</translation>
     </message>
     <message>
         <source>&amp;Address</source>
-        <translation>&amp;Адрес</translation>
+        <translation>&amp;Endereço</translation>
     </message>
     <message>
         <source>The address associated with this address list entry. This can only be modified for sending addresses.</source>
-        <translation>Адрес, связанный с этой записью списка адресов. Он может быть изменён только для адресов отправки.</translation>
+        <translation>O endereço associado a esta lista de endereços de entrada. Isso só pode ser modificado para o envio de endereços.</translation>
     </message>
     <message>
         <source>New receiving address</source>
-        <translation>Новый адрес для получения</translation>
+        <translation>Novo endereço de recebimento</translation>
     </message>
     <message>
         <source>New sending address</source>
-        <translation>Новый адрес для отправки</translation>
+        <translation>Novo endereço de envio</translation>
     </message>
     <message>
         <source>Edit receiving address</source>
-        <translation>Изменение адреса для получения</translation>
+        <translation>Editar endereço de recebimento</translation>
     </message>
     <message>
         <source>Edit sending address</source>
-        <translation>Изменение адреса для отправки</translation>
+        <translation>Editar endereço de envio</translation>
     </message>
     <message>
         <source>The entered address "%1" is not a valid Sparks address.</source>
-        <translation>Введённый адрес "%1" не является правильным адресом Sparks.</translation>
+        <translation>O endereço digitado "%1" não é um endereço válido.</translation>
     </message>
     <message>
         <source>The entered address "%1" is already in the address book.</source>
-        <translation>Введённый адрес "%1" уже находится в адресной книге.</translation>
+        <translation>O endereço digitado "%1" já se encontra no catálogo de endereços.</translation>
     </message>
     <message>
         <source>Could not unlock wallet.</source>
-        <translation>Не удается разблокировать кошелёк.</translation>
+        <translation>Não foi possível desbloquear a carteira.</translation>
     </message>
     <message>
         <source>New key generation failed.</source>
-        <translation>Генерация нового ключа не удалась.</translation>
+        <translation>Falha na geração de nova chave.</translation>
     </message>
 </context>
 <context>
     <name>FreespaceChecker</name>
     <message>
         <source>A new data directory will be created.</source>
-        <translation>Будет создан новый каталог данных.</translation>
+        <translation>Um novo diretório de dados será criado.</translation>
     </message>
     <message>
         <source>name</source>
-        <translation>имя</translation>
+        <translation>nome</translation>
     </message>
     <message>
         <source>Directory already exists. Add %1 if you intend to create a new directory here.</source>
-        <translation>Каталог уже существует. Добавьте %1, если вы хотите создать здесь новый каталог.</translation>
+        <translation>O diretório já existe. Adicione %1 se você pretende criar um novo diretório aqui.</translation>
     </message>
     <message>
         <source>Path already exists, and is not a directory.</source>
-        <translation>Путь уже существует и не является каталогом.</translation>
+        <translation>Esta pasta já existe, e não é um diretório.</translation>
     </message>
     <message>
         <source>Cannot create data directory here.</source>
-        <translation>Не удаётся создать здесь каталог данных.</translation>
+        <translation>Não é possível criar um diretório de dados aqui</translation>
     </message>
 </context>
 <context>
     <name>HelpMessageDialog</name>
     <message>
         <source>version</source>
-        <translation>версия</translation>
+        <translation>versão</translation>
     </message>
     <message>
         <source>(%1-bit)</source>
-        <translation>(%1-бит)</translation>
+        <translation>(%1-bit)</translation>
     </message>
     <message>
         <source>About %1</source>
-        <translation>О %1</translation>
+        <translation>Sobre %1</translation>
     </message>
     <message>
         <source>Command-line options</source>
-        <translation>Параметры командной строки</translation>
+        <translation>opções da linha de comando</translation>
     </message>
     <message>
         <source>Usage:</source>
-        <translation>Использование:</translation>
+        <translation>Uso:</translation>
     </message>
     <message>
         <source>command-line options</source>
-        <translation>параметры командной строки</translation>
+        <translation>opções da linha de comando</translation>
     </message>
     <message>
         <source>UI Options:</source>
-        <translation>Настройки интерфейса:</translation>
+        <translation>opções da UI</translation>
     </message>
     <message>
         <source>Choose data directory on startup (default: %u)</source>
-        <translation>Выбрать каталог данных при запуске (по умолчанию: %u)</translation>
+        <translation>Escolher diretório de dados na inicialização (padrão: %u)</translation>
     </message>
     <message>
         <source>Set language, for example "de_DE" (default: system locale)</source>
-        <translation>Выберите язык, например "de_DE" (по умолчанию: как в системе)</translation>
+        <translation>Definir idioma, por exemplo "de_DE" (padrão: idioma do sistema)</translation>
     </message>
     <message>
         <source>Start minimized</source>
-        <translation>Запускать свёрнутым</translation>
+        <translation>Iniciar minimizado</translation>
     </message>
     <message>
         <source>Set SSL root certificates for payment request (default: -system-)</source>
-        <translation>Указать корневые SSL-сертификаты для запроса платежа (по умолчанию: -system-)</translation>
+        <translation>Definir certificados de root SSL para requisições de pagamento (padrão: -sistema-)</translation>
     </message>
     <message>
         <source>Show splash screen on startup (default: %u)</source>
-        <translation>Показывать заставку при запуске (по умолчанию: %u)</translation>
+        <translation>Exibir tela de abertura na inicialização (padrão: %u)</translation>
     </message>
     <message>
         <source>Reset all settings changed in the GUI</source>
-        <translation>Сбросить все настройки, измененные через графический интерфейс</translation>
+        <translation>Resetar todas as configuraçãoes do GUI</translation>
     </message>
     <message>
         <source>PrivateSend information</source>
-        <translation>Информация о PrivateSend</translation>
+        <translation>Informação de Envio&amp;Privado</translation>
     </message>
     <message>
-        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the Sparks in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.01 SPARKS, 0.1 SPARKS, 1 SPARKS and 10 SPARKS -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be anonymized. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more info see &lt;a href="https://sparkspay.atlassian.net/wiki/display/DOC/PrivateSend"&gt;https://sparkspay.atlassian.net/wiki/display/DOC/PrivateSend&lt;/a&gt;         </source>
-        <translation>&lt;h3&gt;Основы PrivateSend&lt;/h3&gt;PrivateSend позволяет Вам получить настоящую финансовую конфиденциальность за счет скрытия источников Ваших средств. Все Sparks в  Вашем кошельке состоят из различных ""входов", Вы можете думать о них как об отдельных монетах.&lt;br&gt;PrivateSend использует инновационный процесс для перемешивания Ваших входов со входами еще двоих человек, но при этом Ваши монеты никогда не покидают Ваш кошелек. Вы сохраняете контроль над Вашими деньгами на протяжении всего времени.&lt;hr&gt; &lt;b&gt;PrivateSend работает так:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend начинается с разбиения Ваших входов транзакций на стандартные номиналы. Такими номиналами являются 0.01 SPARKS, 0.1 SPARKS, 1 SPARKS и 10 SPARKS -- что-то вроде купюр, которыми вы пользуетесь каждый день.&lt;/li&gt; &lt;li&gt;Ваш кошелек затем отправляет запросы к особым образом настроенным сетевым узлам, называемым "мастернодами". Эти мастерноды знают только то, что Вы хотите перемешать определенные номиналы. Никакой идентифицирующей информации мастернодам не отправляется, так что они не знают "кто" Вы конкретно.&lt;/li&gt; &lt;li&gt;Сессия перемешивания начинается тогда, когда еще двое человек отправляют схожее сообщение, подтверждающее, что они хотят перемешать точно такой же номинал. Мастернода перемешивает входы и просит кошельки всех пользователей осуществить платежи по ним. Ваш кошелек осуществляет выплату самому себе, но на другой адрес (тоже из вашего кошелька).&lt;/li&gt; &lt;li&gt;Для скрытия Ваших средств кошелек должен повторить этот процесс несколько раз с каждым номиналом. Каждый раз, когда такой процесс завершается, называется "раундом". С каждым раундом PrivateSend становится экспоненциально сложнее определить откуда поступили средства.&lt;/li&gt; &lt;li&gt;Процесс перемешивания выполняется в фоне, без участия пользователя. Когда Вы захотите провести транзакцию, средства уже будут анонимизированы. Дополнительно ждать не требуется.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;ВАЖНО:&lt;/b&gt; Ваш кошелек содержит 1000 адресов. Каждое перемешивание использует до 9 из этих адресов. Это означает, что 1000 адресов хватит примерно на 100 перемешиваний. Когда 900 адресов будут уже использованы, Ваш кошелек должен создать новые адреса. Однако, он может сделать это, только если у Вас включены автоматические резервные копии.&lt;br&gt;Соответственно, пользователям с отключенным резервным копированием PrivateSend не доступен. &lt;hr&gt;Дополнительная информация доступна по ссылке &lt;a href="https://sparkspay.atlassian.net/wiki/display/DOC/PrivateSend"&gt;https://sparkspay.atlassian.net/wiki/display/DOC/PrivateSend&lt;/a&gt;         </translation>
+        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the Sparks in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 SPARKS, 0.01 SPARKS, 0.1 SPARKS, 1 SPARKS and 10 SPARKS -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be anonymized. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a href="https://docs.sparks.org/en/latest/wallets/sparkscore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
+        <translation>&lt;h3&gt;O básico sobre EnvioPrivado&lt;/h3&gt;O EnvioPrivado te dá verdadeira privacidade financeira ao obscurecer a origem dos seus fundos. Todos os sparkss na sua carteira é composto de "inputs" diferentes que você pode pensar como sendo moedas separadas, discretas.&lt;br&gt;O EnvioPrivado usa um processo inovador para misturas os inputs de duas pessoas diferentes, sem que suas moedas saiam de suas carteiras. Você mantém o controle de seu dinheiro o tempo todo.. &lt;hr&gt;&lt;b&gt;O processo do EnvioPrivado funciona assim: &lt;/b&gt;&lt;li&gt;O EnvioPrivado começa quebrando os inputs de suuas transações em denominações padrão. Essas denominações são 0.001 SPARKS, 0.01 SPARKS, 0.1 SPARKS, 1 SPARKS e 10 SPARKS -- algo como o dinheiro de papel que você usa todo dia.&lt;/li&gt;Sua carteira então envia uma requisição para um software especialmente configurado na rede, chamados de "masternodes." Esses masternodes são informados que você está interessado em misturar uma denominação específica. Nenhuma informação identificável é enviada aos masternodes, então eles nunca sabem "quem" você é.&lt;li&gt;Quando duas pessoas enviam mensagens similares, uma sessão de mistura tem início. O masternode mistura os inputs e instrui os três usuários da carteira para pagar o input agora transformado de volta a si mesmos. Sua carteira paga a denominação diretamente a si mesmo, mas em um endereço diferente (chamado de endereço mudado).&lt;li&gt;A fim de obscurecer plenamente seus fundos, sua carteira repete esse processo várias vezes com cada denominação. Cada vez que o processo é completado, se chama um "round". Cada round de EnvioPrivado torna exponencialmente mais difícil determinar onde os fundos se originaram.&lt;li&gt;Esse processo de mistura acontece no background sem nenhuma intervenção da sua parte. Quando você deseja fazer uma transação, seus fundos jã estarão anonimizados. Nenhuma espera adicional é requerida.&lt;li&gt;&lt;ol type="1"&gt;&lt;hr&gt;IMPORTANTE: &lt;b&gt;Sua carteira só contém 1000 desses "endereços mudados." Cada vez que um evento de mistura acontece, 9 de seus endereços são usados. Isso indica que esses 1000 endereços duram por cerca de 100 eventos de mistura. Quando 900 desses endereços são usados, sua carteira deve criar mais endereços. Contudo, ela só é capaz de fazer isso se você tem o backup automático habilitado.&lt;br&gt;Consequentemente, usuários que têm seus backups desabilitados também terão o EnvioPrivado desabilitado. &lt;hr&gt;Para mais informações, consulte a &lt;a href="https://docs.sparks.org/en/latest/wallets/sparkscore/privatesend-instantsend.html"&gt;documentação do PrivateSend&lt;/a&gt;.</translation>
     </message>
 </context>
 <context>
     <name>Intro</name>
     <message>
         <source>Welcome</source>
-        <translation>Добро пожаловать</translation>
+        <translation>Bem-vindo</translation>
     </message>
     <message>
         <source>Welcome to %1.</source>
-        <translation>Добро пожаловать в %1.</translation>
+        <translation>Bem vindo ao %1</translation>
     </message>
     <message>
         <source>As this is the first time the program is launched, you can choose where %1 will store its data.</source>
-        <translation>Так как вы впервые запустили программу, вы можете выбрать, где %1 будет хранить данные.</translation>
+        <translation>Como essa é a primeira vez que o programa é executado, você pode escolher onde %1 armazenará seus dados.</translation>
     </message>
     <message>
         <source>%1 will download and store a copy of the Sparks block chain. At least %2GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
-        <translation>%1 скачает и сохранит копию цепочки блоков. Как минимум %2ГБ данных будет храниться в этом каталоге и размер данных будет со временем расти. В этом же каталоге будет сохранён кошелёк.</translation>
+        <translation>%1 fará o download e armazenará uma cópia da cadeia de blocos do Sparks. Pelo menos %2GB de dados serão armazenados neste diretório e crescerão com o tempo. A carteira também será armazenada neste diretório.</translation>
     </message>
     <message>
         <source>Use the default data directory</source>
-        <translation>Использовать каталог данных по умолчанию</translation>
+        <translation>Use o diretório de dados padrão</translation>
     </message>
     <message>
         <source>Use a custom data directory:</source>
-        <translation>Использовать другой каталог данных:</translation>
+        <translation>Use um diretório de dados personalizado:</translation>
     </message>
     <message>
         <source>Error: Specified data directory "%1" cannot be created.</source>
-        <translation>Ошибка: не удалось создать указанный каталог данных "%1".</translation>
+        <translation>Erro: Diretório de dados "%1" não pode ser criado.</translation>
     </message>
     <message>
         <source>Error</source>
-        <translation>Ошибка</translation>
+        <translation>Erro</translation>
     </message>
     <message>
         <source>%1 GB of free space available</source>
-        <translation>доступно %1 ГБ свободного места</translation>
+        <translation>%1 GB de espaço livre disponível </translation>
     </message>
     <message>
         <source>(of %1 GB needed)</source>
-        <translation>(из требующихся %1 ГБ)</translation>
+        <translation>(Mais de %1GB necessário)</translation>
     </message>
 </context>
 <context>
     <name>MasternodeList</name>
     <message>
         <source>Form</source>
-        <translation>Форма</translation>
+        <translation>Formulário</translation>
     </message>
     <message>
         <source>My Masternodes</source>
-        <translation>Мои мастерноды</translation>
+        <translation>Meus Masternodes</translation>
     </message>
     <message>
         <source>Note: Status of your masternodes in local wallet can potentially be slightly incorrect.&lt;br /&gt;Always wait for wallet to sync additional data and then double check from another node&lt;br /&gt;if your masternode should be running but you still do not see "ENABLED" in "Status" field.</source>
-        <translation>Примечание: Статус Ваших мастернод в локальном кошельке может быть не совсем корректным.&lt;br /&gt;Всегда дожидайтесь окончания синхронизации дополнительных данных и перепроверяйте с другой ноды,&lt;br /&gt;если Ваша ьастернода должна быть активна, но Вы ее статус все равно не отображается как "ENABLED".</translation>
+        <translation>Nota: O status de seus masternodes na carteira local pode potencialmente ser ligeiramente incorreto. &lt;br /&gt;Sempre espere que a carteira sincronize dados adicionais e depois cheque novamente de outro nó &lt;br /&gt;, se o seu masternode estiver em execução, mas você ainda não vê "ATIVADO" no campo "Status".</translation>
     </message>
     <message>
         <source>Alias</source>
-        <translation>Имя</translation>
+        <translation>Apelido</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Адрес</translation>
+        <translation>Endereço</translation>
     </message>
     <message>
         <source>Protocol</source>
-        <translation>Протокол</translation>
+        <translation>Protocolo</translation>
     </message>
     <message>
         <source>Status</source>
-        <translation>Статус</translation>
+        <translation>Status</translation>
     </message>
     <message>
         <source>Active</source>
-        <translation>Активна</translation>
+        <translation>Ativo</translation>
     </message>
     <message>
         <source>Last Seen</source>
-        <translation>Последняя активность</translation>
+        <translation>visto pela última vez</translation>
     </message>
     <message>
         <source>Payee</source>
-        <translation>Получатель</translation>
+        <translation>Payee</translation>
     </message>
     <message>
         <source>S&amp;tart alias</source>
-        <translation>Запуск по &amp;имени</translation>
+        <translation>Iniciar Apelido</translation>
     </message>
     <message>
         <source>Start &amp;all</source>
-        <translation>Запуск &amp;всех</translation>
+        <translation>Iniciar tudo</translation>
     </message>
     <message>
         <source>Start &amp;MISSING</source>
-        <translation>Запуск &amp;MISSING</translation>
+        <translation>Iniciar &amp;FALTANTES</translation>
     </message>
     <message>
         <source>&amp;Update status</source>
-        <translation>&amp;Обновить статус</translation>
+        <translation>&amp;Update status</translation>
     </message>
     <message>
         <source>Show additional Masternode information</source>
-        <translation>Показать дополнительную информацию о мастерноде</translation>
+        <translation>Mostrar informações adicionais do Masternode</translation>
     </message>
     <message>
         <source>Show &amp;Info...</source>
-        <translation>Показать &amp;информацию</translation>
+        <translation>Mostrar &amp;Info...</translation>
     </message>
     <message>
         <source>Status will be updated automatically in (sec):</source>
-        <translation>Статус будет обновлен автоматически через (сек):</translation>
+        <translation>O estado será atualizado automaticamente em (seg):</translation>
     </message>
     <message>
         <source>0</source>
@@ -1161,71 +1094,139 @@
     </message>
     <message>
         <source>All Masternodes</source>
-        <translation>Все мастерноды</translation>
+        <translation>Todos os Masternodes</translation>
     </message>
     <message>
         <source>Filter List:</source>
-        <translation>Фильтровать список:</translation>
+        <translation>Filtrar Lista:</translation>
     </message>
     <message>
         <source>Filter masternode list</source>
-        <translation>Фильтровать список мастернод</translation>
+        <translation>Filtrar lista de masternodes</translation>
     </message>
     <message>
         <source>Node Count:</source>
-        <translation>Количество узлов:</translation>
+        <translation>Contagem de Masternodes</translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list represents the legacy and non-deterministic masternode list. It is only active as long as DIP3 has not been fully activated. After SPORK16 activation, this list will be empty.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Nota: Esta lista representa a lista de masternode legada e não determinística. Só está ativo enquanto o DIP3 não estiver totalmente ativado. Após a ativação do SPORK16, esta lista estará vazia.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+        <source>DIP3 Masternodes</source>
+        <translation>DIP3 Masternodes</translation>
+    </message>
+    <message>
+        <source>PoSe Score</source>
+        <translation>Contagem PoSe</translation>
+    </message>
+    <message>
+        <source>Registered</source>
+        <translation>Registrado</translation>
+    </message>
+    <message>
+        <source>Last Paid</source>
+        <translation>Último pagamento</translation>
+    </message>
+    <message>
+        <source>Next Payment</source>
+        <translation>Próximo pagamento</translation>
+    </message>
+    <message>
+        <source>Operator Reward</source>
+        <translation>Recompensa do Operador</translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: This list is not active yet and only for informational purposes. The network is still running in compatibility mode, which means that the non-deterministic masternode list is still active. Only after SPORK16 activation, this list will become the active one. Also, the values in the payment related fields are not used at the moment, but still updated for every block. Please ignore this until SPORK16 activation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Nota: Esta lista ainda não está ativa e apenas para fins informativos. A rede ainda está em execução no modo de compatibilidade, o que significa que a lista de masternodes não determinísticos ainda está ativa. Somente após a ativação do SPORK16, essa lista se tornará  ativa. Além disso, os valores nos campos relacionados ao pagamento não são usados no momento, mas ainda são atualizados para cada bloco. Por favor, ignore isso até a ativação do SPORK16.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Start alias</source>
-        <translation>Запуск по имени</translation>
+        <translation>Iniciar apelido</translation>
+    </message>
+    <message>
+        <source>Copy ProTx Hash</source>
+        <translation>Copiar ProTx Hash</translation>
+    </message>
+    <message>
+        <source>Copy Collateral Outpoint</source>
+        <translation>Copiar Outpoint Collateral</translation>
+    </message>
+    <message>
+        <source>ENABLED</source>
+        <translation>HABILITADO </translation>
+    </message>
+    <message>
+        <source>POSE_BANNED</source>
+        <translation>POSE_BANNED</translation>
+    </message>
+    <message>
+        <source>UNKNOWN</source>
+        <translation>DESCONHECIDO</translation>
+    </message>
+    <message>
+        <source>to %1</source>
+        <translation>para %1</translation>
+    </message>
+    <message>
+        <source>to UNKNOWN</source>
+        <translation>para DESCONHECIDO</translation>
+    </message>
+    <message>
+        <source>but not claimed</source>
+        <translation>mas não reivindicado</translation>
+    </message>
+    <message>
+        <source>NONE</source>
+        <translation>NENHUM</translation>
     </message>
     <message>
         <source>Confirm masternode start</source>
-        <translation>Подтверждение запуска мастерноды</translation>
+        <translation>Confirmar início de masternode</translation>
     </message>
     <message>
         <source>Are you sure you want to start masternode %1?</source>
-        <translation>Вы уверены, что хотите запустить мастерноду %1?</translation>
+        <translation>Tem certeza de que deseja iniciar o masternode %1?</translation>
     </message>
     <message>
         <source>Confirm all masternodes start</source>
-        <translation>Подтверждение запуска всех мастернод</translation>
+        <translation>Confirmar inicialização de todos masternodes</translation>
     </message>
     <message>
         <source>Are you sure you want to start ALL masternodes?</source>
-        <translation>Вы уверены, что хотите запустить ВСЕ мастерноды?</translation>
+        <translation>Tem certeza que quer inicializar TODOS os masternodes?</translation>
     </message>
     <message>
         <source>Command is not available right now</source>
-        <translation>Команда в данный момент недоступна</translation>
+        <translation>Esse comando não está disponível nesse momento</translation>
     </message>
     <message>
         <source>You can't use this command until masternode list is synced</source>
-        <translation>Вы не можете использовать данную команду до завершения синхронизации списка мастернод</translation>
+        <translation>Você não pode usar este comando até que a lista do masternode seja sincronizada</translation>
     </message>
     <message>
         <source>Confirm missing masternodes start</source>
-        <translation>Подтверждение запуска отсутствующих мастернод</translation>
+        <translation>Confirmar inicialização dos masternodes faltantes</translation>
     </message>
     <message>
         <source>Are you sure you want to start MISSING masternodes?</source>
-        <translation>Вы уверены, что хотите запустить ОТСУТСТВУЮЩИЕ мастерноды?</translation>
+        <translation>Tem certeza que quer inicializar os masternodes FALTANTES?</translation>
     </message>
     <message>
         <source>Additional information for Masternode %1</source>
-        <translation>Дополнительная информация по мастерноде %1</translation>
+        <translation>Informações adicionais para o Masternode %1</translation>
     </message>
     <message>
         <source>Masternode Private Key</source>
-        <translation>Закрытый ключ мастерноды</translation>
+        <translation>Chave Privada Masternode</translation>
     </message>
     <message>
         <source>Private Key</source>
-        <translation>Закрытый ключ</translation>
+        <translation>Chave Privada</translation>
     </message>
     <message>
         <source>Collateral</source>
-        <translation>Обеспечительная транзакция</translation>
+        <translation>Garantia</translation>
     </message>
     <message>
         <source>IP</source>
@@ -1233,77 +1234,81 @@
     </message>
     <message>
         <source>Version</source>
-        <translation>Версия</translation>
+        <translation>Versão</translation>
     </message>
     <message>
         <source>Unknown</source>
-        <translation>Неизвестно</translation>
+        <translation>Desconhecido</translation>
     </message>
     <message>
         <source>Sentinel</source>
         <translation>Sentinel</translation>
+    </message>
+    <message>
+        <source>Additional information for DIP3 Masternode %1</source>
+        <translation>Informações adicionais para DIP3 Masternode %1</translation>
     </message>
 </context>
 <context>
     <name>ModalOverlay</name>
     <message>
         <source>Form</source>
-        <translation>Форма</translation>
+        <translation>Forma</translation>
     </message>
     <message>
         <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the Sparks network, as detailed below.</source>
-        <translation>Последние транзакции пока что могут быть не видны и поэтому ваш баланс может отображаться некорректно. Информация будет корректироваться по мере синхронизации с сетью Sparks, подробности о ходе синхронизации представлены ниже.</translation>
+        <translation>Transações recentes podem não estar visíveis ainda, portanto o seu saldo pode estar incorreto. Esta informação será corrigida assim que sua carteira for sincronizada com a rede, como detalhado abaixo.</translation>
     </message>
     <message>
         <source>Attempting to spend Sparks that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
-        <translation>Попытка потратить средства из ещё не отображённых транзакций будет отвергнута сетью.</translation>
+        <translation>A tentativa de gastar o Sparks que é afetado por transações ainda não exibidas não será aceita pela rede.</translation>
     </message>
     <message>
         <source>Number of blocks left</source>
-        <translation>Количество оставшихся блоков</translation>
+        <translation>Número de blocos que faltam</translation>
     </message>
     <message>
         <source>Unknown...</source>
-        <translation>Неизвестно...</translation>
+        <translation>Desconhecido...</translation>
     </message>
     <message>
         <source>Last block time</source>
-        <translation>Время последнего блока</translation>
+        <translation>Hora do último bloco</translation>
     </message>
     <message>
         <source>Progress</source>
-        <translation>Прогресс</translation>
+        <translation>Progresso</translation>
     </message>
     <message>
         <source>Progress increase per hour</source>
-        <translation>Увеличение прогресса за час</translation>
+        <translation>Aumento do progresso por hora</translation>
     </message>
     <message>
         <source>calculating...</source>
-        <translation>рассчитывается...</translation>
+        <translation>calculando</translation>
     </message>
     <message>
         <source>Estimated time left until synced</source>
-        <translation>Оставшееся время, приблизительно</translation>
+        <translation>Tempo estimado para sincronizar</translation>
     </message>
     <message>
         <source>Hide</source>
-        <translation>Скрыть</translation>
+        <translation>Esconder</translation>
     </message>
     <message>
         <source>Unknown. Syncing Headers (%1)...</source>
-        <translation>Неизвестно. Синхронизация заголовков (%1)...</translation>
+        <translation>Desconhecido. Sincronizando cabeçalhos (%1)...</translation>
     </message>
 </context>
 <context>
     <name>OpenURIDialog</name>
     <message>
         <source>Open URI</source>
-        <translation>Открыть URI</translation>
+        <translation>Abrir URI</translation>
     </message>
     <message>
         <source>Open payment request from URI or file</source>
-        <translation>Открыть запрос платежа из URI или файла</translation>
+        <translation>Cobrança aberta de URI ou arquivo</translation>
     </message>
     <message>
         <source>URI:</source>
@@ -1311,178 +1316,186 @@
     </message>
     <message>
         <source>Select payment request file</source>
-        <translation>Выбрать файл запроса платежа</translation>
+        <translation>Selecione o arquivo de cobrança</translation>
     </message>
     <message>
         <source>Select payment request file to open</source>
-        <translation>Выберите файл запроса платежа</translation>
+        <translation>Selecione o arquivo de cobrança para ser aberto</translation>
     </message>
 </context>
 <context>
     <name>OptionsDialog</name>
     <message>
         <source>Options</source>
-        <translation>Настройки</translation>
+        <translation>Opções</translation>
     </message>
     <message>
         <source>&amp;Main</source>
-        <translation>&amp;Главная</translation>
+        <translation>Principal</translation>
     </message>
     <message>
         <source>Size of &amp;database cache</source>
-        <translation>Размер кэша &amp;БД</translation>
+        <translation>Tamanho do banco de &amp;dados do cache</translation>
     </message>
     <message>
         <source>MB</source>
-        <translation>МБ</translation>
+        <translation>MB</translation>
     </message>
     <message>
         <source>Number of script &amp;verification threads</source>
-        <translation>Число потоков проверки &amp;сценария</translation>
+        <translation>Número de threads do script de &amp;verificação</translation>
     </message>
     <message>
         <source>(0 = auto, &lt;0 = leave that many cores free)</source>
-        <translation>(0 = автоматически, &lt;0 = оставить столько незагруженных ядер)</translation>
+        <translation>(0 = automático, &lt;0 = número de cores deixados livres)</translation>
     </message>
     <message>
         <source>Amount of Sparks to keep anonymized</source>
-        <translation>Сумма постоянно анонимизированных Sparks</translation>
+        <translation>Quantidade de sparkss para manter anonimizado</translation>
     </message>
     <message>
         <source>W&amp;allet</source>
-        <translation>К&amp;ошелёк</translation>
+        <translation>C&amp;arteira</translation>
     </message>
     <message>
         <source>Show additional tab listing all your masternodes in first sub-tab&lt;br/&gt;and all masternodes on the network in second sub-tab.</source>
-        <translation>Показывать дополнительную вкладку со списком своих мастернод&lt;br/&gt;в одной таблице и списком всех мастернод в другой.</translation>
+        <translation>Mostre uma guia adicional listando todos os seus masternodes na primeira subposição &lt;br/&gt; e todos os masternodes na rede na segunda sub-guia.</translation>
     </message>
     <message>
         <source>Show Masternodes Tab</source>
-        <translation>Показывать вкладку с мастернодами</translation>
+        <translation>Mostrar a aba Masternodes</translation>
     </message>
     <message>
         <source>Show additional information and buttons for PrivateSend on overview screen.</source>
-        <translation>Показывать дополнительную информацию и кнопки для PrivateSend на обзорной вкладке.</translation>
+        <translation>Mostre informações adicionais e botões para PrivateSend na tela.</translation>
     </message>
     <message>
         <source>Enable advanced PrivateSend interface</source>
-        <translation>Включить расширенный интерфейс PrivateSend</translation>
+        <translation>Ativar interface avançada PrivateSend</translation>
     </message>
     <message>
         <source>Show warning dialog when PrivateSend detects that wallet has very low number of keys left.</source>
-        <translation>Показывать предупреждение, когда PrivateSend обнаружит, что в кошельке осталось слишком мало ключей.</translation>
+        <translation>Mostrar mensagem de aviso quando o PrivateSend detectar que a carteira tem um número muito baixo de chaves restantes.</translation>
     </message>
     <message>
         <source>Warn if PrivateSend is running out of keys</source>
-        <translation>Предупредить, если кончаются ключи для PrivateSend</translation>
+        <translation>Avisar se o PrivateSend estiver sem as chaves</translation>
     </message>
     <message>
         <source>Whether to use experimental PrivateSend mode with multiple mixing sessions per block.&lt;br/&gt;Note: You must use this feature carefully.&lt;br/&gt;Make sure you always have recent wallet (auto)backup in a safe place!</source>
-        <translation>Использовать или нет экспериментальный режим PrivateSend с множественным перемешивание за один блок.&lt;br/&gt;Примечание: Используйте с осторожностью.&lt;br/&gt;Убедитесь, что у вас всегда есть (автоматический) бэкап в безопасном месте!</translation>
+        <translation>Se você deseja usar o modo PrivateSend com várias sessões de mixagem por bloco. &lt;br/&gt; Nota: Você deve usar este recurso com cuidado. &lt;br/&gt; Certifique-se de ter sempre um backup  recente de sua  carteira em um local seguro.</translation>
     </message>
     <message>
         <source>Enable PrivateSend &amp;multi-session</source>
-        <translation>Включить &amp;мульти-сессионный PrivateSend</translation>
+        <translation>Ativar PrivateSend &amp;multi-sessão</translation>
     </message>
     <message>
         <source>If you disable the spending of unconfirmed change, the change from a transaction&lt;br/&gt;cannot be used until that transaction has at least one confirmation.&lt;br/&gt;This also affects how your balance is computed.</source>
-        <translation>При отключении траты неподтверждённой сдачи, сдача от транзакции&lt;br/&gt;не может быть использована до тех пор, пока у этой транзакции не будет хотя бы одно подтверждение.&lt;br/&gt;Это также влияет на то, как рассчитывается Ваш баланс.</translation>
+        <translation>Se você desabilitar o gasto de um troco não confirmado, o troco da transação&lt;br/&gt;não poderá ser utilizado até a transação ter pelo menos uma confirmação.&lt;br/&gt;Isso também afeta seu saldo computado.</translation>
     </message>
     <message>
         <source>PrivateSend rounds to use</source>
-        <translation>Количество раундов PrivateSend</translation>
+        <translation>PrivateSend rodadas para usar</translation>
     </message>
     <message>
         <source>This amount acts as a threshold to turn off PrivateSend once it's reached.</source>
-        <translation>Это пороговое значение, при достижении которого PrivateSend отключается.</translation>
+        <translation>Esse valor atua como um limite para desativar o PrivateSend assim que ele for atingido.</translation>
     </message>
     <message>
         <source>Automatically open the Sparks Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Автоматически открыть порт для Sparks Core на роутере. Работает только в том случае, если Ваш роутер поддерживает UPnP и данная функция включена.</translation>
+        <translation>Abre automaticamente a porta para o cliente Sparks Core no roteador. Essa função apenas funciona se o seu roteador oferece suporte a UPnP e a opção estiver habilitada.</translation>
     </message>
     <message>
         <source>Accept connections from outside</source>
-        <translation>Принимать подключения извне</translation>
+        <translation>Aceitar conexões externas</translation>
     </message>
     <message>
         <source>Allow incoming connections</source>
-        <translation>Принимать входящие подключения</translation>
+        <translation>Permitir conexões de entrada</translation>
     </message>
     <message>
         <source>Connect to the Sparks network through a SOCKS5 proxy.</source>
-        <translation>Подключаться к сети Sparks через прокси SOCKS5.</translation>
+        <translation>Conecta à rede Sparks através de um proxy SOCKS5.</translation>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
-        <translation>&amp;Подключаться через прокси SOCKS5 (прокси по умолчанию):</translation>
+        <translation>&amp;Conectar via proxy SOCKS5 (proxy padrão):</translation>
     </message>
     <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Exit in the menu.</source>
-        <translation>Сворачивать вместо закрытия. Если данная настройка будет выбрана, то приложение закроется только после выбора пункта меню Завершить.</translation>
+        <translation>Minimizar em vez de sair do aplicativo quando a janela for fechada. Quando esta opção está ativada, o aplicativo só será fechado selecionando Sair no menu.</translation>
     </message>
     <message>
         <source>Third party URLs (e.g. a block explorer) that appear in the transactions tab as context menu items.&lt;br/&gt;%s in the URL is replaced by transaction hash. Multiple URLs are separated by vertical bar |.</source>
-        <translation>Сторонние URL (например, block explorer), которые отображаются на вкладке транзакций как пункты контекстного меню.&lt;br/&gt;%s в URL заменяется хэшем транзакции. URL отделяются друг от друга вертикальной чертой |.</translation>
+        <translation>As URLs de terceiros (por exemplo, um explorador de blocos) que aparecem na guia de transações como itens de menu de contexto. &lt;br/&gt;%s na URL são substituídos por hash de transação. Vários URLs são separados pela barra vertical |.</translation>
     </message>
     <message>
         <source>Expert</source>
-        <translation>Настройки для опытных пользователей</translation>
+        <translation>Avançado</translation>
     </message>
     <message>
         <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Эта настройка определяет количество отдельных мастернод, через которые пройдет анонимизация.&lt;br/&gt;Чем больше раундов, тем выше степень конфиденциальности, но также выше и суммарная стоимость комиссий.</translation>
+        <translation>Esta configuração determina a quantidade de Masternodes individuais através dos quais um input será anonimizado. &lt;br/&gt;Mais rodadas de anonimização garantem um maior grau de privacidade, mas também custarão mais em fees.</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
-        <translation>Показывать ли функции контроля монет или нет.</translation>
+        <translation>Mostrar ou não opções de controle da moeda.</translation>
     </message>
     <message>
         <source>Automatically start %1 after logging in to the system.</source>
-        <translation>Автоматически запускать %1 после входа в систему.</translation>
+        <translation>Executar o %1 automaticamente ao iniciar o sistema.</translation>
     </message>
     <message>
         <source>&amp;Start %1 on system login</source>
-        <translation>&amp;Запускать %1 при входе в систему</translation>
+        <translation>&amp;Iniciar %1 ao fazer login no sistema</translation>
     </message>
     <message>
         <source>Enable coin &amp;control features</source>
-        <translation>Включить функции &amp;контроля монет</translation>
+        <translation>Habilitar opções de &amp;controle de moedas</translation>
+    </message>
+    <message>
+        <source>Show system popups for PrivateSend mixing transactions&lt;br/&gt;just like for all other transaction types.</source>
+        <translation>Mostrar pop-ups do sistema para transações de mesclagem do PrivateSend &lt;br/&gt;como para todos os outros tipos de transação.</translation>
+    </message>
+    <message>
+        <source>Show popups for PrivateSend transactions</source>
+        <translation>Mostrar pop-ups para transações do PrivateSend</translation>
     </message>
     <message>
         <source>&amp;Spend unconfirmed change</source>
-        <translation>&amp;Тратить неподтверждённую сдачу</translation>
+        <translation>Ga&amp;star mudança não confirmada</translation>
     </message>
     <message>
         <source>&amp;Network</source>
-        <translation>&amp;Сеть</translation>
+        <translation>Rede</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
-        <translation>Пробросить порт через &amp;UPnP</translation>
+        <translation>Mapear porta usando &amp;UPnP</translation>
     </message>
     <message>
         <source>Proxy &amp;IP:</source>
-        <translation>&amp;IP Прокси: </translation>
+        <translation>&amp;IP do proxy:</translation>
     </message>
     <message>
         <source>IP address of the proxy (e.g. IPv4: 127.0.0.1 / IPv6: ::1)</source>
-        <translation>IP-адрес прокси (например, IPv4: 127.0.0.1 / IPv6: ::1)</translation>
+        <translation>Endereço de IP do proxy (e.g. IPv4: 127.0.0.1 / IPv6: ::1)</translation>
     </message>
     <message>
         <source>&amp;Port:</source>
-        <translation>По&amp;рт: </translation>
+        <translation>&amp;Porta:</translation>
     </message>
     <message>
         <source>Port of the proxy (e.g. 9050)</source>
-        <translation>Порт прокси-сервера (например, 9050)</translation>
+        <translation>Porta do serviço de proxy (ex. 9050)</translation>
     </message>
     <message>
         <source>Used for reaching peers via:</source>
-        <translation>Используется для подключения к пирам через:</translation>
+        <translation>Usado para alcançar peers através de:</translation>
     </message>
     <message>
         <source>Shows, if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
-        <translation>Если указано, то показывает прокси SOCKS5, используемый по умолчанию для подключения к пирам этого типа сети</translation>
+        <translation>Mostra, se o proxy SOCKS5 padrão fornecido for usado para alcançar pares através deste tipo de rede.</translation>
     </message>
     <message>
         <source>IPv4</source>
@@ -1498,85 +1511,85 @@
     </message>
     <message>
         <source>Connect to the Sparks network through a separate SOCKS5 proxy for Tor hidden services.</source>
-        <translation>Подключаться к сети Sparks через отдельный прокси SOCKS5 для скрытых сервисов Tor.</translation>
+        <translation>Conecte-se à rede Sparks através de um proxy SOCKS5 separado para serviços ocultos Tor</translation>
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services:</source>
-        <translation>Использовать отдельный SOCKS5 прокси для подключения к участникам через скрытые сервисы Tor:</translation>
+        <translation>Usar proxy SOCKS5 separado para alcançar pares via serviços ocultos Tor:</translation>
     </message>
     <message>
         <source>&amp;Window</source>
-        <translation>&amp;Окно</translation>
+        <translation>&amp;Janela</translation>
     </message>
     <message>
         <source>&amp;Hide the icon from the system tray.</source>
-        <translation>&amp;Скрыть иконку в системном лотке.</translation>
+        <translation>&amp;Ocultar o ícone da bandeja do sistema.</translation>
     </message>
     <message>
         <source>Hide tray icon</source>
-        <translation>Скрыть иконку в системном лотке</translation>
+        <translation>Ocultar ícone da bandeja</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
-        <translation>После сворачивания окна показывать только иконку в системном лотке.</translation>
+        <translation>Mostrar apenas um ícone na bandeja ao minimizar a janela.</translation>
     </message>
     <message>
         <source>&amp;Minimize to the tray instead of the taskbar</source>
-        <translation>&amp;Cворачивать в системный лоток вместо панели задач</translation>
+        <translation>&amp;Minimizar para a bandeja em vez da barra de tarefas.</translation>
     </message>
     <message>
         <source>M&amp;inimize on close</source>
-        <translation>С&amp;ворачивать при закрытии</translation>
+        <translation>M&amp;inimizar ao sair</translation>
     </message>
     <message>
         <source>&amp;Display</source>
-        <translation>О&amp;тображение</translation>
+        <translation>&amp;Mostrar</translation>
     </message>
     <message>
         <source>User Interface &amp;language:</source>
-        <translation>&amp;Язык интерфейса:</translation>
+        <translation>&amp;Língua da interface com usuário:</translation>
     </message>
     <message>
         <source>The user interface language can be set here. This setting will take effect after restarting %1.</source>
-        <translation>Здесь можно выбрать язык интерфейса. Настройки вступят в силу после перезапуска %1.</translation>
+        <translation>O idioma da interface pode ser definido aqui. Essa configuração terá efeito após reiniciar o %1.</translation>
     </message>
     <message>
         <source>Language missing or translation incomplete? Help contributing translations here:
 https://www.transifex.com/projects/p/sparks/</source>
-        <translation>Нет Вашего языка или перевод неполон? Помогите нам сделать перевод лучше:
+        <translation>Idioma inexistente ou tradução incompleta? Contribua com a tradução aqui:
 https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>User Interface Theme:</source>
-        <translation>Тема интерфейса:</translation>
+        <translation>Tema da Interface do usuário:</translation>
     </message>
     <message>
         <source>&amp;Unit to show amounts in:</source>
-        <translation>&amp;Отображать суммы в единицах: </translation>
+        <translation>&amp;Unidade usada para mostrar quantidades:</translation>
     </message>
     <message>
         <source>Choose the default subdivision unit to show in the interface and when sending coins.</source>
-        <translation>Выберите единицу измерения монет при отображении и отправке.</translation>
+        <translation>Escolha a unidade padrão de subdivisão para interface mostrar quando enviar bitcoins.</translation>
     </message>
     <message>
         <source>Decimal digits</source>
-        <translation>Знаков после запятой</translation>
+        <translation>Dígitos decimais</translation>
     </message>
     <message>
         <source>Third party transaction URLs</source>
-        <translation>Сторонние URL для транзакций</translation>
+        <translation>URLs da transação de terceiros</translation>
     </message>
     <message>
         <source>Active command-line options that override above options:</source>
-        <translation>Активные параметры командной строки, которые перекрывают вышеуказанные настройки:</translation>
+        <translation>Ativa as opções de linha de comando que sobrescreve as opções acima:</translation>
     </message>
     <message>
         <source>Reset all client options to default.</source>
-        <translation>Сбросить все настройки клиента на значения по умолчанию.</translation>
+        <translation>Redefinir todas as opções do cliente para opções padrão.</translation>
     </message>
     <message>
         <source>&amp;Reset Options</source>
-        <translation>&amp;Сбросить настройки</translation>
+        <translation>&amp;Redefinir opções</translation>
     </message>
     <message>
         <source>&amp;OK</source>
@@ -1584,106 +1597,106 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
-        <translation>О&amp;тмена</translation>
+        <translation>&amp;Cancelar</translation>
     </message>
     <message>
         <source>default</source>
-        <translation>по умолчанию</translation>
+        <translation>padrão</translation>
     </message>
     <message>
         <source>none</source>
-        <translation>нет</translation>
+        <translation>Nenhum</translation>
     </message>
     <message>
         <source>Confirm options reset</source>
-        <translation>Подтвердите сброс настроек</translation>
+        <translation>Confirmar redefinição de opções</translation>
     </message>
     <message>
         <source>Client restart required to activate changes.</source>
-        <translation>Для применения изменений требуется перезапуск клиента.</translation>
+        <translation>Reinicialização do aplicativo necessária para efetivar alterações.</translation>
     </message>
     <message>
         <source>Client will be shut down. Do you want to proceed?</source>
-        <translation>Клиент будет выключен. Продолжить?</translation>
+        <translation>O programa será encerrado. Deseja continuar?</translation>
     </message>
     <message>
         <source>This change would require a client restart.</source>
-        <translation>Это изменение потребует перезапуска клиента.</translation>
+        <translation>Essa mudança requer uma reinicialização do aplicativo.</translation>
     </message>
     <message>
         <source>The supplied proxy address is invalid.</source>
-        <translation>Адрес прокси неверен.</translation>
+        <translation>O endereço proxy fornecido é inválido.</translation>
     </message>
 </context>
 <context>
     <name>OverviewPage</name>
     <message>
         <source>Form</source>
-        <translation>Форма</translation>
+        <translation>Formulário</translation>
     </message>
     <message>
         <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Sparks network after a connection is established, but this process has not completed yet.</source>
-        <translation>Отображаемая информация может быть устаревшей. Ваш кошелёк автоматически синхронизируется с сетью Sparks после подключения, но этот процесс пока не завершён.</translation>
+        <translation>A informação exibida pode estar desatualizada. Sua wallet é sincronizada automaticamente com a rede Sparks tão logo uma conexão se estabeleça, entrtanto esse processo ainda não está completo.</translation>
     </message>
     <message>
         <source>Available:</source>
-        <translation>Доступно:</translation>
+        <translation>Disponível:</translation>
     </message>
     <message>
         <source>Your current spendable balance</source>
-        <translation>Ваш текущий баланс, доступный для расходования</translation>
+        <translation>Seu saldo atual spendable</translation>
     </message>
     <message>
         <source>Pending:</source>
-        <translation>В ожидании:</translation>
+        <translation>Pendente:</translation>
     </message>
     <message>
         <source>Total of transactions that have yet to be confirmed, and do not yet count toward the spendable balance</source>
-        <translation>Общая сумма всех транзакций, которые до сих пор не подтверждены и еще не учитываются в балансе, доступном для расходования</translation>
+        <translation>Total de transações que ainda têm de ser confirmados, e ainda não contam para o equilíbrio spendable</translation>
     </message>
     <message>
         <source>Immature:</source>
-        <translation>Незрелые:</translation>
+        <translation>Imaturo:</translation>
     </message>
     <message>
         <source>Mined balance that has not yet matured</source>
-        <translation>Баланс добытых монет, который ещё не созрел</translation>
+        <translation>Saldo minerado que ainda não maturou</translation>
     </message>
     <message>
         <source>Balances</source>
-        <translation>Балансы</translation>
+        <translation>Saldos</translation>
     </message>
     <message>
         <source>Unconfirmed transactions to watch-only addresses</source>
-        <translation>Неподтвержденные транзакции на адреса для просмотра</translation>
+        <translation>Transações não confirmadas para endereços apenas para exibição</translation>
     </message>
     <message>
         <source>Mined balance in watch-only addresses that has not yet matured</source>
-        <translation>Баланс добытых монет на адресах для просмотра, который ещё не созрел</translation>
+        <translation>Saldo minerado em endereços somente para observação que ainda não maturou</translation>
     </message>
     <message>
         <source>Total:</source>
-        <translation>Итого:</translation>
+        <translation>Total:</translation>
     </message>
     <message>
         <source>Your current total balance</source>
-        <translation>Ваш текущий общий баланс</translation>
+        <translation>Seu saldo total atual</translation>
     </message>
     <message>
         <source>Current total balance in watch-only addresses</source>
-        <translation>Текущий полный баланс на адресах для просмотра</translation>
+        <translation>Saldo total atual em endereços de monitoração</translation>
     </message>
     <message>
         <source>Watch-only:</source>
-        <translation>Для просмотра:</translation>
+        <translation>Observar apenas:</translation>
     </message>
     <message>
         <source>Your current balance in watch-only addresses</source>
-        <translation>Ваш текущий баланс на адресах для просмотра</translation>
+        <translation>Seu saldo atual em endereços somente de monitoração</translation>
     </message>
     <message>
         <source>Spendable:</source>
-        <translation>Для расхода:</translation>
+        <translation>Saldo disponível:</translation>
     </message>
     <message>
         <source>PrivateSend</source>
@@ -1691,299 +1704,295 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>Status:</source>
-        <translation>Статус:</translation>
+        <translation>Status:</translation>
     </message>
     <message>
         <source>Enabled/Disabled</source>
-        <translation>Включен/Выключен</translation>
+        <translation>Ativado/Desativado</translation>
     </message>
     <message>
         <source>Completion:</source>
-        <translation>Завершение:</translation>
+        <translation>Conclusão:</translation>
     </message>
     <message>
         <source>Try to manually submit a PrivateSend request.</source>
-        <translation>Попробовать отправить запрос PrivateSend вручную.</translation>
+        <translation>Tente enviar manualmente uma solicitação PrivateSend.</translation>
     </message>
     <message>
         <source>Reset the current status of PrivateSend (can interrupt PrivateSend if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>Сбросить текущий статус PrivateSend (можно прервать процесс перемешивания PrivateSend, но это может стоить Вам немного денег!)</translation>
+        <translation>Reseta o estado atual do PrivateSend (pode interromper o PrivateSend se este estiver em processo de Mixing, isso pode te custar dinheiro!)</translation>
     </message>
     <message>
         <source>Information about PrivateSend and Mixing</source>
-        <translation>Информация о PrivateSend и перемешивании</translation>
+        <translation>Informações sobre PrivateSend e Mixing</translation>
     </message>
     <message>
         <source>Info</source>
-        <translation>Информация</translation>
+        <translation>Info</translation>
     </message>
     <message>
         <source>Amount and Rounds:</source>
-        <translation>Сумма и раунды:</translation>
+        <translation>Quantia e Rodadas:</translation>
     </message>
     <message>
         <source>0 SPARKS / 0 Rounds</source>
-        <translation>0 SPARKS / 0 раундов</translation>
+        <translation>0 SPARKS / 0 Rodadas</translation>
     </message>
     <message>
         <source>Submitted Denom:</source>
-        <translation>Отправленные номиналы:</translation>
+        <translation>Denom Submetido:</translation>
     </message>
     <message>
         <source>n/a</source>
-        <translation>н/д</translation>
+        <translation>n/a</translation>
     </message>
     <message>
         <source>Recent transactions</source>
-        <translation>Недавние транзакции</translation>
+        <translation>Transações recentes</translation>
     </message>
     <message>
         <source>Start/Stop Mixing</source>
-        <translation>Начать/остановить автоматическое перемешивание</translation>
+        <translation>Iniciar/Interronper o Mixing</translation>
     </message>
     <message>
         <source>PrivateSend Balance:</source>
-        <translation>Баланс PrivateSend:</translation>
+        <translation>Saldo PrivateSend</translation>
     </message>
     <message>
         <source>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
-        <translation>Номиналы, предоставленные Вами мастерноде.&lt;br&gt;Для перемешивания другие пользователи должны предоставить точно такой же набор номиналов.</translation>
+        <translation>As denominações submetidas por você ao Masternode.&lt;br/&gt;Para a realização do mixing, outros usuários precisam submeter exatamente as mesmas denominações.</translation>
     </message>
     <message>
         <source>(Last Message)</source>
-        <translation>(Последнее сообщение)</translation>
+        <translation>(Última Mensagem)</translation>
     </message>
     <message>
         <source>Try Mix</source>
-        <translation>Попробовать вручную</translation>
+        <translation>Tentar o Mixing</translation>
     </message>
     <message>
         <source>Reset</source>
-        <translation>Сбросить</translation>
+        <translation>Resetar</translation>
     </message>
     <message>
         <source>out of sync</source>
-        <translation>несинхронизировано</translation>
+        <translation>Sem sincronia</translation>
     </message>
     <message>
         <source>Automatic backups are disabled, no mixing available!</source>
-        <translation>Автоматические бэкапы отключены, перемешивание недоступно!</translation>
+        <translation>Backups automáticos estão desabilitados, Mixing não disponível!</translation>
     </message>
     <message>
         <source>Start Mixing</source>
-        <translation>Начать перемешивание</translation>
+        <translation>Iniciar o Mixing</translation>
     </message>
     <message>
         <source>Stop Mixing</source>
-        <translation>Остановить перемешивание</translation>
+        <translation>Interromper o Mixing</translation>
     </message>
     <message>
         <source>No inputs detected</source>
-        <translation>Монеты не найдены</translation>
+        <translation>Nenhuma entrada detectada</translation>
     </message>
     <message numerus="yes">
         <source>%n Rounds</source>
-        <translation><numerusform>%n раунд</numerusform><numerusform>%n  раунда</numerusform><numerusform>%n раундов</numerusform><numerusform>%n раундов</numerusform></translation>
+        <translation><numerusform>%n Rodadas</numerusform><numerusform>%n Rodadas</numerusform></translation>
     </message>
     <message>
         <source>Found enough compatible inputs to anonymize %1</source>
-        <translation>Найдено достаточно совместимых средств для анонимизации %1</translation>
+        <translation>Encontrou entradas compatíveis para anonimizar %1</translation>
     </message>
     <message>
         <source>Not enough compatible inputs to anonymize &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style='color:red;'&gt;%2&lt;/span&gt; instead</source>
-        <translation>Не достаточно совместимых средств для анонимизации &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br/&gt;будет анонимизировано только &lt;span style='color:red;'&gt;%2&lt;/span&gt;</translation>
+        <translation>Não há entradas compatíveis suficientes para anonimizar &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt; vamos anonimizar &lt;span style='color:red;'&gt;%2&lt;/span&gt; em vez disso</translation>
     </message>
     <message>
         <source>Overall progress</source>
-        <translation>Прогресс в целом</translation>
+        <translation>Progresso geral</translation>
     </message>
     <message>
         <source>Denominated</source>
-        <translation>Разбито на номиналы</translation>
+        <translation>Denominado</translation>
     </message>
     <message>
         <source>Mixed</source>
-        <translation>Перемешано</translation>
+        <translation>Misturado</translation>
     </message>
     <message>
         <source>Anonymized</source>
-        <translation>Анонимизировано</translation>
+        <translation>Anonimizado</translation>
     </message>
     <message numerus="yes">
         <source>Denominated inputs have %5 of %n rounds on average</source>
-        <translation><numerusform>Номиналы прошли в среднем %5 из %n раундов</numerusform><numerusform>Номиналы прошли в среднем %5 из %n раундов</numerusform><numerusform>Номиналы прошли в среднем %5 из %n раундов</numerusform><numerusform>Номиналы прошли в среднем %5 из %n раундов</numerusform></translation>
+        <translation><numerusform>Os insumos denominados têm %5 de %n rodadas em média</numerusform><numerusform>Os insumos denominados têm %5 de %n rodadas em média</numerusform></translation>
     </message>
     <message>
         <source>keys left: %1</source>
-        <translation>осталось ключей: %1</translation>
+        <translation>Chaves restantes: %1</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation>Выключен</translation>
+        <translation>Desativado</translation>
     </message>
     <message>
         <source>Very low number of keys left since last automatic backup!</source>
-        <translation>Очень мало ключей с момента последнего автоматического бэкапа!</translation>
+        <translation>Número muito baixo de chaves deixadas desde o último backup automático!</translation>
     </message>
     <message>
         <source>We are about to create a new automatic backup for you, however &lt;span style='color:red;'&gt; you should always make sure you have backups saved in some safe place&lt;/span&gt;!</source>
-        <translation>Мы собираемся создать автоматический бэкап, однако &lt;span style='color:red;'&gt; всегда проверяйте, что вы сохраняете их в безопасном месте&lt;/span&gt;!</translation>
+        <translation>Estamos prestes a criar um novo backup automático para você, no entanto&lt;span style='color:red;'&gt;, você deve sempre garantir que você tenha backups salvos em algum lugar seguro&lt;/span&gt;!</translation>
     </message>
     <message>
         <source>Note: You can turn this message off in options.</source>
-        <translation>Примечание: Вы можете отключить это сообщение в настройках.</translation>
+        <translation>Nota: Você pode desativar essa mensagem nas opções.</translation>
     </message>
     <message>
         <source>WARNING! Something went wrong on automatic backup</source>
-        <translation>ВНИМАНИЕ! Что-то пошло не так при создании автоматического бэкапа</translation>
+        <translation>ALERTA! Algo de errado ocorreu com o backup automático</translation>
     </message>
     <message>
         <source>ERROR! Failed to create automatic backup</source>
-        <translation>ОШИБКА! Не удалось создать автоматический бэкап</translation>
+        <translation>ERRO! Falha ao criar o backup automático</translation>
     </message>
     <message>
         <source>Mixing is disabled, please close your wallet and fix the issue!</source>
-        <translation>Перемешивание выключено, пожалуйста закройте кошелек и исправьте проблему!</translation>
+        <translation>Mixing está desabilitado, por favor feche sua carteira e corrija o problema!</translation>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>Включен</translation>
+        <translation>Ativado</translation>
     </message>
     <message>
         <source>see debug.log for details.</source>
-        <translation>смотрите debug.log для получения подробной информации.</translation>
+        <translation>Consulte debug.log para obter detalhes.</translation>
     </message>
     <message>
         <source>WARNING! Failed to replenish keypool, please unlock your wallet to do so.</source>
-        <translation>ВНИМАНИЕ! Ну удалось обновить пул ключей, пожалуйста, разблокируйте кошелек.</translation>
+        <translation>ATENÇÃO! Falha ao repor o keypool, desbloqueie sua carteira para fazer isso.</translation>
     </message>
     <message>
         <source>Last PrivateSend message:
 </source>
-        <translation>Последнее сообщение PrivateSend:
+        <translation>Última mensagem do PrivateSend:
 </translation>
     </message>
     <message>
-        <source>N/A</source>
-        <translation>Н/Д</translation>
-    </message>
-    <message>
         <source>PrivateSend was successfully reset.</source>
-        <translation>PrivateSend был успешно прерван.</translation>
+        <translation>PrivateSend foi reiniciado com sucesso.</translation>
     </message>
     <message>
         <source>If you don't want to see internal PrivateSend fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
-        <translation>Если Вы не хотите видеть внутренние транзакции/комиссии от работы PrivateSend, выберите Тип "Наиболее общие" на закладке "Транзакции".</translation>
+        <translation>Se você não quiser ver as taxas / transações internas do PrivateSend selecione "Mais comum" como Tipo na guia "Transações".</translation>
     </message>
     <message>
         <source>PrivateSend requires at least %1 to use.</source>
-        <translation>Для работы PrivateSend требуется минимум %1.</translation>
+        <translation>PrivateSend requer pelo menos %1 para usar.</translation>
     </message>
     <message>
         <source>Wallet is locked and user declined to unlock. Disabling PrivateSend.</source>
-        <translation>Бумажник заблокирован и пользователь отказался его разблокировать. PrivateSend будет выключен.</translation>
+        <translation>A Carteira está bloqueada e o usuário recusou a desbloquear. Desativando o PrivateSend.</translation>
     </message>
 </context>
 <context>
     <name>PaymentServer</name>
     <message>
         <source>Payment request error</source>
-        <translation>Ошибка запроса платежа</translation>
+        <translation>Erro no pedido de pagamento</translation>
     </message>
     <message>
         <source>Cannot start sparks: click-to-pay handler</source>
-        <translation>Не удаётся запустить обработчик sparks: click-to-pay</translation>
+        <translation>Não foi possível iniciar Sparks: manipulador click-to-pay</translation>
     </message>
     <message>
         <source>URI handling</source>
-        <translation>Обработка URI</translation>
+        <translation>Manipulação de URI</translation>
     </message>
     <message>
         <source>Payment request fetch URL is invalid: %1</source>
-        <translation>Неверный URL запроса платежа: %1</translation>
+        <translation>URL de cobrança é inválida: %1</translation>
     </message>
     <message>
         <source>Invalid payment address %1</source>
-        <translation>Неверный адрес платежа %1</translation>
+        <translation>Endereço de pagamento inválido %1</translation>
     </message>
     <message>
         <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
-        <translation>Не удалось разобрать URI! Возможно указан некорректный адрес Sparks либо параметры URI сформированы неверно.</translation>
+        <translation>A URI não pode ser analisada! Isto pode ser causado por um endereço inválido ou um parâmetro URI malformado.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
-        <translation>Обработка файла запроса платежа</translation>
+        <translation>Manipulação de arquivo de cobrança</translation>
     </message>
     <message>
         <source>Payment request file cannot be read! This can be caused by an invalid payment request file.</source>
-        <translation>Не удается прочесть либо разобрать файл запроса платежа! Возможно это некоректный файл.</translation>
+        <translation>Arquivo de pedido de pagamento não pode ser lido! Isto pode ser causado por uma requisição de pagamento inválida.</translation>
     </message>
     <message>
         <source>Payment request rejected</source>
-        <translation>Запрос платежа отклонен</translation>
+        <translation>Pedido de pagamento rejeitado</translation>
     </message>
     <message>
         <source>Payment request network doesn't match client network.</source>
-        <translation>Сеть запроса платежа не соответствует сети клиента.</translation>
+        <translation>Rede do pedido de pagamento não corresponde rede do cliente.</translation>
     </message>
     <message>
         <source>Payment request expired.</source>
-        <translation>Время этого запроса платежа истекло.</translation>
+        <translation>Pedido de pagamento expirado.</translation>
     </message>
     <message>
         <source>Payment request is not initialized.</source>
-        <translation>Запрос платежа не инициализирован.</translation>
+        <translation>A requisição do pagamento não foi inicializada.</translation>
     </message>
     <message>
         <source>Unverified payment requests to custom payment scripts are unsupported.</source>
-        <translation>Непроверенные запросы платежей с нестандартными платёжными сценариями не поддерживаются.</translation>
+        <translation>Pedidos de pagamento não verificados para scripts de pagamento personalizados não são suportados.</translation>
     </message>
     <message>
         <source>Invalid payment request.</source>
-        <translation>Неправильный запрос платежа.</translation>
+        <translation>Pedido de pagamento inválido</translation>
     </message>
     <message>
         <source>Requested payment amount of %1 is too small (considered dust).</source>
-        <translation>Запрошенная сумма платежа %1 слишком мала (считается "пылью").</translation>
+        <translation>Valor do pagamento solicitado de %1 é muito pequeno (Considerado poeira).</translation>
     </message>
     <message>
         <source>Refund from %1</source>
-        <translation>Возврат от %1</translation>
+        <translation>Reembolso de %1</translation>
     </message>
     <message>
         <source>Payment request %1 is too large (%2 bytes, allowed %3 bytes).</source>
-        <translation>Запрос платежа %1 слишком большой (%2 байт, разрешено %3 байт).</translation>
+        <translation>Pedido de pagamento %1 é muito grande (%2 bytes, permitido %3 bytes).</translation>
     </message>
     <message>
         <source>Error communicating with %1: %2</source>
-        <translation>Ошибка связи с %1: %2</translation>
+        <translation>Erro na comunicação com %1: %2</translation>
     </message>
     <message>
         <source>Payment request cannot be parsed!</source>
-        <translation>Не могу разобрать запрос платежа!</translation>
+        <translation>Pedido de pagamento não pode ser analisado!</translation>
     </message>
     <message>
         <source>Bad response from server %1</source>
-        <translation>Плохой ответ от сервера %1</translation>
+        <translation>Má resposta do servidor %1</translation>
     </message>
     <message>
         <source>Network request error</source>
-        <translation>Ошибка сетевого запроса</translation>
+        <translation>Erro de solicitação de rede</translation>
     </message>
     <message>
         <source>Payment acknowledged</source>
-        <translation>Платёж принят</translation>
+        <translation>Pagamento reconhecido</translation>
     </message>
 </context>
 <context>
     <name>PeerTableModel</name>
     <message>
         <source>NodeId</source>
-        <translation>ID ноды</translation>
+        <translation>ID do nó</translation>
     </message>
     <message>
         <source>Node/Service</source>
-        <translation>Узел/Сервис</translation>
+        <translation>Nó/Serviço</translation>
     </message>
     <message>
         <source>User Agent</source>
@@ -1991,7 +2000,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>Ping</source>
-        <translation>Пинг</translation>
+        <translation>Ping</translation>
     </message>
 </context>
 <context>
@@ -2002,644 +2011,644 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>%1 didn't yet exit safely...</source>
-        <translation>%1 еще не завершил работу...</translation>
+        <translation>%1 ainda não terminou com segurança...</translation>
     </message>
     <message>
         <source>Error reading masternode configuration file: %1</source>
-        <translation>Ошибка чтения файла конфигурации мастернод: %1</translation>
+        <translation>Erro ao ler o arquivo de configuração do masternode: %1</translation>
     </message>
     <message>
         <source>Amount</source>
-        <translation>Сумма</translation>
+        <translation>Quantia</translation>
     </message>
     <message>
         <source>Enter a Sparks address (e.g. %1)</source>
-        <translation>Введите адрес Sparks (например, %1)</translation>
+        <translation>Informe um endereço Sparks (ex: %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
-        <translation>%1 д</translation>
+        <translation>%1 d</translation>
     </message>
     <message>
         <source>%1 h</source>
-        <translation>%1 ч</translation>
+        <translation>%1 h</translation>
     </message>
     <message>
         <source>%1 m</source>
-        <translation>%1 м</translation>
+        <translation>%1 m</translation>
     </message>
     <message>
         <source>%1 s</source>
-        <translation>%1 с</translation>
+        <translation>%1 s</translation>
     </message>
     <message>
         <source>None</source>
-        <translation>Нет</translation>
+        <translation>Nenhum</translation>
     </message>
     <message>
         <source>N/A</source>
-        <translation>Н/Д</translation>
+        <translation>N/A</translation>
     </message>
     <message>
         <source>%1 ms</source>
-        <translation>%1 мс</translation>
+        <translation>%1 ms</translation>
     </message>
     <message numerus="yes">
         <source>%n second(s)</source>
-        <translation><numerusform>%n секунда</numerusform><numerusform>%n секунды</numerusform><numerusform>%n секунд</numerusform><numerusform>%n секунд</numerusform></translation>
+        <translation><numerusform>%n segundos</numerusform><numerusform>%n segundos</numerusform></translation>
     </message>
     <message numerus="yes">
         <source>%n minute(s)</source>
-        <translation><numerusform>%n минута</numerusform><numerusform>%n минуты</numerusform><numerusform>%n минут</numerusform><numerusform>%n минут</numerusform></translation>
+        <translation><numerusform>%n minutos</numerusform><numerusform>%n minutos</numerusform></translation>
     </message>
     <message numerus="yes">
         <source>%n hour(s)</source>
-        <translation><numerusform>%n час</numerusform><numerusform>%n часа</numerusform><numerusform>%n часов</numerusform><numerusform>%n часов</numerusform></translation>
+        <translation><numerusform>%n horas</numerusform><numerusform>%n horas</numerusform></translation>
     </message>
     <message numerus="yes">
         <source>%n day(s)</source>
-        <translation><numerusform>%n день</numerusform><numerusform>%n дня</numerusform><numerusform>%n дней</numerusform><numerusform>%n дней</numerusform></translation>
+        <translation><numerusform>%n dias</numerusform><numerusform>%n dias</numerusform></translation>
     </message>
     <message numerus="yes">
         <source>%n week(s)</source>
-        <translation><numerusform>%n неделя</numerusform><numerusform>%n недели</numerusform><numerusform>%n недель</numerusform><numerusform>%n недель</numerusform></translation>
+        <translation><numerusform>%n semanas</numerusform><numerusform>%n semanas</numerusform></translation>
     </message>
     <message numerus="yes">
         <source>%n year(s)</source>
-        <translation><numerusform>%n год</numerusform><numerusform>%n года</numerusform><numerusform>%n лет</numerusform><numerusform>%n лет</numerusform></translation>
+        <translation><numerusform>%n anos</numerusform><numerusform>%n anos</numerusform></translation>
     </message>
     <message>
         <source>%1 and %2</source>
-        <translation>%1 и %2</translation>
+        <translation>%1 e %2</translation>
     </message>
     <message>
         <source>unknown</source>
-        <translation>неизвестно</translation>
+        <translation>desconhecido</translation>
     </message>
 </context>
 <context>
     <name>QObject::QObject</name>
     <message>
         <source>Error: Specified data directory "%1" does not exist.</source>
-        <translation>Ошибка: Указанная папка данных "%1" не существует.</translation>
+        <translation>Erro: Diretório de dados especificado "%1" não existe.</translation>
     </message>
     <message>
         <source>Error: Cannot parse configuration file: %1. Only use key=value syntax.</source>
-        <translation>Ошибка: не могу прочитать файл настроек: %1. Используйте для настроек только строки ключ=значение.</translation>
+        <translation>Erro: Não foi possível interpretar arquivo de configuração: %1. Utilize apenas a sintaxe chave=valor.</translation>
     </message>
     <message>
         <source>Error: %1</source>
-        <translation>Ошибка: %1</translation>
+        <translation>Erro: %1</translation>
     </message>
 </context>
 <context>
     <name>QRDialog</name>
     <message>
         <source>QR-Code Title</source>
-        <translation>Заголовок QR-кода</translation>
+        <translation>QR-Code Titulo</translation>
     </message>
     <message>
         <source>QR Code</source>
-        <translation>QR-код</translation>
+        <translation>Código QR</translation>
     </message>
     <message>
         <source>&amp;Save Image...</source>
-        <translation>&amp;Сохранить изображение...</translation>
+        <translation>&amp;Salvar Imagem...</translation>
     </message>
     <message>
         <source>Error creating QR Code.</source>
-        <translation>Ошибка создания QR-кода</translation>
+        <translation>Erro ao criar o QR Code.</translation>
     </message>
 </context>
 <context>
     <name>QRGeneralImageWidget</name>
     <message>
         <source>&amp;Save Image...</source>
-        <translation>&amp;Сохранить изображение...</translation>
+        <translation>&amp;Salvar Imagem...</translation>
     </message>
     <message>
         <source>&amp;Copy Image</source>
-        <translation>&amp;Копировать изображение</translation>
+        <translation>&amp;Copiar imagem</translation>
     </message>
     <message>
         <source>Save QR Code</source>
-        <translation>Сохранить QR-код</translation>
+        <translation>Salvar código QR</translation>
     </message>
     <message>
         <source>PNG Image (*.png)</source>
-        <translation>Изображение PNG (*.png)</translation>
+        <translation>Imagem PNG (*.png)</translation>
     </message>
 </context>
 <context>
     <name>QRImageWidget</name>
     <message>
         <source>&amp;Save Image...</source>
-        <translation>&amp;Сохранить изображение...</translation>
+        <translation>&amp;Salvar Imagem...</translation>
     </message>
     <message>
         <source>&amp;Copy Image</source>
-        <translation>&amp;Копировать изображение</translation>
+        <translation>&amp;Copiar imagem</translation>
     </message>
     <message>
         <source>Save QR Code</source>
-        <translation>Сохранить QR-код</translation>
+        <translation>Salvar código QR</translation>
     </message>
     <message>
         <source>PNG Image (*.png)</source>
-        <translation>Изображение PNG (*.png)</translation>
+        <translation>Imagem PNG (*.png)</translation>
     </message>
 </context>
 <context>
     <name>RPCConsole</name>
     <message>
         <source>Tools window</source>
-        <translation>Окно инструментов</translation>
+        <translation>Janela de ferramentas</translation>
     </message>
     <message>
         <source>&amp;Information</source>
-        <translation>&amp;Информация</translation>
+        <translation>&amp;Informação</translation>
     </message>
     <message>
         <source>General</source>
-        <translation>Общие</translation>
+        <translation>Geral</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation>Имя</translation>
+        <translation>Nome</translation>
     </message>
     <message>
         <source>N/A</source>
-        <translation>Н/Д</translation>
+        <translation>N/A</translation>
     </message>
     <message>
         <source>Number of connections</source>
-        <translation>Число подключений</translation>
+        <translation>Número de conexões</translation>
     </message>
     <message>
         <source>&amp;Open</source>
-        <translation>&amp;Открыть</translation>
+        <translation>&amp;Abrir</translation>
     </message>
     <message>
         <source>Startup time</source>
-        <translation>Время запуска</translation>
+        <translation>Horário de inicialização</translation>
     </message>
     <message>
         <source>Network</source>
-        <translation>Сеть</translation>
+        <translation>Rede</translation>
     </message>
     <message>
         <source>Last block time</source>
-        <translation>Время последнего блока</translation>
+        <translation>Horário do último bloco</translation>
     </message>
     <message>
         <source>Debug log file</source>
-        <translation>Отладочный лог-файл</translation>
+        <translation>Arquivo de log de Depuração</translation>
     </message>
     <message>
         <source>Current number of blocks</source>
-        <translation>Текущее количество блоков</translation>
+        <translation>Quantidade atual de blocos</translation>
     </message>
     <message>
         <source>Client version</source>
-        <translation>Версия клиента</translation>
+        <translation>Versão do cliente</translation>
     </message>
     <message>
         <source>Using BerkeleyDB version</source>
-        <translation>Используется версия BerkeleyDB</translation>
+        <translation>Usando BerkeleyDB versão</translation>
     </message>
     <message>
         <source>Block chain</source>
-        <translation>Цепочка блоков</translation>
+        <translation>Corrente de blocos</translation>
     </message>
     <message>
         <source>Number of Masternodes</source>
-        <translation>Количество Мастернод</translation>
+        <translation>Número de Masternodes</translation>
     </message>
     <message>
         <source>Memory Pool</source>
-        <translation>Пул памяти</translation>
+        <translation>Pool de memória</translation>
     </message>
     <message>
         <source>Current number of transactions</source>
-        <translation>Текущее количество транзакций</translation>
+        <translation>Número atual de transações</translation>
     </message>
     <message>
         <source>Memory usage</source>
-        <translation>Использование памяти</translation>
+        <translation>Uso de memória</translation>
     </message>
     <message>
         <source>&amp;Console</source>
-        <translation>&amp;Консоль</translation>
+        <translation>&amp;Console</translation>
     </message>
     <message>
         <source>Clear console</source>
-        <translation>Очистить консоль</translation>
+        <translation>Limpar console</translation>
     </message>
     <message>
         <source>&amp;Network Traffic</source>
-        <translation>Сетевой &amp;трафик</translation>
+        <translation>Tráfico de Rede</translation>
     </message>
     <message>
         <source>&amp;Clear</source>
-        <translation>&amp;Очистить</translation>
+        <translation>&amp;Limpar</translation>
     </message>
     <message>
         <source>Totals</source>
-        <translation>Всего</translation>
+        <translation>Totais</translation>
     </message>
     <message>
         <source>Received</source>
-        <translation>Получено</translation>
+        <translation>Recebido</translation>
     </message>
     <message>
         <source>Sent</source>
-        <translation>Отправлено</translation>
+        <translation>Enviado</translation>
     </message>
     <message>
         <source>&amp;Peers</source>
-        <translation>&amp;Пиры</translation>
+        <translation>&amp;Peers</translation>
     </message>
     <message>
         <source>Banned peers</source>
-        <translation>Заблокированные пиры</translation>
+        <translation>Nós banidos</translation>
     </message>
     <message>
         <source>Select a peer to view detailed information.</source>
-        <translation>Выберите пира для просмотра детализированной информации.</translation>
+        <translation>Selecione um ponto para ver informações detalhadas.</translation>
     </message>
     <message>
         <source>Whitelisted</source>
-        <translation>В белом списке</translation>
+        <translation>Lista branca</translation>
     </message>
     <message>
         <source>Direction</source>
-        <translation>Направление</translation>
+        <translation>Direção</translation>
     </message>
     <message>
         <source>Version</source>
-        <translation>Версия</translation>
+        <translation>Versão</translation>
     </message>
     <message>
         <source>Starting Block</source>
-        <translation>Начальный блок</translation>
+        <translation>Bloco inicial</translation>
     </message>
     <message>
         <source>Synced Headers</source>
-        <translation>Синхронизированные заголовки</translation>
+        <translation>Cabeçalhos Sincronizados</translation>
     </message>
     <message>
         <source>Synced Blocks</source>
-        <translation>Синхронизированные блоки</translation>
+        <translation>Blocos Sincronizados</translation>
     </message>
     <message>
         <source>Wallet Path</source>
-        <translation>Путь к кошельку</translation>
+        <translation>Caminho da carteira</translation>
     </message>
     <message>
         <source>User Agent</source>
-        <translation>User Agent</translation>
+        <translation>Agente de Usuário </translation>
     </message>
     <message>
         <source>Datadir</source>
-        <translation>Папка с данными</translation>
+        <translation>Datadir</translation>
     </message>
     <message>
         <source>Open the %1 debug log file from the current data directory. This can take a few seconds for large log files.</source>
-        <translation>Открыть отладочный лог-файл %1 из текущего каталога данных. Для больших лог-файлов эта операция может занять несколько секунд.</translation>
+        <translation>Abrir o arquivo de log de depuração do %1 localizado no diretório atual de dados. Isso pode levar alguns segundos para arquivos de log grandes.</translation>
     </message>
     <message>
         <source>Decrease font size</source>
-        <translation>Уменьшить шрифт</translation>
+        <translation>Diminuir o tamanho da fonte</translation>
     </message>
     <message>
         <source>Increase font size</source>
-        <translation>Увеличить шрифт</translation>
+        <translation>Aumentar o tamanho da fonte</translation>
     </message>
     <message>
         <source>Services</source>
-        <translation>Сервисы</translation>
+        <translation>Serviços</translation>
     </message>
     <message>
         <source>Ban Score</source>
-        <translation>Очки бана</translation>
+        <translation>Banir pontuação</translation>
     </message>
     <message>
         <source>Connection Time</source>
-        <translation>Время соединения</translation>
+        <translation>Tempo de conexão</translation>
     </message>
     <message>
         <source>Last Send</source>
-        <translation>Последняя отправка</translation>
+        <translation>Último envio</translation>
     </message>
     <message>
         <source>Last Receive</source>
-        <translation>Последнее получение</translation>
+        <translation>Último recebido</translation>
     </message>
     <message>
         <source>Ping Time</source>
-        <translation>Время пинга</translation>
+        <translation>Tempo de Ping</translation>
     </message>
     <message>
         <source>The duration of a currently outstanding ping.</source>
-        <translation>Длительность текущего просроченного пинга.</translation>
+        <translation>A duração de um ping excepcional no momento.</translation>
     </message>
     <message>
         <source>Ping Wait</source>
-        <translation>Ожидание пинга</translation>
+        <translation>Espera de ping</translation>
     </message>
     <message>
         <source>Min Ping</source>
-        <translation>Мин. пинг</translation>
+        <translation>Ping min</translation>
     </message>
     <message>
         <source>Time Offset</source>
-        <translation>Сдвиг времени</translation>
+        <translation>Offset de tempo</translation>
     </message>
     <message>
         <source>&amp;Wallet Repair</source>
-        <translation>Ремонт &amp;кошелька</translation>
+        <translation>&amp;Reparar carteira</translation>
     </message>
     <message>
         <source>Salvage wallet</source>
-        <translation>Спасение кошелька</translation>
+        <translation>Salvar wallet</translation>
     </message>
     <message>
         <source>Rescan blockchain files</source>
-        <translation>Пересканировать цепочку блоков</translation>
+        <translation>reescanear o blockchain</translation>
     </message>
     <message>
         <source>Recover transactions 1</source>
-        <translation>Восстановление транзакций 1</translation>
+        <translation>Recuperar transações 1</translation>
     </message>
     <message>
         <source>Recover transactions 2</source>
-        <translation>Восстановление транзакций 2</translation>
+        <translation>Recuperar transações 2</translation>
     </message>
     <message>
         <source>Upgrade wallet format</source>
-        <translation>Обновить формат кошелька</translation>
+        <translation>Atualizar formato da carteira</translation>
     </message>
     <message>
         <source>The buttons below will restart the wallet with command-line options to repair the wallet, fix issues with corrupt blockhain files or missing/obsolete transactions.</source>
-        <translation>С помощью этих кнопок Вы можете перезапустить кошелек с добавлением специальных команд для починки кошелька, исправления проблем с испорченными файлами блокчейна или пропавшими/конфликтующими транзакциями.</translation>
+        <translation>Os botões abaixo reiniciarão a carteira com opções de linha de comando para reparar a carteira, corrigir problemas com arquivos blockhain corrompidos ou transações ausentes/obsoletas.</translation>
     </message>
     <message>
         <source>-salvagewallet: Attempt to recover private keys from a corrupt wallet.dat.</source>
-        <translation>-salvagewallet: Попытаться восстановить закрытые ключи из повреждённого wallet.dat.</translation>
+        <translation>-salvagewallet: tenta recuperar chaves privadas de um wallet.dat corrompido.</translation>
     </message>
     <message>
         <source>-rescan: Rescan the block chain for missing wallet transactions.</source>
-        <translation>-rescan: Перепроверить цепочку блоков на предмет отсутствующих в кошельке транзакций.</translation>
+        <translation>-rescan: Reinicia a cadeia de bloco para transações de carteira ausentes.</translation>
     </message>
     <message>
         <source>-zapwallettxes=1: Recover transactions from blockchain (keep meta-data, e.g. account owner).</source>
-        <translation>-zapwallettxes=1: Восстановить транзакции из цепочки блоков (сохранить мета-данные, например, о владельцах аккаунтов).</translation>
+        <translation>-zapwallettxes = 1: Recupere as transações do blockchain (mantenha metadados, por exemplo, proprietário da conta).</translation>
     </message>
     <message>
         <source>-zapwallettxes=2: Recover transactions from blockchain (drop meta-data).</source>
-        <translation>-zapwallettxes=2: Восстановить транзакции из цепочки блоков (удалить мета-данные).</translation>
+        <translation>-zapwallettxes = 2: Recupere as transações do blockchain (elimine metadados).</translation>
     </message>
     <message>
         <source>-upgradewallet: Upgrade wallet to latest format on startup. (Note: this is NOT an update of the wallet itself!)</source>
-        <translation>-upgradewallet: Обновить формат кошелька при следующем запуске. (Примечание: обновление непосредственно клиент кошелька НЕ выполняется!)</translation>
+        <translation>-upgradewallet: Atualize a carteira para o formato mais recente na inicialização. (Nota: esta não é uma atualização da carteira em si!)</translation>
     </message>
     <message>
         <source>Wallet repair options.</source>
-        <translation>Варианты ремонта кошелька.</translation>
+        <translation>Opções de reparação da carteira.</translation>
     </message>
     <message>
         <source>Rebuild index</source>
-        <translation>Перестроить индекс</translation>
+        <translation> Reconstrução de Índice</translation>
     </message>
     <message>
         <source>-reindex: Rebuild block chain index from current blk000??.dat files.</source>
-        <translation>-reindex: Перестроить индекс цепочки блоков из текущих файлов blk000??.dat.</translation>
+        <translation>-reindex: Reconstrói o índice de cadeia de blocos a partir dos arquivos atuais de dados blk000??.dat .</translation>
     </message>
     <message>
         <source>&amp;Disconnect</source>
-        <translation>&amp;Отключить</translation>
+        <translation>&amp;Desconectar</translation>
     </message>
     <message>
         <source>Ban for</source>
-        <translation>Заблокировать на</translation>
+        <translation>Banir por</translation>
     </message>
     <message>
         <source>1 &amp;hour</source>
-        <translation>1 &amp;час</translation>
+        <translation>1 &amp;hora</translation>
     </message>
     <message>
         <source>1 &amp;day</source>
-        <translation>1 &amp;день</translation>
+        <translation>1 &amp;dia</translation>
     </message>
     <message>
         <source>1 &amp;week</source>
-        <translation>1 &amp;неделя</translation>
+        <translation>1 &amp;semana</translation>
     </message>
     <message>
         <source>1 &amp;year</source>
-        <translation>1 &amp;год</translation>
+        <translation>1 &amp;ano</translation>
     </message>
     <message>
         <source>&amp;Unban</source>
-        <translation>&amp;Разблокировать</translation>
+        <translation>&amp;Desbanir</translation>
     </message>
     <message>
         <source>Welcome to the %1 RPC console.</source>
-        <translation>Добро пожаловать в RPC-консоль %1.</translation>
+        <translation>Bem-vindo ao console RPC do %1.</translation>
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>Используйте стрелки вверх и вниз для просмотра истории и &lt;b&gt;Ctrl-L&lt;/b&gt; для очистки экрана.</translation>
+        <translation>Use as setas para cima e para baixo para navegar pelo histórico, e &lt;b&gt;Ctrl-L&lt;/b&gt; para limpar a tela.</translation>
     </message>
     <message>
         <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
-        <translation>Напишите &lt;b&gt;help&lt;/b&gt; для просмотра доступных команд.</translation>
+        <translation>Digite &lt;b&gt;help&lt;/b&gt; para uma visão geral dos comandos disponíveis.</translation>
     </message>
     <message>
         <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramification of a command.</source>
-        <translation>ВНИМАНИЕ: Мошенники могут попросить Вас ввести сюда команды и таким образом украсть Ваши средства. Не используйте эту консоль, если Вы не до конца понимаете последствия вводимых команд.</translation>
+        <translation>AVISO: Os golpistas estão ativos, dizendo aos usuários para digitar comandos aqui, roubando o conteúdo da carteira. Não use este console sem compreender totalmente o contexto de um comando.</translation>
     </message>
     <message>
         <source>In:</source>
-        <translation>Вход:</translation>
+        <translation>Entrada:</translation>
     </message>
     <message>
         <source>Out:</source>
-        <translation>Выход:</translation>
+        <translation>Saída:</translation>
     </message>
     <message>
         <source>Network activity disabled</source>
-        <translation>Сетевая активность отключена</translation>
+        <translation>Atividade da rede disativada</translation>
     </message>
     <message>
         <source>%1 B</source>
-        <translation>%1 Б</translation>
+        <translation>%1 B</translation>
     </message>
     <message>
         <source>%1 KB</source>
-        <translation>%1 КБ</translation>
+        <translation>%1 KB</translation>
     </message>
     <message>
         <source>%1 MB</source>
-        <translation>%1 МБ</translation>
+        <translation>%1 MB</translation>
     </message>
     <message>
         <source>%1 GB</source>
-        <translation>%1 ГБ</translation>
+        <translation>%1 GB</translation>
     </message>
     <message>
         <source>(node id: %1)</source>
-        <translation>(id узла: %1)</translation>
+        <translation>(id do nó: %1)</translation>
     </message>
     <message>
         <source>via %1</source>
-        <translation>через %1</translation>
+        <translation>por %1</translation>
     </message>
     <message>
         <source>never</source>
-        <translation>никогда</translation>
+        <translation>nunca</translation>
     </message>
     <message>
         <source>Inbound</source>
-        <translation>Входящие</translation>
+        <translation>Entrada</translation>
     </message>
     <message>
         <source>Outbound</source>
-        <translation>Исходящие</translation>
+        <translation>Saída</translation>
     </message>
     <message>
         <source>Yes</source>
-        <translation>Да</translation>
+        <translation>sim</translation>
     </message>
     <message>
         <source>No</source>
-        <translation>Нет</translation>
+        <translation>não</translation>
     </message>
     <message>
         <source>Unknown</source>
-        <translation>Неизвестно</translation>
+        <translation>Desconhecido</translation>
     </message>
 </context>
 <context>
     <name>ReceiveCoinsDialog</name>
     <message>
         <source>Reuse one of the previously used receiving addresses.&lt;br&gt;Reusing addresses has security and privacy issues.&lt;br&gt;Do not use this unless re-generating a payment request made before.</source>
-        <translation>Повторно использовать один из ранее использованных адресов.&lt;br&gt;Повторное использование адресов несёт риски безопасности и приватности.&lt;br&gt;Не используйте эту опцию, если вы не создаёте повторно ранее сделанный запрос платежа.</translation>
+        <translation>Reutilize um dos endereços de recebimento usados anteriormente.&lt;br&gt; Os endereços que estão sendo usados têm problemas de segurança e privacidade. &lt;br&gt;Não use isso, a menos que você gere novamente uma solicitação de pagamento feita anteriormente.</translation>
     </message>
     <message>
         <source>R&amp;euse an existing receiving address (not recommended)</source>
-        <translation>&amp;Повторно использовать существующий адрес получения (не рекомендуется)</translation>
+        <translation>R&amp;eutilize um endereço de recebimento (não recomendado)</translation>
     </message>
     <message>
         <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Sparks network.</source>
-        <translation>Необязательное сообщение для запроса платежа, которое будет показано при открытии запроса. Обратите внимание: сообщение не будет отправлено вместе с платежом через сеть Sparks.</translation>
+        <translation>Uma mensagem opcional que será anexada na cobrança e será mostrada quando ela for aberta. Nota: A mensagem não será enviada com o pagamento pela rede Sparks.</translation>
     </message>
     <message>
         <source>&amp;Message:</source>
-        <translation>&amp;Сообщение:</translation>
+        <translation>&amp;Mensagem</translation>
     </message>
     <message>
         <source>An optional label to associate with the new receiving address.</source>
-        <translation>Необязательная метка для нового адреса получения.</translation>
+        <translation>Um marcador opcional para associar ao novo endereço de recebimento.</translation>
     </message>
     <message>
         <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the Sparks network.</source>
-        <translation>Необязательное сообщение для запроса платежа, которое будет показано при открытии запроса.&lt;br&gt;Обратите внимание: сообщение не будет отправлено вместе с платежом через сеть Sparks.</translation>
+        <translation>Uma mensagem opcional para anexar à solicitação de pagamento, que será exibida quando a solicitação for aberta. &lt;br&gt;Observação: a mensagem não será enviada com o pagamento pela rede do Sparks.</translation>
     </message>
     <message>
         <source>Use this form to request payments. All fields are &lt;b&gt;optional&lt;/b&gt;.</source>
-        <translation>Заполните форму для запроса платежей. Все поля &lt;b&gt;необязательны&lt;/b&gt;.</translation>
+        <translation>Use esse formulário para fazer cobranças. Todos os campos são &lt;b&gt;opcionais&lt;/b&gt;.</translation>
     </message>
     <message>
         <source>&amp;Label:</source>
-        <translation>&amp;Метка:</translation>
+        <translation>&amp;Rótulo:</translation>
     </message>
     <message>
         <source>An optional amount to request. Leave this empty or zero to not request a specific amount.</source>
-        <translation>Необязательная сумма для запроса. Оставьте пустым или укажите ноль, чтобы запросить неопределённую сумму.</translation>
+        <translation>Uma quantia opcional para cobrar. Deixe vazio ou em branco se o pagador puder especificar a quantia.</translation>
     </message>
     <message>
         <source>&amp;Amount:</source>
-        <translation>&amp;Сумма:</translation>
+        <translation>Qu&amp;antia:</translation>
     </message>
     <message>
         <source>&amp;Request payment</source>
-        <translation>&amp;Запросить платёж</translation>
+        <translation>&amp;Requisitar Pagamento</translation>
     </message>
     <message>
         <source>Clear all fields of the form.</source>
-        <translation>Очистить все поля формы.</translation>
+        <translation>Limpa todos os campos do formulário.</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation>Очистить</translation>
+        <translation>Limpar</translation>
     </message>
     <message>
         <source>Request InstantSend</source>
-        <translation>Запросить InstantSend</translation>
+        <translation>Solicitar o InstantSend</translation>
     </message>
     <message>
         <source>Requested payments history</source>
-        <translation>История запрошенных платежей</translation>
+        <translation>Histórico de cobranças</translation>
     </message>
     <message>
         <source>Show the selected request (does the same as double clicking an entry)</source>
-        <translation>Показать выбранный запрос (то же самое, что и двойной клик по записи)</translation>
+        <translation>Mostra a cobrança selecionada (o mesmo que clicar duas vezes em um registro)</translation>
     </message>
     <message>
         <source>Show</source>
-        <translation>Показать</translation>
+        <translation>Mostrar</translation>
     </message>
     <message>
         <source>Remove the selected entries from the list</source>
-        <translation>Удалить выбранные записи из списка</translation>
+        <translation>Remove o registro selecionado da lista</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation>Удалить</translation>
+        <translation>Remover</translation>
     </message>
     <message>
         <source>Copy URI</source>
-        <translation>Копировать URI</translation>
+        <translation>Copiar URI</translation>
     </message>
     <message>
         <source>Copy label</source>
-        <translation>Копировать метку</translation>
+        <translation>Copiar rótulo</translation>
     </message>
     <message>
         <source>Copy message</source>
-        <translation>Копировать сообщение</translation>
+        <translation>Copiar mensagem</translation>
     </message>
     <message>
         <source>Copy amount</source>
-        <translation>Скопировать сумму</translation>
+        <translation>Copiar quantia</translation>
     </message>
 </context>
 <context>
     <name>ReceiveRequestDialog</name>
     <message>
         <source>QR Code</source>
-        <translation>QR-код</translation>
+        <translation>Código QR</translation>
     </message>
     <message>
         <source>Copy &amp;URI</source>
-        <translation>Копировать &amp;URI</translation>
+        <translation>Copiar &amp;URI</translation>
     </message>
     <message>
         <source>Copy &amp;Address</source>
-        <translation>Копировать &amp;адрес</translation>
+        <translation>&amp;Copiar Endereço</translation>
     </message>
     <message>
         <source>&amp;Save Image...</source>
-        <translation>&amp;Сохранить изображение...</translation>
+        <translation>&amp;Salvar Imagem...</translation>
     </message>
     <message>
         <source>Request payment to %1</source>
-        <translation>Запросить платёж на %1</translation>
+        <translation>Pedido de pagamento para %1</translation>
     </message>
     <message>
         <source>Payment information</source>
-        <translation>Информация платежа</translation>
+        <translation>Informação do pagamento</translation>
     </message>
     <message>
         <source>URI</source>
@@ -2647,396 +2656,396 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Адрес</translation>
+        <translation>Endereço</translation>
     </message>
     <message>
         <source>Amount</source>
-        <translation>Сумма</translation>
+        <translation>Quantia</translation>
     </message>
     <message>
         <source>Label</source>
-        <translation>Метка</translation>
+        <translation>Rótulo</translation>
     </message>
     <message>
         <source>Message</source>
-        <translation>Сообщение</translation>
+        <translation>mensagem</translation>
     </message>
     <message>
         <source>InstantSend</source>
-        <translation>InstantSend</translation>
+        <translation>EnvioInstantâneo</translation>
     </message>
     <message>
         <source>Yes</source>
-        <translation>Да</translation>
+        <translation>Sim</translation>
     </message>
     <message>
         <source>No</source>
-        <translation>Нет</translation>
+        <translation>Não</translation>
     </message>
     <message>
         <source>Resulting URI too long, try to reduce the text for label / message.</source>
-        <translation>Получившийся URI слишком длинный, попробуйте сократить текст метки / сообщения.</translation>
+        <translation>URI resultante muito longa. Tente reduzir o texto do rótulo ou da mensagem.</translation>
     </message>
     <message>
         <source>Error encoding URI into QR Code.</source>
-        <translation>Ошибка кодирования URI в QR-код.</translation>
+        <translation>Erro ao codigicar o URI em código QR</translation>
     </message>
 </context>
 <context>
     <name>RecentRequestsTableModel</name>
     <message>
         <source>Date</source>
-        <translation>Дата</translation>
+        <translation>Data</translation>
     </message>
     <message>
         <source>Label</source>
-        <translation>Метка</translation>
+        <translation>Rótulo</translation>
     </message>
     <message>
         <source>Message</source>
-        <translation>Сообщение</translation>
+        <translation>Mensagem</translation>
     </message>
     <message>
         <source>(no label)</source>
-        <translation>(нет метки)</translation>
+        <translation>(sem rótulo)</translation>
     </message>
     <message>
         <source>(no message)</source>
-        <translation>(нет сообщения)</translation>
+        <translation>(sem mensagem)</translation>
     </message>
     <message>
         <source>(no amount requested)</source>
-        <translation>(сумма не запрошена)</translation>
+        <translation>(nenhuma quantia solicitada)</translation>
     </message>
     <message>
         <source>Requested</source>
-        <translation>Запрошено</translation>
+        <translation>Solicitado</translation>
     </message>
 </context>
 <context>
     <name>SendCoinsDialog</name>
     <message>
         <source>Send Coins</source>
-        <translation>Отправка</translation>
+        <translation>Enviar dinheiro</translation>
     </message>
     <message>
         <source>Coin Control Features</source>
-        <translation>Функции контроля монет</translation>
+        <translation>Opções de Controle da Moeda</translation>
     </message>
     <message>
         <source>Inputs...</source>
-        <translation>Входы...</translation>
+        <translation>Entradas...</translation>
     </message>
     <message>
         <source>automatically selected</source>
-        <translation>выбраны автоматически</translation>
+        <translation>automaticamente selecionado</translation>
     </message>
     <message>
         <source>Insufficient funds!</source>
-        <translation>Недостаточно средств!</translation>
+        <translation>Saldo insuficiente!</translation>
     </message>
     <message>
         <source>Quantity:</source>
-        <translation>Количество:</translation>
+        <translation>Quantidade:</translation>
     </message>
     <message>
         <source>Bytes:</source>
-        <translation>Байт:</translation>
+        <translation>Bytes:</translation>
     </message>
     <message>
         <source>Amount:</source>
-        <translation>Сумма:</translation>
+        <translation>Quantia:</translation>
     </message>
     <message>
         <source>Fee:</source>
-        <translation>Комиссия:</translation>
+        <translation>Taxa:</translation>
     </message>
     <message>
         <source>Dust:</source>
-        <translation>Пыль:</translation>
+        <translation>Poeira:</translation>
     </message>
     <message>
         <source>After Fee:</source>
-        <translation>После комиссии:</translation>
+        <translation>Depois da taxa:</translation>
     </message>
     <message>
         <source>Change:</source>
-        <translation>Сдача:</translation>
+        <translation>trocar</translation>
     </message>
     <message>
         <source>If this is activated, but the change address is empty or invalid, change will be sent to a newly generated address.</source>
-        <translation>Если это выбрано, но адрес сдачи пустой или неверный, сдача будет отправлена на новый сгенерированный адрес.</translation>
+        <translation>Se isso estiver ativo e o endereço de troco estiver vazio ou inválido, o troco será enviado a um novo endereço gerado na hora.</translation>
     </message>
     <message>
         <source>Custom change address</source>
-        <translation>Свой адрес для сдачи</translation>
+        <translation>Endereço específico de troco</translation>
     </message>
     <message>
         <source>Transaction Fee:</source>
-        <translation>Комиссия транзакции:</translation>
+        <translation>Taxa de transação</translation>
     </message>
     <message>
         <source>Choose...</source>
-        <translation>Выбрать...</translation>
+        <translation>Escolha...</translation>
     </message>
     <message>
         <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until your have validated the complete chain.</source>
-        <translation>Использование fallbackfee может привести к тому, что для подтверждения транзакции потребуется несколько часов или дней (или она вообще никогда не подтвердится). Лучше укажите комиссию вручную или дождитесь полной синхронизации.</translation>
+        <translation>Usar o fallbackfee pode resultar no envio de uma transação que levará várias horas ou dias (ou nunca) para confirmação. Considere escolher sua taxa manualmente ou espere até que você tenha validado a cadeia completa.</translation>
     </message>
     <message>
         <source>Warning: Fee estimation is currently not possible.</source>
-        <translation>Внимание: расчет комиссии в данный момент не возможен.</translation>
+        <translation>Atenção: Estimativa de taxa não disponível no momento</translation>
     </message>
     <message>
         <source>collapse fee-settings</source>
-        <translation>свернуть настройки комиссии</translation>
+        <translation>Ocultar painel</translation>
     </message>
     <message>
         <source>Confirmation time target:</source>
-        <translation>Желаемое время подтверждения:</translation>
+        <translation>Tempo alvo de confirmação:</translation>
     </message>
     <message>
         <source>PrivateSend</source>
-        <translation>PrivateSend</translation>
+        <translation>EnvioPrivado</translation>
     </message>
     <message>
         <source>InstantSend</source>
-        <translation>InstantSend</translation>
+        <translation>EnvioInstantâneo</translation>
     </message>
     <message>
-        <source>If the custom fee is set to 1000 sprites and the transaction is only 250 bytes, then "per kilobyte" only pays 250 sprites in fee,&lt;br /&gt;while "at least" pays 1000 sprites. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Если ручная комиссия  установлена в 1000 sprite, а транзакция по размеру только 250 байт, то плата "за килобайт" составит лишь 250 sprite,&lt;br&gt;в то время как "минимум" будет равна 1000 sprite. Для транзакций больше килобайта в любом случае идет расчет "за килобайт".</translation>
+        <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
+        <translation>Se a taxa por defeito está definida em 1000 duffs e a transação é apenas 250 bytes, então "per kilobyte" paga apenas 250 duffs de taxa,&lt;br /&gt;enquanto "no mínimo" paga 1000 duffs. Para transações maiores que um kilobyte, ambas pagam por kilobyte.</translation>
     </message>
     <message>
-        <source>If the custom fee is set to 1000 sprites and the transaction is only 250 bytes, then "per kilobyte" only pays 250 sprites in fee,&lt;br /&gt;while "total at least" pays 1000 sprites. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Если ручная комиссия  установлена в 1000 sprite, а транзакция по размеру только 250 байт, то плата "за килобайт" составит лишь 250 sprite,&lt;br&gt;в то время как "итого минимум" будет равна 1000 sprite. Для тразакций больше килобайта в любом случае идет расчет "за килобайт".</translation>
+        <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "total at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
+        <translation>Se a taxa por defeito está definida em 1000 duffs e a transação é apenas 250 bytes, então "per kilobyte" paga apenas 250 duffs de taxa,&lt;br /&gt;enquanto "no total pelo menos" paga 1000 duffs. Para transações maiores que um kilobyte, ambas pagam por kilobyte.</translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
-        <translation>Оплаты только минимальной комиссии должно быть достаточно во всех случаях, пока в блоках достаточно места.&lt;br&gt;Однако, будьте готовы к тому, что транзакция может вовсе не получить подтверждения,&lt;br&gt;если количество транзакций будет стабильно больше, чем сеть способна обработать.</translation>
+        <translation>Não há problema em pagar apenas a taxa mínima desde que exista um volume transacional inferior ao espaço nos blocos.&lt;br /&gt;Mas tenha em conta que pode ocorrer uma transação que nunca será confirmada devido a existir uma maior procura para transações em sparks, do que a rede tem capacidade para processar.</translation>
     </message>
     <message>
         <source>per kilobyte</source>
-        <translation>за килобайт</translation>
+        <translation>por kilobyte</translation>
     </message>
     <message>
         <source>Hide</source>
-        <translation>Скрыть</translation>
+        <translation>Esconder</translation>
     </message>
     <message>
         <source>total at least</source>
-        <translation>итого минимум</translation>
+        <translation>total pelo menos</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
-        <translation>(прочтите всплывающую подсказку)</translation>
+        <translation>(Leia o popup)</translation>
     </message>
     <message>
         <source>Recommended:</source>
-        <translation>Рекомендовано:</translation>
+        <translation>Recomendado</translation>
     </message>
     <message>
         <source>Custom:</source>
-        <translation>Вручную:</translation>
+        <translation>Personalizado:</translation>
     </message>
     <message>
         <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
-        <translation>(Расчет "умной" комиссии еще не доступен. Обычно требуется подождать несколько блоков...)</translation>
+        <translation>(Smart fee não iniciado. Isso requer alguns blocos...)</translation>
     </message>
     <message>
         <source>normal</source>
-        <translation>нормальный</translation>
+        <translation>normal</translation>
     </message>
     <message>
         <source>fast</source>
-        <translation>быстрый</translation>
+        <translation>rápido</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
-        <translation>Подтвердить отправку</translation>
+        <translation>Confirmar o envio</translation>
     </message>
     <message>
         <source>S&amp;end</source>
-        <translation>&amp;Отправить</translation>
+        <translation>Enviar</translation>
     </message>
     <message>
         <source>Clear all fields of the form.</source>
-        <translation>Очистить все поля формы.</translation>
+        <translation>Limpar todos os campos do formulário.</translation>
     </message>
     <message>
         <source>Clear &amp;All</source>
-        <translation>Очистить &amp;всё</translation>
+        <translation>Limpar Tudo</translation>
     </message>
     <message>
         <source>Send to multiple recipients at once</source>
-        <translation>Отправить нескольким получателям одновременно</translation>
+        <translation>Enviar para vários destinatários de uma só vez</translation>
     </message>
     <message>
         <source>Add &amp;Recipient</source>
-        <translation>&amp;Добавить получателя</translation>
+        <translation>Adicionar destinatário</translation>
     </message>
     <message>
         <source>Balance:</source>
-        <translation>Баланс:</translation>
+        <translation>Saldo:</translation>
     </message>
     <message>
         <source>Copy quantity</source>
-        <translation>Копировать количество</translation>
+        <translation>Copiar quantidade</translation>
     </message>
     <message>
         <source>Copy amount</source>
-        <translation>Скопировать сумму</translation>
+        <translation>Copiar quantia</translation>
     </message>
     <message>
         <source>Copy fee</source>
-        <translation>Копировать комиссию</translation>
+        <translation>Copiar taxa</translation>
     </message>
     <message>
         <source>Copy after fee</source>
-        <translation>Копировать после комиссии</translation>
+        <translation>Copiar pós taxa</translation>
     </message>
     <message>
         <source>Copy bytes</source>
-        <translation>Копировать байты</translation>
+        <translation>Copiar bytes</translation>
     </message>
     <message>
         <source>Copy dust</source>
-        <translation>Скопировать пыль</translation>
+        <translation>Copiar poeira</translation>
     </message>
     <message>
         <source>Copy change</source>
-        <translation>Копировать сдачу</translation>
+        <translation>Copiar troco</translation>
     </message>
     <message>
         <source>using</source>
-        <translation>, используя</translation>
+        <translation>usando</translation>
     </message>
     <message>
         <source>anonymous funds</source>
-        <translation>анонимные средства</translation>
+        <translation>fundos anônimos </translation>
     </message>
     <message>
         <source>(privatesend requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(для работы PrivateSend требуется принудительно округлить до ближайшего %1).</translation>
+        <translation>(O privatesend exige que esse valor seja arredondado para o próximo %1).</translation>
     </message>
     <message>
         <source>any available funds (not anonymous)</source>
-        <translation>любые доступные средства (не анонимно)</translation>
+        <translation>quaisquer fundos disponíveis (não anônimos)</translation>
     </message>
     <message>
         <source>and InstantSend</source>
-        <translation>и InstantSend</translation>
+        <translation>e EnvioInstantâneo</translation>
     </message>
     <message>
         <source>%1 to %2</source>
-        <translation>С %1 на %2</translation>
+        <translation>%1 a %2</translation>
     </message>
     <message>
         <source>Are you sure you want to send?</source>
-        <translation>Вы уверены, что хотите отправить?</translation>
+        <translation>Você tem certeza que deseja enviar?</translation>
     </message>
     <message>
         <source>are added as transaction fee</source>
-        <translation>добавлено в качестве комиссии транзакции</translation>
+        <translation>são adicionadas como taxas de transação</translation>
     </message>
     <message>
         <source>Total Amount = &lt;b&gt;%1&lt;/b&gt;&lt;br /&gt;= %2</source>
-        <translation>Общая сумма = &lt;b&gt;%1&lt;/b&gt;&lt;br /&gt;= %2</translation>
+        <translation>Quantidade Total = &lt;b&gt;%1&lt;/b&gt;&lt;br /&gt;= %2</translation>
     </message>
     <message>
         <source>&lt;b&gt;(%1 of %2 entries displayed)&lt;/b&gt;</source>
-        <translation>&lt;b&gt;(показано записей: %1 из %2)&lt;/b&gt;</translation>
+        <translation>&lt;b&gt;(%1 de %2 entradas exibidas)&lt;/b&gt;</translation>
     </message>
     <message>
         <source>Confirm send coins</source>
-        <translation>Подтвердите отправку монет</translation>
+        <translation>Confirme o envio de moedas</translation>
     </message>
     <message>
         <source>The recipient address is not valid. Please recheck.</source>
-        <translation>Адрес получателя неверный. Пожалуйста, перепроверьте.</translation>
+        <translation>Endereço de envio inváido. Favor checar.</translation>
     </message>
     <message>
         <source>The amount to pay must be larger than 0.</source>
-        <translation>Сумма для отправки должна быть больше 0.</translation>
+        <translation>A quantia à pagar deve ser maior que 0</translation>
     </message>
     <message>
         <source>The amount exceeds your balance.</source>
-        <translation>Сумма превышает Ваш баланс.</translation>
+        <translation>A quantia excede o seu saldo</translation>
     </message>
     <message>
         <source>The total exceeds your balance when the %1 transaction fee is included.</source>
-        <translation>Сумма превысит Ваш баланс, если комиссия в размере %1 будет добавлена к транзакции.</translation>
+        <translation>O total excede o seu saldo quando a taxa da transação %1 é incluída</translation>
     </message>
     <message>
         <source>Duplicate address found: addresses should only be used once each.</source>
-        <translation>Обнаружен дублирующийся адрес: каждый адрес должен быть использован только один раз.</translation>
+        <translation>Encontrado endereço duplicado: os endereços deveriam ser usados apenas uma vez cada</translation>
     </message>
     <message>
         <source>Transaction creation failed!</source>
-        <translation>Не удалось создать транзакцию!</translation>
+        <translation>Criação de transação falha</translation>
     </message>
     <message>
         <source>The transaction was rejected with the following reason: %1</source>
-        <translation>Транзакция отклонена по следующей причине: %1</translation>
+        <translation>A transação foi rejeitada com a seguinte razão: %1</translation>
     </message>
     <message>
         <source>A fee higher than %1 is considered an absurdly high fee.</source>
-        <translation>Комиссия выше чем %1 считается "безумно высокой".</translation>
+        <translation>Uma taxa maior que %1 é considerada uma taxa absurdamente alta.</translation>
     </message>
     <message>
         <source>Payment request expired.</source>
-        <translation>Время этого запроса платежа истекло.</translation>
+        <translation>Pedido de pagamento expirado</translation>
     </message>
     <message numerus="yes">
         <source>%n block(s)</source>
-        <translation><numerusform>%n блок</numerusform><numerusform>%n блока</numerusform><numerusform>%n блоков</numerusform><numerusform>%n блоков</numerusform></translation>
+        <translation><numerusform>%n blocos</numerusform><numerusform>%n blocos</numerusform></translation>
     </message>
     <message>
         <source>Pay only the required fee of %1</source>
-        <translation>Заплатить только требуемую комиссию %1</translation>
+        <translation>Pagar somente a taxa requerida de %1</translation>
     </message>
     <message numerus="yes">
         <source>Estimated to begin confirmation within %n block(s).</source>
-        <translation><numerusform>Будет подтверждено приблизительно в течение %n блока.</numerusform><numerusform>Будет подтверждено приблизительно в течение %n блоков.</numerusform><numerusform>Будет подтверждено приблизительно в течение %n блоков.</numerusform><numerusform>Будет подтверждено приблизительно в течение %n блоков.</numerusform></translation>
+        <translation><numerusform>Estimativa para iniciar a confirmação em %n blocos.</numerusform><numerusform>Estimativa para iniciar a confirmação em %n blocos.</numerusform></translation>
     </message>
     <message>
         <source>Warning: Invalid Sparks address</source>
-        <translation>Внимание: неверный адрес Sparks</translation>
+        <translation>Aviso: Endereço Sparks inválido</translation>
     </message>
     <message>
         <source>Warning: Unknown change address</source>
-        <translation>Внимание: неизвестный адрес для сдачи</translation>
+        <translation>Aviso: Endereço de troco inválido</translation>
     </message>
     <message>
         <source>Confirm custom change address</source>
-        <translation>Подтвердите адрес для сдачи</translation>
+        <translation>Confirmar endereço de troco personalizado</translation>
     </message>
     <message>
         <source>The address you selected for change is not part of this wallet. Any or all funds in your wallet may be sent to this address. Are you sure?</source>
-        <translation>Выбранный Вами адрес сдачи не является частью данного кошелька. Некоторые или даже все средства Вашего кошелька могут быть отправлены на этот адрес. Вы уверены, что хотите продолжить?</translation>
+        <translation>O endereço selecionado para o troco não pertence a esta carteira. Alguns ou todos os fundos da sua carteira modem ser mandados para esse endereço. Tem certeza?</translation>
     </message>
     <message>
         <source>(no label)</source>
-        <translation>(нет метки)</translation>
+        <translation>(sem rótulo)</translation>
     </message>
 </context>
 <context>
     <name>SendCoinsEntry</name>
     <message>
         <source>This is a normal payment.</source>
-        <translation>Это нормальный платёж.</translation>
+        <translation>Este é um pagamento normal.</translation>
     </message>
     <message>
         <source>Pay &amp;To:</source>
-        <translation>Полу&amp;чатель:</translation>
+        <translation>Pagar &amp;Para:</translation>
     </message>
     <message>
         <source>The Sparks address to send the payment to</source>
-        <translation>Адрес Sparks для отправки на него монет</translation>
+        <translation>O endereço Sparks para enviar o pagamento a</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
-        <translation>Выбрать ранее использованный адрес</translation>
+        <translation>Escolher endereço usado anteriormente</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -3044,7 +3053,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>Paste address from clipboard</source>
-        <translation>Вставить адрес из буфера обмена</translation>
+        <translation>Colar o endereço da área de transferência</translation>
     </message>
     <message>
         <source>Alt+P</source>
@@ -3052,96 +3061,96 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>Remove this entry</source>
-        <translation>Удалить эту запись</translation>
+        <translation>Remover esta entrada</translation>
     </message>
     <message>
         <source>&amp;Label:</source>
-        <translation>&amp;Метка:</translation>
+        <translation>&amp;Rótulo:</translation>
     </message>
     <message>
         <source>Enter a label for this address to add it to the list of used addresses</source>
-        <translation>Введите метку для этого адреса, чтобы добавить его в список использованных</translation>
+        <translation>Digite um rótulo para este endereço para adicioná-lo no catálogo</translation>
     </message>
     <message>
         <source>A&amp;mount:</source>
-        <translation>Ко&amp;личество:</translation>
+        <translation>Q&amp;uantidade:</translation>
     </message>
     <message>
         <source>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of Sparks than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
-        <translation>Комиссия будет вычтена из отправляемой суммы. Получателю придет меньше Sparks, сем указано в поле "Сумма". Если указано несколько получателей, то комиссия будет разделена между ними поровну.</translation>
+        <translation>A taxa será deduzida do valor enviado. O destinatário receberá uma quantidade menor de Sparks do que você insere no campo de valor. Se vários destinatários forem selecionados, a taxa será dividida igualmente.</translation>
     </message>
     <message>
         <source>S&amp;ubtract fee from amount</source>
-        <translation>&amp;Вычесть комиссию из суммы</translation>
+        <translation>&amp;Retirar taxa da quantia</translation>
     </message>
     <message>
         <source>Message:</source>
-        <translation>Сообщение:</translation>
+        <translation>Mensagem:</translation>
     </message>
     <message>
         <source>A message that was attached to the sparks: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Sparks network.</source>
-        <translation>К sparks: URI было прикреплено сообщение, которое будет сохранено вместе с транзакцией для вашего сведения. Обратите внимание: сообщение не будет отправлено через сеть Sparks.</translation>
+        <translation>A mensagem que foi anexada ao Sparks: URI na qual será gravada na transação para sua referência. Nota: Essa mensagem não será gravada publicamente na rede Sparks.</translation>
     </message>
     <message>
         <source>This is an unauthenticated payment request.</source>
-        <translation>Этот запрос платежа неаутентифицирован.</translation>
+        <translation>Esta é uma cobrança não autenticada.</translation>
     </message>
     <message>
         <source>This is an authenticated payment request.</source>
-        <translation>Этот запрос платежа аутентифицирован.</translation>
+        <translation>Esta é uma cobrança autenticada.</translation>
     </message>
     <message>
         <source>Pay To:</source>
-        <translation>Получатель:</translation>
+        <translation>Pague Para:</translation>
     </message>
     <message>
         <source>Memo:</source>
-        <translation>Примечание:</translation>
+        <translation>Memorizar:</translation>
     </message>
     <message>
         <source>Enter a label for this address to add it to your address book</source>
-        <translation>Введите метку для данного адреса для добавления его в адресную книгу</translation>
+        <translation>Digite um rótulo para este endereço para adicioná-lo ao catálogo de endereços</translation>
     </message>
 </context>
 <context>
     <name>SendConfirmationDialog</name>
     <message>
         <source>Yes</source>
-        <translation>Да</translation>
+        <translation>Sim</translation>
     </message>
 </context>
 <context>
     <name>ShutdownWindow</name>
     <message>
         <source>%1 is shutting down...</source>
-        <translation>%1 выключается...</translation>
+        <translation>%1 está desligando...</translation>
     </message>
     <message>
         <source>Do not shut down the computer until this window disappears.</source>
-        <translation>Не выключайте компьютер, пока это окно не исчезнет.</translation>
+        <translation>Não desligue o computador até essa janela desaparecer.</translation>
     </message>
 </context>
 <context>
     <name>SignVerifyMessageDialog</name>
     <message>
         <source>Signatures - Sign / Verify a Message</source>
-        <translation>Подписи - подписать/проверить сообщение</translation>
+        <translation>Assinaturas - Assinar / Verificar uma mensagem</translation>
     </message>
     <message>
         <source>&amp;Sign Message</source>
-        <translation>&amp;Подписать сообщение</translation>
+        <translation>&amp;Assinar Mensagem</translation>
     </message>
     <message>
         <source>You can sign messages/agreements with your addresses to prove you can receive Sparks sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
-        <translation>Вы можете подписывать сообщения своими адресами, чтобы доказать, что Вы можете получать Sparks на них. Будьте осторожны, не подписывайте что-то неопределённое, так как фишинговые атаки могут обманным путём заставить вас подписать нежелательные сообщения. Подписывайте только те сообщения, с которыми вы согласны вплоть до мелочей.</translation>
+        <translation>Você pode assinar mensagens/acordos com seus endereços para provar que pode receber o Sparks enviado para eles. Tenha cuidado para não assinar nada vago ou aleatório, pois os ataques de phishing podem tentar convencê-lo a assinar sua identidade para eles. Assine apenas declarações totalmente detalhadas com as quais você concorda.</translation>
     </message>
     <message>
         <source>The Sparks address to sign the message with</source>
-        <translation>Адрес Sparks, которым Вы хотите подписать сообщение</translation>
+        <translation>O endereço Sparks que assinará a mensagem</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
-        <translation>Выбрать ранее использованный адрес</translation>
+        <translation>Escolha um endereço usado anteriormente</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -3149,7 +3158,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>Paste address from clipboard</source>
-        <translation>Вставить адрес из буфера обмена</translation>
+        <translation>Colar o endereço da área de transferência</translation>
     </message>
     <message>
         <source>Alt+P</source>
@@ -3157,613 +3166,625 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>Enter the message you want to sign here</source>
-        <translation>Введите сообщение для подписи</translation>
+        <translation>Entre a mensagem que você quer assinar aqui</translation>
     </message>
     <message>
         <source>Signature</source>
-        <translation>Подпись</translation>
+        <translation>Assinatura</translation>
     </message>
     <message>
         <source>Copy the current signature to the system clipboard</source>
-        <translation>Скопировать текущую подпись в системный буфер обмена</translation>
+        <translation>Copiar a assinatura para a área de transferência do sistema</translation>
     </message>
     <message>
         <source>Sign the message to prove you own this Sparks address</source>
-        <translation>Подписать сообщение, чтобы доказать владение этим адресом Sparks</translation>
+        <translation>Assinar mensagem para provar que você é dono deste endereço Sparks</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
-        <translation>Подписать &amp;сообщение</translation>
+        <translation>Assinar &amp;Mensagem</translation>
     </message>
     <message>
         <source>Reset all sign message fields</source>
-        <translation>Сбросить значения всех полей формы подписывания сообщений</translation>
+        <translation>Limpar todos os campos de assinatura da mensagem</translation>
     </message>
     <message>
         <source>Clear &amp;All</source>
-        <translation>Очистить &amp;всё</translation>
+        <translation>Limpar Tudo</translation>
     </message>
     <message>
         <source>&amp;Verify Message</source>
-        <translation>&amp;Проверить сообщение</translation>
+        <translation>&amp;Verificar Mensagem</translation>
     </message>
     <message>
         <source>Enter the receiver's address, message (ensure you copy line breaks, spaces, tabs, etc. exactly) and signature below to verify the message. Be careful not to read more into the signature than what is in the signed message itself, to avoid being tricked by a man-in-the-middle attack. Note that this only proves the signing party receives with the address, it cannot prove sendership of any transaction!</source>
-        <translation>Введите ниже адрес для подписи, сообщение (убедитесь, что переводы строк, пробелы, табы и т.п. в точности скопированы) и подпись, чтобы проверить сообщение. Убедитесь, что не скопировали лишнего в подпись, кроме самого подписываемого сообщения, чтобы не стать жертвой атаки "man-in-the-middle". Обратите внимание, что это лишь подтверждает, что подписывающий может получить средства на этот адрес, это не подтверждает, что он является отправителем какой-либо транзакции!</translation>
+        <translation>Coloque o endereço do autor, a mensagem (certifique-se de copiar toda a mensagem, incluindo quebras de linha, espaços, tabulações, etc.) e a assinatura embaixo para verificar a mensagem. Cuidado para não ler mais da assinatura do que está assinado na mensagem, para evitar ser enganado pelo ataque man-in-the-middle. Note que isso somente prova a propriedade de um endereço, e não o remetende de qualquer transação.</translation>
     </message>
     <message>
         <source>The Sparks address the message was signed with</source>
-        <translation>Адрес Sparks, которым было подписано сообщение</translation>
+        <translation>O endereço Sparks que foi usado para assinar a mensagem</translation>
     </message>
     <message>
         <source>Verify the message to ensure it was signed with the specified Sparks address</source>
-        <translation>Проверить сообщение, чтобы убедиться, что оно было подписано указанным адресом Sparks</translation>
+        <translation>Verifique a mensagem para se assegurar de que foi assinada pelo endereço Sparks específicado</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
-        <translation>Проверить &amp;сообщение</translation>
+        <translation>Verificar &amp;Mensagem</translation>
     </message>
     <message>
         <source>Reset all verify message fields</source>
-        <translation>Сбросить все поля формы проверки сообщения</translation>
+        <translation>Limpar todos os campos de assinatura da mensagem</translation>
     </message>
     <message>
         <source>Click "Sign Message" to generate signature</source>
-        <translation>Нажмите "Подписать сообщение" для создания подписи</translation>
+        <translation>Clique em "Assinar mensagem" para gerar a assinatura</translation>
     </message>
     <message>
         <source>The entered address is invalid.</source>
-        <translation>Введённый адрес неверен.</translation>
+        <translation>O endereço digitado é inválido</translation>
     </message>
     <message>
         <source>Please check the address and try again.</source>
-        <translation>Пожалуйста, проверьте адрес и попробуйте ещё раз.</translation>
+        <translation>Favor checar o endereço e tente novamente</translation>
     </message>
     <message>
         <source>The entered address does not refer to a key.</source>
-        <translation>Введённый адрес не связан с ключом.</translation>
+        <translation>O endereço fornecido não se refere a uma chave.</translation>
     </message>
     <message>
         <source>Wallet unlock was cancelled.</source>
-        <translation>Разблокировка кошелька была отменена.</translation>
+        <translation>O desbloqueio da carteira foi cancelado</translation>
     </message>
     <message>
         <source>Private key for the entered address is not available.</source>
-        <translation>Закрытый ключ для введённого адреса недоступен.</translation>
+        <translation>A chave privada para o endereço disponibilizado não está disponível.</translation>
     </message>
     <message>
         <source>Message signing failed.</source>
-        <translation>Не удалось подписать сообщение.</translation>
+        <translation>Assinatura da mensagem falhou.</translation>
     </message>
     <message>
         <source>Message signed.</source>
-        <translation>Сообщение подписано.</translation>
+        <translation>Mensagem assinada.</translation>
     </message>
     <message>
         <source>The signature could not be decoded.</source>
-        <translation>Подпись не может быть раскодирована.</translation>
+        <translation>A assinatura não pôde ser decodificada.</translation>
     </message>
     <message>
         <source>Please check the signature and try again.</source>
-        <translation>Пожалуйста, проверьте подпись и попробуйте ещё раз.</translation>
+        <translation>Por favor, cheque a assinatura e tente novamente.</translation>
     </message>
     <message>
         <source>The signature did not match the message digest.</source>
-        <translation>Подпись не соответствует отпечатку сообщения.</translation>
+        <translation>A assinatura não corresponde a mensagem</translation>
     </message>
     <message>
         <source>Message verification failed.</source>
-        <translation>Проверка сообщения не удалась.</translation>
+        <translation>Falha na verificação da mensagem</translation>
     </message>
     <message>
         <source>Message verified.</source>
-        <translation>Сообщение проверено.</translation>
+        <translation>Mensagem verificada</translation>
     </message>
 </context>
 <context>
     <name>SplashScreen</name>
     <message>
         <source>[testnet]</source>
-        <translation>[тестовая сеть]</translation>
+        <translation>[testnet]</translation>
     </message>
     <message>
         <source>Version %1</source>
-        <translation>Версия %1</translation>
+        <translation>Versão %1</translation>
     </message>
 </context>
 <context>
     <name>TrafficGraphWidget</name>
     <message>
         <source>KB/s</source>
-        <translation>КБ/сек</translation>
+        <translation>KB/s</translation>
     </message>
 </context>
 <context>
     <name>TransactionDesc</name>
     <message numerus="yes">
         <source>Open for %n more block(s)</source>
-        <translation><numerusform>Будет открыто ещё %n блок</numerusform><numerusform>Будет открыто ещё %n блока</numerusform><numerusform>Будет открыто ещё %n блоков</numerusform><numerusform>Будет открыто ещё %n блоков</numerusform></translation>
+        <translation><numerusform>Aberto para %n mais blocos</numerusform><numerusform>Aberto para %n mais blocos</numerusform></translation>
     </message>
     <message>
         <source>Open until %1</source>
-        <translation>Открыто до %1</translation>
+        <translation>Aberto até %1</translation>
     </message>
     <message>
         <source>conflicted</source>
-        <translation>в противоречии</translation>
+        <translation>Conflitado</translation>
     </message>
     <message>
         <source>%1/offline</source>
-        <translation>%1/отключен</translation>
+        <translation>%1/offline</translation>
     </message>
     <message>
         <source>0/unconfirmed, %1</source>
-        <translation>0/не подтверждено, %1</translation>
+        <translation>0/não confirmado, %1</translation>
     </message>
     <message>
         <source>in memory pool</source>
-        <translation>в пуле памяти</translation>
+        <translation>na memória</translation>
     </message>
     <message>
         <source>not in memory pool</source>
-        <translation>не в пуле памяти</translation>
+        <translation>não na memóra</translation>
     </message>
     <message>
         <source>abandoned</source>
-        <translation>сброшена</translation>
+        <translation>abandonado</translation>
     </message>
     <message>
         <source>%1/unconfirmed</source>
-        <translation>%1/не подтверждено</translation>
+        <translation>%1/não confirmado</translation>
     </message>
     <message>
         <source>%1 confirmations</source>
-        <translation>%1 подтверждений</translation>
+        <translation>%1 confirmações</translation>
     </message>
     <message>
         <source>verified via InstantSend</source>
-        <translation>проверено через InstantSend</translation>
+        <translation>verificado via InstantSend</translation>
     </message>
     <message>
         <source>InstantSend verification in progress - %1 of %2 signatures</source>
-        <translation>верификация InstantSend в процессе - %1 из %2 подписей</translation>
+        <translation>Confirmação InstantSend em andamento - %1 de  %2 assinaturas</translation>
     </message>
     <message>
         <source>InstantSend verification failed</source>
-        <translation>верификация InstantSend завершилась неудачно</translation>
+        <translation>A confirmação do InstantSend falhou</translation>
     </message>
     <message>
         <source>Status</source>
-        <translation>Статус</translation>
+        <translation>Status</translation>
     </message>
     <message>
         <source>, has not been successfully broadcast yet</source>
-        <translation>, ещё не было успешно разослано</translation>
+        <translation>, ainda não foi propagada na rede com êxito.</translation>
     </message>
     <message numerus="yes">
         <source>, broadcast through %n node(s)</source>
-        <translation><numerusform>, разослано через %n узел</numerusform><numerusform>, разослано через %n узла</numerusform><numerusform>, разослано через %n узлов</numerusform><numerusform>, разослано через %n узлов</numerusform></translation>
+        <translation><numerusform>, transmissão por %n nós</numerusform><numerusform>, transmissão por %n nós</numerusform></translation>
     </message>
     <message>
         <source>Date</source>
-        <translation>Дата</translation>
+        <translation>Data</translation>
     </message>
     <message>
         <source>Source</source>
-        <translation>Источник</translation>
+        <translation>Fonte</translation>
     </message>
     <message>
         <source>Generated</source>
-        <translation>Сгенерированно</translation>
+        <translation>Gerado</translation>
     </message>
     <message>
         <source>From</source>
-        <translation>От</translation>
+        <translation>De</translation>
     </message>
     <message>
         <source>unknown</source>
-        <translation>неизвестно</translation>
+        <translation>desconhecido</translation>
     </message>
     <message>
         <source>To</source>
-        <translation>Для</translation>
+        <translation>Para</translation>
     </message>
     <message>
         <source>own address</source>
-        <translation>свой адрес</translation>
+        <translation>endereço próprio</translation>
     </message>
     <message>
         <source>watch-only</source>
-        <translation>для просмотра</translation>
+        <translation>Monitorado</translation>
     </message>
     <message>
         <source>label</source>
-        <translation>метка</translation>
+        <translation>Rótulo</translation>
     </message>
     <message>
         <source>Credit</source>
-        <translation>Кредит</translation>
+        <translation>Crédito</translation>
     </message>
     <message numerus="yes">
         <source>matures in %n more block(s)</source>
-        <translation><numerusform>будет доступно через %n блок</numerusform><numerusform>будет доступно через %n блока</numerusform><numerusform>будет доступно через %n блоков</numerusform><numerusform>будет доступно через %n блоков</numerusform></translation>
+        <translation><numerusform>Maduro em %n blocos</numerusform><numerusform>Maduro em %n blocos</numerusform></translation>
     </message>
     <message>
         <source>not accepted</source>
-        <translation>не принято</translation>
+        <translation>não aceito</translation>
     </message>
     <message>
         <source>Debit</source>
-        <translation>Дебет</translation>
+        <translation>Débito</translation>
     </message>
     <message>
         <source>Total debit</source>
-        <translation>Полный дебит</translation>
+        <translation>Débito total</translation>
     </message>
     <message>
         <source>Total credit</source>
-        <translation>Полный кредит</translation>
+        <translation>Crédito total</translation>
     </message>
     <message>
         <source>Transaction fee</source>
-        <translation>Комиссия</translation>
+        <translation>Taxa da transação</translation>
     </message>
     <message>
         <source>Net amount</source>
-        <translation>Чистая сумма</translation>
+        <translation>Valor líquido</translation>
     </message>
     <message>
         <source>Message</source>
-        <translation>Сообщение</translation>
+        <translation>Mensagem</translation>
     </message>
     <message>
         <source>Comment</source>
-        <translation>Комментарий</translation>
+        <translation>Comentário</translation>
     </message>
     <message>
         <source>Transaction ID</source>
-        <translation>ID транзакции</translation>
+        <translation>ID da transação</translation>
     </message>
     <message>
         <source>Output index</source>
-        <translation>Индекс выхода</translation>
+        <translation>Index da saída</translation>
     </message>
     <message>
         <source>Transaction total size</source>
-        <translation>Полный размер транзакции</translation>
+        <translation>Tamanho transacional total</translation>
     </message>
     <message>
         <source>Merchant</source>
-        <translation>Продавец</translation>
+        <translation>Mercador</translation>
     </message>
     <message>
         <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to "not accepted" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
-        <translation>Сгенерированные монеты должны подождать %1 блоков, прежде чем они могут быть потрачены. Когда Вы сгенерировали этот блок, он был отправлен в сеть для добавления в цепочку блоков. Если он не попадёт в цепочку, его статус изменится на "не принят", и монеты будут недействительны. Это иногда происходит в случае, если другой узел сгенерирует блок на несколько секунд раньше вас.</translation>
+        <translation>Moedas recém minerados precisam aguardar %1 blocos antes de serem gastos. Quando o bloco foi gerado, ele foi disseminado pela rede para ser adicionado à blockchain. Se ele falhar em ser inserido na cadeia, seu estado será modificado para "não aceito" e ele não poderá ser gasto. Isso pode acontecer eventualmente quando blocos são gerados quase que simultaneamente.</translation>
     </message>
     <message>
         <source>Debug information</source>
-        <translation>Отладочная информация</translation>
+        <translation>Depurar informação</translation>
     </message>
     <message>
         <source>Transaction</source>
-        <translation>Транзакция</translation>
+        <translation>Transação</translation>
     </message>
     <message>
         <source>Inputs</source>
-        <translation>Входы</translation>
+        <translation>Entradas</translation>
     </message>
     <message>
         <source>Amount</source>
-        <translation>Сумма</translation>
+        <translation>Quantia</translation>
     </message>
     <message>
         <source>true</source>
-        <translation>истина</translation>
+        <translation>verdadeiro</translation>
     </message>
     <message>
         <source>false</source>
-        <translation>ложь</translation>
+        <translation>falso</translation>
     </message>
 </context>
 <context>
     <name>TransactionDescDialog</name>
     <message>
         <source>This pane shows a detailed description of the transaction</source>
-        <translation>Эта панель отображает детальное описание транзакции</translation>
+        <translation>Este painel mostra uma descrição detalhada da transação</translation>
     </message>
     <message>
         <source>Details for %1</source>
-        <translation>Детали для %1</translation>
+        <translation>Detalhes para %1</translation>
     </message>
 </context>
 <context>
     <name>TransactionTableModel</name>
     <message>
         <source>Date</source>
-        <translation>Дата</translation>
+        <translation>Data</translation>
     </message>
     <message>
         <source>Type</source>
-        <translation>Тип</translation>
+        <translation>Tipo</translation>
     </message>
     <message>
         <source>Address / Label</source>
-        <translation>Адрес / Метка</translation>
+        <translation>Endereço / Etiqueta</translation>
     </message>
     <message numerus="yes">
         <source>Open for %n more block(s)</source>
-        <translation><numerusform>Будет открыто ещё %n блок</numerusform><numerusform>Будет открыто ещё %n блока</numerusform><numerusform>Будет открыто ещё %n блоков</numerusform><numerusform>Будет открыто ещё %n блоков</numerusform></translation>
+        <translation><numerusform>Aberto para %n mais blocos</numerusform><numerusform>Aberto para %n mais blocos</numerusform></translation>
     </message>
     <message>
         <source>Open until %1</source>
-        <translation>Открыто до %1</translation>
+        <translation>Aberto até %1</translation>
     </message>
     <message>
         <source>Offline</source>
-        <translation>Нет активных соединений с сетью</translation>
+        <translation>Offline</translation>
     </message>
     <message>
         <source>Unconfirmed</source>
-        <translation>Неподтверждено</translation>
+        <translation>Não confirmado</translation>
     </message>
     <message>
         <source>Abandoned</source>
-        <translation>Сброшена</translation>
+        <translation>Abandonado</translation>
     </message>
     <message>
         <source>Confirming (%1 of %2 recommended confirmations)</source>
-        <translation>Подтверждается (%1 из %2 рекомендованных подтверждений)</translation>
+        <translation>Confirmando (%1 de %2 confirmações recomendadas)</translation>
     </message>
     <message>
         <source>Confirmed (%1 confirmations)</source>
-        <translation>Подтверждено (%1 подтверждений)</translation>
+        <translation>Confirmado (%1 confirmações)</translation>
     </message>
     <message>
         <source>Conflicted</source>
-        <translation>В противоречии</translation>
+        <translation>Conflitante</translation>
     </message>
     <message>
         <source>Immature (%1 confirmations, will be available after %2)</source>
-        <translation>Незрелый (%1 подтверждений, будет доступен после %2)</translation>
+        <translation>Recém-criado (%1 confirmações, disponível somente após %2)</translation>
     </message>
     <message>
         <source>This block was not received by any other nodes and will probably not be accepted!</source>
-        <translation>Этот блок не был получен другими узлами и, возможно, не будет принят!</translation>
+        <translation>Este bloco não foi recebido por nenhum outro participante da rede e provavelmente não será aceito!</translation>
     </message>
     <message>
         <source>Generated but not accepted</source>
-        <translation>Сгенерированно, но не подтверждено</translation>
+        <translation>Gerado mas não aceito</translation>
     </message>
     <message>
         <source>Received with</source>
-        <translation>Получено</translation>
+        <translation>Recebido</translation>
     </message>
     <message>
         <source>Received from</source>
-        <translation>Получено от</translation>
+        <translation>Recebido</translation>
     </message>
     <message>
         <source>Received via PrivateSend</source>
-        <translation>Получено через PrivateSend</translation>
+        <translation>Recebido via EnvioPrivado</translation>
     </message>
     <message>
         <source>Sent to</source>
-        <translation>Отправлено</translation>
+        <translation>Enviado</translation>
     </message>
     <message>
         <source>Payment to yourself</source>
-        <translation>Отправлено себе</translation>
+        <translation>Pagamento a si mesmo</translation>
     </message>
     <message>
         <source>Mined</source>
-        <translation>Добыто</translation>
+        <translation>Minerado</translation>
     </message>
     <message>
         <source>PrivateSend Denominate</source>
-        <translation>Перемешивание PrivateSend</translation>
+        <translation>PrivateSend Denominate</translation>
     </message>
     <message>
         <source>PrivateSend Collateral Payment</source>
-        <translation>Обеспечительный платеж PrivateSend</translation>
+        <translation>PrivateSend Pagamento de Garantia</translation>
     </message>
     <message>
         <source>PrivateSend Make Collateral Inputs</source>
-        <translation>Создание обеспечительных монет для PrivateSend</translation>
+        <translation>PrivateSend fazer insumos colaterais</translation>
     </message>
     <message>
         <source>PrivateSend Create Denominations</source>
-        <translation>Создание номиналов для PrivateSend</translation>
+        <translation>PrivateSend Criar Denominações</translation>
     </message>
     <message>
         <source>PrivateSend</source>
-        <translation>PrivateSend</translation>
+        <translation>EnvioPrivado</translation>
     </message>
     <message>
         <source>watch-only</source>
-        <translation>для просмотра</translation>
+        <translation>Monitorado</translation>
     </message>
     <message>
         <source>(n/a)</source>
-        <translation>(н/д)</translation>
+        <translation>(n/a)</translation>
     </message>
     <message>
         <source>(no label)</source>
-        <translation>(нет метки)</translation>
+        <translation>(sem rótulo)</translation>
     </message>
     <message>
         <source>Transaction status. Hover over this field to show number of confirmations.</source>
-        <translation>Статус транзакции. Подведите курсор к нужному полю для того, чтобы увидеть количество подтверждений.</translation>
+        <translation>Status da transação. Passe o mouse sobre este campo para mostrar o número de confirmações.</translation>
     </message>
     <message>
         <source>Date and time that the transaction was received.</source>
-        <translation>Дата и время, когда транзакция была получена.</translation>
+        <translation>Data e hora que a transação foi recebida.</translation>
     </message>
     <message>
         <source>Type of transaction.</source>
-        <translation>Тип транзакции.</translation>
+        <translation>Tipo de transação.</translation>
     </message>
     <message>
         <source>Whether or not a watch-only address is involved in this transaction.</source>
-        <translation>Участвовал ли адрес для просмотра в этой транзакции.</translation>
+        <translation>Mostrar ou não endereços monitorados na lista de transações.</translation>
+    </message>
+    <message>
+        <source>Whether or not this transaction was locked by InstantSend.</source>
+        <translation>Se esta transação foi ou não bloqueada pelo InstantSend.</translation>
     </message>
     <message>
         <source>User-defined intent/purpose of the transaction.</source>
-        <translation>Определенное пользователем назначение транзакции.</translation>
+        <translation>Intenção/Propósito definido pelo usuário para a transação</translation>
     </message>
     <message>
         <source>Amount removed from or added to balance.</source>
-        <translation>Сумма, снятая с баланса или добавленная на него.</translation>
+        <translation>Quantidade debitada ou creditada ao saldo.</translation>
     </message>
 </context>
 <context>
     <name>TransactionView</name>
     <message>
         <source>All</source>
-        <translation>Все</translation>
+        <translation>Todos</translation>
+    </message>
+    <message>
+        <source>Locked by InstantSend</source>
+        <translation>Bloqueado pelo InstantSend</translation>
+    </message>
+    <message>
+        <source>Not locked by InstantSend</source>
+        <translation>Não bloqueado pelo InstantSend</translation>
     </message>
     <message>
         <source>Today</source>
-        <translation>Сегодня</translation>
+        <translation>Hoje</translation>
     </message>
     <message>
         <source>This week</source>
-        <translation>На этой неделе</translation>
+        <translation>Essa semana</translation>
     </message>
     <message>
         <source>This month</source>
-        <translation>В этом месяце</translation>
+        <translation>Esse mês</translation>
     </message>
     <message>
         <source>Last month</source>
-        <translation>В прошлом месяце</translation>
+        <translation>Último mês</translation>
     </message>
     <message>
         <source>This year</source>
-        <translation>В этом году</translation>
+        <translation>Esse ano</translation>
     </message>
     <message>
         <source>Range...</source>
-        <translation>Промежуток...</translation>
+        <translation>Intervalo...</translation>
     </message>
     <message>
         <source>Most Common</source>
-        <translation>Наиболее общие</translation>
+        <translation>Mais comum</translation>
     </message>
     <message>
         <source>Received with</source>
-        <translation>Получено на</translation>
+        <translation>Recebido com</translation>
     </message>
     <message>
         <source>Sent to</source>
-        <translation>Отправлено на</translation>
+        <translation>Enviado para</translation>
     </message>
     <message>
         <source>PrivateSend</source>
-        <translation>PrivateSend</translation>
+        <translation>EnvioPrivado</translation>
     </message>
     <message>
         <source>PrivateSend Make Collateral Inputs</source>
-        <translation>Создание обеспечительных монет для PrivateSend</translation>
+        <translation>PrivateSend fazer insumos colaterais</translation>
     </message>
     <message>
         <source>PrivateSend Create Denominations</source>
-        <translation>Создание номиналов для PrivateSend</translation>
+        <translation>PrivateSend Criar Denominações</translation>
     </message>
     <message>
         <source>PrivateSend Denominate</source>
-        <translation>Перемешивание PrivateSend</translation>
+        <translation>PrivateSend Denominate</translation>
     </message>
     <message>
         <source>PrivateSend Collateral Payment</source>
-        <translation>Обеспечительный платеж PrivateSend</translation>
+        <translation>PrivateSend Pagamento de Garantia</translation>
     </message>
     <message>
         <source>To yourself</source>
-        <translation>Отправленные себе</translation>
+        <translation>Para você mesmo</translation>
     </message>
     <message>
         <source>Mined</source>
-        <translation>Добытые</translation>
+        <translation>Minerado</translation>
     </message>
     <message>
         <source>Other</source>
-        <translation>Другое</translation>
+        <translation>Outro</translation>
     </message>
     <message>
         <source>Enter address or label to search</source>
-        <translation>Введите адрес или метку для поиска</translation>
+        <translation>Procure um endereço ou etiqueta</translation>
     </message>
     <message>
         <source>Min amount</source>
-        <translation>Мин. сумма</translation>
+        <translation>Quantia mínima</translation>
     </message>
     <message>
         <source>Abandon transaction</source>
-        <translation>Сбросить транзакцию</translation>
+        <translation>Abandonar transação</translation>
     </message>
     <message>
         <source>Copy address</source>
-        <translation>Копировать адрес</translation>
+        <translation>Copiar endereço</translation>
     </message>
     <message>
         <source>Copy label</source>
-        <translation>Копировать метку</translation>
+        <translation>Copiar rótulo</translation>
     </message>
     <message>
         <source>Copy amount</source>
-        <translation>Скопировать сумму</translation>
+        <translation>Copias quantia</translation>
     </message>
     <message>
         <source>Copy transaction ID</source>
-        <translation>Скопировать ID транзакции</translation>
+        <translation>Copiar ID da transação</translation>
     </message>
     <message>
         <source>Copy raw transaction</source>
-        <translation>Скопировать код транзакции</translation>
+        <translation>Copiar o raw da transação</translation>
     </message>
     <message>
         <source>Copy full transaction details</source>
-        <translation>Скопировать все детали транзакции</translation>
+        <translation>Copiar dados completos da transação</translation>
     </message>
     <message>
         <source>Edit label</source>
-        <translation>Изменить метку</translation>
+        <translation>Editar rótulo</translation>
     </message>
     <message>
         <source>Show transaction details</source>
-        <translation>Показать подробности транзакции</translation>
+        <translation>Mostrar detalhes da transação</translation>
     </message>
     <message>
         <source>Export Transaction History</source>
-        <translation>Экспортировать историю транзакций</translation>
+        <translation>Exportar histórico de transações</translation>
     </message>
     <message>
         <source>Comma separated file (*.csv)</source>
-        <translation>Текст, разделённый запятыми (*.csv)</translation>
+        <translation>Comma separated file (*.csv)</translation>
     </message>
     <message>
         <source>Confirmed</source>
-        <translation>Подтверждено</translation>
+        <translation>Confirmado</translation>
     </message>
     <message>
         <source>Watch-only</source>
-        <translation>Для просмотра</translation>
+        <translation>Monitorado</translation>
     </message>
     <message>
         <source>Date</source>
-        <translation>Дата</translation>
+        <translation>Data</translation>
     </message>
     <message>
         <source>Type</source>
-        <translation>Тип</translation>
+        <translation>Tipo</translation>
     </message>
     <message>
         <source>Label</source>
-        <translation>Метка</translation>
+        <translation>Rótulo</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Адрес</translation>
+        <translation>Endereço</translation>
     </message>
     <message>
         <source>ID</source>
@@ -3771,1174 +3792,1258 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>Exporting Failed</source>
-        <translation>Экспорт не удался</translation>
+        <translation>Falha na exportação</translation>
     </message>
     <message>
         <source>There was an error trying to save the transaction history to %1.</source>
-        <translation>Произошла ошибка при сохранении истории транзакций в %1.</translation>
+        <translation>Ocorreu um erro ao tentar salvar o histórico de transações em %1.</translation>
     </message>
     <message>
         <source>Exporting Successful</source>
-        <translation>Экспорт успешно завершён</translation>
+        <translation>Exportação feita com êxito</translation>
     </message>
     <message>
         <source>The transaction history was successfully saved to %1.</source>
-        <translation>История транзакций была успешно сохранена в %1.</translation>
+        <translation>O histórico de transação foi gravado com êxito em %1.</translation>
     </message>
     <message>
         <source>Range:</source>
-        <translation>Промежуток от:</translation>
+        <translation>Intervalo: </translation>
     </message>
     <message>
         <source>to</source>
-        <translation>до</translation>
+        <translation>para</translation>
     </message>
 </context>
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
         <source>Unit to show amounts in. Click to select another unit.</source>
-        <translation>Размерность для показа сумм. Кликните для выбора другой размерности.</translation>
+        <translation>Unidade para mostrar. Clique para selecionar outra unidade.</translation>
     </message>
 </context>
 <context>
     <name>WalletFrame</name>
     <message>
         <source>No wallet has been loaded.</source>
-        <translation>Не был загружен ни один кошелёк.</translation>
+        <translation>Nenhuma carteira carregada</translation>
     </message>
 </context>
 <context>
     <name>WalletModel</name>
     <message>
         <source>Send Coins</source>
-        <translation>Отправка</translation>
+        <translation>Enviar moedas</translation>
     </message>
     <message>
         <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 SPARKS.</source>
-        <translation>InstantSend пока что не поддерживает такие большие суммы. На данный момент транзакции ограничены суммами до %1 SPARKS.</translation>
+        <translation>EnvioInstantâneo não suporta o envio de valores tão altos ainda. As transações são limitadas a %1 SPARKS.</translation>
     </message>
     <message>
         <source>Used way too many inputs (&gt;%1) for this InstantSend transaction, fees could be huge.</source>
-        <translation>Для этой InstantSend транзакции было использовано слишком много входов (&gt;%1), комиссия может быть огромной.</translation>
+        <translation>Usado demais entradas (&gt;%1) para esta transação do InstantSend, as taxas podem ser enormes.</translation>
     </message>
 </context>
 <context>
     <name>WalletView</name>
     <message>
         <source>&amp;Export</source>
-        <translation>&amp;Экспорт</translation>
+        <translation>&amp;Exportar</translation>
     </message>
     <message>
         <source>Export the data in the current tab to a file</source>
-        <translation>Экспортировать данные из вкладки в файл</translation>
+        <translation>Exportar os dados da guia atual para um arquivo</translation>
     </message>
     <message>
         <source>Selected amount:</source>
-        <translation>Сумма выбранных:</translation>
+        <translation>Quantidade selecionada:</translation>
     </message>
     <message>
         <source>Backup Wallet</source>
-        <translation>Сделать резервную копию кошелька</translation>
+        <translation>Backup da carteira</translation>
     </message>
     <message>
         <source>Wallet Data (*.dat)</source>
-        <translation>Данные кошелька (*.dat)</translation>
+        <translation>Dados da carteira (*.dat)</translation>
     </message>
     <message>
         <source>Backup Failed</source>
-        <translation>Резервное копирование не удалось</translation>
+        <translation>Falha no backup</translation>
     </message>
     <message>
         <source>There was an error trying to save the wallet data to %1.</source>
-        <translation>Произошла ошибка при сохранении данных кошелька в %1.</translation>
+        <translation>Ocorreu um erro ao tentar salvar os dados da carteira em %1.</translation>
     </message>
     <message>
         <source>Backup Successful</source>
-        <translation>Резервное копирование успешно завершено</translation>
+        <translation>Backup bem sucedido</translation>
     </message>
     <message>
         <source>The wallet data was successfully saved to %1.</source>
-        <translation>Данные кошелька были успешно сохранены в %1.</translation>
+        <translation>Os dados da carteira foram salvos com êxito em %1.</translation>
     </message>
 </context>
 <context>
     <name>sparks-core</name>
     <message>
         <source>Bind to given address and always listen on it. Use [host]:port notation for IPv6</source>
-        <translation>Привязаться к указанному адресу и всегда прослушивать только его. Используйте [хост]:порт для IPv6</translation>
+        <translation>Vincular ao endereço fornecido e sempre escutar nele. Use a notação [host]:port para IPv6</translation>
     </message>
     <message>
         <source>Error: Listening for incoming connections failed (listen returned error %s)</source>
-        <translation>Ошибка: не удалось начать прослушивание входящих подключений (прослушивание вернуло ошибку %s)</translation>
+        <translation>Erro: Aceitar conexões de entrada falhou (retornou erro %s)</translation>
     </message>
     <message>
         <source>Execute command when a relevant alert is received or we see a really long fork (%s in cmd is replaced by message)</source>
-        <translation>Выполнить команду, когда приходит соответствующее сообщение о тревоге или наблюдается очень длинная альтернативная цепочка блоков (%s в команде заменяется на сообщение)</translation>
+        <translation>Executa um comando quando um alerta relevante é recebido ou vemos uma longa segregação (%s é substituída pela mensagem)</translation>
     </message>
     <message>
         <source>Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)</source>
-        <translation>Выполнить команду, когда меняется транзакция в кошельке (%s в команде заменяется на TxID)</translation>
+        <translation>Executa um comando quando uma transação da carteira mudar (%s no comando será substituído por TxID)</translation>
     </message>
     <message>
         <source>Execute command when the best block changes (%s in cmd is replaced by block hash)</source>
-        <translation>Выполнить команду при появлении нового блока (%s в команде заменяется на хэш блока)</translation>
+        <translation>Executa um comando quando o melhor bloco mudar (%s no comando será substituído pelo hash do bloco)</translation>
     </message>
     <message>
         <source>Name to construct url for KeePass entry that stores the wallet passphrase</source>
-        <translation>Имя для создания ссылки на запись KeePass, хранящую пароль к кошельку</translation>
+        <translation>Nome para construir url para a entrada do KeePass que armazena a senha da carteira</translation>
     </message>
     <message>
         <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>Задать максимальный размер высокоприоритетных/низкокомиссионных транзакций в байтах (по умолчанию: %d)</translation>
+        <translation>Definir tamanho máximo de transações de alta prioridade/baixa taxa em bytes (padrão: %d)</translation>
     </message>
     <message>
         <source>Set the number of script verification threads (%u to %d, 0 = auto, &lt;0 = leave that many cores free, default: %d)</source>
-        <translation>Задать число потоков проверки скрипта (от %u до %d, 0=авто, &lt;0 = оставить столько ядер свободными, по умолчанию: %d)</translation>
+        <translation>Define o número de threads de verificação de script (%u a %d, 0 = automático, &lt;0 = número de cores deixados livres, padrão: %d)</translation>
     </message>
     <message>
         <source>This is a pre-release test build - use at your own risk - do not use for mining or merchant applications</source>
-        <translation>Это пре-релизная тестовая сборка - используйте на свой страх и риск - не используйте для добычи или торговых приложений</translation>
+        <translation>Este é um build de teste pré-lançamento - use por sua conta e risco - não use para mineração ou comércio.</translation>
     </message>
     <message>
         <source>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</source>
-        <translation>Внимание: похоже, что в сети нет полного согласия! Некоторый майнеры, возможно, испытывают проблемы.</translation>
+        <translation>Atenção: A rede não parecem concordar plenamente! Alguns mineiros parecem estar enfrentando problemas.</translation>
     </message>
     <message>
         <source>Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.</source>
-        <translation>Внимание: обнаружено несогласие с подключенными участниками! Вам или другим участникам, возможно, следует обновиться.</translation>
+        <translation>Atenção: Nós não parecemos concordar plenamente com nossos nós! Você pode precisar atualizar ou outros nós podem precisar atualizar.</translation>
     </message>
     <message>
         <source>You must specify a masternodeprivkey in the configuration. Please see documentation for help.</source>
-        <translation>Необходимо указать masternodeprivkey в файле конфигурации. Пожалуйста, ознакомьтесь с документацией.</translation>
+        <translation>Você deve especificar um masternodeprivkey na configuração. Por favor, consulte a documentação para obter ajuda.</translation>
     </message>
     <message>
         <source>Accept command line and JSON-RPC commands</source>
-        <translation>Принимать командную строку и команды JSON-RPC</translation>
+        <translation>Aceitar linha de comando e comandos JSON-RPC</translation>
     </message>
     <message>
         <source>Add a node to connect to and attempt to keep the connection open</source>
-        <translation>Добавить узел для подключения и пытаться поддерживать соединение открытым</translation>
+        <translation>Adicionar um nó com o qual se conectar e tentar manter a conexão ativa</translation>
     </message>
     <message>
         <source>Allow DNS lookups for -addnode, -seednode and -connect</source>
-        <translation>Разрешить поиск в DNS для -addnode, -seednode и -connect</translation>
+        <translation>Permitir consultas DNS para -addnode, -seednode e -connect</translation>
     </message>
     <message>
         <source>Already have that input.</source>
-        <translation>Уже есть этот вход.</translation>
+        <translation>Já tem essa entrada.</translation>
     </message>
     <message>
         <source>Block creation options:</source>
-        <translation>Параметры создания блоков:</translation>
+        <translation>Opções de criação de bloco:</translation>
     </message>
     <message>
         <source>Cannot downgrade wallet</source>
-        <translation>Не удаётся понизить версию кошелька</translation>
+        <translation>Não é possível fazer downgrade da carteira</translation>
     </message>
     <message>
         <source>Cannot write default address</source>
-        <translation>Не удаётся записать адрес по умолчанию</translation>
+        <translation>Não foi possível escrever no endereço padrão</translation>
     </message>
     <message>
         <source>Collateral not valid.</source>
-        <translation>Обеспечительная транзакция некорректна.</translation>
+        <translation>Colateral inválido.</translation>
     </message>
     <message>
         <source>Connect to a node to retrieve peer addresses, and disconnect</source>
-        <translation>Подключиться к участнику, чтобы получить список адресов других участников, и отключиться</translation>
+        <translation>Conectar a um nó para receber endereços de participantes, e desconectar.</translation>
     </message>
     <message>
         <source>Connection options:</source>
-        <translation>Параметры подключения:</translation>
+        <translation>Opções de conexão:</translation>
     </message>
     <message>
         <source>Corrupted block database detected</source>
-        <translation>База данных блоков повреждена</translation>
+        <translation>Detectada database de bloco corrompida</translation>
     </message>
     <message>
         <source>Debugging/Testing options:</source>
-        <translation>Параметры отладки/тестирования:</translation>
+        <translation>Opções de depuração/teste:</translation>
     </message>
     <message>
         <source>Do not load the wallet and disable wallet RPC calls</source>
-        <translation>Не загружать кошелёк и запретить обращения к нему через RPC</translation>
+        <translation>Não carrega a carteira e desabilita as chamadas RPC para a carteira</translation>
     </message>
     <message>
         <source>Do you want to rebuild the block database now?</source>
-        <translation>Перестроить базу данных блоков прямо сейчас?</translation>
+        <translation>Você quer reconstruir o banco de dados de blocos agora?</translation>
     </message>
     <message>
         <source>Done loading</source>
-        <translation>Загрузка завершена</translation>
+        <translation>Carregamento completo</translation>
     </message>
     <message>
         <source>Entries are full.</source>
-        <translation>Очередь переполнена.</translation>
+        <translation>Entradas estão cheias.</translation>
     </message>
     <message>
         <source>Error initializing block database</source>
-        <translation>Ошибка инициализации базы данных блоков</translation>
+        <translation>Erro ao inicializar a database do bloco</translation>
     </message>
     <message>
         <source>Error initializing wallet database environment %s!</source>
-        <translation>Ошибка инициализации окружения БД кошелька %s!</translation>
+        <translation>Erro ao inicializar ambiente de banco de dados de carteira %s!</translation>
     </message>
     <message>
         <source>Error loading block database</source>
-        <translation>Ошибка загрузки базы данных блоков</translation>
+        <translation>Erro ao carregar banco de dados de blocos</translation>
     </message>
     <message>
         <source>Error opening block database</source>
-        <translation>Не удалось открыть базу данных блоков</translation>
+        <translation>Erro ao abrir banco de dados de blocos</translation>
     </message>
     <message>
         <source>Error reading from database, shutting down.</source>
-        <translation>Ошибка чтения базы данных, завершение работы.</translation>
+        <translation>Erro ao ler o banco de dados. Finalizando.</translation>
     </message>
     <message>
         <source>Error</source>
-        <translation>Ошибка</translation>
+        <translation>Erro</translation>
     </message>
     <message>
         <source>Error: Disk space is low!</source>
-        <translation>Ошибка: мало места на диске!</translation>
+        <translation>Erro: Pouco espaço em disco!</translation>
     </message>
     <message>
         <source>Failed to listen on any port. Use -listen=0 if you want this.</source>
-        <translation>Не удалось начать прослушивание на порту. Используйте -listen=0, если вас это устраивает.</translation>
+        <translation>Falha ao escutar em qualquer porta. Use -listen=0 se você quiser isso.</translation>
     </message>
     <message>
         <source>(1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)</source>
-        <translation>(1 = сохранить мета-данные, например, о владельце аккаунта и информацию о запросе платежа, 2 = удалить мета-данные)</translation>
+        <translation>(1 = manter metadados tx e.g. informação do dono da conta e requisição de pagamente, 2 = descartar metadados tx)</translation>
     </message>
     <message>
         <source>-maxtxfee is set very high! Fees this large could be paid on a single transaction.</source>
-        <translation>установлено очень большое значение -maxtxfee! Комиссия такого размера может быть уплачена при проведении отдельной транзакции.</translation>
+        <translation>-maxtxfee é muito alto! Essa quantia poderia ser paga em uma única transação.</translation>
     </message>
     <message>
         <source>A fee rate (in %s/kB) that will be used when fee estimation has insufficient data (default: %s)</source>
-        <translation>Комиссия (в %s/kB), которая будет использована при недостаточности данных для расчета предполагаемой комиссии (по умолчанию: %s)</translation>
+        <translation>A variação da taxa (em %s/kB) que será usada quando não houver dados suficientes para se estimar a taxa (default: %s)</translation>
     </message>
     <message>
         <source>Accept relayed transactions received from whitelisted peers even when not relaying transactions (default: %d)</source>
-        <translation>Принимать пересылаемые транзакции, полученные от узлов в белом списке, даже когда пересылка транзакций отключена (по умолчанию: %d)</translation>
+        <translation>Aceita transações retransmitidas advindas de pares em lista branca, mesmo quando não estiver retransmitindo transações (padrão: %d)</translation>
     </message>
     <message>
         <source>Allow JSON-RPC connections from specified source. Valid for &lt;ip&gt; are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times</source>
-        <translation>Разрешить соединения JSON-RPC с указанного источника . &lt;ip&gt; может быть отдельным IP (например, 1.2.3.4), подсетью/маской (например, 1.2.3.4/255.255.255.0) или подсетью/CIDR (e.g. 1.2.3.4/24). Эту опцию можно указывать несколько раз</translation>
+        <translation>Permitir conexões JSON-RPC de uma fonte específica. Válido para um único ip (ex. 1.2.3.4), até uma rede/máscara (ex. 1.2.3.4/255.255.255.0) ou uma rede/CIDR (ex. 1.2.3.4/24). Esta opção pode ser usada múltiplas vezes</translation>
     </message>
     <message>
         <source>Bind to given address and whitelist peers connecting to it. Use [host]:port notation for IPv6</source>
-        <translation>Привязаться к указанному адресу и внести пиров, использующих его, в белый список. Используйте [хост]:порт для IPv6</translation>
+        <translation>Vincular ao endereço fornecido e sempre escutar nele. Use a notação [host]:port para IPv6</translation>
     </message>
     <message>
         <source>Bind to given address to listen for JSON-RPC connections. Use [host]:port notation for IPv6. This option can be specified multiple times (default: bind to all interfaces)</source>
-        <translation>Привязаться к указанному адресу для прослушивания JSON-RPC соединений. Используйте [хост]:порт для IPv6. Эту опцию можно указывать несколько раз (по умолчанию: привязаться ко всем интерфейсам)</translation>
+        <translation>Vincular a determinado endereço para atender as ligações JSON-RPC. Use [host]: Notação de porta para IPv6. Esta opção pode ser especificada várias vezes (padrão: ligam-se a todas as interfaces)</translation>
     </message>
     <message>
         <source>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</source>
-        <translation>Создавать новые файлы с разрешениями по умолчанию вместо umask 077 (актуально только с отключенной функциональностью кошелька)</translation>
+        <translation>Criar novos arquivos com permissões padrão do sistema, em vez de umask 077 (apenas efetivo com funcionalidade de carteira desabilitada)</translation>
     </message>
     <message>
         <source>Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup</source>
-        <translation>Удалить все трансакции из кошелька и при рестарте с помощью -rescan восстановить только те, которые есть в цепочке блоков</translation>
+        <translation>Apaga todas as transações da carteira e somente recupera essas partes da blockchain usando o comando -rescan na inicialização</translation>
+    </message>
+    <message>
+        <source>Enable publish raw transactions of attempted InstantSend double spend in &lt;address&gt;</source>
+        <translation>Ativar publicação de transações brutas na tentativa de gasto duplo do InstantSend em &lt;address&gt;</translation>
+    </message>
+    <message>
+        <source>Enable publish transaction hashes of attempted InstantSend double spend in &lt;address&gt;</source>
+        <translation>Habilitar hashes de transação de publicação da tentativa de gasto duplo do InstantSend em &lt;address&gt;</translation>
     </message>
     <message>
         <source>Error loading %s: You can't enable HD on a already existing non-HD wallet</source>
-        <translation>Ошибка загрузки %s: Вы не можете включить HD режим для существующего не-HD кошелька</translation>
+        <translation>Erro ao carregar %s: você não pode ativar o HD em uma carteira não HD já existente</translation>
     </message>
     <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
-        <translation>Найдены неподтверждённые номиналы, процесс продолжится после их подтверждения.</translation>
+        <translation>Encontrado saídas não confirmadas, esperará até que confirme para continuar.</translation>
     </message>
     <message>
         <source>How thorough the block verification of -checkblocks is (0-4, default: %u)</source>
-        <translation>Насколько тщательна проверка контрольных блоков -checkblocks (0-4, по умолчанию: %u)</translation>
+        <translation>Quão completa a verificação de blocos do -checkblocks é (0-4, padrão: %u)</translation>
     </message>
     <message>
         <source>If paytxfee is not set, include enough fee so transactions begin confirmation on average within n blocks (default: %u)</source>
-        <translation>Если paytxfee не задано, то включить достаточно комиссии, чтобы подтверждение транзакций происходило в среднем за n блоков (по умолчанию: %u)</translation>
+        <translation>Se paytxfee não estiver definida, incluir comissão suficiente para que as transações comecem a ter confirmações em média dentro de N blocos (padrão %u)</translation>
     </message>
     <message>
         <source>If this block is in the chain assume that it and its ancestors are valid and potentially skip their script verification (0 to verify all, default: %s, testnet: %s)</source>
-        <translation>Если этот блок есть в цепочке, то предположить, что он и все предшествующие блоки валидны, и пропустить проверку их скриптов (0 - проверять все, по умолчанию: %s, testnet: %s)</translation>
+        <translation>Se este bloco está no blockchain, assume-se que ele e seus ancestrais são válidos e podem ignorar a verificação de scripts (0 para verificar todos, padrão: %s, testnet: %s)</translation>
     </message>
     <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s' (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
-        <translation>Некорректная сумма для -maxtxfee=&lt;amount&gt;: '%s' (должна быть минимум как комиссия minrelay - %s, чтобы предотвратить застревание транзакций)</translation>
+        <translation>Valor inválido para -maxtxfee=&lt;valor&gt;: '%s' (precisa ser pelo menos a taxa mínima de %s para prevenir que a transação nunca seja confirmada)</translation>
     </message>
     <message>
         <source>Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)</source>
-        <translation>Хранить полный индекс транзакций, используется rpc-вызовом getrawtransaction (по умолчанию: %u)</translation>
+        <translation>Mantém um índice completo de transações, usado pela chamada rpc getrawtransaction (padrão: %u)</translation>
     </message>
     <message>
         <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you verified that wallet works!</source>
-        <translation>Не забудьте зашифровать кошелек и удалить все незашифрованные резервные копии после того как убедитесь, что кошелек работает!</translation>
+        <translation>Certifique-se de criptografar sua carteira e excluir todos os backups não criptografados depois de verificar se a carteira funciona!</translation>
     </message>
     <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
-        <translation>Максимальный размер данных в транзакциях передачи данных, который мы ретранслируем и добываем (по умолчанию: %u)</translation>
+        <translation>Tamanho máximo de dados em transações de dados de operadora (padrão %u)</translation>
     </message>
     <message>
         <source>Number of seconds to keep misbehaving peers from reconnecting (default: %u)</source>
-        <translation>Количество секунд, в течение которых запрещать переподключаться неправильно ведущим себя участникам (по умолчанию: %u)</translation>
+        <translation>Número de segundos para impedir que peers mal comportados reconectem (padrão %u)</translation>
     </message>
     <message>
         <source>Output debugging information (default: %u, supplying &lt;category&gt; is optional)</source>
-        <translation>Вывод отладочной информации (по умолчанию: %u, указание &lt;category&gt; необязательно)</translation>
+        <translation>Informação de saída de debug (padrão: %u, definir &lt;category&gt; é opcional)</translation>
+    </message>
+    <message>
+        <source>Overrides minimum spork signers to change spork value. Only useful for regtest and devnet. Using this on mainnet or testnet will ban you.</source>
+        <translation>Substitui signatários de spork mínimos para alterar o valor do spork. Útil apenas para regtest e devnet. Usando isto na mainnet ou testnet irá banir você.</translation>
+    </message>
+    <message>
+        <source>Use N separate masternodes in parallel to mix funds (%u-%u, default: %u)</source>
+        <translation>Use N masternodes separados em paralelo para misturar fundos (%u-%u, padrao: %u)</translation>
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: %s)</source>
-        <translation>Использовать отдельный SOCKS5 прокси для подключения к участникам через скрытые сервисы Tor (по умолчанию: %s)</translation>
+        <translation>Use um proxy SOCKS5 separado para alcançar participantes da rede via serviços ocultos Tor (padrão: %s)</translation>
     </message>
     <message>
         <source>User defined mnemonic for HD wallet (bip39). Only has effect during wallet creation/first start (default: randomly generated)</source>
-        <translation>Заданная пользователем мнемоника HD кошелька (bip39). Работает только при первом создании/старте кошелька (по умолчанию: генерируется случайным образом)</translation>
+        <translation>Usuário definido mnemonic para carteira HD (bip39). Somente tem efeito durante a criação/primeiro começa da carteira (padrão: gerado aleatoriamente)</translation>
     </message>
     <message>
         <source>User defined seed for HD wallet (should be in hex). Only has effect during wallet creation/first start (default: randomly generated)</source>
-        <translation>Заданная пользователем seed последовательность HD кошелька (в hex формате). Работает только при первом создании/старте кошелька (по умолчанию: генерируется случайным образом)</translation>
+        <translation>Semente definida pelo usuário para carteira HD (deve estar em hex). Só tem efeito durante a criação / início da carteira (padrão: gerado aleatoriamente)</translation>
     </message>
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>
-        <translation>Пиры, внесенные в белый список, не будут подвергаться DoS блокировкам и их транзакции будут ретранслироваться, даже если они уже есть в пуле памяти, что полезно, например, для работы в качестве шлюза</translation>
+        <translation>Peers permitidos não podem ser banidos do DoS e suas transações sempre são transmitidas, até mesmo se eles já estão no pool de memória, útil, por exemplo, para um gateway</translation>
     </message>
     <message>
         <source>You need to rebuild the database using -reindex-chainstate to change -txindex</source>
-        <translation>Вам необходимо пересобрать базы данных с помощью -reindex-chainstate, чтобы изменить -txindex</translation>
+        <translation>Você precisa reconstruir o banco de dados usando -reindex-chainstate para alterar -txindex</translation>
+    </message>
+    <message>
+        <source>You should specify a masternodeblsprivkey in the configuration. Please see documentation for help.</source>
+        <translation>Você deve especificar um masternodeblsprivkey na configuração. Por favor, consulte a documentação para obter ajuda.</translation>
     </message>
     <message>
         <source>(default: %s)</source>
-        <translation>(по умолчанию: %s)</translation>
+        <translation>(padão: %s)</translation>
     </message>
     <message>
         <source>Accept public REST requests (default: %u)</source>
-        <translation>Принимать публичные REST-запросы (по  умолчанию: %u)</translation>
+        <translation>Aceitar pedidos restantes públicas (padrão: %u)</translation>
     </message>
     <message>
         <source>Always query for peer addresses via DNS lookup (default: %u)</source>
-        <translation>Всегда запрашивать адреса участников через DNS (по умолчанию: %u)</translation>
+        <translation>Sempre pergunte pelo endereço de peer via pesquisa DNS (padrão: %u)</translation>
     </message>
     <message>
         <source>Can't mix: no compatible inputs found!</source>
-        <translation>Перемешивание невозможно: подходящие монеты не найдены!</translation>
+        <translation>Não é possível misturar: não foram encontradas entradas compatíveis!</translation>
     </message>
     <message>
         <source>Chain selection options:</source>
-        <translation>Параметры выбора цепи:</translation>
+        <translation>Opções de seleção de cadeia:</translation>
     </message>
     <message>
         <source>Connect through SOCKS5 proxy</source>
-        <translation>Соединяться через SOCKS5 прокси</translation>
+        <translation>Conecte através do proxy SOCKS5</translation>
     </message>
     <message>
         <source>Connect to KeePassHttp on port &lt;port&gt; (default: %u)</source>
-        <translation>Соединяться c KeePassHttp по порту &lt;port&gt; (по умолчанию: %u)</translation>
+        <translation>Conecte-se ao KeePassHttp na porta&lt;port&gt; (padrão: %u) </translation>
     </message>
     <message>
         <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>Разрешить этому клиенту работать в качестве мастерноды (0-1, по умолчанию: %u)</translation>
+        <translation>Ative o cliente para atuar como um masternode (0-1, padrão: %u)</translation>
     </message>
     <message>
         <source>Entry exceeds maximum size.</source>
-        <translation>Запись превышает максимально допустимый размер.</translation>
+        <translation>Entrada excede o tamanho máximo.</translation>
     </message>
     <message>
         <source>Error loading %s: You can't disable HD on a already existing HD wallet</source>
-        <translation>Ошибка загрузки %s: Вы не можете отключить HD режим для существующего HD кошелька</translation>
+        <translation>Erro ao carregar %s: você não pode desativar o HD em uma carteira HD já existente</translation>
     </message>
     <message>
         <source>Failed to load fulfilled requests cache from</source>
-        <translation>Ошибка загрузки кэша выполненных запросов из</translation>
+        <translation>Falha ao carregar o cache de solicitações preenchidas de</translation>
     </message>
     <message>
         <source>Failed to load governance cache from</source>
-        <translation>Ошибка загрузки кэша управления из</translation>
+        <translation>Falha ao carregar o cache de governança de</translation>
     </message>
     <message>
         <source>Failed to load masternode cache from</source>
-        <translation>Ошибка загрузка кэша мастернод из</translation>
+        <translation>Falha ao carregar o cache masternode de</translation>
     </message>
     <message>
         <source>Failed to load masternode payments cache from</source>
-        <translation>Ошибка загрузка кэша выплат мастернодам из</translation>
+        <translation>Falha ao carregar o cache de pagamentos do masternode</translation>
     </message>
     <message>
         <source>Found enough users, signing ( waiting %s )</source>
-        <translation>Найдено достаточное количество участников, подписываем ( ожидание %s )</translation>
+        <translation>Encontrou usuários suficientes, assinando ( esperando %s )</translation>
     </message>
     <message>
         <source>Found enough users, signing ...</source>
-        <translation>Найдено достаточное количество участников, подписываем ...</translation>
+        <translation>Encontrou usuários suficientes, assinando ...</translation>
     </message>
     <message>
         <source>How many blocks to check at startup (default: %u, 0 = all)</source>
-        <translation>Сколько блоков проверять на старте (по умолчанию: %u, 0 = все)</translation>
+        <translation>Quantos blocos devem ser checados ao iniciar (padrão: %u, 0 = todos)</translation>
     </message>
     <message>
         <source>Importing...</source>
-        <translation>Импорт ...</translation>
+        <translation>Importando...</translation>
     </message>
     <message>
         <source>Include IP addresses in debug output (default: %u)</source>
-        <translation>Писать IP-адреса в отладочный вывод (по умолчанию: %u)</translation>
+        <translation>Incluir endereço IP na saída de depuração (padrão: %u)</translation>
     </message>
     <message>
         <source>Incompatible mode.</source>
-        <translation>Несовместимый режим.</translation>
+        <translation>Modo incompatível.</translation>
     </message>
     <message>
         <source>Incompatible version.</source>
-        <translation>Несовместимая версия.</translation>
+        <translation>Versão incompatível. </translation>
     </message>
     <message>
         <source>Incorrect or no genesis block found. Wrong datadir for network?</source>
-        <translation>Неверный или отсутствующий начальный блок. Неправильный каталог данных для сети?</translation>
+        <translation>Bloco gênese incorreto ou não encontrado. Datadir errado para a rede?</translation>
     </message>
     <message>
         <source>Information</source>
-        <translation>Информация</translation>
+        <translation>Informação</translation>
     </message>
     <message>
         <source>Input is not valid.</source>
-        <translation>Вход некорректен.</translation>
+        <translation>A entrada não é válida.</translation>
     </message>
     <message>
         <source>Insufficient funds.</source>
-        <translation>Недостаточно средств.</translation>
+        <translation>Saldo insuficiente. </translation>
     </message>
     <message>
         <source>Invalid -onion address: '%s'</source>
-        <translation>Неверный -onion адрес: '%s'</translation>
+        <translation>Endereço -onion inválido: '%s'</translation>
     </message>
     <message>
         <source>Invalid -proxy address: '%s'</source>
-        <translation>Неверный адрес -proxy: '%s'</translation>
+        <translation>Endereço - proxy inválido: '%s'</translation>
     </message>
     <message>
         <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
-        <translation>Неверная сумма в параметре -paytxfee=&lt;amount&gt;: '%s' (должна быть минимум %s)</translation>
+        <translation>Valor inválido para -paytxfee=&lt;amount&gt;: '%s' (precisa ser no mínimo %s)</translation>
+    </message>
+    <message>
+        <source>Invalid masternodeblsprivkey. Please see documenation.</source>
+        <translation>Masternodeblsprivkey invalido. Por favor, veja a documentação.</translation>
+    </message>
+    <message>
+        <source>Invalid minimum number of spork signers specified with -minsporkkeys</source>
+        <translation>Número mínimo inválido de assinantes do spork especificados com -minsporkkeys</translation>
     </message>
     <message>
         <source>Keypool ran out, please call keypoolrefill first</source>
-        <translation>Не осталось ключей, пожалуйста, выполните команду keypoolrefill</translation>
+        <translation>Erro na Keypool, favor executar keypoolrefill primeiro</translation>
     </message>
     <message>
         <source>Listen for JSON-RPC connections on &lt;port&gt; (default: %u or testnet: %u)</source>
-        <translation>Слушать JSON-RPC соединения на порту &lt;port&gt; (по умолчанию: %u или testnet: %u)</translation>
+        <translation>Escutar por conexões JSON-RPC na porta &lt;port&gt; (padrão: %u ou testnet: %u)</translation>
     </message>
     <message>
         <source>Listen for connections on &lt;port&gt; (default: %u or testnet: %u)</source>
-        <translation>Принимать входящие подключения на порт &lt;port&gt; (по умолчанию: %u или testnet: %u)</translation>
+        <translation>Aguardar por conexões na porta &lt;port&gt; (padrão: %u ou testnet: %u)</translation>
     </message>
     <message>
         <source>Loading banlist...</source>
-        <translation>Загрузка списка заблокированных...</translation>
+        <translation>Carregando lista de banidos...</translation>
     </message>
     <message>
         <source>Loading fulfilled requests cache...</source>
-        <translation>Загрузка кэша выполненных запросов...</translation>
+        <translation>Carregando o cache de solicitações atendidas ...</translation>
     </message>
     <message>
         <source>Loading masternode cache...</source>
-        <translation>Загрузка кэша мастернод...</translation>
+        <translation>Carregando o cache do masternode ...</translation>
     </message>
     <message>
         <source>Loading masternode payment cache...</source>
-        <translation>Загрузка кэша выплат Мастернодам...</translation>
+        <translation>Carregando o cache de pagamento do masternode ...</translation>
     </message>
     <message>
         <source>Lock is already in place.</source>
-        <translation>Установлена блокировка.</translation>
+        <translation>Bloqueio já está no lugar.</translation>
     </message>
     <message>
         <source>Lock masternodes from masternode configuration file (default: %u)</source>
-        <translation>Заблокировать средства мастернод, указанных в настроечном файле (по умолчанию: %u)</translation>
+        <translation>Bloquear masternodes do arquivo de configuração do masternode (padrão: %u)</translation>
     </message>
     <message>
         <source>Maximum per-connection receive buffer, &lt;n&gt;*1000 bytes (default: %u)</source>
-        <translation>Максимальный размер буфера приёма на одно соединение, &lt;n&gt;*1000 байт (по умолчанию: %u)</translation>
+        <translation>Buffer máximo de recebimento por conexão, &lt;n&gt;*1000 bytes (padrão: %u)</translation>
     </message>
     <message>
         <source>Maximum per-connection send buffer, &lt;n&gt;*1000 bytes (default: %u)</source>
-        <translation>Максимальный размер буфера отправки на соединение, &lt;n&gt;*1000 байт (по умолчанию: %u)</translation>
+        <translation>Buffer máximo de envio por conexão, &lt;n&gt;*1000 bytes (padrão: %u)</translation>
     </message>
     <message>
         <source>Mixing in progress...</source>
-        <translation>Выполняется перемешивание...</translation>
+        <translation>Mixing em progresso...</translation>
     </message>
     <message>
         <source>Mnemonic passphrase is too long, must be at most 256 characters</source>
-        <translation>Парольная фраза мнемоники слишком длинная, она не должна превышать 256 символов</translation>
+        <translation>Frase mnemotica é muito grande, deve ter ao máximo 256 caracteres</translation>
     </message>
     <message>
         <source>Need to specify a port with -whitebind: '%s'</source>
-        <translation>Для параметра -whitebind нужно указать порт: '%s'</translation>
+        <translation>Necessário informar uma porta com -whitebind: '%s'</translation>
     </message>
     <message>
         <source>No Masternodes detected.</source>
-        <translation>Мастерноды не найдены.</translation>
+        <translation>Nenhum Masternode detectado.</translation>
     </message>
     <message>
         <source>No compatible Masternode found.</source>
-        <translation>Отсутствуют совместимые мастерноды.</translation>
+        <translation>Nenhum Masternode compatível encontrado.</translation>
     </message>
     <message>
         <source>Not in the Masternode list.</source>
-        <translation>Отсутствует в списке мастернод.</translation>
+        <translation>Não está na lista de Masternode.</translation>
     </message>
     <message>
         <source>Only connect to nodes in network &lt;net&gt; (ipv4, ipv6 or onion)</source>
-        <translation>Соединяться только по сети &lt;net&gt; (ipv4, ipv6 или onion)</translation>
+        <translation>Somente conectar a clientes na rede &lt;net&gt; (ipv4, ipv6 ou onion)</translation>
     </message>
     <message>
         <source>Port: %d</source>
-        <translation>Порт: %d</translation>
+        <translation>Porta: %d</translation>
     </message>
     <message>
         <source>Prepend debug output with timestamp (default: %u)</source>
-        <translation>Дописывать в начало отладочного вывода отметки времени (по умолчанию: %u)</translation>
+        <translation>Adiciona timestamp como prefixo no debug (padrão: %u)</translation>
     </message>
     <message>
         <source>Rebuild chain state and block index from the blk*.dat files on disk</source>
-        <translation>Перестроить состояние цепочки и индекс блоков из текущих файлов blk*.dat, хранящихся на диске</translation>
+        <translation>Reconstruir índice de cadeia de bloco a partir dos arquivos blk*.dat no disco</translation>
     </message>
     <message>
         <source>Rebuild chain state from the currently indexed blocks</source>
-        <translation>Перестроить состояние цепочки из уже проиндексированных блоков</translation>
+        <translation>Reconstruir estado a partir dos blocos indexados</translation>
     </message>
     <message>
         <source>Send trace/debug info to debug.log file (default: %u)</source>
-        <translation>Выводить информацию трассировки/отладки в файл debug.log (по умолчанию: %u)</translation>
+        <translation>Enviar informação de execução/depuração para o ficheiro debug.log (omissão: %u)</translation>
     </message>
     <message>
         <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
-        <translation>По возможности отправлять транзакции с нулевой комиссией (по умолчанию: %u)</translation>
+        <translation>Enviar com taxa-zero se possível (omissão: %u)</translation>
     </message>
     <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
-        <translation>Установить размер пула ключей в &lt;n&gt; (по умолчанию: %u)</translation>
+        <translation>Defina o tamanho da chave para piscina&lt;n&gt; (padrão: %u)</translation>
+    </message>
+    <message>
+        <source>Set the masternode BLS private key</source>
+        <translation>Definir a chave privada BLS do masternode </translation>
     </message>
     <message>
         <source>Set the number of threads to service RPC calls (default: %d)</source>
-        <translation>Задать число потоков выполнения запросов RPC (по умолчанию: %d)</translation>
+        <translation>Defina o número de threads para chamadas do serviço RPC (padrão: %d)</translation>
     </message>
     <message>
         <source>Specify configuration file (default: %s)</source>
-        <translation>Указать конфигурационный файл (по умолчанию: %s)</translation>
+        <translation>Especificar arquivo de configuração (padrão: %s)</translation>
     </message>
     <message>
         <source>Specify connection timeout in milliseconds (minimum: 1, default: %d)</source>
-        <translation>Указать тайм-аут соединения в миллисекундах (минимально: 1, по умолчанию: %d)</translation>
+        <translation>Especificar tempo para desistência de conexões, em mili segundos (mínimo: 1, padrão: %d)</translation>
     </message>
     <message>
         <source>Specify masternode configuration file (default: %s)</source>
-        <translation>Указать конфигурационный файл для мастернод (по умолчанию: %s)</translation>
+        <translation>Especificar ficheiro de configuração masternode (omissão: %s)</translation>
     </message>
     <message>
         <source>Specify pid file (default: %s)</source>
-        <translation>Указать pid-файл (по умолчанию: %s)</translation>
+        <translation>Especificar arquivo pid (padrão: %s)</translation>
     </message>
     <message>
         <source>Spend unconfirmed change when sending transactions (default: %u)</source>
-        <translation>Тратить неподтвержденную сдачу при отправке транзакций (по умолчанию: %u)</translation>
+        <translation>Gastar troco não confirmado quando enviar transações (padrão: %u)</translation>
     </message>
     <message>
         <source>Submitted following entries to masternode: %u / %d</source>
-        <translation>Мастерноде отправлены следующие записи: %u / %d</translation>
+        <translation>Apresentadas as seguintes entradas ao masternode: %u / %d </translation>
     </message>
     <message>
         <source>Submitted to masternode, waiting for more entries ( %u / %d ) %s</source>
-        <translation>Отправлено мастерноде, ожидаем больше записей ( %u / %d ) %s</translation>
+        <translation>Apresentado ao masternode, esperando por mais entradas ( %u / %d ) %s</translation>
     </message>
     <message>
         <source>Submitted to masternode, waiting in queue %s</source>
-        <translation>Отправлено на мастерноду, ожидаем в очереди %s</translation>
+        <translation>Enviado para o masternode, esperando na fila %s</translation>
     </message>
     <message>
         <source>Synchroning blockchain...</source>
-        <translation>Синхронизация блокчейна...</translation>
+        <translation>Sincronizando blockchain...</translation>
     </message>
     <message>
         <source>Synchronization failed</source>
-        <translation>Синхронизация закончилась неудачно</translation>
+        <translation>Sincronização falhou</translation>
     </message>
     <message>
         <source>Synchronization finished</source>
-        <translation>Синхронизация завершена</translation>
+        <translation>Sincronização finalizada</translation>
     </message>
     <message>
         <source>Synchronizing masternodes...</source>
-        <translation>Синхронизация списка мастернод...</translation>
+        <translation>Sincronizando masternodes...</translation>
     </message>
     <message>
         <source>This is not a Masternode.</source>
-        <translation>Это не мастернода.</translation>
+        <translation>Este não é um Masternode.</translation>
     </message>
     <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
-        <translation>Порог для отключения некорректно ведущих себя пиров (по умолчанию: %u)</translation>
+        <translation>Limite para desconectar peers mal comportados (padrão: %u)</translation>
     </message>
     <message>
         <source>Too many %f denominations, removing.</source>
-        <translation>Слишком много номиналов %f, удаляем.</translation>
+        <translation>Muitas %f denominações, removendo.</translation>
+    </message>
+    <message>
+        <source>Too many %f denominations, skipping.</source>
+        <translation>Muitos %f denominações, saltando.</translation>
     </message>
     <message>
         <source>Tor control port password (default: empty)</source>
-        <translation>Пароль контрольного порта Tor (по умолчанию: пустой)</translation>
+        <translation>Senha da porta de controle do Tor (padrão: vazio)</translation>
     </message>
     <message>
         <source>Tor control port to use if onion listening enabled (default: %s)</source>
-        <translation>Используемый контрольный порт Tor при включенном прослушивании сети onion (по умолчанию: %s)</translation>
+        <translation>Porta de controle a ser usada se o monitoramento onion estiver habilitado (padrão: %s)</translation>
     </message>
     <message>
         <source>Unable to start HTTP server. See debug log for details.</source>
-        <translation>Не удалось стартовать HTTP сервер. Смотрите debug.log для получения подробной информации.</translation>
+        <translation>Não foi possível iniciar o servidor HTTP. Veja o log de debug para detalhes.</translation>
     </message>
     <message>
         <source>Unknown response.</source>
-        <translation>Неизвестный ответ.</translation>
+        <translation>Resposta desconhecida.</translation>
     </message>
     <message>
         <source>Unsupported argument -benchmark ignored, use -debug=bench.</source>
-        <translation>Опция -benchmark проигнорирована, используйте -debug=bench вместо нее.</translation>
+        <translation>Argument -benchmark não suportado e ignorado, use -debug=bench.</translation>
     </message>
     <message>
         <source>Unsupported argument -debugnet ignored, use -debug=net.</source>
-        <translation>Опция -debugnet проигнорирована, используйте -debug=net вместо нее.</translation>
+        <translation>Argument -debugnet não suportado e ignorado, use -debug=net.</translation>
     </message>
     <message>
         <source>Unsupported argument -tor found, use -onion.</source>
-        <translation>Обнаружен неподдерживаемый параметр -tor, используйте -onion вместо него.</translation>
+        <translation>O argumento -tor não é suportado, use -onion.</translation>
     </message>
     <message>
         <source>Upgrade wallet to latest format on startup</source>
-        <translation>Обновить бумажник до последнего формата на старте</translation>
+        <translation>Atualizar carteira para o formato mais recente ao iniciar</translation>
     </message>
     <message>
         <source>Use KeePass 2 integration using KeePassHttp plugin (default: %u)</source>
-        <translation>Использовать интеграцию с KeePass 2 через плагин KeePassHttp (по умолчанию: %u)</translation>
+        <translation>Utilize integração KeePass 2 usando plugin KeePassHttp (default: %u)</translation>
     </message>
     <message>
         <source>Use UPnP to map the listening port (default: %u)</source>
-        <translation>Использовать UPnP для проброса порта (по умолчанию: %u)</translation>
+        <translation>Usar UPnP para mapear a porta de entrada (padrão: %u)</translation>
     </message>
     <message>
         <source>Use the test chain</source>
-        <translation>Использовать тестовую цепь</translation>
+        <translation>Use a cadeia de teste</translation>
     </message>
     <message>
         <source>User Agent comment (%s) contains unsafe characters.</source>
-        <translation>Комментарий User Agent  (%s) содержит небезопасные символы.</translation>
+        <translation>Comentário User Agent (%s) contém caracteres inseguros.</translation>
     </message>
     <message>
         <source>Will retry...</source>
-        <translation>Попробуем еще раз...</translation>
+        <translation>Será feita nova tentativa...</translation>
     </message>
     <message>
         <source>Invalid masternodeprivkey. Please see documenation.</source>
-        <translation>Неправильное значение masternodeprivkey. Пожалуйста, ознакомьтесь с документацией.</translation>
+        <translation>masternodeprivkey inválida. Por favor, consulte a documentação.</translation>
     </message>
     <message>
         <source>Can't find random Masternode.</source>
-        <translation>Не получилось выбрать случайную Мастерноду.</translation>
+        <translation>Não é possível encontrar o Masternode aleatório.</translation>
     </message>
     <message>
         <source>Can't mix while sync in progress.</source>
-        <translation>Перемешивание до завершения синхронизации невозможно.</translation>
+        <translation>Não é possível misturar enquanto a sincronização está em progresso.</translation>
     </message>
     <message>
         <source>Could not parse masternode.conf</source>
-        <translation>Не могу разобрать masternode.conf</translation>
+        <translation>Impossível avaliar masternode.conf</translation>
     </message>
     <message>
         <source>Invalid netmask specified in -whitelist: '%s'</source>
-        <translation>В параметре -whitelist указана некорректная маска: '%s'</translation>
+        <translation>Máscara de rede inválida detectada em -whitelist: '%s'</translation>
     </message>
     <message>
         <source>Invalid port detected in masternode.conf</source>
-        <translation>Обнаружен некорректный порт в masternode.conf</translation>
+        <translation>Porta inválida detectada em masternode.conf</translation>
     </message>
     <message>
         <source>Invalid script detected.</source>
-        <translation>Обнаружен некорректный скрипт.</translation>
+        <translation>Detectado script inválido.</translation>
     </message>
     <message>
         <source>KeePassHttp id for the established association</source>
-        <translation>Идентификатор KeePassHttp для установленной ассоциации</translation>
+        <translation>KeePassHttp id para a associação estabelecida</translation>
     </message>
     <message>
         <source>KeePassHttp key for AES encrypted communication with KeePass</source>
-        <translation>Ключ KeePassHttp для зашифрованной коммуникации с KeePass</translation>
+        <translation>Chave KeePassHttp para usar na comunicação cifrada AES com o KeePass</translation>
     </message>
     <message>
         <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
-        <translation>Держать в памяти до &lt;n&gt; несвязных транзакций (по умолчанию: %u)</translation>
+        <translation>Manter ao máximo &lt;n&gt; transações inconectáveis na memória (padrão: %u)</translation>
     </message>
     <message>
         <source>Disable all Sparks specific functionality (Masternodes, PrivateSend, InstantSend, Governance) (0-1, default: %u)</source>
-        <translation>Отключить всю функциональность, относящуюся к Sparks (Мастерноды, PrivateSend, InstantSend, Governance) (0-1, по умолчанию: %u)</translation>
+        <translation>Desabilitar todas as funcionalidades específicas da Sparks (Masternodes, EnvioPrivado, EnvioInstantâneo, Governança) (0-1, default: %u)</translation>
+    </message>
+    <message>
+        <source>%s file contains all private keys from this wallet. Do not share it with anyone!</source>
+        <translation>%s arquivo contém todas as chaves privadas desta carteira. Não compartilhe com ninguém!</translation>
     </message>
     <message>
         <source>Discover own IP addresses (default: 1 when listening and no -externalip or -proxy)</source>
-        <translation>Определить свой IP (по умолчанию: 1 при прослушивании и если не используется -externalip или -proxy)</translation>
+        <translation>Descobrir o próprio IP (padrão: 1 enquanto aguardando conexões e sem -externalip ou -proxy)</translation>
     </message>
     <message>
         <source>Do not keep transactions in the mempool longer than &lt;n&gt; hours (default: %u)</source>
-        <translation>Не хранить транзакции в мемпуле дольше чем &lt;n&gt; часов (по умолчанию: %u)</translation>
+        <translation>Não manter transações na mempool por mais que &lt;n&gt; horas (padrão: %u)</translation>
     </message>
     <message>
         <source>Enable InstantSend, show confirmations for locked transactions (0-1, default: %u)</source>
-        <translation>Включить InstantSend, показывать подтверждения для заблокированных транзакций (0-1, по умолчанию: %u)</translation>
+        <translation>Activar InstantSend, mostrar confirmações para transacções bloqueadas (0-1, omissão: %u)</translation>
     </message>
     <message>
         <source>Enable multiple PrivateSend mixing sessions per block, experimental (0-1, default: %u)</source>
-        <translation>Включить множественное перемешивание PrivateSend за один блок (0-1, по умолчанию: %u)</translation>
+        <translation>Habalitar múltiplas sessões de mistura para EnvioPrivado por bloco, experimental (0-1, padrão: %u)</translation>
     </message>
     <message>
         <source>Enable use of automated PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Включить автоматическое перемешивание PrivateSend для средств, хранящихся в этом кошельке (0-1, по умолчанию: %u)</translation>
+        <translation>Activar o uso de PrivateSend automatizado para os fundos guardados nesta carteira (0-1, omissão: %u)</translation>
     </message>
     <message>
         <source>Execute command when a wallet InstantSend transaction is successfully locked (%s in cmd is replaced by TxID)</source>
-        <translation>Выполнить команду, когда транзакция InstantSend успешно заблокирована (%s в команде заменяется на TxID)</translation>
+        <translation>Execute comando quando uma transação EnvioInstantâneo numa carteira é fechada com sucesso (%s no cmd  é substituído por TxID)</translation>
+    </message>
+    <message>
+        <source>Extra transactions to keep in memory for compact block reconstructions (default: %u)</source>
+        <translation>Transações extras para manter na memória para reconstruções do blocos compactos (padrão: %u)</translation>
     </message>
     <message>
         <source>Failed to create backup, file already exists! This could happen if you restarted wallet in less than 60 seconds. You can continue if you are ok with this.</source>
-        <translation>Не удалось создать резервную копию, т.к. файл уже существует! Такое могло случится, если вы перезапустили кошелек менее чем через 60 секунд после предыдущего запуска. Вы можете продолжить, если это допустимо.</translation>
+        <translation>Falha em criar o backup, o arquivo já existe! Isso pode ter acontecido se você resetou sua carteira em menos de 60 segundos. Você pode continuar se está ok com isso.</translation>
     </message>
     <message>
         <source>Fees (in %s/kB) smaller than this are considered zero fee for relaying, mining and transaction creation (default: %s)</source>
-        <translation>Комиссии (в %s/kB) меньше этого значения считаются нулевой для ретранслирования, майнинга и создания транзакции (по умолчанию: %s)</translation>
+        <translation>Comissões (em %s/kB) menores serão consideradas como zero para relaying, mineração e criação de transação (padrão %s)</translation>
     </message>
     <message>
         <source>Fees (in %s/kB) smaller than this are considered zero fee for transaction creation (default: %s)</source>
-        <translation>Комиссии (в %s/kB) меньше этого значения считаются нулевой при создании транзакции (по умолчанию: %s)</translation>
+        <translation>Comissões (em %s/kB) menores serão consideradas como zero para criação de transação (padrão %s)</translation>
     </message>
     <message>
         <source>If &lt;category&gt; is not supplied or if &lt;category&gt; = 1, output all debugging information.</source>
-        <translation>Если &lt;category&gt; не указана или &lt;category&gt; = 1, выводит всю отладочную информацию.</translation>
+        <translation>Se &lt;category&gt; não for suprida ou se &lt;category&gt; = 1, mostrar toda informação de depuração.</translation>
     </message>
     <message>
         <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 SPARKS.</source>
-        <translation>InstantSend пока что не поддерживает такие большие суммы. На данный момент транзакции ограничены суммами до %1 SPARKS.</translation>
+        <translation>EnvioInstantâneo não suporta o envio de valores tão altos ainda. As transações são limitadas a %1 SPARKS.</translation>
     </message>
     <message>
         <source>InstantSend requires inputs with at least %d confirmations, you might need to wait a few minutes and try again.</source>
-        <translation>InstantSend требует наличия средств с хотя бы %d подтверждениями, возможно Вам нужно подождать пару минут и попробовать снова.</translation>
+        <translation>O InstantSend necessita de entradas com pelo menos %d confirmações, pode ser necessário aguardar mais uns minutos e tentar de novo.</translation>
     </message>
     <message>
         <source>Maintain a full address index, used to query for the balance, txids and unspent outputs for addresses (default: %u)</source>
-        <translation>Хранить полный индекс для адресов, используется для запроса баланса, транзакций и непотраченных выходов для конкретного адреса (по умолчанию: %u)</translation>
+        <translation>Mantenha um index completo de endereços, usados para inquirir sobre o saldo, txids e outpus não gastos para endereços (padrão: %u)</translation>
     </message>
     <message>
         <source>Maintain a full spent index, used to query the spending txid and input index for an outpoint (default: %u)</source>
-        <translation>Хранить полный индекс трат, используется для запроса id транзакции и индекса входа для конкретного выхода (по умолчанию: %u)</translation>
+        <translation>Mantenha um index completo de gastos, usados para inquirir a txid de gastos e index de input para um outpoint (padrão: %u)</translation>
     </message>
     <message>
         <source>Maintain a timestamp index for block hashes, used to query blocks hashes by a range of timestamps (default: %u)</source>
-        <translation>Хранить индекс меток времени для хэшей блока, используется для запроса хэшей блоков по диапазону меток времени (по умолчанию: %u)</translation>
+        <translation>Mantenha um index de marcadores de tempo para hashes de bloco, usados para inquirir hashes de blocos por alcance de marcadores de tempo (padrão: %u)</translation>
     </message>
     <message>
         <source>Maintain at most &lt;n&gt; connections to peers (temporary service connections excluded) (default: %u)</source>
-        <translation>Поддерживать не более &lt;n&gt; подключений к узлам (без учета временных сервисных соединений) (по умолчанию: %u)</translation>
+        <translation>Mantenha no máximo&lt;n&gt;conexões a pares (conexões de serviço temporário excluídas) (padrão: %u)</translation>
     </message>
     <message>
         <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
-        <translation>При отправке PrivateSend использует только деноминированные средства, возможно, Вам просто нужно анонимизировать немного больше монет.</translation>
+        <translation>O PrivateSend usa denominações exactas para enviar fundos, pode necessitar simplesmente de anonimizar mais algumas moedas.</translation>
     </message>
     <message>
         <source>Prune configured below the minimum of %d MiB.  Please use a higher number.</source>
-        <translation>Удаление блоков настроено ниже допустимого предела в %d MiB.  Пожалуйста, укажите большее число.</translation>
+        <translation>Prune configurado abaixo do mínimo de %d MiB. Por favor use um número mais alto.</translation>
     </message>
     <message>
         <source>Prune: last wallet synchronisation goes beyond pruned data. You need to -reindex (download the whole blockchain again in case of pruned node)</source>
-        <translation>Удаление блоков: последняя синхронизация кошелька выходит за рамки удаленных данных. Вам нужно запустить клиента с ключом -reindex (в случае узла с удаленными блоками это означает повторное скачивание всей цепи блоков)</translation>
+        <translation>Prune: A ultima sincronização da carteira foi além do dado comprimido. Você precisa reindexar (fazer o download de toda a blockchain novamente)</translation>
     </message>
     <message>
         <source>Randomize credentials for every proxy connection. This enables Tor stream isolation (default: %u)</source>
-        <translation>Использовать случайные учётные данные для каждого прокси-подключения. Эта функция позволяет изолировать потоки Tor (по умолчанию: %u)</translation>
+        <translation>Gerar credenciais aleatórias para cada conexão por proxy. Isto habilita o isolamento de stream do Tor (padrão: %u)</translation>
     </message>
     <message>
         <source>Rescans are not possible in pruned mode. You will need to use -reindex which will download the whole blockchain again.</source>
-        <translation>Повторное сканирование невозможно в режиме удаления блоков. Вам надо будет использовать -reindex, что приведет к повторной загрузке всей цепи блоков.</translation>
+        <translation>Rescans não são possíveis no modo prune. Você precisa usar -reindex, que irá fazer o download de toda a blockchain novamente.</translation>
     </message>
     <message>
         <source>Specify full path to directory for automatic wallet backups (must exist)</source>
-        <translation>Укажите полный путь к папке для автоматических резервных копий кошелька (должна уже быть создана)</translation>
+        <translation>Especifique o caminho completo para o diretório de backups automáticos da carteira (deve existir)</translation>
     </message>
     <message>
         <source>Support filtering of blocks and transaction with bloom filters (default: %u)</source>
-        <translation>Поддерживать фильтрацию блоков и транзакций с помощью фильтров Блума (по умолчанию: %u)</translation>
+        <translation>Suportar filtragem de blocos e transações com filtros bloom (padrão: %u)</translation>
     </message>
     <message>
         <source>The block database contains a block which appears to be from the future. This may be due to your computer's date and time being set incorrectly. Only rebuild the block database if you are sure that your computer's date and time are correct</source>
-        <translation>База данных блоков содержит блок, созданный в будущем. Такое может случиться из-за некорректно установленных даты и времени на Вашем компьютере. Перестройте базу блоков, только если вы уверены, что дата и время корректны.</translation>
+        <translation>O banco de dados de blocos contém um bloco que parece ser do futuro. Isso pode ser devido à data e hora do seu computador estarem configuradas incorretamente. Apenas reconstrua o banco de dados de blocos se você estiver certo de que a data e hora de seu computador estão corretas.</translation>
     </message>
     <message>
         <source>The transaction amount is too small to send after the fee has been deducted</source>
-        <translation>При вычете комиссии сумма транзакции будет слишком мала для отправки</translation>
+        <translation>O valor da transação é muito pequeno para ser enviado depois que a taxa foi deduzida</translation>
     </message>
     <message>
         <source>Total length of network version string (%i) exceeds maximum length (%i). Reduce the number or size of uacomments.</source>
-        <translation>Длина строки сетевой версии (%i) превышает максимально допустимую (%i). Уменьшите количество или размер строк uacomment.</translation>
+        <translation>O tamanho total da string de versão da rede (%i) excede o tamanho máximo (%i). Reduza o numero ou tamanho de uacomments.</translation>
+    </message>
+    <message>
+        <source>Transaction index can't be disabled in full mode. Either start with -litemode command line switch or enable transaction index.</source>
+        <translation>O índice de transação não pode ser desativado no modo completo. Inicie com o comutador na linha de comando -litemode ou ative o índice de transação.</translation>
     </message>
     <message>
         <source>Tries to keep outbound traffic under the given target (in MiB per 24h), 0 = no limit (default: %d)</source>
-        <translation>Пытаться ограничить исходящий трафик в пределах установленного лимита (в МБ за 24ч), 0 = не ограничивать (по умолчанию: %d)</translation>
+        <translation>Tenta manter tráfego fora dos limites dentro do alvo especificado (em MiB por 24h), 0 = sem limite (padrão: %d)</translation>
     </message>
     <message>
         <source>Unable to locate enough PrivateSend denominated funds for this transaction.</source>
-        <translation>Не удалось обнаружить достаточных для выполнения этой транзакции номиналов PrivateSend.</translation>
+        <translation>Não é possível localizar fundos denominados do PrivateSend suficientes para essa transação.</translation>
     </message>
     <message>
         <source>Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported.</source>
-        <translation>Обнаружен неподдерживаемый аргумент -socks. Выбор версии SOCKS больше невозможен, поддерживаются только прокси версии SOCKS5.</translation>
+        <translation>Argumento inválido -socks encontrado. Definir a versão do SOCKS não é mais possível, somente proxys SOCK5 são suportados.</translation>
     </message>
     <message>
         <source>Unsupported argument -whitelistalwaysrelay ignored, use -whitelistrelay and/or -whitelistforcerelay.</source>
-        <translation>Неподдерживаемый аргумент -whitelistalwaysrelay проигнорирован, используйте -whitelistrelay и/или -whitelistforcerelay.</translation>
+        <translation>Argumento não suportado -whitelistalwaysrelay foi ignorado, utilize -whitelistrelay e/ou -whitelistforcerelay.</translation>
     </message>
     <message>
         <source>Use UPnP to map the listening port (default: 1 when listening and no -proxy)</source>
-        <translation>Использовать UPnP для проброса порта (по умолчанию: 1, если используется прослушивание и нет -proxy)</translation>
+        <translation>Usar UPnP para mapear a porta de entrada (padrão: 1 quando listening e no -proxy)</translation>
     </message>
     <message>
         <source>WARNING! Failed to replenish keypool, please unlock your wallet to do so.</source>
-        <translation>ВНИМАНИЕ! Ну удалось обновить пул ключей, пожалуйста, разблокируйте кошелек.</translation>
+        <translation>ATENÇÃO! Falha ao repor o keypool, desbloqueie sua carteira para fazer isso.</translation>
     </message>
     <message>
         <source>Wallet is locked, can't replenish keypool! Automatic backups and mixing are disabled, please unlock your wallet to replenish keypool.</source>
-        <translation>Кошелек заблокирован, невозможно пополнить пул ключей! Автоматические резервные копии и перемешивание отключены. Пожалуйста, разблокируйте кошелек для пополнения пула ключей.</translation>
+        <translation>Carteira travada, impossível reabastecer o keypool. Backups e misturas automáticas estão desabilitadas, por favor, destrave sua carteira para reabastecer o keypool. </translation>
     </message>
     <message>
         <source>Warning: Unknown block versions being mined! It's possible unknown rules are in effect</source>
-        <translation>Внимание: создаются блоки неизвестной версии! Возможно активированы неизвестные правила</translation>
+        <translation>Alerta: Versões de blocos desconhecidas mineradas! É possível que regras desconhecidas estejam ativas</translation>
+    </message>
+    <message>
+        <source>You are starting in lite mode, all Sparks-specific functionality is disabled.</source>
+        <translation>Você está começando no modo light, todas as funcionalidades específicas do Sparks estão desativadas.</translation>
     </message>
     <message>
         <source>You need to rebuild the database using -reindex to go back to unpruned mode.  This will redownload the entire blockchain</source>
-        <translation>Вам необходимо пересоздать базы данных, запустив клиент с ключом -reindex, чтобы вернуться в полный режим. Это приведет к повторному скачиванию всей цепи блоков.</translation>
+        <translation>Você precisa reconstruir o banco de dados usando -reindex para sair do modo prune. Isso irá rebaixar todo o blockchain.</translation>
     </message>
     <message>
         <source>(%d could be used only on mainnet)</source>
-        <translation>(%d можно использовать только в главной сети)</translation>
+        <translation>(%d poderia ser usado somente na mainnet)</translation>
     </message>
     <message>
         <source>(default: %u)</source>
-        <translation>(по умолчанию: %u)</translation>
+        <translation>(padrão: %u)</translation>
     </message>
     <message>
         <source>(must be %d for mainnet)</source>
-        <translation>(должно быть %d в главной сети)</translation>
+        <translation>(precisa ser %d para mainnet)</translation>
     </message>
     <message>
         <source>-maxmempool must be at least %d MB</source>
-        <translation>-maxmempool должно быть минимум %d MB</translation>
+        <translation>-maxmempool deve ser pelo menos %d MB</translation>
     </message>
     <message>
         <source>&lt;category&gt; can be:</source>
-        <translation>&lt;category&gt; может быть:</translation>
+        <translation>&lt;category&gt; pode ser:</translation>
     </message>
     <message>
         <source>Append comment to the user agent string</source>
-        <translation>Добавить комментарий к строке User Agent</translation>
+        <translation>Adicionar comentário à string user agent</translation>
     </message>
     <message>
         <source>Automatic backups disabled</source>
-        <translation>Автоматические бэкапы отключены</translation>
+        <translation>Backup automáticos desabilitados.</translation>
     </message>
     <message>
         <source>Automatically create Tor hidden service (default: %d)</source>
-        <translation>Автоматически создавать скрытый сервис Tor (по умолчанию: %d)</translation>
+        <translation>Criar automaticamente serviços ocultos do Tor (padrão: %d)</translation>
     </message>
     <message>
         <source>ERROR! Failed to create automatic backup</source>
-        <translation>ОШИБКА! Не удалось создать автоматический бэкап</translation>
+        <translation>ERRO! Falha ao criar o backup automático</translation>
     </message>
     <message>
         <source>Enable publish hash block in &lt;address&gt;</source>
-        <translation>Включить публикацию хэша блока на &lt;address&gt;</translation>
+        <translation>Abilitar a publicação da hash do block em &lt;endereço&gt;</translation>
+    </message>
+    <message>
+        <source>Enable publish hash of governance objects (like proposals) in &lt;address&gt;</source>
+        <translation>Ativar o hash de publicação de objetos de controle (como propostas) em &lt;address&gt;</translation>
+    </message>
+    <message>
+        <source>Enable publish hash of governance votes in &lt;address&gt;</source>
+        <translation>Ativar o hash de publicação de votos da governança em &lt;address&gt;</translation>
     </message>
     <message>
         <source>Enable publish hash transaction (locked via InstantSend) in &lt;address&gt;</source>
-        <translation>Включить публикацию хэша транзакции (заблокированной через InstantSend) на &lt;address&gt;</translation>
+        <translation>Ative a transação de hash de publicação (bloqueada via InstantSend) em&lt;address&gt;</translation>
     </message>
     <message>
         <source>Enable publish hash transaction in &lt;address&gt;</source>
-        <translation>Включить публикацию хэша транзакции на &lt;address&gt;</translation>
+        <translation>Abilitar a publicação da hash da transação em &lt;endereço&gt;</translation>
     </message>
     <message>
         <source>Enable publish raw block in &lt;address&gt;</source>
-        <translation>Включить публикацию кода блока на &lt;address&gt;</translation>
+        <translation>Abilitar a publicação dos dados brutos do block em &lt;endereço&gt;</translation>
     </message>
     <message>
         <source>Enable publish raw transaction (locked via InstantSend) in &lt;address&gt;</source>
-        <translation>Включить публикацию кода транзакции (заблокированной через InstantSend) на &lt;address&gt;</translation>
+        <translation>Ativar publicação de transação bruta (bloqueada via InstantSend) em&lt;address&gt;</translation>
     </message>
     <message>
         <source>Enable publish raw transaction in &lt;address&gt;</source>
-        <translation>Включить публикацию кода транзакции на &lt;address&gt;</translation>
-    </message>
-    <message>
-        <source>Enable transaction replacement in the memory pool (default: %u)</source>
-        <translation>Разрешить подмену транзакций в пуле памяти (по умолчанию: %u)</translation>
+        <translation>Abilitar a publicação dos dados brutos da transação em &lt;endereço&gt;</translation>
     </message>
     <message>
         <source>Error: A fatal internal error occurred, see debug.log for details</source>
-        <translation>Ошибка: Произошла критическая ошибка, подробности смотрите в файле debug.log</translation>
+        <translation>Erro: Um erro interno fatal ocorreu, veja debug.log para detalhes</translation>
     </message>
     <message>
         <source>Failed to create backup %s!</source>
-        <translation>Не удалось создать резервную копию %s!</translation>
+        <translation>Falhou ao criar backup %s!</translation>
     </message>
     <message>
         <source>Failed to create backup, error: %s</source>
-        <translation>Не удалось создать резервную копию, ошибка: %s</translation>
+        <translation>Falha ao criar backup, erro: %s</translation>
     </message>
     <message>
         <source>Failed to delete backup, error: %s</source>
-        <translation>Не удалось удалить резервную копию, ошибка: %s</translation>
+        <translation>Falha ao apagar backup, erro: %s</translation>
+    </message>
+    <message>
+        <source>Failed to load InstantSend data cache from</source>
+        <translation>Falha ao carregar o cache de dados do InstantSend de</translation>
+    </message>
+    <message>
+        <source>Failed to load sporks cache from</source>
+        <translation>Falha ao carregar o cache de sporks de</translation>
     </message>
     <message>
         <source>Failed to parse host:port string</source>
-        <translation>Не удалось разбить строку host:port</translation>
+        <translation>Falha ao avaliar a string host:port</translation>
     </message>
     <message>
         <source>Fee (in %s/kB) to add to transactions you send (default: %s)</source>
-        <translation>Комиссия (в %s/kB), добавляемая к отправляемым Вами транзакциям (по умолчанию: %s)</translation>
+        <translation>Taxa (em %s/kB) a ser adicionada às transações que você mandar (padrão: %s)</translation>
     </message>
     <message>
         <source>Imports blocks from external blk000??.dat file on startup</source>
-        <translation>Импортировать блоки из внешнего файла blk000??.dat на старте</translation>
+        <translation>Importar blocos a partir de arquivo externo blk000??.dat durante a inicialização</translation>
     </message>
     <message>
         <source>InstantSend options:</source>
-        <translation>Параметры InstantSend:</translation>
+        <translation>Opções de EnvioInstantâneo: </translation>
     </message>
     <message>
         <source>Invalid amount for -fallbackfee=&lt;amount&gt;: '%s'</source>
-        <translation>Неверная сумма в параметре -fallbackfee=&lt;amount&gt;: '%s'</translation>
+        <translation>Valor inválido para -fallbackfee=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
         <source>Keep the transaction memory pool below &lt;n&gt; megabytes (default: %u)</source>
-        <translation>Держать размер пула памяти транзакций ниже &lt;n&gt; мегабайт (по умолчанию: %u)</translation>
+        <translation>Mantenha a mempool de transações abaixo de &lt;n&gt; megabytes (padrão: %u)</translation>
     </message>
     <message>
         <source>Last PrivateSend was too recent.</source>
-        <translation>Последнее действие PrivateSend было слишком недавно.</translation>
+        <translation>O último PrivateSend foi muito recente.</translation>
     </message>
     <message>
         <source>Last successful PrivateSend action was too recent.</source>
-        <translation>Последнее успешное действие PrivateSend было слишком недавно.</translation>
+        <translation>A última ação PrivateSend com sucesso foi muito recente.</translation>
     </message>
     <message>
         <source>Line: %d</source>
-        <translation>Строка: %d</translation>
+        <translation>Linha: %d</translation>
+    </message>
+    <message>
+        <source>Loading InstantSend data cache...</source>
+        <translation>Carregando o cache de dados do InstantSend ...</translation>
     </message>
     <message>
         <source>Loading addresses...</source>
-        <translation>Загрузка адресов...</translation>
+        <translation>Carregando endereços...</translation>
     </message>
     <message>
         <source>Loading block index...</source>
-        <translation>Загрузка индекса блоков...</translation>
+        <translation>Carregando índice de blocos...</translation>
     </message>
     <message>
         <source>Loading governance cache...</source>
-        <translation>Загрузка кэша управления...</translation>
+        <translation>Sincronizando cache de governança ....</translation>
+    </message>
+    <message>
+        <source>Loading sporks cache...</source>
+        <translation>Carregando o cache de sporks ...</translation>
     </message>
     <message>
         <source>Loading wallet... (%3.2f %%)</source>
-        <translation>Загрузка кошелька... (%3.2f %%)</translation>
+        <translation>Carregando carteira... (%3.2f %%)</translation>
     </message>
     <message>
         <source>Loading wallet...</source>
-        <translation>Загрузка кошелька...</translation>
+        <translation>Carregando carteira...</translation>
     </message>
     <message>
         <source>Location of the auth cookie (default: data dir)</source>
-        <translation>Расположение cookie для аутентификации (по умолчанию: папка данных)</translation>
+        <translation>Localização do cookie de autenticação (padrão: diretório de dados)</translation>
     </message>
     <message>
         <source>Make the wallet broadcast transactions</source>
-        <translation>Рассылать транзакции из бумажника</translation>
+        <translation>Criar transações de transmissão de carteira</translation>
     </message>
     <message>
         <source>Masternode cache is empty, skipping payments and governance cache...</source>
-        <translation>Кэш мастернод пуст, пропускаем кэш платежей и объектов управления...</translation>
+        <translation>A  cache masternode está vazia, pulando cache de pagamentos e governança...</translation>
     </message>
     <message>
         <source>Masternode options:</source>
-        <translation>Параметры мастерноды:</translation>
+        <translation>Opções do Masternode:</translation>
     </message>
     <message>
         <source>Masternode queue is full.</source>
-        <translation>Очередь на мастерноде переполнена.</translation>
+        <translation>A fila do masternode está cheia.</translation>
     </message>
     <message>
         <source>Masternode:</source>
-        <translation>Мастернода:</translation>
+        <translation>Masternode:</translation>
     </message>
     <message>
         <source>Minimum bytes per sigop in transactions we relay and mine (default: %u)</source>
-        <translation>Минимальное количество байт на операцию в транзакциях, которые мы ретранслируем и добываем (по умолчанию: %u)</translation>
+        <translation>Mínimo de bytes por sigop nas transações que retransmitimos e mineramos (padrão: %u)</translation>
     </message>
     <message>
         <source>Missing input transaction information.</source>
-        <translation>Отсутствует информация о входной транзакции.</translation>
+        <translation>Falta informação da transação de entrada.</translation>
     </message>
     <message>
         <source>No errors detected.</source>
-        <translation>Ошибок не обнаружено.</translation>
+        <translation>Nenhum erro detectado.</translation>
     </message>
     <message>
         <source>No matching denominations found for mixing.</source>
-        <translation>Отсутствуют совпадающие для перемешивания номиналы.</translation>
+        <translation>Nenhuma denominação correspondente encontrada para misturar.</translation>
     </message>
     <message>
         <source>Node relay options:</source>
-        <translation>Параметры ретрансляции узла:</translation>
+        <translation>Opções de relé nó :</translation>
     </message>
     <message>
         <source>Non-standard public key detected.</source>
-        <translation>Обнаружен нестандартный открытый ключ.</translation>
+        <translation>Nenhuma chave pública fora do padrão detectada.</translation>
     </message>
     <message>
         <source>Not compatible with existing transactions.</source>
-        <translation>Не совместимо с существующими транзакциями.</translation>
+        <translation>Não é compatível com as transações existentes.</translation>
     </message>
     <message>
         <source>Not enough file descriptors available.</source>
-        <translation>Недостаточно файловых дескрипторов.</translation>
+        <translation>Não há descritores de arquivos disponíveis.</translation>
     </message>
     <message>
         <source>Not enough funds to anonymize.</source>
-        <translation>Недостаточно средств, подходящих для анонимизации.</translation>
+        <translation>Não há fundos suficientes para anonimo.</translation>
     </message>
     <message>
         <source>Number of automatic wallet backups (default: %u)</source>
-        <translation>Количество автоматических резервных копий кошелька (по умолчанию: %u)</translation>
+        <translation>Número de backups automáticos da carteira (padrão: %u)</translation>
     </message>
     <message>
         <source>Options:</source>
-        <translation>Параметры:</translation>
+        <translation>Opções:</translation>
     </message>
     <message>
         <source>Password for JSON-RPC connections</source>
-        <translation>Пароль для подключений JSON-RPC</translation>
+        <translation>Senha para conexões JSON-RPC</translation>
     </message>
     <message>
         <source>Print version and exit</source>
-        <translation>Вывести версию и выйти</translation>
+        <translation>Versão de impressão e sair</translation>
     </message>
     <message>
         <source>PrivateSend is idle.</source>
-        <translation>PrivateSend в режиме ожидания.</translation>
+        <translation>PrivateSend está inativo.</translation>
     </message>
     <message>
         <source>PrivateSend options:</source>
-        <translation>Опции PrivateSend:</translation>
+        <translation>Opções do PrivateSend:</translation>
     </message>
     <message>
         <source>PrivateSend request complete:</source>
-        <translation>Запрос PrivateSend завершен:</translation>
+        <translation>PrivateSend solicitação completa:</translation>
     </message>
     <message>
         <source>PrivateSend request incomplete:</source>
-        <translation>Запрос PrivateSend не завершен:</translation>
+        <translation>PrivateSend solicitação incompleta:</translation>
     </message>
     <message>
         <source>Prune cannot be configured with a negative value.</source>
-        <translation>Удаление блоков не может использовать отрицательное значение.</translation>
+        <translation>O modo prune não pode ser configurado com um valor negativo.</translation>
     </message>
     <message>
         <source>Prune mode is incompatible with -txindex.</source>
-        <translation>Режим удаления блоков несовместим с -txindex.</translation>
+        <translation>O modo prune é incompatível com -txindex.</translation>
     </message>
     <message>
         <source>Pruning blockstore...</source>
-        <translation>Урезание хранилища блоков...</translation>
+        <translation>Prunando os blocos existentes...</translation>
     </message>
     <message>
         <source>Rescan the block chain for missing wallet transactions on startup</source>
-        <translation>Перепроверить цепочку блоков на предмет отсутствующих в бумажнике транзакций на старте</translation>
+        <translation>Analise novamente o blockchain para ver se há transações da carteira em falta na inicialização</translation>
     </message>
     <message>
         <source>The wallet will avoid paying less than the minimum relay fee.</source>
-        <translation>Кошелек не будет платить комиссию меньше, чем необходимо для передачи. </translation>
+        <translation>A carteira irá evitar pagar menos que a taxa mínima de retransmissão.</translation>
     </message>
     <message>
         <source>This is the minimum transaction fee you pay on every transaction.</source>
-        <translation>Это минимальная комиссия, которую надо заплатить за каждую транзакцию.</translation>
+        <translation>Esta é a taxa mínima que você paga em todas as transação.</translation>
     </message>
     <message>
         <source>This is the transaction fee you will pay if you send a transaction.</source>
-        <translation>Это комиссия, которую Вы заплатите, если отправите транзакцию.</translation>
+        <translation>Esta é a taxa que você irá pagar se enviar uma transação.</translation>
     </message>
     <message>
         <source>Transaction amounts must not be negative</source>
-        <translation>Сумма транзакции не может быть отрицательной</translation>
+        <translation>As quantidades nas transações não podem ser negativas.</translation>
     </message>
     <message>
         <source>Transaction has too long of a mempool chain</source>
-        <translation>У транзакции слишком длинная цепочка в мемпуле</translation>
+        <translation>A transação demorou muito na memória</translation>
     </message>
     <message>
         <source>Transaction must have at least one recipient</source>
-        <translation>У транзакции должен быть хотя бы один получатель</translation>
+        <translation>A transação deve ter ao menos um destinatário</translation>
+    </message>
+    <message>
+        <source>Transaction too large</source>
+        <translation>Transação muito grande</translation>
     </message>
     <message>
         <source>Trying to connect...</source>
-        <translation>Попытка соединения...</translation>
+        <translation>Tentando se conectar...</translation>
     </message>
     <message>
         <source>Unable to bind to %s on this computer. %s is probably already running.</source>
-        <translation>Не удалось привязаться к %s на этом компьютере. Возможно, %s уже запущен.</translation>
+        <translation>Impossível vincular a %s neste computador. O %s provavelmente já está rodando.</translation>
     </message>
     <message>
         <source>Upgrading UTXO database</source>
-        <translation>Обновление базы UTXO</translation>
+        <translation>Atualizando banco de dados UTXO</translation>
     </message>
     <message>
         <source>Use devnet chain with provided name</source>
-        <translation>Использовать цепочку devnet с указанным именем</translation>
+        <translation>Use a cadeia devnet com o nome fornecido</translation>
     </message>
     <message>
         <source>Wallet debugging/testing options:</source>
-        <translation>Параметры отладки/тестирования кошелька:</translation>
+        <translation>Opções de depuração/teste da Carteira</translation>
+    </message>
+    <message>
+        <source>Wallet is not initialized</source>
+        <translation>Carteira não inicializada</translation>
     </message>
     <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
-        <translation>Необходимо перезаписать кошелёк: перезапустите %s для завершения операции</translation>
+        <translation>A Carteira precisa ser reescrita: reinicie o %s para completar</translation>
     </message>
     <message>
         <source>Warning: unknown new rules activated (versionbit %i)</source>
-        <translation>Внимание: вступили в силу неизвестные правила (versionbit %i)</translation>
+        <translation>Alerta: regras novas desconhecidas ativadas (versionbit %i)</translation>
     </message>
     <message>
         <source>Wasn't able to create wallet backup folder %s!</source>
-        <translation>Не удалось создать папку для резервной копии кошелька %s!</translation>
+        <translation>Não foi possível criar a pasta para backup da carteira %s!</translation>
     </message>
     <message>
         <source>Whether to operate in a blocks only mode (default: %u)</source>
-        <translation>Работать в режиме обработки только блоков (по умолчанию: %u)</translation>
+        <translation>Se é para operar em modo somente blocos (padrão: %u)</translation>
+    </message>
+    <message>
+        <source>You can not start a masternode in lite mode.</source>
+        <translation>Você não pode iniciar um masternode no modo light.</translation>
     </message>
     <message>
         <source>ZeroMQ notification options:</source>
-        <translation>Параметры оповещения ZeroMQ:</translation>
+        <translation>ZeroMQ notificação opções </translation>
     </message>
     <message>
         <source>no mixing available.</source>
-        <translation>перемешивание недоступно.</translation>
+        <translation>mixing não disponível.</translation>
     </message>
     <message>
         <source>see debug.log for details.</source>
-        <translation>смотрите debug.log для получения подробной информации.</translation>
+        <translation>Consulte debug.log para obter detalhes.</translation>
     </message>
     <message>
         <source>RPC server options:</source>
-        <translation>Параметры сервера RPC:</translation>
+        <translation>Opções do servidor RPC:</translation>
     </message>
     <message>
         <source>Sparks Core</source>
@@ -4946,399 +5051,395 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>The %s developers</source>
-        <translation>Разработчики %s</translation>
+        <translation>Desenvolvedores do %s</translation>
     </message>
     <message>
         <source>Accept connections from outside (default: 1 if no -proxy or -connect/-noconnect)</source>
-        <translation>Принимать подключения извне (по умолчанию: 1, если не используется -proxy или -connect/-noconnect)</translation>
+        <translation>Aceite conexões de fora (padrão: 1 senão -proxy ou -connect/-noconnect)</translation>
     </message>
     <message>
         <source>Cannot obtain a lock on data directory %s. %s is probably already running.</source>
-        <translation>Не удалось установить блокировку на каталог данных %s. Возможно, %s уже запущен.</translation>
+        <translation>Não foi possível obter exclusividade de escrita no endereço %s. O %s provavelmente já está sendo executado.</translation>
     </message>
     <message>
         <source>Connect only to the specified node(s); -noconnect or -connect=0 alone to disable automatic connections</source>
-        <translation>Присоединиться только к указанному узлу(ам); используйте -noconnect или -connect=0, чтобы отключить автоматические соединения</translation>
+        <translation>Conecte apenas a nó(s) especificados; -noconnect ou -connect=0 somente para desabilitar conexões automáticas</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file %s or %s</source>
-        <translation>Распространяется под лицензией на программное обеспечение MIT, смотрите прилагаемый файл %s или %s.</translation>
+        <translation>Distribuído sob a licença de software MIT, veja o arquivo %s ou %s</translation>
     </message>
     <message>
         <source>Error reading %s! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
-        <translation>Ошибка чтения %s! Все ключи прочитаны верно, но данные транзакций или записи адресной книги могут отсутствовать или быть неправильными.</translation>
+        <translation>Erro ao ler arquivo %s! Todas as chaves privadas foram lidas corretamente, mas os dados de transação ou o livro de endereços podem estar faltando ou incorretos.</translation>
     </message>
     <message>
         <source>Force relay of transactions from whitelisted peers even if they violate local relay policy (default: %d)</source>
-        <translation>Пересылать транзакции от узлов в белом списке, даже если они нарушают локальные правила пересылки (по умолчанию: %d)</translation>
+        <translation>Força a retransmissão de transações de pares da lista branca, mesmo quando violam a política local de retransmissão (default: %d)</translation>
     </message>
     <message>
         <source>Incorrect or no devnet genesis block found. Wrong datadir for devnet specified?</source>
-        <translation>Неверный или отсутствующий начальный блок devnet. Неправильный каталог данных для devnet?</translation>
+        <translation>Bloco gênese incorreto ou não encontrado. Datadir errado para a devnet rede?</translation>
     </message>
     <message>
         <source>Maximum allowed median peer time offset adjustment. Local perspective of time may be influenced by peers forward or backward by this amount. (default: %u seconds)</source>
-        <translation>Максимально допустимое отклонение медианного времени узлов. Локальное время может отклоняться узлами на эту величину как вперед, так и назад. (по умолчанию: %u секунд)</translation>
+        <translation>Ajuste da média máxima permitida do time offset para um par. A perspectiva local de horário pode ser influenciada por pares à frente ou atrás neste montante. (padrão: %u segundos)</translation>
     </message>
     <message>
         <source>Maximum total fees (in %s) to use in a single wallet transaction or raw transaction; setting this too low may abort large transactions (default: %s)</source>
-        <translation>Максимальная сумма комиссии (в %s), допустимая в одной транзакции. Установка слишком низкого значения может привести к невозможности отправить большие транзакции (по умолчанию: %s)</translation>
+        <translation>Total máximo de taxas (em %s) para usar em uma única transação de carteira ou transação crua; especificar um valor muito baixo pode abortar grandes transações (padrão: %s)</translation>
     </message>
     <message>
         <source>Override spork address. Only useful for regtest and devnet. Using this on mainnet or testnet will ban you.</source>
-        <translation>Задать spork-адрес. Полезно только для regtest или devnet. Использование этого в главной либо тестовой сети приведет к бану Вашего узла.</translation>
+        <translation>Substituir endereço de spork. Útil apenas para regtest e devnet. Usando isto na mainnet ou testnet irá banir você.</translation>
     </message>
     <message>
         <source>Please check that your computer's date and time are correct! If your clock is wrong, %s will not work properly.</source>
-        <translation>Пожалуйста, убедитесь что дата и время на Вашем компьютере выставлены правильно! %s не сможет работать корректно, если часы настроены неверно.</translation>
+        <translation>Por favor verifique se a data e o horário de seu computador estão corretos. Se o relógio de seu computador estiver incorreto, %s não funcionará corretamente.</translation>
     </message>
     <message>
         <source>Please contribute if you find %s useful. Visit %s for further information about the software.</source>
-        <translation>Пожалуйста, поддержите нас, если считаете %s полезным. Посетите %s для дополнительной информации.</translation>
+        <translation>Por favor contribua se você entender que %s é útil. Visite %s para mais informações sobre o software.</translation>
     </message>
     <message>
         <source>Provide liquidity to PrivateSend by infrequently mixing coins on a continual basis (%u-%u, default: %u, 1=very frequent, high fees, %u=very infrequent, low fees)</source>
-        <translation>Предоставлять ликвидность для PrivateSend путем редкого участия в перемешивании монет на постоянной основе (%u-%u, по умолчанию: %u, 1=очень часто, высокая комиссия, %u=очень редко, низкая комиссия)</translation>
+        <translation>Providencia liquidez ao EnvioPrivado através da mistura não frequente de moedas em uma base contínua (%u-%u, padrão: %u, 1=muito frequente, altas taxas, %u=muito infrequente, taxas baixas)</translation>
     </message>
     <message>
         <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect/-noconnect)</source>
-        <translation>Запрашивать адреса участников с помощью DNS, если адресов мало (по умолчанию: 1, если не указан -connect/-noconnect)</translation>
+        <translation>Consulta por endereços de pares via pesquisa de DNS, se baixa nos endereços (default: 1 unless -connect/-noconnect)</translation>
     </message>
     <message>
         <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex and -rescan. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;%u = automatically prune block files to stay under the specified target size in MiB)</source>
-        <translation>Уменьшить требования к размеру хранилища путем урезания (удаления) старых блоков. Это позволяет использовать RPC-команду pruneblockchain для удаления определенных блоков, а также включает автоматическое удаление старых блоков, если указан целевой размер в MiB. Этот режим несовместим с -txindex и -rescan. Внимание: отмена этой настройки потребует повторного скачивания всей цепочки блоков. (по умолчанию: 0 = отключить удаление блоков, 1 = разрешить ручное удаление через RPC, &gt;%u = целевой размер в MiB, который будут займут файлы блоков)</translation>
+        <translation>Reduz o requerimente de espaço habiitando a poda (apagando) de blocos antigos. Isso permite chamar o comando pruneblockchain via RPC para apagar blocos específicos, e habiita o poda automático de blocos antigos se o tamanho em MiB for atingido. Esse modo é incompatível com -txindex e -rescan. Aviso: Reverter essa configuração requer baixar novamente o blockchain inteiro. (padrão: 0 = desabilitado, 1 = permite a poda manual via RPC, &gt;%u = poda os blocos para ficar abaixo do especificado, em MiB)</translation>
     </message>
     <message>
         <source>Set lowest fee rate (in %s/kB) for transactions to be included in block creation. (default: %s)</source>
-        <translation>Установить минимальную комиссию (в %s/kB) для добавления транзакций в блок (по умолчанию: %s)</translation>
-    </message>
-    <message>
-        <source>Show N confirmations for a successfully locked transaction (%u-%u, default: %u)</source>
-        <translation>Показывать N подтверждений для успешно заблокированной транзакции (%u-%u, по умолчанию: %u)</translation>
+        <translation>Especificar a taxa miníma (em %s/KiB) para transações para ser incluída na criação de blocos. (padrão: %s)</translation>
     </message>
     <message>
         <source>This is the transaction fee you may pay when fee estimates are not available.</source>
-        <translation>Это комиссия, которую Вы заплатите при отправке транзакции, если расчет комиссии не доступен.</translation>
+        <translation>Esta é a taxa que você deve pagar quando a taxa estimada não está disponível.</translation>
     </message>
     <message>
         <source>This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit %s and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard.</source>
-        <translation>Этот продукт включает ПО, разработанное проектом OpenSSL Project для использования в OpenSSL Toolkit %s, криптографическое ПО, написанное Eric Young и ПО для работы с UPnP, написанное Thomas Bernard.</translation>
+        <translation>Esse produto inclui um software desenvolvido pelo OpenSSL Project para uso na OpenSSL Toolkit %s e software criptográfico escrito por Eric Young e software UPnP escrito por Thomas Bernard. </translation>
     </message>
     <message>
         <source>Unable to locate enough PrivateSend non-denominated funds for this transaction.</source>
-        <translation>Не удалось обнаружить достаточных для выполнения этой транзакции неденоминированных средств.</translation>
+        <translation>Não é possível localizar fundos não-expressos do PrivateSend suficientes para essa transação.</translation>
     </message>
     <message>
         <source>Use N separate masternodes for each denominated input to mix funds (%u-%u, default: %u)</source>
-        <translation>Использовать N отдельных мастернод для перемешивания средств (%u-%u, по умолчанию: %u)</translation>
+        <translation>Use N masternodes separados para cada entrada denominada para misturar fundos (%u-%u, padrão: %u)</translation>
     </message>
     <message>
         <source>Use hierarchical deterministic key generation (HD) after BIP39/BIP44. Only has effect during wallet creation/first start</source>
-        <translation>Использовать генерацию иерархических детерминированных ключей (HD) по схеме BIP39/BIP44. Работает только при первом создании/старте кошелька</translation>
+        <translation>Use a geração hierárquica de chaves determinísticas (HD) após o BIP39 / BIP44. Só tem efeito durante a criação / início da carteira</translation>
     </message>
     <message>
         <source>User defined mnemonic passphrase for HD wallet (BIP39). Only has effect during wallet creation/first start (default: empty string)</source>
-        <translation>Заданная пользователем парольная фраза мнемоники HD кошелька (BIP39). Работает только при первом создании/старте кошелька (по умолчанию: пустая строка)</translation>
+        <translation>Senha mnemônica definida pelo usuário para carteira HD (BIP39). Só tem efeito durante a criação da carteira / primeira inicialização (padrão: string vazia)</translation>
     </message>
     <message>
         <source>Username and hashed password for JSON-RPC connections. The field &lt;userpw&gt; comes in the format: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. A canonical python script is included in share/rpcuser. The client then connects normally using the rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; pair of arguments. This option can be specified multiple times</source>
-        <translation>Имя пользователя и хэш пароля для JSON-RPC соединений. Поле &lt;userpw&gt; использует формат: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. Каноничный пример скрипта на питоне находится в share/rpcuser. После этого клиент соединяется как обычно, используя rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; пару. Эта опция может быть указана несколько раз</translation>
+        <translation>Nome de usuário e hash da senha para conexões JSON-RPC. O campo &lt;userpw&gt; vem com o formato: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. Um script python canônico é incluído em share/rpcuser. O cliente pode conectar normalmente usando o rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt;. Esta opção pode ser especificado multiplas vezes</translation>
     </message>
     <message>
         <source>Wallet will not create transactions that violate mempool chain limits (default: %u)</source>
-        <translation>Кошелек не будет создавать транзакции превышающие ограничения мемпула по длине цепочки (default: %u)</translation>
+        <translation>A carteira não irá criar transações que violem o limite da mempool chain (padrão: %u)</translation>
     </message>
     <message>
         <source>Warning: At least %d of %d masternodes are running on a newer software version. Please check latest releases, you might need to update too.</source>
-        <translation>Внимание: как минимум %d из %d мастернод используют новое ПО. Пожалуйста, ознакомьтесь с последними релизами, возможно Вам тоже необходимо перейти на новую версию.</translation>
+        <translation>Aviso: Pelo menos %d de %d masternodes estão sendo executados em uma versão de software mais recente. Por favor, verifique os últimos lançamentos, talvez você precise atualizar também.</translation>
     </message>
     <message>
         <source>Warning: Every masternode (out of %d known ones) is running on a newer software version. Please check latest releases, it's very likely that you missed a major/critical update.</source>
-        <translation>Внимание: все мастерноды (из %d известных) используют новое ПО. Пожалуйста, ознакомьтесь с последними релизами, крайне вероятно, что Вы пропустили значимое либо критическое обновление.</translation>
+        <translation>Aviso: Cada masternode (fora de %d conhecidos) está sendo executado em uma versão de software mais recente. Por favor, verifique os últimos lançamentos, é muito provável que você tenha perdido uma atualização importante / crítica.</translation>
     </message>
     <message>
         <source>Warning: Wallet file corrupt, data salvaged! Original %s saved as %s in %s; if your balance or transactions are incorrect you should restore from a backup.</source>
-        <translation>Внимание: кошелек повреждён, данные спасены! Оригинальный %s сохранён как %s в %s. Если Ваш баланс или транзакции некорректны, Вы должны восстановить файл из резервной копии.</translation>
+        <translation>Atenção: Arquivo da carteira corrompido, dados recuperados! Original %s salvo como %s em %s; se seu saldo ou transações estiverem incorretos, você deve restaurar o backup.</translation>
     </message>
     <message>
         <source>Whitelist peers connecting from the given IP address (e.g. 1.2.3.4) or CIDR notated network (e.g. 1.2.3.0/24). Can be specified multiple times.</source>
-        <translation>Внести пиров, соединяющихся с IP адреса (например, 1.2.3.4) или с адресов, подходящих по маске в CIDR нотации (например, 1.2.3.0/24), в белый список. Опция может быть указана несколько раз.</translation>
+        <translation>Inclui na lista branca pares conectando do dado endereço IP (ex: 1.2.3.4) ou rede em notação CIDR (ex: 1.2.3.0/24). Pode ser especificado várias vezes.</translation>
     </message>
     <message>
         <source>%s corrupt, salvage failed</source>
-        <translation>%s повреждён, спасение данных не удалось</translation>
+        <translation>%s corrompido, recuperação falhou</translation>
     </message>
     <message>
         <source>%s is not a valid backup folder!</source>
-        <translation>%s не является корректной директорией для резервной копии!</translation>
+        <translation>%s não é uma pasta de backup válida!</translation>
     </message>
     <message>
         <source>%s is set very high!</source>
-        <translation>Для %s установлено слишком высокое значение!</translation>
+        <translation>%s está muito alto!</translation>
     </message>
     <message>
         <source>(press q to shutdown and continue later)</source>
-        <translation>(нажмите q для завершения и продолжите позже)</translation>
+        <translation>(pressione q para desligar e continuar depois)</translation>
     </message>
     <message>
         <source>-devnet can only be specified once</source>
-        <translation>-devnet может быть указано только один раз</translation>
+        <translation>-devnet só pode ser especificado uma vez</translation>
     </message>
     <message>
         <source>-port must be specified when -devnet and -listen are specified</source>
-        <translation>Необходимо указать -port, если указаны -devnet и -listen</translation>
+        <translation>-rpcport deve ser especificado quando -devnet e -server são especificados</translation>
     </message>
     <message>
         <source>-rpcport must be specified when -devnet and -server are specified</source>
-        <translation>Необходимо указать -rpcport, если указаны -devnet и -server</translation>
+        <translation>-rpcport deve ser especificado quando -devnet e -server são especificados</translation>
     </message>
     <message>
         <source>Allow RFC1918 addresses to be relayed and connected to (default: %u)</source>
-        <translation>Позволять передачу и соединение к RFC1918 адресам (по умолчанию: %u)</translation>
+        <translation>Permitir que os endereços RFC1918 sejam retransmitidos e conectados a (padrão: %u)</translation>
     </message>
     <message>
         <source>Attempt to recover private keys from a corrupt wallet on startup</source>
-        <translation>Попытаться восстановить закрытые ключи из повреждённого кошелька на старте</translation>
+        <translation>Tenta recuperar as chaves privadas de uma carteira corrompida ao inicializar</translation>
     </message>
     <message>
         <source>Cannot resolve -%s address: '%s'</source>
-        <translation>Не удаётся разрешить адрес в параметре -%s: '%s'</translation>
+        <translation>Não foi possível encontrar o endereço de -%s: '%s'</translation>
     </message>
     <message>
         <source>Change index out of range</source>
-        <translation>Индекс выхода для сдачи вне допустимых рамок</translation>
+        <translation>Índice de mudança fora do intervalo</translation>
     </message>
     <message>
         <source>Copyright (C)</source>
-        <translation>Copyright (C)</translation>
+        <translation>Copyright</translation>
     </message>
     <message>
         <source>Error loading %s</source>
-        <translation>Ошибка при загрузке %s</translation>
+        <translation>Erro ao carregar %s</translation>
     </message>
     <message>
         <source>Error loading %s: Wallet corrupted</source>
-        <translation>Ошибка загрузки %s: кошелёк поврежден</translation>
+        <translation>Erro ao carregar %s Carteira corrompida</translation>
     </message>
     <message>
         <source>Error loading %s: Wallet requires newer version of %s</source>
-        <translation>Ошибка загрузки %s: кошелёк требует более новой версии %s</translation>
+        <translation>Erro ao carregar %s A carteira requer a versão mais nova do %s</translation>
     </message>
     <message>
         <source>Error upgrading chainstate database</source>
-        <translation>Ошибка обновления базы данных состояний цепочки</translation>
+        <translation>Erro ao atualizar banco de dados do chainstate</translation>
     </message>
     <message>
         <source>Failed to find mixing queue to join</source>
-        <translation>Не удалось найти очередь перемешивания</translation>
+        <translation>Não foi possível encontrar a fila de mistura para participar</translation>
     </message>
     <message>
         <source>Failed to start a new mixing queue</source>
-        <translation>Не удалось создать очередь перемешивания</translation>
+        <translation>Falha ao iniciar uma nova fila de mistura</translation>
     </message>
     <message>
         <source>Initialization sanity check failed. %s is shutting down.</source>
-        <translation>Проверка на непротиворечивость закончилась неудачно. %s выключается.</translation>
+        <translation>O teste de integridade de inicialização falhou. O %s está sendo desligado.</translation>
     </message>
     <message>
         <source>Invalid amount for -%s=&lt;amount&gt;: '%s'</source>
-        <translation>Некорректное значение в параметре -%s=&lt;amount&gt;: '%s'</translation>
+        <translation>Quantidade inválida para -%s=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
         <source>Invalid spork address specified with -sporkaddr</source>
-        <translation>В -sporkaddr указан некорректный адрес</translation>
+        <translation>Endereço de spork inválido especificado com -sporkaddr</translation>
     </message>
     <message>
         <source>Keep N SPARKS anonymized (%u-%u, default: %u)</source>
-        <translation>Держать N SPARKS анонимизированными (%u-%u, по умолчанию: %u)</translation>
+        <translation>Mantenha o N SPARKS anônimo (%u-%u, padrão: %u)</translation>
     </message>
     <message>
         <source>Print this help message and exit</source>
-        <translation>Вывести эту справку и выйти</translation>
+        <translation>Mostra essa mensagem de ajuda e sai</translation>
     </message>
     <message>
         <source>Receive and display P2P network alerts (default: %u)</source>
-        <translation>Получать и показывать предупреждения P2P-сети (по умолчанию: %u)</translation>
+        <translation>Receba e exiba alertas de rede P2P (default: %u)</translation>
     </message>
     <message>
         <source>Reducing -maxconnections from %d to %d, because of system limitations.</source>
-        <translation>Настройка -maxconnections снижена с %d до %d из-за ограничений системы.</translation>
+        <translation>Reduzindo -maxconnections de %d para %d, devido à limitações do sistema.</translation>
     </message>
     <message>
         <source>Relay and mine data carrier transactions (default: %u)</source>
-        <translation>Ретрансляция и создание транзакций передачи данных (по умолчанию: %u)</translation>
+        <translation>Transações de dados de operadora (padrão: %u)</translation>
     </message>
     <message>
         <source>Relay non-P2SH multisig (default: %u)</source>
-        <translation>Ретрансляция не-P2SH multisig (по умолчанию: %u)</translation>
+        <translation>Retransmitir P2SH não multisig (padrão: %u)</translation>
     </message>
     <message>
         <source>Rescanning...</source>
-        <translation>Сканирование...</translation>
+        <translation>Escaneando...</translation>
     </message>
     <message>
         <source>Run in the background as a daemon and accept commands</source>
-        <translation>Запускаться в фоне как демон и принимать команды</translation>
+        <translation>Executar em segundo plano como um daemon e aceitar comandos</translation>
     </message>
     <message>
         <source>Send trace/debug info to console instead of debug.log file</source>
-        <translation>Выводить информацию трассировки/отладки на консоль вместо файла debug.log</translation>
+        <translation>Envia informação de trace/debug para o console e não para o arquivo debug.log</translation>
     </message>
     <message>
         <source>Session not complete!</source>
-        <translation>Сессия не закончена!</translation>
+        <translation>Sessão não completa!</translation>
     </message>
     <message>
         <source>Session timed out.</source>
-        <translation>Сессия прекращена по тайм-ауту.</translation>
+        <translation>A sessão expirou.</translation>
     </message>
     <message>
         <source>Set database cache size in megabytes (%d to %d, default: %d)</source>
-        <translation>Установить размер кэша БД в мегабайтах(от %d до %d, по умолчанию: %d)</translation>
+        <translation>Define o tamanho da cache em megabytes (%d a %d, padrão: %d)</translation>
     </message>
     <message>
         <source>Set maximum block size in bytes (default: %d)</source>
-        <translation>Установить максимальный размер блока в байтах (по умолчанию: %d)</translation>
+        <translation>Definir tamanho máximo do bloco em bytes (padrão: %d)</translation>
     </message>
     <message>
         <source>Set the masternode private key</source>
-        <translation>Установить закрытый ключ мастерноды</translation>
+        <translation>Definir a chave privada do masternode</translation>
     </message>
     <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>
-        <translation>Показать все отладочные параметры (использование: --help -help-debug)</translation>
+        <translation>Exibe todas as opçoes de debug (uso: --help -help-debug)</translation>
     </message>
     <message>
         <source>Shrink debug.log file on client startup (default: 1 when no -debug)</source>
-        <translation>Сжимать файл debug.log при запуске клиента (по умолчанию: 1, если нет -debug)</translation>
+        <translation>Compactar arquivo debug.log ao executar o cliente (padrão: 1 sem -debug)</translation>
     </message>
     <message>
         <source>Signing transaction failed</source>
-        <translation>Подписание транзакции завершилось неудачно</translation>
+        <translation>A transação assinada falhou</translation>
     </message>
     <message>
         <source>Specify data directory</source>
-        <translation>Задать каталог данных</translation>
+        <translation>Especificar diretório de dados</translation>
     </message>
     <message>
         <source>Specify wallet file (within data directory)</source>
-        <translation>Укажите файл кошелька (внутри каталога данных)</translation>
+        <translation>Especifique o arquivo da carteira (dentro do diretório de dados)</translation>
     </message>
     <message>
         <source>Specify your own public address</source>
-        <translation>Укажите Ваш собственный публичный адрес</translation>
+        <translation>Especificar seu próprio endereço público</translation>
     </message>
     <message>
         <source>Starting network threads...</source>
-        <translation>Запуск сетевых потоков...</translation>
+        <translation>Iniciando threads de rede...</translation>
     </message>
     <message>
         <source>Synchronization pending...</source>
-        <translation>Ожидание синхронизации...</translation>
+        <translation>Sincronização pendente</translation>
     </message>
     <message>
         <source>Synchronizing governance objects...</source>
-        <translation>Синхронизация объектов управления...</translation>
+        <translation>Sincronizando objetos de governança ....</translation>
     </message>
     <message>
         <source>Synchronizing masternode payments...</source>
-        <translation>Синхронизация выплат мастернодам...</translation>
+        <translation>Sincronizando pagamentos do masternode...</translation>
     </message>
     <message>
         <source>The source code is available from %s.</source>
-        <translation>Исходный код доступен по адресу %s.</translation>
+        <translation>O código fonte está disponível pelo %s.</translation>
     </message>
     <message>
         <source>The transaction amount is too small to pay the fee</source>
-        <translation>Сумма транзакции слишком мала для оплаты комиссии</translation>
+        <translation>O valor da transação é muito pequeno para pagar a taxa</translation>
     </message>
     <message>
         <source>This is experimental software.</source>
-        <translation>Это экспериментальное ПО.</translation>
+        <translation>Este é um software experimental.</translation>
     </message>
     <message>
         <source>Transaction amount too small</source>
-        <translation>Сумма транзакции слишком мала</translation>
+        <translation>Quantia da transação muito pequena</translation>
     </message>
     <message>
         <source>Transaction created successfully.</source>
-        <translation>Создание транзакции прошло успешно.</translation>
+        <translation>Transação criada com sucesso.</translation>
     </message>
     <message>
         <source>Transaction fees are too high.</source>
-        <translation>Комиссия по транзакции слишком большая.</translation>
+        <translation>Taxa de transação muito alta.</translation>
     </message>
     <message>
         <source>Transaction not valid.</source>
-        <translation>Транзакция некорректна.</translation>
+        <translation>Transação inválida.</translation>
     </message>
     <message>
         <source>Transaction too large for fee policy</source>
-        <translation>Транзакция слишком большая для установленных ограничений комиссии</translation>
+        <translation>Transação muito grande para a política de tarifas</translation>
     </message>
     <message>
         <source>Unable to bind to %s on this computer (bind returned error %s)</source>
-        <translation>Невозможно привязаться к %s на этом компьютере (привязка вернула ошибку %s)</translation>
+        <translation>Impossível abrir %s neste computador (bind retornou o erro %s)</translation>
     </message>
     <message>
         <source>Unable to sign spork message, wrong key?</source>
-        <translation>Не удалось подписать spork-сообщение. Неправильный ключ?</translation>
+        <translation>Impossível assinar mensagem spork, chave incorreta?</translation>
     </message>
     <message>
         <source>Unknown network specified in -onlynet: '%s'</source>
-        <translation>В параметре -onlynet указана неизвестная сеть: '%s'</translation>
+        <translation>Rede desconhecida fornecida em -onlynet: '%s'</translation>
     </message>
     <message>
         <source>Unknown state: id = %u</source>
-        <translation>Неизвестное состояние: id = %u</translation>
+        <translation>Estado desconhecido: id = %u</translation>
     </message>
     <message>
         <source>Username for JSON-RPC connections</source>
-        <translation>Имя для подключений JSON-RPC</translation>
+        <translation>Nome de usuario para conexão JSON-RPC</translation>
     </message>
     <message>
         <source>Verifying blocks...</source>
-        <translation>Проверка блоков...</translation>
+        <translation>Verificando blocos...</translation>
     </message>
     <message>
         <source>Verifying wallet...</source>
-        <translation>Проверка кошелька...</translation>
+        <translation>Verificando carteira...</translation>
     </message>
     <message>
         <source>Very low number of keys left: %d</source>
-        <translation>Осталось очень мало ключей: %d</translation>
+        <translation>Número muito baixo de chaves restantes: %d</translation>
     </message>
     <message>
         <source>Wallet %s resides outside data directory %s</source>
-        <translation>Кошелёк %s располагается вне каталога данных %s</translation>
+        <translation>Carteira %s está fora do diretório de dados %s</translation>
     </message>
     <message>
         <source>Wallet is locked.</source>
-        <translation>Кошелёк заблокирован.</translation>
+        <translation>Carteira está bloqueada.</translation>
     </message>
     <message>
         <source>Wallet options:</source>
-        <translation>Параметры кошелька:</translation>
+        <translation>Opções da carteira:</translation>
     </message>
     <message>
         <source>Wallet window title</source>
-        <translation>Заголовок окна кошелька</translation>
+        <translation>Título da janela da carteira</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>Внимание</translation>
+        <translation>Atenção</translation>
     </message>
     <message>
         <source>Your entries added successfully.</source>
-        <translation>Ваши записи успешно добавлены.</translation>
+        <translation>Suas entradas foram adicionadas com êxito.</translation>
     </message>
     <message>
         <source>Your transaction was accepted into the pool!</source>
-        <translation>Ваша транзакция принята в пул!</translation>
+        <translation>Sua transação foi aceita na pool!</translation>
     </message>
     <message>
         <source>Zapping all transactions from wallet...</source>
-        <translation>Удаление всех транзакций из кошелька...</translation>
+        <translation>Fazendo o Zapping de todas as transações da wallet...</translation>
     </message>
 </context>
 </TS>

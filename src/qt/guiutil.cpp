@@ -1,6 +1,6 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2017 The Dash Core developers
-// Copyright (c) 2016-2019 The Sparks Core developers
+// Copyright (c) 2016-2020 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -923,13 +923,13 @@ void restoreWindowGeometry(const QString& strSetting, const QSize& defaultSize, 
 // Return name of current UI-theme or default theme if no theme was found
 QString getThemeName()
 {
-    QSettings settings;
-    QString theme = settings.value("theme", "").toString();
+    // QSettings settings;
+    // QString theme = settings.value("theme", "").toString();
 
-    if(!theme.isEmpty()){
-        return theme;
-    }
-    return QString("light");  
+    // if(!theme.isEmpty()){
+    //     return theme;
+    // }
+    return QString("sparkspay2020");  
 }
 
 // Open CSS when configured
@@ -938,15 +938,17 @@ QString loadStyleSheet()
     QString styleSheet;
     QSettings settings;
     QString cssName;
-    QString theme = settings.value("theme", "").toString();
+    // QString theme = settings.value("theme", "").toString();
 
-    if(!theme.isEmpty()){
-        cssName = QString(":/css/") + theme; 
-    }
-    else {
-        cssName = QString(":/css/light");  
-        settings.setValue("theme", "light");
-    }
+    // if(!theme.isEmpty()){
+    //     cssName = QString(":/css/") + theme; 
+    // }
+    // else {
+    //     cssName = QString(":/css/sparkspay2020");  
+    //     settings.setValue("theme", "sparkspay2020");
+    // }
+    cssName = QString(":/css/sparkspay2020");  
+    settings.setValue("theme", "sparkspay2020");
     
     QFile qFile(cssName);      
     if (qFile.open(QFile::ReadOnly)) {

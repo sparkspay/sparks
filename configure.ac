@@ -1,11 +1,11 @@
 dnl require autoconf 2.60 (AS_ECHO/AS_ECHO_N)
 AC_PREREQ([2.60])
 define(_CLIENT_VERSION_MAJOR, 0)
-define(_CLIENT_VERSION_MINOR, 12)
-define(_CLIENT_VERSION_REVISION, 4)
-define(_CLIENT_VERSION_BUILD, 3)
+define(_CLIENT_VERSION_MINOR, 13)
+define(_CLIENT_VERSION_REVISION, 3)
+define(_CLIENT_VERSION_BUILD, 1)
 define(_CLIENT_VERSION_IS_RELEASE, true)
-define(_COPYRIGHT_YEAR, 2019)
+define(_COPYRIGHT_YEAR, 2020)
 define(_COPYRIGHT_HOLDERS,[The %s developers])
 define(_COPYRIGHT_HOLDERS_SUBSTITUTION,[[Sparks Core]])
 AC_INIT([Sparks Core],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[https://github.com/sparkspay/sparks/issues],[sparkscore],[https://sparks.io/])
@@ -54,8 +54,8 @@ case $host in
      lt_cv_deplibs_check_method="pass_all"
   ;;
 esac
-dnl Require C++11 compiler (no GNU extensions)
-AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory], [nodefault])
+dnl Require C++14 compiler (no GNU extensions)
+AX_CXX_COMPILE_STDCXX([14], [noext], [mandatory], [nodefault])
 dnl Check if -latomic is required for <std::atomic>
 CHECK_ATOMIC
 
@@ -191,6 +191,17 @@ AC_ARG_ENABLE([debug],
                     [use debug compiler flags and macros (default is no)])],
     [enable_debug=$enableval],
     [enable_debug=no])
+
+# Enable in-wallet miner
+AC_ARG_ENABLE([miner],
+    [AS_HELP_STRING([--enable-miner],
+                    [enable in-wallet miner (default is yes)])],
+    [enable_miner=$enableval],
+    [enable_miner=yes])
+AM_CONDITIONAL([ENABLE_MINER], [test x$enable_miner = xyes])
+if test "x$enable_miner" = xyes; then
+    AC_DEFINE(ENABLE_MINER, 1, [Define this symbol if in-wallet miner should be enabled])
+fi
 
 # Turn warnings into errors
 AC_ARG_ENABLE([werror],
@@ -1181,6 +1192,7 @@ echo "  with test     = $use_tests"
 echo "  with bench    = $use_bench"
 echo "  with upnp     = $use_upnp"
 echo "  debug enabled = $enable_debug"
+echo "  miner enabled = $enable_miner"
 echo "  werror        = $enable_werror"
 echo 
 echo "  target os     = $TARGET_OS"
