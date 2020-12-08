@@ -653,7 +653,7 @@ std::string HelpMessage(HelpMessageMode mode)
 
 std::string LicenseInfo()
 {
-    const std::string URL_SOURCE_CODE = "<https://github.com/sparkspayofficial/sparks>";
+    const std::string URL_SOURCE_CODE = "<https://github.com/sparkspay/sparks>";
     const std::string URL_WEBSITE = "<https://sparkspay.io>";
 
     return CopyrightHolders(_("Copyright (C)"), 2014, COPYRIGHT_YEAR) + "\n" +
@@ -1943,7 +1943,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     }
 
     if((!fLiteMode && fTxIndex == false)
-       && chainparams.NetworkIDString() != CBaseChainParams::REGTEST) { // TODO remove this when pruning is fixed. See https://github.com/sparkspayofficial/sparks/pull/1817 and https://github.com/sparkspayofficial/sparks/pull/1743
+       && chainparams.NetworkIDString() != CBaseChainParams::REGTEST) { // TODO remove this when pruning is fixed. See https://github.com/sparkspay/sparks/pull/1817 and https://github.com/sparkspay/sparks/pull/1743
         return InitError(_("Transaction index can't be disabled in full mode. Either start with -litemode command line switch or enable transaction index."));
     }
 

@@ -25,7 +25,7 @@ packages:
 - "python3"
 - "rename"
 remotes:
-- "url": "https://github.com/sparkspayofficial/sparks.git"
+- "url": "https://github.com/sparkspay/sparks.git"
   "dir": "sparks"
 files: []
 script: |

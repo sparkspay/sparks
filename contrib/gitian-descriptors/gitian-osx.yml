@@ -30,7 +30,7 @@ packages:
 - "python3-setuptools"
 - "fonts-tuffy"
 remotes:
-- "url": "https://github.com/sparkspayofficial/sparks.git"
+- "url": "https://github.com/sparkspay/sparks.git"
   "dir": "sparks"
 files:
 - "MacOSX10.11.sdk.tar.gz"

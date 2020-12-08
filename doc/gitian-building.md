@@ -309,8 +309,8 @@ Clone the git repositories for Sparks Core and Gitian.
 
 ```bash
 git clone https://github.com/devrandom/gitian-builder.git
-git clone https://github.com/sparkspayofficial/sparks
-git clone https://github.com/sparkspayofficial/gitian.sigs.git
+git clone https://github.com/sparkspay/sparks
+git clone https://github.com/sparkspay/gitian.sigs.git
 ```
 
 Setting up the Gitian image
@@ -376,7 +376,7 @@ Output from `gbuild` will look something like
     remote: Total 57959 (delta 0), reused 0 (delta 0), pack-reused 57958
     Receiving objects: 100% (57959/57959), 53.76 MiB | 484.00 KiB/s, done.
     Resolving deltas: 100% (41590/41590), done.
-    From https://github.com/sparkspayofficial/sparks
+    From https://github.com/sparkspay/sparks
     ... (new tags, new branch etc)
     --- Building for bionic amd64 ---
     Stopping target if it is up
@@ -452,7 +452,7 @@ Then when building, override the remote URLs that gbuild would otherwise pull fr
 ```bash
 
 cd /some/root/path/
-git clone https://github.com/sparkspayofficial/sparks-detached-sigs.git
+git clone https://github.com/sparkspay/sparks-detached-sigs.git
 
 BTCPATH=/some/root/path/sparks
 SIGPATH=/some/root/path/sparks-detached-sigs
@@ -484,6 +484,6 @@ Uploading signatures (not yet implemented)
 ---------------------
 
 In the future it will be possible to push your signatures (both the `.assert` and `.assert.sig` files) to the
-[sparks/gitian.sigs](https://github.com/sparkspayofficial/gitian.sigs/) repository, or if that's not possible to create a pull
+[sparks/gitian.sigs](https://github.com/sparkspay/gitian.sigs/) repository, or if that's not possible to create a pull
 request.
 There will be an official announcement when this repository is online.

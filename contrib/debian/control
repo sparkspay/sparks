@@ -27,8 +27,8 @@ Build-Depends: debhelper,
  libzmq3-dev
 Standards-Version: 3.9.2
 Homepage: https://www.sparks.io/
-Vcs-Git: git://github.com/sparkspayofficial/sparks.git
-Vcs-Browser: https://github.com/sparkspayofficial/sparks
+Vcs-Git: git://github.com/sparkspay/sparks.git
+Vcs-Browser: https://github.com/sparkspay/sparks
 
 Package: sparksd
 Architecture: any
