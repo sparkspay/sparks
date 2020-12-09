@@ -923,12 +923,12 @@ void restoreWindowGeometry(const QString& strSetting, const QSize& defaultSize, 
 // Return name of current UI-theme or default theme if no theme was found
 QString getThemeName()
 {
-    QSettings settings;
-    QString theme = settings.value("theme", "").toString();
+    // QSettings settings;
+    // QString theme = settings.value("theme", "").toString();
 
-    if(!theme.isEmpty()){
-        return theme;
-    }
+    // if(!theme.isEmpty()){
+    //     return theme;
+    // }
     return QString("sparkspay2020");  
 }
 
@@ -938,15 +938,17 @@ QString loadStyleSheet()
     QString styleSheet;
     QSettings settings;
     QString cssName;
-    QString theme = settings.value("theme", "").toString();
+    // QString theme = settings.value("theme", "").toString();
 
-    if(!theme.isEmpty()){
-        cssName = QString(":/css/") + theme; 
-    }
-    else {
-        cssName = QString(":/css/sparkspay2020");  
-        settings.setValue("theme", "sparkspay2020");
-    }
+    // if(!theme.isEmpty()){
+    //     cssName = QString(":/css/") + theme; 
+    // }
+    // else {
+    //     cssName = QString(":/css/sparkspay2020");  
+    //     settings.setValue("theme", "sparkspay2020");
+    // }
+    cssName = QString(":/css/sparkspay2020");  
+    settings.setValue("theme", "sparkspay2020");
     
     QFile qFile(cssName);      
     if (qFile.open(QFile::ReadOnly)) {
