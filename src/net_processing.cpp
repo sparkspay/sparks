@@ -1376,7 +1376,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     // TODO delete this in next release after v13
     int nMinPeerProtoVersion = MIN_PEER_PROTO_VERSION;
     if (fDIP0003Active) {
-        nMinPeerProtoVersion = GUARDIAN_PROTOCOL_VERSION;
+        nMinPeerProtoVersion = MIN_PEER_PROTO_VERSION_DIP3;
     }
     // END TEMPORARY CODE
 
