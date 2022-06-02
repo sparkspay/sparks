@@ -238,10 +238,10 @@ public:
 
         // Deployment of DIP0003
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 4;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nStartTime = 1604188800; // Nov 1st, 2020
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 1638316800; // Dec 1st, 2021
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nStartTime = 1655424000; // Jun 17th, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 1686960000; // Jun 17th, 2023
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nWindowSize = 1000;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nThreshold = 600; // 60% of 1000
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nThreshold = 800; // 80% of 1000
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000eee93cb0b1f4be");//269664
