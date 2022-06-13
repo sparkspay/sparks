@@ -236,6 +236,13 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nWindowSize = 1000;
         consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nThreshold = 800; // 80% of 1000
 
+        // Deployment of DIP0003
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 4;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nStartTime = 1655683200; // Jun 20th, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 1687219200; // Jun 20th, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nWindowSize = 1000;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nThreshold = 700; // 70% of 1000
+
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000eee93cb0b1f4be");//269664
 
@@ -324,6 +331,11 @@ public:
             ( 200000, uint256S("0x00000000124558e8e546ebc3a45f05952cb8476c29193c0b2d130d97450f92e4"))
             ( 250000, uint256S("0x000000000c449edcdcd3fe2ea4a7f2910a13089065acc10a4bf7d15f00c5960e"))
             ( 317500, uint256S("0x00000000074a05411efe26c57b14780103b638918927a86ee4cf683dfd23a068"))
+            ( 350000, uint256S("0x000000001d364a30921e1c208f5b2a3537c6f848cc16858976bed0dbed848244"))
+            ( 400000, uint256S("0x000000007010d10480818fabe4b47c99e4f2973b78b6ccab3e369204df679eff"))
+            ( 450000, uint256S("0x00000000cf88e545fbefa839ccbce18b24137835f02ac2b6818f8134fe1f9ca2"))
+            ( 500000, uint256S("0x00000000abd8dec8cfb87b00d78344d432b8121f21b2af8a46dd84a20b0c0b51"))
+            ( 550000, uint256S("0x00000000336504dbd915c8b17c3085ee08cc5eaef67e4ec34f1f7863f472149b"))
         };
 
         chainTxData = ChainTxData{
@@ -345,7 +357,7 @@ public:
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 262800;
         consensus.nMasternodePaymentsStartBlock = 50; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock
-        consensus.nMasternodePaymentsIncreaseBlock = 158000;
+        consensus.nMasternodePaymentsIncreaseBlock = 1500;
         consensus.nMasternodePaymentsIncreasePeriod = 10;
         consensus.nInstantSendConfirmationsRequired = 2;
         consensus.nInstantSendKeepLock = 6;
@@ -355,20 +367,21 @@ public:
         consensus.nGovernanceMinQuorum = 1;
         consensus.nGovernanceFilterElements = 500;
         consensus.nMasternodeMinimumConfirmations = 1;
-        consensus.BIP34Height = 21111; // FIX
+        consensus.BIP34Height = 100; // FIX
         consensus.BIP34Hash = uint256S("0x0000000023b3a96d3484e5abb3755c413e7d41500f8e2a5c3f0dd01299cd8ef8"); // FIX
-        consensus.BIP65Height = 2431; // 0000039cf01242c7f921dcb4806a5994bc003b48c1973ae0c89b67809c2bb2ab
-        consensus.BIP66Height = 2075; // 0000002acdd29a14583540cb72e1c5cc83783560e38fa7081495d474fe1671f7
-        consensus.DIP0001Height = 119000;
+        consensus.BIP65Height = 100; // 0000039cf01242c7f921dcb4806a5994bc003b48c1973ae0c89b67809c2bb2ab
+        consensus.BIP66Height = 100; // 0000002acdd29a14583540cb72e1c5cc83783560e38fa7081495d474fe1671f7
+        consensus.DIP0001Height = 100;
         consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 20
         consensus.nPowTargetTimespan = 5 * 60; // Sparks: 5 minutes, 10 blocks
         consensus.nPowTargetSpacing = 0.5 * 60; // Sparks: 30 seconds
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = false;
-        consensus.nPowKGWHeight = 4001; // nPowKGWHeight >= nPowDGWHeight means "no KGW"
-        consensus.nPowDGWHeight = 650;
+        consensus.nPowKGWHeight = 100; // nPowKGWHeight >= nPowDGWHeight means "no KGW"
+        consensus.nPowDGWHeight = 101;
         consensus.nRuleChangeActivationThreshold = 1512; // 75% for testchains
         consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
+        consensus.GuardianHeight = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
@@ -392,10 +405,17 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nThreshold = 50; // 50% of 100
 
+        // Deployment of Guardian Nodes
+        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].bit = 3;
+        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nStartTime = 1551398400; // March 1st, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nTimeout = 1585699200; // April 1st, 2020
+        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nThreshold = 5; // 80% of 1000
+
         // Deployment of DIP0003
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 3;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nStartTime = 1544655600; // Dec 13th, 2018
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 1576191600; // Dec 13th, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 4;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nStartTime = 1638786047; // Dec 6th, 2021
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 1670302247; // Dec 6th, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nThreshold = 50; // 50% of 100
 
@@ -466,7 +486,7 @@ public:
         nPoolMaxTransactions = 3;
         nFulfilledRequestExpireTime = 5*60; // fulfilled requests expire in 5 minutes
 
-        vSporkAddresses = {"n7ntRMZ83MKzu9Krwp9W5rKGeTBRyVrVjc"};
+        vSporkAddresses = {"nFnDXRQFZWscibREq3EAh5GiPuKc92D2Ac"};
         nMinSporkKeys = 1;
         fBIP9CheckMasternodesUpgraded = true;
         consensus.fLLMQAllowDummyCommitments = true;
@@ -723,7 +743,7 @@ public:
         nFulfilledRequestExpireTime = 5*60; // fulfilled requests expire in 5 minutes
 
         // privKey: cP4EKFyJsHT39LDqgdcB43Y3YXjNyjb5Fuas1GQSeAtjnZWmZEQK
-        vSporkAddresses = {"n7ntRMZ83MKzu9Krwp9W5rKGeTBRyVrVjc"};
+        vSporkAddresses = {"nCYRgPB26SYEf37EmUPnZSqT6Uy4UjqWNm"};
         nMinSporkKeys = 1;
         // regtest usually has no masternodes in most tests, so don't check for upgraged MNs
         fBIP9CheckMasternodesUpgraded = false;

@@ -11,7 +11,7 @@
  */
 
 
-static const int PROTOCOL_VERSION = 70213;
+static const int PROTOCOL_VERSION = 70214;
 
 //! initial proto version, to be increased after version/verack negotiation
 static const int INIT_PROTO_VERSION = 209;
@@ -21,6 +21,9 @@ static const int GETHEADERS_VERSION = 70077;
 
 //! disconnect from peers older than this proto version
 static const int MIN_PEER_PROTO_VERSION = 70213;
+
+//! disconnect from peers older than this proto version when DIP3 is activated via the BIP9 deployment
+static const int MIN_PEER_PROTO_VERSION_DIP3 = 70214;
 
 //! disconnect from peers which don't support Guardian nodes
 static const int GUARDIAN_PROTOCOL_VERSION = 70213;
@@ -45,6 +48,6 @@ static const int SENDHEADERS_VERSION = 70201;
 static const int SHORT_IDS_BLOCKS_VERSION = 70209;
 
 //! introduction of DIP3/deterministic masternodes
-static const int DMN_PROTO_VERSION = 70213;
+static const int DMN_PROTO_VERSION = 70214;
 
 #endif // BITCOIN_VERSION_H
