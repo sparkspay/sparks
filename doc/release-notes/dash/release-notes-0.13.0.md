@@ -67,7 +67,7 @@ This DIP provides on-chain consensus for masternode lists that in turn allow for
 derivation and service scoring of masternode rewards.
 
 In the previous system, each node maintained its own individual masternode list. Masternodes gained
-entry to that masternode list after the owner created a 1000 Dash UTXO and the masternode broadcast
+entry to that masternode list after the owner created a 25000 Dash UTXO and the masternode broadcast
 a "masternode broadcast/announcement" P2P message. This in turn set the masternode to a PRE_ENABLED
 state in the list maintained by each node. Masternodes then regularly broadcasted ping messages to
 keep the masternode in ENABLED state.
@@ -88,7 +88,7 @@ take an unnecessarily long amount of time and sometimes resulted in failure.
 In the new system, the masternode list is derived entirely from information found on-chain. New
 masternodes are added by new special transactions called Provider Registration Transactions
 (abbreviated as ProRegTx). They are only removed by spending the collateral. A ProRegTx is a special
-transaction which includes either a 1000-Dash collateral payment or a reference to it, along with
+transaction which includes either a 25000-Dash collateral payment or a reference to it, along with
 other payload information (DIP0002).
 
 The new system is going to be activated via combination of a BIP9-like deployment (bit 3) and new spork

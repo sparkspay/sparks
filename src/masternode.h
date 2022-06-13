@@ -26,7 +26,7 @@ static const int MASTERNODE_NEW_START_REQUIRED_SECONDS  = 180 * 60;
 static const int MASTERNODE_POSE_BAN_MAX_SCORE          = 5;
 static const int MASTERNODE_MAX_MIXING_TXES             = 5;
 
-static const CAmount MASTERNODE_COLLATERAL_SIZE = 1000L;
+static const CAmount MASTERNODE_COLLATERAL_SIZE = 25000L;
 static const CAmount GUARDIAN_COLLATERAL_SIZE = 25000L;
 
 //
