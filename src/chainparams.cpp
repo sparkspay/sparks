@@ -238,8 +238,8 @@ public:
 
         // Deployment of DIP0003
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 4;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nStartTime = 1655683200; // Jun 20th, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 1687219200; // Jun 20th, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nStartTime = 1655856000; // Jun 22nd, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 1687392000; // Jun 22nd, 2023
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nWindowSize = 1000;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nThreshold = 700; // 70% of 1000
 
@@ -454,7 +454,11 @@ public:
 
         vSeeds.clear();
         // nodes with support for servicebits filtering should be at the top
-        vSeeds.push_back(CDNSSeedData("forge3.itplace.com",  "forge3.itplace.com"));
+        vSeeds.push_back(CDNSSeedData("test0.sparkspay.io",  "test0.sparkspay.io"));
+        vSeeds.push_back(CDNSSeedData("test1.sparkspay.io",  "test1.sparkspay.io"));
+        vSeeds.push_back(CDNSSeedData("test2.sparkspay.io",  "test2.sparkspay.io"));
+        vSeeds.push_back(CDNSSeedData("test3.sparkspay.io",  "test3.sparkspay.io"));
+        vSeeds.push_back(CDNSSeedData("test4.sparkspay.io",  "test4.sparkspay.io"));
 
         // Testnet Sparks addresses start with 'n'
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,112);
