@@ -1601,10 +1601,8 @@ UniValue sentinelping(const JSONRPCRequest& request)
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         okSafe argNames
   //  --------------------- ------------------------  -----------------------  ------ ----------
-    { "sparks",               "masternode",             &guardian,             true,  {} },
-    { "sparks",               "masternodelist",         &guardianlist,         true,  {} },
-    // { "sparks",               "guardian",               &guardian,               true,  {} },
-    // { "sparks",               "guardianlist",           &guardianlist,           true,  {} },
+    { "sparks",               "masternode",             &masternode,             true,  {} },
+    { "sparks",               "masternodelist",         &masternodelist,         true,  {} },
     { "sparks",               "masternodebroadcast",    &masternodebroadcast,    true,  {} },
     { "sparks",               "getpoolinfo",            &getpoolinfo,            true,  {} },
     { "sparks",               "sentinelping",           &sentinelping,           true,  {} },
