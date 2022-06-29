@@ -195,7 +195,6 @@ public:
         consensus.BIP65Height = 1;
         consensus.BIP66Height = 1;
         consensus.DIP0001Height = 119000;
-        consensus.GuardianHeight = 316000;
         consensus.powLimit = uint256S("00000fffff000000000000000000000000000000000000000000000000000000");
 
         consensus.nPowTargetTimespan = 60 * 60; // Sparks: 1 hour, 24 blocks
@@ -229,12 +228,6 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nWindowSize = 4032;
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nThreshold = 3226; // 80% of 4032
 
-        // Deployment of Guardian Nodes
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].bit = 3;
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nStartTime = 1551398400; // March 1st, 2019
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nTimeout = 1585699200; // April 1st, 2020
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nWindowSize = 1000;
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nThreshold = 800; // 80% of 1000
 
         // Deployment of DIP0003
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 4;
@@ -405,12 +398,6 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nThreshold = 50; // 50% of 100
 
-        // Deployment of Guardian Nodes
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].bit = 3;
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nStartTime = 1551398400; // March 1st, 2019
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nTimeout = 1585699200; // April 1st, 2020
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nWindowSize = 100;
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nThreshold = 5; // 80% of 1000
 
         // Deployment of DIP0003
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 4;
