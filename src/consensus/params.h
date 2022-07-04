@@ -136,7 +136,6 @@ struct Params {
     unsigned int nSPKSubsidyLegacy;
     unsigned int nSPKSubidyReborn;
     unsigned int nSPKBlocksPerMonth;
-    std::string strCoreAddress;
     std::vector<std::string> vBannedAddresses;
     float fSPKRatioMN;
     /**
