@@ -460,7 +460,6 @@ int CMasternodeMan::CountMasternodes(int nProtocolVersion)
     } else {
         for (const auto& mnpair : mapMasternodes) {
             if(mnpair.second.nProtocolVersion < nProtocolVersion) continue;
-            if(mnpair.second.IsGuardian()) continue;
             nCount++;
         }
     }
@@ -480,38 +479,8 @@ int CMasternodeMan::CountEnabled(int nProtocolVersion)
     } else {
         for (const auto& mnpair : mapMasternodes) {
             if (mnpair.second.nProtocolVersion < nProtocolVersion || !mnpair.second.IsEnabled()) continue;
-            if (mnpair.second.IsGuardian()) continue;
             nCount++;
         }
-    }
-
-    return nCount;
-}
-int CMasternodeMan::CountGuardians(int nProtocolVersion)
-{
-    LOCK(cs);
-    int nCount = 0;
-    nProtocolVersion = nProtocolVersion == -1 ? mnpayments.GetMinMasternodePaymentsProto() : nProtocolVersion;
-
-    for (const auto& mnpair : mapMasternodes) {
-        if(mnpair.second.nProtocolVersion < nProtocolVersion) continue;
-        if(!mnpair.second.IsGuardian()) continue;
-        nCount++;
-    }
-
-    return nCount;
-}
-
-int CMasternodeMan::CountGuardiansEnabled(int nProtocolVersion)
-{
-    LOCK(cs);
-    int nCount = 0;
-    nProtocolVersion = nProtocolVersion == -1 ? mnpayments.GetMinMasternodePaymentsProto() : nProtocolVersion;
-
-    for (const auto& mnpair : mapMasternodes) {
-        if(mnpair.second.nProtocolVersion < nProtocolVersion || !mnpair.second.IsEnabled()) continue;
-        if(!mnpair.second.IsGuardian()) continue;
-        nCount++;
     }
 
     return nCount;
@@ -675,12 +644,12 @@ bool CMasternodeMan::Has(const COutPoint& outpoint)
 //
 // Deterministically select the oldest/best masternode to pay on the network
 //
-bool CMasternodeMan::GetNextMasternodeInQueueForPayment(bool fFilterSigTime, int& nCountMnRet, int& nCountGnRet, masternode_info_t& mnInfoRet)
+bool CMasternodeMan::GetNextMasternodeInQueueForPayment(bool fFilterSigTime, int& nCountMnRet, masternode_info_t& mnInfoRet)
 {
-    return GetNextMasternodeInQueueForPayment(nCachedBlockHeight, fFilterSigTime, nCountMnRet, nCountGnRet, mnInfoRet);
+    return GetNextMasternodeInQueueForPayment(nCachedBlockHeight, fFilterSigTime, nCountMnRet, mnInfoRet);
 }
 
-bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool fFilterSigTime, int& nCountMnRet, int& nCountGnRet, masternode_info_t& mnInfoRet)
+bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool fFilterSigTime, int& nCountMnRet, masternode_info_t& mnInfoRet)
 {
     if (deterministicMNManager->IsDeterministicMNsSporkActive(nBlockHeight)) {
         return false;
@@ -688,7 +657,6 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
 
     mnInfoRet = masternode_info_t();
     nCountMnRet = 0;
-    nCountGnRet = 0;
 
     if (!masternodeSync.IsWinnersListSynced()) {
         // without winner list we can't reliably find the next winner anyway
@@ -699,15 +667,12 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
     LOCK2(cs_main,cs);
 
     std::vector<std::pair<int, const CMasternode*>> vecMasternodeLastPaid;
-    std::vector<std::pair<int, const CMasternode*>> vecGuardianLastPaid;
 
     /*
         Make a vector with all of the last paid times
     */
 
     int nTotalMnCount = CountMasternodes();
-    int nTotalGnCount = CountGuardians();
-    int nTotalNodeCount = nTotalMnCount + nTotalGnCount;
 
     for (const auto& mnpair : mapMasternodes) {
         if(!mnpair.second.IsValidForPayment()) continue;
@@ -719,45 +684,23 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
         if(mnpayments.IsScheduled(mnpair.second, nBlockHeight)) continue;
 
         //it's too new, wait for a cycle
-        if(fFilterSigTime && mnpair.second.sigTime + (nTotalNodeCount*2.6*60) > GetAdjustedTime()) continue;
+        if(fFilterSigTime && mnpair.second.sigTime + (nTotalMnCount*2.6*60) > GetAdjustedTime()) continue;
 
         //make sure it has at least as many confirmations as there are masternodes
-        if(GetUTXOConfirmations(mnpair.first) < nTotalNodeCount) continue;
+        if(GetUTXOConfirmations(mnpair.first) < nTotalMnCount) continue;
 
-        if(mnpair.second.IsGuardian()) {
-            //LogPrintf("CMasternode::GetNextMasternodeInQueueForPayment -- found Guardian: %s\n", mnpair.second.outpoint.ToString());
-            vecGuardianLastPaid.push_back(std::make_pair(mnpair.second.GetLastPaidBlock(), &mnpair.second));
-        }
-        else {
-            vecMasternodeLastPaid.push_back(std::make_pair(mnpair.second.GetLastPaidBlock(), &mnpair.second));
-        }
+        vecMasternodeLastPaid.push_back(std::make_pair(mnpair.second.GetLastPaidBlock(), &mnpair.second));
     }
 
     nCountMnRet = (int)vecMasternodeLastPaid.size();
-    nCountGnRet = (int)vecGuardianLastPaid.size();
-    int nCountTotal = nCountMnRet + nCountGnRet;
-
-    int cycleLength = nCountGnRet * 26.75 + nCountMnRet;
-    int mnModulo = 1;
-    if(nCountMnRet > 0) {
-        mnModulo = (unsigned int) (cycleLength / nCountMnRet);
-    }
-
-    LogPrintf("CMasternode::GetNextMasternodeInQueueForPayment -- nTotalNodeCount: %d nTotalMnCount: %d nTotalGnCount: %d nCountMnRet: %d nCountGnRet: %d cycleLength: %d mnModulo: %d\n", nTotalNodeCount, nTotalMnCount, nTotalGnCount, nCountMnRet, nCountGnRet, cycleLength, mnModulo);
 
     //when the network is in the process of upgrading, don't penalize nodes that recently restarted
-    if(fFilterSigTime && nCountTotal < nTotalNodeCount/3) {
+    if(fFilterSigTime && nCountMnRet < nTotalMnCount/3) {
         LogPrintf("CMasternode::GetNextMasternodeInQueueForPayment -- network upgrading \n");
-        return GetNextMasternodeInQueueForPayment(nBlockHeight, false, nCountMnRet, nCountGnRet, mnInfoRet);
+        return GetNextMasternodeInQueueForPayment(nBlockHeight, false, nCountMnRet, mnInfoRet);
     }
 
-    // Sort them low to high
-    if(nCountMnRet > 0) {
-        sort(vecMasternodeLastPaid.begin(), vecMasternodeLastPaid.end(), CompareLastPaidBlock());
-    }
-    if(nCountGnRet > 0) {
-        sort(vecGuardianLastPaid.begin(), vecGuardianLastPaid.end(), CompareLastPaidBlock());
-    }
+    sort(vecMasternodeLastPaid.begin(), vecMasternodeLastPaid.end(), CompareLastPaidBlock());
     
     uint256 blockHash;
     if(!GetBlockHash(blockHash, nBlockHeight - 101)) {
@@ -765,33 +708,8 @@ bool CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight, bool f
         return false;
     }
 
-    if(!fGuardianActiveAtTip) {
-        GetNextNodeInQueueForPayment(blockHash, nTotalNodeCount, vecMasternodeLastPaid, mnInfoRet);
-    }
-    else {
-        if(mnModulo == 1 || nCountGnRet == 0 || nBlockHeight % mnModulo == 0) {
-            //Mns
-            GetNextNodeInQueueForPayment(blockHash, nTotalMnCount, vecMasternodeLastPaid, mnInfoRet);
-        }
-        else {
-            //Gns
-            GetNextNodeInQueueForPayment(blockHash, nTotalGnCount, vecGuardianLastPaid, mnInfoRet);
-            if(mnInfoRet.fInfoValid) {
-                CBitcoinAddress address(mnInfoRet.pubKeyCollateralAddress.GetID());
-                LogPrintf("CMasternodeMan::GetNextNodeInQueueForPayment -- found GN to pay:%s\n", address.ToString());
-            }
-            else {
-                GetNextNodeInQueueForPayment(blockHash, nTotalMnCount, vecMasternodeLastPaid, mnInfoRet);
-                if(mnInfoRet.fInfoValid) {
-                    CBitcoinAddress address(mnInfoRet.pubKeyCollateralAddress.GetID());
-                    LogPrintf("CMasternodeMan::GetNextNodeInQueueForPayment -- no valid GN, paying MN:%s\n", address.ToString());
-                }
-                else{
-                    LogPrintf("CMasternodeMan::GetNextNodeInQueueForPayment -- no valid node to pay\n");
-                }
-            }
-        }
-    }
+    GetNextNodeInQueueForPayment(blockHash, nTotalMnCount, vecMasternodeLastPaid, mnInfoRet);
+
     return mnInfoRet.fInfoValid;
 }
 

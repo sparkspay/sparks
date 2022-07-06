@@ -105,9 +105,7 @@ enum AvailableCoinsType
     ALL_COINS,
     ONLY_DENOMINATED,
     ONLY_NONDENOMINATED,
-    ONLY_1000, // find masternode outputs including locked ones (use with caution)
-    ONLY_25000, // find guardian node outputs including locked ones
-    ONLY_ALL_NODES, //find all masternode / guardian outputs
+    ONLY_25000, // find masternode outputs including locked ones (use with caution)
     ONLY_PRIVATESEND_COLLATERAL
 };
 

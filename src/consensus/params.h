@@ -19,7 +19,6 @@ enum DeploymentPos
     DEPLOYMENT_DIP0001, // Deployment of DIP0001 and lower transaction fees.
     DEPLOYMENT_BIP147, // Deployment of BIP147 (NULLDUMMY)
     DEPLOYMENT_DIP0003, // Deployment of DIP0002 and DIP0003 (txv3 and deterministic MN lists)
-    DEPLOYMENT_GUARDIAN_NODES, // Deployment of Guardian Nodes
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
     MAX_VERSION_BITS_DEPLOYMENTS
 };
@@ -127,8 +126,6 @@ struct Params {
     int BIP66Height;
     /** Block height at which DIP0001 becomes active */
     int DIP0001Height;
-    /** Block height at which Guardian nodes become active */
-    int GuardianHeight;
 
     int nSPKHeight;
     unsigned int nSPKPremine;

@@ -352,9 +352,9 @@ bool CMasternodePayments::GetMasternodeTxOuts(int nBlockHeight, CAmount blockRew
         }
 
         // no masternode detected...
-        int nCount = 0, nGuardiansCount = 0;
+        int nCount = 0;
         masternode_info_t mnInfo;
-        if(!mnodeman.GetNextMasternodeInQueueForPayment(nBlockHeight, true, nCount, nGuardiansCount, mnInfo)) {
+        if(!mnodeman.GetNextMasternodeInQueueForPayment(nBlockHeight, true, nCount, mnInfo)) {
             // ...and we can't calculate it on our own
             LogPrintf("CMasternodePayments::%s -- Failed to detect masternode to pay\n", __func__);
             return false;
@@ -958,10 +958,10 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight, CConnman& connman)
     LogPrintf("CMasternodePayments::%s -- Start: nBlockHeight=%d, masternode=%s\n", __func__, nBlockHeight, activeMasternodeInfo.outpoint.ToStringShort());
 
     // pay to the oldest MN that still had no payment but its input is old enough and it was active long enough
-    int nCount = 0, nGuardiansCount = 0;
+    int nCount = 0;
     masternode_info_t mnInfo;
 
-    if (!mnodeman.GetNextMasternodeInQueueForPayment(nBlockHeight, true, nCount, nGuardiansCount, mnInfo)) {
+    if (!mnodeman.GetNextMasternodeInQueueForPayment(nBlockHeight, true, nCount, mnInfo)) {
         LogPrintf("CMasternodePayments::ProcessBlock -- ERROR: Failed to find masternode to pay\n");
         return false;
     }
