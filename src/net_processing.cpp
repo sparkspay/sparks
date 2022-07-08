@@ -1468,9 +1468,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         }
 
         int minVersion = MIN_PEER_PROTO_VERSION;
-        if(sporkManager.IsSporkActive(SPORK_15_REQUIRE_GUARDIAN_FLAG)) {
-            minVersion = GUARDIAN_PROTOCOL_VERSION;
-        }
         if (nVersion < minVersion)
         {
             // disconnect from peers older than this proto version

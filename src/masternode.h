@@ -27,7 +27,6 @@ static const int MASTERNODE_POSE_BAN_MAX_SCORE          = 5;
 static const int MASTERNODE_MAX_MIXING_TXES             = 5;
 
 static const CAmount MASTERNODE_COLLATERAL_SIZE = 25000L;
-static const CAmount GUARDIAN_COLLATERAL_SIZE = 25000L;
 
 //
 // The Masternode Ping Class : Contains a different serialize method for sending pings from masternodes throughout the network
@@ -185,7 +184,6 @@ public:
     int nPoSeBanHeight{};
     int nMixingTxCount{};
     bool fUnitTest = false;
-    bool fGuardian{};
 
     // KEEP TRACK OF GOVERNANCE ITEMS EACH MASTERNODE HAS VOTE UPON FOR RECALCULATION
     std::map<uint256, int> mapGovernanceObjectsVotedOn;
@@ -225,7 +223,6 @@ public:
         READWRITE(nMixingTxCount);
         READWRITE(fUnitTest);
         READWRITE(mapGovernanceObjectsVotedOn);
-        READWRITE(fGuardian);
     }
 
     // CALCULATE A RANK AGAINST OF GIVEN BLOCK
@@ -233,8 +230,8 @@ public:
 
     bool UpdateFromNewBroadcast(CMasternodeBroadcast& mnb, CConnman& connman);
 
-    static CollateralStatus CheckCollateral(const COutPoint& outpoint, const CKeyID& keyID, bool& isGuardian);
-    static CollateralStatus CheckCollateral(const COutPoint& outpoint, const CKeyID& keyID, int& nHeightRet, bool& isGuardian);
+    static CollateralStatus CheckCollateral(const COutPoint& outpoint, const CKeyID& keyID);
+    static CollateralStatus CheckCollateral(const COutPoint& outpoint, const CKeyID& keyID, int& nHeightRet);
     void Check(bool fForce = false);
 
     bool IsBroadcastedWithin(int nSeconds) { return GetAdjustedTime() - sigTime < nSeconds; }
@@ -249,7 +246,6 @@ public:
         return nTimeToCheckAt - lastPing.sigTime < nSeconds;
     }
 
-    bool IsGuardian() const { return fGuardian; }
     bool IsEnabled() const { return nActiveState == MASTERNODE_ENABLED; }
     bool IsPreEnabled() const { return nActiveState == MASTERNODE_PRE_ENABLED; }
     bool IsPoSeBanned() const { return nActiveState == MASTERNODE_POSE_BAN; }
@@ -323,7 +319,6 @@ public:
         nMixingTxCount = from.nMixingTxCount;
         fUnitTest = from.fUnitTest;
         mapGovernanceObjectsVotedOn = from.mapGovernanceObjectsVotedOn;
-        fGuardian = from.fGuardian;
         return *this;
     }
 };

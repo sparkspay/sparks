@@ -97,7 +97,6 @@ int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 
 std::atomic<bool> fDIP0001ActiveAtTip{false};
 std::atomic<bool> fDIP0003ActiveAtTip{false};
-std::atomic<bool> fGuardianActiveAtTip{false};
 
 uint256 hashAssumeValid;
 
@@ -1255,20 +1254,11 @@ CAmount GetDecreasedSubsidy(int nPrevHeight, const Consensus::Params& consensusP
 {
     CAmount nSubsidy = consensusParams.nSPKSubidyReborn * COIN;
 
-    if(fGuardianActiveAtTip)
+    for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval)
     {
-        for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval)
-        {
-            nSubsidy /= 1.5;
-        }
+        nSubsidy /= 1.5;
     }
-    else
-    {
-        for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval)
-        {
-            nSubsidy -= nSubsidy/12;
-        }
-    }
+
     return nSubsidy;
 }
 
@@ -1995,10 +1985,6 @@ int32_t ComputeBlockVersion(const CBlockIndex* pindexPrev, const Consensus::Para
                 }
                 if (!mnKnown) {
                     // unknown masternode
-                    continue;
-                }
-                if (mnInfo.nProtocolVersion < GUARDIAN_PROTOCOL_VERSION) {
-                    // masternode is not upgraded yet
                     continue;
                 }
                 if (mnInfo.nProtocolVersion < DMN_PROTO_VERSION) {

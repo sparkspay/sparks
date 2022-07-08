@@ -2618,12 +2618,8 @@ void CWallet::AvailableCoins(std::vector<COutput>& vCoins, bool fOnlyConfirmed, 
                 } else if(nCoinType == ONLY_NONDENOMINATED) {
                     if (CPrivateSend::IsCollateralAmount(pcoin->tx->vout[i].nValue)) continue; // do not use collateral amounts
                     found = !CPrivateSend::IsDenominatedAmount(pcoin->tx->vout[i].nValue);
-                } else if(nCoinType == ONLY_1000) {
-                    found = pcoin->tx->vout[i].nValue == MASTERNODE_COLLATERAL_SIZE * COIN;
                 } else if(nCoinType == ONLY_25000) {
-                    found = pcoin->tx->vout[i].nValue == GUARDIAN_COLLATERAL_SIZE * COIN;
-                } else if (nCoinType == ONLY_ALL_NODES) {
-                    found = (pcoin->tx->vout[i].nValue == GUARDIAN_COLLATERAL_SIZE * COIN) || (pcoin->tx->vout[i].nValue == MASTERNODE_COLLATERAL_SIZE * COIN);
+                    found = pcoin->tx->vout[i].nValue == MASTERNODE_COLLATERAL_SIZE * COIN;
                 } else if(nCoinType == ONLY_PRIVATESEND_COLLATERAL) {
                     found = CPrivateSend::IsCollateralAmount(pcoin->tx->vout[i].nValue);
                 } else {
@@ -2633,7 +2629,7 @@ void CWallet::AvailableCoins(std::vector<COutput>& vCoins, bool fOnlyConfirmed, 
 
                 isminetype mine = IsMine(pcoin->tx->vout[i]);
                 if (!(IsSpent(wtxid, i)) && mine != ISMINE_NO &&
-                    (!IsLockedCoin((*it).first, i) || nCoinType == ONLY_1000 || nCoinType == ONLY_25000 || nCoinType == ONLY_ALL_NODES) &&
+                    (!IsLockedCoin((*it).first, i) || nCoinType == ONLY_25000) &&
                     (pcoin->tx->vout[i].nValue > 0 || fIncludeZeroValue) &&
                     (!coinControl || !coinControl->HasSelected() || coinControl->fAllowOtherInputs || coinControl->IsSelected(COutPoint((*it).first, i))))
                         vCoins.push_back(COutput(pcoin, i, nDepth,
@@ -3236,7 +3232,7 @@ bool CWallet::GetMasternodeOutpointAndKeys(COutPoint& outpointRet, CPubKey& pubK
 
     // Find possible candidates
     std::vector<COutput> vPossibleCoins;
-    AvailableCoins(vPossibleCoins, true, NULL, false, ONLY_ALL_NODES);
+    AvailableCoins(vPossibleCoins, true, NULL, false, ONLY_25000);
     if(vPossibleCoins.empty()) {
         LogPrintf("CWallet::GetMasternodeOutpointAndKeys -- Could not locate any valid masternode vin\n");
         return false;

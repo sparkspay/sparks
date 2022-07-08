@@ -41,8 +41,7 @@ CMasternode::CMasternode(const CMasternode& other) :
     nPoSeBanScore(other.nPoSeBanScore),
     nPoSeBanHeight(other.nPoSeBanHeight),
     nMixingTxCount(other.nMixingTxCount),
-    fUnitTest(other.fUnitTest),
-    fGuardian(other.fGuardian)
+    fUnitTest(other.fUnitTest)
 {}
 
 CMasternode::CMasternode(const CMasternodeBroadcast& mnb) :
@@ -112,13 +111,13 @@ arith_uint256 CMasternode::CalculateScore(const uint256& blockHash) const
     return UintToArith256(ss.GetHash());
 }
 
-CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outpoint, const CKeyID& keyID, bool& isGuardian)
+CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outpoint, const CKeyID& keyID)
 {
     int nHeight;
-    return CheckCollateral(outpoint, keyID, nHeight, isGuardian);
+    return CheckCollateral(outpoint, keyID, nHeight);
 }
 
-CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outpoint, const CKeyID& keyID, int& nHeightRet, bool& isGuardian)
+CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outpoint, const CKeyID& keyID, int& nHeightRet)
 {
     AssertLockHeld(cs_main);
 
@@ -127,20 +126,9 @@ CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outp
         return COLLATERAL_UTXO_NOT_FOUND;
     }
 
-    if(fGuardianActiveAtTip) {
-        if(coin.out.nValue != MASTERNODE_COLLATERAL_SIZE * COIN && coin.out.nValue != GUARDIAN_COLLATERAL_SIZE * COIN) {
-            LogPrintf("CMasternode::CheckCollateral -- fGuardianActive -- invalid collateral value: %ld\n", coin.out.nValue);
-            return COLLATERAL_INVALID_AMOUNT;
-        }
-        if(coin.out.nValue == GUARDIAN_COLLATERAL_SIZE * COIN) {
-            isGuardian = true;
-        }
-    }
-    else {
-        if(coin.out.nValue != MASTERNODE_COLLATERAL_SIZE * COIN) {
-            LogPrintf("CMasternode::CheckCollateral -- invalid collateral value: %ld\n", coin.out.nValue);
-            return COLLATERAL_INVALID_AMOUNT;
-        }
+    if(coin.out.nValue != MASTERNODE_COLLATERAL_SIZE * COIN) {
+        LogPrintf("CMasternode::CheckCollateral -- invalid collateral value: %ld\n", coin.out.nValue);
+        return COLLATERAL_INVALID_AMOUNT;
     }
 
     if(keyID.IsNull() || coin.out.scriptPubKey != GetScriptForDestination(keyID)) {
@@ -585,8 +573,7 @@ bool CMasternodeBroadcast::CheckOutpoint(int& nDos)
     AssertLockHeld(cs_main);
 
     int nHeight;
-    bool isGuardian = false;
-    CollateralStatus err = CheckCollateral(outpoint, keyIDCollateralAddress, nHeight, isGuardian);
+    CollateralStatus err = CheckCollateral(outpoint, keyIDCollateralAddress, nHeight);
     if (err == COLLATERAL_UTXO_NOT_FOUND) {
         LogPrint("masternode", "CMasternodeBroadcast::CheckOutpoint -- Failed to find Masternode UTXO, masternode=%s\n", outpoint.ToStringShort());
         return false;
@@ -632,7 +619,6 @@ bool CMasternodeBroadcast::CheckOutpoint(int& nDos)
 
     // remember the block hash when collateral for this masternode had minimum required confirmations
     nCollateralMinConfBlockHash = pRequiredConfIndex->GetBlockHash();
-    fGuardian = isGuardian;
     return true;
 }
 

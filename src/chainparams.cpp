@@ -195,7 +195,6 @@ public:
         consensus.BIP65Height = 1;
         consensus.BIP66Height = 1;
         consensus.DIP0001Height = 119000;
-        consensus.GuardianHeight = 316000;
         consensus.powLimit = uint256S("00000fffff000000000000000000000000000000000000000000000000000000");
 
         consensus.nPowTargetTimespan = 60 * 60; // Sparks: 1 hour, 24 blocks
@@ -229,12 +228,6 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nWindowSize = 4032;
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nThreshold = 3226; // 80% of 4032
 
-        // Deployment of Guardian Nodes
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].bit = 3;
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nStartTime = 1551398400; // March 1st, 2019
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nTimeout = 1585699200; // April 1st, 2020
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nWindowSize = 1000;
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nThreshold = 800; // 80% of 1000
 
         // Deployment of DIP0003
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 4;
@@ -256,7 +249,6 @@ public:
         consensus.nSPKSubsidyLegacy = 18;
         consensus.nSPKSubidyReborn = 20;
         consensus.nSPKBlocksPerMonth = 21600;
-        consensus.strCoreAddress = "GcwzZzkUnJdbSdexjvSLwdJRg3JXvZGjea";
         consensus.fSPKRatioMN = 0.7;
         consensus.vBannedAddresses.push_back("GRFBCEuMcfi9PhFVfcVutL7bGwj4KdPyWX");
         consensus.vBannedAddresses.push_back("GPawkMiQm4qmYcz6mnM8ad3BxgsdgHjh52");
@@ -381,7 +373,6 @@ public:
         consensus.nPowDGWHeight = 101;
         consensus.nRuleChangeActivationThreshold = 1512; // 75% for testchains
         consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
-        consensus.GuardianHeight = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
@@ -405,12 +396,6 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nThreshold = 50; // 50% of 100
 
-        // Deployment of Guardian Nodes
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].bit = 3;
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nStartTime = 1551398400; // March 1st, 2019
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nTimeout = 1585699200; // April 1st, 2020
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nWindowSize = 100;
-        consensus.vDeployments[Consensus::DEPLOYMENT_GUARDIAN_NODES].nThreshold = 5; // 80% of 1000
 
         // Deployment of DIP0003
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 4;
@@ -432,7 +417,6 @@ public:
         consensus.nSPKSubsidyLegacy = 18;
         consensus.nSPKSubidyReborn = 20;
         consensus.nSPKBlocksPerMonth = 1;
-        consensus.strCoreAddress = "n7ntRMZ83MKzu9Krwp9W5rKGeTBRyVrVjc";
         consensus.fSPKRatioMN = 0.7;
 
         pchMessageStart[0] = 0xd1;
@@ -718,7 +702,6 @@ public:
         consensus.nSPKSubsidyLegacy = 18;
         consensus.nSPKSubidyReborn = 20;
         consensus.nSPKBlocksPerMonth = 1;
-        consensus.strCoreAddress = "n7ntRMZ83MKzu9Krwp9W5rKGeTBRyVrVjc";
 
         pchMessageStart[0] = 0xa1;
         pchMessageStart[1] = 0xb3;

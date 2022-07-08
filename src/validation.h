@@ -188,7 +188,6 @@ extern bool fLargeWorkInvalidChainFound;
 extern std::map<uint256, int64_t> mapRejectedBlocks;
 
 extern std::atomic<bool> fDIP0001ActiveAtTip;
-extern std::atomic<bool> fGuardianActiveAtTip;
 
 /** Block hash whose ancestors we will assume to have valid scripts without checking them. */
 extern uint256 hashAssumeValid;
