@@ -1,5 +1,5 @@
 // Copyright (c) 2018 The Dash Core developers
-// Copyright (c) 2019-2021 The Sparks Core developers
+// Copyright (c) 2019-2022 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 

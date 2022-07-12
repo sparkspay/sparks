@@ -20,13 +20,10 @@ static const int INIT_PROTO_VERSION = 209;
 static const int GETHEADERS_VERSION = 70077;
 
 //! disconnect from peers older than this proto version
-static const int MIN_PEER_PROTO_VERSION = 70213;
+static const int MIN_PEER_PROTO_VERSION = 70214;
 
 //! disconnect from peers older than this proto version when DIP3 is activated via the BIP9 deployment
 static const int MIN_PEER_PROTO_VERSION_DIP3 = 70214;
-
-//! disconnect from peers which don't support Guardian nodes
-static const int GUARDIAN_PROTOCOL_VERSION = 70213;
 
 //! nTime field added to CAddress, starting with this version;
 //! if possible, avoid requesting addresses nodes older than this

@@ -28,7 +28,7 @@ private:
 
     static const int LAST_PAID_SCAN_BLOCKS;
 
-    static const int MIN_POSE_PROTO_VERSION     = 70213;
+    static const int MIN_POSE_PROTO_VERSION     = 70214;
     static const int MAX_POSE_CONNECTIONS       = 10;
     static const int MAX_POSE_RANK              = 10;
     static const int MAX_POSE_BLOCKS            = 10;
@@ -161,13 +161,6 @@ public:
     /// Masternode nProtocolVersion should match or be above the one specified in param here.
     int CountEnabled(int nProtocolVersion = -1);
 
-    /// Count Guardian nodes filtered by nProtocolVersion.
-    /// Guardian node nProtocolVersion should match or be above the one specified in param here.
-    int CountGuardians(int nProtocolVersion = -1);
-    /// Count enabled Masternodes filtered by nProtocolVersion.
-    /// Masternode nProtocolVersion should match or be above the one specified in param here.
-    int CountGuardiansEnabled(int nProtocolVersion = -1);
-
     /// Count Masternodes by network type - NET_IPV4, NET_IPV6, NET_TOR
     // int CountByIP(int nNetworkType);
 
@@ -183,9 +176,9 @@ public:
     bool GetMasternodeInfo(const CScript& payee, masternode_info_t& mnInfoRet);
 
     /// Find an entry in the masternode list that is next to be paid
-    bool GetNextMasternodeInQueueForPayment(int nBlockHeight, bool fFilterSigTime, int& nCountMnRet, int& nCountGnRet, masternode_info_t& mnInfoRet);
+    bool GetNextMasternodeInQueueForPayment(int nBlockHeight, bool fFilterSigTime, int& nCountMnRet, masternode_info_t& mnInfoRet);
     /// Same as above but use current block height
-    bool GetNextMasternodeInQueueForPayment(bool fFilterSigTime, int& nCountMnRet, int& nCountGnRet, masternode_info_t& mnInfoRet);
+    bool GetNextMasternodeInQueueForPayment(bool fFilterSigTime, int& nCountMnRet, masternode_info_t& mnInfoRet);
     void GetNextNodeInQueueForPayment(uint256 blockHash, int totalNodeCount, const std::vector<std::pair<int, const CMasternode*>> &vecNodeLastPaid, masternode_info_t& mnInfoRet);
 
     /// Find a random entry

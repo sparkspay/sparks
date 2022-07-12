@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2017 The Dash Core developers
-// Copyright (c) 2016-2020 The Sparks Core developers
+// Copyright (c) 2016-2022 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -97,7 +97,6 @@ int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 
 std::atomic<bool> fDIP0001ActiveAtTip{false};
 std::atomic<bool> fDIP0003ActiveAtTip{false};
-std::atomic<bool> fGuardianActiveAtTip{false};
 
 uint256 hashAssumeValid;
 
@@ -1255,7 +1254,7 @@ CAmount GetDecreasedSubsidy(int nPrevHeight, const Consensus::Params& consensusP
 {
     CAmount nSubsidy = consensusParams.nSPKSubidyReborn * COIN;
 
-    if(fGuardianActiveAtTip)
+    if((nPrevHeight + 1) >= consensusParams.GuardianHeight)
     {
         for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval)
         {
@@ -1995,10 +1994,6 @@ int32_t ComputeBlockVersion(const CBlockIndex* pindexPrev, const Consensus::Para
                 }
                 if (!mnKnown) {
                     // unknown masternode
-                    continue;
-                }
-                if (mnInfo.nProtocolVersion < GUARDIAN_PROTOCOL_VERSION) {
-                    // masternode is not upgraded yet
                     continue;
                 }
                 if (mnInfo.nProtocolVersion < DMN_PROTO_VERSION) {
