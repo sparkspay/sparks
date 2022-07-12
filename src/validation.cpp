@@ -1254,11 +1254,20 @@ CAmount GetDecreasedSubsidy(int nPrevHeight, const Consensus::Params& consensusP
 {
     CAmount nSubsidy = consensusParams.nSPKSubidyReborn * COIN;
 
-    for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval)
+    if((nPrevHeight + 1) >= consensusParams.GuardianHeight)
     {
-        nSubsidy /= 1.5;
+        for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval)
+        {
+            nSubsidy /= 1.5;
+        }
     }
-
+    else
+    {
+        for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval)
+        {
+            nSubsidy -= nSubsidy/12;
+        }
+    }
     return nSubsidy;
 }
 

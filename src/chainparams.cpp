@@ -195,6 +195,7 @@ public:
         consensus.BIP65Height = 1;
         consensus.BIP66Height = 1;
         consensus.DIP0001Height = 119000;
+        consensus.GuardianHeight = 316000; // we need to keep the GuardianHeight for block Subsidy halving changes after this height, otherwise blockchain will not sync
         consensus.powLimit = uint256S("00000fffff000000000000000000000000000000000000000000000000000000");
 
         consensus.nPowTargetTimespan = 60 * 60; // Sparks: 1 hour, 24 blocks
@@ -328,6 +329,14 @@ public:
             ( 450000, uint256S("0x00000000cf88e545fbefa839ccbce18b24137835f02ac2b6818f8134fe1f9ca2"))
             ( 500000, uint256S("0x00000000abd8dec8cfb87b00d78344d432b8121f21b2af8a46dd84a20b0c0b51"))
             ( 550000, uint256S("0x00000000336504dbd915c8b17c3085ee08cc5eaef67e4ec34f1f7863f472149b"))
+            ( 600000, uint256S("0x000000005496a2ba94506effcab8a2490fd126abca3e35916191b41e48b9f24c"))
+            ( 650000, uint256S("0x0000000017e7e5a121dda111924daac4b753da4a7868198d62ca28f66e1a1dd0"))
+            ( 700000, uint256S("0x000000010165bb7e367d0e9567ca851cbb689356529974d51f16f2f7f8b6de64"))
+            ( 750000, uint256S("0x00000001d0d407b1668cfb22af894a0aff67994dacd7e44fd9513a3715d6f6e5"))
+            ( 800000, uint256S("0x000000031757893847ae644d488fa49c9e1d68e062246e28f3e1a9233971647e"))
+            ( 850000, uint256S("0x000000027ad324d353e377330590752a3dec1f0ee2cc679bf7feead6402c5c0c"))
+            ( 900000, uint256S("0x0000000611f05c34587c6ed56364336460b6d7a6ee2cd62133e5b5a574e01dfe"))
+            ( 920000, uint256S("0x000000010cc252a6bad5717ab07e171c4d7eb833877467b54c71d94790330291"))
         };
 
         chainTxData = ChainTxData{
@@ -364,6 +373,7 @@ public:
         consensus.BIP65Height = 100; // 0000039cf01242c7f921dcb4806a5994bc003b48c1973ae0c89b67809c2bb2ab
         consensus.BIP66Height = 100; // 0000002acdd29a14583540cb72e1c5cc83783560e38fa7081495d474fe1671f7
         consensus.DIP0001Height = 100;
+        consensus.GuardianHeight = 100;
         consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 20
         consensus.nPowTargetTimespan = 5 * 60; // Sparks: 5 minutes, 10 blocks
         consensus.nPowTargetSpacing = 0.5 * 60; // Sparks: 30 seconds

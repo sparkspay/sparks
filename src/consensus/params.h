@@ -126,6 +126,9 @@ struct Params {
     int BIP66Height;
     /** Block height at which DIP0001 becomes active */
     int DIP0001Height;
+    /** Block height at which Guardian nodes become active */
+    int GuardianHeight;
+
 
     int nSPKHeight;
     unsigned int nSPKPremine;
