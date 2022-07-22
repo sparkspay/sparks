@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2014-2019 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef INSTANTX_H
@@ -28,15 +28,7 @@ extern CInstantSend instantsend;
     (1000/2900.0)**5 = 0.004875397277841433
 */
 
-// The INSTANTSEND_DEPTH is the "pseudo block depth" level assigned to locked
-// txs to indicate the degree of confidence in their eventual confirmation and
-// inability to be double-spent (adjustable via command line argument)
-static const int MIN_INSTANTSEND_DEPTH              = 0;
-static const int MAX_INSTANTSEND_DEPTH              = 60;
-/// Default number of "pseudo-confirmations" for an InstantSend tx
-static const int DEFAULT_INSTANTSEND_DEPTH          = 5;
-
-static const int MIN_INSTANTSEND_PROTO_VERSION      = 70213;
+static const int MIN_INSTANTSEND_PROTO_VERSION      = 70214;
 
 /// For how long we are going to accept votes/locks
 /// after we saw the first one for a specific transaction
@@ -46,18 +38,18 @@ static const int INSTANTSEND_LOCK_TIMEOUT_SECONDS   = 15;
 static const int INSTANTSEND_FAILED_TIMEOUT_SECONDS = 60;
 
 extern bool fEnableInstantSend;
-extern int nCompleteTXLocks;
 
 /**
  * Manages InstantSend. Processes lock requests, candidates, and votes.
  */
 class CInstantSend
 {
-private:
-    static const std::string SERIALIZATION_VERSION_STRING;
+public:
     /// Automatic locks of "simple" transactions are only allowed
     /// when mempool usage is lower than this threshold
     static const double AUTO_IX_MEMPOOL_THRESHOLD;
+private:
+    static const std::string SERIALIZATION_VERSION_STRING;
 
     // Keep track of current block height
     int nCachedBlockHeight;
@@ -241,7 +233,7 @@ class CTxLockVote
 private:
     uint256 txHash;
     COutPoint outpoint;
-    // TODO remove this member when the legacy masternode code is removed after DIP3 deployment
+    // TODO remove this member (not needed anymore after DIP3 has been deployed)
     COutPoint outpointMasternode;
     uint256 quorumModifierHash;
     uint256 masternodeProTxHash;
@@ -280,12 +272,17 @@ public:
         READWRITE(txHash);
         READWRITE(outpoint);
         READWRITE(outpointMasternode);
+<<<<<<< HEAD
         if (deterministicMNManager->IsDeterministicMNsSporkActive()) {
             // Starting with spork16 activation, the proTxHash and quorumModifierHash is included. When we bump to >= 70214, we can remove
             // the surrounding if. We might also remove outpointMasternode as well later
             READWRITE(quorumModifierHash);
             READWRITE(masternodeProTxHash);
         }
+=======
+        READWRITE(quorumModifierHash);
+        READWRITE(masternodeProTxHash);
+>>>>>>> refs/heads/v0.14.0.x
         if (!(s.GetType() & SER_GETHASH)) {
             READWRITE(vchMasternodeSignature);
         }
@@ -321,9 +318,6 @@ private:
     bool fAttacked = false;
 
 public:
-    static const int SIGNATURES_REQUIRED        = 6;
-    static const int SIGNATURES_TOTAL           = 10;
-
     COutPointLock() {}
 
     COutPointLock(const COutPoint& outpointIn) :
@@ -346,7 +340,7 @@ public:
     std::vector<CTxLockVote> GetVotes() const;
     bool HasMasternodeVoted(const COutPoint& outpointMasternodeIn) const;
     int CountVotes() const { return fAttacked ? 0 : mapMasternodeVotes.size(); }
-    bool IsReady() const { return !fAttacked && CountVotes() >= SIGNATURES_REQUIRED; }
+    bool IsReady() const;
     void MarkAsAttacked() { fAttacked = true; }
 
     void Relay(CConnman& connman) const;
