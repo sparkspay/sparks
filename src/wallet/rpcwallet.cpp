@@ -1,11 +1,7 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
-<<<<<<< HEAD
 // Copyright (c) 2014-2017 The Dash Core developers
 // Copyright (c) 2016-2022 The Sparks Core developers
-=======
-// Copyright (c) 2014-2018 The Dash Core developers
->>>>>>> refs/heads/v0.14.0.x
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -963,15 +959,9 @@ UniValue sendfrom(const JSONRPCRequest& request)
 
     if (request.fHelp || request.params.size() < 3 || request.params.size() > 7)
         throw std::runtime_error(
-<<<<<<< HEAD
-            "sendfrom \"fromaccount\" \"toaddress\" amount ( minconf addlockconf \"comment\" \"comment_to\" )\n"
-            "\nDEPRECATED (use sendtoaddress). Sent an amount from an account to a sparks address."
-            + HelpRequiringPassphrase() + "\n"
-=======
             "sendfrom \"fromaccount\" \"toaddress\" amount ( minconf addlocked \"comment\" \"comment_to\" )\n"
             "\nDEPRECATED (use sendtoaddress). Sent an amount from an account to a sparks address."
             + HelpRequiringPassphrase(pwallet) + "\n"
->>>>>>> refs/heads/v0.14.0.x
             "\nArguments:\n"
             "1. \"fromaccount\"       (string, required) The name of the account to send funds from. May be the default account using \"\".\n"
             "                       Specifying an account does not influence coin selection, but it does associate the newly created\n"
@@ -2923,11 +2913,7 @@ UniValue fundrawtransaction(const JSONRPCRequest& request)
             CBitcoinAddress address(options["changeAddress"].get_str());
 
             if (!address.IsValid())
-<<<<<<< HEAD
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "changeAddress must be a valid sparks address");
-=======
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "changeAddress must be a valid sparks address");
->>>>>>> refs/heads/v0.14.0.x
 
             changeAddress = address.Get();
         }

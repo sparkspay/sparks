@@ -475,22 +475,13 @@ bool CGovernanceObject::IsValidLocally(std::string& strError, bool& fMissingMast
             strError = strprintf("Invalid proposal data, error messages: %s", validator.GetErrorMessages());
             return false;
         }
-        case GOVERNANCE_OBJECT_PROPOSAL: {
-            CProposalValidator validator(GetDataAsHexString());
-            // Note: It's ok to have expired proposals
-            // they are going to be cleared by CGovernanceManager::UpdateCachesAndClean()
-            // TODO: should they be tagged as "expired" to skip vote downloading?
-            if (!validator.Validate(false)) {
-                strError = strprintf("Invalid proposal data, error messages: %s", validator.GetErrorMessages());
-                return false;
-            }
-            if (fCheckCollateral && !IsCollateralValid(strError, fMissingConfirmations)) {
-                strError = "Invalid proposal collateral";
-                return false;
-            }
-            return true;
+        if (fCheckCollateral && !IsCollateralValid(strError, fMissingConfirmations)) {
+            strError = "Invalid proposal collateral";
+            return false;
         }
-        case GOVERNANCE_OBJECT_TRIGGER: {
+        return true;
+    }
+    case GOVERNANCE_OBJECT_TRIGGER: {
             if (!fCheckCollateral)
                 // nothing else we can check here (yet?)
                 return true;

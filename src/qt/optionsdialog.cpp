@@ -92,7 +92,6 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
     }
     
     /* Theme selector */
-<<<<<<< HEAD
     // ui->theme->addItem(QString("SPARKS-light"), QVariant("light"));
     // ui->theme->addItem(QString("SPARKS-light-hires"), QVariant("light-hires"));
     // ui->theme->addItem(QString("SPARKS-light-retro"), QVariant("light-retro"));
@@ -102,16 +101,6 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
     // ui->theme->addItem(QString("SPARKS-traditional"), QVariant("trad"));
     ui->theme->addItem(QString("SPARKS-2020"), QVariant("sparkspay2020"));
     
-=======
-    ui->theme->addItem(QString("Light"), QVariant("light"));
-    ui->theme->addItem(QString("Light-HiRes"), QVariant("light-hires"));
-    ui->theme->addItem(QString("Light-Retro"), QVariant("light-retro"));
-    ui->theme->addItem(QString("Light-HiRes-Retro"), QVariant("light-hires-retro"));
-    ui->theme->addItem(QString("Blue"), QVariant("drkblue"));
-    ui->theme->addItem(QString("Crownium"), QVariant("crownium"));
-    ui->theme->addItem(QString("Traditional"), QVariant("trad"));
-
->>>>>>> refs/heads/v0.14.0.x
     /* Language selector */
     QDir translations(":translations");
 

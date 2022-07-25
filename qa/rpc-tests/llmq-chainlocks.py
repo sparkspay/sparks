@@ -25,7 +25,7 @@ class LLMQChainLocksTest(DashTestFramework):
             self.nodes[0].generate(10)
         sync_blocks(self.nodes, timeout=60*5)
 
-        self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 0)
+        self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
         self.nodes[0].spork("SPORK_19_CHAINLOCKS_ENABLED", 0)
         self.wait_for_sporks_same()
 

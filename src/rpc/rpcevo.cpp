@@ -821,7 +821,7 @@ UniValue protx_revoke(const JSONRPCRequest& request)
         CBitcoinAddress feeSourceAddress = CBitcoinAddress(request.params[4].get_str());
         if (!feeSourceAddress.IsValid())
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Spark address: ") + request.params[4].get_str());
-        FundSpecialTx(tx, ptx, feeSourceAddress.Get());
+        FundSpecialTx(pwallet, tx, ptx, feeSourceAddress.Get());
     } else if (dmn->pdmnState->scriptOperatorPayout != CScript()) {
         // Using funds from previousely specified operator payout address
         CTxDestination txDest;

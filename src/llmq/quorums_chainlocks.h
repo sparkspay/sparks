@@ -2,8 +2,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DASH_QUORUMS_CHAINLOCKS_H
-#define DASH_QUORUMS_CHAINLOCKS_H
+#ifndef SPARKS_QUORUMS_CHAINLOCKS_H
+#define SPARKS_QUORUMS_CHAINLOCKS_H
 
 #include "llmq/quorums.h"
 #include "llmq/quorums_signing.h"
@@ -118,4 +118,4 @@ extern CChainLocksHandler* chainLocksHandler;
 
 }
 
-#endif //DASH_QUORUMS_CHAINLOCKS_H
+#endif //SPARKS_QUORUMS_CHAINLOCKS_H

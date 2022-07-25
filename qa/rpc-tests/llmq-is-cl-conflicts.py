@@ -59,7 +59,7 @@ class LLMQ_IS_CL_Conflicts(DashTestFramework):
         NetworkThread().start()  # Start up network handling in another thread
         self.test_node.wait_for_verack()
 
-        self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 0)
+        self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
         self.nodes[0].spork("SPORK_19_CHAINLOCKS_ENABLED", 0)
         self.nodes[0].spork("SPORK_20_INSTANTSEND_LLMQ_BASED", 0)
         self.wait_for_sporks_same()

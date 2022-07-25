@@ -23,7 +23,7 @@ class LLMQDKGErrors(DashTestFramework):
             self.nodes[0].generate(10)
         sync_blocks(self.nodes, timeout=60*5)
 
-        self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 0)
+        self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
 
         # Mine one quorum without simulating any errors
@@ -90,14 +90,14 @@ class LLMQDKGErrors(DashTestFramework):
 
     def heal_masternodes(self, blockCount):
         # We're not testing PoSe here, so lets heal the MNs :)
-        self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 4070908800)
+        self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 4070908800)
         self.wait_for_sporks_same()
         for i in range(blockCount):
             set_mocktime(get_mocktime() + 1)
             set_node_times(self.nodes, get_mocktime())
             self.nodes[0].generate(1)
         self.sync_all()
-        self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 0)
+        self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
 
 

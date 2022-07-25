@@ -272,17 +272,8 @@ public:
         READWRITE(txHash);
         READWRITE(outpoint);
         READWRITE(outpointMasternode);
-<<<<<<< HEAD
-        if (deterministicMNManager->IsDeterministicMNsSporkActive()) {
-            // Starting with spork16 activation, the proTxHash and quorumModifierHash is included. When we bump to >= 70214, we can remove
-            // the surrounding if. We might also remove outpointMasternode as well later
-            READWRITE(quorumModifierHash);
-            READWRITE(masternodeProTxHash);
-        }
-=======
         READWRITE(quorumModifierHash);
         READWRITE(masternodeProTxHash);
->>>>>>> refs/heads/v0.14.0.x
         if (!(s.GetType() & SER_GETHASH)) {
             READWRITE(vchMasternodeSignature);
         }

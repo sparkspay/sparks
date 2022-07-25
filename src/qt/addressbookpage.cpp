@@ -233,7 +233,7 @@ void AddressBookPage::on_showAddressQRCode_clicked()
 
     dialog->setModel(model);
     dialog->setAttribute(Qt::WA_DeleteOnClose);
-    dialog->setInfo(tr("QR code"), "dash:"+strAddress, "", strAddress);
+    dialog->setInfo(tr("QR code"), "sparks:"+strAddress, "", strAddress);
     dialog->show();
 }
 

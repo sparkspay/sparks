@@ -93,7 +93,7 @@ class LLMQCoinbaseCommitmentsTest(DashTestFramework):
         self.sync_all()
         first_quorum = self.test_dip8_quorum_merkle_root_activation(False)
 
-        self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 0)
+        self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
 
         # Verify that the first quorum appears in MNLISTDIFF
@@ -238,13 +238,13 @@ class LLMQCoinbaseCommitmentsTest(DashTestFramework):
 
     def test_dip8_quorum_merkle_root_activation(self, with_initial_quorum):
         if with_initial_quorum:
-            self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 0)
+            self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
             self.wait_for_sporks_same()
 
             # Mine one quorum before dip8 is activated
             self.mine_quorum()
 
-        self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 4070908800)
+        self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 4070908800)
         self.wait_for_sporks_same()
 
         cbtx = self.nodes[0].getblock(self.nodes[0].getbestblockhash(), 2)["tx"][0]
@@ -271,7 +271,7 @@ class LLMQCoinbaseCommitmentsTest(DashTestFramework):
 
         set_mocktime(get_mocktime() + 1)
         set_node_times(self.nodes, get_mocktime())
-        self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 0)
+        self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
 
         # Mine quorum and verify that merkleRootQuorums has changed
