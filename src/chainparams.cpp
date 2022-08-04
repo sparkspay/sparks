@@ -411,7 +411,9 @@ public:
         consensus.BIP66Height = 100; // 0000002acdd29a14583540cb72e1c5cc83783560e38fa7081495d474fe1671f7
         consensus.DIP0001Height = 100;
         consensus.GuardianHeight = 100;
-        consensus.DIP0003Height = 100;
+        consensus.DIP0003Height = 2; // DIP0003 activated immediately on testnet
+        consensus.DIP0003EnforcementHeight = 2;
+        consensus.DIP0003EnforcementHash = uint256();
         consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 20
         consensus.nPowTargetTimespan = 5 * 60; // Sparks: 5 minutes, 10 blocks
         consensus.nPowTargetSpacing = 0.5 * 60; // Sparks: 30 seconds
@@ -456,8 +458,8 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].bit = 5;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nStartTime = 1658793600; // Jul 26th, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nTimeout = 1690329600; // Jul 26th, 2023
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nWindowSize = 100;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nThreshold = 50; // 50% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nWindowSize = 10;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nThreshold = 5; // 5% of 10
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000000000000000100010");
