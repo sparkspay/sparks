@@ -144,12 +144,12 @@ static Consensus::LLMQParams llmq50_60 = {
         .keepOldConnections = 25,
 };
 
-static Consensus::LLMQParams llmq400_60 = {
-        .type = Consensus::LLMQ_400_60,
-        .name = "llmq_400_60",
-        .size = 400,
-        .minSize = 300,
-        .threshold = 240,
+static Consensus::LLMQParams llmq100_60 = {
+        .type = Consensus::LLMQ_100_60,
+        .name = "llmq_100_60",
+        .size = 100,
+        .minSize = 80,
+        .threshold = 60,
 
         .dkgInterval = 24 * 12, // one DKG every 12 hours
         .dkgPhaseBlocks = 4,
@@ -163,12 +163,12 @@ static Consensus::LLMQParams llmq400_60 = {
 };
 
 // Used for deployment and min-proto-version signalling, so it needs a higher threshold
-static Consensus::LLMQParams llmq400_85 = {
-        .type = Consensus::LLMQ_400_85,
-        .name = "llmq_400_85",
-        .size = 400,
-        .minSize = 350,
-        .threshold = 340,
+static Consensus::LLMQParams llmq100_85 = {
+        .type = Consensus::LLMQ_100_85,
+        .name = "llmq_100_85",
+        .size = 100,
+        .minSize = 95,
+        .threshold = 85,
 
         .dkgInterval = 24 * 24, // one DKG every 24 hours
         .dkgPhaseBlocks = 4,
@@ -326,9 +326,9 @@ public:
 
         // long living quorum params
         consensus.llmqs[Consensus::LLMQ_50_60] = llmq50_60;
-        consensus.llmqs[Consensus::LLMQ_400_60] = llmq400_60;
-        consensus.llmqs[Consensus::LLMQ_400_85] = llmq400_85;
-        consensus.llmqChainLocks = Consensus::LLMQ_400_60;
+        consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
+        consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
+        consensus.llmqChainLocks = Consensus::LLMQ_100_60;
         consensus.llmqForInstantSend = Consensus::LLMQ_50_60;
 
         fMiningRequiresPeers = true;
@@ -517,8 +517,8 @@ public:
 
         // long living quorum params
         consensus.llmqs[Consensus::LLMQ_5_60] = llmq5_60;
-        consensus.llmqs[Consensus::LLMQ_400_60] = llmq400_60;
-        consensus.llmqs[Consensus::LLMQ_400_85] = llmq400_85;
+        consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
+        consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
         consensus.llmqChainLocks = Consensus::LLMQ_5_60;
         consensus.llmqForInstantSend = Consensus::LLMQ_5_60;
 
@@ -672,8 +672,8 @@ public:
 
         // long living quorum params
         consensus.llmqs[Consensus::LLMQ_50_60] = llmq50_60;
-        consensus.llmqs[Consensus::LLMQ_400_60] = llmq400_60;
-        consensus.llmqs[Consensus::LLMQ_400_85] = llmq400_85;
+        consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
+        consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
         consensus.llmqChainLocks = Consensus::LLMQ_50_60;
         consensus.llmqForInstantSend = Consensus::LLMQ_50_60;
 
