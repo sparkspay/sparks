@@ -107,19 +107,13 @@ bool CFinalCommitment::Verify(const std::vector<CDeterministicMNCPtr>& members, 
 
 bool CFinalCommitment::VerifyNull() const
 {
-    bool fDIP0008Active;
-    {
-        LOCK(cs_main);
-        fDIP0008Active = VersionBitsState(chainActive.Tip()->pprev, Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
-    }
-
     if (!Params().GetConsensus().llmqs.count((Consensus::LLMQType)llmqType)) {
         LogPrintfFinalCommitment("invalid llmqType=%d\n", llmqType);
         return false;
     }
     const auto& params = Params().GetConsensus().llmqs.at((Consensus::LLMQType)llmqType);
 
-    if (!IsNull() || (fDIP0008Active && !VerifySizes(params))) {
+    if (!IsNull() || !VerifySizes(params)) {
         return false;
     }
 

@@ -144,6 +144,43 @@ static Consensus::LLMQParams llmq50_60 = {
         .keepOldConnections = 25,
 };
 
+static Consensus::LLMQParams llmq400_60 = {
+        .type = Consensus::LLMQ_400_60,
+        .name = "llmq_400_60",
+        .size = 400,
+        .minSize = 300,
+        .threshold = 240,
+
+        .dkgInterval = 24 * 12, // one DKG every 12 hours
+        .dkgPhaseBlocks = 4,
+        .dkgMiningWindowStart = 20, // dkgPhaseBlocks * 5 = after finalization
+        .dkgMiningWindowEnd = 28,
+        .dkgBadVotesThreshold = 300,
+
+        .signingActiveQuorumCount = 4, // two days worth of LLMQs
+
+        .keepOldConnections = 5,
+};
+
+// Used for deployment and min-proto-version signalling, so it needs a higher threshold
+static Consensus::LLMQParams llmq400_85 = {
+        .type = Consensus::LLMQ_400_85,
+        .name = "llmq_400_85",
+        .size = 400,
+        .minSize = 350,
+        .threshold = 340,
+
+        .dkgInterval = 24 * 24, // one DKG every 24 hours
+        .dkgPhaseBlocks = 4,
+        .dkgMiningWindowStart = 20, // dkgPhaseBlocks * 5 = after finalization
+        .dkgMiningWindowEnd = 48, // give it a larger mining window to make sure it is mined
+        .dkgBadVotesThreshold = 300,
+
+        .signingActiveQuorumCount = 4, // two days worth of LLMQs
+
+        .keepOldConnections = 5,
+};
+
 static Consensus::LLMQParams llmq100_60 = {
         .type = Consensus::LLMQ_100_60,
         .name = "llmq_100_60",
@@ -326,8 +363,11 @@ public:
 
         // long living quorum params
         consensus.llmqs[Consensus::LLMQ_50_60] = llmq50_60;
-        consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
-        consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
+        consensus.llmqs[Consensus::LLMQ_400_60] = llmq400_60;
+        consensus.llmqs[Consensus::LLMQ_400_85] = llmq400_85;
+        consensus.llmqs_new[Consensus::LLMQ_50_60] = llmq50_60;
+        consensus.llmqs_new[Consensus::LLMQ_100_60] = llmq100_60;
+        consensus.llmqs_new[Consensus::LLMQ_100_85] = llmq100_85;
         consensus.llmqChainLocks = Consensus::LLMQ_100_60;
         consensus.llmqForInstantSend = Consensus::LLMQ_50_60;
 
@@ -516,9 +556,12 @@ public:
         nExtCoinType = 1;
 
         // long living quorum params
-        consensus.llmqs[Consensus::LLMQ_5_60] = llmq5_60;
-        consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
-        consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
+        consensus.llmqs[Consensus::LLMQ_50_60] = llmq50_60;
+        consensus.llmqs[Consensus::LLMQ_400_60] = llmq400_60;
+        consensus.llmqs[Consensus::LLMQ_400_85] = llmq400_85;
+        consensus.llmqs_new[Consensus::LLMQ_5_60] = llmq5_60;
+        consensus.llmqs_new[Consensus::LLMQ_100_60] = llmq100_60;
+        consensus.llmqs_new[Consensus::LLMQ_100_85] = llmq100_85;
         consensus.llmqChainLocks = Consensus::LLMQ_5_60;
         consensus.llmqForInstantSend = Consensus::LLMQ_5_60;
 
@@ -672,8 +715,11 @@ public:
 
         // long living quorum params
         consensus.llmqs[Consensus::LLMQ_50_60] = llmq50_60;
-        consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
-        consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
+        consensus.llmqs[Consensus::LLMQ_400_60] = llmq400_60;
+        consensus.llmqs[Consensus::LLMQ_400_85] = llmq400_85;
+        consensus.llmqs_new[Consensus::LLMQ_50_60] = llmq100_60;
+        consensus.llmqs_new[Consensus::LLMQ_100_60] = llmq100_60;
+        consensus.llmqs_new[Consensus::LLMQ_100_85] = llmq100_85;
         consensus.llmqChainLocks = Consensus::LLMQ_50_60;
         consensus.llmqForInstantSend = Consensus::LLMQ_50_60;
 
@@ -901,6 +947,14 @@ CChainParams& Params(const std::string& chain)
             return regTestParams;
     else
         throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
+}
+
+const CChainParams &Params(const bool fDIP0008Active) {
+    assert(pCurrentParams);
+    if(fDIP0008Active){
+        pCurrentParams->SwitchToNewLLMQParameters();
+    }
+    return *pCurrentParams;
 }
 
 void SelectParams(const std::string& network)

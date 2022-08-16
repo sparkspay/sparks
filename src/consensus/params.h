@@ -45,8 +45,10 @@ enum LLMQType : uint8_t
     LLMQ_NONE = 0xff,
 
     LLMQ_50_60 = 1, // 50 members, 30 (60%) threshold, one per hour
-    LLMQ_100_60 = 2, // 100 members, 60 (60%) threshold, one every 12 hours
-    LLMQ_100_85 = 3, // 100 members, 85 (85%) threshold, one every 24 hours
+    LLMQ_400_60 = 2, // 400 members, 240 (60%) threshold, one every 12 hours
+    LLMQ_400_85 = 3, // 400 members, 340 (85%) threshold, one every 24 hours
+    LLMQ_100_60 = 4, // 100 members, 60 (60%) threshold, one every 12 hours
+    LLMQ_100_85 = 5, // 100 members, 85 (85%) threshold, one every 24 hours
 
     // for testing only
     LLMQ_5_60 = 100, // 6 members, 3 (66.6%) threshold, one per hour
@@ -190,6 +192,7 @@ struct Params {
     int nHighSubsidyFactor{1};
 
     std::map<LLMQType, LLMQParams> llmqs;
+    std::map<LLMQType, LLMQParams> llmqs_new; //move new llqms to above param and remove this in a futrue update
     LLMQType llmqChainLocks;
     LLMQType llmqForInstantSend{LLMQ_NONE};
 };

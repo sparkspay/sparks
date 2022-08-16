@@ -580,4 +580,6 @@ void DumpMempool();
 /** Load the mempool from disk. */
 bool LoadMempool();
 
+const CChainParams &_Params();
+
 #endif // BITCOIN_VALIDATION_H

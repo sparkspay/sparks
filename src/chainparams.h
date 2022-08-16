@@ -92,6 +92,7 @@ public:
     const std::vector<std::string>& SporkAddresses() const { return vSporkAddresses; }
     int MinSporkKeys() const { return nMinSporkKeys; }
     bool BIP9CheckMasternodesUpgraded() const { return fBIP9CheckMasternodesUpgraded; }
+    void SwitchToNewLLMQParameters() { consensus.llmqs = consensus.llmqs_new; };
 protected:
     CChainParams() {}
 
@@ -135,6 +136,12 @@ const CChainParams &Params();
  * @returns CChainParams for the given BIP70 chain name.
  */
 CChainParams& Params(const std::string& chain);
+
+/**
+ * Return the currently selected parameters with new LLMQ parameters. This won't change after app
+ * startup, except for unit tests.
+ */
+const CChainParams &Params(const bool fDIP0008Active);
 
 /**
  * Sets the params returned by Params() to those for the given BIP70 chain name.
