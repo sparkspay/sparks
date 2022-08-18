@@ -362,12 +362,12 @@ public:
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
         // long living quorum params
+        consensus.llmqs_old[Consensus::LLMQ_50_60] = llmq50_60;
+        consensus.llmqs_old[Consensus::LLMQ_400_60] = llmq400_60;
+        consensus.llmqs_old[Consensus::LLMQ_400_85] = llmq400_85;
         consensus.llmqs[Consensus::LLMQ_50_60] = llmq50_60;
-        consensus.llmqs[Consensus::LLMQ_400_60] = llmq400_60;
-        consensus.llmqs[Consensus::LLMQ_400_85] = llmq400_85;
-        consensus.llmqs_new[Consensus::LLMQ_50_60] = llmq50_60;
-        consensus.llmqs_new[Consensus::LLMQ_100_60] = llmq100_60;
-        consensus.llmqs_new[Consensus::LLMQ_100_85] = llmq100_85;
+        consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
+        consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
         consensus.llmqChainLocks = Consensus::LLMQ_100_60;
         consensus.llmqForInstantSend = Consensus::LLMQ_50_60;
 
@@ -417,6 +417,10 @@ public:
                         //   (the tx=... number in the SetBestChain debug.log lines)
             0.1         // * estimated number of transactions per second after that timestamp
         };
+    }
+
+    void SwitchToOldLLMQParameters(){
+        consensus.llmqs = consensus.llmqs_old;
     }
 };
 static CMainParams mainParams;
@@ -556,12 +560,12 @@ public:
         nExtCoinType = 1;
 
         // long living quorum params
-        consensus.llmqs[Consensus::LLMQ_50_60] = llmq50_60;
-        consensus.llmqs[Consensus::LLMQ_400_60] = llmq400_60;
-        consensus.llmqs[Consensus::LLMQ_400_85] = llmq400_85;
-        consensus.llmqs_new[Consensus::LLMQ_5_60] = llmq5_60;
-        consensus.llmqs_new[Consensus::LLMQ_100_60] = llmq100_60;
-        consensus.llmqs_new[Consensus::LLMQ_100_85] = llmq100_85;
+        consensus.llmqs_old[Consensus::LLMQ_50_60] = llmq50_60;
+        consensus.llmqs_old[Consensus::LLMQ_400_60] = llmq400_60;
+        consensus.llmqs_old[Consensus::LLMQ_400_85] = llmq400_85;
+        consensus.llmqs[Consensus::LLMQ_5_60] = llmq5_60;
+        consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
+        consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
         consensus.llmqChainLocks = Consensus::LLMQ_5_60;
         consensus.llmqForInstantSend = Consensus::LLMQ_5_60;
 
@@ -593,6 +597,10 @@ public:
             0.01        // * estimated number of transactions per second after that timestamp
         };
 
+    }
+
+    void SwitchToOldLLMQParameters(){
+        consensus.llmqs = consensus.llmqs_old;
     }
 };
 static CTestNetParams testNetParams;
@@ -714,12 +722,12 @@ public:
         nExtCoinType = 1;
 
         // long living quorum params
-        consensus.llmqs[Consensus::LLMQ_50_60] = llmq50_60;
-        consensus.llmqs[Consensus::LLMQ_400_60] = llmq400_60;
-        consensus.llmqs[Consensus::LLMQ_400_85] = llmq400_85;
-        consensus.llmqs_new[Consensus::LLMQ_50_60] = llmq100_60;
-        consensus.llmqs_new[Consensus::LLMQ_100_60] = llmq100_60;
-        consensus.llmqs_new[Consensus::LLMQ_100_85] = llmq100_85;
+        consensus.llmqs_old[Consensus::LLMQ_50_60] = llmq50_60;
+        consensus.llmqs_old[Consensus::LLMQ_400_60] = llmq400_60;
+        consensus.llmqs_old[Consensus::LLMQ_400_85] = llmq400_85;
+        consensus.llmqs[Consensus::LLMQ_50_60] = llmq100_60;
+        consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
+        consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
         consensus.llmqChainLocks = Consensus::LLMQ_50_60;
         consensus.llmqForInstantSend = Consensus::LLMQ_50_60;
 
@@ -951,8 +959,8 @@ CChainParams& Params(const std::string& chain)
 
 const CChainParams &Params(const bool fDIP0008Active) {
     assert(pCurrentParams);
-    if(fDIP0008Active){
-        pCurrentParams->SwitchToNewLLMQParameters();
+    if(!fDIP0008Active){
+        pCurrentParams->SwitchToOldLLMQParameters();
     }
     return *pCurrentParams;
 }

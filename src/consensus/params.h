@@ -192,7 +192,7 @@ struct Params {
     int nHighSubsidyFactor{1};
 
     std::map<LLMQType, LLMQParams> llmqs;
-    std::map<LLMQType, LLMQParams> llmqs_new; //move new llqms to above param and remove this in a futrue update
+    std::map<LLMQType, LLMQParams> llmqs_old; //old quorums list came from v0.13.x code
     LLMQType llmqChainLocks;
     LLMQType llmqForInstantSend{LLMQ_NONE};
 };

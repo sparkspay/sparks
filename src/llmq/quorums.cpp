@@ -21,7 +21,6 @@
 
 #include "cxxtimer.hpp"
 
-#define Params _Params
 
 namespace llmq
 {

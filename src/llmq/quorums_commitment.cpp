@@ -12,6 +12,8 @@
 
 #include <univalue.h>
 
+#define Params _Params
+
 namespace llmq
 {
 
