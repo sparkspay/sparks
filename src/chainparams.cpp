@@ -455,9 +455,7 @@ public:
         consensus.BIP66Height = 100; // 0000002acdd29a14583540cb72e1c5cc83783560e38fa7081495d474fe1671f7
         consensus.DIP0001Height = 100;
         consensus.GuardianHeight = 100;
-        consensus.DIP0003Height = 2; // DIP0003 activated immediately on testnet
-        consensus.DIP0003EnforcementHeight = 2;
-        consensus.DIP0003EnforcementHash = uint256();
+        consensus.DIP0003Height = 300; // DIP0003 activated at block 300
         consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 20
         consensus.nPowTargetTimespan = 5 * 60; // Sparks: 5 minutes, 10 blocks
         consensus.nPowTargetSpacing = 0.5 * 60; // Sparks: 30 seconds
