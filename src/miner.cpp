@@ -168,7 +168,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     if (fDIP0003Active_context) {
         auto param = Params(fDIP0008Active_context).GetConsensus();
         for (auto& p : param.llmqs) {
-            LogPrintf("### here ###");
             CTransactionRef qcTx;
             if (llmq::quorumBlockProcessor->GetMinableCommitmentTx(p.first, nHeight, qcTx)) {
                 pblock->vtx.emplace_back(qcTx);
