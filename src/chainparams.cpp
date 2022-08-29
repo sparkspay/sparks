@@ -455,7 +455,7 @@ public:
         consensus.BIP66Height = 100; // 0000002acdd29a14583540cb72e1c5cc83783560e38fa7081495d474fe1671f7
         consensus.DIP0001Height = 100;
         consensus.GuardianHeight = 100;
-        consensus.DIP0003Height = 300; // DIP0003 activated at block 300
+        consensus.DIP0003Height = 30; // DIP0003 activated at block 30
         consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 20
         consensus.nPowTargetTimespan = 5 * 60; // Sparks: 5 minutes, 10 blocks
         consensus.nPowTargetSpacing = 0.5 * 60; // Sparks: 30 seconds
@@ -493,8 +493,8 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 4;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nStartTime = 1638786047; // Dec 6th, 2021
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 1670302247; // Dec 6th, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nWindowSize = 100;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nThreshold = 50; // 50% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nWindowSize = 10;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nThreshold = 5; // 50% of 10
 
         // Deployment of DIP0008
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].bit = 5;
