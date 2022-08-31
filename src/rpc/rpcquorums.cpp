@@ -12,6 +12,8 @@
 #include "llmq/quorums_dkgsession.h"
 #include "llmq/quorums_signing.h"
 
+#define Params _Params
+
 void quorum_list_help()
 {
     throw std::runtime_error(
