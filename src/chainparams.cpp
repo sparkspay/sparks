@@ -368,6 +368,7 @@ public:
         consensus.llmqs[Consensus::LLMQ_50_60] = llmq50_60;
         consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
         consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
+        consensus.llmqs_new = consensus.llmqs;
         consensus.llmqChainLocks = Consensus::LLMQ_100_60;
         consensus.llmqForInstantSend = Consensus::LLMQ_50_60;
 
@@ -419,9 +420,6 @@ public:
         };
     }
 
-    void SwitchToOldLLMQParameters(){
-        consensus.llmqs = consensus.llmqs_old;
-    }
 };
 static CMainParams mainParams;
 
@@ -564,6 +562,7 @@ public:
         consensus.llmqs[Consensus::LLMQ_5_60] = llmq5_60;
         consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
         consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
+        consensus.llmqs_new = consensus.llmqs;
         consensus.llmqChainLocks = Consensus::LLMQ_5_60;
         consensus.llmqForInstantSend = Consensus::LLMQ_5_60;
 
@@ -597,9 +596,6 @@ public:
 
     }
 
-    void SwitchToOldLLMQParameters(){
-        consensus.llmqs = consensus.llmqs_old;
-    }
 };
 static CTestNetParams testNetParams;
 
@@ -726,6 +722,7 @@ public:
         consensus.llmqs[Consensus::LLMQ_50_60] = llmq100_60;
         consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
         consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
+        consensus.llmqs_new = consensus.llmqs;
         consensus.llmqChainLocks = Consensus::LLMQ_50_60;
         consensus.llmqForInstantSend = Consensus::LLMQ_50_60;
 
@@ -957,7 +954,9 @@ CChainParams& Params(const std::string& chain)
 
 const CChainParams &Params(const bool fDIP0008Active) {
     assert(pCurrentParams);
-    if(!fDIP0008Active){
+    if(fDIP0008Active){
+        pCurrentParams->SwitchToNewLLMQParameters();
+    } else {
         pCurrentParams->SwitchToOldLLMQParameters();
     }
     return *pCurrentParams;
