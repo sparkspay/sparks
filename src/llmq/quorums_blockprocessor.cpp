@@ -17,7 +17,6 @@
 #include "primitives/block.h"
 #include "validation.h"
 
-#define Params _Params
 
 namespace llmq
 {
@@ -48,13 +47,20 @@ void CQuorumBlockProcessor::ProcessMessage(CNode* pfrom, const std::string& strC
             return;
         }
 
-        if (!Params().GetConsensus().llmqs.count((Consensus::LLMQType)qc.llmqType)) {
+        bool fDIP0008Active;
+        {
+            LOCK(cs_main);
+            fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+        }
+
+        if ((fDIP0008Active && !Params().GetConsensus().llmqs.count((Consensus::LLMQType)qc.llmqType)) ||
+        (!fDIP0008Active && !Params().GetConsensus().llmqs_old.count((Consensus::LLMQType)qc.llmqType))) {
             LOCK(cs_main);
             LogPrintf("llmq""CQuorumBlockProcessor::%s -- invalid commitment type %d from peer=%d\n", __func__,
                     qc.llmqType, pfrom->id);
             Misbehaving(pfrom->id, 100);
             return;
-        }
+        } 
         auto type = (Consensus::LLMQType)qc.llmqType;
         const auto& params = Params().GetConsensus().llmqs.at(type);
 
@@ -126,7 +132,7 @@ bool CQuorumBlockProcessor::ProcessBlock(const CBlock& block, const CBlockIndex*
     bool fDIP0008Active;
     {
         LOCK(cs_main);
-        fDIP0008Active = VersionBitsState(chainActive.Tip()->pprev, Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
     }
     if (!fDIP0003Active || !fDIP0008Active) {
         evoDb.Write(DB_BEST_BLOCK_UPGRADE, block.GetHash());
@@ -141,7 +147,8 @@ bool CQuorumBlockProcessor::ProcessBlock(const CBlock& block, const CBlockIndex*
     // The following checks make sure that there is always a (possibly null) commitment while in the mining phase
     // until the first non-null commitment has been mined. After the non-null commitment, no other commitments are
     // allowed, including null commitments.
-    for (const auto& p : Params().GetConsensus().llmqs) {
+    auto llmqs = fDIP0008Active ? Params().GetConsensus().llmqs : Params().GetConsensus().llmqs_old;
+    for (const auto& p : llmqs) {
         auto type = p.first;
 
         // does the currently processed block contain a (possibly null) commitment for the current session?
@@ -154,7 +161,6 @@ bool CQuorumBlockProcessor::ProcessBlock(const CBlock& block, const CBlockIndex*
         }
 
         if (!hasCommitmentInNewBlock && isCommitmentRequired) {
-            LogPrintf("##### %d ##### %d #####",type,isCommitmentRequired);
             // If no non-null commitment was mined for the mining phase yet and the new block does not include
             // a (possibly null) commitment, the block should be rejected.
             return state.DoS(100, false, REJECT_INVALID, "bad-qc-missing");
@@ -185,7 +191,12 @@ static std::tuple<std::string, uint8_t, uint32_t> BuildInversedHeightKey(Consens
 
 bool CQuorumBlockProcessor::ProcessCommitment(int nHeight, const uint256& blockHash, const CFinalCommitment& qc, CValidationState& state)
 {
-    auto& params = Params().GetConsensus().llmqs.at((Consensus::LLMQType)qc.llmqType);
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+    auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at((Consensus::LLMQType)qc.llmqType) : Params().GetConsensus().llmqs_old.at((Consensus::LLMQType)qc.llmqType);
 
     uint256 quorumHash = GetQuorumBlockHash((Consensus::LLMQType)qc.llmqType, nHeight);
     if (quorumHash.IsNull()) {

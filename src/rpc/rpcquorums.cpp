@@ -12,7 +12,6 @@
 #include "llmq/quorums_dkgsession.h"
 #include "llmq/quorums_signing.h"
 
-#define Params _Params
 
 void quorum_list_help()
 {
@@ -50,9 +49,17 @@ UniValue quorum_list(const JSONRPCRequest& request)
         }
     }
 
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+
     UniValue ret(UniValue::VOBJ);
 
-    for (auto& p : Params().GetConsensus().llmqs) {
+    auto llmqs = fDIP0008Active ? Params().GetConsensus().llmqs : Params().GetConsensus().llmqs_old;
+
+    for (auto& p : llmqs) {
         UniValue v(UniValue::VARR);
 
         auto quorums = llmq::quorumManager->ScanQuorums(p.first, chainActive.Tip(), count > -1 ? count : p.second.signingActiveQuorumCount);

@@ -12,7 +12,6 @@
 
 #include <univalue.h>
 
-#define Params _Params
 
 namespace llmq
 {
@@ -35,11 +34,18 @@ bool CFinalCommitment::Verify(const std::vector<CDeterministicMNCPtr>& members, 
         return false;
     }
 
-    if (!Params().GetConsensus().llmqs.count((Consensus::LLMQType)llmqType)) {
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+
+    if ((fDIP0008Active && !Params().GetConsensus().llmqs.count((Consensus::LLMQType)llmqType)) ||
+    (!fDIP0008Active && !Params().GetConsensus().llmqs_old.count((Consensus::LLMQType)llmqType))) {
         LogPrintfFinalCommitment("invalid llmqType=%d\n", llmqType);
         return false;
     }
-    const auto& params = Params().GetConsensus().llmqs.at((Consensus::LLMQType)llmqType);
+    const auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at((Consensus::LLMQType)llmqType) : Params().GetConsensus().llmqs_old.at((Consensus::LLMQType)llmqType);
 
     if (!VerifySizes(params)) {
         return false;
@@ -109,11 +115,18 @@ bool CFinalCommitment::Verify(const std::vector<CDeterministicMNCPtr>& members, 
 
 bool CFinalCommitment::VerifyNull() const
 {
-    if (!Params().GetConsensus().llmqs.count((Consensus::LLMQType)llmqType)) {
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+
+    if ((fDIP0008Active && !Params().GetConsensus().llmqs.count((Consensus::LLMQType)llmqType)) ||
+    (!fDIP0008Active && !Params().GetConsensus().llmqs_old.count((Consensus::LLMQType)llmqType))) {
         LogPrintfFinalCommitment("invalid llmqType=%d\n", llmqType);
         return false;
     }
-    const auto& params = Params().GetConsensus().llmqs.at((Consensus::LLMQType)llmqType);
+    const auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at((Consensus::LLMQType)llmqType) : Params().GetConsensus().llmqs_old.at((Consensus::LLMQType)llmqType);
 
     if (!IsNull() || !VerifySizes(params)) {
         return false;
@@ -159,6 +172,12 @@ void CFinalCommitmentTxPayload::ToJson(UniValue& obj) const
 
 bool CheckLLMQCommitment(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+    
     CFinalCommitmentTxPayload qcTx;
     if (!GetTxPayload(tx, qcTx)) {
         return state.DoS(100, false, REJECT_INVALID, "bad-qc-payload");
@@ -183,10 +202,11 @@ bool CheckLLMQCommitment(const CTransaction& tx, const CBlockIndex* pindexPrev, 
         return state.DoS(100, false, REJECT_INVALID, "bad-qc-quorum-hash");
     }
 
-    if (!Params().GetConsensus().llmqs.count((Consensus::LLMQType)qcTx.commitment.llmqType)) {
+    if ((fDIP0008Active && !Params().GetConsensus().llmqs.count((Consensus::LLMQType)qcTx.commitment.llmqType)) || 
+    (!fDIP0008Active && !Params().GetConsensus().llmqs_old.count((Consensus::LLMQType)qcTx.commitment.llmqType))) {
         return state.DoS(100, false, REJECT_INVALID, "bad-qc-type");
     }
-    const auto& params = Params().GetConsensus().llmqs.at((Consensus::LLMQType)qcTx.commitment.llmqType);
+    const auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at((Consensus::LLMQType)qcTx.commitment.llmqType) : Params().GetConsensus().llmqs_old.at((Consensus::LLMQType)qcTx.commitment.llmqType);
 
     if (qcTx.commitment.IsNull()) {
         if (!qcTx.commitment.VerifyNull()) {
