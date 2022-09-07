@@ -454,8 +454,8 @@ public:
         consensus.GuardianHeight = 100;
         consensus.DIP0003Height = 30; // DIP0003 activated at block 30
         consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 20
-        consensus.nPowTargetTimespan = 5 * 60; // Sparks: 5 minutes, 10 blocks
-        consensus.nPowTargetSpacing = 0.5 * 60; // Sparks: 30 seconds
+        consensus.nPowTargetTimespan = 5 * 60; // Sparks: 5 minutes, 50 blocks
+        consensus.nPowTargetSpacing = 0.1 * 60; // Sparks: 30 seconds
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = false;
         consensus.nPowKGWHeight = 100; // nPowKGWHeight >= nPowDGWHeight means "no KGW"
