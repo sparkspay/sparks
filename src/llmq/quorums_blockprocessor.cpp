@@ -353,7 +353,13 @@ bool CQuorumBlockProcessor::GetCommitmentsFromBlock(const CBlock& block, const C
 
 bool CQuorumBlockProcessor::IsMiningPhase(Consensus::LLMQType llmqType, int nHeight)
 {
-    const auto& params = Params().GetConsensus().llmqs.at(llmqType);
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+
+    const auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at(llmqType) : Params().GetConsensus().llmqs_old.at(llmqType);
     int phaseIndex = nHeight % params.dkgInterval;
     if (phaseIndex >= params.dkgMiningWindowStart && phaseIndex <= params.dkgMiningWindowEnd) {
         return true;
@@ -380,7 +386,13 @@ uint256 CQuorumBlockProcessor::GetQuorumBlockHash(Consensus::LLMQType llmqType, 
 {
     AssertLockHeld(cs_main);
 
-    auto& params = Params().GetConsensus().llmqs.at(llmqType);
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+
+    auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at(llmqType) : Params().GetConsensus().llmqs_old.at(llmqType);
 
     int quorumStartHeight = nHeight - (nHeight % params.dkgInterval);
     uint256 quorumBlockHash;
@@ -533,6 +545,12 @@ bool CQuorumBlockProcessor::GetMinableCommitment(Consensus::LLMQType llmqType, i
 {
     AssertLockHeld(cs_main);
 
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+
     if (!IsCommitmentRequired(llmqType, nHeight)) {
         // no commitment required
         return false;
@@ -549,7 +567,8 @@ bool CQuorumBlockProcessor::GetMinableCommitment(Consensus::LLMQType llmqType, i
     auto it = minableCommitmentsByQuorum.find(k);
     if (it == minableCommitmentsByQuorum.end()) {
         // null commitment required
-        ret = CFinalCommitment(Params().GetConsensus().llmqs.at(llmqType), quorumHash);
+        auto llmq = fDIP0008Active ? Params().GetConsensus().llmqs.at(llmqType) : Params().GetConsensus().llmqs_old.at(llmqType);
+        ret = CFinalCommitment(llmq, quorumHash);
         return true;
     }
 
