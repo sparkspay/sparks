@@ -375,8 +375,8 @@ public:
         consensus.DIP0001Height = 100;
         consensus.GuardianHeight = 100;
         consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 20
-        consensus.nPowTargetTimespan = 5 * 60; // Sparks: 5 minutes, 10 blocks
-        consensus.nPowTargetSpacing = 0.5 * 60; // Sparks: 30 seconds
+        consensus.nPowTargetTimespan = 5 * 60; // Sparks: 5 minutes, 50 blocks
+        consensus.nPowTargetSpacing = 0.1 * 60; // Sparks: 30 seconds
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = false;
         consensus.nPowKGWHeight = 100; // nPowKGWHeight >= nPowDGWHeight means "no KGW"
@@ -411,8 +411,8 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 4;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nStartTime = 1638786047; // Dec 6th, 2021
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 1670302247; // Dec 6th, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nWindowSize = 100;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nThreshold = 50; // 50% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nWindowSize = 10;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nThreshold = 5; // 50% of 10
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000000000000000100010");
