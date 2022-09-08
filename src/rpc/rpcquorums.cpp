@@ -132,7 +132,13 @@ UniValue quorum_info(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid LLMQ type");
     }
 
-    const auto& llmqParams = Params().GetConsensus().llmqs.at(llmqType);
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+
+    const auto& llmqParams = fDIP0008Active ? Params().GetConsensus().llmqs.at(llmqType) : Params().GetConsensus().llmqs_old.at(llmqType);
 
     uint256 quorumHash = ParseHashV(request.params[2], "quorumHash");
     bool includeSkShare = false;
@@ -182,8 +188,15 @@ UniValue quorum_dkgstatus(const JSONRPCRequest& request)
     LOCK(cs_main);
     int tipHeight = chainActive.Height();
 
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+
     UniValue minableCommitments(UniValue::VOBJ);
-    for (const auto& p : Params().GetConsensus().llmqs) {
+    auto llmqs = fDIP0008Active ? Params().GetConsensus().llmqs : Params().GetConsensus().llmqs_old;
+    for (const auto& p : llmqs) {
         auto& params = p.second;
         llmq::CFinalCommitment fqc;
         if (llmq::quorumBlockProcessor->GetMinableCommitment(params.type, tipHeight, fqc)) {
@@ -239,7 +252,13 @@ UniValue quorum_memberof(const JSONRPCRequest& request)
 
     UniValue result(UniValue::VARR);
 
-    for (const auto& p : Params().GetConsensus().llmqs) {
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+    auto llmqs = fDIP0008Active ? Params().GetConsensus().llmqs : Params().GetConsensus().llmqs_old;
+    for (const auto& p : llmqs) {
         auto& params = p.second;
         size_t count = params.signingActiveQuorumCount;
         if (scanQuorumsCount != -1) {

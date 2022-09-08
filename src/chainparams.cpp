@@ -299,8 +299,8 @@ public:
 
         // Deployment of DIP0008
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].bit = 5;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nStartTime = 1659312000; // Aug 1st, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nTimeout = 1690848000; // Aug 1st, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nStartTime = 1664582400; // Oct 1st, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nTimeout = 1696118400; // Aug 1st, 2023
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nThreshold = 70; // 70% of 100
 
