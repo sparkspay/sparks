@@ -436,7 +436,6 @@ public:
             0.1         // * estimated number of transactions per second after that timestamp
         };
     }
-
 };
 static CMainParams mainParams;
 
@@ -611,7 +610,6 @@ public:
         };
 
     }
-
 };
 static CTestNetParams testNetParams;
 
@@ -738,8 +736,8 @@ public:
         consensus.llmqs[Consensus::LLMQ_15_60] = llmq15_60;
         consensus.llmqs[Consensus::LLMQ_25_60] = llmq25_60;
         consensus.llmqs[Consensus::LLMQ_25_80] = llmq25_80;
-        consensus.llmqChainLocks = Consensus::LLMQ_50_60;
-        consensus.llmqForInstantSend = Consensus::LLMQ_50_60;
+        consensus.llmqChainLocks = Consensus::LLMQ_15_60;
+        consensus.llmqForInstantSend = Consensus::LLMQ_15_60;
 
         fMiningRequiresPeers = true;
         fDefaultConsistencyChecks = false;
