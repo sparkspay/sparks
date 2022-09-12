@@ -181,12 +181,30 @@ static Consensus::LLMQParams llmq400_85 = {
         .keepOldConnections = 5,
 };
 
-static Consensus::LLMQParams llmq100_60 = {
-        .type = Consensus::LLMQ_100_60,
-        .name = "llmq_100_60",
-        .size = 100,
-        .minSize = 80,
-        .threshold = 60,
+static Consensus::LLMQParams llmq15_60 = {
+        .type = Consensus::LLMQ_15_60,
+        .name = "llmq_15_60",
+        .size = 15,
+        .minSize = 12,
+        .threshold = 9,
+
+        .dkgInterval = 24, // one DKG per hour
+        .dkgPhaseBlocks = 2,
+        .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
+        .dkgMiningWindowEnd = 18,
+        .dkgBadVotesThreshold = 40,
+
+        .signingActiveQuorumCount = 5, // 5 hours worth of LLMQs
+
+        .keepOldConnections = 25,
+};
+
+static Consensus::LLMQParams llmq25_60 = {
+        .type = Consensus::LLMQ_25_60,
+        .name = "llmq_25_60",
+        .size = 25,
+        .minSize = 20,
+        .threshold = 15,
 
         .dkgInterval = 24 * 12, // one DKG every 12 hours
         .dkgPhaseBlocks = 4,
@@ -200,12 +218,12 @@ static Consensus::LLMQParams llmq100_60 = {
 };
 
 // Used for deployment and min-proto-version signalling, so it needs a higher threshold
-static Consensus::LLMQParams llmq100_85 = {
-        .type = Consensus::LLMQ_100_85,
-        .name = "llmq_100_85",
-        .size = 100,
-        .minSize = 95,
-        .threshold = 85,
+static Consensus::LLMQParams llmq25_80 = {
+        .type = Consensus::LLMQ_25_80,
+        .name = "llmq_25_80",
+        .size = 25,
+        .minSize = 23,
+        .threshold = 20,
 
         .dkgInterval = 24 * 24, // one DKG every 24 hours
         .dkgPhaseBlocks = 4,
@@ -299,10 +317,10 @@ public:
 
         // Deployment of DIP0008
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].bit = 5;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nStartTime = 1664582400; // Oct 1st, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nTimeout = 1696118400; // Aug 1st, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nStartTime = 1663632000; // Sep 20th, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nTimeout = 1695168000; // Sep 20th, 2023
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nWindowSize = 100;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nThreshold = 70; // 70% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nThreshold = 60; // 60% of 100
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000eee93cb0b1f4be");//269664
@@ -365,11 +383,11 @@ public:
         consensus.llmqs_old[Consensus::LLMQ_50_60] = llmq50_60;
         consensus.llmqs_old[Consensus::LLMQ_400_60] = llmq400_60;
         consensus.llmqs_old[Consensus::LLMQ_400_85] = llmq400_85;
-        consensus.llmqs[Consensus::LLMQ_50_60] = llmq50_60;
-        consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
-        consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
-        consensus.llmqChainLocks = Consensus::LLMQ_100_60;
-        consensus.llmqForInstantSend = Consensus::LLMQ_50_60;
+        consensus.llmqs[Consensus::LLMQ_15_60] = llmq15_60;
+        consensus.llmqs[Consensus::LLMQ_25_60] = llmq25_60;
+        consensus.llmqs[Consensus::LLMQ_25_80] = llmq25_80;
+        consensus.llmqChainLocks = Consensus::LLMQ_25_60;
+        consensus.llmqForInstantSend = Consensus::LLMQ_15_60;
 
         fMiningRequiresPeers = true;
         fDefaultConsistencyChecks = false;
@@ -558,9 +576,9 @@ public:
         consensus.llmqs_old[Consensus::LLMQ_50_60] = llmq50_60;
         consensus.llmqs_old[Consensus::LLMQ_400_60] = llmq400_60;
         consensus.llmqs_old[Consensus::LLMQ_400_85] = llmq400_85;
-        consensus.llmqs[Consensus::LLMQ_5_60] = llmq5_60;
-        consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
-        consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
+        consensus.llmqs[Consensus::LLMQ_15_60] = llmq15_60;
+        consensus.llmqs[Consensus::LLMQ_25_60] = llmq25_60;
+        consensus.llmqs[Consensus::LLMQ_25_80] = llmq25_80;
         consensus.llmqChainLocks = Consensus::LLMQ_5_60;
         consensus.llmqForInstantSend = Consensus::LLMQ_5_60;
 
@@ -717,9 +735,9 @@ public:
         consensus.llmqs_old[Consensus::LLMQ_50_60] = llmq50_60;
         consensus.llmqs_old[Consensus::LLMQ_400_60] = llmq400_60;
         consensus.llmqs_old[Consensus::LLMQ_400_85] = llmq400_85;
-        consensus.llmqs[Consensus::LLMQ_50_60] = llmq100_60;
-        consensus.llmqs[Consensus::LLMQ_100_60] = llmq100_60;
-        consensus.llmqs[Consensus::LLMQ_100_85] = llmq100_85;
+        consensus.llmqs[Consensus::LLMQ_15_60] = llmq15_60;
+        consensus.llmqs[Consensus::LLMQ_25_60] = llmq25_60;
+        consensus.llmqs[Consensus::LLMQ_25_80] = llmq25_80;
         consensus.llmqChainLocks = Consensus::LLMQ_50_60;
         consensus.llmqForInstantSend = Consensus::LLMQ_50_60;
 

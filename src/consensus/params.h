@@ -47,8 +47,9 @@ enum LLMQType : uint8_t
     LLMQ_50_60 = 1, // 50 members, 30 (60%) threshold, one per hour
     LLMQ_400_60 = 2, // 400 members, 240 (60%) threshold, one every 12 hours
     LLMQ_400_85 = 3, // 400 members, 340 (85%) threshold, one every 24 hours
-    LLMQ_100_60 = 4, // 100 members, 60 (60%) threshold, one every 12 hours
-    LLMQ_100_85 = 5, // 100 members, 85 (85%) threshold, one every 24 hours
+    LLMQ_15_60 = 4, // 15 members, 9 (60%) threshold, one per hour
+    LLMQ_25_60 = 5, // 25 members, 15 (60%) threshold, one every 12 hours
+    LLMQ_25_80 = 6, // 25 members, 20 (80%) threshold, one every 24 hours
 
     // for testing only
     LLMQ_5_60 = 100, // 6 members, 3 (66.6%) threshold, one per hour
