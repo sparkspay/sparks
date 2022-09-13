@@ -52,6 +52,6 @@ static const int LLMQS_PROTO_VERSION = 70215;
 
 //! introduction of SENDDSQUEUE
 //! TODO we can remove this in 0.15.0.0
-static const int SENDDSQUEUE_PROTO_VERSION = 70214;
+static const int SENDDSQUEUE_PROTO_VERSION = 70215;
 
 #endif // BITCOIN_VERSION_H

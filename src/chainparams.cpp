@@ -272,8 +272,8 @@ public:
         consensus.DIP0001Height = 119000;
         consensus.GuardianHeight = 316000; // we need to keep the GuardianHeight for block Subsidy halving changes after this height, otherwise blockchain will not sync
         consensus.DIP0003Height = 919000;
-        consensus.DIP0003EnforcementHeight = 930630;
-        consensus.DIP0003EnforcementHash = uint256S("0000000021d5295bed99efac09f636c8b96b06fd0ff24fc4c9bfe6f730864215");
+        consensus.DIP0003EnforcementHeight = 919512;
+        consensus.DIP0003EnforcementHash = uint256S("00000002e0b0ab0b9026a213554fc4dfd34fb3f46acba6d3d4417a8a09792d81");
         consensus.powLimit = uint256S("00000fffff000000000000000000000000000000000000000000000000000000");
 
         consensus.nPowTargetTimespan = 60 * 60; // Sparks: 1 hour, 24 blocks
