@@ -62,7 +62,7 @@ void CQuorumBlockProcessor::ProcessMessage(CNode* pfrom, const std::string& strC
             return;
         } 
         auto type = (Consensus::LLMQType)qc.llmqType;
-        const auto& params = Params().GetConsensus().llmqs.at(type);
+        const auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at(type) : Params().GetConsensus().llmqs_old.at(type);
 
         // Verify that quorumHash is part of the active chain and that it's the first block in the DKG interval
         const CBlockIndex* pquorumIndex;
@@ -476,9 +476,15 @@ std::vector<const CBlockIndex*> CQuorumBlockProcessor::GetMinedCommitmentsUntilB
 
 std::map<Consensus::LLMQType, std::vector<const CBlockIndex*>> CQuorumBlockProcessor::GetMinedAndActiveCommitmentsUntilBlock(const CBlockIndex* pindex)
 {
-    std::map<Consensus::LLMQType, std::vector<const CBlockIndex*>> ret;
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
 
-    for (const auto& p : Params().GetConsensus().llmqs) {
+    std::map<Consensus::LLMQType, std::vector<const CBlockIndex*>> ret;
+    auto llmqs = fDIP0008Active ? Params().GetConsensus().llmqs : Params().GetConsensus().llmqs_old;
+    for (const auto& p : llmqs) {
         auto& v = ret[p.second.type];
         v.reserve(p.second.signingActiveQuorumCount);
         auto commitments = GetMinedCommitmentsUntilBlock(p.second.type, pindex, p.second.signingActiveQuorumCount);

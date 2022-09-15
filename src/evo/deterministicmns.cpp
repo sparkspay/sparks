@@ -617,6 +617,12 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
 {
     AssertLockHeld(cs);
 
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+
     int nHeight = pindexPrev->nHeight + 1;
 
     CDeterministicMNList oldList = GetListForBlock(pindexPrev);
@@ -808,7 +814,7 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
                 assert(false); // this should have been handled already
             }
             if (!qc.commitment.IsNull()) {
-                const auto& params = Params().GetConsensus().llmqs.at((Consensus::LLMQType)qc.commitment.llmqType);
+                const auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at((Consensus::LLMQType)qc.commitment.llmqType) : Params().GetConsensus().llmqs_old.at((Consensus::LLMQType)qc.commitment.llmqType);
                 int quorumHeight = qc.nHeight - (qc.nHeight % params.dkgInterval);
                 auto quorumIndex = pindexPrev->GetAncestor(quorumHeight);
                 if (!quorumIndex || quorumIndex->GetBlockHash() != qc.commitment.quorumHash) {

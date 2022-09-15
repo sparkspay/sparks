@@ -169,14 +169,26 @@ void CQuorumManager::UpdatedBlockTip(const CBlockIndex* pindexNew, bool fInitial
         return;
     }
 
-    for (auto& p : Params().GetConsensus().llmqs) {
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+    auto llmqs = fDIP0008Active ? Params().GetConsensus().llmqs : Params().GetConsensus().llmqs_old;
+    for (auto& p : llmqs) {
         EnsureQuorumConnections(p.first, pindexNew);
     }
 }
 
 void CQuorumManager::EnsureQuorumConnections(Consensus::LLMQType llmqType, const CBlockIndex* pindexNew)
 {
-    const auto& params = Params().GetConsensus().llmqs.at(llmqType);
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+
+    const auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at(llmqType) : Params().GetConsensus().llmqs_old.at(llmqType);
 
     auto myProTxHash = activeMasternodeInfo.proTxHash;
     auto lastQuorums = ScanQuorums(llmqType, pindexNew, (size_t)params.keepOldConnections);
@@ -406,7 +418,13 @@ CQuorumCPtr CQuorumManager::GetQuorum(Consensus::LLMQType llmqType, const CBlock
         return nullptr;
     }
 
-    auto& params = Params().GetConsensus().llmqs.at(llmqType);
+    bool fDIP0008Active;
+    {
+        LOCK(cs_main);
+        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
+    }
+
+    auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at(llmqType) : Params().GetConsensus().llmqs_old.at(llmqType);
 
     auto quorum = std::make_shared<CQuorum>(params, blsWorker);
 
