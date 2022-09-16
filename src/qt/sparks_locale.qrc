@@ -9,12 +9,15 @@
         <file alias="fr">locale/sparks_fr.qm</file>
         <file alias="it">locale/sparks_it.qm</file>
         <file alias="ja">locale/sparks_ja.qm</file>
+        <file alias="ko">locale/sparks_ko.qm</file>
         <file alias="nl">locale/sparks_nl.qm</file>
         <file alias="pl">locale/sparks_pl.qm</file>
         <file alias="pt">locale/sparks_pt.qm</file>
         <file alias="ru">locale/sparks_ru.qm</file>
         <file alias="sk">locale/sparks_sk.qm</file>
         <file alias="sv">locale/sparks_sv.qm</file>
+        <file alias="th">locale/sparks_th.qm</file>
+        <file alias="tr">locale/sparks_tr.qm</file>
         <file alias="vi">locale/sparks_vi.qm</file>
         <file alias="zh_CN">locale/sparks_zh_CN.qm</file>
         <file alias="zh_TW">locale/sparks_zh_TW.qm</file>

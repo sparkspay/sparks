@@ -2,8 +2,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DASH_CRYPTO_BLS_WORKER_H
-#define DASH_CRYPTO_BLS_WORKER_H
+#ifndef SPARKS_CRYPTO_BLS_WORKER_H
+#define SPARKS_CRYPTO_BLS_WORKER_H
 
 #include "bls.h"
 
@@ -53,6 +53,7 @@ public:
     CBLSWorker();
     ~CBLSWorker();
 
+    void Start();
     void Stop();
 
     bool GenerateContributions(int threshold, const BLSIdVector& ids, BLSVerificationVectorPtr& vvecRet, BLSSecretKeyVector& skShares);
@@ -201,4 +202,4 @@ private:
     }
 };
 
-#endif //DASH_CRYPTO_BLS_WORKER_H
+#endif //SPARKS_CRYPTO_BLS_WORKER_H

@@ -18,6 +18,7 @@ QT_TS = \
   qt/locale/sparks_fr.ts \
   qt/locale/sparks_it.ts \
   qt/locale/sparks_ja.ts \
+  qt/locale/sparks_ko.qm \
   qt/locale/sparks_nl.ts \
   qt/locale/sparks_pl.ts \
   qt/locale/sparks_pt.ts \
@@ -25,6 +26,8 @@ QT_TS = \
   qt/locale/sparks_ru.ts \
   qt/locale/sparks_sk.ts \
   qt/locale/sparks_sv.ts \
+  qt/locale/sparks_th.qm \
+  qt/locale/sparks_tr.qm \
   qt/locale/sparks_th.ts \
   qt/locale/sparks_tr.ts \
   qt/locale/sparks_vi.ts \
@@ -103,7 +106,8 @@ QT_MOC_CPP = \
 
 BITCOIN_MM = \
   qt/macdockiconhandler.mm \
-  qt/macnotificationhandler.mm
+  qt/macnotificationhandler.mm \
+  qt/macos_appnap.mm
 
 QT_MOC = \
   qt/sparks.moc \
@@ -140,6 +144,7 @@ BITCOIN_QT_H = \
   qt/intro.h \
   qt/macdockiconhandler.h \
   qt/macnotificationhandler.h \
+  qt/macos_appnap.h \
   qt/modaloverlay.h \
   qt/masternodelist.h \
   qt/networkstyle.h \
@@ -712,9 +717,9 @@ if ENABLE_ZMQ
 qt_sparks_qt_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
 endif
 qt_sparks_qt_LDADD += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_CONSENSUS) $(LIBBITCOIN_CRYPTO) $(LIBUNIVALUE) $(LIBLEVELDB) $(LIBMEMENV) \
-  $(BOOST_LIBS) $(QT_LIBS) $(QT_DBUS_LIBS) $(QR_LIBS) $(PROTOBUF_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(LIBSECP256K1) \
+  $(BACKTRACE_LIB) $(BOOST_LIBS) $(QT_LIBS) $(QT_DBUS_LIBS) $(QR_LIBS) $(PROTOBUF_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(LIBSECP256K1) \
   $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(BLS_LIBS)
-qt_sparks_qt_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+qt_sparks_qt_LDFLAGS = $(LDFLAGS_WRAP_EXCEPTIONS) $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 qt_sparks_qt_LIBTOOLFLAGS = --tag CXX
 
 #locale/foo.ts -> locale/foo.qm

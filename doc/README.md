@@ -1,4 +1,4 @@
-Sparks Core 0.13.0
+Sparks Core 0.14.0
 =====================
 
 This is the official reference wallet for Sparks digital currency and comprises the backbone of the Sparks peer-to-peer network. You can [download Sparks Core](https://www.sparkspay.io/downloads/) or [build it yourself](#building) using the guides below.

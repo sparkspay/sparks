@@ -45,7 +45,7 @@ void RPCNestedTests::rpcNestedTests()
     RegisterAllCoreRPCCommands(tableRPC);
     tableRPC.appendCommand("rpcNestedTest", &vRPCCommands[0]);
     ClearDatadirCache();
-    std::string path = QDir::tempPath().toStdString() + "/" + strprintf("test_dash_qt_%lu_%i", (unsigned long)GetTime(), (int)(GetRand(100000)));
+    std::string path = QDir::tempPath().toStdString() + "/" + strprintf("test_sparks_qt_%lu_%i", (unsigned long)GetTime(), (int)(GetRand(100000)));
     QDir dir(QString::fromStdString(path));
     dir.mkpath(".");
     ForceSetArg("-datadir", path);
@@ -54,8 +54,7 @@ void RPCNestedTests::rpcNestedTests()
     pblocktree = new CBlockTreeDB(1 << 20, true);
     pcoinsdbview = new CCoinsViewDB(1 << 23, true);
     deterministicMNManager = new CDeterministicMNManager(*evoDb);
-
-    llmq::InitLLMQSystem(*evoDb);
+    llmq::InitLLMQSystem(*evoDb, nullptr, true);
 
     pcoinsTip = new CCoinsViewCache(pcoinsdbview);
     InitBlockIndex(chainparams);
@@ -157,8 +156,11 @@ void RPCNestedTests::rpcNestedTests()
 #endif
 
     delete pcoinsTip;
+    llmq::DestroyLLMQSystem();
+    delete deterministicMNManager;
     delete pcoinsdbview;
     delete pblocktree;
+    delete evoDb;
 
     boost::filesystem::remove_all(boost::filesystem::path(path));
 }

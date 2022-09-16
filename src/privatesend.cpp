@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 The Dash Core developers
+// Copyright (c) 2014-2019 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,13 +8,15 @@
 #include "consensus/validation.h"
 #include "masternode-payments.h"
 #include "masternode-sync.h"
-#include "masternodeman.h"
 #include "messagesigner.h"
 #include "netmessagemaker.h"
 #include "script/sign.h"
 #include "txmempool.h"
 #include "util.h"
 #include "utilmoneystr.h"
+#include "validation.h"
+
+#include "llmq/quorums_instantsend.h"
 
 #include <string>
 
@@ -36,91 +38,33 @@ bool CPrivateSendEntry::AddScriptSig(const CTxIn& txin)
 
 uint256 CPrivateSendQueue::GetSignatureHash() const
 {
-    // Remove after migration to 70211
-    {
-        masternode_info_t mnInfo;
-        mnodeman.GetMasternodeInfo(masternodeOutpoint, mnInfo);
-        return SerializeHash(*this, SER_GETHASH, mnInfo.nProtocolVersion);
-    }
-    // END remove, replace with the code below
-    // return SerializeHash(*this);
+    return SerializeHash(*this);
 }
 
 bool CPrivateSendQueue::Sign()
 {
     if (!fMasternodeMode) return false;
 
-    std::string strError = "";
 
-    if (deterministicMNManager->IsDeterministicMNsSporkActive()) {
-        uint256 hash = GetSignatureHash();
-        CBLSSignature sig = activeMasternodeInfo.blsKeyOperator->Sign(hash);
-        if (!sig.IsValid()) {
-            return false;
-        }
-        sig.GetBuf(vchSig);
-    } else if (sporkManager.IsSporkActive(SPORK_6_NEW_SIGS)) {
-        uint256 hash = GetSignatureHash();
-
-        if (!CHashSigner::SignHash(hash, activeMasternodeInfo.legacyKeyOperator, vchSig)) {
-            LogPrintf("CPrivateSendQueue::Sign -- SignHash() failed\n");
-            return false;
-        }
-
-        if (!CHashSigner::VerifyHash(hash, activeMasternodeInfo.legacyKeyIDOperator, vchSig, strError)) {
-            LogPrintf("CPrivateSendQueue::Sign -- VerifyHash() failed, error: %s\n", strError);
-            return false;
-        }
-    } else {
-        std::string strMessage = CTxIn(masternodeOutpoint).ToString() +
-                                 std::to_string(nDenom) +
-                                 std::to_string(nTime) +
-                                 std::to_string(fReady);
-
-        if (!CMessageSigner::SignMessage(strMessage, vchSig, activeMasternodeInfo.legacyKeyOperator)) {
-            LogPrintf("CPrivateSendQueue::Sign -- SignMessage() failed, %s\n", ToString());
-            return false;
-        }
-
-        if (!CMessageSigner::VerifyMessage(activeMasternodeInfo.legacyKeyIDOperator, vchSig, strMessage, strError)) {
-            LogPrintf("CPrivateSendQueue::Sign -- VerifyMessage() failed, error: %s\n", strError);
-            return false;
-        }
+    uint256 hash = GetSignatureHash();
+    CBLSSignature sig = activeMasternodeInfo.blsKeyOperator->Sign(hash);
+    if (!sig.IsValid()) {
+        return false;
     }
+    sig.GetBuf(vchSig);
 
     return true;
 }
 
-bool CPrivateSendQueue::CheckSignature(const CKeyID& keyIDOperator, const CBLSPublicKey& blsPubKey) const
+bool CPrivateSendQueue::CheckSignature(const CBLSPublicKey& blsPubKey) const
 {
-    std::string strError = "";
-    if (deterministicMNManager->IsDeterministicMNsSporkActive()) {
-        uint256 hash = GetSignatureHash();
+    uint256 hash = GetSignatureHash();
 
-        CBLSSignature sig;
-        sig.SetBuf(vchSig);
-        if (!sig.IsValid() || !sig.VerifyInsecure(blsPubKey, hash)) {
-            LogPrintf("CTxLockVote::CheckSignature -- VerifyInsecure() failed\n");
-            return false;
-        }
-    } else if (sporkManager.IsSporkActive(SPORK_6_NEW_SIGS)) {
-        uint256 hash = GetSignatureHash();
-
-        if (!CHashSigner::VerifyHash(hash, keyIDOperator, vchSig, strError)) {
-            // we don't care about queues with old signature format
-            LogPrintf("CPrivateSendQueue::CheckSignature -- VerifyHash() failed, error: %s\n", strError);
-            return false;
-        }
-    } else {
-        std::string strMessage = CTxIn(masternodeOutpoint).ToString() +
-                                 std::to_string(nDenom) +
-                                 std::to_string(nTime) +
-                                 std::to_string(fReady);
-
-        if (!CMessageSigner::VerifyMessage(keyIDOperator, vchSig, strMessage, strError)) {
-            LogPrintf("CPrivateSendQueue::CheckSignature -- Got bad Masternode queue signature: %s; error: %s\n", ToString(), strError);
-            return false;
-        }
+    CBLSSignature sig;
+    sig.SetBuf(vchSig);
+    if (!sig.IsValid() || !sig.VerifyInsecure(blsPubKey, hash)) {
+        LogPrintf("CTxLockVote::CheckSignature -- VerifyInsecure() failed\n");
+        return false;
     }
 
     return true;
@@ -130,10 +74,15 @@ bool CPrivateSendQueue::Relay(CConnman& connman)
 {
     connman.ForEachNode([&connman, this](CNode* pnode) {
         CNetMsgMaker msgMaker(pnode->GetSendVersion());
-        if (pnode->nVersion >= MIN_PRIVATESEND_PEER_PROTO_VERSION)
+        if (pnode->nVersion >= MIN_PRIVATESEND_PEER_PROTO_VERSION && pnode->fSendDSQueue)
             connman.PushMessage(pnode, msgMaker.Make(NetMsgType::DSQUEUE, (*this)));
     });
     return true;
+}
+
+bool CPrivateSendQueue::IsTimeOutOfBounds() const
+{
+    return GetAdjustedTime() - nTime > PRIVATESEND_QUEUE_TIMEOUT || nTime - GetAdjustedTime() > PRIVATESEND_QUEUE_TIMEOUT;
 }
 
 uint256 CPrivateSendBroadcastTx::GetSignatureHash() const
@@ -145,73 +94,28 @@ bool CPrivateSendBroadcastTx::Sign()
 {
     if (!fMasternodeMode) return false;
 
-    std::string strError = "";
 
-    if (deterministicMNManager->IsDeterministicMNsSporkActive()) {
-        uint256 hash = GetSignatureHash();
+    uint256 hash = GetSignatureHash();
 
-        CBLSSignature sig = activeMasternodeInfo.blsKeyOperator->Sign(hash);
-        if (!sig.IsValid()) {
-            return false;
-        }
-        sig.GetBuf(vchSig);
-    } else if (sporkManager.IsSporkActive(SPORK_6_NEW_SIGS)) {
-        uint256 hash = GetSignatureHash();
-
-        if (!CHashSigner::SignHash(hash, activeMasternodeInfo.legacyKeyOperator, vchSig)) {
-            LogPrintf("CPrivateSendBroadcastTx::Sign -- SignHash() failed\n");
-            return false;
-        }
-
-        if (!CHashSigner::VerifyHash(hash, activeMasternodeInfo.legacyKeyIDOperator, vchSig, strError)) {
-            LogPrintf("CPrivateSendBroadcastTx::Sign -- VerifyHash() failed, error: %s\n", strError);
-            return false;
-        }
-    } else {
-        std::string strMessage = tx->GetHash().ToString() + std::to_string(sigTime);
-
-        if (!CMessageSigner::SignMessage(strMessage, vchSig, activeMasternodeInfo.legacyKeyOperator)) {
-            LogPrintf("CPrivateSendBroadcastTx::Sign -- SignMessage() failed\n");
-            return false;
-        }
-
-        if (!CMessageSigner::VerifyMessage(activeMasternodeInfo.legacyKeyIDOperator, vchSig, strMessage, strError)) {
-            LogPrintf("CPrivateSendBroadcastTx::Sign -- VerifyMessage() failed, error: %s\n", strError);
-            return false;
-        }
+    CBLSSignature sig = activeMasternodeInfo.blsKeyOperator->Sign(hash);
+    if (!sig.IsValid()) {
+        return false;
     }
+    sig.GetBuf(vchSig);
 
     return true;
 }
 
-bool CPrivateSendBroadcastTx::CheckSignature(const CKeyID& keyIDOperator, const CBLSPublicKey& blsPubKey) const
+bool CPrivateSendBroadcastTx::CheckSignature(const CBLSPublicKey& blsPubKey) const
 {
-    std::string strError = "";
 
-    if (deterministicMNManager->IsDeterministicMNsSporkActive()) {
-        uint256 hash = GetSignatureHash();
+    uint256 hash = GetSignatureHash();
 
-        CBLSSignature sig;
-        sig.SetBuf(vchSig);
-        if (!sig.IsValid() || !sig.VerifyInsecure(blsPubKey, hash)) {
-            LogPrintf("CTxLockVote::CheckSignature -- VerifyInsecure() failed\n");
-            return false;
-        }
-    } else if (sporkManager.IsSporkActive(SPORK_6_NEW_SIGS)) {
-        uint256 hash = GetSignatureHash();
-
-        if (!CHashSigner::VerifyHash(hash, keyIDOperator, vchSig, strError)) {
-            // we don't care about dstxes with old signature format
-            LogPrintf("CPrivateSendBroadcastTx::CheckSignature -- VerifyHash() failed, error: %s\n", strError);
-            return false;
-        }
-    } else {
-        std::string strMessage = tx->GetHash().ToString() + std::to_string(sigTime);
-
-        if (!CMessageSigner::VerifyMessage(keyIDOperator, vchSig, strMessage, strError)) {
-            LogPrintf("CPrivateSendBroadcastTx::CheckSignature -- Got bad dstx signature, error: %s\n", strError);
-            return false;
-        }
+    CBLSSignature sig;
+    sig.SetBuf(vchSig);
+    if (!sig.IsValid() || !sig.VerifyInsecure(blsPubKey, hash)) {
+        LogPrintf("CTxLockVote::CheckSignature -- VerifyInsecure() failed\n");
+        return false;
     }
 
     return true;
@@ -250,8 +154,8 @@ void CPrivateSendBaseManager::CheckQueue()
     // check mixing queue objects for timeouts
     std::vector<CPrivateSendQueue>::iterator it = vecPrivateSendQueue.begin();
     while (it != vecPrivateSendQueue.end()) {
-        if ((*it).IsExpired()) {
-            LogPrint("privatesend", "CPrivateSendBaseManager::%s -- Removing expired queue (%s)\n", __func__, (*it).ToString());
+        if ((*it).IsTimeOutOfBounds()) {
+            LogPrint("privatesend", "CPrivateSendBaseManager::%s -- Removing a queue (%s)\n", __func__, (*it).ToString());
             it = vecPrivateSendQueue.erase(it);
         } else
             ++it;
@@ -265,7 +169,7 @@ bool CPrivateSendBaseManager::GetQueueItemAndTry(CPrivateSendQueue& dsqRet)
 
     for (auto& dsq : vecPrivateSendQueue) {
         // only try each queue once
-        if (dsq.fTried || dsq.IsExpired()) continue;
+        if (dsq.fTried || dsq.IsTimeOutOfBounds()) continue;
         dsq.fTried = true;
         dsqRet = dsq;
         return true;
@@ -341,11 +245,19 @@ bool CPrivateSend::IsCollateralValid(const CTransaction& txCollateral)
 
     for (const auto& txin : txCollateral.vin) {
         Coin coin;
-        if (!GetUTXOCoin(txin.prevout, coin)) {
+        auto mempoolTx = mempool.get(txin.prevout.hash);
+        if (mempoolTx != nullptr) {
+            if (mempool.isSpent(txin.prevout) || !llmq::quorumInstantSendManager->IsLocked(txin.prevout.hash)) {
+                LogPrint("privatesend", "CPrivateSend::IsCollateralValid -- spent or non-locked mempool input! txin=%s\n", txin.ToString());
+                return false;
+            }
+            nValueIn += mempoolTx->vout[txin.prevout.n].nValue;
+        } else if (GetUTXOCoin(txin.prevout, coin)) {
+            nValueIn += coin.out.nValue;
+        } else {
             LogPrint("privatesend", "CPrivateSend::IsCollateralValid -- Unknown inputs in collateral transaction, txCollateral=%s", txCollateral.ToString());
             return false;
         }
-        nValueIn += coin.out.nValue;
     }
 
     //collateral transactions are required to pay out a small fee to the miners
@@ -572,7 +484,7 @@ void CPrivateSend::CheckDSTXes(int nHeight)
 
 void CPrivateSend::UpdatedBlockTip(const CBlockIndex* pindex)
 {
-    if (pindex && !fLiteMode && masternodeSync.IsMasternodeListSynced()) {
+    if (pindex && !fLiteMode && masternodeSync.IsBlockchainSynced()) {
         CheckDSTXes(pindex->nHeight);
     }
 }

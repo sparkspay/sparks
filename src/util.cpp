@@ -16,6 +16,7 @@
 #include "ctpl.h"
 #include "random.h"
 #include "serialize.h"
+#include "stacktraces.h"
 #include "sync.h"
 #include "utilstrencodings.h"
 #include "utiltime.h"
@@ -126,9 +127,9 @@ const char * const BITCOIN_CONF_FILENAME = "sparks.conf";
 const char * const BITCOIN_PID_FILENAME = "sparksd.pid";
 
 CCriticalSection cs_args;
-std::map<std::string, std::string> mapArgs;
-static std::map<std::string, std::vector<std::string> > _mapMultiArgs;
-const std::map<std::string, std::vector<std::string> >& mapMultiArgs = _mapMultiArgs;
+std::unordered_map<std::string, std::string> mapArgs;
+static std::unordered_map<std::string, std::vector<std::string> > _mapMultiArgs;
+const std::unordered_map<std::string, std::vector<std::string> >& mapMultiArgs = _mapMultiArgs;
 bool fDebug = false;
 bool fPrintToConsole = false;
 bool fPrintToDebugLog = true;
@@ -216,6 +217,7 @@ static boost::once_flag debugPrintInitFlag = BOOST_ONCE_INIT;
 static FILE* fileout = NULL;
 static boost::mutex* mutexDebugLog = NULL;
 static std::list<std::string>* vMsgsBeforeOpenLog;
+static std::atomic<int> logAcceptCategoryCacheCounter(0);
 
 static int FileWriteStr(const std::string &str, FILE *fp)
 {
@@ -260,6 +262,7 @@ bool LogAcceptCategory(const char* category)
         // where mapMultiArgs might be deleted before another
         // global destructor calls LogPrint()
         static boost::thread_specific_ptr<std::set<std::string> > ptrCategory;
+        static boost::thread_specific_ptr<int> cacheCounter;
 
         if (!fDebug) {
             if (ptrCategory.get() != NULL) {
@@ -269,8 +272,11 @@ bool LogAcceptCategory(const char* category)
             return false;
         }
 
-        if (ptrCategory.get() == NULL)
+        if (ptrCategory.get() == NULL || *cacheCounter != logAcceptCategoryCacheCounter.load())
         {
+            cacheCounter.reset(new int(logAcceptCategoryCacheCounter.load()));
+
+            LOCK(cs_args);
             if (mapMultiArgs.count("-debug")) {
                 std::string strThreadName = GetThreadName();
                 LogPrintf("debug turned on:\n");
@@ -279,21 +285,26 @@ bool LogAcceptCategory(const char* category)
                 const std::vector<std::string>& categories = mapMultiArgs.at("-debug");
                 ptrCategory.reset(new std::set<std::string>(categories.begin(), categories.end()));
                 // thread_specific_ptr automatically deletes the set when the thread ends.
-                // "sparks" is a composite category enabling all Sparks-related debug output
+                // "sparks" is a composite category enabling all Dash-related debug output
                 if(ptrCategory->count(std::string("sparks"))) {
-                    ptrCategory->insert(std::string("privatesend"));
-                    ptrCategory->insert(std::string("instantsend"));
-                    ptrCategory->insert(std::string("masternode"));
-                    ptrCategory->insert(std::string("spork"));
-                    ptrCategory->insert(std::string("keepass"));
-                    ptrCategory->insert(std::string("mnpayments"));
+                    ptrCategory->insert(std::string("chainlocks"));
                     ptrCategory->insert(std::string("gobject"));
+                    ptrCategory->insert(std::string("instantsend"));
+                    ptrCategory->insert(std::string("keepass"));
+                    ptrCategory->insert(std::string("llmq"));
+                    ptrCategory->insert(std::string("llmq-dkg"));
+                    ptrCategory->insert(std::string("llmq-sigs"));
+                    ptrCategory->insert(std::string("masternode"));
+                    ptrCategory->insert(std::string("mnpayments"));
+                    ptrCategory->insert(std::string("mnsync"));
+                    ptrCategory->insert(std::string("spork"));
+                    ptrCategory->insert(std::string("privatesend"));
                 }
             } else {
                 ptrCategory.reset(new std::set<std::string>());
             }
         }
-        const std::set<std::string>& setCategories = *ptrCategory.get();
+        const std::set<std::string>& setCategories = *ptrCategory;
 
         // if not debugging everything and not debugging specific category, LogPrint does nothing.
         if (setCategories.count(std::string("")) == 0 &&
@@ -302,6 +313,11 @@ bool LogAcceptCategory(const char* category)
             return false;
     }
     return true;
+}
+
+void ResetLogAcceptCategoryCache()
+{
+    logAcceptCategoryCacheCounter++;
 }
 
 /**
@@ -317,8 +333,12 @@ static std::string LogTimestampStr(const std::string &str, std::atomic_bool *fSt
         return str;
 
     if (*fStartedNewLine) {
+        if (IsMockTime()) {
+            int64_t nRealTimeMicros = GetTimeMicros();
+            strStamped = DateTimeStrFormat("(real %Y-%m-%d %H:%M:%S) ", nRealTimeMicros/1000000);
+        }
         int64_t nTimeMicros = GetLogTimeMicros();
-        strStamped = DateTimeStrFormat("%Y-%m-%d %H:%M:%S", nTimeMicros/1000000);
+        strStamped += DateTimeStrFormat("%Y-%m-%d %H:%M:%S", nTimeMicros/1000000);
         if (fLogTimeMicros)
             strStamped += strprintf(".%06d", nTimeMicros%1000000);
         strStamped += ' ' + str;
@@ -531,23 +551,12 @@ std::string HelpMessageOpt(const std::string &option, const std::string &message
            std::string("\n\n");
 }
 
-static std::string FormatException(const std::exception* pex, const char* pszThread)
+static std::string FormatException(const std::exception_ptr pex, const char* pszThread)
 {
-#ifdef WIN32
-    char pszModule[MAX_PATH] = "";
-    GetModuleFileNameA(NULL, pszModule, sizeof(pszModule));
-#else
-    const char* pszModule = "sparks";
-#endif
-    if (pex)
-        return strprintf(
-            "EXCEPTION: %s       \n%s       \n%s in %s       \n", typeid(*pex).name(), pex->what(), pszModule, pszThread);
-    else
-        return strprintf(
-            "UNKNOWN EXCEPTION       \n%s in %s       \n", pszModule, pszThread);
+    return strprintf("EXCEPTION: %s", GetPrettyExceptionStr(pex));
 }
 
-void PrintExceptionContinue(const std::exception* pex, const char* pszThread)
+void PrintExceptionContinue(const std::exception_ptr pex, const char* pszThread)
 {
     std::string message = FormatException(pex, pszThread);
     LogPrintf("\n\n************************\n%s\n", message);
@@ -639,14 +648,6 @@ boost::filesystem::path GetConfigFile(const std::string& confPath)
     if (!pathConfigFile.is_complete())
         pathConfigFile = GetDataDir(false) / pathConfigFile;
 
-    return pathConfigFile;
-}
-
-boost::filesystem::path GetMasternodeConfigFile()
-{
-    boost::filesystem::path pathConfigFile(GetArg("-mnconf", "masternode.conf"));
-    if (!pathConfigFile.is_complete())
-        pathConfigFile = GetDataDir() / pathConfigFile;
     return pathConfigFile;
 }
 
@@ -890,6 +891,7 @@ void RenameThread(const char* name)
     // Prevent warnings for unused parameters...
     (void)name;
 #endif
+    LogPrintf("%s: thread new name %s\n", __func__, name);
 }
 
 std::string GetThreadName()
@@ -912,18 +914,37 @@ void RenameThreadPool(ctpl::thread_pool& tp, const char* baseName)
     auto cond = std::make_shared<std::condition_variable>();
     auto mutex = std::make_shared<std::mutex>();
     std::atomic<int> doneCnt(0);
-    for (size_t i = 0; i < tp.size(); i++) {
-        tp.push([baseName, i, cond, mutex, &doneCnt](int threadId) {
+    std::map<int, std::future<void> > futures;
+
+    for (int i = 0; i < tp.size(); i++) {
+        futures[i] = tp.push([baseName, i, cond, mutex, &doneCnt](int threadId) {
             RenameThread(strprintf("%s-%d", baseName, i).c_str());
-            doneCnt++;
             std::unique_lock<std::mutex> l(*mutex);
+            doneCnt++;
             cond->wait(l);
         });
     }
-    while (doneCnt != tp.size()) {
+
+    do {
+        // Always sleep to let all threads acquire locks
         MilliSleep(10);
-    }
+        // `doneCnt` should be at least `futures.size()` if tp size was increased (for whatever reason),
+        // or at least `tp.size()` if tp size was decreased and queue was cleared
+        // (which can happen on `stop()` if we were not fast enough to get all jobs to their threads).
+    } while (doneCnt < futures.size() && doneCnt < tp.size());
+
     cond->notify_all();
+
+    // Make sure no one is left behind, just in case
+    for (auto& pair : futures) {
+        auto& f = pair.second;
+        if (f.valid() && f.wait_for(std::chrono::milliseconds(2000)) == std::future_status::timeout) {
+            LogPrintf("%s: %s-%d timed out\n", __func__, baseName, pair.first);
+            // Notify everyone again
+            cond->notify_all();
+            break;
+        }
+    }
 }
 
 void SetupEnvironment()
@@ -982,6 +1003,7 @@ std::string CopyrightHolders(const std::string& strPrefix, unsigned int nStartYe
 
     // Check for untranslated substitution to make sure Bitcoin Core copyright is not removed by accident
     if (strprintf(COPYRIGHT_HOLDERS, COPYRIGHT_HOLDERS_SUBSTITUTION).find("Bitcoin Core") == std::string::npos) {
+        strCopyrightHolders += "\n" + strPrefix + strprintf(" %u-%u ", 2014, nEndYear) + "The Dash Core developers";
         strCopyrightHolders += "\n" + strPrefix + strprintf(" %u-%u ", 2009, nEndYear) + "The Bitcoin Core developers";
     }
     return strCopyrightHolders;
