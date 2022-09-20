@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-Sparks Core version 0.13.3.0
-=======
-Dash Core version 0.14.0.5
->>>>>>> refs/heads/v0.14.0.x
+Sparks Core version 0.14.0.0
 ==========================
 
 Release is now available from:

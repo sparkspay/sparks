@@ -107,13 +107,6 @@ Section -post SEC0001
     WriteRegStr HKCR "@PACKAGE_TARNAME@" "" "URL:Sparks"
     WriteRegStr HKCR "@PACKAGE_TARNAME@\DefaultIcon" "" $INSTDIR\@BITCOIN_GUI_NAME@@EXEEXT@
     WriteRegStr HKCR "@PACKAGE_TARNAME@\shell\open\command" "" '"$INSTDIR\@BITCOIN_GUI_NAME@@EXEEXT@" "%1"'
-<<<<<<< HEAD
-
-    # Delete old key (before we switched to PACKAGE_TARNAME, which is set to 'sparkscore' now, we had 'sparks' hardcoded)
-    # TODO remove this line sometime later
-    DeleteRegKey HKCR "sparks"
-=======
->>>>>>> refs/heads/v0.14.0.x
 SectionEnd
 
 # Macro for selecting uninstaller sections
