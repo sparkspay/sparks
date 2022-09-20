@@ -760,21 +760,11 @@ class ComparisonTestFramework(BitcoinTestFramework):
 
     def add_options(self, parser):
         parser.add_option("--testbinary", dest="testbinary",
-<<<<<<< HEAD
                           default=os.getenv("SPARKSD", "sparksd"),
                           help="bitcoind binary to test")
-=======
-                          default=os.getenv("BITCOIND", "sparksd"),
-                          help="sparksd binary to test")
->>>>>>> refs/heads/v0.14.0.x
         parser.add_option("--refbinary", dest="refbinary",
-<<<<<<< HEAD
                           default=os.getenv("SPARKSD", "sparksd"),
                           help="bitcoind binary to use for reference nodes (if any)")
-=======
-                          default=os.getenv("BITCOIND", "sparksd"),
-                          help="sparksd binary to use for reference nodes (if any)")
->>>>>>> refs/heads/v0.14.0.x
 
     def setup_network(self):
         self.nodes = start_nodes(

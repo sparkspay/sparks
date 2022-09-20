@@ -1775,12 +1775,7 @@ class NodeConn(asyncore.dispatcher):
             vt.addrFrom.port = 0
             self.send_message(vt, True)
 
-<<<<<<< HEAD
-        print('MiniNode: Connecting to Sparks Node IP # ' + dstaddr + ':' \
-            + str(dstport))
-=======
-        logger.info('Connecting to Dash Node: %s:%d' % (self.dstaddr, self.dstport))
->>>>>>> refs/heads/v0.14.0.x
+        logger.info('Connecting to Sparks Node: %s:%d' % (self.dstaddr, self.dstport))
 
         try:
             self.connect((dstaddr, dstport))

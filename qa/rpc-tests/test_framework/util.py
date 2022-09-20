@@ -342,11 +342,7 @@ def start_node(i, dirname, extra_args=None, rpchost=None, timewait=None, binary=
     """
     datadir = os.path.join(dirname, "node"+str(i))
     if binary is None:
-<<<<<<< HEAD
         binary = os.getenv("SPARKSD", "sparksd")
-=======
-        binary = os.getenv("BITCOIND", "sparksd")
->>>>>>> refs/heads/v0.14.0.x
     # RPC tests still depend on free transactions
     args = [ binary, "-datadir="+datadir, "-server", "-keypool=1", "-discover=0", "-rest", "-blockprioritysize=50000", "-logtimemicros", "-debug", "-mocktime="+str(get_mocktime()) ]
     # Don't try auto backups (they fail a lot when running tests)
@@ -359,12 +355,7 @@ def start_node(i, dirname, extra_args=None, rpchost=None, timewait=None, binary=
         stderr = sys.stdout
 
     bitcoind_processes[i] = subprocess.Popen(args, stderr=stderr)
-<<<<<<< HEAD
-    if os.getenv("PYTHON_DEBUG", ""):
-        print("start_node: sparksd started, waiting for RPC to come up")
-=======
     logger.debug("initialize_chain: sparksd started, waiting for RPC to come up")
->>>>>>> refs/heads/v0.14.0.x
     url = rpc_url(i, rpchost)
     wait_for_bitcoind_start(bitcoind_processes[i], url, i)
     logger.debug("initialize_chain: RPC successfully started")

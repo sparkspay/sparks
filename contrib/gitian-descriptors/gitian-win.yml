@@ -179,12 +179,8 @@ script: |
     make ${MAKEOPTS} -C src check-security
     make deploy
     make install DESTDIR=${INSTALLPATH}
-<<<<<<< HEAD
-    cp -f sparkscore-*setup*.exe $OUTDIR/
-=======
     rename 's/-setup\.exe$/-setup-unsigned.exe/' *-setup.exe
     cp -f sparkscore-*setup*.exe $OUTDIR/
->>>>>>> refs/heads/v0.14.0.x
     cd installed
     mv ${DISTNAME}/bin/*.dll ${DISTNAME}/lib/
     find . -name "lib*.la" -delete
