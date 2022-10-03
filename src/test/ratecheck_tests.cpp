@@ -1,6 +1,6 @@
-// Copyright (c) 2014-2018 The Dash Core developers
+// Copyright (c) 2014-2019 The Dash Core developers
 
-#include "governance.h"
+#include "governance/governance.h"
 
 #include "test/test_sparks.h"
 

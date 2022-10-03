@@ -1,6 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin Core developers
-// Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2014-2022 The Dash Core developers
 // Copyright (c) 2016-2022 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -15,8 +15,6 @@
 #include "arith_uint256.h"
 
 #include <assert.h>
-
-#include <boost/assign/list_of.hpp>
 
 #include "chainparamsseeds.h"
 
@@ -81,6 +79,43 @@ static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits
     const char* pszTimestamp = "The Sparks Genesis 22.12.2017: Ok, lets go to the moon!";
     const CScript genesisOutputScript = CScript() << ParseHex("048ec1d4d14133344c77703e4c5c722d6b1cb0b840f9531f6b73e93943cddbd2e01e07bd40057a66e0fe19790ffc6d7427cd9088cf6e44c41c4a82b2b92c3b3909") << OP_CHECKSIG;
     return CreateGenesisBlock(pszTimestamp, genesisOutputScript, nTime, nNonce, nBits, nVersion, genesisReward);
+}
+
+
+void CChainParams::UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout, int64_t nWindowSize, int64_t nThreshold)
+{
+    consensus.vDeployments[d].nStartTime = nStartTime;
+    consensus.vDeployments[d].nTimeout = nTimeout;
+    if (nWindowSize != -1) {
+            consensus.vDeployments[d].nWindowSize = nWindowSize;
+    }
+    if (nThreshold != -1) {
+            consensus.vDeployments[d].nThreshold = nThreshold;
+    }
+}
+
+void CChainParams::UpdateDIP3Parameters(int nActivationHeight, int nEnforcementHeight)
+{
+    consensus.DIP0003Height = nActivationHeight;
+    consensus.DIP0003EnforcementHeight = nEnforcementHeight;
+}
+
+void CChainParams::UpdateBudgetParameters(int nMasternodePaymentsStartBlock, int nBudgetPaymentsStartBlock, int nSuperblockStartBlock)
+{
+    consensus.nMasternodePaymentsStartBlock = nMasternodePaymentsStartBlock;
+    consensus.nBudgetPaymentsStartBlock = nBudgetPaymentsStartBlock;
+    consensus.nSuperblockStartBlock = nSuperblockStartBlock;
+}
+
+void CChainParams::UpdateSubsidyAndDiffParams(int nMinimumDifficultyBlocks, int nHighSubsidyBlocks, int nHighSubsidyFactor)
+{
+    consensus.nMinimumDifficultyBlocks = nMinimumDifficultyBlocks;
+    consensus.nHighSubsidyBlocks = nHighSubsidyBlocks;
+    consensus.nHighSubsidyFactor = nHighSubsidyFactor;
+}
+
+void CChainParams::UpdateLLMQChainLocks(Consensus::LLMQType llmqType) {
+    consensus.llmqTypeChainLocks = llmqType;
 }
 
 static CBlock FindDevNetGenesisBlock(const Consensus::Params& params, const CBlock &prevBlock, const CAmount& reward)
@@ -176,7 +211,7 @@ static Consensus::LLMQParams llmq400_85 = {
         .dkgMiningWindowEnd = 48, // give it a larger mining window to make sure it is mined
         .dkgBadVotesThreshold = 300,
 
-        .signingActiveQuorumCount = 4, // two days worth of LLMQs
+        .signingActiveQuorumCount = 4, // four days worth of LLMQs
 
         .keepOldConnections = 5,
 };
@@ -349,7 +384,6 @@ public:
         pchMessageStart[1] = 0xb2;
         pchMessageStart[2] = 0xc3;
         pchMessageStart[3] = 0xd4;
-        vAlertPubKey = ParseHex("0343783664fe0a0f884ceff5fe128e674d8c050cfd5bd66d262a7d4e1a546e30c3");
         nDefaultPort = 8890;
 
         nPruneAfterHeight = 100000;
@@ -371,9 +405,9 @@ public:
         // Sparks private keys start with '5' or 'G' (?)
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,198);
         // Sparks BIP32 pubkeys start with 'xpub' (Bitcoin defaults)
-        base58Prefixes[EXT_PUBLIC_KEY] = boost::assign::list_of(0x04)(0x88)(0xB2)(0x1E).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
         // Sparks BIP32 prvkeys start with 'xprv' (Bitcoin defaults)
-        base58Prefixes[EXT_SECRET_KEY] = boost::assign::list_of(0x04)(0x88)(0xAD)(0xE4).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
         // Sparks BIP44 coin type is '5'
         nExtCoinType = 5;
 
@@ -386,10 +420,9 @@ public:
         consensus.llmqs[Consensus::LLMQ_15_60] = llmq15_60;
         consensus.llmqs[Consensus::LLMQ_25_60] = llmq25_60;
         consensus.llmqs[Consensus::LLMQ_25_80] = llmq25_80;
-        consensus.llmqChainLocks = Consensus::LLMQ_25_60;
-        consensus.llmqForInstantSend = Consensus::LLMQ_15_60;
+        consensus.llmqTypeChainLocks = Consensus::LLMQ_25_60;
+        consensus.llmqTypeInstantSend = Consensus::LLMQ_15_60;
 
-        fMiningRequiresPeers = true;
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
         fRequireRoutableExternalIP = true;
@@ -406,38 +439,38 @@ public:
         fBIP9CheckMasternodesUpgraded = true;
 
         checkpointData = (CCheckpointData) {
-            boost::assign::map_list_of
-            (      0, uint256S("0x00000a5c6ddfaac5097218560d5b92d416931cfeba1abf10c81d1d6a232fc8ea"))
-	        (  50000, uint256S("0x0000000010f1cfdac6446f431337e3874e6b91ada402e4fe9361778f1a684572"))
-            ( 100000, uint256S("0x0000000006fbc78ab84d3ddf4246d128b36c5240060cfc5ce9bb989a775bf970"))
-            ( 150000, uint256S("0x0000000005f483c970c60293a8d0508cfe6a4500359d26f84abdf302328f413d"))
-            ( 200000, uint256S("0x00000000124558e8e546ebc3a45f05952cb8476c29193c0b2d130d97450f92e4"))
-            ( 250000, uint256S("0x000000000c449edcdcd3fe2ea4a7f2910a13089065acc10a4bf7d15f00c5960e"))
-            ( 317500, uint256S("0x00000000074a05411efe26c57b14780103b638918927a86ee4cf683dfd23a068"))
-            ( 350000, uint256S("0x000000001d364a30921e1c208f5b2a3537c6f848cc16858976bed0dbed848244"))
-            ( 400000, uint256S("0x000000007010d10480818fabe4b47c99e4f2973b78b6ccab3e369204df679eff"))
-            ( 450000, uint256S("0x00000000cf88e545fbefa839ccbce18b24137835f02ac2b6818f8134fe1f9ca2"))
-            ( 500000, uint256S("0x00000000abd8dec8cfb87b00d78344d432b8121f21b2af8a46dd84a20b0c0b51"))
-            ( 550000, uint256S("0x00000000336504dbd915c8b17c3085ee08cc5eaef67e4ec34f1f7863f472149b"))
-            ( 600000, uint256S("0x000000005496a2ba94506effcab8a2490fd126abca3e35916191b41e48b9f24c"))
-            ( 650000, uint256S("0x0000000017e7e5a121dda111924daac4b753da4a7868198d62ca28f66e1a1dd0"))
-            ( 700000, uint256S("0x000000010165bb7e367d0e9567ca851cbb689356529974d51f16f2f7f8b6de64"))
-            ( 750000, uint256S("0x00000001d0d407b1668cfb22af894a0aff67994dacd7e44fd9513a3715d6f6e5"))
-            ( 800000, uint256S("0x000000031757893847ae644d488fa49c9e1d68e062246e28f3e1a9233971647e"))
-            ( 850000, uint256S("0x000000027ad324d353e377330590752a3dec1f0ee2cc679bf7feead6402c5c0c"))
-            ( 900000, uint256S("0x0000000611f05c34587c6ed56364336460b6d7a6ee2cd62133e5b5a574e01dfe"))
-            ( 920000, uint256S("0x000000010cc252a6bad5717ab07e171c4d7eb833877467b54c71d94790330291"))
+            {
+                {0, uint256S("0x00000a5c6ddfaac5097218560d5b92d416931cfeba1abf10c81d1d6a232fc8ea")},
+	        {50000, uint256S("0x0000000010f1cfdac6446f431337e3874e6b91ada402e4fe9361778f1a684572")},
+                {100000, uint256S("0x0000000006fbc78ab84d3ddf4246d128b36c5240060cfc5ce9bb989a775bf970")},
+                {150000, uint256S("0x0000000005f483c970c60293a8d0508cfe6a4500359d26f84abdf302328f413d")},
+                {200000, uint256S("0x00000000124558e8e546ebc3a45f05952cb8476c29193c0b2d130d97450f92e4")},
+                {250000, uint256S("0x000000000c449edcdcd3fe2ea4a7f2910a13089065acc10a4bf7d15f00c5960e")},
+                {317500, uint256S("0x00000000074a05411efe26c57b14780103b638918927a86ee4cf683dfd23a068")},
+                {350000, uint256S("0x000000001d364a30921e1c208f5b2a3537c6f848cc16858976bed0dbed848244")},
+                {400000, uint256S("0x000000007010d10480818fabe4b47c99e4f2973b78b6ccab3e369204df679eff")},
+                {450000, uint256S("0x00000000cf88e545fbefa839ccbce18b24137835f02ac2b6818f8134fe1f9ca2")},
+                {500000, uint256S("0x00000000abd8dec8cfb87b00d78344d432b8121f21b2af8a46dd84a20b0c0b51")},
+                {550000, uint256S("0x00000000336504dbd915c8b17c3085ee08cc5eaef67e4ec34f1f7863f472149b")},
+                {600000, uint256S("0x000000005496a2ba94506effcab8a2490fd126abca3e35916191b41e48b9f24c")},
+                {650000, uint256S("0x0000000017e7e5a121dda111924daac4b753da4a7868198d62ca28f66e1a1dd0")},
+                {700000, uint256S("0x000000010165bb7e367d0e9567ca851cbb689356529974d51f16f2f7f8b6de64")},
+                {750000, uint256S("0x00000001d0d407b1668cfb22af894a0aff67994dacd7e44fd9513a3715d6f6e5")},
+                {800000, uint256S("0x000000031757893847ae644d488fa49c9e1d68e062246e28f3e1a9233971647e")},
+                {850000, uint256S("0x000000027ad324d353e377330590752a3dec1f0ee2cc679bf7feead6402c5c0c")},
+                {900000, uint256S("0x0000000611f05c34587c6ed56364336460b6d7a6ee2cd62133e5b5a574e01dfe")},
+                {920000, uint256S("0x000000010cc252a6bad5717ab07e171c4d7eb833877467b54c71d94790330291")},
+           }
         };
 
         chainTxData = ChainTxData{
             1549015815, // * UNIX timestamp of last known number of transactions
             354527,    // * total number of transactions between genesis and that timestamp
                         //   (the tx=... number in the SetBestChain debug.log lines)
-            0.1         // * estimated number of transactions per second after that timestamp
+            0.2         // * estimated number of transactions per second after that timestamp
         };
     }
 };
-static CMainParams mainParams;
 
 /**
  * Testnet (v3)
@@ -453,8 +486,6 @@ public:
         consensus.nInstantSendConfirmationsRequired = 2;
         consensus.nInstantSendKeepLock = 6;
         consensus.nSuperblockStartBlock = 2100000000; // NOTE: Should satisfy nSuperblockStartBlock > nBudgetPeymentsStartBlock
-        consensus.nInstantSendSigsRequired = 6;
-        consensus.nInstantSendSigsTotal = 10;
         consensus.nBudgetPaymentsStartBlock = 4100;
         consensus.nBudgetPaymentsCycleBlocks = 50;
         consensus.nBudgetPaymentsWindowBlocks = 10;
@@ -536,7 +567,6 @@ public:
         pchMessageStart[1] = 0x2b;
         pchMessageStart[2] = 0xb3;
         pchMessageStart[3] = 0x7a;
-        vAlertPubKey = ParseHex("0244a0f8bd00f5497419d38623be157d80d42a83f7ed95b36387461515276b31bd");
         nDefaultPort = 8891;
 
         nPruneAfterHeight = 1000;
@@ -564,9 +594,9 @@ public:
         // Testnet private keys start with '9' or 'c' (Bitcoin defaults) (?)
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,240);
         // Testnet Sparks BIP32 pubkeys start with 'tpub' (Bitcoin defaults)
-        base58Prefixes[EXT_PUBLIC_KEY] = boost::assign::list_of(0x04)(0x35)(0x87)(0xCF).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         // Testnet Sparks BIP32 prvkeys start with 'tprv' (Bitcoin defaults)
-        base58Prefixes[EXT_SECRET_KEY] = boost::assign::list_of(0x04)(0x35)(0x83)(0x94).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
 
         // Testnet Sparks BIP44 coin type is '1' (All coin's testnet default)
         nExtCoinType = 1;
@@ -578,10 +608,9 @@ public:
         consensus.llmqs[Consensus::LLMQ_5_60] = llmq5_60;
         consensus.llmqs[Consensus::LLMQ_25_60] = llmq25_60;
         consensus.llmqs[Consensus::LLMQ_25_80] = llmq25_80;
-        consensus.llmqChainLocks = Consensus::LLMQ_5_60;
-        consensus.llmqForInstantSend = Consensus::LLMQ_5_60;
+        consensus.llmqTypeChainLocks = Consensus::LLMQ_5_60;
+        consensus.llmqTypeInstantSend = Consensus::LLMQ_5_60;
 
-        fMiningRequiresPeers = true;
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
         fRequireRoutableExternalIP = true;
@@ -598,8 +627,9 @@ public:
         fBIP9CheckMasternodesUpgraded = true;
 
         checkpointData = (CCheckpointData) {
-            boost::assign::map_list_of
-            ( 0, uint256S("0x000005f15ec2b9e4495efb539fb5b113338df946291cccd8dfd192bb68cd6dcf"))
+            {
+                {0, uint256S("0x000005f15ec2b9e4495efb539fb5b113338df946291cccd8dfd192bb68cd6dcf")},
+            }
         };
 
         chainTxData = ChainTxData{
@@ -611,7 +641,6 @@ public:
 
     }
 };
-static CTestNetParams testNetParams;
 
 /**
  * Devnet
@@ -626,8 +655,6 @@ public:
         consensus.nMasternodePaymentsIncreasePeriod = 10;
         consensus.nInstantSendConfirmationsRequired = 2;
         consensus.nInstantSendKeepLock = 6;
-        consensus.nInstantSendSigsRequired = 6;
-        consensus.nInstantSendSigsTotal = 10;
         consensus.nBudgetPaymentsStartBlock = 4100;
         consensus.nBudgetPaymentsCycleBlocks = 50;
         consensus.nBudgetPaymentsWindowBlocks = 10;
@@ -700,8 +727,7 @@ public:
         pchMessageStart[1] = 0xca;
         pchMessageStart[2] = 0xff;
         pchMessageStart[3] = 0xce;
-        vAlertPubKey = ParseHex("04517d8a699cb43d3938d7b24faaff7cda448ca4ea267723ba614784de661949bf632d6304316b244646dea079735b9a6fc4af804efb4752075b9fe2245e14e412");
-        nDefaultPort = 19999;
+        nDefaultPort = 19799;
         nPruneAfterHeight = 1000;
 
         genesis = CreateGenesisBlock(1417713337, 1096447, 0x207fffff, 1, 50 * COIN);
@@ -721,10 +747,10 @@ public:
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,19);
         // Testnet private keys start with '9' or 'c' (Bitcoin defaults)
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
-        // Testnet Sparks BIP32 pubkeys start with 'tpub' (Bitcoin defaults)
-        base58Prefixes[EXT_PUBLIC_KEY] = boost::assign::list_of(0x04)(0x35)(0x87)(0xCF).convert_to_container<std::vector<unsigned char> >();
-        // Testnet Sparks BIP32 prvkeys start with 'tprv' (Bitcoin defaults)
-        base58Prefixes[EXT_SECRET_KEY] = boost::assign::list_of(0x04)(0x35)(0x83)(0x94).convert_to_container<std::vector<unsigned char> >();
+        // Testnet Dash BIP32 pubkeys start with 'tpub' (Bitcoin defaults)
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
+        // Testnet Dash BIP32 prvkeys start with 'tprv' (Bitcoin defaults)
+        base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
 
         // Testnet Sparks BIP44 coin type is '1' (All coin's testnet default)
         nExtCoinType = 1;
@@ -736,10 +762,9 @@ public:
         consensus.llmqs[Consensus::LLMQ_15_60] = llmq15_60;
         consensus.llmqs[Consensus::LLMQ_25_60] = llmq25_60;
         consensus.llmqs[Consensus::LLMQ_25_80] = llmq25_80;
-        consensus.llmqChainLocks = Consensus::LLMQ_15_60;
-        consensus.llmqForInstantSend = Consensus::LLMQ_15_60;
+        consensus.llmqTypeChainLocks = Consensus::LLMQ_15_60;
+        consensus.llmqTypeInstantSend = Consensus::LLMQ_15_60;
 
-        fMiningRequiresPeers = true;
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
@@ -756,9 +781,10 @@ public:
         fBIP9CheckMasternodesUpgraded = false;
 
         checkpointData = (CCheckpointData) {
-            boost::assign::map_list_of
-            (      0, uint256S("0x000008ca1832a4baf228eb1553c03d3a2c8e02399550dd6ea8d65cec3ef23d2e"))
-            (      1, devnetGenesis.GetHash())
+            {
+                { 0, uint256S("0x000008ca1832a4baf228eb1553c03d3a2c8e02399550dd6ea8d65cec3ef23d2e")},
+                { 1, devnetGenesis.GetHash() },
+            }
         };
 
         chainTxData = ChainTxData{
@@ -767,20 +793,7 @@ public:
             0.01                          // * estimated number of transactions per second
         };
     }
-
-    void UpdateSubsidyAndDiffParams(int nMinimumDifficultyBlocks, int nHighSubsidyBlocks, int nHighSubsidyFactor)
-    {
-        consensus.nMinimumDifficultyBlocks = nMinimumDifficultyBlocks;
-        consensus.nHighSubsidyBlocks = nHighSubsidyBlocks;
-        consensus.nHighSubsidyFactor = nHighSubsidyFactor;
-    }
-
-    void UpdateLLMQChainLocks(Consensus::LLMQType llmqType) {
-        consensus.llmqChainLocks = llmqType;
-    }
 };
-static CDevNetParams *devNetParams;
-
 
 /**
  * Regression test
@@ -795,8 +808,6 @@ public:
         consensus.nMasternodePaymentsIncreasePeriod = 10;
         consensus.nInstantSendConfirmationsRequired = 2;
         consensus.nInstantSendKeepLock = 6;
-        consensus.nInstantSendSigsRequired = 3;
-        consensus.nInstantSendSigsTotal = 5;
         consensus.nBudgetPaymentsStartBlock = 1000;
         consensus.nBudgetPaymentsCycleBlocks = 50;
         consensus.nBudgetPaymentsWindowBlocks = 10;
@@ -869,7 +880,6 @@ public:
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
 
-        fMiningRequiresPeers = false;
         fDefaultConsistencyChecks = true;
         fRequireStandard = false;
         fRequireRoutableExternalIP = false;
@@ -878,6 +888,8 @@ public:
         fAllowMultiplePorts = true;
 
         nFulfilledRequestExpireTime = 5*60; // fulfilled requests expire in 5 minutes
+        nPoolMinParticipants = 3;
+        nPoolMaxParticipants = 5;
 
         // privKey: cP4EKFyJsHT39LDqgdcB43Y3YXjNyjb5Fuas1GQSeAtjnZWmZEQK
         vSporkAddresses = {"nCYRgPB26SYEf37EmUPnZSqT6Uy4UjqWNm"};
@@ -886,8 +898,9 @@ public:
         fBIP9CheckMasternodesUpgraded = false;
 
         checkpointData = (CCheckpointData){
-            boost::assign::map_list_of
-            ( 0, uint256S("0x00000a584fb9211f6dc67cebc024138caa9e387274bf91400cbb2aa49c53ceca"))
+            {
+                {0, uint256S("0x00000a584fb9211f6dc67cebc024138caa9e387274bf91400cbb2aa49c53ceca")},
+            }
         };
 
         chainTxData = ChainTxData{
@@ -902,9 +915,9 @@ public:
         // Regtest private keys start with '9' or 'c' (Bitcoin defaults) (?)
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,240);
         // Regtest Sparks BIP32 pubkeys start with 'tpub' (Bitcoin defaults)
-        base58Prefixes[EXT_PUBLIC_KEY] = boost::assign::list_of(0x04)(0x35)(0x87)(0xCF).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         // Regtest Sparks BIP32 prvkeys start with 'tprv' (Bitcoin defaults)
-        base58Prefixes[EXT_SECRET_KEY] = boost::assign::list_of(0x04)(0x35)(0x83)(0x94).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
 
         // Regtest Sparks BIP44 coin type is '1' (All coin's testnet default)
         nExtCoinType = 1;
@@ -912,94 +925,58 @@ public:
         // long living quorum params
         consensus.llmqs[Consensus::LLMQ_5_60] = llmq5_60;
         consensus.llmqs[Consensus::LLMQ_50_60] = llmq50_60;
-        consensus.llmqChainLocks = Consensus::LLMQ_5_60;
-        consensus.llmqForInstantSend = Consensus::LLMQ_5_60;
-    }
-
-    void UpdateBIP9Parameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout, int64_t nWindowSize, int64_t nThreshold)
-    {
-        consensus.vDeployments[d].nStartTime = nStartTime;
-        consensus.vDeployments[d].nTimeout = nTimeout;
-        if (nWindowSize != -1) {
-            consensus.vDeployments[d].nWindowSize = nWindowSize;
-        }
-        if (nThreshold != -1) {
-            consensus.vDeployments[d].nThreshold = nThreshold;
-        }
-    }
-
-    void UpdateDIP3Parameters(int nActivationHeight, int nEnforcementHeight)
-    {
-        consensus.DIP0003Height = nActivationHeight;
-        consensus.DIP0003EnforcementHeight = nEnforcementHeight;
-    }
-
-    void UpdateBudgetParameters(int nMasternodePaymentsStartBlock, int nBudgetPaymentsStartBlock, int nSuperblockStartBlock)
-    {
-        consensus.nMasternodePaymentsStartBlock = nMasternodePaymentsStartBlock;
-        consensus.nSuperblockStartBlock = nBudgetPaymentsStartBlock;
-        consensus.nSuperblockStartBlock = nSuperblockStartBlock;
+        consensus.llmqTypeChainLocks = Consensus::LLMQ_5_60;
+        consensus.llmqTypeInstantSend = Consensus::LLMQ_5_60;
     }
 };
-static CRegTestParams regTestParams;
 
-static CChainParams *pCurrentParams = 0;
+static std::unique_ptr<CChainParams> globalChainParams;
 
 const CChainParams &Params() {
-    assert(pCurrentParams);
-    return *pCurrentParams;
+    assert(globalChainParams);
+    return *globalChainParams;
 }
 
-CChainParams& Params(const std::string& chain)
+std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain)
 {
     if (chain == CBaseChainParams::MAIN)
-            return mainParams;
+        return std::unique_ptr<CChainParams>(new CMainParams());
     else if (chain == CBaseChainParams::TESTNET)
-            return testNetParams;
+        return std::unique_ptr<CChainParams>(new CTestNetParams());
     else if (chain == CBaseChainParams::DEVNET) {
-            assert(devNetParams);
-            return *devNetParams;
+        return std::unique_ptr<CChainParams>(new CDevNetParams());
     } else if (chain == CBaseChainParams::REGTEST)
-            return regTestParams;
-    else
-        throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
+        return std::unique_ptr<CChainParams>(new CRegTestParams());
+    throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
 }
 
 void SelectParams(const std::string& network)
 {
-    if (network == CBaseChainParams::DEVNET) {
-        devNetParams = (CDevNetParams*)new uint8_t[sizeof(CDevNetParams)];
-        memset(devNetParams, 0, sizeof(CDevNetParams));
-        new (devNetParams) CDevNetParams();
-    }
-
     SelectBaseParams(network);
-    pCurrentParams = &Params(network);
+    globalChainParams = CreateChainParams(network);
 }
 
-void UpdateRegtestBIP9Parameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout, int64_t nWindowSize, int64_t nThreshold)
+void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout, int64_t nWindowSize, int64_t nThreshold)
 {
-    regTestParams.UpdateBIP9Parameters(d, nStartTime, nTimeout, nWindowSize, nThreshold);
+    globalChainParams->UpdateVersionBitsParameters(d, nStartTime, nTimeout, nWindowSize, nThreshold);
 }
 
-void UpdateRegtestDIP3Parameters(int nActivationHeight, int nEnforcementHeight)
+void UpdateDIP3Parameters(int nActivationHeight, int nEnforcementHeight)
 {
-    regTestParams.UpdateDIP3Parameters(nActivationHeight, nEnforcementHeight);
+    globalChainParams->UpdateDIP3Parameters(nActivationHeight, nEnforcementHeight);
 }
 
-void UpdateRegtestBudgetParameters(int nMasternodePaymentsStartBlock, int nBudgetPaymentsStartBlock, int nSuperblockStartBlock)
+void UpdateBudgetParameters(int nMasternodePaymentsStartBlock, int nBudgetPaymentsStartBlock, int nSuperblockStartBlock)
 {
-    regTestParams.UpdateBudgetParameters(nMasternodePaymentsStartBlock, nBudgetPaymentsStartBlock, nSuperblockStartBlock);
+    globalChainParams->UpdateBudgetParameters(nMasternodePaymentsStartBlock, nBudgetPaymentsStartBlock, nSuperblockStartBlock);
 }
 
 void UpdateDevnetSubsidyAndDiffParams(int nMinimumDifficultyBlocks, int nHighSubsidyBlocks, int nHighSubsidyFactor)
 {
-    assert(devNetParams);
-    devNetParams->UpdateSubsidyAndDiffParams(nMinimumDifficultyBlocks, nHighSubsidyBlocks, nHighSubsidyFactor);
+    globalChainParams->UpdateSubsidyAndDiffParams(nMinimumDifficultyBlocks, nHighSubsidyBlocks, nHighSubsidyFactor);
 }
 
 void UpdateDevnetLLMQChainLocks(Consensus::LLMQType llmqType)
 {
-    assert(devNetParams);
-    devNetParams->UpdateLLMQChainLocks(llmqType);
+    globalChainParams->UpdateLLMQChainLocks(llmqType);
 }

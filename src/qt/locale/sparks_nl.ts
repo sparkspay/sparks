@@ -598,6 +598,30 @@
         <translation>Informatie</translation>
     </message>
     <message>
+        <source>Received and sent multiple transactions</source>
+        <translation>Meerdere transacties ontvangen en verstuurd</translation>
+    </message>
+    <message>
+        <source>Sent multiple transactions</source>
+        <translation>Meerdere transacties verstuurd</translation>
+    </message>
+    <message>
+        <source>Received multiple transactions</source>
+        <translation>Meerdere transacties ontvangen</translation>
+    </message>
+    <message>
+        <source>Sent Amount: %1
+</source>
+        <translation>Verstuurd bedrag: %1
+</translation>
+    </message>
+    <message>
+        <source>Received Amount: %1
+</source>
+        <translation>Ontvangen bedrag: %1
+</translation>
+    </message>
+    <message>
         <source>Date: %1
 </source>
         <translation>Datum: %1
@@ -649,18 +673,11 @@
     </message>
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt; for mixing only</source>
-        <translation>Portemonnee is &lt;b&gt;versleuteld&lt;/b&gt; en momenteel &lt;b&gt;ontgrendeld&lt;/b&gt; enkel voor mixing</translation>
+        <translation>Portemonnee is &lt;b&gt;versleuteld&lt;/b&gt; en momenteel &lt;b&gt;ontgrendeld&lt;/b&gt; enkel voor mixen</translation>
     </message>
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation>Portemonnee is &lt;b&gt;versleuteld&lt;/b&gt; en momenteel &lt;b&gt;vergrendeld&lt;/b&gt;</translation>
-    </message>
-</context>
-<context>
-    <name>ClientModel</name>
-    <message>
-        <source>Network Alert</source>
-        <translation>Netwerkwaarschuwing</translation>
     </message>
 </context>
 <context>
@@ -798,8 +815,8 @@
         <translation>Schakel over naar "Lijst mode" om deze functie te gebruiken.</translation>
     </message>
     <message>
-        <source>Non-anonymized input selected. &lt;b&gt;PrivateSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivateSend, please deselect all non-anonymized inputs first and then check the PrivateSend checkbox again.</source>
-        <translation>Niet-anonieme invoer geselecteerd. &lt;b&gt;PrivateSend wordt uitgeschakeld. &lt;/b&gt;&lt;br&gt;&lt;br&gt; Indien je toch PrivateSend wenst te gebruiken, deselecteer dan eerst alle niet-anonieme invoer. Vink daarna PrivateSend opnieuw aan.</translation>
+        <source>Non-mixed input selected. &lt;b&gt;PrivateSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivateSend, please deselect all non-mixed inputs first and then check the PrivateSend checkbox again.</source>
+        <translation>Niet-anonieme invoer geselecteerd. &lt;b&gt;PrivateSend wordt uitgeschakeld. &lt;/b&gt;&lt;br&gt;&lt;br&gt; Indien u toch PrivateSend wenst te gebruiken, deselecteer dan eerst alle niet-anonieme invoer. Vink daarna PrivateSend opnieuw aan.</translation>
     </message>
     <message>
         <source>(%1 locked)</source>
@@ -975,8 +992,8 @@
         <translation>PrivateSend informatie</translation>
     </message>
     <message>
-        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the Sparks in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 SPARKS, 0.01 SPARKS, 0.1 SPARKS, 1 SPARKS and 10 SPARKS -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be anonymized. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a href="https://docs.sparks.org/en/latest/wallets/sparkscore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
-        <translation>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend geeft u een echte financiële privacy door de oorsprong van uw geld te verschuilen. Alle Sparks in uw portefeuille bestaat uit verschillende "inputs" die u kunt beschouwen als afzonderlijke, discrete munten.&lt;br&gt; PrivateSend maakt gebruik van een innovatief proces om uw invoer te mengen met de invoer van twee andere mensen, zonder dat uw munten ooit uw portemonnee verlaten . U behoudt de controle over uw geld te allen tijde. &lt;hr&gt; &lt;b&gt;Het PrivateSend-proces werkt als volgt: &lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begint door uw transactie-inputs in de standaard denominaties te breken. Deze denominaties zijn 0,001 SPARKS, 0,01 SPARKS, 0,1 SPARKS, 1 SPARKS en 10 SPARKS - zoals de papiergeld dat u elke dag gebruikt.&lt;/li&gt; &lt;li&gt;Jouw portemonnee stuurt dan verzoeken naar speciaal geconfigureerde software nodes op het netwerk, genaamd "masternodes." Deze masternodes worden dan op de hoogte gesteld dat u geïnteresseerd bent in het mengen van een bepaalde denominaties. Er wordt geen identificeerbare informatie naar de masternodes gestuurd, zodat ze nooit weten wie je bent.&lt;/li&gt; &lt;li&gt;Wanneer twee andere mensen dezelfde berichten sturen, die aanduiden dat ze dezelfde denominaties willen vermengen, begint een mengsessie. De masternode mengt alle invoeren en instrueert de portefeuilles van alle drie de gebruikers om de nu getransformeerde invoer aan zichzelf terug te betalen. Jouw portemonnee betaalt die denominaties rechtstreeks naar zichzelf, maar met een ander adres (een wijziging adres genoemd).&lt;/li&gt; &lt;li&gt;Om uw geld volledig te verschuilen, moet uw portemonnee dit proces een aantal keren herhalen voor elke denominaties. Elke keer dat het proces wordt voltooid, dit heet een 'ronde'. Elke ronde van PrivateSend maakt het exponentieel moeilijker om te bepalen waar uw geld van afkomstig is.&lt;/li&gt; &lt;li&gt;Dit mengproces gebeurt op de achtergrond zonder enige interventie van uw kant. Wanneer u een transactie wenst uit te voeren, zijn uw fondsen al geanonimiseerd. Er is geen extra wachttijd nodig.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;BELANGRIJK:&lt;/b&gt; Je portemonnee bevat slechts 1000 van deze "wijzigingsadressen". Elke keer dat er een mengsessie plaatsvindt, worden maximaal 9 van uw adressen opgebruikt. Dit betekent dat deze 1000 adressen voor ongeveer 100 mengsessies volstaat. Wanneer er 900 werden gebruikt, moet je portemonnee meer adressen aanmaken. Dit kan alleen maar als u automatische back-ups hebt ingeschakeld.&lt;br&gt; Bijgevolg hebben gebruikers die back-ups hebben uitgeschakeld, ook PrivateSend uitgeschakeld. &lt;hr&gt;Voor meer informatie zie de &lt;a href="https://docs.sparks.org/en/latest/wallets/sparkscore/privatesend-instantsend.html"&gt;PrivateSend documentatie&lt;/a&gt;.</translation>
+        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the Sparks in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 SPARKS, 0.01 SPARKS, 0.1 SPARKS, 1 SPARKS and 10 SPARKS -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be mixed. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a href="https://docs.sparks.org/en/stable/wallets/sparkscore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
+        <translation>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend geeft u een echte financiële privacy door de oorsprong van uw geld te verschuilen. Alle Sparks in uw portefeuille bestaat uit verschillende "inputs" die u kunt beschouwen als afzonderlijke, discrete munten.&lt;br&gt; PrivateSend maakt gebruik van een innovatief proces om uw invoer te mengen met de invoer van twee andere mensen, zonder dat uw munten ooit uw portemonnee verlaten . U behoudt de controle over uw geld te allen tijde. &lt;hr&gt; &lt;b&gt;Het PrivateSend-proces werkt als volgt: &lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begint door uw transactie-inputs in de standaard denominaties te breken. Deze denominaties zijn 0,001 SPARKS, 0,01 SPARKS, 0,1 SPARKS, 1 SPARKS en 10 SPARKS - zoals het papiergeld dat u elke dag gebruikt.&lt;/li&gt; &lt;li&gt;Uw portemonnee stuurt dan verzoeken naar speciaal geconfigureerde software nodes op het netwerk, genaamd "masternodes." Deze masternodes worden dan op de hoogte gesteld dat u geïnteresseerd bent in het mengen van een bepaalde denominaties. Er wordt geen identificeerbare informatie naar de masternodes gestuurd, zodat ze nooit weten wie u bent.&lt;/li&gt; &lt;li&gt;Wanneer twee andere mensen dezelfde berichten sturen, die aanduiden dat ze dezelfde denominaties willen vermengen, begint een mengsessie. De masternode mengt alle invoeren en instrueert de portefeuilles van alle drie de gebruikers om de nu getransformeerde invoer aan zichzelf terug te betalen. Uw portemonnee betaalt die denominaties rechtstreeks naar zichzelf, maar met een ander adres (een wijzigingadres genoemd).&lt;/li&gt; &lt;li&gt;Om uw geld volledig te verschuilen, moet uw portemonnee dit proces een aantal keren herhalen voor alle denominaties. Elke keer dat het proces wordt voltooid, heet dit een 'ronde'. Elke ronde van PrivateSend maakt het exponentieel moeilijker om te bepalen waar uw geld van afkomstig is.&lt;/li&gt; &lt;li&gt;Dit mengproces gebeurt op de achtergrond zonder enige interventie van uw kant. Wanneer u een transactie wenst uit te voeren, is uw saldo al geanonimiseerd. Er is geen extra wachttijd nodig.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;BELANGRIJK:&lt;/b&gt; Uw portemonnee bevat slechts 1000 van deze "wijzigingsadressen". Elke keer dat er een mengsessie plaatsvindt, worden maximaal 9 van uw adressen opgebruikt. Dit betekent dat deze 1000 adressen voor ongeveer 100 mengsessies volstaat. Wanneer er 900 zijn verbruikt, moet uw portemonnee meer adressen aanmaken. Dit kan alleen maar als u automatische back-ups hebt ingeschakeld.&lt;br&gt; Daarom zodra gebruikers die back-ups hebben uitgeschakeld, ook PrivateSend is uitgeschakeld. &lt;hr&gt;Voor meer informatie zie de &lt;a href="https://docs.sparks.org/en/stable/wallets/sparkscore/privatesend-instantsend.html"&gt;PrivateSend documentatie&lt;/a&gt;.</translation>
     </message>
 </context>
 <context>
@@ -1053,16 +1070,8 @@
         <translation>Formulier</translation>
     </message>
     <message>
-        <source>Address</source>
-        <translation>Adres</translation>
-    </message>
-    <message>
         <source>Status</source>
         <translation>Status</translation>
-    </message>
-    <message>
-        <source>Payee</source>
-        <translation>Begunstigde</translation>
     </message>
     <message>
         <source>0</source>
@@ -1081,16 +1090,16 @@
         <translation>Aantal Nodes:</translation>
     </message>
     <message>
-        <source>DIP3 Masternodes</source>
-        <translation>DIP3 Masternodes</translation>
-    </message>
-    <message>
         <source>Show only masternodes this wallet has keys for.</source>
         <translation>Toon alleen masternodes waar deze portemonnee sleutels voor heeft.</translation>
     </message>
     <message>
         <source>My masternodes only</source>
         <translation>Alleen mijn masternodes</translation>
+    </message>
+    <message>
+        <source>Service</source>
+        <translation>Service</translation>
     </message>
     <message>
         <source>PoSe Score</source>
@@ -1109,8 +1118,24 @@
         <translation>Volgende betaling</translation>
     </message>
     <message>
+        <source>Payout Address</source>
+        <translation>Betalingsadres</translation>
+    </message>
+    <message>
         <source>Operator Reward</source>
         <translation>Vergoeding voor Bediener</translation>
+    </message>
+    <message>
+        <source>Collateral Address</source>
+        <translation>Onderpand adres</translation>
+    </message>
+    <message>
+        <source>Owner Address</source>
+        <translation>Adres eigenaar</translation>
+    </message>
+    <message>
+        <source>Voting Address</source>
+        <translation>Stemadres</translation>
     </message>
     <message>
         <source>Copy ProTx Hash</source>
@@ -1254,10 +1279,6 @@
         <translation>(0 = auto, &lt;0 = laat dit aantal kernen vrij)</translation>
     </message>
     <message>
-        <source>Amount of Sparks to keep anonymized</source>
-        <translation>Aantal Sparks om geanonimiseerd te houden</translation>
-    </message>
-    <message>
         <source>W&amp;allet</source>
         <translation>W&amp;allet</translation>
     </message>
@@ -1287,7 +1308,7 @@
     </message>
     <message>
         <source>Whether to use experimental PrivateSend mode with multiple mixing sessions per block.&lt;br/&gt;Note: You must use this feature carefully.&lt;br/&gt;Make sure you always have recent wallet (auto)backup in a safe place!</source>
-        <translation>Of je de experimentele PrivateSend-modus wenst te gebruiken met meerdere mengingssessies per blok.&lt;br/&gt;Nota: Je moet deze functie zorgvuldig gebruiken.&lt;br/&gt;Zorg ervoor dat je steeds een recente (auto)backup van jouw portemonnee op een veilige plek hebt!</translation>
+        <translation>Of je de experimentele PrivateSend-modus wenst te gebruiken met meerdere mixsessies per blok.&lt;br/&gt;Nota: Je moet deze functie zorgvuldig gebruiken.&lt;br/&gt;Zorg ervoor dat je steeds een recente (auto)backup van jouw portemonnee op een veilige plek hebt!</translation>
     </message>
     <message>
         <source>Enable PrivateSend &amp;multi-session</source>
@@ -1307,16 +1328,12 @@ Dit heeft ook invloed op de manier waarop uw saldo wordt berekend.</translation>
         <translation>Dit bedrag fungeert als een drempel om PrivateSend uit te schakelen zodra het werd bereikt.</translation>
     </message>
     <message>
+        <source>Target PrivateSend balance</source>
+        <translation>Target PrivateSend Saldo</translation>
+    </message>
+    <message>
         <source>Automatically open the Sparks Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation>Open automatisch de Sparks client poort op de router. Dit werkt alleen als uw router UPnP ondersteunt en dit is ingeschakeld.</translation>
-    </message>
-    <message>
-        <source>Accept connections from outside</source>
-        <translation>Laat uitgaande verbindingen toe.</translation>
-    </message>
-    <message>
-        <source>Allow incoming connections</source>
-        <translation>Laat binnenkomende verbindingen toe</translation>
     </message>
     <message>
         <source>Connect to the Sparks network through a SOCKS5 proxy.</source>
@@ -1325,6 +1342,10 @@ Dit heeft ook invloed op de manier waarop uw saldo wordt berekend.</translation>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
         <translation>&amp;Verbind via een SOCKS-proxy (standaardproxy):</translation>
+    </message>
+    <message>
+        <source>Shows if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
+        <translation>Toont of de opgegeven standaard SOCK5 proxy gebruikt is om peers via dit netwerk type te bereiken.</translation>
     </message>
     <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Exit in the menu.</source>
@@ -1337,11 +1358,6 @@ Dit heeft ook invloed op de manier waarop uw saldo wordt berekend.</translation>
     <message>
         <source>Expert</source>
         <translation>Expert</translation>
-    </message>
-    <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Deze instelling bepaalt het aantal individuele masternodes waardoor een input zal worden geanonimiseerd. 
-Meer anonimisatie rondes geeft een hoger niveau van privacy, maar kost ook meer aan vergoedingen.</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
@@ -1361,7 +1377,7 @@ Meer anonimisatie rondes geeft een hoger niveau van privacy, maar kost ook meer 
     </message>
     <message>
         <source>Show system popups for PrivateSend mixing transactions&lt;br/&gt;just like for all other transaction types.</source>
-        <translation>Toon systeem popups voor PrivateSend mixing transacties &lt;br/&gt;, net zoals voor alle andere transactie types.</translation>
+        <translation>Toon systeem popups voor PrivateSend mixtransacties &lt;br/&gt;, net zoals voor alle andere transactie types.</translation>
     </message>
     <message>
         <source>Show popups for PrivateSend transactions</source>
@@ -1372,12 +1388,24 @@ Meer anonimisatie rondes geeft een hoger niveau van privacy, maar kost ook meer 
         <translation>&amp;Spendeer onbevestigd wisselgeld</translation>
     </message>
     <message>
+        <source>This setting determines the amount of individual masternodes that an input will be mixed through.&lt;br/&gt;More rounds of mixing gives a higher degree of privacy, but also costs more in fees.</source>
+        <translation>Deze instelling bepaalt het aantal individuele masternodes waardoor een input zal worden geanonimiseerd.&lt;br/&gt;Meer mixrondes geeft een hoger niveau van privacy, maar kost ook meer aan vergoedingen.</translation>
+    </message>
+    <message>
         <source>&amp;Network</source>
         <translation>&amp;Netwerk</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
         <translation>Portmapping via &amp;UPnP</translation>
+    </message>
+    <message>
+        <source>Accept connections from outside</source>
+        <translation>Laat uitgaande verbindingen toe.</translation>
+    </message>
+    <message>
+        <source>Allow incoming connections</source>
+        <translation>Laat binnenkomende verbindingen toe</translation>
     </message>
     <message>
         <source>Proxy &amp;IP:</source>
@@ -1398,10 +1426,6 @@ Meer anonimisatie rondes geeft een hoger niveau van privacy, maar kost ook meer 
     <message>
         <source>Used for reaching peers via:</source>
         <translation>Gebruikt om peers te bereiken via:</translation>
-    </message>
-    <message>
-        <source>Shows, if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
-        <translation>Toont of de opgegeven standaard SOCK5 proxy gebruikt is om peers via dit netwerk type te bereiken</translation>
     </message>
     <message>
         <source>IPv4</source>
@@ -1621,22 +1645,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Voltooiing:</translation>
     </message>
     <message>
-        <source>Try to manually submit a PrivateSend request.</source>
-        <translation>Probeer handmatig een PrivateSend verzoek in te dienen</translation>
-    </message>
-    <message>
-        <source>Reset the current status of PrivateSend (can interrupt PrivateSend if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>Reset de huidige status van PrivateSend (kan PrivateSend onderbreken indien het Mix proces bezig is, wat u geld kan kosten!)</translation>
-    </message>
-    <message>
-        <source>Information about PrivateSend and Mixing</source>
-        <translation>Informatie over PrivateSend en mixen</translation>
-    </message>
-    <message>
-        <source>Info</source>
-        <translation>Informatie</translation>
-    </message>
-    <message>
         <source>Amount and Rounds:</source>
         <translation>Bedrag en Rondes:</translation>
     </message>
@@ -1658,7 +1666,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>Start/Stop Mixing</source>
-        <translation>Start/Stop met Mixen</translation>
+        <translation>Start/Stop met mixen</translation>
     </message>
     <message>
         <source>PrivateSend Balance:</source>
@@ -1674,14 +1682,6 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
         <translation>(Laatste Bericht)</translation>
     </message>
     <message>
-        <source>Try Mix</source>
-        <translation>Probeer te Mixen</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Reset</translation>
-    </message>
-    <message>
         <source>out of sync</source>
         <translation>niet gesynchroniseerd</translation>
     </message>
@@ -1691,11 +1691,11 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
     </message>
     <message>
         <source>Start Mixing</source>
-        <translation>Start met Mixen</translation>
+        <translation>Start met mixen</translation>
     </message>
     <message>
         <source>Stop Mixing</source>
-        <translation>Stop met Mixen</translation>
+        <translation>Stop met mixen</translation>
     </message>
     <message>
         <source>No inputs detected</source>
@@ -1722,12 +1722,12 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
         <translation>Gedenomineerd</translation>
     </message>
     <message>
-        <source>Mixed</source>
-        <translation>Gemixt</translation>
+        <source>Partially mixed</source>
+        <translation>Gedeeltelijk gemengd</translation>
     </message>
     <message>
-        <source>Anonymized</source>
-        <translation>Geanonimiseerd</translation>
+        <source>Mixed</source>
+        <translation>Gemixt</translation>
     </message>
     <message numerus="yes">
         <source>Denominated inputs have %5 of %n rounds on average</source>
@@ -1782,10 +1782,6 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
 </source>
         <translation>Laatste PrivateSend bericht:
 </translation>
-    </message>
-    <message>
-        <source>PrivateSend was successfully reset.</source>
-        <translation>PrivateSend is succesvol gereset</translation>
     </message>
     <message>
         <source>If you don't want to see internal PrivateSend fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
@@ -2148,10 +2144,6 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
         <translation>&amp;Netwerkverkeer</translation>
     </message>
     <message>
-        <source>&amp;Clear</source>
-        <translation>&amp;Wissen</translation>
-    </message>
-    <message>
         <source>Totals</source>
         <translation>Totalen</translation>
     </message>
@@ -2216,12 +2208,20 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
         <translation>Open het %1 debug-logbestand van de huidige gegevensmap. Dit kan een aantal seconden duren voor grote logbestanden.</translation>
     </message>
     <message>
+        <source>InstantSend locks</source>
+        <translation>InstantSend vergrendelingen</translation>
+    </message>
+    <message>
         <source>Decrease font size</source>
         <translation>Verklein lettergrootte</translation>
     </message>
     <message>
         <source>Increase font size</source>
         <translation>Vergroot lettergrootte</translation>
+    </message>
+    <message>
+        <source>&amp;Reset</source>
+        <translation>&amp;Reset</translation>
     </message>
     <message>
         <source>Services</source>
@@ -2356,16 +2356,16 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
         <translation>Welkom bij de %1 RPC-console.</translation>
     </message>
     <message>
-        <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>Gebruik de pijltjestoetsen om door de geschiedenis te navigeren, en &lt;b&gt;Ctrl-L&lt;/b&gt; om het scherm leeg te maken.</translation>
-    </message>
-    <message>
         <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
         <translation>Typ &lt;b&gt;help&lt;/b&gt; voor een overzicht van de beschikbare commando's.</translation>
     </message>
     <message>
-        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramification of a command.</source>
-        <translation>WAARSCHUWING: Er zijn oplichters die gebruikers hier commando's in laten voeren om zo de inhoud van hun portemonnee te stelen. Gebruik deze console niet zonder dat u de gevolgen van uw commando's volledig begrijpt.</translation>
+        <source>Use up and down arrows to navigate history, and %1 to clear screen.</source>
+        <translation>Gebruik de pijl toetsen om door de geschiedenis te navigeren, en %1 om het scherm te wissen.</translation>
+    </message>
+    <message>
+        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.</source>
+        <translation>PAS OP: Oplichters zijn actief, die proberen om gebruikers hier opdrachten te typen, waardoor de inhoud van de portemonnee gestolen kan worden. Gebruik deze console niet zonder de consequenties van een opdracht volledig te begrijpen.</translation>
     </message>
     <message>
         <source>In:</source>
@@ -2490,10 +2490,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Wissen</translation>
     </message>
     <message>
-        <source>Request InstantSend</source>
-        <translation>Verzoek InstantSend</translation>
-    </message>
-    <message>
         <source>Requested payments history</source>
         <translation>Geschiedenis van de betalingsverzoeken</translation>
     </message>
@@ -2575,18 +2571,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Message</source>
         <translation>Bericht</translation>
-    </message>
-    <message>
-        <source>InstantSend</source>
-        <translation>InstantSend</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation>Ja</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>Nee</translation>
     </message>
     <message>
         <source>Resulting URI too long, try to reduce the text for label / message.</source>
@@ -2695,14 +2679,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Kies...</translation>
     </message>
     <message>
-        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until your have validated the complete chain.</source>
-        <translation>Het gebruik van de terugvalvergoeding kan resulteren in het verzenden van een transactie die meerdere uren of dagen (of nooit) nodig heeft om bevestigd te worden. Overweeg om handmatig een vergoeding te kiezen of wacht totdat de volledige blockchain gevalideerd is.</translation>
-    </message>
-    <message>
-        <source>Warning: Fee estimation is currently not possible.</source>
-        <translation>Waarschuwing: Schatting van de transactiekosten is momenteel niet mogelijk.</translation>
-    </message>
-    <message>
         <source>collapse fee-settings</source>
         <translation>Klap de vergoedinginstellingen dicht</translation>
     </message>
@@ -2715,16 +2691,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>PrivateSend</translation>
     </message>
     <message>
-        <source>InstantSend</source>
-        <translation>InstantSend</translation>
-    </message>
-    <message>
         <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation>Als de aangepaste vergoeding is ingesteld op 1000 duffs en de transactie is maar 250 bytes, dan wordt bij "per kilobyte" 250 duffs aan toeslag berekend, &lt;br /&gt;terwijl er bij "tenminste" 1000 duffs worden berekend. Voor transacties die groter zijn dan een kilobyte, wordt in beide gevallen per kilobyte de toeslag berekend.</translation>
-    </message>
-    <message>
-        <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "total at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Als de aangepaste toeslag is ingesteld op 1000 duffs en de transactie is maar 250 bytes, dan wordt bij "per kilobyte" 250 duffs aan toeslag berekend, &lt;br /&gt;terwijl er bij "totaal tenminste" 1000 duffs worden berekend. Voor transacties die groter zijn dan een kilobyte, wordt in beide gevallen per kilobyte de toeslag berekend.</translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
@@ -2735,12 +2703,16 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>per kilobyte</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>Verbergen</translation>
+        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until you have validated the complete chain.</source>
+        <translation>Het gebruik van de terugval vergoeding kan resulteren in het verzenden van een transactie die enkele uren of dagen (of nooit) duurt om te bevestigen. Overweeg uw tarief handmatig te kiezen of wacht tot u de volledige keten hebt gevalideerd.</translation>
     </message>
     <message>
-        <source>total at least</source>
-        <translation>minimaal totaal</translation>
+        <source>Note: Not enough data for fee estimation, using the fallback fee instead.</source>
+        <translation>Opmerking: niet genoeg gegevens voor het schatten van de transactievergoeding, in plaats daarvan wordt de terugval vergoeding gebruikte.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Verbergen</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
@@ -2757,14 +2729,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
         <translation>(Slimme kosten zijn nog niet geïnitialiseerd Dit duurt meestal een paar blocks ...)</translation>
-    </message>
-    <message>
-        <source>normal</source>
-        <translation>normaal</translation>
-    </message>
-    <message>
-        <source>fast</source>
-        <translation>snel</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
@@ -2823,24 +2787,12 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Kopieer wijziging</translation>
     </message>
     <message>
+        <source>%1 (%2 blocks)</source>
+        <translation>%1 (%2 blokken)</translation>
+    </message>
+    <message>
         <source>using</source>
         <translation>gebruiken</translation>
-    </message>
-    <message>
-        <source>anonymous funds</source>
-        <translation>anonieme geldmiddelen</translation>
-    </message>
-    <message>
-        <source>(privatesend requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(PrivateSend vereist dat dit bedrag afgerond wordt naar dedichtstbijzijnde %1)</translation>
-    </message>
-    <message>
-        <source>any available funds (not anonymous)</source>
-        <translation>Al het beschikbare geldmiddelen (niet anoniem)</translation>
-    </message>
-    <message>
-        <source>and InstantSend</source>
-        <translation>en InstantSend</translation>
     </message>
     <message>
         <source>%1 to %2</source>
@@ -2861,6 +2813,34 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>&lt;b&gt;(%1 of %2 entries displayed)&lt;/b&gt;</source>
         <translation>&lt;b&gt;(%1 van de %2 items weergegeven)&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>PrivateSend funds only</source>
+        <translation>Allen PrivateSend saldo</translation>
+    </message>
+    <message>
+        <source>any available funds</source>
+        <translation>Beschikbare fondsen</translation>
+    </message>
+    <message>
+        <source>(PrivateSend transactions have higher fees usually due to no change output being allowed)</source>
+        <translation>(PrivateSend-transacties hebben hogere kosten doordat er geen wisselgeld output is toegestaan)</translation>
+    </message>
+    <message>
+        <source>Transaction size: %1</source>
+        <translation>Transactiegrootte: %1</translation>
+    </message>
+    <message>
+        <source>Fee rate: %1</source>
+        <translation>Transactievergoeding: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>This transaction will consume %n input(s)</source>
+        <translation><numerusform>Deze transactie verbruikt %n inputs</numerusform><numerusform>Deze transactie verbruikt %n inputs</numerusform></translation>
+    </message>
+    <message>
+        <source>Warning: Using PrivateSend with %1 or more inputs can harm your privacy and is not recommended</source>
+        <translation>Waarschuwing: het gebruik van PrivateSend met %1 of meer ingangen kan uw privacy schaden en wordt niet aanbevolen</translation>
     </message>
     <message>
         <source>Confirm send coins</source>
@@ -2901,10 +2881,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Payment request expired.</source>
         <translation>Betalingsverzoek verlopen.</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n block(s)</source>
-        <translation><numerusform>%n blok</numerusform><numerusform>%n blocks</numerusform></translation>
     </message>
     <message>
         <source>Pay only the required fee of %1</source>
@@ -3242,18 +3218,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>verified via LLMQ based InstantSend</source>
         <translation>vergrendeld door LLMQ-gebaseerde InstandSend</translation>
-    </message>
-    <message>
-        <source>verified via InstantSend</source>
-        <translation>geverifieerd met InstantSend</translation>
-    </message>
-    <message>
-        <source>InstantSend verification in progress - %1 of %2 signatures</source>
-        <translation>Bezig met InstantSend verficatie - %1 van %2 ondertekeningen</translation>
-    </message>
-    <message>
-        <source>InstantSend verification failed</source>
-        <translation>InstantSend verificatie mislukt</translation>
     </message>
     <message>
         <source>Status</source>
@@ -3757,14 +3721,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <source>Send Coins</source>
         <translation>Verstuur munten</translation>
     </message>
-    <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 SPARKS.</source>
-        <translation>InstantSend ondersteund het verzenden van zulke hoge bedragen nog niet. Transacties zijn momenteel gelimiteerd tot %1 Sparks.</translation>
-    </message>
-    <message>
-        <source>Used way too many inputs (&gt;%1) for this InstantSend transaction, fees could be huge.</source>
-        <translation>Er worden veel te veel inputs (&gt;%1) gebruikt voor deze InstantSend transactie, de vergoeding kan enorm zijn.</translation>
-    </message>
 </context>
 <context>
     <name>WalletView</name>
@@ -3832,10 +3788,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Naam om url te vormen voor de KeePass invoer die de wachtwoordzin van de wallet opslaat</translation>
     </message>
     <message>
-        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>Stel de maximale grote in van hoge prioriteit/lage kosten transacties in bytes (default: %d)</translation>
-    </message>
-    <message>
         <source>Set the number of script verification threads (%u to %d, 0 = auto, &lt;0 = leave that many cores free, default: %d)</source>
         <translation>Kies het aantal scriptverificatie processen (%u tot %d, 0 = auto, &lt;0 = laat dit aantal kernen vrij, standaard: %d)</translation>
     </message>
@@ -3854,10 +3806,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Accept command line and JSON-RPC commands</source>
         <translation>Ontvang command-lijn en JSON-RPC commando's.</translation>
-    </message>
-    <message>
-        <source>Add a node to connect to and attempt to keep the connection open</source>
-        <translation>Voeg een node toe om mee te verbinden en probeer de verbinding open te houden.</translation>
     </message>
     <message>
         <source>Allow DNS lookups for -addnode, -seednode and -connect</source>
@@ -3988,10 +3936,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Inschakelen van het publiceren van transactiehashes van pogingen van InstantSend double spend in &lt;address&gt;</translation>
     </message>
     <message>
-        <source>Error loading %s: You can't enable HD on a already existing non-HD wallet</source>
-        <translation>Fout bij het laden van %s: U kunt HD niet inschakelen op een al bestaande non-HD wallet</translation>
-    </message>
-    <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
         <translation>Niet-bevestigde denominatie outputs gevonden, voortzetting zal worden  gepauseerd totdat deze zijn bevestigd.</translation>
     </message>
@@ -4016,10 +3960,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Onderhoud een volledige transactieindex, gebruikt door de getrawtransaction rpc call (standaard: %u)</translation>
     </message>
     <message>
-        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you verified that wallet works!</source>
-        <translation>Zorg ervoor dat u uw wallet versleuteld, verwijder alle niet versleutelde backups nadat u getest hebt dat de nieuwe wallet werkt!</translation>
-    </message>
-    <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
         <translation>Maximale grootte van de gegevens in gegevensdragertransacties die we doorgeven en mijnen (standaard: %u)</translation>
     </message>
@@ -4034,6 +3974,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Overrides minimum spork signers to change spork value. Only useful for regtest and devnet. Using this on mainnet or testnet will ban you.</source>
         <translation>Overschrijf minimum spork ondertekenaars om de spork waarde te veranderen. Alleen bruikbaar bij regtest en devnet. Door dit te gebruiken op mainnet of testnet zal een ban opleveren.</translation>
+    </message>
+    <message>
+        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to mix some more coins.</source>
+        <translation>PrivateSend gebruikt exact genoemde bedragen om geld te verzenden. Wellicht moet u gewoon wat meer munten mixen.</translation>
     </message>
     <message>
         <source>Use N separate masternodes in parallel to mix funds (%u-%u, default: %u)</source>
@@ -4056,20 +4000,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Goedgekeurde peers kunnen niet ge-DoS-banned worden en hun transacties worden altijd doorgegeven, zelfs als ze reeds in de mempool aanwezig zijn, nuttig voor bijv. een gateway</translation>
     </message>
     <message>
-        <source>You need to rebuild the database using -reindex-chainstate to change -txindex</source>
-        <translation>U moet de database herbouwen met -reindex-chainstate om -txindex aan te passen</translation>
-    </message>
-    <message>
-        <source>You should specify a masternodeblsprivkey in the configuration. Please see documentation for help.</source>
-        <translation>U dient een masternode BLS geheime sleutel te specificeren in de configuratie. Raadpleeg de documentatie voor hulp.</translation>
-    </message>
-    <message>
         <source>(default: %s)</source>
         <translation>(standaard: %s)</translation>
-    </message>
-    <message>
-        <source>-wallet parameter must only specify a filename (not a path)</source>
-        <translation>-wallet parameter mag alleen een bestandsnaam zijn (niet een pad)</translation>
     </message>
     <message>
         <source>Accept public REST requests (default: %u)</source>
@@ -4096,16 +4028,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Verbind naar KeePassHttps via poort &lt;port&gt; (standaard: %u)</translation>
     </message>
     <message>
-        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>Stel de client toe om te handelen als een masternode (0-1, standaard: %u)</translation>
-    </message>
-    <message>
         <source>Entry exceeds maximum size.</source>
         <translation>Invoer overschrijdt de maximale grootte.</translation>
-    </message>
-    <message>
-        <source>Error loading %s: You can't disable HD on a already existing HD wallet</source>
-        <translation>Fout bij het laden van %s: U kunt HD niet uitschakelen op een al bestaande HD wallet</translation>
     </message>
     <message>
         <source>Failed to load fulfilled requests cache from</source>
@@ -4164,16 +4088,24 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Ontoereikend saldo.</translation>
     </message>
     <message>
+        <source>Invalid amount for -discardfee=&lt;amount&gt;: '%s'</source>
+        <translation>Ongeldig bedrag voor -discardfee = &lt;amount&gt;: '%s'</translation>
+    </message>
+    <message>
         <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
         <translation>Ongeldig bedrag voor -paytxfee=&lt;bedrag&gt;: '%s' (Minimum %s)</translation>
     </message>
     <message>
-        <source>Invalid masternodeblsprivkey. Please see documenation.</source>
-        <translation>Ongeldige masternode BLS geheime sleutel. Raadpleeg de documentatie.</translation>
-    </message>
-    <message>
         <source>Invalid minimum number of spork signers specified with -minsporkkeys</source>
         <translation>Ongeldig minumum aantal spork ondertekenaars zoals ingesteld met -minsporkkeys</translation>
+    </message>
+    <message>
+        <source>Keep N SPARKS mixed (%u-%u, default: %u)</source>
+        <translation>Houdt N SPARKS gemixt (%u-%u, standaard: %u)</translation>
+    </message>
+    <message>
+        <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
+        <translation>Bewaar maximaal &lt;n&gt; niet-koppelbare transacties in het geheugen (standaard: %u)</translation>
     </message>
     <message>
         <source>Keypool ran out, please call keypoolrefill first</source>
@@ -4232,6 +4164,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Geen compatibele Masternode gevonden.</translation>
     </message>
     <message>
+        <source>Not enough funds to mix.</source>
+        <translation>Onvoldoende fondsen om te mixen.</translation>
+    </message>
+    <message>
         <source>Not in the Masternode list.</source>
         <translation>Niet in de Masternode lijst.</translation>
     </message>
@@ -4256,16 +4192,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Stuur traceer-/debuginformatie naar debug.log (standaard: %u)</translation>
     </message>
     <message>
-        <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
-        <translation>Verstuur transacties als nul-vergoedingtransacties indien mogelijk (standaard: %u)</translation>
-    </message>
-    <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
         <translation>Stel sleutelpoelgrootte in op &lt;n&gt; (standaard: %u)</translation>
-    </message>
-    <message>
-        <source>Set the masternode BLS private key</source>
-        <translation>Stel de BLS geheime sleutel van de masternode in</translation>
     </message>
     <message>
         <source>Set the number of threads to service RPC calls (default: %d)</source>
@@ -4298,10 +4226,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Synchronization finished</source>
         <translation>Synchronisatie voltooid</translation>
-    </message>
-    <message>
-        <source>This is not a Masternode.</source>
-        <translation>Dit is geen Masternode.</translation>
     </message>
     <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
@@ -4364,6 +4288,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>User Agentcommentaar (%s) bevat onveilige karakters.</translation>
     </message>
     <message>
+        <source>Verifying wallet(s)...</source>
+        <translation>Portemonnee(s) verifiëren..... </translation>
+    </message>
+    <message>
         <source>Will retry...</source>
         <translation>Opnieuw aan het proberen...</translation>
     </message>
@@ -4373,7 +4301,7 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     </message>
     <message>
         <source>Can't mix while sync in progress.</source>
-        <translation>Kan niet Mixen tijdens het synchroniseren.</translation>
+        <translation>Kan niet mixen tijdens het synchroniseren.</translation>
     </message>
     <message>
         <source>Invalid netmask specified in -whitelist: '%s'</source>
@@ -4392,10 +4320,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>KeePassHttp sleutel voor AES versleutelde communicatie met KeePass</translation>
     </message>
     <message>
-        <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
-        <translation>Houd maximaal &lt;n&gt; onverbonden transacties in geheugen (standaard: %u)</translation>
-    </message>
-    <message>
         <source>Disable all Sparks specific functionality (Masternodes, PrivateSend, InstantSend, Governance) (0-1, default: %u)</source>
         <translation>Uitschakelen van alle Sparks specifieke functies (Masternodes, PrivateSend, InstantSend, Governance) (0-1, standaard: %u)</translation>
     </message>
@@ -4404,8 +4328,20 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>%s bestand bevat alle persoonlijke sleutel van deze portemonnee. Deel deze met niemand!</translation>
     </message>
     <message>
+        <source>-masternode option is deprecated and ignored, specifying -masternodeblsprivkey is enough to start this node as a masternode.</source>
+        <translation>-masternode optie is verouderd en genegeerd, het specificeren van -masternodeblsprivkey is voldoende om deze node als een masternode te starten.</translation>
+    </message>
+    <message>
+        <source>Add a node to connect to and attempt to keep the connection open (see the `addnode` RPC command help for more info)</source>
+        <translation>Voeg een node toe om verbinding mee te maken en om de verbinding open te houden (zie de `addnode` RPC-opdracht help voor meer info)</translation>
+    </message>
+    <message>
         <source>Bind to given address to listen for JSON-RPC connections. This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost, or if -rpcallowip has been specified, 0.0.0.0 and :: i.e., all addresses)</source>
         <translation>Bind met opgegeven address om te luisteren voor JSON-RPC-connections. Deze optie wordt genegeerd behalve als -rpcallowip ook opgegeven is. Poort is optioneel en overschrijft -rpcport. Gebruik [host]:port notatie voor IPv6. Deze optie kan meerdere keren worden meegegeven (standaard: 127.0.0.1 en ::1 bijvoobeeld, localhost, of als -rpcallowip is opgegeven, 0.0.0.0 en :: bijvoorbeeld, alle adressen)</translation>
+    </message>
+    <message>
+        <source>Connect only to the specified node(s); -connect=0 disables automatic connections (the rules for this peer are the same as for -addnode)</source>
+        <translation>Maak alleen verbinding met de opgegeven node(s); -connect=0 schakelt automatische verbindingen uit (de regels voor deze peer zijn hetzelfde als voor -addnode)</translation>
     </message>
     <message>
         <source>Discover own IP addresses (default: 1 when listening and no -externalip or -proxy)</source>
@@ -4416,16 +4352,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Bewaar transactie niet langer dan &lt;n&gt; uren in de geheugenpool (standaard: %u)</translation>
     </message>
     <message>
-        <source>Enable InstantSend, show confirmations for locked transactions (0-1, default: %u)</source>
-        <translation>Inschakelen van InstantSend, toon bevestigingen van vastgezette transacties (0-1, standaard: %u)</translation>
-    </message>
-    <message>
         <source>Enable multiple PrivateSend mixing sessions per block, experimental (0-1, default: %u)</source>
-        <translation>Inschakel van meerdere PrivateSend mix sessies per blok, experimenteel (0-1, standaard: %u)</translation>
-    </message>
-    <message>
-        <source>Enable use of automated PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Inschakelen van het automatisch gebruik van PrivateSend voor geld opgeslagen in deze wallet (0-1, standaard: %u)</translation>
+        <translation>Inschakel van meerdere PrivateSend mixsessies per blok, experimenteel (0-1, standaard: %u)</translation>
     </message>
     <message>
         <source>Execute command when a wallet InstantSend transaction is successfully locked (%s in cmd is replaced by TxID)</source>
@@ -4452,14 +4380,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Als er geen &lt;categorie&gt; is opgegeven of als de &lt;categorie&gt; 1 is, laat dan alle debugginginformatie zien.</translation>
     </message>
     <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 SPARKS.</source>
-        <translation>InstantSend ondersteund het verzenden van zulke hoge bedragen nog niet. Transacties zijn momenteel gelimiteerd tot %1 Sparks.</translation>
-    </message>
-    <message>
-        <source>InstantSend requires inputs with at least %d confirmations, you might need to wait a few minutes and try again.</source>
-        <translation>InstantSend vereist dat inputs ten minste %d bevestigingen hebben, u zult een paar minuten moeten wachten en opnieuw moeten proberen.</translation>
-    </message>
-    <message>
         <source>Maintain a full address index, used to query for the balance, txids and unspent outputs for addresses (default: %u)</source>
         <translation>Hou een volledige transactieindex bij, wordt gebruikt om het balans, txids en niet-uitgegeven outputs voor adresen op te vragen (standaard: %u)</translation>
     </message>
@@ -4476,8 +4396,12 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Onderhoudt maximaal &lt;n&gt; connecties met peers (tijdelijke service connecties uitgezonderd) (standaard: %u)</translation>
     </message>
     <message>
-        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
-        <translation>PrivateSend gebruikt exact gedenomineerde bedragen om geld te versturen, u zult wellicht simpelweg meer geld moeten anonimiseren.</translation>
+        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you have verified that the wallet works!</source>
+        <translation>Zorg ervoor dat u uw portefeuille codeert en alle niet-gecodeerde back-ups verwijdert nadat u hebt geverifieerd dat de portefeuille werkt!</translation>
+    </message>
+    <message>
+        <source>Maximum total size of all orphan transactions in megabytes (default: %u)</source>
+        <translation>Maximale totale grootte van alle wees-transacties in megabytes (standaard: %u)</translation>
     </message>
     <message>
         <source>Prune configured below the minimum of %d MiB.  Please use a higher number.</source>
@@ -4488,12 +4412,20 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Prune: laatste wallet synchronisatie gaat verder terug dan de middels -prune beperkte data. U moet -reindex gebruiken (downloadt opnieuw de gehele blockchain voor een pruned node)</translation>
     </message>
     <message>
+        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect used)</source>
+        <translation>Vraag naar peer-adressen via DNS-lookup, indien laag aantal adressen (standaard: 1 tenzij -connect gebruikt)</translation>
+    </message>
+    <message>
         <source>Randomize credentials for every proxy connection. This enables Tor stream isolation (default: %u)</source>
         <translation>Gebruik willekeurige inloggegevens voor elke proxyverbinding. Dit maakt streamisolatie voor Tor mogelijk (standaard: %u)</translation>
     </message>
     <message>
         <source>Rescans are not possible in pruned mode. You will need to use -reindex which will download the whole blockchain again.</source>
         <translation>Herscannen is niet mogelijk i.c.m. -prune. U moet -reindex gebruiken dat de hele blockchain opnieuw zal downloaden.</translation>
+    </message>
+    <message>
+        <source>Set the masternode BLS private key and enable the client to act as a masternode</source>
+        <translation>Stel de geheime sleutel van de masternode in en laat de cliënt als een masternode werken</translation>
     </message>
     <message>
         <source>Specify full path to directory for automatic wallet backups (must exist)</source>
@@ -4545,15 +4477,15 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     </message>
     <message>
         <source>Wallet is locked, can't replenish keypool! Automatic backups and mixing are disabled, please unlock your wallet to replenish keypool.</source>
-        <translation>Wallet is vergrendeld, niet instaat om keypool aan te vullen! Automatische backups en PrivateSend zijn uitgeschakeld, ontgrendel alstublieft uw wallet om de keypool aan te vullen.</translation>
+        <translation>Wallet is vergrendeld, niet instaat om keypool aan te vullen! Automatische backups en mixen zijn uitgeschakeld, ontgrendel alstublieft uw wallet om de keypool aan te vullen.</translation>
     </message>
     <message>
         <source>Warning: Unknown block versions being mined! It's possible unknown rules are in effect</source>
         <translation>Waarschuwing: Onbekende blok versies worden gemined! Er zijn mogelijk onbekende regels in werking getreden</translation>
     </message>
     <message>
-        <source>You are starting in lite mode, all Sparks-specific functionality is disabled.</source>
-        <translation>Je start in lite modus. Alle Sparks specifieke functionaliteit is uitgeschakeld.</translation>
+        <source>You need to rebuild the database using -reindex to change -timestampindex</source>
+        <translation>U moet de database opnieuw opbouwen met behulp van -reindex om -timestampindex te wijzigen</translation>
     </message>
     <message>
         <source>You need to rebuild the database using -reindex to go back to unpruned mode.  This will redownload the entire blockchain</source>
@@ -4636,10 +4568,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Verwijderen van de back-up is mislukt, foutmelding: %s</translation>
     </message>
     <message>
-        <source>Failed to load InstantSend data cache from</source>
-        <translation>Fout bij het laden van InstandSend data cache uit</translation>
-    </message>
-    <message>
         <source>Failed to load sporks cache from</source>
         <translation>Fout bij het inladen van de sporks cache uit</translation>
     </message>
@@ -4660,6 +4588,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Ongeldig bedrag voor -fallbackfee=&lt;bedrag&gt;: '%s'</translation>
     </message>
     <message>
+        <source>Invalid masternodeblsprivkey. Please see documentation.</source>
+        <translation>Ongeldige masternodeblsprivkey. Zie documentatie.</translation>
+    </message>
+    <message>
         <source>Keep the transaction memory pool below &lt;n&gt; megabytes (default: %u)</source>
         <translation>De transactiegeheugenpool moet onder de &lt;n&gt; megabytes blijven (standaard: %u)</translation>
     </message>
@@ -4670,10 +4602,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Last successful PrivateSend action was too recent.</source>
         <translation>Vorige succesvolle PrivateSend actie is te recent.</translation>
-    </message>
-    <message>
-        <source>Loading InstantSend data cache...</source>
-        <translation>Laden van InstantSend data cache...</translation>
     </message>
     <message>
         <source>Loading block index...</source>
@@ -4748,10 +4676,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Niet genoeg file descriptors beschikbaar.</translation>
     </message>
     <message>
-        <source>Not enough funds to anonymize.</source>
-        <translation>Niet genoeg geld om the anonimiseren.</translation>
-    </message>
-    <message>
         <source>Number of automatic wallet backups (default: %u)</source>
         <translation>Aantal automatische wallet back-ups (standaard: %u)</translation>
     </message>
@@ -4798,14 +4722,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Rescan the block chain for missing wallet transactions on startup</source>
         <translation>Herscan de blokketen voor missende portemonneetransacties bij opstarten</translation>
-    </message>
-    <message>
-        <source>Submitted following entries to masternode: %u</source>
-        <translation>Volgende masternode entries zijn ingediend: %u</translation>
-    </message>
-    <message>
-        <source>Submitted to masternode, waiting for more entries ( %u ) %s</source>
-        <translation>Ingediend bij masternode, wachtende op meer entries ( %u ) %s</translation>
     </message>
     <message>
         <source>Synchronizing blockchain...</source>
@@ -4860,10 +4776,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Portemonee debugging/testing opties:</translation>
     </message>
     <message>
-        <source>Wallet is not initialized</source>
-        <translation>Portemonnee is niet geïnitialiseerd</translation>
-    </message>
-    <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
         <translation>Portemonnee moest herschreven worden: Herstart %s om te voltooien</translation>
     </message>
@@ -4884,12 +4796,28 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Je kan geen masternode starten in lite modus.</translation>
     </message>
     <message>
+        <source>You can not start a masternode with wallet enabled.</source>
+        <translation>U kunt geen masternode starten met portemennee ingeschakeld.</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -addressindex</source>
+        <translation>U moet de database opnieuw opbouwen met behulp van -reindex om -addressindex te wijzigen</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -spentindex</source>
+        <translation>U moet de database opnieuw opbouwen met behulp van -reindex om -spentindex te wijzigen</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -txindex</source>
+        <translation>U moet de database opnieuw opbouwen met behulp van -reindex om -txindex te wijzigen</translation>
+    </message>
+    <message>
         <source>ZeroMQ notification options:</source>
         <translation>ZeroMQ notificatieopties:</translation>
     </message>
     <message>
         <source>no mixing available.</source>
-        <translation>Geen Mixen beschikbaar.</translation>
+        <translation>Mixen is niet beschikbaar.</translation>
     </message>
     <message>
         <source>see debug.log for details.</source>
@@ -4908,24 +4836,32 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>De %s ontwikkelaars</translation>
     </message>
     <message>
-        <source>Accept connections from outside (default: 1 if no -proxy or -connect/-noconnect)</source>
-        <translation>Sta verbindingen van buiten toe (standaard: 1 zonder -proxy of -connect/-noconnect)</translation>
-    </message>
-    <message>
         <source>Cannot obtain a lock on data directory %s. %s is probably already running.</source>
         <translation>Kan geen lock verkrijgen op gegevensmap %s. %s draait waarschijnlijk al.</translation>
-    </message>
-    <message>
-        <source>Connect only to the specified node(s); -noconnect or -connect=0 alone to disable automatic connections</source>
-        <translation>Verbindt alleen met opgegeven node(s); -noconnect of -connect=0 alleen bestemd om automatische verbindingen uit te schakelen</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file %s or %s</source>
         <translation>Uitgegeven onder de MIT software licentie, zie het bijgevoegde bestand %s of %s</translation>
     </message>
     <message>
+        <source>Enable use of PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
+        <translation>Gebruik van PrivateSend inschakelen voor de Sparks die in deze portemonnee is opgeslagen (0-1, standaard: %u)</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't enable HD on an already existing non-HD wallet</source>
+        <translation>Fout bij laden %s: HD kan niet worden geactiveerd bij een bestaande non-HD portemonnee.</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. -wallet parameter must only specify a filename (not a path).</source>
+        <translation>Fout bij laden portemonnee %s. -wallet parameter moet alleen een bestandsnaam opgeven (geen pad).</translation>
+    </message>
+    <message>
         <source>Error reading %s! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
         <translation>Waarschuwing: Fout bij het lezen van %s! Alle sleutels zijn in goede orde uitgelezen, maar transactiedata of adresboeklemma's zouden kunnen ontbreken of fouten bevatten.</translation>
+    </message>
+    <message>
+        <source>Exclude debugging information for a category. Can be used in conjunction with -debug=1 to output debug logs for all categories except one or more specified categories.</source>
+        <translation>debug-informatie voor een categorie uitsluiten. Kan worden gebruikt in combinatie met -debug=1 voor het uitvoeren van debug-logboeken voor alle categorieën behalve een of meer opgegeven categorieën.</translation>
     </message>
     <message>
         <source>Force relay of transactions from whitelisted peers even if they violate local relay policy (default: %d)</source>
@@ -4956,20 +4892,20 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Gelieve bij te dragen als je %s nuttig vindt. Bezoek %s voor meer informatie over de software.</translation>
     </message>
     <message>
-        <source>Provide liquidity to PrivateSend by infrequently mixing coins on a continual basis (%u-%u, default: %u, 1=very frequent, high fees, %u=very infrequent, low fees)</source>
-        <translation>Voorzie PrivateSend van liquiditeit door niet vaak maar stelselmatig geld te mixen (%u-%u, standaard: %u, 1=heel vaak, hoge vergoedingen, %u=heel zelden, lage vergoedingen)</translation>
-    </message>
-    <message>
-        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect/-noconnect)</source>
-        <translation>Vraag peer adressen aan via DNS-naslag, indien weinig adressen (standaard: 1 tenzij -connect/-noconnect)</translation>
-    </message>
-    <message>
         <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex and -rescan. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;%u = automatically prune block files to stay under the specified target size in MiB)</source>
         <translation>Beperk benodigde opslag door het prunen (verwijderen) van oude blocks in te schakelen. Dit maakt het mogelijk om het pruneblockchain RPC commando aan te roepen om specifieke blocks te verwijderen, en maakt het automatische prunen van oude blocks mogelijk wanneer een doelgrootte in MiB is ingesteld. Deze modus is niet compatibel met -txindex en -rescan. Waarschuwing: ongedaan maken van deze instellingen vereist het opnieuw downloaden van gehele de blocks. (standaard:0 = uitschakelen prunen, 1 = handmatig prunen via RPC toestaan, &gt;%u = automatisch blokketen bestanden prunen om beneden de gespecificeerde doelgrootte in MiB te blijven)</translation>
     </message>
     <message>
         <source>Set lowest fee rate (in %s/kB) for transactions to be included in block creation. (default: %s)</source>
         <translation>Specificeer het laagste tarief (in %s/kB) voor transacties die bij het maken van een blok moeten worden in rekening worden gebracht (standaard: %s)</translation>
+    </message>
+    <message>
+        <source>The fee rate (in %s/kB) that indicates your tolerance for discarding change by adding it to the fee (default: %s). Note: An output is discarded if it is dust at this rate, but we will always discard up to the dust relay fee and a discard fee above that is limited by the fee estimate for the longest target</source>
+        <translation>De tolerantie (in %s/kB) voor het toevoegen van het restantbedrag(dust) aan de transactievergoeding(standaard: %s). Opmerking: Een transactie wordt uitgesloten als het stof is volgens deze instelling. </translation>
+    </message>
+    <message>
+        <source>This is the transaction fee you may discard if change is smaller than dust at this level</source>
+        <translation>Dit is de transactievergoeding die u kunt negeren als het wisselgeld kleiner is dan het restantbedrag</translation>
     </message>
     <message>
         <source>This is the transaction fee you may pay when fee estimates are not available.</source>
@@ -4982,6 +4918,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Unable to locate enough PrivateSend non-denominated funds for this transaction.</source>
         <translation>Kan onvoldoende met PrivateSend niet-gedenomineerd geld vinden voor deze transactie.</translation>
+    </message>
+    <message>
+        <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
+        <translation>Kan blokken niet nalopen. U moet de database opnieuw opbouwen met behulp van -reindex-chainstate.</translation>
     </message>
     <message>
         <source>Use N separate masternodes for each denominated input to mix funds (%u-%u, default: %u)</source>
@@ -5008,8 +4948,20 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Waarschuwing: portemonnee bestand is corrupt, data is veiliggesteld! Originele %s is opgeslagen als %s in %s; als uw balans of transacties incorrect zijn dient u een backup terug te zetten.</translation>
     </message>
     <message>
+        <source>Whether to save the mempool on shutdown and load on restart (default: %u)</source>
+        <translation>Of de mempool moet worden bewaard bij afsluiten en weer moet laden bij opnieuw opstarten (standaard: %u)</translation>
+    </message>
+    <message>
         <source>Whitelist peers connecting from the given IP address (e.g. 1.2.3.4) or CIDR notated network (e.g. 1.2.3.0/24). Can be specified multiple times.</source>
         <translation>Goedgekeurde peers die verbinden vanaf een bepaald IP adres (vb. 1.2.3.4) of CIDR genoteerd netwerk (vb. 1.2.3.0/24). Kan meerdere keren worden gespecificeerd.</translation>
+    </message>
+    <message>
+        <source>You are starting in lite mode, most Sparks-specific functionality is disabled.</source>
+        <translation>U start in lite-modus, de meeste Sparks-specifieke functionaliteit is uitgeschakeld.</translation>
+    </message>
+    <message>
+        <source>%d of last 100 blocks have unexpected version</source>
+        <translation>%d van de laatste 100 blokken hebben een onverwachte versie</translation>
     </message>
     <message>
         <source>%s corrupt, salvage failed</source>
@@ -5040,6 +4992,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>-rpcport moet worden opgegeven wanneer -devnet en -server worden gebruikt</translation>
     </message>
     <message>
+        <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
+        <translation>Accepteer verbindingen van buitenaf (standaard: 1 indien geen -proxy of -connect)</translation>
+    </message>
+    <message>
         <source>Allow RFC1918 addresses to be relayed and connected to (default: %u)</source>
         <translation>Sta toe dat RFC1918 adressen worden doorgegeven en er mee wordt verbonden (standaard: %u)</translation>
     </message>
@@ -5060,6 +5016,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Copyright (C)</translation>
     </message>
     <message>
+        <source>Create up to N inputs of each denominated amount (%u-%u, default: %u)</source>
+        <translation>Maak maximaal N ingangen van elk bedrag (%u-%u, standaard: %u)</translation>
+    </message>
+    <message>
         <source>Error loading %s</source>
         <translation>Fout bij het laden van %s</translation>
     </message>
@@ -5072,20 +5032,40 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Fout bij laden %s: Portemonnee vereist een nieuwere versie van %s</translation>
     </message>
     <message>
+        <source>Error loading %s: You can't disable HD on an already existing HD wallet</source>
+        <translation>Fout bij laden %s. HD kan niet worden uitgeschakeld bij een HD portemonnee.</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. -wallet filename must be a regular file.</source>
+        <translation>Fout bij het laden van portemonnee %s. -wallet bestandsnaam moet een normaal bestand zijn.</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
+        <translation>Fout bij het laden van portemonnee %s. Dubbele -wallet bestandsnaam gespecificeerd.</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Invalid characters in -wallet filename.</source>
+        <translation>Fout bij het laden van portemonnee %s. Ongeldig karakter in - wallet bestandsnaam.</translation>
+    </message>
+    <message>
         <source>Error upgrading chainstate database</source>
         <translation>Fout bij het upgraden van de ketenstaat database</translation>
     </message>
     <message>
         <source>Failed to find mixing queue to join</source>
-        <translation>Het is niet gelukt om een Mix-wachtrij te vinden om bij aan te sluiten</translation>
+        <translation>Het is niet gelukt om een mixwachtrij te vinden om bij aan te sluiten</translation>
     </message>
     <message>
         <source>Failed to start a new mixing queue</source>
-        <translation>Het is niet gelukt om een nieuwe Mix-wachtrij te starten</translation>
+        <translation>Het is niet gelukt om een nieuwe mixwachtrij te starten</translation>
     </message>
     <message>
         <source>Initialization sanity check failed. %s is shutting down.</source>
         <translation>Initialisatie sanity check mislukt. %s is aan het afsluiten.</translation>
+    </message>
+    <message>
+        <source>Inputs vs outputs size mismatch.</source>
+        <translation>Invoer versus uitvoer komt niet overeen.</translation>
     </message>
     <message>
         <source>Invalid -onion address or hostname: '%s'</source>
@@ -5100,16 +5080,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Ongeldig bedrag voor -%s=&lt;bedrag&gt;: '%s'</translation>
     </message>
     <message>
-        <source>Invalid characters in -wallet filename</source>
-        <translation>Ongeldige karakters in -wallet bestandsnaam</translation>
-    </message>
-    <message>
         <source>Invalid spork address specified with -sporkaddr</source>
         <translation>Ongeldig sporkadres opgegeven met -sporkaddr</translation>
-    </message>
-    <message>
-        <source>Keep N SPARKS anonymized (%u-%u, default: %u)</source>
-        <translation>Hou N Sparks geanonimiseerd (%u-%u, standaard: %u)</translation>
     </message>
     <message>
         <source>Loading P2P addresses...</source>
@@ -5118,10 +5090,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Print this help message and exit</source>
         <translation>Print dit helpbericht en sluit af</translation>
-    </message>
-    <message>
-        <source>Receive and display P2P network alerts (default: %u)</source>
-        <translation>Ontvang en geef P2P network alerts weer (standaard: %u)</translation>
     </message>
     <message>
         <source>Reducing -maxconnections from %d to %d, because of system limitations.</source>
@@ -5134,6 +5102,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Relay non-P2SH multisig (default: %u)</source>
         <translation>Geef non-P2SH multisig door (standaard: %u)</translation>
+    </message>
+    <message>
+        <source>Replaying blocks...</source>
+        <translation>Replaying blocks...</translation>
     </message>
     <message>
         <source>Rescanning...</source>
@@ -5188,6 +5160,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Specificeer uw eigen publieke adres</translation>
     </message>
     <message>
+        <source>Start PrivateSend automatically (0-1, default: %u)</source>
+        <translation>Start PrivateSend automatisch (0-1, standaard: %u)</translation>
+    </message>
+    <message>
         <source>Starting network threads...</source>
         <translation>Netwerkthread starten...</translation>
     </message>
@@ -5220,6 +5196,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Transactie succesvol aangemaakt.</translation>
     </message>
     <message>
+        <source>Transaction fee and change calculation failed</source>
+        <translation>Transactievergoeding en wisselgeld berekening mislukt</translation>
+    </message>
+    <message>
         <source>Transaction fees are too high.</source>
         <translation>Transactiekosten zijn te hoog.</translation>
     </message>
@@ -5248,16 +5228,16 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Onbekende staat: id = %u</translation>
     </message>
     <message>
+        <source>Unsupported logging category %s=%s.</source>
+        <translation>Niet-ondersteunde logboekcategorie %s=%s.</translation>
+    </message>
+    <message>
         <source>Username for JSON-RPC connections</source>
         <translation>Gebruikersnaam voor JSON-RPC-verbindingen</translation>
     </message>
     <message>
         <source>Verifying blocks...</source>
         <translation>blocks aan het controleren...</translation>
-    </message>
-    <message>
-        <source>Verifying wallet...</source>
-        <translation>Wallet wordt geverifieerd...</translation>
     </message>
     <message>
         <source>Very low number of keys left: %d</source>
@@ -5286,10 +5266,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Your entries added successfully.</source>
         <translation>Uw gegevens zijn succesvol toegevoegd.</translation>
-    </message>
-    <message>
-        <source>Your transaction was accepted into the pool!</source>
-        <translation>Uw transactie was geaccepteerd in de pool!</translation>
     </message>
     <message>
         <source>Zapping all transactions from wallet...</source>

@@ -20,10 +20,8 @@
 #ifdef ENABLE_WALLET
 #include "wallet/wallet.h" // for CWallet::GetRequiredFee()
 
-#include "privatesend-client.h"
+#include "privatesend/privatesend-client.h"
 #endif // ENABLE_WALLET
-
-#include <boost/thread.hpp>
 
 #include <QDataWidgetMapper>
 #include <QDir>
@@ -33,8 +31,9 @@
 #include <QTimer>
 
 #ifdef ENABLE_WALLET
-extern CWallet* pwalletMain;
-#endif // ENABLE_WALLET
+typedef CWallet* CWalletRef;
+extern std::vector<CWalletRef> vpwallets;
+#endif //ENABLE_WALLET
 
 OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
     QDialog(parent),
@@ -91,14 +90,6 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
         ui->digits->addItem(digits, digits);
     }
     
-    /* Theme selector */
-    // ui->theme->addItem(QString("SPARKS-light"), QVariant("light"));
-    // ui->theme->addItem(QString("SPARKS-light-hires"), QVariant("light-hires"));
-    // ui->theme->addItem(QString("SPARKS-light-retro"), QVariant("light-retro"));
-    // ui->theme->addItem(QString("SPARKS-light-hires-retro"), QVariant("light-hires-retro"));
-    // ui->theme->addItem(QString("SPARKS-blue"), QVariant("drkblue"));
-    // ui->theme->addItem(QString("SPARKS-Crownium"), QVariant("crownium"));
-    // ui->theme->addItem(QString("SPARKS-traditional"), QVariant("trad"));
     ui->theme->addItem(QString("SPARKS-2020"), QVariant("sparkspay2020"));
     
     /* Language selector */
@@ -109,7 +100,7 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
 
     ui->lang->setToolTip(ui->lang->toolTip().arg(tr(PACKAGE_NAME)));
     ui->lang->addItem(QString("(") + tr("default") + QString(")"), QVariant(""));
-    Q_FOREACH(const QString &langStr, translations.entryList())
+    for (const QString &langStr : translations.entryList())
     {
         QLocale locale(langStr);
 
@@ -275,8 +266,8 @@ void OptionsDialog::on_okButton_clicked()
     mapper->submit();
 #ifdef ENABLE_WALLET
     privateSendClient.nCachedNumBlocks = std::numeric_limits<int>::max();
-    if(pwalletMain)
-        pwalletMain->MarkDirty();
+    if(!vpwallets.empty())
+        vpwallets[0]->MarkDirty();
 #endif // ENABLE_WALLET
     accept();
     updateDefaultProxyNets();
@@ -302,7 +293,7 @@ void OptionsDialog::on_hideTrayIcon_stateChanged(int fState)
 
 void OptionsDialog::showRestartWarning(bool fPersistent)
 {
-    ui->statusLabel->setStyleSheet("QLabel { color: red; }");
+    ui->statusLabel->setStyleSheet(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_ERROR));
 
     if(fPersistent)
     {
@@ -337,7 +328,7 @@ void OptionsDialog::updateProxyValidationState()
     else
     {
         setOkButtonState(false);
-        ui->statusLabel->setStyleSheet("QLabel { color: red; }");
+        ui->statusLabel->setStyleSheet(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_ERROR));
         ui->statusLabel->setText(tr("The supplied proxy address is invalid."));
     }
 }
