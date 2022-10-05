@@ -6,7 +6,8 @@
 #define BITCOIN_CONSENSUS_TX_VERIFY_H
 
 #include "amount.h"
-
+#include "params.h"
+#include "primitives/transaction.h"
 #include <stdint.h>
 #include <vector>
 
@@ -28,6 +29,9 @@ namespace Consensus {
  * Preconditions: tx.IsCoinBase() is false.
  */
 bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, CAmount& txfee);
+
+bool IsInputBanned(const Consensus::Params& consensusParams, const CTxIn& input, const CTxOut &prev);
+
 } // namespace Consensus
 
 /** Auxiliary functions for transaction validation (ideally should not be exposed) */

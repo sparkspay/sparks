@@ -80,7 +80,7 @@ extern double NSAppKitVersionNumber;
 namespace GUIUtil {
 
 // The theme to set by default if settings are missing or incorrect
-static const QString defaultTheme = "Light";
+static const QString defaultTheme = "sparkspay2020";
 // The prefix a theme name should have if we want to apply dark colors and styles to it
 static const QString darkThemePrefix = "Dark";
 
@@ -929,12 +929,11 @@ void migrateQtSettings()
 QString loadStyleSheet()
 {
     QSettings settings;
-    QString cssName;
-    
-    cssName = QString(":/css/sparkspay2020");  
+    QString theme = settings.value("theme", "").toString();
+    theme = "sparkspay2020";
     settings.setValue("theme", "sparkspay2020");
     
-    QFile qFile(cssName);      
+    QFile qFile(":themes/" + theme);      
     if (qFile.open(QFile::ReadOnly)) {
         return QLatin1String(qFile.readAll());
     }

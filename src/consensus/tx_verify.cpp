@@ -5,6 +5,7 @@
 #include "tx_verify.h"
 
 #include "consensus.h"
+#include "chainparams.h"
 #include "primitives/transaction.h"
 #include "script/interpreter.h"
 #include "validation.h"

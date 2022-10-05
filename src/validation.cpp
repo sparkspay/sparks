@@ -1372,7 +1372,7 @@ bool IsInputBanned(const Params& consensusParams, const CTxIn& input, const CTxO
     if (whichType == TX_PUBKEYHASH)
     {
         std::vector<std::vector<unsigned char> > stack;
-        if (!EvalScript(stack, input.scriptSig, SCRIPT_VERIFY_P2SH, BaseSignatureChecker()))
+        if (!EvalScript(stack, input.scriptSig, SCRIPT_VERIFY_P2SH, BaseSignatureChecker(), SIGVERSION_BASE))
         {
             LogPrintf("IsInputBanned() : EvalScript returned false\n");
             return true;
@@ -1393,7 +1393,7 @@ bool IsInputBanned(const Params& consensusParams, const CTxIn& input, const CTxO
         address.Set(pubkey.GetID());
         // LogPrintf("IsInputBanned() : sender address is %s\n", address.ToString().c_str());
         // Check address against blacklist
-        BOOST_FOREACH(std::string bannedAddress, consensusParams.vBannedAddresses)
+        for(std::string bannedAddress : consensusParams.vBannedAddresses)
         {
             if (address.Get() == CBitcoinAddress(bannedAddress).Get())
             {

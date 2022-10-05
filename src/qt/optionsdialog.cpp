@@ -90,7 +90,13 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
         ui->digits->addItem(digits, digits);
     }
     
-    ui->theme->addItem(QString("SPARKS-2020"), QVariant("sparkspay2020"));
+    //ui->theme->addItem(QString("SPARKS-2020"), QVariant("sparkspay2020"));
+    /* Theme selector */
+    QDir themes(":themes");
+    for (const QString &entry : themes.entryList()) {
+        LogPrintf("### %s ###", entry.toStdString());
+        ui->theme->addItem(entry, QVariant(entry));
+    }
     
     /* Language selector */
     QDir translations(":translations");
