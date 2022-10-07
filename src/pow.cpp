@@ -176,7 +176,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
         return bnPowLimit.GetCompact();
     }
 
-    if (pindexLast->nHeight + 1 < params.nPowKGWHeight) {
+    if (pindexLast->nHeight + 1 < params.nPowDGWHeight) {
         return GetNextWorkRequiredBTC(pindexLast, pblock, params);
     }
 
@@ -197,9 +197,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
         }
     }
 
-    if (pindexLast->nHeight + 1 < params.nPowDGWHeight) {
-        return KimotoGravityWell(pindexLast, params);
-    }
+    //no KGW in Sparks, no need to check for KimotoGravityWell
 
     return DarkGravityWave(pindexLast, params);
 }
