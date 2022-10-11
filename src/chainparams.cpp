@@ -562,6 +562,8 @@ public:
         consensus.nSPKSubidyReborn = 20;
         consensus.nSPKBlocksPerMonth = 1;
         consensus.fSPKRatioMN = 0.7;
+        consensus.vBannedAddresses.push_back("nKhbKA1L4mSn6Xovy4wTtSor1wwRx1GGNL");
+        consensus.vBannedAddresses.push_back("nTMbCAsxCEYMEF7fhPiJ6gSPYxnSUbRNHa");
 
         pchMessageStart[0] = 0xd1;
         pchMessageStart[1] = 0x2b;
