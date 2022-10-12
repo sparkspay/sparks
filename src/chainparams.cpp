@@ -501,6 +501,8 @@ public:
         consensus.DIP0001Height = 100;
         consensus.GuardianHeight = 100;
         consensus.DIP0003Height = 30; // DIP0003 activated at block 30
+        consensus.DIP0003EnforcementHeight = 31;
+        consensus.DIP0003EnforcementHash = uint256();
         consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 20
         consensus.nPowTargetTimespan = 5 * 60; // Sparks: 5 minutes, 50 blocks
         consensus.nPowTargetSpacing = 0.1 * 60; // Sparks: 30 seconds
