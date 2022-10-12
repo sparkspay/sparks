@@ -8,7 +8,7 @@ from decimal import Decimal
 from test_framework import mininode
 from test_framework.blocktools import get_masternode_payment, create_coinbase, create_block
 from test_framework.mininode import *
-from test_framework.test_framework import DashTestFramework
+from test_framework.test_framework import SparksTestFramework
 from test_framework.util import sync_blocks, sync_mempools, p2p_port, assert_raises_rpc_error, set_node_times
 
 '''
@@ -46,7 +46,7 @@ class TestNode(NodeConnCB):
                 self.send_message(self.islocks[inv.hash])
 
 
-class LLMQ_IS_CL_Conflicts(DashTestFramework):
+class LLMQ_IS_CL_Conflicts(SparksTestFramework):
     def set_test_params(self):
         self.set_sparks_test_params(6, 5, fast_dip3_enforcement=True)
         #disable_mocktime()

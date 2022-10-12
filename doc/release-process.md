@@ -163,8 +163,8 @@ Codesigner only: Create Windows/OS X detached signatures:
 
 Codesigner only: Sign the osx binary:
 
-    transfer dashcore-osx-unsigned.tar.gz to osx for signing
-    tar xf dashcore-osx-unsigned.tar.gz
+    transfer sparkscore-osx-unsigned.tar.gz to osx for signing
+    tar xf sparkscore-osx-unsigned.tar.gz
     ./detached-sig-create.sh -s "Key ID" -o runtime
     Enter the keychain password and authorize the signature
     Move signature-osx.tar.gz back to the gitian host

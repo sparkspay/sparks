@@ -32,7 +32,7 @@
 - [`bdfc303d2`](https://github.com/sparkspay/sparks/commit/bdfc303d2) Temporarily remove arguments to BENCHMARK
 - [`2be67c760`](https://github.com/sparkspay/sparks/commit/2be67c760) Merge #12324: speed up Unserialize_impl for prevector
 - [`595826ad6`](https://github.com/sparkspay/sparks/commit/595826ad6) Merge #12549: Make prevector::resize() and other prevector operations much faster
-- [`a1bd147bc`](https://github.com/sparkspay/sparks/commit/a1bd147bc) Dashify
+- [`a1bd147bc`](https://github.com/sparkspay/sparks/commit/a1bd147bc) Sparksify
 - [`f7b71f660`](https://github.com/sparkspay/sparks/commit/f7b71f660) Merge #13611: [bugfix] Use `__cpuid_count` for gnu C to avoid gitian build fail.
 - [`4bfc6ab30`](https://github.com/sparkspay/sparks/commit/4bfc6ab30) Merge #13788: Fix --disable-asm for newer assembly checks/code
 - [`1b2252c28`](https://github.com/sparkspay/sparks/commit/1b2252c28) Merge #13386: SHA256 implementations based on Intel SHA Extensions
@@ -81,7 +81,7 @@
 - [`58a946c6b`](https://github.com/sparkspay/sparks/commit/58a946c6b) [tests] do not allow assert_raises_message to be called with JSONRPCException
 - [`3602d3139`](https://github.com/sparkspay/sparks/commit/3602d3139) [tests] remove direct testing on JSONRPCException from individual test cases
 - [`297e9a018`](https://github.com/sparkspay/sparks/commit/297e9a018) Remove more SegWit related tests from script_standard_tests.cpp
-- [`f76d53d73`](https://github.com/sparkspay/sparks/commit/f76d53d73) Dashify a few strings in tests
+- [`f76d53d73`](https://github.com/sparkspay/sparks/commit/f76d53d73) Sparksify a few strings in tests
 - [`4770830bb`](https://github.com/sparkspay/sparks/commit/4770830bb) Drop accidently added lines in release-notes.md
 - [`1c65e0859`](https://github.com/sparkspay/sparks/commit/1c65e0859) Fix "os" import in wallet-dump.py
 - [`f61698937`](https://github.com/sparkspay/sparks/commit/f61698937) Merge #11483: Fix importmulti bug when importing an already imported key
@@ -126,7 +126,7 @@
 - [`ec892d459`](https://github.com/sparkspay/sparks/commit/ec892d459) Merge #11234: Remove redundant testutil.cpp|h files
 - [`d643ada80`](https://github.com/sparkspay/sparks/commit/d643ada80) Merge #11241: [tests] Improve signmessages functional test
 - [`b9ce8480d`](https://github.com/sparkspay/sparks/commit/b9ce8480d) Merge #11215: [tests] fixups from set_test_params()
-- [`a304d4d47`](https://github.com/sparkspay/sparks/commit/a304d4d47) Fix DashTestFramework and tests depending on it
+- [`a304d4d47`](https://github.com/sparkspay/sparks/commit/a304d4d47) Fix SparksTestFramework and tests depending on it
 - [`ac0f483d8`](https://github.com/sparkspay/sparks/commit/ac0f483d8) Fix issues with set_test_params and start/stop_node
 - [`703f4c77a`](https://github.com/sparkspay/sparks/commit/703f4c77a) Fix stderr related issues
 - [`39a1c6452`](https://github.com/sparkspay/sparks/commit/39a1c6452) Allow to set self.stderr when using vanilla setup_nodes()
@@ -135,14 +135,14 @@
 - [`17bb230d7`](https://github.com/sparkspay/sparks/commit/17bb230d7) Merge #11121: TestNode tidyups
 - [`37250c02e`](https://github.com/sparkspay/sparks/commit/37250c02e) Merge #11150: [tests] Add getmininginfo test
 - [`74325db11`](https://github.com/sparkspay/sparks/commit/74325db11) Merge #10859: RPC: gettxout: Slightly improve doc and tests
-- [`ebfec2218`](https://github.com/sparkspay/sparks/commit/ebfec2218) Dashify BITCOINCLI
+- [`ebfec2218`](https://github.com/sparkspay/sparks/commit/ebfec2218) Sparksify BITCOINCLI
 - [`1adc2001a`](https://github.com/sparkspay/sparks/commit/1adc2001a) Merge #10798: [tests] [utils] test bitcoin-cli
 - [`1b77cc81a`](https://github.com/sparkspay/sparks/commit/1b77cc81a) No need to assert wait_until
 - [`956e6bc01`](https://github.com/sparkspay/sparks/commit/956e6bc01) Merge #11068: qa: Move wait_until to util
 - [`d09f88d98`](https://github.com/sparkspay/sparks/commit/d09f88d98) Merge #11077: [tests] fix timeout issues from TestNode
 - [`0a8ad8b56`](https://github.com/sparkspay/sparks/commit/0a8ad8b56) Merge #11091: test: Increase initial RPC timeout to 60 seconds
 - [`1596b1dfa`](https://github.com/sparkspay/sparks/commit/1596b1dfa) Move -createwalletbackups=0 into test_node.py
-- [`4049754f4`](https://github.com/sparkspay/sparks/commit/4049754f4) Dashify test_node.py
+- [`4049754f4`](https://github.com/sparkspay/sparks/commit/4049754f4) Sparksify test_node.py
 - [`96966e5b8`](https://github.com/sparkspay/sparks/commit/96966e5b8) Use TestNode.node_encrypt_wallet
 - [`cc124c99c`](https://github.com/sparkspay/sparks/commit/cc124c99c) Remove Sparks specific leftovers of node.stop optimization
 - [`f55da3aa5`](https://github.com/sparkspay/sparks/commit/f55da3aa5) Merge #10711: [tests] Introduce TestNode
@@ -216,7 +216,7 @@
 - [`c62c7ab6d`](https://github.com/sparkspay/sparks/commit/c62c7ab6d) Merge #10662: Initialize randomness in benchmarks
 - [`de1342791`](https://github.com/sparkspay/sparks/commit/de1342791) Merge #10314: Remove unused forward declaration for non-existent ScriptPubKeyToJSON(...)
 - [`f2dcac3a4`](https://github.com/sparkspay/sparks/commit/f2dcac3a4) Merge #10757: RPC: Introduce getblockstats to plot things (#3058)
-- [`51a4e11d6`](https://github.com/sparkspay/sparks/commit/51a4e11d6) dashify what made sense in fuzzing.md
+- [`51a4e11d6`](https://github.com/sparkspay/sparks/commit/51a4e11d6) sparksify what made sense in fuzzing.md
 - [`b1970add1`](https://github.com/sparkspay/sparks/commit/b1970add1) Code Review fixes
 - [`8cadbf622`](https://github.com/sparkspay/sparks/commit/8cadbf622) bitcoin -> sparks
 - [`122da986c`](https://github.com/sparkspay/sparks/commit/122da986c) Merge #10415: [tests] Speed up fuzzing by ~200x when using afl-fuzz
@@ -231,10 +231,10 @@
 - [`cd30d6b44`](https://github.com/sparkspay/sparks/commit/cd30d6b44) simplify `stop_node`
 - [`a67f5375f`](https://github.com/sparkspay/sparks/commit/a67f5375f) remove duplicate import
 - [`3980caf20`](https://github.com/sparkspay/sparks/commit/3980caf20) re-add import shutil
-- [`cb480af01`](https://github.com/sparkspay/sparks/commit/cb480af01) Dashify
+- [`cb480af01`](https://github.com/sparkspay/sparks/commit/cb480af01) Sparksify
 - [`806da3c6e`](https://github.com/sparkspay/sparks/commit/806da3c6e) adjust number of parameters in sendmany
 - [`c4094c8de`](https://github.com/sparkspay/sparks/commit/c4094c8de) Few more tiny trivial fixes
-- [`8c2c2a1ad`](https://github.com/sparkspay/sparks/commit/8c2c2a1ad) s/bitcoind/dashd/ in some places
+- [`8c2c2a1ad`](https://github.com/sparkspay/sparks/commit/8c2c2a1ad) s/bitcoind/sparksd/ in some places
 - [`76822dd50`](https://github.com/sparkspay/sparks/commit/76822dd50) fix imports
 - [`4bfef1daa`](https://github.com/sparkspay/sparks/commit/4bfef1daa) Add missing sparks-specific parts
 - [`9828b624a`](https://github.com/sparkspay/sparks/commit/9828b624a) `_wait_for_bitcoind_start` should be a part of BitcoinTestFramework
@@ -303,8 +303,8 @@
 - [`d97fd1ca7`](https://github.com/sparkspay/sparks/commit/d97fd1ca7) state that getinfo will be deprecated in a future version
 - [`d6633b5fb`](https://github.com/sparkspay/sparks/commit/d6633b5fb) apply rpcconsole.cpp patch
 - [`4a22fb78f`](https://github.com/sparkspay/sparks/commit/4a22fb78f) s/sparks-util-test.py/bitcoin-util-test.py
-- [`e0424c1a0`](https://github.com/sparkspay/sparks/commit/e0424c1a0) s/libbitcoin/libdash
-- [`316fa1859`](https://github.com/sparkspay/sparks/commit/316fa1859) s/bitcoind/dashd
+- [`e0424c1a0`](https://github.com/sparkspay/sparks/commit/e0424c1a0) s/libbitcoin/libsparks
+- [`316fa1859`](https://github.com/sparkspay/sparks/commit/316fa1859) s/bitcoind/sparksd
 - [`f38ed3c71`](https://github.com/sparkspay/sparks/commit/f38ed3c71) #10821 continued
 - [`64c195a03`](https://github.com/sparkspay/sparks/commit/64c195a03) remove witness/segwit based text
 - [`c84636a47`](https://github.com/sparkspay/sparks/commit/c84636a47) update commented time estimates for fees
@@ -346,7 +346,7 @@
 - [`7e4318dda`](https://github.com/sparkspay/sparks/commit/7e4318dda) Merge bitcoin#8329: Consensus: MOVEONLY: Move functions for tx verification (#3030)
 - [`a4f046cd0`](https://github.com/sparkspay/sparks/commit/a4f046cd0) adjust formatting from review configure.ac
 - [`0eae9ed90`](https://github.com/sparkspay/sparks/commit/0eae9ed90) remove witness comment/text
-- [`2b9216e98`](https://github.com/sparkspay/sparks/commit/2b9216e98) /s/BTC/DASH
+- [`2b9216e98`](https://github.com/sparkspay/sparks/commit/2b9216e98) /s/BTC/SPARKS
 - [`188f4a752`](https://github.com/sparkspay/sparks/commit/188f4a752) Merge #10735: Avoid static analyzer warnings regarding uninitialized arguments
 - [`c097ab84d`](https://github.com/sparkspay/sparks/commit/c097ab84d) Merge #10840: Remove duplicate include
 - [`d7057d429`](https://github.com/sparkspay/sparks/commit/d7057d429) Merge #10766: Building Environment: Set ARFLAGS to cr
@@ -380,8 +380,8 @@
 - [`a38648c91`](https://github.com/sparkspay/sparks/commit/a38648c91) Merge #12588: [Utils] Remove deprecated PyZMQ call from Python ZMQ example
 - [`b71a187da`](https://github.com/sparkspay/sparks/commit/b71a187da) Backport yet another part of 11824
 - [`2f8512b92`](https://github.com/sparkspay/sparks/commit/2f8512b92) Merge #11126: Acquire cs_main lock before cs_wallet during wallet initialization
-- [`bcef238d0`](https://github.com/sparkspay/sparks/commit/bcef238d0) dashify test/functional/README.md
-- [`2f5606358`](https://github.com/sparkspay/sparks/commit/2f5606358) dashify test/README.md
+- [`bcef238d0`](https://github.com/sparkspay/sparks/commit/bcef238d0) sparksify test/functional/README.md
+- [`2f5606358`](https://github.com/sparkspay/sparks/commit/2f5606358) sparksify test/README.md
 - [`7e866ed2d`](https://github.com/sparkspay/sparks/commit/7e866ed2d) don't use replace-by-fee.py as example
 - [`f4736b382`](https://github.com/sparkspay/sparks/commit/f4736b382) update seeds emplace_back based on code review
 - [`5ac5e66f3`](https://github.com/sparkspay/sparks/commit/5ac5e66f3) remove unneeded space wallet.cpp
@@ -474,7 +474,7 @@
 - [`9adb72e11`](https://github.com/sparkspay/sparks/commit/9adb72e11) remove initialize to 0 in chainparams.h
 - [`6ce3e55cb`](https://github.com/sparkspay/sparks/commit/6ce3e55cb) add extra params to AvailableCoins calls
 - [`6ad8fe0e9`](https://github.com/sparkspay/sparks/commit/6ad8fe0e9) adjust CoinType logic
-- [`d5d27ad19`](https://github.com/sparkspay/sparks/commit/d5d27ad19) s/bitcoind/dashd
+- [`d5d27ad19`](https://github.com/sparkspay/sparks/commit/d5d27ad19) s/bitcoind/sparksd
 - [`39cfd61c0`](https://github.com/sparkspay/sparks/commit/39cfd61c0) Merge #9279: Consensus: Move CFeeRate out of libconsensus
 - [`535d7d6a8`](https://github.com/sparkspay/sparks/commit/535d7d6a8) Merge #10347: Use range-based for loops (C++11) when looping over vector elements
 - [`30ad4b8e8`](https://github.com/sparkspay/sparks/commit/30ad4b8e8) Merge #8952: Add query options to listunspent RPC call
@@ -591,7 +591,7 @@
 - [`22c4cd7b0`](https://github.com/sparkspay/sparks/commit/22c4cd7b0) Merge #10159: [tests] color test results and sort alphabetically
 - [`9c863edd9`](https://github.com/sparkspay/sparks/commit/9c863edd9) Merge #9780: Suppress noisy output from qa tests in Travis
 - [`98f3e295c`](https://github.com/sparkspay/sparks/commit/98f3e295c) add `&& llmq::IsOldInstantSendEnabled()` to instantsend max value check
-- [`a651f0d0f`](https://github.com/sparkspay/sparks/commit/a651f0d0f) adjust test_runner.py check if dashd is running
+- [`a651f0d0f`](https://github.com/sparkspay/sparks/commit/a651f0d0f) adjust test_runner.py check if sparksd is running
 - [`74830ee2a`](https://github.com/sparkspay/sparks/commit/74830ee2a) adjust spork5 code in wallet.cpp
 - [`4c7b47e28`](https://github.com/sparkspay/sparks/commit/4c7b47e28) Resolve comment, add check for fUseInstantSend and set value equal to the max value
 - [`5152e751c`](https://github.com/sparkspay/sparks/commit/5152e751c) Notify UI/external scripts about wallet txes locks
@@ -704,7 +704,7 @@
 - [`2c833eff3`](https://github.com/sparkspay/sparks/commit/2c833eff3) Merge #10039: Fix compile errors with Qt 5.3.2 and Boost 1.55.0
 - [`a6eee07f2`](https://github.com/sparkspay/sparks/commit/a6eee07f2) Merge bitcoin#9963: util: Properly handle errors during log message formatting (#2917)
 - [`67c735b15`](https://github.com/sparkspay/sparks/commit/67c735b15) s/bitcoin-config.h/sparks-config.h/
-- [`2f63322cd`](https://github.com/sparkspay/sparks/commit/2f63322cd) dashify "Finding reviewers" section to be more relevant
+- [`2f63322cd`](https://github.com/sparkspay/sparks/commit/2f63322cd) sparksify "Finding reviewers" section to be more relevant
 - [`e7a21faa2`](https://github.com/sparkspay/sparks/commit/e7a21faa2) Merge Bitcoin#9960: Trivial: Add const modifier to GetHDChain and IsHDEnabled
 - [`eecc72436`](https://github.com/sparkspay/sparks/commit/eecc72436) Merge #10564: Return early in IsBanned.
 - [`742744f25`](https://github.com/sparkspay/sparks/commit/742744f25) Merge #10522: [wallet] Remove unused variables

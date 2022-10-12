@@ -599,7 +599,7 @@ See detailed [set of changes](https://github.com/sparkspay/sparks/compare/v0.13.
 - [`b8d069bcd`](https://github.com/sparkspay/sparks/commit/b8d069bcd) fix/cleanup qt rpcnestedtests
 - [`b970c20a9`](https://github.com/sparkspay/sparks/commit/b970c20a9) Avoid using immature coinbase UTXOs for dummy TXins
 - [`4d25148c0`](https://github.com/sparkspay/sparks/commit/4d25148c0) Add llmq-signing.py tests
-- [`d020ffa00`](https://github.com/sparkspay/sparks/commit/d020ffa00) Add wait_for_sporks_same and mine_quorum to DashTestFramework
+- [`d020ffa00`](https://github.com/sparkspay/sparks/commit/d020ffa00) Add wait_for_sporks_same and mine_quorum to SparksTestFramework
 - [`0cc1cf279`](https://github.com/sparkspay/sparks/commit/0cc1cf279) Add receivedFinalCommitment flag to CDKGDebugSessionStatus
 - [`23d7ed80d`](https://github.com/sparkspay/sparks/commit/23d7ed80d) Implement "quorum sign/hasrecsig/isconflicting" RPCs
 - [`316b6bf0d`](https://github.com/sparkspay/sparks/commit/316b6bf0d) Faster re-requesting of recovered sigs
@@ -654,7 +654,7 @@ See detailed [set of changes](https://github.com/sparkspay/sparks/compare/v0.13.
 - [`968eb3fc5`](https://github.com/sparkspay/sparks/commit/968eb3fc5) Add real timestamp to log output when mock time is enabled (#2604)
 - [`0648496e2`](https://github.com/sparkspay/sparks/commit/0648496e2) Fix flaky p2p-fullblocktest (#2605)
 - [`96d4f7459`](https://github.com/sparkspay/sparks/commit/96d4f7459) Try to fix flaky IX tests in DIP3 tests (#2602)
-- [`896733223`](https://github.com/sparkspay/sparks/commit/896733223) Dashify copyright_header.py (#2598)
+- [`896733223`](https://github.com/sparkspay/sparks/commit/896733223) Sparksify copyright_header.py (#2598)
 - [`c58f775cc`](https://github.com/sparkspay/sparks/commit/c58f775cc) De-sparksify env vars and sparksify help text in tests instead (#2603)
 - [`a49f4123e`](https://github.com/sparkspay/sparks/commit/a49f4123e) Backports 0.15 pr1 (#2590)
 - [`f95aae2b3`](https://github.com/sparkspay/sparks/commit/f95aae2b3) Remove all legacy/compatibility MN code (#2600)

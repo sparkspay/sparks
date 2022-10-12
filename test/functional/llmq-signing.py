@@ -6,7 +6,7 @@
 import time
 
 from test_framework.mininode import *
-from test_framework.test_framework import DashTestFramework
+from test_framework.test_framework import SparksTestFramework
 from test_framework.util import *
 
 '''
@@ -16,7 +16,7 @@ Checks LLMQs signing sessions
 
 '''
 
-class LLMQSigningTest(DashTestFramework):
+class LLMQSigningTest(SparksTestFramework):
     def set_test_params(self):
         self.set_sparks_test_params(6, 5, fast_dip3_enforcement=True)
 

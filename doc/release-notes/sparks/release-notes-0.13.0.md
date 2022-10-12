@@ -591,7 +591,7 @@ See detailed [set of changes](https://github.com/sparkspay/sparks/compare/v0.12.
 - [`8f9b004ca`](https://github.com/sparkspay/sparks/commit/8f9b004ca) Support "fast" mode when calling sync_masternodes (#2383)
 - [`fcea333ba`](https://github.com/sparkspay/sparks/commit/fcea333ba) Rewrite handling of too long depends builds in .travis.yml (#2385)
 - [`d1debfc26`](https://github.com/sparkspay/sparks/commit/d1debfc26) Implement mt_pooled_secure_allocator and use it for BLS secure allocation (#2375)
-- [`0692de1c5`](https://github.com/sparkspay/sparks/commit/0692de1c5) Fix prepare_masternodes/create_masternodes in DashTestFramework (#2382)
+- [`0692de1c5`](https://github.com/sparkspay/sparks/commit/0692de1c5) Fix prepare_masternodes/create_masternodes in SparksTestFramework (#2382)
 - [`6433a944a`](https://github.com/sparkspay/sparks/commit/6433a944a) [Trivial] typo Groupped -> Grouped (#2374)
 - [`59932401b`](https://github.com/sparkspay/sparks/commit/59932401b) Change internal references of Darksend to PrivateSend (#2372)
 - [`e3046adb3`](https://github.com/sparkspay/sparks/commit/e3046adb3) Clear devNetParams and mimic behavior of other param types (#2367)
