@@ -460,6 +460,7 @@ public:
                 {850000, uint256S("0x000000027ad324d353e377330590752a3dec1f0ee2cc679bf7feead6402c5c0c")},
                 {900000, uint256S("0x0000000611f05c34587c6ed56364336460b6d7a6ee2cd62133e5b5a574e01dfe")},
                 {920000, uint256S("0x000000010cc252a6bad5717ab07e171c4d7eb833877467b54c71d94790330291")},
+                {950000, uint256S("0x00000001ff5971fb183ee2237eebf20c109d1992597438949beb8badc99a46b2")},
            }
         };
 
@@ -467,7 +468,7 @@ public:
             1549015815, // * UNIX timestamp of last known number of transactions
             354527,    // * total number of transactions between genesis and that timestamp
                         //   (the tx=... number in the SetBestChain debug.log lines)
-            0.2         // * estimated number of transactions per second after that timestamp
+            0.1         // * estimated number of transactions per second after that timestamp
         };
     }
 };
