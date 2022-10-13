@@ -65,8 +65,10 @@ Currently, the following notifications are supported:
     -zmqpubhashinstantsenddoublespend=address
     -zmqpubrawblock=address
     -zmqpubrawchainlock=address
+    -zmqpubrawchainlocksig=address
     -zmqpubrawtx=address
     -zmqpubrawtxlock=address
+    -zmqpubrawtxlocksig=address
     -zmqpubrawgovernancevote=address
     -zmqpubrawgovernanceobject=address
     -zmqpubrawinstantsenddoublespend=address
@@ -112,5 +114,5 @@ retrieve the chain from the last known block to the new tip.
 
 There are several possibilities that ZMQ notification can get lost
 during transmission depending on the communication type your are
-using. Dashd appends an up-counting sequence number to each
+using. Sparksd appends an up-counting sequence number to each
 notification which allows listeners to detect lost notifications.

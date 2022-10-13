@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 The Dash Core developers
+// Copyright (c) 2014-2019 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -35,6 +35,17 @@ void CNetFulfilledRequestManager::RemoveFulfilledRequest(const CService& addr, c
 
     if (it != mapFulfilledRequests.end()) {
         it->second.erase(strRequest);
+    }
+}
+
+void CNetFulfilledRequestManager::RemoveAllFulfilledRequests(const CService& addr)
+{
+    LOCK(cs_mapFulfilledRequests);
+    CService addrSquashed = Params().AllowMultiplePorts() ? addr : CService(addr, 0);
+    fulfilledreqmap_t::iterator it = mapFulfilledRequests.find(addrSquashed);
+
+    if (it != mapFulfilledRequests.end()) {
+        mapFulfilledRequests.erase(it++);
     }
 }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Dash Core developers
+// Copyright (c) 2018-2019 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,12 +6,49 @@
 
 CEvoDB* evoDb;
 
+CEvoDBScopedCommitter::CEvoDBScopedCommitter(CEvoDB &_evoDB) :
+    evoDB(_evoDB)
+{
+}
+
+CEvoDBScopedCommitter::~CEvoDBScopedCommitter()
+{
+    if (!didCommitOrRollback)
+        Rollback();
+}
+
+void CEvoDBScopedCommitter::Commit()
+{
+    assert(!didCommitOrRollback);
+    didCommitOrRollback = true;
+    evoDB.CommitCurTransaction();
+}
+
+void CEvoDBScopedCommitter::Rollback()
+{
+    assert(!didCommitOrRollback);
+    didCommitOrRollback = true;
+    evoDB.RollbackCurTransaction();
+}
+
 CEvoDB::CEvoDB(size_t nCacheSize, bool fMemory, bool fWipe) :
     db(fMemory ? "" : (GetDataDir() / "evodb"), nCacheSize, fMemory, fWipe),
     rootBatch(db),
     rootDBTransaction(db, rootBatch),
     curDBTransaction(rootDBTransaction, rootDBTransaction)
 {
+}
+
+void CEvoDB::CommitCurTransaction()
+{
+    LOCK(cs);
+    curDBTransaction.Commit();
+}
+
+void CEvoDB::RollbackCurTransaction()
+{
+    LOCK(cs);
+    curDBTransaction.Clear();
 }
 
 bool CEvoDB::CommitRootTransaction()

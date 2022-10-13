@@ -10,6 +10,16 @@
 #include "config/sparks-config.h"
 #endif
 
+#include <type_traits>
+
+// GCC 4.8 is missing some C++11 type_traits,
+// https://www.gnu.org/software/gcc/gcc-5/changes.html
+#if defined(__GNUC__) && __GNUC__ < 5
+#define IS_TRIVIALLY_CONSTRUCTIBLE std::is_trivial
+#else
+#define IS_TRIVIALLY_CONSTRUCTIBLE std::is_trivially_constructible
+#endif
+
 #ifdef WIN32
 #ifdef _WIN32_WINNT
 #undef _WIN32_WINNT
@@ -47,10 +57,8 @@
 #include <unistd.h>
 #endif
 
-#ifdef WIN32
-#define MSG_DONTWAIT        0
-#else
-typedef u_int SOCKET;
+#ifndef WIN32
+typedef unsigned int SOCKET;
 #include "errno.h"
 #define WSAGetLastError()   errno
 #define WSAEINVAL           EINVAL
@@ -74,16 +82,11 @@ typedef u_int SOCKET;
 #define MAX_PATH            1024
 #endif
 
-// As Solaris does not have the MSG_NOSIGNAL flag for send(2) syscall, it is defined as 0
-#if !defined(HAVE_MSG_NOSIGNAL) && !defined(MSG_NOSIGNAL)
-#define MSG_NOSIGNAL 0
-#endif
-
 #if HAVE_DECL_STRNLEN == 0
 size_t strnlen( const char *start, size_t max_len);
 #endif // HAVE_DECL_STRNLEN
 
-bool static inline IsSelectableSocket(SOCKET s) {
+bool static inline IsSelectableSocket(const SOCKET& s) {
 #ifdef WIN32
     return true;
 #else

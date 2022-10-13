@@ -34,7 +34,7 @@ Package: sparksd
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: peer-to-peer network based digital currency - daemon
- Sparks is an experimental new digital currency that enables anonymous, instant
+ Sparks is an experimental new digital currency that enables instant, private
  payments to anyone, anywhere in the world. Sparks uses peer-to-peer
  technology to operate with no central authority: managing transactions
  and issuing money are carried out collectively by the network. Sparks Core
@@ -47,7 +47,7 @@ Package: sparks-qt
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: peer-to-peer network based digital currency - Qt GUI
- Sparks is an experimental new digital currency that enables anonymous, instant
+ Sparks is an experimental new digital currency that enables instant, private
  payments to anyone, anywhere in the world. Sparks uses peer-to-peer
  technology to operate with no central authority: managing transactions
  and issuing money are carried out collectively by the network. Sparks Core
@@ -59,7 +59,7 @@ Package: sparks-tx
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: peer-to-peer digital currency - standalone transaction tool
- Sparks is an experimental new digital currency that enables anonymous, instant
+ Sparks is an experimental new digital currency that enables instant, private
  payments to anyone, anywhere in the world. Sparks uses peer-to-peer
  technology to operate with no central authority: managing transactions
  and issuing money are carried out collectively by the network. Sparks Core
