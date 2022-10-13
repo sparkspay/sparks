@@ -598,6 +598,30 @@
         <translation>Information</translation>
     </message>
     <message>
+        <source>Received and sent multiple transactions</source>
+        <translation>Transactions multiples reçues et envoyées</translation>
+    </message>
+    <message>
+        <source>Sent multiple transactions</source>
+        <translation>Transactions multiples envoyées</translation>
+    </message>
+    <message>
+        <source>Received multiple transactions</source>
+        <translation>Transactions multiples reçues</translation>
+    </message>
+    <message>
+        <source>Sent Amount: %1
+</source>
+        <translation>Montant envoyé : %1
+</translation>
+    </message>
+    <message>
+        <source>Received Amount: %1
+</source>
+        <translation>Montant reçu : %1
+</translation>
+    </message>
+    <message>
         <source>Date: %1
 </source>
         <translation>Date : %1
@@ -654,13 +678,6 @@
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation>Le portefeuille est &lt;b&gt;chiffré&lt;/b&gt; et actuellement &lt;b&gt;verrouillé&lt;/b&gt;</translation>
-    </message>
-</context>
-<context>
-    <name>ClientModel</name>
-    <message>
-        <source>Network Alert</source>
-        <translation>Alerte réseau</translation>
     </message>
 </context>
 <context>
@@ -798,8 +815,8 @@
         <translation>Veuillez passer en “mode liste” pour utiliser cette fonction.</translation>
     </message>
     <message>
-        <source>Non-anonymized input selected. &lt;b&gt;PrivateSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivateSend, please deselect all non-anonymized inputs first and then check the PrivateSend checkbox again.</source>
-        <translation>Éléments non-anonymisés sélectionnés. &lt;b&gt;PrivateSend sera désactivé.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Si vous voulez quand même utiliser PrivateSend, veuillez d'abord désélectionner tous les éléments non-anonymisés, puis recochez la case PrivateSend.</translation>
+        <source>Non-mixed input selected. &lt;b&gt;PrivateSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivateSend, please deselect all non-mixed inputs first and then check the PrivateSend checkbox again.</source>
+        <translation>Éléments non-mélangés sélectionnés. &lt;b&gt;PrivateSend sera désactivé.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Si vous voulez quand même utiliser PrivateSend, veuillez d'abord désélectionner tous les éléments non-mélangés, puis recochez la case PrivateSend.</translation>
     </message>
     <message>
         <source>(%1 locked)</source>
@@ -975,8 +992,8 @@
         <translation>Information PrivateSend</translation>
     </message>
     <message>
-        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the Sparks in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 SPARKS, 0.01 SPARKS, 0.1 SPARKS, 1 SPARKS and 10 SPARKS -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be anonymized. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a href="https://docs.sparks.org/en/latest/wallets/sparkscore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
-        <translation>&lt;h3&gt;Ce qu'il faut savoir sur PrivateSend&lt;/h3&gt; PrivateSend vous donne une véritable confidentialité financière en obscurcissant l'origine de vos fonds. Tous les sparkss de votre portefeuille sont répartis en différentes "entrées", qu'on peut se représenter comme des pièces distinctes.&lt;br&gt; PrivateSend utilise une procédure innovante pour mélanger vos entrées avec les entrées de deux autres personnes, sans que vos fonds ne quittent jamais votre portefeuille. Vous gardez le contrôle de votre argent à tout moment.&lt;hr&gt; &lt;b&gt;La procédure PrivateSend fonctionne comme ceci :&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend commence par diviser vos entrées de transaction en coupures standard. Ces coupures sont de 0.001 SPARKS, 0.01 SPARKS, 0.1 SPARKS, 1 SPARKS et 10 SPARKS -- un peu comme pour les billets de banque que vous utilisez tous les jours.&lt;/li&gt; &lt;li&gt;Votre portefeuille envoie alors des requêtes à des serveurs spécifiques sur le réseau, appelés "masternodes". Ces masternodes sont informés que vous souhaiteriez mélanger certaines coupures. Aucune information permettant de vous identifier n'est envoyée aux masternodes, qui ne savent donc jamais "qui" vous êtes.&lt;/li&gt; &lt;li&gt;Quand deux autres personnes envoient des requêtes similaires, indiquant qu'elles veulent mélanger les mêmes coupures, alors commence une session de mélange. Le masternode mélange les entrées et demande aux portefeuilles des trois utilisateurs de payer l'entrée, désormais transformée, à eux-mêmes. Votre portefeuille paie cette coupure directement à lui-même, mais à une adresse différente (appelée une adresse de monnaie rendue).&lt;/li&gt; &lt;li&gt;Afin d'obscurcir complètement vos fonds, votre portefeuille doit répéter cette procédure un certain nombre de fois avec chaque coupure. Une procédure terminée s'appelle un "cycle". Chaque cycle PrivateSend rend exponentiellement plus difficile de déterminer d'où viennent vos fonds.&lt;/li&gt; &lt;li&gt;Cette procédure de mélange intervient en arrière-plan, sans aucune intervention de votre part. Quand vous souhaiterez faire une transaction, vos fonds seront déjà anonymisés. Aucune autre attente ne sera nécessaire.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT :&lt;/b&gt; Votre portefeuille ne contient que 1000 de ces "adresses de monnaie rendue". À chaque opération de mélange, jusqu'à 9 de ces adresses sont utilisées. Cela signifie que ces 1000 adresses couvrent environ 100 opérations de mélange. Quand 900 d'entre elles sont utilisées, votre portefeuille doit créer de nouvelles adresses. Cependant il ne peut le faire que si vous avez activé les sauvegardes automatiques.&lt;br&gt; En conséquence, les utilisateurs qui ont désactivé les sauvegardes ont aussi PrivateSend désactivé. &lt;hr&gt;Pour en savoir plus, voir la documentation PrivateSend.   </translation>
+        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the Sparks in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 SPARKS, 0.01 SPARKS, 0.1 SPARKS, 1 SPARKS and 10 SPARKS -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be mixed. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a href="https://docs.sparks.org/en/stable/wallets/sparkscore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
+        <translation>&lt;h3&gt;Ce qu'il faut savoir sur PrivateSend&lt;/h3&gt; PrivateSend vous donne une véritable confidentialité financière en obscurcissant l'origine de vos fonds. Tous les sparkss de votre portefeuille sont répartis en différentes "entrées", qu'on peut se représenter comme des pièces distinctes.&lt;br&gt; PrivateSend utilise une procédure innovante pour mélanger vos entrées avec les entrées de deux autres personnes, sans que vos fonds ne quittent jamais votre portefeuille. Vous gardez le contrôle de votre argent à tout moment.&lt;hr&gt; &lt;b&gt;La procédure PrivateSend fonctionne comme ceci :&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend commence par diviser vos entrées de transaction en coupures standard. Ces coupures sont de 0.001 SPARKS, 0.01 SPARKS, 0.1 SPARKS, 1 SPARKS et 10 SPARKS -- un peu comme pour les billets de banque que vous utilisez tous les jours.&lt;/li&gt; &lt;li&gt;Votre portefeuille envoie alors des requêtes à des serveurs spécifiques sur le réseau, appelés "masternodes". Ces masternodes sont informés que vous souhaiteriez mélanger certaines coupures. Aucune information permettant de vous identifier n'est envoyée aux masternodes, qui ne savent donc jamais "qui" vous êtes.&lt;/li&gt; &lt;li&gt;Quand deux autres personnes envoient des requêtes similaires, indiquant qu'elles veulent mélanger les mêmes coupures, alors commence une session de mélange. Le masternode mélange les entrées et demande aux portefeuilles des trois utilisateurs de payer l'entrée, désormais transformée, à eux-mêmes. Votre portefeuille paie cette coupure directement à lui-même, mais à une adresse différente (appelée une adresse de monnaie rendue).&lt;/li&gt; &lt;li&gt;Afin d'obscurcir complètement vos fonds, votre portefeuille doit répéter cette procédure un certain nombre de fois avec chaque coupure. Une procédure terminée s'appelle un "cycle". Chaque cycle PrivateSend rend exponentiellement plus difficile de déterminer d'où viennent vos fonds.&lt;/li&gt; &lt;li&gt;Cette procédure de mélange intervient en arrière-plan, sans aucune intervention de votre part. Quand vous souhaiterez faire une transaction, vos fonds seront déjà mélangés. Aucune autre attente ne sera nécessaire.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT :&lt;/b&gt; Votre portefeuille ne contient que 1000 de ces "adresses de monnaie rendue". À chaque opération de mélange, jusqu'à 9 de ces adresses sont utilisées. Cela signifie que ces 1000 adresses couvrent environ 100 opérations de mélange. Quand 900 d'entre elles sont utilisées, votre portefeuille doit créer de nouvelles adresses. Cependant il ne peut le faire que si vous avez activé les sauvegardes automatiques.&lt;br&gt; En conséquence, les utilisateurs qui ont désactivé les sauvegardes ont aussi PrivateSend désactivé. &lt;hr&gt;Pour en savoir plus, voir la &lt;a href="https://docs.sparks.org/en/stable/wallets/sparkscore/privatesend-instantsend.html"&gt;documentation PrivateSend&lt;/a&gt;.   </translation>
     </message>
 </context>
 <context>
@@ -1053,16 +1070,8 @@
         <translation>Formulaire</translation>
     </message>
     <message>
-        <source>Address</source>
-        <translation>Adresse</translation>
-    </message>
-    <message>
         <source>Status</source>
         <translation>État</translation>
-    </message>
-    <message>
-        <source>Payee</source>
-        <translation>Bénéficiaire</translation>
     </message>
     <message>
         <source>0</source>
@@ -1081,16 +1090,16 @@
         <translation>Nombre de nœuds :</translation>
     </message>
     <message>
-        <source>DIP3 Masternodes</source>
-        <translation>Masternodes DIP3</translation>
-    </message>
-    <message>
         <source>Show only masternodes this wallet has keys for.</source>
         <translation>N'afficher que les masternodes dont les clés sont dans ce portefeuille</translation>
     </message>
     <message>
         <source>My masternodes only</source>
         <translation>Seulement mes masternodes</translation>
+    </message>
+    <message>
+        <source>Service</source>
+        <translation>Service</translation>
     </message>
     <message>
         <source>PoSe Score</source>
@@ -1109,8 +1118,24 @@
         <translation>Prochain paiement</translation>
     </message>
     <message>
+        <source>Payout Address</source>
+        <translation>Adresse de rétribution</translation>
+    </message>
+    <message>
         <source>Operator Reward</source>
         <translation>Récompense opérateur</translation>
+    </message>
+    <message>
+        <source>Collateral Address</source>
+        <translation>Adresse de caution</translation>
+    </message>
+    <message>
+        <source>Owner Address</source>
+        <translation>Adresse de propriétaire</translation>
+    </message>
+    <message>
+        <source>Voting Address</source>
+        <translation>Adresse de vote</translation>
     </message>
     <message>
         <source>Copy ProTx Hash</source>
@@ -1254,10 +1279,6 @@
         <translation>(0 = auto, &lt; 0 = ne pas utiliser ce nombre de cœurs)</translation>
     </message>
     <message>
-        <source>Amount of Sparks to keep anonymized</source>
-        <translation>Nombre de sparkss à conserver anonymisés</translation>
-    </message>
-    <message>
         <source>W&amp;allet</source>
         <translation>&amp;Portefeuille</translation>
     </message>
@@ -1306,16 +1327,12 @@
         <translation>Ce montant agit comme seuil de désactivation de PrivateSend, une fois atteint.</translation>
     </message>
     <message>
+        <source>Target PrivateSend balance</source>
+        <translation>Solde cible PrivateSend</translation>
+    </message>
+    <message>
         <source>Automatically open the Sparks Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation>Ouvrir automatiquement le port du client Sparks Core sur le routeur. Cela ne fonctionne que si votre routeur supporte UPnP et est activé.</translation>
-    </message>
-    <message>
-        <source>Accept connections from outside</source>
-        <translation>Accepter les connexions provenant de l'extérieur</translation>
-    </message>
-    <message>
-        <source>Allow incoming connections</source>
-        <translation>Autoriser les connexions entrantes</translation>
     </message>
     <message>
         <source>Connect to the Sparks network through a SOCKS5 proxy.</source>
@@ -1324,6 +1341,10 @@
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
         <translation>&amp;Connexion par SOCKS5 (proxy par défaut) :</translation>
+    </message>
+    <message>
+        <source>Shows if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
+        <translation>Indique si le proxy SOCKS5 par défaut est utilisé pour atteindre les pairs à travers ce type de réseau.</translation>
     </message>
     <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Exit in the menu.</source>
@@ -1336,10 +1357,6 @@
     <message>
         <source>Expert</source>
         <translation>Expert</translation>
-    </message>
-    <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Ce paramètre détermine le nombre de masternodes uniques par lesquels l'anonymisation sera effectuée.&lt;br/&gt;Plus le nombre de cycles d'anonymisation est important, plus le degré de confidentialité est élevé, mais les frais associés sont d'autant plus importants.</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
@@ -1370,12 +1387,24 @@
         <translation>&amp;Dépenser l'argent non confirmé</translation>
     </message>
     <message>
+        <source>This setting determines the amount of individual masternodes that an input will be mixed through.&lt;br/&gt;More rounds of mixing gives a higher degree of privacy, but also costs more in fees.</source>
+        <translation>Ce paramètre détermine le nombre de masternodes uniques par lesquels une entrée sera mélangée.&lt;br/&gt;Plus le nombre de cycles de mélange est important, plus le degré de confidentialité est élevé, mais les frais associés sont d'autant plus importants.</translation>
+    </message>
+    <message>
         <source>&amp;Network</source>
         <translation>&amp;Réseau</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
         <translation>Mapper le port avec l'&amp;UPnP</translation>
+    </message>
+    <message>
+        <source>Accept connections from outside</source>
+        <translation>Accepter les connexions provenant de l'extérieur</translation>
+    </message>
+    <message>
+        <source>Allow incoming connections</source>
+        <translation>Autoriser les connexions entrantes</translation>
     </message>
     <message>
         <source>Proxy &amp;IP:</source>
@@ -1396,10 +1425,6 @@
     <message>
         <source>Used for reaching peers via:</source>
         <translation>Utilisé pour atteindre les pairs via :</translation>
-    </message>
-    <message>
-        <source>Shows, if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
-        <translation>Indique si le proxy SOCKS5 par défaut est utilisé pour atteindre les pairs à travers ce type de réseau.</translation>
     </message>
     <message>
         <source>IPv4</source>
@@ -1619,22 +1644,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Avancement :</translation>
     </message>
     <message>
-        <source>Try to manually submit a PrivateSend request.</source>
-        <translation>Essayer de soumettre manuellement une requête PrivateSend.</translation>
-    </message>
-    <message>
-        <source>Reset the current status of PrivateSend (can interrupt PrivateSend if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>Réinitialiser l'état actuel de PrivateSend (peut interrompre PrivateSend s'il est en plein mélange, ce qui peut vous coûter de l'argent !)</translation>
-    </message>
-    <message>
-        <source>Information about PrivateSend and Mixing</source>
-        <translation>Information sur PrivateSend et le mélange</translation>
-    </message>
-    <message>
-        <source>Info</source>
-        <translation>Info</translation>
-    </message>
-    <message>
         <source>Amount and Rounds:</source>
         <translation>Montant et cycles :</translation>
     </message>
@@ -1669,14 +1678,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>(Last Message)</source>
         <translation>(Dernier message)</translation>
-    </message>
-    <message>
-        <source>Try Mix</source>
-        <translation>Essayer le mélange</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Réinitialiser</translation>
     </message>
     <message>
         <source>out of sync</source>
@@ -1719,12 +1720,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Coupures</translation>
     </message>
     <message>
-        <source>Mixed</source>
-        <translation>Mélangés</translation>
+        <source>Partially mixed</source>
+        <translation>Partiellement mélangé</translation>
     </message>
     <message>
-        <source>Anonymized</source>
-        <translation>Anonymisés</translation>
+        <source>Mixed</source>
+        <translation>Mélangés</translation>
     </message>
     <message numerus="yes">
         <source>Denominated inputs have %5 of %n rounds on average</source>
@@ -1779,10 +1780,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
 </source>
         <translation>Dernier message PrivateSend :
 </translation>
-    </message>
-    <message>
-        <source>PrivateSend was successfully reset.</source>
-        <translation>PrivateSend a bien été réinitialisé.</translation>
     </message>
     <message>
         <source>If you don't want to see internal PrivateSend fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
@@ -2145,10 +2142,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Trafic &amp;réseau</translation>
     </message>
     <message>
-        <source>&amp;Clear</source>
-        <translation>&amp;Nettoyer</translation>
-    </message>
-    <message>
         <source>Totals</source>
         <translation>Totaux</translation>
     </message>
@@ -2213,12 +2206,20 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Ouvrir le fichier journal de débogage de %1 à partir du répertoire de données actuel. Cela peut prendre quelques secondes pour les fichiers journaux de grande taille.</translation>
     </message>
     <message>
+        <source>InstantSend locks</source>
+        <translation>Verrous InstantSend</translation>
+    </message>
+    <message>
         <source>Decrease font size</source>
         <translation>Diminuer la taille des caractères</translation>
     </message>
     <message>
         <source>Increase font size</source>
         <translation>Augmenter la taille des caractères</translation>
+    </message>
+    <message>
+        <source>&amp;Reset</source>
+        <translation>&amp;Réinitialiser</translation>
     </message>
     <message>
         <source>Services</source>
@@ -2353,15 +2354,15 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Bienvenue sur la console RPC de %1.</translation>
     </message>
     <message>
-        <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>Utilisez les touches de curseur pour naviguer dans l'historique et &lt;b&gt;Ctrl-L&lt;/b&gt; pour effacer l'écran.</translation>
-    </message>
-    <message>
         <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
         <translation>Tapez &lt;b&gt;help&lt;/b&gt; pour afficher une vue générale des commandes disponibles.</translation>
     </message>
     <message>
-        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramification of a command.</source>
+        <source>Use up and down arrows to navigate history, and %1 to clear screen.</source>
+        <translation>Utilisez les touches de curseur pour naviguer dans l'historique et %1 pour effacer l'écran.</translation>
+    </message>
+    <message>
+        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.</source>
         <translation>AVERTISSEMENT : des escrocs ont déjà tenté d'inciter des utilisateurs à saisir des commandes ici même, pour voler le contenu de leur portefeuille. N'utilisez pas cette console sans comprendre exactement la portée d'une commande.</translation>
     </message>
     <message>
@@ -2484,10 +2485,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Effacer</translation>
     </message>
     <message>
-        <source>Request InstantSend</source>
-        <translation>Demander un paiement InstantSend</translation>
-    </message>
-    <message>
         <source>Requested payments history</source>
         <translation>Historique des paiements demandés</translation>
     </message>
@@ -2569,18 +2566,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Message</source>
         <translation>Message</translation>
-    </message>
-    <message>
-        <source>InstantSend</source>
-        <translation>InstantSend</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation>Oui</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>Non</translation>
     </message>
     <message>
         <source>Resulting URI too long, try to reduce the text for label / message.</source>
@@ -2689,14 +2674,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Choisissez...</translation>
     </message>
     <message>
-        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until your have validated the complete chain.</source>
-        <translation>Utiliser les frais de repli peut allonger le temps de confirmation d'une transaction (jusqu'à plusieurs heures, ou jours, voire jamais). Envisagez de choisir vos frais manuellement, ou bien attendez la validation complète de la blockchain.</translation>
-    </message>
-    <message>
-        <source>Warning: Fee estimation is currently not possible.</source>
-        <translation>Avertissement : l’estimation des frais n’est actuellement pas possible.</translation>
-    </message>
-    <message>
         <source>collapse fee-settings</source>
         <translation>replier les paramètres de frais</translation>
     </message>
@@ -2709,16 +2686,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>PrivateSend</translation>
     </message>
     <message>
-        <source>InstantSend</source>
-        <translation>InstantSend</translation>
-    </message>
-    <message>
         <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation>Si les frais personnalisés sont à 1000 duffs et que la transaction fait seulement 250 octets, alors "par kilooctet" coûtera seulement 250 duffs de frais,&lt;br /&gt;alors que "au moins" coûtera 1000 duffs. Pour les transactions de plus d'un kilooctet, les deux coûts seront calculés au kilooctet.</translation>
-    </message>
-    <message>
-        <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "total at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Si les frais personnalisés sont à 1000 duffs et que la transaction fait seulement 250 octets, alors "par kilooctet" coûtera seulement 250 duffs de frais,&lt;br /&gt;alors que "total au moins" coûtera 1000 duffs. Pour les transactions de plus d'un kilooctet, les deux coûts seront calculés au kilooctet.</translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
@@ -2729,12 +2698,16 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>par kilooctet</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>Cacher</translation>
+        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until you have validated the complete chain.</source>
+        <translation>Utiliser les frais de repli peut allonger le temps de confirmation d'une transaction (jusqu'à plusieurs heures, ou jours, voire jamais). Envisagez de choisir vos frais manuellement, ou bien attendez la validation complète de la blockchain.</translation>
     </message>
     <message>
-        <source>total at least</source>
-        <translation>total au moins</translation>
+        <source>Note: Not enough data for fee estimation, using the fallback fee instead.</source>
+        <translation>Note : données insuffisantes pour estimer les frais. Utilisation des frais prédéfinis à la place.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Cacher</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
@@ -2751,14 +2724,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
         <translation>(Les frais intelligents ne sont pas encore disponibles. Cette fonction apparaît d'habitude après quelques blocs...)</translation>
-    </message>
-    <message>
-        <source>normal</source>
-        <translation>normal</translation>
-    </message>
-    <message>
-        <source>fast</source>
-        <translation>rapide</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
@@ -2817,24 +2782,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Copier la monnaie</translation>
     </message>
     <message>
+        <source>%1 (%2 blocks)</source>
+        <translation>%1 (%2 blocs)</translation>
+    </message>
+    <message>
         <source>using</source>
         <translation>utiliser</translation>
-    </message>
-    <message>
-        <source>anonymous funds</source>
-        <translation>fonds anonymisés</translation>
-    </message>
-    <message>
-        <source>(privatesend requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(PrivateSend nécessite que ce montant soit arrondi au plus proche de %1).</translation>
-    </message>
-    <message>
-        <source>any available funds (not anonymous)</source>
-        <translation>tous fonds disponibles (pas d'anonymat)</translation>
-    </message>
-    <message>
-        <source>and InstantSend</source>
-        <translation>et InstantSend</translation>
     </message>
     <message>
         <source>%1 to %2</source>
@@ -2855,6 +2808,34 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>&lt;b&gt;(%1 of %2 entries displayed)&lt;/b&gt;</source>
         <translation>&lt;b&gt;(%1 sur %2 entrées affichées)&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>PrivateSend funds only</source>
+        <translation>Fonds PrivateSend seulement</translation>
+    </message>
+    <message>
+        <source>any available funds</source>
+        <translation>tous fonds disponibles</translation>
+    </message>
+    <message>
+        <source>(PrivateSend transactions have higher fees usually due to no change output being allowed)</source>
+        <translation>(les transactions PrivateSend ont des frais plus élevés, en général parce qu'elles n'acceptent pas de monnaie rendue)</translation>
+    </message>
+    <message>
+        <source>Transaction size: %1</source>
+        <translation>Taille de la transaction : %1</translation>
+    </message>
+    <message>
+        <source>Fee rate: %1</source>
+        <translation>Taux des frais : %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>This transaction will consume %n input(s)</source>
+        <translation><numerusform>Cette transaction emploiera %n entrée</numerusform><numerusform>Cette transaction emploiera %n entrées</numerusform></translation>
+    </message>
+    <message>
+        <source>Warning: Using PrivateSend with %1 or more inputs can harm your privacy and is not recommended</source>
+        <translation>Attention : utiliser PrivateSend avec %1 entrées ou plus peut affaiblir votre confidentialité et n'est pas recommandé</translation>
     </message>
     <message>
         <source>Confirm send coins</source>
@@ -2895,10 +2876,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Payment request expired.</source>
         <translation>La demande de paiement a expiré.</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n block(s)</source>
-        <translation><numerusform>%n bloc</numerusform><numerusform>%n blocs</numerusform></translation>
     </message>
     <message>
         <source>Pay only the required fee of %1</source>
@@ -3236,18 +3213,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>verified via LLMQ based InstantSend</source>
         <translation>vérifié par InstantSend/LLMQ</translation>
-    </message>
-    <message>
-        <source>verified via InstantSend</source>
-        <translation>vérifié via InstantSend</translation>
-    </message>
-    <message>
-        <source>InstantSend verification in progress - %1 of %2 signatures</source>
-        <translation>Vérification InstantSend en cours - %1 de %2 signatures</translation>
-    </message>
-    <message>
-        <source>InstantSend verification failed</source>
-        <translation>Echec de la vérification InstantSend</translation>
     </message>
     <message>
         <source>Status</source>
@@ -3751,14 +3716,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Send Coins</source>
         <translation>Envoyer des fonds</translation>
     </message>
-    <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 SPARKS.</source>
-        <translation>InstantSend ne supporte pas des transferts aussi élevés. Les transactions sont pour le moment limitées à %1 SPARKS.</translation>
-    </message>
-    <message>
-        <source>Used way too many inputs (&gt;%1) for this InstantSend transaction, fees could be huge.</source>
-        <translation>Vous avez utilisé bien trop d'entrées (&gt;%1) pour cette transaction InstantSend, les frais peuvent être énormes.</translation>
-    </message>
 </context>
 <context>
     <name>WalletView</name>
@@ -3826,10 +3783,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Nom pour construire l'URL pour l'entrée KeePass qui conserve la phrase de passe du portefeuille</translation>
     </message>
     <message>
-        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>Définir la taille maximale en octets des transactions prioritaires/à frais modiques (par défaut : %d)</translation>
-    </message>
-    <message>
         <source>Set the number of script verification threads (%u to %d, 0 = auto, &lt;0 = leave that many cores free, default: %d)</source>
         <translation>Définir le nombre d'exétrons de vérification des scripts (%u à %d, 0 = auto, &lt; 0 = laisser ce nombre de cœurs inutilisés, par défaut : %d)</translation>
     </message>
@@ -3848,10 +3801,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Accept command line and JSON-RPC commands</source>
         <translation>Accepter les commandes de JSON-RPC et de la ligne de commande</translation>
-    </message>
-    <message>
-        <source>Add a node to connect to and attempt to keep the connection open</source>
-        <translation>Ajouter un nœud auquel se connecter et tenter de garder la connexion ouverte</translation>
     </message>
     <message>
         <source>Allow DNS lookups for -addnode, -seednode and -connect</source>
@@ -3982,10 +3931,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Activer la publication des empreintes de transaction des tentatives de double dépense InstantSend dans &lt;address&gt;</translation>
     </message>
     <message>
-        <source>Error loading %s: You can't enable HD on a already existing non-HD wallet</source>
-        <translation>Erreur en chargeant %s : Impossible d'activer HD sur un portefeuille non-HD déjà existant</translation>
-    </message>
-    <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
         <translation>Détection de sorties de coupures non confirmées, attente de leur confirmation pour continuer.</translation>
     </message>
@@ -4010,10 +3955,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Maintenir un index complet des transactions, utilisé par l'appel rpc getrawtransaction (par défaut : %u)</translation>
     </message>
     <message>
-        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you verified that wallet works!</source>
-        <translation>Assurez-vous de chiffrer votre portefeuille, et effacez toutes vos sauvegardes non chiffrées après avoir vérifié que ce portefeuille marche !</translation>
-    </message>
-    <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
         <translation>Taille maximale des données dans les transactions support de données que l'on relaye et mine (par défaut : %u)</translation>
     </message>
@@ -4028,6 +3969,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Overrides minimum spork signers to change spork value. Only useful for regtest and devnet. Using this on mainnet or testnet will ban you.</source>
         <translation>Ignore le nombre minimal de signataires spork pour la modification de la valeur de spork. Utile seulement pour les réseaux d'enregistrement et de développement. Utiliser ceci sur les réseaux principal ou de test entraînera votre bannissement.</translation>
+    </message>
+    <message>
+        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to mix some more coins.</source>
+        <translation>PrivateSend utilise des montants libellés exacts pour envoyer des fonds, vous pourriez simplement avoir besoin de mélanger plus de fonds.</translation>
     </message>
     <message>
         <source>Use N separate masternodes in parallel to mix funds (%u-%u, default: %u)</source>
@@ -4050,20 +3995,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Pairs en liste blanche ne peuvent être bannis pour DoS et leurs transactions sont toujours relayées, même si elles sont déjà en mémoire, utile par ex. pour une passerelle</translation>
     </message>
     <message>
-        <source>You need to rebuild the database using -reindex-chainstate to change -txindex</source>
-        <translation>Vous devez reconstruire la base de données en utilisant -reindex-chainstate pour modifier -txindex</translation>
-    </message>
-    <message>
-        <source>You should specify a masternodeblsprivkey in the configuration. Please see documentation for help.</source>
-        <translation>Vous devriez indiquer une "masternodeprivkey" dans la configuration. Veuillez consulter la documentation pour en savoir plus.</translation>
-    </message>
-    <message>
         <source>(default: %s)</source>
         <translation>(par défaut: %s)</translation>
-    </message>
-    <message>
-        <source>-wallet parameter must only specify a filename (not a path)</source>
-        <translation>Le paramètre -wallet doit seulement indiquer un nom de fichier (pas un chemin)</translation>
     </message>
     <message>
         <source>Accept public REST requests (default: %u)</source>
@@ -4090,16 +4023,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Connecter à KeePassHttp sur le port &lt;port&gt; (par défaut: %u)</translation>
     </message>
     <message>
-        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>Autoriser le client à agir en tant que masternode (0-1, par défaut : %u)</translation>
-    </message>
-    <message>
         <source>Entry exceeds maximum size.</source>
         <translation>L'entrée dépasse la taille maximale.</translation>
-    </message>
-    <message>
-        <source>Error loading %s: You can't disable HD on a already existing HD wallet</source>
-        <translation>Erreur au chargement de %s : Impossible de désactiver HD sur un portefeuille HD déjà existant</translation>
     </message>
     <message>
         <source>Failed to load fulfilled requests cache from</source>
@@ -4158,16 +4083,24 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Fonds insuffisants</translation>
     </message>
     <message>
+        <source>Invalid amount for -discardfee=&lt;amount&gt;: '%s'</source>
+        <translation>Montant invalide pour -discardfee=&lt;montant&gt; : « %s »</translation>
+    </message>
+    <message>
         <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
         <translation>Montant invalide pour -paytxfee=&lt;montant&gt; : « %s » (minimum possible: %s)</translation>
     </message>
     <message>
-        <source>Invalid masternodeblsprivkey. Please see documenation.</source>
-        <translation>masternodeblsprivkey invalide. Veuillez vous référer à la documentation.</translation>
-    </message>
-    <message>
         <source>Invalid minimum number of spork signers specified with -minsporkkeys</source>
         <translation>Le nombre minimal de signataires spork spécifié avec -minsporkkeys est invalide</translation>
+    </message>
+    <message>
+        <source>Keep N SPARKS mixed (%u-%u, default: %u)</source>
+        <translation>Conserver N sparkss mélangés (%u-%u, par défaut : %u)</translation>
+    </message>
+    <message>
+        <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
+        <translation>Garder au plus &lt;n&gt; transactions sans connexion en mémoire (par défaut : %u)</translation>
     </message>
     <message>
         <source>Keypool ran out, please call keypoolrefill first</source>
@@ -4226,6 +4159,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Aucun masternode compatible trouvé.</translation>
     </message>
     <message>
+        <source>Not enough funds to mix.</source>
+        <translation>Pas assez de fonds à mélanger.</translation>
+    </message>
+    <message>
         <source>Not in the Masternode list.</source>
         <translation>Absent de la liste des masternodes.</translation>
     </message>
@@ -4250,16 +4187,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Envoyer les informations de débogage/trace au fichier debug.log (par défaut: %u)</translation>
     </message>
     <message>
-        <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
-        <translation>N'envoyer que des transactions sans frais si possible (par défaut : %u)</translation>
-    </message>
-    <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
         <translation>Définir la taille de la réserve de clefs à &lt;n&gt; (par défaut : %u)</translation>
-    </message>
-    <message>
-        <source>Set the masternode BLS private key</source>
-        <translation>Définir la clé privée BLS du masternode</translation>
     </message>
     <message>
         <source>Set the number of threads to service RPC calls (default: %d)</source>
@@ -4292,10 +4221,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Synchronization finished</source>
         <translation>La synchronisation est terminée</translation>
-    </message>
-    <message>
-        <source>This is not a Masternode.</source>
-        <translation>Ceci n'est pas un masternode.</translation>
     </message>
     <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
@@ -4358,6 +4283,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Le commentaire User Agent (%s) contient des caractères dangereux.</translation>
     </message>
     <message>
+        <source>Verifying wallet(s)...</source>
+        <translation>Vérification du ou des portefeuille(s)…</translation>
+    </message>
+    <message>
         <source>Will retry...</source>
         <translation>Va réessayer ...</translation>
     </message>
@@ -4386,10 +4315,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Clef KeePassHttp pour la communication chiffrée AES avec KeePass</translation>
     </message>
     <message>
-        <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
-        <translation>Garder au plus &lt;n&gt; transactions sans connexion en mémoire (par défaut : %u)</translation>
-    </message>
-    <message>
         <source>Disable all Sparks specific functionality (Masternodes, PrivateSend, InstantSend, Governance) (0-1, default: %u)</source>
         <translation>Désactiver toutes les fonctionnalités liées à Sparks (masternodes, PrivateSend, InstantSend, gouvernance) (0-1, par défaut : %u)</translation>
     </message>
@@ -4398,8 +4323,20 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Le fichier %s contient toutes les clés privées de ce portefeuille. Ne le partagez avec personne !</translation>
     </message>
     <message>
+        <source>-masternode option is deprecated and ignored, specifying -masternodeblsprivkey is enough to start this node as a masternode.</source>
+        <translation>L'option -masternode est obsolète et ignorée. Indiquer -masternodeblsprivkey suffit à démarrer ce nœud en tant que masternode.</translation>
+    </message>
+    <message>
+        <source>Add a node to connect to and attempt to keep the connection open (see the `addnode` RPC command help for more info)</source>
+        <translation>Ajouter un nœud auquel se connecter et tenter de garder la connexion ouverte (voir l'aide sur la commande RPC `addnode` pour en savoir plus)</translation>
+    </message>
+    <message>
         <source>Bind to given address to listen for JSON-RPC connections. This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost, or if -rpcallowip has been specified, 0.0.0.0 and :: i.e., all addresses)</source>
         <translation>Se lier à l'adresse indiquée pour écouter les connexions JSON-RPC. Cette option est ignorée sauf si -rpcallowip est également passée. Le port est facultatif et outrepasse -rpcport. Utilisez la notation [hôte]:port pour IPv6. Cette option peut être indiquée plusieurs fois (défaut : 127.0.0.1 et ::1 i.e., localhost, ou si -rpcallowip a été indiquée, 0.0.0.0 et :: i.e., toutes les adresses)</translation>
+    </message>
+    <message>
+        <source>Connect only to the specified node(s); -connect=0 disables automatic connections (the rules for this peer are the same as for -addnode)</source>
+        <translation>Se connecter seulement aux nœud(s) indiqué(s) ; -connect=0 désactive les connexions automatiques (les règles pour ce pair sont les mêmes que pour -addnode)</translation>
     </message>
     <message>
         <source>Discover own IP addresses (default: 1 when listening and no -externalip or -proxy)</source>
@@ -4410,16 +4347,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Ne pas garder de transactions dans la zone mémoire plus de &lt;n&gt; heures (par défaut : %u)</translation>
     </message>
     <message>
-        <source>Enable InstantSend, show confirmations for locked transactions (0-1, default: %u)</source>
-        <translation>Activer InstantSend, montrer les confirmations pour les transactions verrouillées (0-1, par défaut : %u)</translation>
-    </message>
-    <message>
         <source>Enable multiple PrivateSend mixing sessions per block, experimental (0-1, default: %u)</source>
         <translation>Active de multiples sessions de mélange PrivateSend par blocs, expérimental (0-1, par défaut : %u)</translation>
-    </message>
-    <message>
-        <source>Enable use of automated PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Activer l'utilisation automatique de PrivateSend pour les fonds stockés dans ce portefeuille (0-1, par défaut : %u)</translation>
     </message>
     <message>
         <source>Execute command when a wallet InstantSend transaction is successfully locked (%s in cmd is replaced by TxID)</source>
@@ -4446,14 +4375,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Si &lt;category&gt; n'est pas indiqué ou si &lt;category&gt; = 1, extraire toutes les données de débogage.</translation>
     </message>
     <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 SPARKS.</source>
-        <translation>InstantSend ne supporte pas encore des transferts aussi élevés. Les transactions sont pour le moment limitées à %1 SPARKS.</translation>
-    </message>
-    <message>
-        <source>InstantSend requires inputs with at least %d confirmations, you might need to wait a few minutes and try again.</source>
-        <translation>InstantSend nécessite des entrées avec au moins %d confirmations. Vous devriez attendre quelques minutes avant de réessayer.</translation>
-    </message>
-    <message>
         <source>Maintain a full address index, used to query for the balance, txids and unspent outputs for addresses (default: %u)</source>
         <translation>Maintenir un index complet des transactions, utilisé pour requêter le solde, txids et sorties non dépensées par adresses (par défaut : %u)</translation>
     </message>
@@ -4470,8 +4391,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Garder au plus &lt;n&gt; connexions avec les pairs (services temporaires de connexions exclus) (par défaut : %u)</translation>
     </message>
     <message>
-        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
-        <translation>PrivateSend utilise des montants libellés exacts pour envoyer des fonds, vous pourriez simplement avoir besoin d'anonymiser plus de fonds.</translation>
+        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you have verified that the wallet works!</source>
+        <translation>Assurez-vous de chiffrer votre portefeuille, et effacez toutes vos sauvegardes non chiffrées après avoir vérifié que ce portefeuille marche !</translation>
+    </message>
+    <message>
+        <source>Maximum total size of all orphan transactions in megabytes (default: %u)</source>
+        <translation>Taille maximale totale en méga-octets de toutes les transactions orphelines (par défaut : %u)</translation>
     </message>
     <message>
         <source>Prune configured below the minimum of %d MiB.  Please use a higher number.</source>
@@ -4482,12 +4407,20 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Élagage : la dernière synchronisation de portefeuille va au-delà des données élaguées. Vous devez -reindex er (télécharger la chaîne complète de nouveau dans le cas d'un nœud élagué)</translation>
     </message>
     <message>
+        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect used)</source>
+        <translation>Requête pour adresses de pairs via recherche DNS, si peu d'adresses (par défaut : 1, sauf si -connect est utilisé)</translation>
+    </message>
+    <message>
         <source>Randomize credentials for every proxy connection. This enables Tor stream isolation (default: %u)</source>
         <translation>Rendre les Identifiant aléatoires pour chaque connection au proxy. Ceci active l'isolation de flux Tor (par défaut : %u)</translation>
     </message>
     <message>
         <source>Rescans are not possible in pruned mode. You will need to use -reindex which will download the whole blockchain again.</source>
         <translation>Les re-balayages ne sont pas possibles en mode élagué. Vous devrez utiliser -reindex qui va télécharger la chaîne complète de nouveau.</translation>
+    </message>
+    <message>
+        <source>Set the masternode BLS private key and enable the client to act as a masternode</source>
+        <translation>Définir la clé privée BLS du masternode et permettre au client d'agir comme masternode</translation>
     </message>
     <message>
         <source>Specify full path to directory for automatic wallet backups (must exist)</source>
@@ -4546,8 +4479,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Attention : un bloc de version inconnue est en train d'être miné ! Il est possible que des règles inconnues soient en vigueur.</translation>
     </message>
     <message>
-        <source>You are starting in lite mode, all Sparks-specific functionality is disabled.</source>
-        <translation>Vous démarrez en mode allégé : toutes les fonctionnalités propres à Sparks sont désactivées.</translation>
+        <source>You need to rebuild the database using -reindex to change -timestampindex</source>
+        <translation>Vous devez reconstruire la base de données avec l'option -reindex afin de modifier -timestampindex</translation>
     </message>
     <message>
         <source>You need to rebuild the database using -reindex to go back to unpruned mode.  This will redownload the entire blockchain</source>
@@ -4630,10 +4563,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>La suppression de la sauvegarde a échoué, erreur : %s !</translation>
     </message>
     <message>
-        <source>Failed to load InstantSend data cache from</source>
-        <translation>Échec du chargement du cache de données InstantSend depuis</translation>
-    </message>
-    <message>
         <source>Failed to load sporks cache from</source>
         <translation>Échec du chargement du cache des sporks depuis</translation>
     </message>
@@ -4654,6 +4583,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Montant invalide pour -fallbackfee=&lt;montant&gt; : « %s »</translation>
     </message>
     <message>
+        <source>Invalid masternodeblsprivkey. Please see documentation.</source>
+        <translation>masternodeblsprivkey invalide. Veuillez vous référer à la documentation.</translation>
+    </message>
+    <message>
         <source>Keep the transaction memory pool below &lt;n&gt; megabytes (default: %u)</source>
         <translation>Garder la zone mémoire de transactions en-dessous de &lt;n&gt; Mo (par défaut : %u)</translation>
     </message>
@@ -4664,10 +4597,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Last successful PrivateSend action was too recent.</source>
         <translation>La dernière action PrivateSend réussie est trop récente.</translation>
-    </message>
-    <message>
-        <source>Loading InstantSend data cache...</source>
-        <translation>Chargement du cache de données d'InstantSend…</translation>
     </message>
     <message>
         <source>Loading block index...</source>
@@ -4742,10 +4671,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Pas assez de descripteurs de fichiers disponibles.</translation>
     </message>
     <message>
-        <source>Not enough funds to anonymize.</source>
-        <translation>Pas assez de fonds pour anonymiser.</translation>
-    </message>
-    <message>
         <source>Number of automatic wallet backups (default: %u)</source>
         <translation>Nombre de sauvegardes automatiques de portefeuille (par défaut : %u)</translation>
     </message>
@@ -4792,14 +4717,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Rescan the block chain for missing wallet transactions on startup</source>
         <translation>Réanalyser la chaîne de blocs au démarrage pour les transactions de portefeuille manquantes</translation>
-    </message>
-    <message>
-        <source>Submitted following entries to masternode: %u</source>
-        <translation>Soumission des entrées suivantes au masternode : %u</translation>
-    </message>
-    <message>
-        <source>Submitted to masternode, waiting for more entries ( %u ) %s</source>
-        <translation>Soumis au masternode, en attente d'entrées supplémentaires ( %u ) %s</translation>
     </message>
     <message>
         <source>Synchronizing blockchain...</source>
@@ -4854,10 +4771,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Options de débogage/de test du porte-monnaie :</translation>
     </message>
     <message>
-        <source>Wallet is not initialized</source>
-        <translation>Le portefeuille n'est pas initialisé</translation>
-    </message>
-    <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
         <translation>Le porte-monnaie devait être réécrit : redémarrer %s pour terminer l’opération.</translation>
     </message>
@@ -4876,6 +4789,22 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>You can not start a masternode in lite mode.</source>
         <translation>Vous ne pouvez pas démarrer un masternode en mode allégé.</translation>
+    </message>
+    <message>
+        <source>You can not start a masternode with wallet enabled.</source>
+        <translation>Impossible de démarrer un masternode avec le portefeuille activé.</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -addressindex</source>
+        <translation>Vous devez reconstruire la base de données avec l'option -reindex afin de modifier -addressindex</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -spentindex</source>
+        <translation>Vous devez reconstruire la base de données avec l'option -reindex afin de modifier -spentindex</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -txindex</source>
+        <translation>Vous devez reconstruire la base de données avec l'option -reindex afin de modifier -txindex</translation>
     </message>
     <message>
         <source>ZeroMQ notification options:</source>
@@ -4902,24 +4831,32 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Les développeurs de %s</translation>
     </message>
     <message>
-        <source>Accept connections from outside (default: 1 if no -proxy or -connect/-noconnect)</source>
-        <translation>Accepter les connexions de l'extérieur (par défaut : 1, si pas de -proxy ni de -connect/-noconnect)</translation>
-    </message>
-    <message>
         <source>Cannot obtain a lock on data directory %s. %s is probably already running.</source>
         <translation>Impossible d’obtenir un verrou sur le répertoire de données %s. %s fonctionne probablement déjà.</translation>
-    </message>
-    <message>
-        <source>Connect only to the specified node(s); -noconnect or -connect=0 alone to disable automatic connections</source>
-        <translation>Se connecter seulement aux nœud(s) indiqués ; -noconnect ou -connect=0 seul pour désactiver les connexions automatiques</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file %s or %s</source>
         <translation>Distribué sous la licence MIT d’utilisation d’un logiciel. Consulter le fichier joint %s ou %s</translation>
     </message>
     <message>
+        <source>Enable use of PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
+        <translation>Activer l'utilisation de PrivateSend pour les fonds stockés dans ce portefeuille (0-1, par défaut : %u)</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't enable HD on an already existing non-HD wallet</source>
+        <translation>Erreur en chargeant %s : Impossible d'activer HD sur un portefeuille non-HD déjà existant</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. -wallet parameter must only specify a filename (not a path).</source>
+        <translation>Erreur au chargement du portefeuille %s. Le paramètre -wallet doit seulement indiquer un nom de fichier (pas un chemin).</translation>
+    </message>
+    <message>
         <source>Error reading %s! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
         <translation>Erreur de lecture de %s ! Toutes les clés ont été lues correctement, mais les données transactionnelles ou les entrées du carnet d’adresses sont peut-être manquantes ou incorrectes.</translation>
+    </message>
+    <message>
+        <source>Exclude debugging information for a category. Can be used in conjunction with -debug=1 to output debug logs for all categories except one or more specified categories.</source>
+        <translation>Exclut les informations de débogage pour une catégorie. Peut être utilisé en conjonction avec -debug=1 pour produire des journaux de sortie pour toutes les catégories à l'exception d'une ou plusieurs catégories indiquées.</translation>
     </message>
     <message>
         <source>Force relay of transactions from whitelisted peers even if they violate local relay policy (default: %d)</source>
@@ -4950,20 +4887,20 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Si vous trouvez %s utile, vous pouvez y contribuer. Vous trouverez davantage d’informations à propos du logiciel sur %s.</translation>
     </message>
     <message>
-        <source>Provide liquidity to PrivateSend by infrequently mixing coins on a continual basis (%u-%u, default: %u, 1=very frequent, high fees, %u=very infrequent, low fees)</source>
-        <translation>Fournir de la liquidité à PrivateSend par un mélange occasionnel ou continuel de pièces (%u-%u, par défaut : %u, 1=haute fréquence, frais élevés, %u=très occasionnel, frais bas)</translation>
-    </message>
-    <message>
-        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect/-noconnect)</source>
-        <translation>Requête d'adresses de pairs par consultation DNS, en cas de pénurie d'adresses (par défaut : 1, sauf si -connect/-noconnect)</translation>
-    </message>
-    <message>
         <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex and -rescan. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;%u = automatically prune block files to stay under the specified target size in MiB)</source>
         <translation>Réduire les exigences de stockage en activant l’élagage (suppression) des anciens blocs. Cela permet d’appeler le RPC « pruneblockchain » pour supprimer des blocs précis et active l’élagage automatique des anciens blocs si une taille cible en Mio est fournie. Ce mode n’est pas compatible avec -txindex et -rescan. Avertissement : ramener ce paramètre à sa valeur antérieure exige de retélécharger l’intégralité de la chaîne de blocs (par défaut : 0 = désactiver l’élagage des blocs, 1 = permettre l’élagage manuel par RPC, &gt;%u = élaguer automatiquement les fichiers de blocs pour rester en deçà de la taille cible précisée en Mio).</translation>
     </message>
     <message>
         <source>Set lowest fee rate (in %s/kB) for transactions to be included in block creation. (default: %s)</source>
         <translation>Définir le taux minimal de frais (en %s/Ko) pour les transactions à inclure dans la création de blocs (par défaut : %s)</translation>
+    </message>
+    <message>
+        <source>The fee rate (in %s/kB) that indicates your tolerance for discarding change by adding it to the fee (default: %s). Note: An output is discarded if it is dust at this rate, but we will always discard up to the dust relay fee and a discard fee above that is limited by the fee estimate for the longest target</source>
+        <translation>Le taux de frais (en %s/Ko) qui spécifie jusqu'à quel point vous acceptez de renoncer à la monnaie rendue en l'ajoutant aux frais (par défaut : %s). Note : une sortie est supprimée si elle est considérée comme de la "poussière" selon ce taux ; cependant nous supprimerons toujours à hauteur des frais de relais de "poussière", et toute valeur supérieure est limitée par l'estimation de frais pour la cible la plus longue.</translation>
+    </message>
+    <message>
+        <source>This is the transaction fee you may discard if change is smaller than dust at this level</source>
+        <translation>Il s’agit des frais de transaction auxquels vous pouvez renoncer si la monnaie rendue est inférieure à ce qui est considéré comme "poussière" à ce niveau</translation>
     </message>
     <message>
         <source>This is the transaction fee you may pay when fee estimates are not available.</source>
@@ -4976,6 +4913,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Unable to locate enough PrivateSend non-denominated funds for this transaction.</source>
         <translation>Impossible de trouver pour cette transaction suffisamment de fonds PrivateSend non libellés.</translation>
+    </message>
+    <message>
+        <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
+        <translation>Impossible de repasser les blocs. Vous devez reconstruire la base de données en utilisant -reindex-chainstate.</translation>
     </message>
     <message>
         <source>Use N separate masternodes for each denominated input to mix funds (%u-%u, default: %u)</source>
@@ -5002,8 +4943,20 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Avertissement : le fichier du porte-monnaie est corrompu, les données ont été récupérées ! Le fichier %s original a été enregistré en tant que %s dans %s ; si votre solde ou vos transactions sont incorrects, vous devriez restaurer une sauvegarde.</translation>
     </message>
     <message>
+        <source>Whether to save the mempool on shutdown and load on restart (default: %u)</source>
+        <translation>Enregistrer le pool mémoire à la fermeture, et le charger au redémarrage (par défaut : %u)</translation>
+    </message>
+    <message>
         <source>Whitelist peers connecting from the given IP address (e.g. 1.2.3.4) or CIDR notated network (e.g. 1.2.3.0/24). Can be specified multiple times.</source>
         <translation>Pairs de la liste blanche se connectant à partir de l’adresse IP donnée (p. ex. 1.2.3.4) ou du réseau noté CIDR (p. ex. 1.2.3.0/24). Peut être précisé plusieurs fois.</translation>
+    </message>
+    <message>
+        <source>You are starting in lite mode, most Sparks-specific functionality is disabled.</source>
+        <translation>Vous démarrez en mode allégé : la plupart des fonctionnalités propres à Sparks sont désactivées.</translation>
+    </message>
+    <message>
+        <source>%d of last 100 blocks have unexpected version</source>
+        <translation>%d des 100 derniers blocs sont d'une version inattendue</translation>
     </message>
     <message>
         <source>%s corrupt, salvage failed</source>
@@ -5034,6 +4987,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>-rpcport doit être spécifié si -devnet et -server le sont déjà</translation>
     </message>
     <message>
+        <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
+        <translation>Accepter les connexions entrantes (par défaut : 1 si aucun -proxy ou -connect)</translation>
+    </message>
+    <message>
         <source>Allow RFC1918 addresses to be relayed and connected to (default: %u)</source>
         <translation>Autoriser les adresses RFC1918 à être relayées et pour la connexion (par défaut : %u)</translation>
     </message>
@@ -5054,6 +5011,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Copyright (c)</translation>
     </message>
     <message>
+        <source>Create up to N inputs of each denominated amount (%u-%u, default: %u)</source>
+        <translation>Créer jusqu'à N entrées pour chaque coupure (%u-%u, par défaut : %u)</translation>
+    </message>
+    <message>
         <source>Error loading %s</source>
         <translation>Erreur de chargement de %s</translation>
     </message>
@@ -5064,6 +5025,22 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Error loading %s: Wallet requires newer version of %s</source>
         <translation>Erreur de chargement de %s : le porte-monnaie exige une version plus récente de %s</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't disable HD on an already existing HD wallet</source>
+        <translation>Erreur au chargement de %s : Impossible de désactiver HD sur un portefeuille HD déjà existant</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. -wallet filename must be a regular file.</source>
+        <translation>Erreur au chargement du portefeuille %s. Le nom de fichier -wallet doit correspondre à un fichier normal.</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
+        <translation>Erreur au chargement du portefeuille %s. Le nom de fichier -wallet indiqué est en double.</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Invalid characters in -wallet filename.</source>
+        <translation>Erreur au chargement du portefeuille %s. Caractères invalides dans le nom de fichier -wallet.</translation>
     </message>
     <message>
         <source>Error upgrading chainstate database</source>
@@ -5082,6 +5059,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>L’initialisation du test de cohérence a échoué. %s est en cours de fermeture. </translation>
     </message>
     <message>
+        <source>Inputs vs outputs size mismatch.</source>
+        <translation>Différence de taille entre entrées et sorties.</translation>
+    </message>
+    <message>
         <source>Invalid -onion address or hostname: '%s'</source>
         <translation>Adresse ou nom d’hôte -onion invalide : « %s »</translation>
     </message>
@@ -5094,16 +5075,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Montant invalide pour -%s=&lt;amount&gt; : « %s »</translation>
     </message>
     <message>
-        <source>Invalid characters in -wallet filename</source>
-        <translation>Caractères invalides dans le nom de fichier -wallet</translation>
-    </message>
-    <message>
         <source>Invalid spork address specified with -sporkaddr</source>
         <translation>L'adresse spork spécifiée avec -sporkaddr est invalide</translation>
-    </message>
-    <message>
-        <source>Keep N SPARKS anonymized (%u-%u, default: %u)</source>
-        <translation>Conserver N sparkss anonymisés (%u-%u, par défaut : %u)</translation>
     </message>
     <message>
         <source>Loading P2P addresses...</source>
@@ -5112,10 +5085,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Print this help message and exit</source>
         <translation>Imprimer ce message d’aide et quitter</translation>
-    </message>
-    <message>
-        <source>Receive and display P2P network alerts (default: %u)</source>
-        <translation>Recevoir et afficher les alertes réseau P2P (par défaut : %u)</translation>
     </message>
     <message>
         <source>Reducing -maxconnections from %d to %d, because of system limitations.</source>
@@ -5128,6 +5097,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Relay non-P2SH multisig (default: %u)</source>
         <translation>Relayer les multisig non-P2SH (par défaut : %u)</translation>
+    </message>
+    <message>
+        <source>Replaying blocks...</source>
+        <translation>Retraitement des blocs…</translation>
     </message>
     <message>
         <source>Rescanning...</source>
@@ -5182,6 +5155,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Spécifier votre propre adresse publique</translation>
     </message>
     <message>
+        <source>Start PrivateSend automatically (0-1, default: %u)</source>
+        <translation>Démarrer PrivateSend automatiquement (0-1, par défaut : %u)</translation>
+    </message>
+    <message>
         <source>Starting network threads...</source>
         <translation>Démarrage des processus réseau...</translation>
     </message>
@@ -5214,6 +5191,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Transaction créée avec succès.</translation>
     </message>
     <message>
+        <source>Transaction fee and change calculation failed</source>
+        <translation>Échec du calcul des frais de transaction et de la monnaie rendue</translation>
+    </message>
+    <message>
         <source>Transaction fees are too high.</source>
         <translation>Les frais de transaction sont trop élevés.</translation>
     </message>
@@ -5242,16 +5223,16 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>État inconnu : id = %u</translation>
     </message>
     <message>
+        <source>Unsupported logging category %s=%s.</source>
+        <translation>Catégorie de journalisation non supportée %s=%s.</translation>
+    </message>
+    <message>
         <source>Username for JSON-RPC connections</source>
         <translation>Nom d'utilisateur pour les connexions JSON-RPC</translation>
     </message>
     <message>
         <source>Verifying blocks...</source>
         <translation>Vérification des blocs en cours...</translation>
-    </message>
-    <message>
-        <source>Verifying wallet...</source>
-        <translation>Vérification du portefeuille en cours...</translation>
     </message>
     <message>
         <source>Very low number of keys left: %d</source>
@@ -5280,10 +5261,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Your entries added successfully.</source>
         <translation>Vos entrées ajoutées avec succès.</translation>
-    </message>
-    <message>
-        <source>Your transaction was accepted into the pool!</source>
-        <translation>Votre transaction a été acceptée dans le registre !</translation>
     </message>
     <message>
         <source>Zapping all transactions from wallet...</source>

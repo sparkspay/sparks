@@ -22,6 +22,14 @@
         <translation>&amp;Sao chép</translation>
     </message>
     <message>
+        <source>Show QR code for the currently selected address</source>
+        <translation>Hiển thị mã QR cho địa chỉ hiện được chọn</translation>
+    </message>
+    <message>
+        <source>&amp;Show QR code</source>
+        <translation>&amp;Hiển thị mã QR</translation>
+    </message>
+    <message>
         <source>Delete the currently selected address from the list</source>
         <translation>Xoá địa chỉ đang được chọn khỏi danh sách</translation>
     </message>
@@ -80,6 +88,14 @@
     <message>
         <source>&amp;Edit</source>
         <translation>&amp;Sửa</translation>
+    </message>
+    <message>
+        <source>&amp;Show address QR code</source>
+        <translation>&amp;Hiển thị mã QR của địa chỉ</translation>
+    </message>
+    <message>
+        <source>QR code</source>
+        <translation>Mã QR</translation>
     </message>
     <message>
         <source>Export Address List</source>
@@ -582,6 +598,30 @@
         <translation>Thông tin</translation>
     </message>
     <message>
+        <source>Received and sent multiple transactions</source>
+        <translation>Đã nhận và gửi nhiều giao dịch</translation>
+    </message>
+    <message>
+        <source>Sent multiple transactions</source>
+        <translation>Đã gửi nhiều giao dịch</translation>
+    </message>
+    <message>
+        <source>Received multiple transactions</source>
+        <translation>Đã nhận nhiều giao dịch</translation>
+    </message>
+    <message>
+        <source>Sent Amount: %1
+</source>
+        <translation>Khoản tiền đã gửi: %1
+</translation>
+    </message>
+    <message>
+        <source>Received Amount: %1
+</source>
+        <translation>Khoản tiền đã nhận: %1
+</translation>
+    </message>
+    <message>
         <source>Date: %1
 </source>
         <translation>Ngày: %1
@@ -638,13 +678,6 @@
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation>Ví &lt;b&gt;đã được mã hoá&lt;/b&gt; và hiện tại &lt;b&gt;đã được khoá&lt;/b&gt;</translation>
-    </message>
-</context>
-<context>
-    <name>ClientModel</name>
-    <message>
-        <source>Network Alert</source>
-        <translation>Cảnh báo mạng</translation>
     </message>
 </context>
 <context>
@@ -782,8 +815,8 @@
         <translation>Hãy chuyển về "Chế độ danh sách" để sử dụng tính năng này.</translation>
     </message>
     <message>
-        <source>Non-anonymized input selected. &lt;b&gt;PrivateSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivateSend, please deselect all non-anonymized inputs first and then check the PrivateSend checkbox again.</source>
-        <translation>Đầu vào được chọn chưa được ẩn danh. &lt;b&gt;PrivateSend sẽ được tắt.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Nếu bạn vẫn muốn sử dụng PrivateSend, hãy bỏ chọn tất cả các đầu vào chưa được ẩn danh trước và sau đó chọn vào ô PrivateSend lần nữa.</translation>
+        <source>Non-mixed input selected. &lt;b&gt;PrivateSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivateSend, please deselect all non-mixed inputs first and then check the PrivateSend checkbox again.</source>
+        <translation>Đầu vào không trộn đã được chọn. &lt;b&gt;PrivateSend sẽ bị tắt.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Nếu bạn vẫn muốn sử dụng PrivateSend, hãy bỏ chọn tất cả các đầu vào không được trộn trước rồi sau đó đánh dấu vào ô PrivateSend lần nữa.</translation>
     </message>
     <message>
         <source>(%1 locked)</source>
@@ -959,8 +992,8 @@
         <translation>Thông tin PrivateSend</translation>
     </message>
     <message>
-        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the Sparks in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 SPARKS, 0.01 SPARKS, 0.1 SPARKS, 1 SPARKS and 10 SPARKS -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be anonymized. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a href="https://docs.sparks.org/en/latest/wallets/sparkscore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
-        <translation>&lt;h3&gt;Cơ bản về PrivateSend&lt;/h3&gt; PrivateSend cho bạn sự thực sự riêng tư về tài chính bằng việc che dấu những nguồn cung. Tất cả Sparks trong ví của bạn bao gồm những "đầu vào" khác nhau mà bạn nghĩ đó là các coin riêng biệt và rời rạc.&lt;br&gt; PrivateSend sử dụng một tiến trình độc đáo để trộn các đầu vào của bạn với đầu vào của những người khác, mà không làm cho các coin rời khỏi ví của bạn. Bạn vẫn giữ quyền kiểm soát tiền của bạn bất cứ lúc nào.&lt;hr&gt; &lt;b&gt;Quá trình PrivateSend làm việc như sau: &lt;/b&gt; &lt;ol type="1"&gt; &lt;li&gt;PrivateSend bắt đầu bằng việc chia các giao dịch đầu vào của bạn thành những mệnh giá chuẩn. Những mệnh giá đó là 0.001 SPARKS, 0.01 SPARKS, 0.1 SPARKS, 1 SPARKS, và 10 SPARKS -- cũng giống như các mệnh giá trên tiền giấy mà bạn sử dụng hàng ngày. &lt;/li&gt;&lt;li&gt;Ví của bạn sau đó gửi yêu cầu đến những nút phần mềm được cấu hình đặc biệt trên mạng gọi là các "masternode". Những masternode được báo rằng bạn quan tâm đến việc xáo trộn một mệnh giá nào đó. Không có thông tin định danh nào được gửi đến cho các masternode, và như vậy họ không bao giờ biết bạn "là ai". &lt;/li&gt; &lt;li&gt;Khi hai người khác nhau gửi những thông điệp tương tự, có nghĩa là họ muốn xáo trộn cùng loại mệnh giá, một phiên xáo trộn bắt đầu. Masternode xáo trộn các đầu vào và hướng dẫn tất cả ví của tất cả ba người dùng để trả đầu vào đã được chuyển đổi trở lại cho chính họ. Ví của bạn sẽ trả mệnh giá đó trực tiếp cho nó, nhưng với một địa chỉ khác (được gọi là địa chỉ trả tiền lẻ). &lt;/li&gt; &lt;li&gt;Để thực sự che khuất nguồn tiền của bạn, ví của bạn phải lặp lại quy trình đó một số lần với mỗi mệnh giá nhất định. Mỗi lần tiến trình hoàn tất, nó được gọi là một "vòng". Mỗi vòng của PrivateSend làm nên độ khó bậc số mũ để xác định nguồn tiền của bạn đến từ đâu. &lt;/li&gt; &lt;li&gt;Quá trình xáo trộn này xảy ra trong chế độ nền mà không xen vào những việc khác của bạn. Khi bạn muốn thực hiện một giao dịch, nguồn tiền của bạn đã được ẩn danh rồi. Do đó bạn không cần phải đợi thêm gì nữa. &lt;/li&gt;&lt;/ol&gt; &lt;hr&gt; &lt;b&gt;QUAN TRỌNG:&lt;/b&gt; Ví của bạn chỉ có chứa 1000 "địa chỉ tiền trả lại". Mỗi lần một sự kiện xáo trộn xảy ra, có đến 9 địa chỉ sẽ được sử dụng. Điều đó có nghĩa với ví mới với 1000 địa chỉ thì dùng cho 100 lần trộn. Khi 900 địa chỉ đã được sử dụng, ví của bạn phải tạo thêm các địa chỉ mới. Nó chỉ có thể làm việc đó, tuy nhiên, nếu bạn có chế độ tự động backup được bật&lt;br&gt; Kết quả là, những người dùng mà chế độ backup bị tắt sẽ có chế độ PrivateSend cũng bị tắt.&lt;hr&gt; Để biết thêm thông tin hãy xem &lt;a href="https://docs.sparks.org/en/latest/wallets/sparkscore/privatesend-instantsend.html"&gt;Tài liệu về PrivateSend&lt;/a&gt;.</translation>
+        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the Sparks in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 SPARKS, 0.01 SPARKS, 0.1 SPARKS, 1 SPARKS and 10 SPARKS -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be mixed. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a href="https://docs.sparks.org/en/stable/wallets/sparkscore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
+        <translation>&lt;h3&gt;Cơ bản về PrivateSend&lt;/h3&gt; PrivateSend cho bạn sự thực sự riêng tư về tài chính bằng việc che dấu những nguồn cung. Tất cả Sparks trong ví của bạn bao gồm những "đầu vào" khác nhau mà bạn nghĩ đó là các coin riêng biệt và rời rạc.&lt;br&gt; PrivateSend sử dụng một tiến trình độc đáo để trộn các đầu vào của bạn với đầu vào của hai người khác, mà không làm cho các coin rời khỏi ví của bạn. Bạn vẫn giữ quyền kiểm soát tiền của bạn bất cứ lúc nào.&lt;hr&gt; &lt;b&gt;Quá trình PrivateSend làm việc như sau: &lt;/b&gt; &lt;ol type="1"&gt; &lt;li&gt;PrivateSend bắt đầu bằng việc chia các giao dịch đầu vào của bạn thành những mệnh giá chuẩn. Những mệnh giá đó là 0.001 SPARKS, 0.01 SPARKS, 0.1 SPARKS, 1 SPARKS, và 10 SPARKS -- cũng giống như các mệnh giá trên tiền giấy mà bạn sử dụng hàng ngày. &lt;/li&gt;&lt;li&gt;Ví của bạn sau đó gửi yêu cầu đến những nút phần mềm được cấu hình đặc biệt trên mạng gọi là các "masternode". Những masternode được báo rằng bạn quan tâm đến việc xáo trộn một mệnh giá nào đó. Không có thông tin định danh nào được gửi đến cho các masternode, và như vậy họ không bao giờ biết bạn "là ai". &lt;/li&gt; &lt;li&gt;Khi hai người kia gửi những thông điệp tương tự, có nghĩa là họ muốn xáo trộn cùng loại mệnh giá, một phiên xáo trộn bắt đầu. Masternode xáo trộn các đầu vào và hướng dẫn tất cả ví của cả ba người dùng để trả đầu vào đã được chuyển đổi trở lại cho chính họ. Ví của bạn sẽ trả mệnh giá đó trực tiếp cho nó, nhưng với một địa chỉ khác (được gọi là địa chỉ trả tiền lẻ). &lt;/li&gt; &lt;li&gt;Để thực sự che khuất nguồn tiền của bạn, ví của bạn phải lặp lại quy trình đó một số lần với mỗi mệnh giá nhất định. Mỗi lần tiến trình hoàn tất, nó được gọi là một "vòng". Mỗi vòng của PrivateSend làm nên độ khó bậc số mũ để xác định nguồn tiền của bạn đến từ đâu. &lt;/li&gt; &lt;li&gt;Quá trình xáo trộn này xảy ra trong chế độ nền mà không xen vào những việc khác của bạn. Khi bạn muốn thực hiện một giao dịch, nguồn tiền của bạn đã được ẩn danh rồi. Do đó bạn không cần phải đợi thêm gì nữa. &lt;/li&gt;&lt;/ol&gt; &lt;hr&gt; &lt;b&gt;QUAN TRỌNG:&lt;/b&gt; Ví của bạn chỉ có chứa 1000 "địa chỉ tiền trả lại". Mỗi lần một sự kiện xáo trộn xảy ra, có đến 9 địa chỉ sẽ được sử dụng. Điều đó có nghĩa với ví mới với 1000 địa chỉ thì dùng cho 100 lần trộn. Khi 900 địa chỉ đã được sử dụng, ví của bạn phải tạo thêm các địa chỉ mới. Nó chỉ có thể làm việc đó nếu bạn có chế độ tự động backup được bật&lt;br&gt; Kết quả là, những người dùng mà chế độ backup bị tắt sẽ có chế độ PrivateSend cũng bị tắt.&lt;hr&gt; Để biết thêm thông tin hãy xem &lt;a href="https://docs.sparks.org/en/stable/wallets/sparkscore/privatesend-instantsend.html"&gt;Tài liệu về PrivateSend&lt;/a&gt;.</translation>
     </message>
 </context>
 <context>
@@ -1037,16 +1070,8 @@
         <translation>Từ</translation>
     </message>
     <message>
-        <source>Address</source>
-        <translation>Địa chỉ</translation>
-    </message>
-    <message>
         <source>Status</source>
         <translation>Trạng thái</translation>
-    </message>
-    <message>
-        <source>Payee</source>
-        <translation>Người nhận</translation>
     </message>
     <message>
         <source>0</source>
@@ -1065,16 +1090,16 @@
         <translation>Số lượng các nút:</translation>
     </message>
     <message>
-        <source>DIP3 Masternodes</source>
-        <translation>DIP3 Masternodes</translation>
-    </message>
-    <message>
         <source>Show only masternodes this wallet has keys for.</source>
         <translation>Chỉ hiển thị masternode mà có khoá trong ví này.</translation>
     </message>
     <message>
         <source>My masternodes only</source>
         <translation>Chỉ các masternode của tôi</translation>
+    </message>
+    <message>
+        <source>Service</source>
+        <translation>Dịch vụ</translation>
     </message>
     <message>
         <source>PoSe Score</source>
@@ -1093,8 +1118,24 @@
         <translation>Kỳ thanh toán tiếp theo</translation>
     </message>
     <message>
+        <source>Payout Address</source>
+        <translation>Địa chỉ thanh toán</translation>
+    </message>
+    <message>
         <source>Operator Reward</source>
         <translation>Phần thưởng cho người vận hành</translation>
+    </message>
+    <message>
+        <source>Collateral Address</source>
+        <translation>Địa chỉ đặt cọc</translation>
+    </message>
+    <message>
+        <source>Owner Address</source>
+        <translation>Địa chỉ chủ sở hữu</translation>
+    </message>
+    <message>
+        <source>Voting Address</source>
+        <translation>Địa chỉ bỏ phiếu</translation>
     </message>
     <message>
         <source>Copy ProTx Hash</source>
@@ -1238,10 +1279,6 @@
         <translation>(0 = tự động, &lt;0 = để đó rất nhiều lõi miễn phí)</translation>
     </message>
     <message>
-        <source>Amount of Sparks to keep anonymized</source>
-        <translation>Lượng Sparks muốn giữ vô danh</translation>
-    </message>
-    <message>
         <source>W&amp;allet</source>
         <translation>&amp;Ví</translation>
     </message>
@@ -1290,16 +1327,12 @@
         <translation>Số lượng này hoạt động như là một ngưỡng để tắt PrivateSend khi nó được chạm tới.</translation>
     </message>
     <message>
+        <source>Target PrivateSend balance</source>
+        <translation>Số dư đích cho PrivateSend</translation>
+    </message>
+    <message>
         <source>Automatically open the Sparks Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation>Tự động mở cổng cho phần mềm Sparks Core trên rounter. Điều này chỉ hoạt động được khi rounter của bạn hỗ trợ UpnP và tính năng đó được bật lên.</translation>
-    </message>
-    <message>
-        <source>Accept connections from outside</source>
-        <translation>Chấp nhận kết nối từ bên ngoài</translation>
-    </message>
-    <message>
-        <source>Allow incoming connections</source>
-        <translation>Cho phép các kết nối tới</translation>
     </message>
     <message>
         <source>Connect to the Sparks network through a SOCKS5 proxy.</source>
@@ -1308,6 +1341,10 @@
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
         <translation>&amp;Kết nối thông qua SOCK5 proxy (proxy ngầm định): </translation>
+    </message>
+    <message>
+        <source>Shows if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
+        <translation>Hiển thị nếu proxy SOCKS5 mặc định được cung cấp để dùng tiếp cận các thiết bị ngang hàng thông qua loại mạng này.</translation>
     </message>
     <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Exit in the menu.</source>
@@ -1320,10 +1357,6 @@
     <message>
         <source>Expert</source>
         <translation>Chuyên gia</translation>
-    </message>
-    <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Thiết lập này xác định số tiền cho mỗi master nodes mà đầu vào thông qua đó được ẩn danh.&lt;br/&gt;Càng có nhiều vòng ẩn danh thì sẽ cho mức độ riêng tư càng cao, nhưng nó cũng tốn nhiều phí hơn.</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
@@ -1354,12 +1387,24 @@
         <translation>&amp;Tiêu phần trả lại chưa được xác nhận</translation>
     </message>
     <message>
+        <source>This setting determines the amount of individual masternodes that an input will be mixed through.&lt;br/&gt;More rounds of mixing gives a higher degree of privacy, but also costs more in fees.</source>
+        <translation>Thiết lập này xác định một khoản của mỗi masternode mà một đầu vào sẽ được trộn qua.  Thêm &lt;br/&gt; vòng trộn nữa sẽ cho một mức độ riêng tư cao hơn, nhưng nó cũng tốt phí nhiều hơn.</translation>
+    </message>
+    <message>
         <source>&amp;Network</source>
         <translation>&amp;Mạng</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
         <translation>Ánh xạ cổng sử dụng &amp;UPnP</translation>
+    </message>
+    <message>
+        <source>Accept connections from outside</source>
+        <translation>Chấp nhận kết nối từ bên ngoài</translation>
+    </message>
+    <message>
+        <source>Allow incoming connections</source>
+        <translation>Cho phép các kết nối tới</translation>
     </message>
     <message>
         <source>Proxy &amp;IP:</source>
@@ -1380,10 +1425,6 @@
     <message>
         <source>Used for reaching peers via:</source>
         <translation>Sử dụng để tiếp cận các nút mạng ngang hàng thông qua:</translation>
-    </message>
-    <message>
-        <source>Shows, if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
-        <translation>Hiển thị, nếu sử dụng ngầm định proxy SOCKS5 để kết nối đến các điểm ngang hàng trong mạng.</translation>
     </message>
     <message>
         <source>IPv4</source>
@@ -1603,22 +1644,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Hoàn thành:</translation>
     </message>
     <message>
-        <source>Try to manually submit a PrivateSend request.</source>
-        <translation>Thử gửi một yêu cầu PrivateSend bằng tay.</translation>
-    </message>
-    <message>
-        <source>Reset the current status of PrivateSend (can interrupt PrivateSend if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>Khởi tạo lại trạng thái hiện tại của PrivateSend (có thể làm ngắt PrivateSend nếu nó đang trong quá trình Trộn, điều đó có thể làm bạn tốn tiền!)</translation>
-    </message>
-    <message>
-        <source>Information about PrivateSend and Mixing</source>
-        <translation>Thông tin về PrivateSend và Trộn coin</translation>
-    </message>
-    <message>
-        <source>Info</source>
-        <translation>Thông tin</translation>
-    </message>
-    <message>
         <source>Amount and Rounds:</source>
         <translation>Số tiền và số vòng:</translation>
     </message>
@@ -1653,14 +1678,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>(Last Message)</source>
         <translation>(Thông điệp cuối)</translation>
-    </message>
-    <message>
-        <source>Try Mix</source>
-        <translation>Thử Trộn</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Khởi động lại</translation>
     </message>
     <message>
         <source>out of sync</source>
@@ -1703,12 +1720,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Đã chia mệnh giá</translation>
     </message>
     <message>
-        <source>Mixed</source>
-        <translation>Đã trộn</translation>
+        <source>Partially mixed</source>
+        <translation>Đã trộn được một phần</translation>
     </message>
     <message>
-        <source>Anonymized</source>
-        <translation>Đã được ẩn danh</translation>
+        <source>Mixed</source>
+        <translation>Đã trộn</translation>
     </message>
     <message numerus="yes">
         <source>Denominated inputs have %5 of %n rounds on average</source>
@@ -1763,10 +1780,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
 </source>
         <translation>Thông điệp PrivateSend cuối cùng:
 </translation>
-    </message>
-    <message>
-        <source>PrivateSend was successfully reset.</source>
-        <translation>PrivateSend đã được thiết lập lại thành công.</translation>
     </message>
     <message>
         <source>If you don't want to see internal PrivateSend fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
@@ -2129,10 +2142,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>&amp;Lưu lượng mạng</translation>
     </message>
     <message>
-        <source>&amp;Clear</source>
-        <translation>&amp;Xoá</translation>
-    </message>
-    <message>
         <source>Totals</source>
         <translation>Tổng</translation>
     </message>
@@ -2197,12 +2206,20 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Mở cái %1 debug log file từ danh mục dữ liệu hiện tại. Điều này cần vài giây cho large log files.</translation>
     </message>
     <message>
+        <source>InstantSend locks</source>
+        <translation>Khoá InstantSend</translation>
+    </message>
+    <message>
         <source>Decrease font size</source>
         <translation>Giảm cỡ chữ</translation>
     </message>
     <message>
         <source>Increase font size</source>
         <translation>Tăng cỡ chữ</translation>
+    </message>
+    <message>
+        <source>&amp;Reset</source>
+        <translation>&amp;Reset</translation>
     </message>
     <message>
         <source>Services</source>
@@ -2337,16 +2354,16 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Welcome to the %1 RPC console.</translation>
     </message>
     <message>
-        <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>Sử dụng các phím mũi tên lên và xuống để xem lịch sử, và &lt;b&gt;Ctrl-L&lt;/b&gt; để xoá màn hình.</translation>
-    </message>
-    <message>
         <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
         <translation>Gõ &lt;b&gt;help&lt;/b&gt; để xem tổng thể các lệnh có thể dùng.</translation>
     </message>
     <message>
-        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramification of a command.</source>
-        <translation>CẢNH BÁO: Những người lừa đảo hay Scammer đã từng đánh lừa và nói với người dùng là hãy gõ những câu lệnh ở đây và ăn cắp nội dung ví của bạn. Đừng sử dụng console nếu như bạn không thực sự hoàn toàn hiểu chi tiết từng câu lệnh và các tham số của nó.</translation>
+        <source>Use up and down arrows to navigate history, and %1 to clear screen.</source>
+        <translation>Sử dụng các mũi tên lên và xuống để duyệt lịch sử, và %1 để xoá màn hình.</translation>
+    </message>
+    <message>
+        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.</source>
+        <translation>CẢNH BÁO: Những kẻ lừa đảo đã rất tích cực, xúi mọi người gõ các lệnh ở đây và đánh cắp nội dung ví của họ. Không nên sử dụng cửa sổ lệnh mà không hiểu đầy đủ các câu lệnh.</translation>
     </message>
     <message>
         <source>In:</source>
@@ -2359,6 +2376,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Network activity disabled</source>
         <translation>Kết nối mạng bị tắt</translation>
+    </message>
+    <message>
+        <source>Total: %1 (Enabled: %2)</source>
+        <translation>Tổng số: %1 (Bật: %2)</translation>
     </message>
     <message>
         <source>%1 B</source>
@@ -2464,10 +2485,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Xoá</translation>
     </message>
     <message>
-        <source>Request InstantSend</source>
-        <translation>Yêu cầu InstantSend</translation>
-    </message>
-    <message>
         <source>Requested payments history</source>
         <translation>Xem lịch sử thanh toán</translation>
     </message>
@@ -2549,18 +2566,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Message</source>
         <translation>Thông điệp</translation>
-    </message>
-    <message>
-        <source>InstantSend</source>
-        <translation>InstantSend</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation>Đồng ý</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>Không</translation>
     </message>
     <message>
         <source>Resulting URI too long, try to reduce the text for label / message.</source>
@@ -2669,14 +2674,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Chọn...</translation>
     </message>
     <message>
-        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until your have validated the complete chain.</source>
-        <translation>Sử dụng fallbackfee có thể dẫn tới việc giao dịch mất đến hàng giờ hoặc hàng ngày (hoặc thậm chí không bao giờ) có thể được xác thực. Hãy cân nhắc tự chọn mức phí hoặc đợi đến khi bạn được chuỗi xác thực hoàn chỉnh.</translation>
-    </message>
-    <message>
-        <source>Warning: Fee estimation is currently not possible.</source>
-        <translation>Warning: Fee ước tính hiện tại không khả thi.</translation>
-    </message>
-    <message>
         <source>collapse fee-settings</source>
         <translation>Thu gọn các thiết lập về phí</translation>
     </message>
@@ -2689,16 +2686,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>PrivateSend</translation>
     </message>
     <message>
-        <source>InstantSend</source>
-        <translation>InstantSend</translation>
-    </message>
-    <message>
         <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation>Nếu mức phí tuỳ chỉnh được đặt là 1000 duff và giao dịch chỉ có 250 byte, thì "theo kilobyte" chỉ trả 250 duff cho phí,&lt;br /&gt;trong khi "ít nhất" phải trả 1000 duff. Cho các giao dịch lớn hơn 1 kilobyte thì cả hai đều trả theo kilobyte.</translation>
-    </message>
-    <message>
-        <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "total at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Nếu phí giao dịch tuỳ chỉnh được đặt là 1000 duff và giao dịch chỉ có 250 bytes, thì "theo kilobyte" chỉ trả 250 duff phí,&lt;br /&gt;trong khi "tổng ít nhất" trả 1000 duff. Với các giao dịch lớn hơn 1 kilobyte thì cả hai đều trả theo kilobyte.</translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
@@ -2709,12 +2698,16 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>mỗi kilobyte</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>Ẩn</translation>
+        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until you have validated the complete chain.</source>
+        <translation>Sử dụng phí dự phòng có thể dẫn tới việc giao dịch mất đến hàng giờ hoặc hàng ngày (hoặc thậm chí không bao giờ) được xác thực. Hãy cân nhắc tự chọn mức phí hoặc đợi đến khi bạn được chuỗi xác thực hoàn chỉnh.</translation>
     </message>
     <message>
-        <source>total at least</source>
-        <translation>tổng ít nhất</translation>
+        <source>Note: Not enough data for fee estimation, using the fallback fee instead.</source>
+        <translation>Chú ý: Không đủ dữ liệu cho việc ước lượng chi phí, thay vào đó sử dụng mức phí dự phòng.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ẩn</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
@@ -2731,14 +2724,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
         <translation>(Phí khởi tạo thông minh chưa được khởi tạo. Thường thì sẽ mất vài block...)</translation>
-    </message>
-    <message>
-        <source>normal</source>
-        <translation>bình thường</translation>
-    </message>
-    <message>
-        <source>fast</source>
-        <translation>nhanh</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
@@ -2797,24 +2782,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Sao chép tiền trả lại</translation>
     </message>
     <message>
+        <source>%1 (%2 blocks)</source>
+        <translation>%1 (%2 khối)</translation>
+    </message>
+    <message>
         <source>using</source>
         <translation>sử dụng</translation>
-    </message>
-    <message>
-        <source>anonymous funds</source>
-        <translation>các khoản tiền ẩn danh</translation>
-    </message>
-    <message>
-        <source>(privatesend requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(privatesend yêu cầu số lượng này để làm tròn về giá trị gần nhất %1).</translation>
-    </message>
-    <message>
-        <source>any available funds (not anonymous)</source>
-        <translation>bất kỳ nguồn cung nào còn (không ẩn danh)</translation>
-    </message>
-    <message>
-        <source>and InstantSend</source>
-        <translation>và InstantSend</translation>
     </message>
     <message>
         <source>%1 to %2</source>
@@ -2835,6 +2808,34 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>&lt;b&gt;(%1 of %2 entries displayed)&lt;/b&gt;</source>
         <translation>&lt;b&gt;(%1 của %2 các thành phần được hiển thị)&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>PrivateSend funds only</source>
+        <translation>Ngân quỹ chỉ cho PrivateSend</translation>
+    </message>
+    <message>
+        <source>any available funds</source>
+        <translation>bất kỳ nguồn cung nào còn</translation>
+    </message>
+    <message>
+        <source>(PrivateSend transactions have higher fees usually due to no change output being allowed)</source>
+        <translation>(Các giao dịch PrivateSend có mức phí cao hơn thường do không được phép thay đổi đầu ra)</translation>
+    </message>
+    <message>
+        <source>Transaction size: %1</source>
+        <translation>Kích thước giao dịch: %1</translation>
+    </message>
+    <message>
+        <source>Fee rate: %1</source>
+        <translation>Mức phí: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>This transaction will consume %n input(s)</source>
+        <translation><numerusform>Giao dịch này sẽ dùng đến %n đầu vào</numerusform></translation>
+    </message>
+    <message>
+        <source>Warning: Using PrivateSend with %1 or more inputs can harm your privacy and is not recommended</source>
+        <translation>Cảnh báo: Sử dụng PrivateSend với %1 hoặc nhiều hơn các đầu vào có thể làm hại tính riêng tư cho bạn và nó không phải là điều được khuyến nghị</translation>
     </message>
     <message>
         <source>Confirm send coins</source>
@@ -2875,10 +2876,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Payment request expired.</source>
         <translation>Yêu cầu thanh toán đã hết hạn.</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n block(s)</source>
-        <translation><numerusform>%n khối</numerusform></translation>
     </message>
     <message>
         <source>Pay only the required fee of %1</source>
@@ -3210,16 +3207,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>%1 xác nhận</translation>
     </message>
     <message>
-        <source>verified via InstantSend</source>
-        <translation>đã được kiểm tra bởi InstantSend</translation>
+        <source>locked via LLMQ based ChainLocks</source>
+        <translation>đã được khoá bởi ChainLocks dựa trên LLMQ</translation>
     </message>
     <message>
-        <source>InstantSend verification in progress - %1 of %2 signatures</source>
-        <translation>Việc kiểm chứng InstantSend đang trong tiến trình - %1 của %2 các chữ ký</translation>
-    </message>
-    <message>
-        <source>InstantSend verification failed</source>
-        <translation>Kiểm chứng InstantSend thất bại</translation>
+        <source>verified via LLMQ based InstantSend</source>
+        <translation>đã được xác thực bởi InstantSend dựa trên LLMQ</translation>
     </message>
     <message>
         <source>Status</source>
@@ -3635,6 +3628,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Xem chi tiết giao dịch</translation>
     </message>
     <message>
+        <source>Show address QR code</source>
+        <translation>Hiển thị mã QR của địa chỉ</translation>
+    </message>
+    <message>
         <source>Export Transaction History</source>
         <translation>Kết xuất Lịch sử Giao dịch</translation>
     </message>
@@ -3687,6 +3684,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Lịch sử giao dịch đã được lưu thành công vào %1.</translation>
     </message>
     <message>
+        <source>QR code</source>
+        <translation>Mã QR</translation>
+    </message>
+    <message>
         <source>Range:</source>
         <translation>Khoảng:</translation>
     </message>
@@ -3714,14 +3715,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Send Coins</source>
         <translation>Gửi tiền</translation>
-    </message>
-    <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 SPARKS.</source>
-        <translation>InstantSend không hỗ trợ gửi giá trị lớn đến vậy. Các giao dịch hiện giới hạn với %1 SPARKS.</translation>
-    </message>
-    <message>
-        <source>Used way too many inputs (&gt;%1) for this InstantSend transaction, fees could be huge.</source>
-        <translation>Sử dụng quá nhiều đầu vào (&gt;%1) cho giao dịch InstantSend này, phí giao dịch có thể rất lớn.</translation>
     </message>
 </context>
 <context>
@@ -3790,10 +3783,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Đặt tên để tạo dựng url cho các thành phần KeePass mà nó sẽ lưu giữ mật khẩu của ví</translation>
     </message>
     <message>
-        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>Đặt kích thước tối đa cho giao dịch với ưu tiên cao/phí thấp theo bytes (ngầm định: %d)</translation>
-    </message>
-    <message>
         <source>Set the number of script verification threads (%u to %d, 0 = auto, &lt;0 = leave that many cores free, default: %d)</source>
         <translation>Thiết lập số luồng của kịch bản kiểm tra (%u to %d, 0 = tự động, &lt;0 = để nhiều lõi miễn phí, ngầm định: %d)</translation>
     </message>
@@ -3812,10 +3801,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Accept command line and JSON-RPC commands</source>
         <translation>Chấp nhận dòng lệnh và các lệnh JSON-RPC</translation>
-    </message>
-    <message>
-        <source>Add a node to connect to and attempt to keep the connection open</source>
-        <translation>Thêm nút để kết nối tới và giữ mở kết nối</translation>
     </message>
     <message>
         <source>Allow DNS lookups for -addnode, -seednode and -connect</source>
@@ -3946,10 +3931,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Cho phép công bố các mã băm của giao dịch đã dùng InstantSend trong việc tiêu lặp ở &lt;address&gt;</translation>
     </message>
     <message>
-        <source>Error loading %s: You can't enable HD on a already existing non-HD wallet</source>
-        <translation>Lỗi tải %s: Bạn không thể mở HD trên ví mà không phải là HD</translation>
-    </message>
-    <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
         <translation>Đã thấy các mệnh giá đầu ra chưa được xác nhận, sẽ đợi đến khi chúng xác nhận để tiếp tục.</translation>
     </message>
@@ -3974,10 +3955,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Duy trì một chỉ mục giao dịch đầy đủ, sử dụng bởi lệnh gọi rpc getrawtransaction (ngầm định: %u)</translation>
     </message>
     <message>
-        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you verified that wallet works!</source>
-        <translation>Hãy chắc chắn rằng bạn mã hoá ví của bạn và xoá tất cả các bản backup không mã hoá sau khi bạn đã kiểm tra rằng ví hoạt động tốt mà không có lỗi.</translation>
-    </message>
-    <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
         <translation>Kích thước tối đa của dữ liệu trong các giao dịch cung cấp dữ liệu, chúng tôi chuyển tiếp và đào (ngầm định: %u)</translation>
     </message>
@@ -3992,6 +3969,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Overrides minimum spork signers to change spork value. Only useful for regtest and devnet. Using this on mainnet or testnet will ban you.</source>
         <translation>Ghi đè yêu cầu về số người ký spork tối thiểu để thay đổi giá trị spork. Chỉ hữu ích cho regtest và devnet. Không được sử dụng cái này trên mainnet hoặc test net.</translation>
+    </message>
+    <message>
+        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to mix some more coins.</source>
+        <translation>PrivateSend sử dụng chính xác số tiền đã được phân mệnh giá để gửi, bạn chỉ đơn giản cần trộn thêm nhiều coin nữa.</translation>
     </message>
     <message>
         <source>Use N separate masternodes in parallel to mix funds (%u-%u, default: %u)</source>
@@ -4014,20 +3995,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Cái điểm ngang hàng trong danh sách trắng không thể bị cấm DoS và các giao dịch của nó luôn được chuyển tiếp, thậm chí cả khi nó đã có trong mempool, hữu ích ví dụ như cho một cửa ngõ</translation>
     </message>
     <message>
-        <source>You need to rebuild the database using -reindex-chainstate to change -txindex</source>
-        <translation>Bạn cần tái tạo lại cơ sở dữ liệu sử dụng tham số -reindex-chainstate để thay cho -txindex</translation>
-    </message>
-    <message>
-        <source>You should specify a masternodeblsprivkey in the configuration. Please see documentation for help.</source>
-        <translation>Bạn cần chỉ rõ một masternodeblsprivkey trong cấu hình. Hãy xem lại tài liệu để biết thêm chi tiết.</translation>
-    </message>
-    <message>
         <source>(default: %s)</source>
         <translation>(ngầm định: %s)</translation>
-    </message>
-    <message>
-        <source>-wallet parameter must only specify a filename (not a path)</source>
-        <translation>Tham số -wallet chỉ được có tên file (không phải gồm cả đường dẫn)</translation>
     </message>
     <message>
         <source>Accept public REST requests (default: %u)</source>
@@ -4054,16 +4023,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Kết nối tới KeePassHttp trên cổng &lt;port&gt; (ngầm định: %u)</translation>
     </message>
     <message>
-        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>Cho phép phần mềm hoạt động như là masternode (0-1, ngầm định: %u)</translation>
-    </message>
-    <message>
         <source>Entry exceeds maximum size.</source>
         <translation>Đầu vào vượt ngưỡng tối đa. </translation>
-    </message>
-    <message>
-        <source>Error loading %s: You can't disable HD on a already existing HD wallet</source>
-        <translation>Lỗi khi tải %s: Bạn có thể tắt HD trên ví đã có HD.</translation>
     </message>
     <message>
         <source>Failed to load fulfilled requests cache from</source>
@@ -4122,16 +4083,24 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Không đủ tiền.</translation>
     </message>
     <message>
+        <source>Invalid amount for -discardfee=&lt;amount&gt;: '%s'</source>
+        <translation>Số tiền không hợp lệ cho -discardfee=&lt;amount&gt;:'%s'</translation>
+    </message>
+    <message>
         <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
         <translation>Số tiền không hợp lệ cho -paytxfee=&lt;số tiền&gt;: '%s' (ít nhất phải bằng %s)</translation>
     </message>
     <message>
-        <source>Invalid masternodeblsprivkey. Please see documenation.</source>
-        <translation>masternodeblsprivkey không hợp lệ. Hãy xem lại tài liệu.</translation>
-    </message>
-    <message>
         <source>Invalid minimum number of spork signers specified with -minsporkkeys</source>
         <translation>Số lượng người ký tối thiểu cho spork được chỉ bởi -minsporkkeys không hợp lệ</translation>
+    </message>
+    <message>
+        <source>Keep N SPARKS mixed (%u-%u, default: %u)</source>
+        <translation>Giữ N SPARKS được trộn (%u-%u, ngầm định: %u)</translation>
+    </message>
+    <message>
+        <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
+        <translation>Giữ nhiều nhất &lt;n&gt;giao dịch không thể được kết nối trong bộ nhớ (ngầm định: %u)</translation>
     </message>
     <message>
         <source>Keypool ran out, please call keypoolrefill first</source>
@@ -4190,6 +4159,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Không tìm thấy Masternode tương thích.</translation>
     </message>
     <message>
+        <source>Not enough funds to mix.</source>
+        <translation>Không đủ tiền để trộn.</translation>
+    </message>
+    <message>
         <source>Not in the Masternode list.</source>
         <translation>Không có trong danh sách Masternode.</translation>
     </message>
@@ -4214,16 +4187,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Gửi thông tin trace/debug vào file debug.log (ngầm định: %u)</translation>
     </message>
     <message>
-        <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
-        <translation>Gửi giao dịch như là giao dịch không phí nếu có thể (ngầm định: %u)</translation>
-    </message>
-    <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
         <translation>Thiết lập kích thước pool đến &lt;n&gt; (ngầm định: %u)</translation>
-    </message>
-    <message>
-        <source>Set the masternode BLS private key</source>
-        <translation>Thiết lập khoá riêng BLS cho masternode</translation>
     </message>
     <message>
         <source>Set the number of threads to service RPC calls (default: %d)</source>
@@ -4256,10 +4221,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Synchronization finished</source>
         <translation>Đồng bộ đã hoàn thành</translation>
-    </message>
-    <message>
-        <source>This is not a Masternode.</source>
-        <translation>Đây không phải là một Masternode.</translation>
     </message>
     <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
@@ -4322,6 +4283,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Bình luận User Agent (%s) có chứa những ký tự không an toàn.</translation>
     </message>
     <message>
+        <source>Verifying wallet(s)...</source>
+        <translation>Đang kiểm tra (các) ví...</translation>
+    </message>
+    <message>
         <source>Will retry...</source>
         <translation>Sẽ thử lại...</translation>
     </message>
@@ -4350,10 +4315,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Khoá KeePassHttp cho liên lạc mã hoá AES với KeePass</translation>
     </message>
     <message>
-        <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
-        <translation>Giữ nhiều nhất &lt;n&gt; các giao dịch không kết nối được trong bộ nhớ (ngầm định: %u)</translation>
-    </message>
-    <message>
         <source>Disable all Sparks specific functionality (Masternodes, PrivateSend, InstantSend, Governance) (0-1, default: %u)</source>
         <translation>Tắt tất cả các chức năng đắc trưng của Sparks (Masternode, PrivateSend, InstantSend, Governance) (0-1, ngầm định: %u)</translation>
     </message>
@@ -4362,8 +4323,20 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>File %s có chứa tất cả các khoá riêng từ ví này. Không nên chia sẻ nó với bất cứ ai.</translation>
     </message>
     <message>
+        <source>-masternode option is deprecated and ignored, specifying -masternodeblsprivkey is enough to start this node as a masternode.</source>
+        <translation>Tuỳ chọn -masternode không được sử dụng nữa và bị bỏ qua, việc chỉ rõ tham số -masternodeblsprivkey là đủ để khởi động một nút như là một masternode.</translation>
+    </message>
+    <message>
+        <source>Add a node to connect to and attempt to keep the connection open (see the `addnode` RPC command help for more info)</source>
+        <translation>Thêm một nút để kết nối và cố gắng giữ kết nối (xem hỗ trợ cho câu lệnh RPC `addnode` để có thêm thông tin)</translation>
+    </message>
+    <message>
         <source>Bind to given address to listen for JSON-RPC connections. This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost, or if -rpcallowip has been specified, 0.0.0.0 and :: i.e., all addresses)</source>
         <translation>Ràng buộc với địa chỉ được cho để lắng nghe cho các kết nối JSON-RPC. Tuỳ chọn này được bỏ qua trừ khi tham số -rpcport được cung cấp. Cổng là tuỳ chọn và được thay thế bởi -rpcport. Sử dụng cách viết [host]:port cho IPv6. Tham số này có thể sử dụng nhiều lần (ngầm định: 127.0.0.1 và ::1 cho localhost, hoặc nếu tham số -rpcallowip được xác định, 0.0.0.0 và :: cho tất cả các địa chỉ)</translation>
+    </message>
+    <message>
+        <source>Connect only to the specified node(s); -connect=0 disables automatic connections (the rules for this peer are the same as for -addnode)</source>
+        <translation>Chỉ kết nối đến (các) nút cụ thể; -connect=0 là tắt các kết nối tự động (quy tắc cho nút này là giống như với -addnode)</translation>
     </message>
     <message>
         <source>Discover own IP addresses (default: 1 when listening and no -externalip or -proxy)</source>
@@ -4374,16 +4347,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Không giữ các giao dịch trong mempool lâu hơn &lt;n&gt; giờ (ngầm định: %u)</translation>
     </message>
     <message>
-        <source>Enable InstantSend, show confirmations for locked transactions (0-1, default: %u)</source>
-        <translation>Bật InstantSend, hiển thị các xác thực cho các giao dịch bị khoá (0-1, ngầm định: %u)</translation>
-    </message>
-    <message>
         <source>Enable multiple PrivateSend mixing sessions per block, experimental (0-1, default: %u)</source>
         <translation>Cho phép nhiều phiên trộn PrivateSend cho mỗi khối, thí nghiệm (0-1, ngầm định: %u)</translation>
-    </message>
-    <message>
-        <source>Enable use of automated PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Cho phép sử dụng tự động PrivateSend cho các nguồn được lưu trong ví (0-1, ngầm định: %u)</translation>
     </message>
     <message>
         <source>Execute command when a wallet InstantSend transaction is successfully locked (%s in cmd is replaced by TxID)</source>
@@ -4410,14 +4375,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Nếu &lt;category&gt; không được cung cấp hoặc nếu &lt;category&gt; = 1, xuất tất cả các thông tin gỡ lỗi.</translation>
     </message>
     <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 SPARKS.</source>
-        <translation>InstantSend chưa hỗ trợ việc gửi những giá trị lớn như vậy. Các giao dịch hiện tại bị giới hạn đến %1 SPARKS.</translation>
-    </message>
-    <message>
-        <source>InstantSend requires inputs with at least %d confirmations, you might need to wait a few minutes and try again.</source>
-        <translation>InstantSend cần các đầu vào ít nhất %d xác thực, bạn cần đợi thêm vài phút nữa và thử lại.</translation>
-    </message>
-    <message>
         <source>Maintain a full address index, used to query for the balance, txids and unspent outputs for addresses (default: %u)</source>
         <translation>Duy trì một chỉ mục địa chỉ đầy đủ, được dùng để tra cứu số dư, txids và những khoản tiền còn chưa tiêu của các địa chỉ (ngầm định: %u)</translation>
     </message>
@@ -4434,8 +4391,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Duy trì nhiều nhất &lt;n&gt; kết nối đến các nút ngang hàng (các kết nối dịch vụ tạm thời không được tính) (ngầm định: %u)</translation>
     </message>
     <message>
-        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
-        <translation>PrivateSend sử dụng một số lượng mệnh giá nhất định để gửi tiền, bạn có thể đơn giản cần ẩn danh một ít coins nữa.</translation>
+        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you have verified that the wallet works!</source>
+        <translation>Hãy chắc chắn rằng bạn sẽ mã hoá ví của bạn và xoá đi tất cả các bản sao lưu của ví mà không có mã hoá sau kiểm tra ví đã hoạt động tốt!</translation>
+    </message>
+    <message>
+        <source>Maximum total size of all orphan transactions in megabytes (default: %u)</source>
+        <translation>Kích thước tổng tối đa của tất cả các giao dịch mồ côi theo megabyte (ngầm định: %u)</translation>
     </message>
     <message>
         <source>Prune configured below the minimum of %d MiB.  Please use a higher number.</source>
@@ -4446,12 +4407,20 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Xén tỉa: việc đồng bộ ví mới đây đã đi quá dữ liệu được xén tỉa. Bạn cần -reindex (download toàn bộ blockchain lần nữa trong trường hợp các nút bị xén tỉa)</translation>
     </message>
     <message>
+        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect used)</source>
+        <translation>Truy vấn địa chỉ đối tác ngang hàng thông qua tra cứu DNS, nếu có ít địa chỉ (ngầm định: 1 trừ trường hợp -connect được sử dụng)</translation>
+    </message>
+    <message>
         <source>Randomize credentials for every proxy connection. This enables Tor stream isolation (default: %u)</source>
         <translation>Ngẫu nhiên hoá các chứng thư cho mỗi kết nối qua proxy. Nó bật Tor stream isolation (ngầm định: %u)</translation>
     </message>
     <message>
         <source>Rescans are not possible in pruned mode. You will need to use -reindex which will download the whole blockchain again.</source>
         <translation>Rescans là không thể trong chế độ xén tỉa. Bạn cần sử dụng -reindex mà nó sẽ tải xuống toàn bộ blockchain lại.</translation>
+    </message>
+    <message>
+        <source>Set the masternode BLS private key and enable the client to act as a masternode</source>
+        <translation>Thiết lập khoá riêng BLS cho masternode và bật phần mềm để nó hoạt động như là một masternode</translation>
     </message>
     <message>
         <source>Specify full path to directory for automatic wallet backups (must exist)</source>
@@ -4510,8 +4479,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Cảnh báo: Không xác định được phiên bản khối được đào! Có thể những luật chưa được biết đang có tác động</translation>
     </message>
     <message>
-        <source>You are starting in lite mode, all Sparks-specific functionality is disabled.</source>
-        <translation>Bạn đang khởi động trong chế độ nhẹ, tất cả các chức năng đặc trưng của Sparks sẽ bị tắt.</translation>
+        <source>You need to rebuild the database using -reindex to change -timestampindex</source>
+        <translation>Bạn cần phải tái lập lại cơ sở dữ liệu sử dụng tham số -reindex để thay đổi -timestampindex</translation>
     </message>
     <message>
         <source>You need to rebuild the database using -reindex to go back to unpruned mode.  This will redownload the entire blockchain</source>
@@ -4594,10 +4563,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Không xoá được backup, lỗi: %s</translation>
     </message>
     <message>
-        <source>Failed to load InstantSend data cache from</source>
-        <translation>Thất bại trong việc tải dữ liệu cache của InstantSend từ</translation>
-    </message>
-    <message>
         <source>Failed to load sporks cache from</source>
         <translation>Thất bại việc tải dữ liệu sporks cache từ</translation>
     </message>
@@ -4618,6 +4583,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Số lượng không hợp lệ cho -fallbackfee=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
+        <source>Invalid masternodeblsprivkey. Please see documentation.</source>
+        <translation>masternodeblsprivkey không hợp lệ. Hãy xem trong tài liệu.</translation>
+    </message>
+    <message>
         <source>Keep the transaction memory pool below &lt;n&gt; megabytes (default: %u)</source>
         <translation>Giữ cho bể nhớ giao dịch dưới &lt;n&gt; megabytes (ngầm định: %u)</translation>
     </message>
@@ -4628,10 +4597,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Last successful PrivateSend action was too recent.</source>
         <translation>PrivateSend mới nhất được thực hiện quá gần đây.</translation>
-    </message>
-    <message>
-        <source>Loading InstantSend data cache...</source>
-        <translation>Đang tải dữ liệu cache của InstantSend...</translation>
     </message>
     <message>
         <source>Loading block index...</source>
@@ -4706,10 +4671,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Chưa có đủ thông tin mô tả tệp.</translation>
     </message>
     <message>
-        <source>Not enough funds to anonymize.</source>
-        <translation>Không đủ tiền để ẩn danh.</translation>
-    </message>
-    <message>
         <source>Number of automatic wallet backups (default: %u)</source>
         <translation>Số lượng ví tự động backup (ngầm định: %u)</translation>
     </message>
@@ -4756,14 +4717,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Rescan the block chain for missing wallet transactions on startup</source>
         <translation>Quét lại block chain để tìm ra những giao dịch mà ví còn thiếu khi khởi động</translation>
-    </message>
-    <message>
-        <source>Submitted following entries to masternode: %u</source>
-        <translation>Đã gửi các đầu vào sau đây cho masternode: %u</translation>
-    </message>
-    <message>
-        <source>Submitted to masternode, waiting for more entries ( %u ) %s</source>
-        <translation>Đã được gửi cho masternode, đang đợi có thêm các đầu vào (%u) %s</translation>
     </message>
     <message>
         <source>Synchronizing blockchain...</source>
@@ -4818,10 +4771,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Wallet debugging/testing options:</translation>
     </message>
     <message>
-        <source>Wallet is not initialized</source>
-        <translation>Ví chưa được khởi tạo</translation>
-    </message>
-    <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
         <translation>Wallet needed to be rewritten: restart %s to complete</translation>
     </message>
@@ -4840,6 +4789,22 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>You can not start a masternode in lite mode.</source>
         <translation>Bạn không thể khởi động một masternode ở chế độ nhẹ.</translation>
+    </message>
+    <message>
+        <source>You can not start a masternode with wallet enabled.</source>
+        <translation>Bạn không thể khởi động một masternode với ví được kích hoạt.</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -addressindex</source>
+        <translation>Bạn cần tái lập lại cơ sở dữ liệu sử dụng -reindex để thay đổi -addressindex</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -spentindex</source>
+        <translation>Bạn cần tái lập lại cơ sở dữ liệu sử dụng -reindex để thay đổi -spentindex</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -txindex</source>
+        <translation>Bạn cần tái lập lại cơ sở dữ liệu sử dụng -reindex để thay đổi -txindex</translation>
     </message>
     <message>
         <source>ZeroMQ notification options:</source>
@@ -4866,24 +4831,32 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>The %s developers</translation>
     </message>
     <message>
-        <source>Accept connections from outside (default: 1 if no -proxy or -connect/-noconnect)</source>
-        <translation>Chấp nhận kết nối từ bên ngoài (ngầm định: 1 nếu không có -proxy hoặc -connect/-noconnect)</translation>
-    </message>
-    <message>
         <source>Cannot obtain a lock on data directory %s. %s is probably already running.</source>
         <translation>Cannot obtain a lock on data directory %s. %s is probably already running.</translation>
-    </message>
-    <message>
-        <source>Connect only to the specified node(s); -noconnect or -connect=0 alone to disable automatic connections</source>
-        <translation>Chỉ kết nối đến (các) nút được cung cấp: -noconnect hoặc chỉ dùng -connect=0  để tắt chức năng tự kết nối</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file %s or %s</source>
         <translation>Distributed under the MIT software license, see the accompanying file %s or %s</translation>
     </message>
     <message>
+        <source>Enable use of PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
+        <translation>Cho phép việc sử dụng PrivateSend cho các khoản tiền được lưu trong ví này (0-1, ngầm định: %u)</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't enable HD on an already existing non-HD wallet</source>
+        <translation>Lỗi khi tải %s: Bạn không thể bật HD trên một ví không HD</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. -wallet parameter must only specify a filename (not a path).</source>
+        <translation>Lỗi tài ví %s. tham số -wallet chỉ được dùng để xác định một tên file (không phải là một đường dẫn)</translation>
+    </message>
+    <message>
         <source>Error reading %s! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
         <translation>Error reading %s! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</translation>
+    </message>
+    <message>
+        <source>Exclude debugging information for a category. Can be used in conjunction with -debug=1 to output debug logs for all categories except one or more specified categories.</source>
+        <translation>Loại bỏ thông tin gỡ rối cho một danh mục. Có thể sử dụng cùng với -debug=1 để xuất nhật ký gỡ rối cho tất cả các danh mục trừ một hoặc các danh mục được xác định.</translation>
     </message>
     <message>
         <source>Force relay of transactions from whitelisted peers even if they violate local relay policy (default: %d)</source>
@@ -4914,20 +4887,20 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Please contribute if you find %s useful. Visit %s for further information about the software.</translation>
     </message>
     <message>
-        <source>Provide liquidity to PrivateSend by infrequently mixing coins on a continual basis (%u-%u, default: %u, 1=very frequent, high fees, %u=very infrequent, low fees)</source>
-        <translation>Cung cấp thanh khoản cho PrivateSend bằng việc thường xuyên trộn coin theo mức độ thường xuyên (%u-%u, ngầm định: %u, 1=rất thường xuyên, phí cao, %u=rất không thường xuyên, phí thấp)</translation>
-    </message>
-    <message>
-        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect/-noconnect)</source>
-        <translation>Truy vấn các địa chỉ ngang hàng thông qua cơ chế tìm kiếm DNS, nếu địa chỉ thấp (ngầm định: 1 trừ khi -connect/-noconnect)</translation>
-    </message>
-    <message>
         <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex and -rescan. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;%u = automatically prune block files to stay under the specified target size in MiB)</source>
         <translation>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex and -rescan. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;%u = automatically prune block files to stay under the specified target size in MiB)</translation>
     </message>
     <message>
         <source>Set lowest fee rate (in %s/kB) for transactions to be included in block creation. (default: %s)</source>
         <translation>Set lowest fee rate (in %s/kB) for transactions to be included in block creation. (default: %s)</translation>
+    </message>
+    <message>
+        <source>The fee rate (in %s/kB) that indicates your tolerance for discarding change by adding it to the fee (default: %s). Note: An output is discarded if it is dust at this rate, but we will always discard up to the dust relay fee and a discard fee above that is limited by the fee estimate for the longest target</source>
+        <translation>Mức phí (tính theo %s/kB) là thể hiện mức độ chịu đựng của bạn đối với việc loại bỏ khoản tiền lẻ trả lại bằng cách thêm nó vào phí (ngầm định: %s). Lưu ý: Một đầu ra bị loại bỏ nếu đó là bụi ở mức phí này, nhưng chúng tôi sẽ luôn loại bỏ phí chuyển tiếp bụi và phí loại bỏ ở trên mà bị giới hạn bởi ước tính phí cho mục tiêu dài nhất</translation>
+    </message>
+    <message>
+        <source>This is the transaction fee you may discard if change is smaller than dust at this level</source>
+        <translation>Đây là phí giao dịch bạn có thể bỏ qua nếu phần trả lại nhỏ hơn bụi ở cấp độ này</translation>
     </message>
     <message>
         <source>This is the transaction fee you may pay when fee estimates are not available.</source>
@@ -4940,6 +4913,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Unable to locate enough PrivateSend non-denominated funds for this transaction.</source>
         <translation>Không thể tìm đủ lượng ngân sách chưa phân mệnh giá Private Send cho giao dịch  này.</translation>
+    </message>
+    <message>
+        <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
+        <translation>Không thể phát lại các khối. Bạn sẽ cần xây dựng lại cơ sở dữ liệu bằng cách sử dụng -reindex-chainstate.</translation>
     </message>
     <message>
         <source>Use N separate masternodes for each denominated input to mix funds (%u-%u, default: %u)</source>
@@ -4966,8 +4943,20 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Warning: Wallet file corrupt, data salvaged! Original %s saved as %s in %s; if your balance or transactions are incorrect you should restore from a backup.</translation>
     </message>
     <message>
+        <source>Whether to save the mempool on shutdown and load on restart (default: %u)</source>
+        <translation>Có nên lưu mempool khi tắt máy và tải lại khi khởi động lại (ngầm định: %u)</translation>
+    </message>
+    <message>
         <source>Whitelist peers connecting from the given IP address (e.g. 1.2.3.4) or CIDR notated network (e.g. 1.2.3.0/24). Can be specified multiple times.</source>
         <translation>Whitelist peers connecting from the given IP address (e.g. 1.2.3.4) or CIDR notated network (e.g. 1.2.3.0/24). Can be specified multiple times.</translation>
+    </message>
+    <message>
+        <source>You are starting in lite mode, most Sparks-specific functionality is disabled.</source>
+        <translation>Bạn đang khởi động ở chế độ nhẹ, hầu hết các tính năng đặc trưng của Sparks bị tắt.</translation>
+    </message>
+    <message>
+        <source>%d of last 100 blocks have unexpected version</source>
+        <translation>%d của 100 khối cuối cùng có phiên bản không mong đợi</translation>
     </message>
     <message>
         <source>%s corrupt, salvage failed</source>
@@ -4998,6 +4987,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>-rpcport phải được chỉ rõ khi -devnet và -server được sử dụng</translation>
     </message>
     <message>
+        <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
+        <translation>Chấp nhận các kết nối từ ngoài (ngầm định: 1 nếu không -proxy hoặc -connect)</translation>
+    </message>
+    <message>
         <source>Allow RFC1918 addresses to be relayed and connected to (default: %u)</source>
         <translation>Cho phép địa chỉ RFC1918 để chuyển tiếp và kết nối đến (ngầm định: %u)</translation>
     </message>
@@ -5018,6 +5011,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Bản quyền (C)</translation>
     </message>
     <message>
+        <source>Create up to N inputs of each denominated amount (%u-%u, default: %u)</source>
+        <translation>Tạo tối đa N đầu vào của mỗi số tiền có mệnh giá (%u-%u, ngầm định: %u)</translation>
+    </message>
+    <message>
         <source>Error loading %s</source>
         <translation>Error loading %s</translation>
     </message>
@@ -5028,6 +5025,22 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Error loading %s: Wallet requires newer version of %s</source>
         <translation>Error loading %s: Wallet requires newer version of %s</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't disable HD on an already existing HD wallet</source>
+        <translation>Lỗi tải %s: Bạn không thể tắt HD trên một ví đã có HD</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. -wallet filename must be a regular file.</source>
+        <translation>Lỗi tải ví %s. -wallet tên file phải là một file bình thường.</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
+        <translation>Lỗi tải ví %s. Tham số -wallet tên file chỉ định bị trùng</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Invalid characters in -wallet filename.</source>
+        <translation>Lỗi tải ví %s. Có ký tự không hợp lệ trong tham số -wallet tên file.</translation>
     </message>
     <message>
         <source>Error upgrading chainstate database</source>
@@ -5046,6 +5059,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Initialization sanity check failed. %s is shutting down.</translation>
     </message>
     <message>
+        <source>Inputs vs outputs size mismatch.</source>
+        <translation>Kích thước của đầu vào với đầu ra không tương xứng.</translation>
+    </message>
+    <message>
         <source>Invalid -onion address or hostname: '%s'</source>
         <translation>Invalid -onion address or hostname: '%s'</translation>
     </message>
@@ -5058,16 +5075,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Invalid amount for -%s=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
-        <source>Invalid characters in -wallet filename</source>
-        <translation>Có ký tự không hợp lệ trong tên file ở tham số -wallet</translation>
-    </message>
-    <message>
         <source>Invalid spork address specified with -sporkaddr</source>
         <translation>Địa chỉ spork được chỉ ra không hợp lệ với -sporkaddr</translation>
-    </message>
-    <message>
-        <source>Keep N SPARKS anonymized (%u-%u, default: %u)</source>
-        <translation>Giữ N Sparks ẩn danh (%u-%u, ngầm định: %u)</translation>
     </message>
     <message>
         <source>Loading P2P addresses...</source>
@@ -5076,10 +5085,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Print this help message and exit</source>
         <translation>Print this help message and exit</translation>
-    </message>
-    <message>
-        <source>Receive and display P2P network alerts (default: %u)</source>
-        <translation>Nhận và hiển thị các cảnh báo mạng P2P (ngầm định: %u)</translation>
     </message>
     <message>
         <source>Reducing -maxconnections from %d to %d, because of system limitations.</source>
@@ -5092,6 +5097,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Relay non-P2SH multisig (default: %u)</source>
         <translation>Chuyển tiếp các khoá đa chữ ký không phải P2SH (ngầm định: %u)</translation>
+    </message>
+    <message>
+        <source>Replaying blocks...</source>
+        <translation>Phát lại các khối...</translation>
     </message>
     <message>
         <source>Rescanning...</source>
@@ -5146,6 +5155,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Hãy xác định địa chỉ công khai của bạn</translation>
     </message>
     <message>
+        <source>Start PrivateSend automatically (0-1, default: %u)</source>
+        <translation>Khởi động PrivateSend một cách tự động (0-1, ngầm định: %u)</translation>
+    </message>
+    <message>
         <source>Starting network threads...</source>
         <translation>Starting network threads...</translation>
     </message>
@@ -5178,6 +5191,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Giao dịch được tạo thành công.</translation>
     </message>
     <message>
+        <source>Transaction fee and change calculation failed</source>
+        <translation>Tính phí giao dịch và tiền hoàn lại không thành công</translation>
+    </message>
+    <message>
         <source>Transaction fees are too high.</source>
         <translation>Phí giao dịch quá cao.</translation>
     </message>
@@ -5206,16 +5223,16 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Trạng thái không xác định: id = %u</translation>
     </message>
     <message>
+        <source>Unsupported logging category %s=%s.</source>
+        <translation>Danh mục ghi nhật ký không được hỗ trợ %s=%s.</translation>
+    </message>
+    <message>
         <source>Username for JSON-RPC connections</source>
         <translation>Username cho kết nối JSON-RPC</translation>
     </message>
     <message>
         <source>Verifying blocks...</source>
         <translation>Đang kiểm tra các khối...</translation>
-    </message>
-    <message>
-        <source>Verifying wallet...</source>
-        <translation>Đang kiểm tra ví...</translation>
     </message>
     <message>
         <source>Very low number of keys left: %d</source>
@@ -5244,10 +5261,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Your entries added successfully.</source>
         <translation>Các đầu vào của bạn đã được thêm vào một cách thành công.</translation>
-    </message>
-    <message>
-        <source>Your transaction was accepted into the pool!</source>
-        <translation>Giao dịch của bạn đã được chấp nhận vào bể!</translation>
     </message>
     <message>
         <source>Zapping all transactions from wallet...</source>

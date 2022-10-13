@@ -1,5 +1,5 @@
-Sparks Core staging tree 0.14.0
-===============================
+Sparks Core staging tree 0.15
+===========================
 
 `master:` [![Build Status](https://travis-ci.org/sparkspay/sparks.svg?branch=master)](https://travis-ci.org/sparkspay/sparks) `develop:` [![Build Status](https://travis-ci.org/sparkspay/sparks.svg?branch=develop)](https://travis-ci.org/sparkspay/sparks/branches)
 
@@ -7,9 +7,9 @@ https://www.sparkspay.io
 
 
 What is Sparks?
-----------------
+-------------
 
-Sparks is an experimental digital currency that enables anonymous, instant
+Sparks is an experimental digital currency that enables instant, private
 payments to anyone, anywhere in the world. Sparks uses peer-to-peer technology
 to operate with no central authority: managing transactions and issuing money
 are carried out collectively by the network. Sparks Core is the name of the open
@@ -49,9 +49,9 @@ submit new unit tests for old code. Unit tests can be compiled and run
 (assuming they weren't disabled in configure) with: `make check`. Further details on running
 and extending unit tests can be found in [/src/test/README.md](/src/test/README.md).
 
-There are also [regression and integration tests](/qa) of the RPC interface, written
+There are also [regression and integration tests](/test), written
 in Python, that are run automatically on the build server.
-These tests can be run (if the [test dependencies](/qa) are installed) with: `qa/pull-tester/rpc-tests.py`
+These tests can be run (if the [test dependencies](/test) are installed) with: `test/functional/test_runner.py`
 
 The Travis CI system makes sure that every pull request is built for Windows, Linux, and OS X, and that unit/sanity tests are run automatically.
 
