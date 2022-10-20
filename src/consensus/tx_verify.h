@@ -5,9 +5,9 @@
 #ifndef BITCOIN_CONSENSUS_TX_VERIFY_H
 #define BITCOIN_CONSENSUS_TX_VERIFY_H
 
-#include "amount.h"
-#include "params.h"
-#include "primitives/transaction.h"
+#include <amount.h>
+#include <params.h>
+#include <primitives/transaction.h>
 #include <stdint.h>
 #include <vector>
 

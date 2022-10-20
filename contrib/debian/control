@@ -1,8 +1,8 @@
 Source: sparks
 Section: utils
 Priority: optional
-Maintainer: Holger Schinzel <holger@dash.org>
-Uploaders: Holger Schinzel <holger@dash.org>
+Maintainer: Holger Schinzel <holger@sparks.org>
+Uploaders: Holger Schinzel <holger@sparks.org>
 Build-Depends: debhelper,
  devscripts,
  automake,

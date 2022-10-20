@@ -2,20 +2,20 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "quorums_blockprocessor.h"
-#include "quorums_commitment.h"
-#include "quorums_debug.h"
-#include "quorums_utils.h"
+#include <llmq/quorums_blockprocessor.h>
+#include <llmq/quorums_commitment.h>
+#include <llmq/quorums_debug.h>
+#include <llmq/quorums_utils.h>
 
-#include "evo/specialtx.h"
+#include <evo/specialtx.h>
 
-#include "chain.h"
-#include "chainparams.h"
-#include "consensus/validation.h"
-#include "net.h"
-#include "net_processing.h"
-#include "primitives/block.h"
-#include "validation.h"
+#include <chain.h>
+#include <chainparams.h>
+#include <consensus/validation.h>
+#include <net.h>
+#include <net_processing.h>
+#include <primitives/block.h>
+#include <validation.h>
 
 
 namespace llmq
@@ -37,12 +37,12 @@ void CQuorumBlockProcessor::ProcessMessage(CNode* pfrom, const std::string& strC
         auto hash = ::SerializeHash(qc);
         {
             LOCK(cs_main);
-            connman.RemoveAskFor(hash);
+            EraseObjectRequest(pfrom->GetId(), CInv(MSG_QUORUM_FINAL_COMMITMENT, hash));
         }
 
         if (qc.IsNull()) {
             LOCK(cs_main);
-            LogPrintf("CQuorumBlockProcessor::%s -- null commitment from peer=%d\n", __func__, pfrom->GetId());
+            LogPrint(BCLog::LLMQ, "CQuorumBlockProcessor::%s -- null commitment from peer=%d\n", __func__, pfrom->GetId());
             Misbehaving(pfrom->GetId(), 100);
             return;
         }
@@ -56,7 +56,7 @@ void CQuorumBlockProcessor::ProcessMessage(CNode* pfrom, const std::string& strC
         if ((fDIP0008Active && !Params().GetConsensus().llmqs.count((Consensus::LLMQType)qc.llmqType)) ||
         (!fDIP0008Active && !Params().GetConsensus().llmqs_old.count((Consensus::LLMQType)qc.llmqType))) {
             LOCK(cs_main);
-            LogPrintf("llmq""CQuorumBlockProcessor::%s -- invalid commitment type %d from peer=%d\n", __func__,
+            LogPrint(BCLog::LLMQ, "CQuorumBlockProcessor::%s -- invalid commitment type %d from peer=%d\n", __func__,
                     qc.llmqType, pfrom->GetId());
             Misbehaving(pfrom->GetId(), 100);
             return;
@@ -69,7 +69,7 @@ void CQuorumBlockProcessor::ProcessMessage(CNode* pfrom, const std::string& strC
         {
             LOCK(cs_main);
             if (!mapBlockIndex.count(qc.quorumHash)) {
-                LogPrintf("CQuorumBlockProcessor::%s -- unknown block %s in commitment, peer=%d\n", __func__,
+                LogPrint(BCLog::LLMQ, "CQuorumBlockProcessor::%s -- unknown block %s in commitment, peer=%d\n", __func__,
                         qc.quorumHash.ToString(), pfrom->GetId());
                 // can't really punish the node here, as we might simply be the one that is on the wrong chain or not
                 // fully synced
@@ -77,14 +77,14 @@ void CQuorumBlockProcessor::ProcessMessage(CNode* pfrom, const std::string& strC
             }
             pquorumIndex = mapBlockIndex[qc.quorumHash];
             if (chainActive.Tip()->GetAncestor(pquorumIndex->nHeight) != pquorumIndex) {
-                LogPrintf("CQuorumBlockProcessor::%s -- block %s not in active chain, peer=%d\n", __func__,
+                LogPrint(BCLog::LLMQ, "CQuorumBlockProcessor::%s -- block %s not in active chain, peer=%d\n", __func__,
                           qc.quorumHash.ToString(), pfrom->GetId());
                 // same, can't punish
                 return;
             }
             int quorumHeight = pquorumIndex->nHeight - (pquorumIndex->nHeight % params.dkgInterval);
             if (quorumHeight != pquorumIndex->nHeight) {
-                LogPrintf("CQuorumBlockProcessor::%s -- block %s is not the first block in the DKG interval, peer=%d\n", __func__,
+                LogPrint(BCLog::LLMQ, "CQuorumBlockProcessor::%s -- block %s is not the first block in the DKG interval, peer=%d\n", __func__,
                           qc.quorumHash.ToString(), pfrom->GetId());
                 Misbehaving(pfrom->GetId(), 100);
                 return;
@@ -111,7 +111,7 @@ void CQuorumBlockProcessor::ProcessMessage(CNode* pfrom, const std::string& strC
 
         if (!qc.Verify(members, true)) {
             LOCK(cs_main);
-            LogPrintf("CQuorumBlockProcessor::%s -- commitment for quorum %s:%d is not valid, peer=%d\n", __func__,
+            LogPrint(BCLog::LLMQ, "CQuorumBlockProcessor::%s -- commitment for quorum %s:%d is not valid, peer=%d\n", __func__,
                       qc.quorumHash.ToString(), qc.llmqType, pfrom->GetId());
             Misbehaving(pfrom->GetId(), 100);
             return;
@@ -149,6 +149,10 @@ bool CQuorumBlockProcessor::ProcessBlock(const CBlock& block, const CBlockIndex*
     // allowed, including null commitments.
     auto llmqs = fDIP0008Active ? Params().GetConsensus().llmqs : Params().GetConsensus().llmqs_old;
     for (const auto& p : llmqs) {
+        // skip these checks when replaying blocks after the crash
+        if (!chainActive.Tip()) {
+            break;
+        }
         auto type = p.first;
 
         // does the currently processed block contain a (possibly null) commitment for the current session?
@@ -199,6 +203,12 @@ bool CQuorumBlockProcessor::ProcessCommitment(int nHeight, const uint256& blockH
     auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at((Consensus::LLMQType)qc.llmqType) : Params().GetConsensus().llmqs_old.at((Consensus::LLMQType)qc.llmqType);
 
     uint256 quorumHash = GetQuorumBlockHash((Consensus::LLMQType)qc.llmqType, nHeight);
+
+    // skip `bad-qc-block` checks below when replaying blocks after the crash
+    if (!chainActive.Tip()) {
+        quorumHash = qc.quorumHash;
+    }
+
     if (quorumHash.IsNull()) {
         return state.DoS(100, false, REJECT_INVALID, "bad-qc-block");
     }
@@ -336,7 +346,7 @@ bool CQuorumBlockProcessor::GetCommitmentsFromBlock(const CBlock& block, const C
             CFinalCommitmentTxPayload qc;
             if (!GetTxPayload(*tx, qc)) {
                 // should not happen as it was verified before processing the block
-                return state.DoS(100, false, REJECT_INVALID, "bad-tx-payload");
+                return state.DoS(100, false, REJECT_INVALID, "bad-qc-payload");
             }
 
             // only allow one commitment per type and per block
@@ -440,6 +450,8 @@ bool CQuorumBlockProcessor::GetMinedCommitment(Consensus::LLMQType llmqType, con
 // The returned quorums are in reversed order, so the most recent one is at index 0
 std::vector<const CBlockIndex*> CQuorumBlockProcessor::GetMinedCommitmentsUntilBlock(Consensus::LLMQType llmqType, const CBlockIndex* pindex, size_t maxCount)
 {
+    LOCK(evoDb.cs);
+
     auto dbIt = evoDb.GetCurTransaction().NewIteratorUniquePtr();
 
     auto firstKey = BuildInversedHeightKey(llmqType, pindex->nHeight);

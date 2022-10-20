@@ -5,27 +5,26 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/sparks-config.h"
+#include <config/sparks-config.h>
 #endif
 
-#include "addressbookpage.h"
-#include "ui_addressbookpage.h"
+#include <qt/addressbookpage.h>
+#include <qt/forms/ui_addressbookpage.h>
 
-#include "addresstablemodel.h"
-#include "bitcoingui.h"
-#include "csvmodelwriter.h"
-#include "editaddressdialog.h"
-#include "guiutil.h"
-#include "optionsmodel.h"
-#include "platformstyle.h"
-#include "qrdialog.h"
+#include <qt/addresstablemodel.h>
+#include <qt/bitcoingui.h>
+#include <qt/csvmodelwriter.h>
+#include <qt/editaddressdialog.h>
+#include <qt/guiutil.h>
+#include <qt/optionsmodel.h>
+#include <qt/qrdialog.h>
 
 #include <QIcon>
 #include <QMenu>
 #include <QMessageBox>
 #include <QSortFilterProxyModel>
 
-AddressBookPage::AddressBookPage(const PlatformStyle *platformStyle, Mode _mode, Tabs _tab, QWidget *parent) :
+AddressBookPage::AddressBookPage(Mode _mode, Tabs _tab, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::AddressBookPage),
     model(0),
@@ -33,17 +32,7 @@ AddressBookPage::AddressBookPage(const PlatformStyle *platformStyle, Mode _mode,
     tab(_tab)
 {
     ui->setupUi(this);
-    if (!platformStyle->getImagesOnButtons()) {
-        ui->newAddress->setIcon(QIcon());
-        ui->copyAddress->setIcon(QIcon());
-        ui->deleteAddress->setIcon(QIcon());
-        ui->exportButton->setIcon(QIcon());
-    } else {
-        ui->newAddress->setIcon(QIcon(":/icons/add"));
-        ui->copyAddress->setIcon(QIcon(":/icons/editcopy"));
-        ui->deleteAddress->setIcon(QIcon(":/icons/remove"));
-        ui->exportButton->setIcon(QIcon(":/icons/export"));
-    }
+
     ui->showAddressQRCode->setIcon(QIcon());
 
     switch(mode)
@@ -107,6 +96,10 @@ AddressBookPage::AddressBookPage(const PlatformStyle *platformStyle, Mode _mode,
     connect(ui->tableView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextualMenu(QPoint)));
 
     connect(ui->closeButton, SIGNAL(clicked()), this, SLOT(accept()));
+
+    GUIUtil::updateFonts();
+
+    GUIUtil::disableMacFocusRect(this);
 }
 
 AddressBookPage::~AddressBookPage()

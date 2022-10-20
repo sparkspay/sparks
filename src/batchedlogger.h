@@ -5,7 +5,7 @@
 #ifndef SPARKS_BATCHEDLOGGER_H
 #define SPARKS_BATCHEDLOGGER_H
 
-#include "tinyformat.h"
+#include <tinyformat.h>
 
 class CBatchedLogger
 {
