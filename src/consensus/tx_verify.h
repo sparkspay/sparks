@@ -6,7 +6,7 @@
 #define BITCOIN_CONSENSUS_TX_VERIFY_H
 
 #include <amount.h>
-#include <params.h>
+#include <consensus/params.h>
 #include <primitives/transaction.h>
 #include <stdint.h>
 #include <vector>

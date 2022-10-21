@@ -23,6 +23,11 @@
 #include <string>
 #include <vector>
 
+#include <boost/test/unit_test.hpp>
+
+#include <univalue.h>
+
+// Uncomment if you want to output updated JSON tests.
 // #define UPDATE_JSON_TESTS
 
 static const unsigned int gFlags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC;

@@ -245,7 +245,6 @@ RES_ICONS = \
   qt/res/icons/sparkspay2020/fontsmaller.png \
   qt/res/icons/sparkspay2020/transaction_abandoned.png \
   qt/res/icons/sparkspay2020/network_disabled.png \
-  qt/res/icons/add.png \
   qt/res/icons/address-book.png \
   qt/res/icons/clock1.png \
   qt/res/icons/clock2.png \
@@ -386,7 +385,6 @@ RES_IMAGES = \
   qt/res/images/checkbox_partly_checked_hover_light.png \
   qt/res/images/checkbox_partly_checked_disabled_light.png \
   qt/res/images/sparks_logo_toolbar.png \
-  qt/res/images/sparks_logo_toolbar_blue.png \
   qt/res/images/radio_normal_dark.png \
   qt/res/images/radio_normal_hover_dark.png \
   qt/res/images/radio_checked_dark.png \
