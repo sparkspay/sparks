@@ -1241,10 +1241,13 @@ CAmount GetMasternodePayment(int nHeight, CAmount blockValue, int nReallocActiva
         // LogPrintf("GetMasternodePayment: height is %d, blockValue is %d, corePayment is %d, masternodePayment is %d\n", nHeight, blockValue, corePayment, masterNodePayment);
         return masterNodePayment;
     }
-    else
-    {
+    else if (nHeight < nReallocActivationHeight)
+    {// Block Reward Realocation is not activated yet
         CAmount masterNodePayment = blockValue * consensusParams.fSPKRatioMN;
         // LogPrintf("GetMasternodePayment: DIP0001 active, height is %d, blockValue is %d, masternodePayment is %d\n", nHeight, blockValue, masterNodePayment);
+        return masterNodePayment;
+    } else {
+        CAmount masterNodePayment = blockValue * consensusParams.fReallocRatioMN;
         return masterNodePayment;
     }
 }

@@ -112,7 +112,8 @@ static const std::map<QString, QString> mapStyleToTheme{
     {"general.css", ""},
     {"dark.css", "Dark"},
     {"light.css", "Light"},
-    {"traditional.css", "Traditional"}
+    {"traditional.css", "Traditional"},
+    {"sparkspay2020.css", "sparkspay2020"}
 };
 
 /** loadFonts stores the SystemDefault font in osDefaultFont to be able to reference it later again */
@@ -1782,7 +1783,6 @@ bool sparksThemeActive()
 {
     QSettings settings;
     QString theme = settings.value("theme", "").toString();
-    theme = "sparkspay2020";
     return theme != traditionalTheme;
 }
 

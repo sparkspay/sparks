@@ -428,6 +428,7 @@ public:
         consensus.nSPKSubidyReborn = 20;
         consensus.nSPKBlocksPerMonth = 21600;
         consensus.fSPKRatioMN = 0.7;
+        consensus.fReallocRatioMN = 0.8;
         consensus.vBannedAddresses.push_back("GRFBCEuMcfi9PhFVfcVutL7bGwj4KdPyWX");
         consensus.vBannedAddresses.push_back("GPawkMiQm4qmYcz6mnM8ad3BxgsdgHjh52");
         consensus.vBannedAddresses.push_back("GSR6AY8GCW8KUf7N5FGz4xxdZpZ3sWkfrR");
@@ -639,6 +640,7 @@ public:
         consensus.nSPKSubidyReborn = 20;
         consensus.nSPKBlocksPerMonth = 1;
         consensus.fSPKRatioMN = 0.7;
+        consensus.fReallocRatioMN = 0.8;
         consensus.vBannedAddresses.push_back("nKhbKA1L4mSn6Xovy4wTtSor1wwRx1GGNL");
         consensus.vBannedAddresses.push_back("nTMbCAsxCEYMEF7fhPiJ6gSPYxnSUbRNHa");
 

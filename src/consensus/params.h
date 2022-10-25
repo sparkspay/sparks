@@ -169,6 +169,7 @@ struct Params {
     unsigned int nSPKBlocksPerMonth;
     std::vector<std::string> vBannedAddresses;
     float fSPKRatioMN;
+    float fReallocRatioMN;
     /** Block height at which DIP0003 becomes active */
     int DIP0003Height;
     /** Block height at which DIP0003 becomes enforced */
