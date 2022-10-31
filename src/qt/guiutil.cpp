@@ -109,10 +109,6 @@ static const QString defaultTheme = "sparkspay2020";
 static const QString darkThemePrefix = "Dark";
 // Mapping css file => theme.
 static const std::map<QString, QString> mapStyleToTheme{
-    {"general.css", ""},
-    {"dark.css", "Dark"},
-    {"light.css", "Light"},
-    {"traditional.css", "Traditional"},
     {"sparkspay2020.css", "sparkspay2020"}
 };
 

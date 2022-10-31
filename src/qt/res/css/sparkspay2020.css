@@ -1948,3 +1948,21 @@ QComboBox::down-arrow:pressed {
 QComboBox::down-arrow:disabled {
     border-image: url(':/images/arrow_light_down_normal') 0 0 0 0 stretch stretch;
 }
+
+/******************************************************
+QSlider
+******************************************************/
+
+QSlider::handle:horizontal {
+	background-color: #ff0000;
+}
+QSlider::handle:horizontal:hover {
+	background-color: #ff0000;
+}
+QSlider::sub-page:horizontal {
+	background-color: #c7c7c7;
+}
+QSlider::add-page:horizontal {
+	background-color: #c7c7c7;
+}
+
