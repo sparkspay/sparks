@@ -407,8 +407,8 @@ public:
 
         // Deployment of Block Reward Reallocation
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].bit = 6;
-        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nStartTime = 1667260800; // Nov 1st, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nTimeout = 1698796800; // Nov 1st, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nStartTime = 1668211200; // Nov 12th, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nTimeout = 1699747200; // Nov 12th, 2023
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nThresholdStart = 60; // 60% of 100
 
