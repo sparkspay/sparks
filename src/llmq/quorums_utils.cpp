@@ -50,7 +50,7 @@ bool CLLMQUtils::IsAllMembersConnectedEnabled(Consensus::LLMQType llmqType)
     if (spork21 == 0) {
         return true;
     }
-    if (spork21 == 1 && llmqType != Consensus::LLMQ_400_60 && llmqType != Consensus::LLMQ_400_85) {
+    if (spork21 == 1 && llmqType != Consensus::LLMQ_25_60 && llmqType != Consensus::LLMQ_25_80) {
         return true;
     }
     return false;
