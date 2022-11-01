@@ -13,6 +13,7 @@ src/sparks-tx
 src/test/test_sparks
 src/test/test_sparks_fuzzy
 src/qt/test/test_sparks-qt
+src/qt/res/css/colors/*
 src/bench/bench_sparks
 
 # autoreconf
@@ -84,6 +85,7 @@ libconftest.dylib*
 Makefile
 sparks-qt
 Sparks-Qt.app
+background.tiff*
 !/depends/Makefile
 
 # Unit-tests
@@ -138,3 +140,6 @@ cmake-build-debug
 
 #Visual Studio C++ cache files
 ipch/
+
+#VS Code
+.vscode/

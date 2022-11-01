@@ -361,7 +361,7 @@ Building Sparks Core
 ----------------
 
 To build Sparks Core (for Linux, OS X and Windows) just follow the steps under 'perform
-Gitian builds' in [doc/release-process.md](release-process.md#perform-gitian-builds) in the Sparks Core repository.
+Gitian builds' in [doc/release-process.md](release-process.md#setup-and-perform-gitian-builds) in the Sparks Core repository.
 
 This may take some time as it will build all the dependencies needed for each descriptor.
 These dependencies will be cached after a successful build to avoid rebuilding them when possible.

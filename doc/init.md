@@ -10,14 +10,14 @@ can be found in the contrib/init folder.
     contrib/init/sparksd.conf:       Upstart service configuration file
     contrib/init/sparksd.init:       CentOS compatible SysV style init script
 
-1. Service User
+Service User
 ---------------------------------
 
 All three Linux startup configurations assume the existence of a "sparkscore" user
 and group.  They must be created before attempting to use these scripts.
 The OS X configuration assumes sparksd will be set up for the current user.
 
-2. Configuration
+Configuration
 ---------------------------------
 
 At a bare minimum, sparksd requires that the rpcpassword setting be set
@@ -46,10 +46,10 @@ relative to the data directory. `wallet` *only* supports relative paths.
 For an example configuration file that describes the configuration settings,
 see `contrib/debian/examples/sparks.conf`.
 
-3. Paths
+Paths
 ---------------------------------
 
-3a) Linux
+### Linux
 
 All three configurations assume several paths that might need to be adjusted.
 
@@ -65,17 +65,17 @@ reasons to make the configuration file and data directory only readable by the
 sparkscore user and group.  Access to sparks-cli and other sparksd rpc clients
 can then be controlled by group membership.
 
-3b) Mac OS X
+### Mac OS X
 
 Binary:              `/usr/local/bin/sparksd`  
 Configuration file:  `~/Library/Application Support/SparksCore/sparks.conf`  
-Data directory:      `~/Library/Application Support/SparksCore`
-Lock file:           `~/Library/Application Support/SparksCore/.lock`
+Data directory:      `~/Library/Application Support/SparksCore`  
+Lock file:           `~/Library/Application Support/SparksCore/.lock`  
 
-4. Installing Service Configuration
+Installing Service Configuration
 -----------------------------------
 
-4a) systemd
+### systemd
 
 Installing this .service file consists of just copying it to
 /usr/lib/systemd/system directory, followed by the command
@@ -84,14 +84,14 @@ Installing this .service file consists of just copying it to
 To test, run `systemctl start sparksd` and to enable for system startup run
 `systemctl enable sparksd`
 
-4b) OpenRC
+### OpenRC
 
 Rename sparksd.openrc to sparksd and drop it in /etc/init.d.  Double
 check ownership and permissions and make it executable.  Test it with
 `/etc/init.d/sparksd start` and configure it to run on startup with
 `rc-update add sparksd`
 
-4c) Upstart (for Debian/Ubuntu based distributions)
+### Upstart (for Debian/Ubuntu based distributions)
 
 Drop sparksd.conf in /etc/init.  Test by running `service sparksd start`
 it will automatically start on reboot.
@@ -99,7 +99,7 @@ it will automatically start on reboot.
 NOTE: This script is incompatible with CentOS 5 and Amazon Linux 2014 as they
 use old versions of Upstart and do not supply the start-stop-daemon utility.
 
-4d) CentOS
+### CentOS
 
 Copy sparksd.init to /etc/init.d/sparksd. Test by running `service sparksd start`.
 
@@ -107,7 +107,7 @@ Using this script, you can adjust the path and flags to the sparksd program by
 setting the SPARKSD and FLAGS environment variables in the file
 /etc/sysconfig/sparksd. You can also use the DAEMONOPTS environment variable here.
 
-4e) Mac OS X
+### Mac OS X
 
 Copy org.sparks.sparksd.plist into ~/Library/LaunchAgents. Load the launch agent by
 running `launchctl load ~/Library/LaunchAgents/org.sparks.sparksd.plist`.
@@ -118,7 +118,7 @@ NOTE: This approach is intended for those wanting to run sparksd as the current 
 You will need to modify org.sparks.sparksd.plist if you intend to use it as a
 Launch Daemon with a dedicated sparkscore user.
 
-5. Auto-respawn
+Auto-respawn
 -----------------------------------
 
 Auto respawning is currently only configured for Upstart and systemd.

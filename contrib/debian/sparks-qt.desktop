@@ -1,5 +1,5 @@
 [Desktop Entry]
-Encoding=UTF-8
+Version=1.0
 Name=Sparks Core
 Comment=Sparks P2P Cryptocurrency
 Comment[de]=Verbinde mit dem Sparks peer-to-peer Netzwerk
@@ -11,3 +11,4 @@ Type=Application
 Icon=sparks128
 MimeType=x-scheme-handler/sparks;
 Categories=Office;Finance;
+StartupWMClass=Sparks-qt

@@ -24,7 +24,7 @@
 #ifndef SPARKS_BIP39_H
 #define SPARKS_BIP39_H
 
-#include "support/allocators/secure.h"
+#include <support/allocators/secure.h>
 
 class CMnemonic
 {
