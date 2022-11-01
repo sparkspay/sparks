@@ -10,9 +10,9 @@
 #include <map>
 #include <stdlib.h>
 
-#include "support/events.h"
+#include <support/events.h>
 
-#include "test/test_sparks.h"
+#include <test/test_sparks.h>
 
 #include <vector>
 

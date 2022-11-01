@@ -5,9 +5,9 @@
 #ifndef SPARKS_SPECIALTX_H
 #define SPARKS_SPECIALTX_H
 
-#include "primitives/transaction.h"
-#include "streams.h"
-#include "version.h"
+#include <primitives/transaction.h>
+#include <streams.h>
+#include <version.h>
 
 class CBlock;
 class CBlockIndex;

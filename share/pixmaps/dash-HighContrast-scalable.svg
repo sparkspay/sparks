@@ -15,8 +15,8 @@
    version="1.1"
    id="svg2176"
    inkscape:version="0.92.4 (unknown)"
-   sodipodi:docname="dash-HighContrast-scalable.svg"
-   inkscape:export-filename="dash-HighContrast-256.png"
+   sodipodi:docname="sparks-HighContrast-scalable.svg"
+   inkscape:export-filename="sparks-HighContrast-256.png"
    inkscape:export-xdpi="92.389999"
    inkscape:export-ydpi="92.389999">
   <defs
@@ -69,7 +69,7 @@
      transform="translate(0,-226.62082)">
     <path
        d="m 9.4304868,227.94346 c 0,0 -8.1076333,0 -8.1076333,8.10673 v 51.52042 c 0,0 0,8.10674 8.1076333,8.10674 H 60.94948 c 0,0 8.107206,0 8.107206,-8.10674 v -51.52042 c 0,0 0,-8.10673 -8.107206,-8.10673 z"
-       style="display:inline;fill:#093251;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:2.64530444;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="display:inline;fill:#093251;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:2.64530444;stroke-miterlimit:4;stroke-sparksarray:none;stroke-opacity:1"
        id="path1484"
        inkscape:connector-curvature="0" />
     <g

@@ -8,7 +8,7 @@ There are currently two sets of tests in this directory:
 - [functional](/test/functional) which test the functionality of 
 sparksd and sparks-qt by interacting with them through the RPC and P2P
 interfaces.
-- [util](test/util) which tests the sparks utilities, currently only
+- [util](/test/util) which tests the sparks utilities, currently only
 sparks-tx.
 
 The util tests are run as part of `make check` target. The functional
@@ -22,6 +22,11 @@ Build for your system first. Be sure to enable wallet, utils and daemon when you
 ### Functional tests
 
 #### Dependencies
+
+Many Sparks specific tests require sparks_hash. To install it:
+
+- Clone the repo `git clone https://github.com/sparkspay/sparks_hash`
+- Install sparks_hash `cd sparks_hash && python3 setup.py install`
 
 The ZMQ functional test requires a python ZMQ library. To install it:
 

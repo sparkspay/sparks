@@ -5,8 +5,8 @@
 #ifndef SPARKS_MNAUTH_H
 #define SPARKS_MNAUTH_H
 
-#include "bls/bls.h"
-#include "serialize.h"
+#include <bls/bls.h>
+#include <serialize.h>
 
 class CConnman;
 class CDataStream;
