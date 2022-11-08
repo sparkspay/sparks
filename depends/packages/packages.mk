@@ -1,4 +1,4 @@
-packages:=boost openssl libevent zeromq gmp bls-sparks backtrace cmake
+packages:=boost openssl libevent zeromq gmp bls-dash backtrace cmake
 
 qt_native_packages = native_protobuf
 qt_packages = qrencode protobuf zlib
