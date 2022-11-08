@@ -1,9 +1,9 @@
-// Copyright (c) 2019-2020 The Dash Core developers
+// Copyright (c) 2019-2021 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef SPARKS_UNORDERED_LRU_CACHE_H
-#define SPARKS_UNORDERED_LRU_CACHE_H
+#ifndef BITCOIN_UNORDERED_LRU_CACHE_H
+#define BITCOIN_UNORDERED_LRU_CACHE_H
 
 #include <unordered_map>
 
@@ -27,6 +27,7 @@ public:
         assert(_maxSize != 0);
     }
 
+    size_t max_size() const { return maxSize; }
 
     template<typename Value2>
     void _emplace(const Key& key, Value2&& v)
@@ -107,4 +108,4 @@ private:
     }
 };
 
-#endif // SPARKS_UNORDERED_LRU_CACHE_H
+#endif // BITCOIN_UNORDERED_LRU_CACHE_H

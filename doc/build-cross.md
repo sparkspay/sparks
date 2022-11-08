@@ -26,13 +26,13 @@ $ tar -C depends/SDKs -xf depends/sdk-sources/MacOSX10.11.sdk.tar.gz
 When building the dependencies, as described in [build-generic](build-generic.md), use
 
 ```bash
-$ make HOST=x86_64-apple-darwin11 -j4
+$ make HOST=x86_64-apple-darwin14 -j4
 ```
 
 When building Sparks Core, use
 
 ```bash
-$ ./configure --prefix=`pwd`/depends/x86_64-apple-darwin11
+$ ./configure --prefix=`pwd`/depends/x86_64-apple-darwin14
 ```
 
 Windows 64bit Cross-compilation
@@ -45,7 +45,7 @@ First, install the general dependencies:
 
     sudo apt update
     sudo apt upgrade
-    sudo apt install build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3 cmake
+    sudo apt install build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3
 
 A host toolchain (`build-essential`) is necessary because some dependency
 packages need to build host utilities that are used in the build process.

@@ -7,76 +7,22 @@
 
 #include <tinyformat.h>
 #include <util.h>
+#include <utilmemory.h>
 
 #include <assert.h>
-#include <memory>
 
 const std::string CBaseChainParams::MAIN = "main";
 const std::string CBaseChainParams::TESTNET = "test";
 const std::string CBaseChainParams::DEVNET = "devnet";
 const std::string CBaseChainParams::REGTEST = "regtest";
 
-void AppendParamsHelpMessages(std::string& strUsage, bool debugHelp)
+void SetupChainParamsBaseOptions()
 {
-    strUsage += HelpMessageGroup(_("Chain selection options:"));
-    strUsage += HelpMessageOpt("-testnet", _("Use the test chain"));
-    strUsage += HelpMessageOpt("-devnet=<name>", _("Use devnet chain with provided name"));
-    if (debugHelp) {
-        strUsage += HelpMessageOpt("-regtest", "Enter regression test mode, which uses a special chain in which blocks can be solved instantly. "
-                                   "This is intended for regression testing tools and app development.");
-    }
+    gArgs.AddArg("-devnet=<name>", "Use devnet chain with provided name", false, OptionsCategory::CHAINPARAMS);
+    gArgs.AddArg("-regtest", "Enter regression test mode, which uses a special chain in which blocks can be solved instantly. "
+                                   "This is intended for regression testing tools and app development.", true, OptionsCategory::CHAINPARAMS);
+    gArgs.AddArg("-testnet", "Use the test chain", false, OptionsCategory::CHAINPARAMS);
 }
-
-/**
- * Main network
- */
-class CBaseMainParams : public CBaseChainParams
-{
-public:
-    CBaseMainParams()
-    {
-        nRPCPort = 9998;
-    }
-};
-
-/**
- * Testnet (v3)
- */
-class CBaseTestNetParams : public CBaseChainParams
-{
-public:
-    CBaseTestNetParams()
-    {
-        nRPCPort = 19998;
-        strDataDir = "testnet3";
-    }
-};
-
-/**
- * Devnet
- */
-class CBaseDevNetParams : public CBaseChainParams
-{
-public:
-    CBaseDevNetParams(const std::string &dataDir)
-    {
-        nRPCPort = 19798;
-        strDataDir = dataDir;
-    }
-};
-
-/*
- * Regression test
- */
-class CBaseRegTestParams : public CBaseChainParams
-{
-public:
-    CBaseRegTestParams()
-    {
-        nRPCPort = 19898;
-        strDataDir = "regtest";
-    }
-};
 
 static std::unique_ptr<CBaseChainParams> globalChainBaseParams;
 
@@ -89,13 +35,13 @@ const CBaseChainParams& BaseParams()
 std::unique_ptr<CBaseChainParams> CreateBaseChainParams(const std::string& chain)
 {
     if (chain == CBaseChainParams::MAIN)
-        return std::unique_ptr<CBaseChainParams>(new CBaseMainParams());
+        return MakeUnique<CBaseChainParams>("", 9998);
     else if (chain == CBaseChainParams::TESTNET)
-        return std::unique_ptr<CBaseChainParams>(new CBaseTestNetParams());
-    else if (chain == CBaseChainParams::DEVNET) {
-        return std::unique_ptr<CBaseChainParams>(new CBaseDevNetParams(gArgs.GetDevNetName()));
-    } else if (chain == CBaseChainParams::REGTEST)
-        return std::unique_ptr<CBaseChainParams>(new CBaseRegTestParams());
+        return MakeUnique<CBaseChainParams>("testnet3", 19998);
+    else if (chain == CBaseChainParams::DEVNET)
+        return MakeUnique<CBaseChainParams>(gArgs.GetDevNetName(), 19798);
+    else if (chain == CBaseChainParams::REGTEST)
+        return MakeUnique<CBaseChainParams>("regtest", 19898);
     else
         throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
 }

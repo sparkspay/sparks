@@ -25,6 +25,12 @@ struct CCheckpointData {
     MapCheckpoints mapCheckpoints;
 };
 
+/**
+ * Holds various statistics on transactions within a chain. Used to estimate
+ * verification progress during chain sync.
+ *
+ * See also: CChainParams::TxData, GuessVerificationProgress.
+ */
 struct ChainTxData {
     int64_t nTime;
     int64_t nTxCount;
@@ -83,15 +89,15 @@ public:
     const ChainTxData& TxData() const { return chainTxData; }
     void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout, int64_t nWindowSize, int64_t nThresholdStart, int64_t nThresholdMin, int64_t nFalloffCoeff);
     void UpdateDIP3Parameters(int nActivationHeight, int nEnforcementHeight);
+    void UpdateDIP8Parameters(int nActivationHeight);
     void UpdateBudgetParameters(int nMasternodePaymentsStartBlock, int nBudgetPaymentsStartBlock, int nSuperblockStartBlock);
     void UpdateSubsidyAndDiffParams(int nMinimumDifficultyBlocks, int nHighSubsidyBlocks, int nHighSubsidyFactor);
     void UpdateLLMQChainLocks(Consensus::LLMQType llmqType);
+    void UpdateLLMQInstantSend(Consensus::LLMQType llmqType);
     void UpdateLLMQTestParams(int size, int threshold);
     void UpdateLLMQDevnetParams(int size, int threshold);
     int PoolMinParticipants() const { return nPoolMinParticipants; }
-    int PoolNewMinParticipants() const { return nPoolNewMinParticipants; }
     int PoolMaxParticipants() const { return nPoolMaxParticipants; }
-    int PoolNewMaxParticipants() const { return nPoolNewMaxParticipants; }
     int FulfilledRequestExpireTime() const { return nFulfilledRequestExpireTime; }
     const std::vector<std::string>& SporkAddresses() const { return vSporkAddresses; }
     int MinSporkKeys() const { return nMinSporkKeys; }
@@ -120,9 +126,7 @@ protected:
     CCheckpointData checkpointData;
     ChainTxData chainTxData;
     int nPoolMinParticipants;
-    int nPoolNewMinParticipants;
     int nPoolMaxParticipants;
-    int nPoolNewMaxParticipants;
     int nFulfilledRequestExpireTime;
     std::vector<std::string> vSporkAddresses;
     int nMinSporkKeys;
@@ -134,7 +138,7 @@ protected:
  * @returns a CChainParams* of the chosen chain.
  * @throws a std::runtime_error if the chain is not supported.
  */
-std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain);
+std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain, bool fHelpOnly = false);
 
 /**
  * Return the currently selected parameters. This won't change after app
@@ -159,6 +163,11 @@ void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime,
 void UpdateDIP3Parameters(int nActivationHeight, int nEnforcementHeight);
 
 /**
+ * Allows modifying the DIP8 activation height
+ */
+void UpdateDIP8Parameters(int nActivationHeight);
+
+/**
  * Allows modifying the budget regtest parameters.
  */
 void UpdateBudgetParameters(int nMasternodePaymentsStartBlock, int nBudgetPaymentsStartBlock, int nSuperblockStartBlock);
@@ -172,6 +181,11 @@ void UpdateDevnetSubsidyAndDiffParams(int nMinimumDifficultyBlocks, int nHighSub
  * Allows modifying the LLMQ type for ChainLocks.
  */
 void UpdateDevnetLLMQChainLocks(Consensus::LLMQType llmqType);
+
+/**
+ * Allows modifying the LLMQ type for InstantSend.
+ */
+void UpdateDevnetLLMQInstantSend(Consensus::LLMQType llmqType);
 
 /**
  * Allows modifying parameters of the test LLMQ

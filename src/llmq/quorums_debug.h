@@ -1,9 +1,9 @@
-// Copyright (c) 2018-2019 The Dash Core developers
+// Copyright (c) 2018-2020 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef SPARKS_QUORUMS_DEBUG_H
-#define SPARKS_QUORUMS_DEBUG_H
+#ifndef BITCOIN_LLMQ_QUORUMS_DEBUG_H
+#define BITCOIN_LLMQ_QUORUMS_DEBUG_H
 
 #include <consensus/params.h>
 #include <sync.h>
@@ -108,4 +108,4 @@ extern CDKGDebugManager* quorumDKGDebugManager;
 
 } // namespace llmq
 
-#endif //SPARKS_QUORUMS_DEBUG_H
+#endif // BITCOIN_LLMQ_QUORUMS_DEBUG_H

@@ -13,7 +13,7 @@ Run the following commands to install required packages:
 
 ##### Debian/Ubuntu:
 ```bash
-$ sudo apt-get install curl build-essential libtool autotools-dev automake pkg-config python3 bsdmainutils cmake
+$ sudo apt-get install curl build-essential libtool autotools-dev automake pkg-config python3 bsdmainutils
 ```
 
 This will build sparks-qt as well if the dependencies are met.
@@ -160,43 +160,22 @@ Berkeley DB
 It is recommended to use Berkeley DB 4.8. If you have to build it yourself:
 
 ```bash
-SPARKS_ROOT=$(pwd)
-
-# Pick some path to install BDB to, here we create a directory within the sparks directory
-BDB_PREFIX="${SPARKS_ROOT}/db4"
-mkdir -p $BDB_PREFIX
-
-# Fetch the source and verify that it is not tampered with
-wget 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz'
-echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz' | sha256sum -c
-# -> db-4.8.30.NC.tar.gz: OK
-tar -xzvf db-4.8.30.NC.tar.gz
-
-# Build the library and install to our prefix
-cd db-4.8.30.NC/build_unix/
-#  Note: Do a static build so that it can be embedded into the executable, instead of having to find a .so at runtime
-../dist/configure --enable-cxx --disable-shared --with-pic --prefix=$BDB_PREFIX
-make install
-
-# Configure Sparks Core to use our own-built instance of BDB
-cd $SPARKS_ROOT
-./autogen.sh
-./configure LDFLAGS="-L${BDB_PREFIX}/lib/" CPPFLAGS="-I${BDB_PREFIX}/include/" # (other args...)
+$ sudo dnf install gcc-c++ libtool make autoconf automake python3 libstdc++-static patch
 ```
 
 ##### Arch Linux:
 ```bash
-$ pacman -S base-devel python3 cmake
+$ pacman -S base-devel python3
 ```
 
 ##### Alpine Linux:
 ```sh
-$ sudo apk --update --no-cache add autoconf automake cmake curl g++ gcc libexecinfo-dev libexecinfo-static libtool make perl pkgconfig python3 patch linux-headers
+$ sudo apk --update --no-cache add autoconf automake curl g++ gcc libexecinfo-dev libexecinfo-static libtool make perl pkgconfig python3 patch linux-headers
 ```
 
 ##### FreeBSD/OpenBSD:
 ```bash
-pkg_add gmake cmake libtool
+pkg_add gmake libtool
 pkg_add autoconf # (select highest version, e.g. 2.69)
 pkg_add automake # (select highest version, e.g. 1.15)
 pkg_add python # (select highest version, e.g. 3.5)

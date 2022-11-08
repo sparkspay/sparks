@@ -1,9 +1,8 @@
-// Copyright (c) 2018-2019 The Dash Core developers
+// Copyright (c) 2018-2021 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <llmq/quorums_commitment.h>
-#include <llmq/quorums_utils.h>
 
 #include <chainparams.h>
 #include <validation.h>
@@ -25,7 +24,7 @@ CFinalCommitment::CFinalCommitment(const Consensus::LLMQParams& params, const ui
     LogPrintStr(strprintf("CFinalCommitment::%s -- %s", __func__, tinyformat::format(__VA_ARGS__))); \
 } while(0)
 
-bool CFinalCommitment::Verify(const std::vector<CDeterministicMNCPtr>& members, bool checkSigs) const
+bool CFinalCommitment::Verify(const CBlockIndex* pQuorumIndex, bool checkSigs) const
 {
     if (nVersion == 0 || nVersion > CURRENT_VERSION) {
         return false;
@@ -73,6 +72,7 @@ bool CFinalCommitment::Verify(const std::vector<CDeterministicMNCPtr>& members, 
         return false;
     }
 
+    auto members = CLLMQUtils::GetAllQuorumMembers(llmqType, pQuorumIndex);
     for (size_t i = members.size(); i < params.size; i++) {
         if (validMembers[i]) {
             LogPrintfFinalCommitment("invalid validMembers bitset. bit %d should not be set\n", i);
@@ -166,22 +166,20 @@ bool CheckLLMQCommitment(const CTransaction& tx, const CBlockIndex* pindexPrev, 
         return state.DoS(100, false, REJECT_INVALID, "bad-qc-height");
     }
 
-    if (!mapBlockIndex.count(qcTx.commitment.quorumHash)) {
+    const CBlockIndex* pindexQuorum = LookupBlockIndex(qcTx.commitment.quorumHash);
+    if (!pindexQuorum) {
         return state.DoS(100, false, REJECT_INVALID, "bad-qc-quorum-hash");
     }
 
-    const CBlockIndex* pindexQuorum = mapBlockIndex[qcTx.commitment.quorumHash];
 
     if (pindexQuorum != pindexPrev->GetAncestor(pindexQuorum->nHeight)) {
         // not part of active chain
         return state.DoS(100, false, REJECT_INVALID, "bad-qc-quorum-hash");
     }
 
-    if ((fDIP0008Active && !Params().GetConsensus().llmqs.count((Consensus::LLMQType)qcTx.commitment.llmqType)) || 
-    (!fDIP0008Active && !Params().GetConsensus().llmqs_old.count((Consensus::LLMQType)qcTx.commitment.llmqType))) {
+    if (!Params().GetConsensus().llmqs.count((Consensus::LLMQType)qcTx.commitment.llmqType)) {
         return state.DoS(100, false, REJECT_INVALID, "bad-qc-type");
     }
-    const auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at((Consensus::LLMQType)qcTx.commitment.llmqType) : Params().GetConsensus().llmqs_old.at((Consensus::LLMQType)qcTx.commitment.llmqType);
 
     if (qcTx.commitment.IsNull()) {
         if (!qcTx.commitment.VerifyNull()) {
@@ -190,8 +188,7 @@ bool CheckLLMQCommitment(const CTransaction& tx, const CBlockIndex* pindexPrev, 
         return true;
     }
 
-    auto members = CLLMQUtils::GetAllQuorumMembers(params.type, pindexQuorum);
-    if (!qcTx.commitment.Verify(members, false)) {
+    if (!qcTx.commitment.Verify(pindexQuorum, false)) {
         return state.DoS(100, false, REJECT_INVALID, "bad-qc-invalid");
     }
 
