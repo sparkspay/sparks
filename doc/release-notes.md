@@ -60,7 +60,7 @@ See detailed [set of changes](https://github.com/sparkspay/sparks/compare/v0.16.
 
 - [`96c041896b`](https://github.com/sparkspay/sparks/commit/96c041896b) feat: add tor entrypoint script for use in sparksmate (#4182)
 - [`3661f36bbd`](https://github.com/sparkspay/sparks/commit/3661f36bbd) Merge #14416: Fix OSX dmg issue (10.12 to 10.14) (#4177)
-- [`4f4bda0557`](https://github.com/sparkspay/sparks/commit/4f4bda0557) depends: Undefine `BLSALLOC_SODIUM` in `bls-sparks.mk` (#4176)
+- [`4f4bda0557`](https://github.com/sparkspay/sparks/commit/4f4bda0557) depends: Undefine `BLSALLOC_SODIUM` in `bls-dash.mk` (#4176)
 - [`575e0a3070`](https://github.com/sparkspay/sparks/commit/575e0a3070) qt: Add `QFont::Normal` as a supported font weight when no other font weights were found (#4175)
 - [`ce4a73b790`](https://github.com/sparkspay/sparks/commit/ce4a73b790) rpc: Fix `upgradetohd` help text (#4170)
 - [`2fa8ddf160`](https://github.com/sparkspay/sparks/commit/2fa8ddf160) Translations 202105 (add missing) (#4169)

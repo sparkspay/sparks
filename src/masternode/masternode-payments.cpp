@@ -8,6 +8,7 @@
 #include <masternode/masternode-sync.h>
 #include <netfulfilledman.h>
 #include <netmessagemaker.h>
+#include <spork.h>
 #include <validation.h>
 
 #include <string>

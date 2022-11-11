@@ -10,14 +10,14 @@
 #include <uint256.h>
 #include <utilstrencodings.h>
 
-// bls-sparks uses relic, which may define DEBUG and ERROR, which leads to many warnings in some build setups
+// bls-dash uses relic, which may define DEBUG and ERROR, which leads to many warnings in some build setups
 #undef ERROR
 #undef DEBUG
-#include <bls-sparks/bls.hpp>
-#include <bls-sparks/privatekey.hpp>
-#include <bls-sparks/elements.hpp>
-#include <bls-sparks/schemes.hpp>
-#include <bls-sparks/threshold.hpp>
+#include <bls-dash/bls.hpp>
+#include <bls-dash/privatekey.hpp>
+#include <bls-dash/elements.hpp>
+#include <bls-dash/schemes.hpp>
+#include <bls-dash/threshold.hpp>
 #undef DOUBLE
 
 #include <array>

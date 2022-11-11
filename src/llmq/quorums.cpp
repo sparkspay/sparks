@@ -241,13 +241,8 @@ void CQuorumManager::UpdatedBlockTip(const CBlockIndex* pindexNew, bool fInitial
         return;
     }
 
-    bool fDIP0008Active;
-    {
-        LOCK(cs_main);
-        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
-    }
-    auto llmqs = fDIP0008Active ? Params().GetConsensus().llmqs : Params().GetConsensus().llmqs_old;
-    for (auto& p : llmqs) {
+    //modified for sparks
+    for (auto& p : llmq::CLLMQUtils::GetEnabledQuorums(pindexNew)) {
         EnsureQuorumConnections(p.first, pindexNew);
     }
 
@@ -269,13 +264,8 @@ void CQuorumManager::UpdatedBlockTip(const CBlockIndex* pindexNew, bool fInitial
 
 void CQuorumManager::EnsureQuorumConnections(Consensus::LLMQType llmqType, const CBlockIndex* pindexNew) const
 {
-    bool fDIP0008Active;
-    {
-        LOCK(cs_main);
-        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
-    }
 
-    const auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at(llmqType) : Params().GetConsensus().llmqs_old.at(llmqType);
+    const auto& params = Params().GetConsensus().llmqs.at(llmqType);
 
     auto myProTxHash = activeMasternodeInfo.proTxHash;
     auto lastQuorums = ScanQuorums(llmqType, pindexNew, (size_t)params.keepOldConnections);

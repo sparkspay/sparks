@@ -28,6 +28,7 @@
 #include <script/script.h>
 #include <script/sigcache.h>
 #include <script/standard.h>
+#include <script/interpreter.h>
 #include <timedata.h>
 #include <tinyformat.h>
 #include <txdb.h>
@@ -35,6 +36,7 @@
 #include <ui_interface.h>
 #include <undo.h>
 #include <util.h>
+#include <spork.h>
 #include <utilmoneystr.h>
 #include <utilstrencodings.h>
 #include <validationinterface.h>
@@ -1512,7 +1514,7 @@ bool IsInputBanned(const Params& consensusParams, const CTxIn& input, const CTxO
     if (whichType == TX_PUBKEYHASH)
     {
         std::vector<std::vector<unsigned char> > stack;
-        if (!EvalScript(stack, input.scriptSig, SCRIPT_VERIFY_P2SH, BaseSignatureChecker(), SIGVERSION_BASE))
+        if (!EvalScript(stack, input.scriptSig, SCRIPT_VERIFY_P2SH, BaseSignatureChecker(), SigVersion::BASE))
         {
             LogPrintf("IsInputBanned() : EvalScript returned false\n");
             return true;
@@ -1529,15 +1531,13 @@ bool IsInputBanned(const Params& consensusParams, const CTxIn& input, const CTxO
             return true;
         }
 
-        CBitcoinAddress address;
-        address.Set(pubkey.GetID());
         // LogPrintf("IsInputBanned() : sender address is %s\n", address.ToString().c_str());
         // Check address against blacklist
         for(std::string bannedAddress : consensusParams.vBannedAddresses)
         {
-            if (address.Get() == CBitcoinAddress(bannedAddress).Get())
+            if (EncodeDestination(pubkey.GetID()) == bannedAddress)
             {
-                LogPrintf("IsInputBanned() : sender address %s is BANNED\n", address.ToString().c_str());
+                LogPrintf("IsInputBanned() : sender address %s is BANNED\n", EncodeDestination(pubkey.GetID()));
                 return true;
             }
         }

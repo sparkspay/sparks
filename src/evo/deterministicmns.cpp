@@ -691,11 +691,6 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
 {
     AssertLockHeld(cs);
 
-    bool fDIP0008Active;
-    {
-        LOCK(cs_main);
-        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
-    }
 
     int nHeight = pindexPrev->nHeight + 1;
 
@@ -880,7 +875,7 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
                 return _state.DoS(100, false, REJECT_INVALID, "bad-qc-payload");
             }
             if (!qc.commitment.IsNull()) {
-                const auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at(qc.commitment.llmqType) : Params().GetConsensus().llmqs_old.at(qc.commitment.llmqType);
+                const auto& params = Params().GetConsensus().llmqs.at(qc.commitment.llmqType);
                 uint32_t quorumHeight = qc.nHeight - (qc.nHeight % params.dkgInterval);
                 auto quorumIndex = pindexPrev->GetAncestor(quorumHeight);
                 if (!quorumIndex || quorumIndex->GetBlockHash() != qc.commitment.quorumHash) {

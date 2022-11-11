@@ -30,18 +30,11 @@ bool CFinalCommitment::Verify(const CBlockIndex* pQuorumIndex, bool checkSigs) c
         return false;
     }
 
-    bool fDIP0008Active;
-    {
-        LOCK(cs_main);
-        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
-    }
-
-    if ((fDIP0008Active && !Params().GetConsensus().llmqs.count((Consensus::LLMQType)llmqType)) ||
-    (!fDIP0008Active && !Params().GetConsensus().llmqs_old.count((Consensus::LLMQType)llmqType))) {
+    if (!Params().GetConsensus().llmqs.count((Consensus::LLMQType)llmqType)) {
         LogPrintfFinalCommitment("invalid llmqType=%d\n", llmqType);
         return false;
     }
-    const auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at((Consensus::LLMQType)llmqType) : Params().GetConsensus().llmqs_old.at((Consensus::LLMQType)llmqType);
+    const auto& params = Params().GetConsensus().llmqs.at((Consensus::LLMQType)llmqType);
 
     if (!VerifySizes(params)) {
         return false;
@@ -112,18 +105,11 @@ bool CFinalCommitment::Verify(const CBlockIndex* pQuorumIndex, bool checkSigs) c
 
 bool CFinalCommitment::VerifyNull() const
 {
-    bool fDIP0008Active;
-    {
-        LOCK(cs_main);
-        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
-    }
-
-    if ((fDIP0008Active && !Params().GetConsensus().llmqs.count((Consensus::LLMQType)llmqType)) ||
-    (!fDIP0008Active && !Params().GetConsensus().llmqs_old.count((Consensus::LLMQType)llmqType))) {
+    if (!Params().GetConsensus().llmqs.count((Consensus::LLMQType)llmqType)) {
         LogPrintfFinalCommitment("invalid llmqType=%d\n", llmqType);
         return false;
     }
-    const auto& params = fDIP0008Active ? Params().GetConsensus().llmqs.at((Consensus::LLMQType)llmqType) : Params().GetConsensus().llmqs_old.at((Consensus::LLMQType)llmqType);
+    const auto& params = Params().GetConsensus().llmqs.at((Consensus::LLMQType)llmqType);
 
     if (!IsNull() || !VerifySizes(params)) {
         return false;
@@ -147,11 +133,6 @@ bool CFinalCommitment::VerifySizes(const Consensus::LLMQParams& params) const
 
 bool CheckLLMQCommitment(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
-    bool fDIP0008Active;
-    {
-        LOCK(cs_main);
-        fDIP0008Active = VersionBitsState(chainActive.Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
-    }
     
     CFinalCommitmentTxPayload qcTx;
     if (!GetTxPayload(tx, qcTx)) {

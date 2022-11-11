@@ -117,8 +117,6 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(interfaces::Wal
                 if (ExtractDestination(wtx.tx->vout[0].scriptPubKey, address))
                 {
                     // Sent to Sparks Address
-                    sub.strAddress = CBitcoinAddress(address).ToString();
-                    // Sent to Sparks Address
                     sub.strAddress = EncodeDestination(address);
                     sub.txDest = address;
                     sub.updateLabel(wallet);

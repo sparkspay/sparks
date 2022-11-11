@@ -302,7 +302,7 @@ bool CLLMQUtils::IsQuorumTypeEnabled(Consensus::LLMQType llmqType, const CBlockI
     LOCK(cs_llmq_vbc);
 
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    bool f_dip0008_Active = pindex->pprev && pindex->pprev->nHeight >= Params().GetConsensus().DIP0008Height;
+    bool f_dip0008_Active = pindex && pindex->nHeight >= Params().GetConsensus().DIP0008Height;
     bool f_dip0020_Active = VersionBitsState(pindex, consensusParams, Consensus::DEPLOYMENT_DIP0020, llmq_versionbitscache) == ThresholdState::ACTIVE;
 
     switch (llmqType)
@@ -317,6 +317,7 @@ bool CLLMQUtils::IsQuorumTypeEnabled(Consensus::LLMQType llmqType, const CBlockI
         case Consensus::LLMQ_15_60:
         case Consensus::LLMQ_25_60:
         case Consensus::LLMQ_25_80:
+        case Consensus::LLMQ_TEST:
             if (!f_dip0008_Active) {
                 return false;
             }
@@ -327,7 +328,6 @@ bool CLLMQUtils::IsQuorumTypeEnabled(Consensus::LLMQType llmqType, const CBlockI
                 return false;
             }
             break;
-        case Consensus::LLMQ_TEST:
         case Consensus::LLMQ_DEVNET:
             break;
         default:
@@ -343,6 +343,18 @@ std::vector<Consensus::LLMQType> CLLMQUtils::GetEnabledQuorumTypes(const CBlockI
     for (const auto& p : Params().GetConsensus().llmqs) {
         if (IsQuorumTypeEnabled(p.first, pindex)) {
             ret.push_back(p.first);
+        }
+    }
+    return ret;
+}
+
+// created for sparks
+std::map<Consensus::LLMQType, Consensus::LLMQParams> CLLMQUtils::GetEnabledQuorums(const CBlockIndex* pindex)
+{
+    std::map<Consensus::LLMQType, Consensus::LLMQParams> ret;
+    for (const auto& p : Params().GetConsensus().llmqs) {
+        if (IsQuorumTypeEnabled(p.first, pindex)) {
+            ret.insert({p.first, p.second});
         }
     }
     return ret;
