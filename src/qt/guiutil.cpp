@@ -101,7 +101,7 @@ static const QString generalTheme = "general";
 // Mapping theme => css file
 static const std::map<QString, QString> mapThemeToStyle{
     {generalTheme, "general.css"},
-    {"sparkspay2020.css", "sparkspay2020"}
+    {"sparkspay2020", "sparkspay2020.css"}
 };
 
 /** loadFonts stores the SystemDefault font in osDefaultFont to be able to reference it later again */
