@@ -2961,7 +2961,7 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
                 if (CCoinJoin::IsCollateralAmount(pcoin->tx->vout[i].nValue)) continue; // do not use collateral amounts
                 found = !CCoinJoin::IsDenominatedAmount(pcoin->tx->vout[i].nValue);
             } else if(nCoinType == CoinType::ONLY_MASTERNODE_COLLATERAL) {
-                found = pcoin->tx->vout[i].nValue == 1000*COIN;
+                found = pcoin->tx->vout[i].nValue == 25000*COIN;
             } else if(nCoinType == CoinType::ONLY_COINJOIN_COLLATERAL) {
                 found = CCoinJoin::IsCollateralAmount(pcoin->tx->vout[i].nValue);
             } else {
