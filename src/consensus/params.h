@@ -21,6 +21,7 @@ enum DeploymentPos
     DEPLOYMENT_DIP0003, // Deployment of DIP0002 and DIP0003 (txv3 and deterministic MN lists)
     DEPLOYMENT_DIP0008, // Deployment of ChainLock enforcement
     DEPLOYMENT_REALLOC, // Deployment of Block Reward Reallocation
+    DEPLOYMENT_DIP0020, // Deployment of DIP0020, DIP0021 and LMQ_100_67 quorums
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
     MAX_VERSION_BITS_DEPLOYMENTS
 };
@@ -55,12 +56,16 @@ enum LLMQType : uint8_t
     LLMQ_15_60 = 4, // 15 members, 9 (60%) threshold, one per hour
     LLMQ_25_60 = 5, // 25 members, 15 (60%) threshold, one every 12 hours
     LLMQ_25_80 = 6, // 25 members, 20 (80%) threshold, one every 24 hours
+    LLMQ_20_70 = 7, // 20 members, 14 (70%) threshold, one per hour
 
     // for testing only
     LLMQ_TEST = 100, // 5 members, 3 (60%) threshold, one per hour. Params might differ when -llmqtestparams is used
 
     // for devnets only
     LLMQ_DEVNET = 101, // 10 members, 6 (60%) threshold, one per hour. Params might differ when -llmqdevnetparams is used
+
+    // for testing activation of new quorums only
+    LLMQ_TEST_V17 = 102, // 3 members, 2 (66%) threshold, one per hour. Params might differ when -llmqtestparams is used
 };
 
 // Configures a LLMQ and its DKG
@@ -119,7 +124,7 @@ struct LLMQParams {
     // Number of quorums to consider "active" for signing sessions
     int signingActiveQuorumCount;
 
-    // Used for inter-quorum communication. This is the number of quorums for which we should keep old connections. This
+    // Used for intra-quorum communication. This is the number of quorums for which we should keep old connections. This
     // should be at least one more then the active quorums set.
     int keepOldConnections;
 
@@ -175,6 +180,8 @@ struct Params {
     /** Block height at which DIP0003 becomes enforced */
     int DIP0003EnforcementHeight;
     uint256 DIP0003EnforcementHash;
+    /** Block height at which DIP0008 becomes active */
+    int DIP0008Height;
     /**
      * Minimum blocks including miner confirmation of the total of nMinerConfirmationWindow blocks in a retargeting period,
      * (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.
@@ -206,6 +213,7 @@ struct Params {
     std::map<LLMQType, LLMQParams> llmqs_old; //old quorums list came from v0.13.x code
     LLMQType llmqTypeChainLocks;
     LLMQType llmqTypeInstantSend{LLMQ_NONE};
+    LLMQType llmqTypePlatform{LLMQ_NONE};
 };
 } // namespace Consensus
 

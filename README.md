@@ -1,7 +1,9 @@
-Sparks Core staging tree 0.16
+Sparks Core staging tree 0.17
 ===========================
 
-`master:` [![Build Status](https://travis-ci.org/sparkspay/sparks.svg?branch=master)](https://travis-ci.org/sparkspay/sparks) `develop:` [![Build Status](https://travis-ci.org/sparkspay/sparks.svg?branch=develop)](https://travis-ci.org/sparkspay/sparks/branches)
+|CI|master|develop|
+|-|-|-|
+|Gitlab|[![Build Status](https://gitlab.com/sparkspay/sparks/badges/master/pipeline.svg)](https://gitlab.com/sparkspay/sparks/-/tree/master)|[![Build Status](https://gitlab.com/sparkspay/sparks/badges/develop/pipeline.svg)](https://gitlab.com/sparkspay/sparks/-/tree/develop)|
 
 https://www.sparkspay.io
 
