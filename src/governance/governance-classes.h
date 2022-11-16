@@ -1,8 +1,8 @@
-// Copyright (c) 2014-2020 The Dash Core developers
+// Copyright (c) 2014-2021 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef GOVERNANCE_CLASSES_H
-#define GOVERNANCE_CLASSES_H
+#ifndef BITCOIN_GOVERNANCE_GOVERNANCE_CLASSES_H
+#define BITCOIN_GOVERNANCE_GOVERNANCE_CLASSES_H
 
 #include <base58.h>
 #include <governance/governance.h>
@@ -20,7 +20,7 @@ typedef std::shared_ptr<CSuperblock> CSuperblock_sptr;
 extern CGovernanceTriggerManager triggerman;
 
 /**
-*   Trigger Mananger
+*   Trigger Manager
 *
 *   - Track governance objects which are triggers
 *   - After triggers are activated and executed, they can be removed
@@ -32,10 +32,7 @@ class CGovernanceTriggerManager
     friend class CGovernanceManager;
 
 private:
-    typedef std::map<uint256, CSuperblock_sptr> trigger_m_t;
-    typedef trigger_m_t::iterator trigger_m_it;
-
-    trigger_m_t mapTrigger;
+    std::map<uint256, CSuperblock_sptr> mapTrigger;
 
     std::vector<CSuperblock_sptr> GetActiveTriggers();
     bool AddNewTrigger(uint256 nHash);
@@ -63,7 +60,6 @@ public:
     static bool GetSuperblockPayments(int nBlockHeight, std::vector<CTxOut>& voutSuperblockRet);
     static void ExecuteBestSuperblock(int nBlockHeight);
 
-    static std::string GetRequiredPaymentsString(int nBlockHeight);
     static bool IsValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward);
 };
 
@@ -88,14 +84,13 @@ public:
     {
     }
 
-    CGovernancePayment(CTxDestination destIn, CAmount nAmountIn) :
+    CGovernancePayment(const CTxDestination& destIn, CAmount nAmountIn) :
         fValid(false),
         script(),
         nAmount(0)
     {
         try {
-            CTxDestination dest = destIn;
-            script = GetScriptForDestination(dest);
+            script = GetScriptForDestination(destIn);
             nAmount = nAmountIn;
             fValid = true;
         } catch (std::exception& e) {
@@ -107,7 +102,7 @@ public:
         }
     }
 
-    bool IsValid() { return fValid; }
+    bool IsValid() const { return fValid; }
 };
 
 
@@ -147,7 +142,7 @@ public:
     static void GetNearestSuperblocksHeights(int nBlockHeight, int& nLastSuperblockRet, int& nNextSuperblockRet);
     static CAmount GetPaymentsLimit(int nBlockHeight);
 
-    int GetStatus() { return nStatus; }
+    int GetStatus() const { return nStatus; }
     void SetStatus(int nStatusIn) { nStatus = nStatusIn; }
 
     // TELL THE ENGINE WE EXECUTED THIS EVENT
@@ -160,7 +155,7 @@ public:
         return pObj;
     }
 
-    int GetBlockHeight()
+    int GetBlockHeight() const
     {
         return nBlockHeight;
     }
@@ -173,4 +168,4 @@ public:
     bool IsExpired() const;
 };
 
-#endif
+#endif // BITCOIN_GOVERNANCE_GOVERNANCE_CLASSES_H

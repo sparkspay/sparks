@@ -84,6 +84,8 @@ Installing this .service file consists of just copying it to
 To test, run `systemctl start sparksd` and to enable for system startup run
 `systemctl enable sparksd`
 
+NOTE: When installing for systemd in Debian/Ubuntu the .service file needs to be copied to the /lib/systemd/system directory instead.
+
 ### OpenRC
 
 Rename sparksd.openrc to sparksd and drop it in /etc/init.d.  Double
@@ -93,7 +95,7 @@ check ownership and permissions and make it executable.  Test it with
 
 ### Upstart (for Debian/Ubuntu based distributions)
 
-Drop sparksd.conf in /etc/init.  Test by running `service sparksd start`
+Drop dashd.conf in /etc/init.  Test by running `service dashd start`
 it will automatically start on reboot.
 
 NOTE: This script is incompatible with CentOS 5 and Amazon Linux 2014 as they

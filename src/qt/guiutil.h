@@ -11,6 +11,7 @@
 
 #include <QEvent>
 #include <QHeaderView>
+#include <QItemDelegate>
 #include <QMessageBox>
 #include <QObject>
 #include <QProgressBar>
@@ -22,9 +23,15 @@ class QValidatedLineEdit;
 class OptionsModel;
 class SendCoinsRecipient;
 
+namespace interfaces
+{
+class Node;
+}
+
 QT_BEGIN_NAMESPACE
 class QAbstractButton;
 class QAbstractItemView;
+class QButtonGroup;
 class QDateTime;
 class QFont;
 class QLineEdit;
@@ -101,9 +108,8 @@ namespace GUIUtil
     QString dateTimeStr(const QDateTime &datetime);
     QString dateTimeStr(qint64 nTime);
 
-    // Set up widgets for address and amounts
+    // Set up widget for address
     void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent, bool fAllowURI = false);
-    void setupAmountWidget(QLineEdit *widget, QWidget *parent);
 
     // Setup appearance settings if not done yet
     void setupAppearance(QWidget* parent, OptionsModel* model);
@@ -115,7 +121,7 @@ namespace GUIUtil
     QString formatBitcoinURI(const SendCoinsRecipient &info);
 
     // Returns true if given address+amount meets "dust" definition
-    bool isDust(const QString& address, const CAmount& amount);
+    bool isDust(interfaces::Node& node, const QString& address, const CAmount& amount);
 
     // HTML escaping for rich text controls
     QString HtmlEscape(const QString& str, bool fMultiLine=false);
@@ -180,15 +186,12 @@ namespace GUIUtil
 
     // Open debug.log
     void openDebugLogfile();
-	
+
     // Open sparks.conf
-    void openConfigfile();	
+    void openConfigfile();
 
     // Browse backup folder
     void showBackups();
-
-    // Replace invalid default fonts with known good ones
-    void SubstituteFonts(const QString& language);
 
     /** Qt event filter that intercepts ToolTipChange events, and replaces the tooltip with a rich text
       representation if needed. This assures that Qt can word-wrap long tooltip messages.
@@ -212,7 +215,7 @@ namespace GUIUtil
      * Makes a QTableView last column feel as if it was being resized from its left border.
      * Also makes sure the column widths are never larger than the table's viewport.
      * In Qt, all columns are resizable from the right, but it's not intuitive resizing the last column from the right.
-     * Usually our second to last columns behave as if stretched, and when on strech mode, columns aren't resizable
+     * Usually our second to last columns behave as if stretched, and when on stretch mode, columns aren't resizable
      * interactively or programmatically.
      *
      * This helper object takes care of this issue.
@@ -250,9 +253,6 @@ namespace GUIUtil
     bool GetStartOnSystemStartup();
     bool SetStartOnSystemStartup(bool fAutoStart);
 
-    /** Modify Qt network specific settings on migration */
-    void migrateQtSettings();
-
     /** Change the stylesheet directory. This is used by
         the parameter -custom-css-dir.*/
     void setStyleSheetDirectory(const QString& path);
@@ -272,10 +272,9 @@ namespace GUIUtil
     /** Check if the given theme name is valid or not */
     const bool isValidTheme(const QString& strTheme);
 
-    /** Updates the widgets stylesheet and adds it to the list of ui debug elements.
-    Beeing on that list means the stylesheet of the widget gets updated if the
-    related css files has been changed if -debug-ui mode is active. */
-    void loadStyleSheet(QWidget* widget = nullptr, bool fForceUpdate = false);
+    /** Sets the stylesheet of the whole app and updates it if the
+    related css files has been changed and -debug-ui mode is active. */
+    void loadStyleSheet(bool fForceUpdate = false);
 
     enum class FontFamily {
         SystemDefault,
@@ -322,6 +321,8 @@ namespace GUIUtil
 
     /** Load sparks specific appliciation fonts */
     bool loadFonts();
+    /** Check if the fonts have been loaded successfully */
+    bool fontsLoaded();
 
     /** Set an application wide default font, depends on the selected theme */
     void setApplicationFont();
@@ -346,12 +347,18 @@ namespace GUIUtil
     /** Get the default bold QFont */
     QFont getFontBold();
 
+    /** Return supported normal default for the current font family */
+    QFont::Weight getSupportedFontWeightNormalDefault();
+    /** Return supported bold default for the current font family */
+    QFont::Weight getSupportedFontWeightBoldDefault();
     /** Return supported weights for the current font family */
     std::vector<QFont::Weight> getSupportedWeights();
     /** Convert an index to a weight in the supported weights vector */
     QFont::Weight supportedWeightFromIndex(int nIndex);
     /** Convert a weight to an index in the supported weights vector */
     int supportedWeightToIndex(QFont::Weight weight);
+    /** Check if a weight is supported by the current font family */
+    bool isSupportedWeight(QFont::Weight weight);
 
     /** Return the name of the currently active theme.*/
     QString getActiveTheme();
@@ -360,7 +367,7 @@ namespace GUIUtil
     bool sparksThemeActive();
 
     /** Load the theme and update all UI elements according to the appearance settings. */
-    void loadTheme(QWidget* widget = nullptr, bool fForce = false);
+    void loadTheme(bool fForce = false);
 
     /** Disable the OS default focus rect for macOS because we have custom focus rects
      * set in the css files */
@@ -368,6 +375,9 @@ namespace GUIUtil
 
     /** Enable/Disable the macOS focus rects depending on the current theme. */
     void updateMacFocusRects();
+
+    /** Update shortcuts for individual buttons in QButtonGroup based on their visibility. */
+    void updateButtonGroupShortcuts(QButtonGroup* buttonGroup);
 
     /* Convert QString to OS specific boost path through UTF-8 */
     fs::path qstringToBoostPath(const QString &path);
@@ -419,20 +429,20 @@ namespace GUIUtil
         void mouseReleaseEvent(QMouseEvent *event);
     };
 
-#if defined(Q_OS_MAC) && QT_VERSION >= 0x050000
-    // workaround for Qt OSX Bug:
-    // https://bugreports.qt-project.org/browse/QTBUG-15631
-    // QProgressBar uses around 10% CPU even when app is in background
-    class ProgressBar : public ClickableProgressBar
-    {
-        bool event(QEvent *e) {
-            return (e->type() != QEvent::StyleAnimationUpdate) ? QProgressBar::event(e) : false;
-        }
-    };
-#else
     typedef ClickableProgressBar ProgressBar;
-#endif
 
+    class ItemDelegate : public QItemDelegate
+    {
+        Q_OBJECT
+    public:
+        ItemDelegate(QObject* parent) : QItemDelegate(parent) {}
+
+    Q_SIGNALS:
+        void keyEscapePressed();
+
+    private:
+        bool eventFilter(QObject *object, QEvent *event);
+    };
 } // namespace GUIUtil
 
 #endif // BITCOIN_QT_GUIUTIL_H

@@ -5,9 +5,11 @@
 #ifndef BITCOIN_WALLET_COINCONTROL_H
 #define BITCOIN_WALLET_COINCONTROL_H
 
+#include <key.h>
 #include <policy/feerate.h>
 #include <policy/fees.h>
 #include <primitives/transaction.h>
+#include <script/standard.h>
 
 #include <boost/optional.hpp>
 
@@ -18,10 +20,10 @@ enum class CoinType
     ONLY_READY_TO_MIX,
     ONLY_NONDENOMINATED,
     ONLY_MASTERNODE_COLLATERAL, // find masternode outputs including locked ones (use with caution)
-    ONLY_PRIVATESEND_COLLATERAL,
+    ONLY_COINJOIN_COLLATERAL,
     // Attributes
     MIN_COIN_TYPE = ALL_COINS,
-    MAX_COIN_TYPE = ONLY_PRIVATESEND_COLLATERAL,
+    MAX_COIN_TYPE = ONLY_COINJOIN_COLLATERAL,
 };
 
 /** Coin Control Features. */
@@ -53,7 +55,7 @@ public:
         SetNull();
     }
 
-    void SetNull()
+    void SetNull(bool fResetCoinType = true)
     {
         destChange = CNoDestination();
         fAllowOtherInputs = false;
@@ -65,7 +67,9 @@ public:
         fOverrideFeeRate = false;
         m_confirm_target.reset();
         m_fee_mode = FeeEstimateMode::UNSET;
-        nCoinType = CoinType::ALL_COINS;
+        if (fResetCoinType) {
+            nCoinType = CoinType::ALL_COINS;
+        }
     }
 
     bool HasSelected() const
@@ -100,12 +104,12 @@ public:
 
     // Sparks-specific helpers
 
-    void UsePrivateSend(bool fUsePrivateSend)
+    void UseCoinJoin(bool fUseCoinJoin)
     {
-        nCoinType = fUsePrivateSend ? CoinType::ONLY_FULLY_MIXED : CoinType::ALL_COINS;
+        nCoinType = fUseCoinJoin ? CoinType::ONLY_FULLY_MIXED : CoinType::ALL_COINS;
     }
 
-    bool IsUsingPrivateSend() const
+    bool IsUsingCoinJoin() const
     {
         return nCoinType == CoinType::ONLY_FULLY_MIXED;
     }
