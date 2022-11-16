@@ -234,14 +234,7 @@ void MasternodeList::updateDIP3List()
         QTableWidgetItem* PoSeScoreItem = new CMasternodeListWidgetItem<int>(QString::number(dmn->pdmnState->nPoSePenalty), dmn->pdmnState->nPoSePenalty);
         QTableWidgetItem* registeredItem = new CMasternodeListWidgetItem<int>(QString::number(dmn->pdmnState->nRegisteredHeight), dmn->pdmnState->nRegisteredHeight);
         QTableWidgetItem* lastPaidItem = new CMasternodeListWidgetItem<int>(QString::number(dmn->pdmnState->nLastPaidHeight), dmn->pdmnState->nLastPaidHeight);
-
-        QString strNextPayment = "UNKNOWN";
-        int nNextPayment = 0;
-        if (nextPayments.count(dmn->proTxHash)) {
-            nNextPayment = nextPayments[dmn->proTxHash];
-            strNextPayment = QString::number(nNextPayment);
-        }
-        QTableWidgetItem* nextPaymentItem = new CMasternodeListWidgetItem<int>(strNextPayment, nNextPayment);
+        QTableWidgetItem* nextPaymentItem = new QTableWidgetItem(nextPayments.count(dmn->proTxHash) ? QString::number(nextPayments[dmn->proTxHash]) : tr("UNKNOWN"));
 
         CTxDestination payeeDest;
         QString payeeStr = tr("UNKNOWN");
