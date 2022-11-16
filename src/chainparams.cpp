@@ -463,10 +463,10 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nThresholdStart = 60; // 60% of 100
 
-        // Deployment of DIP0020, DIP0021 and LLMQ_100_67 quorums
+        // Deployment of DIP0020, DIP0021 and LLMQ_20_70 quorums
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].bit = 7;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nStartTime = 1669852800; // Dec 1st, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nTimeout = 1701388800; // Dec 1st, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nStartTime = 1668988800; // Nov 21st, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nTimeout = 1700524800; // Nov 21st, 2023
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nThresholdStart = 60; // 60% of 100
 
@@ -584,6 +584,7 @@ public:
                 {920000, uint256S("0x000000010cc252a6bad5717ab07e171c4d7eb833877467b54c71d94790330291")},
                 {950000, uint256S("0x00000001ff5971fb183ee2237eebf20c109d1992597438949beb8badc99a46b2")},
                 {1000000, uint256S("0x00000008ea513eba0aa0d7dda4d2d0179564bea13075584ef024bd9b440bb533")},
+                {1012000, uint256S("0x0000000351f0eb82a74f338dc0bbc50b72ebfe3297ddb98098555d04650c93d0")},
            }
         };
 
@@ -682,7 +683,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nWindowSize = 10;
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nThresholdStart = 8; // 80% of 10
 
-        // Deployment of DIP0020, DIP0021 and LLMQ_100_67 quorums
+        // Deployment of DIP0020, DIP0021 and LLMQ_20_70 quorums
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].bit = 7;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nStartTime = 1668421800; // Nov 14th, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nTimeout = 1699957800; // Nov 14th, 2023
@@ -874,7 +875,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nThresholdMin = 60; // 60% of 100
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nFalloffCoeff = 5; // this corresponds to 10 periods
 
-        // Deployment of DIP0020, DIP0021 and LLMQ_100_67 quorums
+        // Deployment of DIP0020, DIP0021 and LLMQ_20_70 quorums
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].bit = 6;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nStartTime = 1604188800; // November 1st, 2020
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nTimeout = 1635724800; // November 1st, 2021
