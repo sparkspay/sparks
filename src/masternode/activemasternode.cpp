@@ -182,7 +182,7 @@ bool CActiveMasternodeManager::GetLocalAddress(CService& addrRet)
     // First try to find whatever our own local address is known internally.
     // Addresses could be specified via externalip or bind option, discovered via UPnP
     // or added by TorController. Use some random dummy IPv4 peer to prefer the one
-    // reachable via IPv4.
+    // reachable via IPv4 or IPv6.
     CNetAddr addrDummyPeer;
     bool fFoundLocal{false};
     if (LookupHost("8.8.8.8", addrDummyPeer, false)) {
@@ -204,7 +204,7 @@ bool CActiveMasternodeManager::GetLocalAddress(CService& addrRet)
         });
         // nothing and no live connections, can't do anything for now
         if (empty) {
-            strError = "Can't detect valid external address. Please consider using the externalip configuration option if problem persists. Make sure to use IPv4 address only.";
+            strError = "Can't detect valid external address. Please consider using the externalip configuration option if problem persists.";
             LogPrintf("CActiveMasternodeManager::GetLocalAddress -- ERROR: %s\n", strError);
             return false;
         }

@@ -379,6 +379,27 @@ public:
         }
         return count;
     }
+    size_t GetIPv4Count() const
+    {
+        size_t count = 0;
+        for (const auto& p : mnMap) {
+            if (IsMNValid(p.second) && p.second->pdmnState->addr.IsIPv4()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    size_t GetIPv6Count() const
+    {
+        size_t count = 0;
+        for (const auto& p : mnMap) {
+            if (IsMNValid(p.second) && p.second->pdmnState->addr.IsIPv6()) {
+                count++;
+            }
+        }
+        return count;
+    }
 
     template <typename Callback>
     void ForEachMN(bool onlyValid, Callback&& cb) const
