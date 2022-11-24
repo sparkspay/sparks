@@ -121,10 +121,14 @@ UniValue masternode_count(const JSONRPCRequest& request)
     auto mnList = deterministicMNManager->GetListAtChainTip();
     int total = mnList.GetAllMNsCount();
     int enabled = mnList.GetValidMNsCount();
+    int ipv4 = mnList.GetIPv4Count();
+    int ipv6 = mnList.GetIPv6Count();
 
     UniValue obj(UniValue::VOBJ);
     obj.pushKV("total", total);
     obj.pushKV("enabled", enabled);
+    obj.pushKV("ipv4", ipv4);
+    obj.pushKV("ipv6", ipv6);
     return obj;
 }
 
