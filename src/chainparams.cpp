@@ -470,6 +470,13 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nThresholdStart = 60; // 60% of 100
 
+        // Deployment of IPv6 Masternodes
+        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].bit = 8;
+        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nStartTime = 1669593600; // Nov 28th, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nTimeout = 1701129600; // Nov 28th, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nThresholdStart = 60; // 60% of 100
+
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000eee93cb0b1f4be");//269664
 
@@ -689,6 +696,13 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nTimeout = 1699957800; // Nov 14th, 2023
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nWindowSize = 10;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nThresholdStart = 8; // 8% of 10
+
+        // Deployment of IPv6 Masternodes
+        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].bit = 8;
+        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nStartTime = 1669291200; // Nov 24th, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nTimeout = 1700827200; // Nov 24th, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nThresholdStart = 60; // 60% of 100
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000000000000000100010");

@@ -182,7 +182,7 @@ bool CActiveMasternodeManager::GetLocalAddress(CService& addrRet)
     // First try to find whatever our own local address is known internally.
     // Addresses could be specified via externalip or bind option, discovered via UPnP
     // or added by TorController. Use some random dummy IPv4 peer to prefer the one
-    // reachable via IPv4.
+    // reachable via IPv4 or IPv6.
     CNetAddr addrDummyPeer;
     bool fFoundLocal{false};
     if (LookupHost("8.8.8.8", addrDummyPeer, false)) {
@@ -198,13 +198,13 @@ bool CActiveMasternodeManager::GetLocalAddress(CService& addrRet)
         // If we have some peers, let's try to find our local address from one of them
         g_connman->ForEachNodeContinueIf(CConnman::AllNodes, [&fFoundLocal, &empty](CNode* pnode) {
             empty = false;
-            if (pnode->addr.IsIPv4())
+            if (pnode->addr.IsIPv4() || pnode->addr.IsIPv6())
                 fFoundLocal = GetLocal(activeMasternodeInfo.service, &pnode->addr) && IsValidNetAddr(activeMasternodeInfo.service);
             return !fFoundLocal;
         });
         // nothing and no live connections, can't do anything for now
         if (empty) {
-            strError = "Can't detect valid external address. Please consider using the externalip configuration option if problem persists. Make sure to use IPv4 address only.";
+            strError = "Can't detect valid external address. Please consider using the externalip configuration option if problem persists.";
             LogPrintf("CActiveMasternodeManager::GetLocalAddress -- ERROR: %s\n", strError);
             return false;
         }
@@ -217,5 +217,5 @@ bool CActiveMasternodeManager::IsValidNetAddr(CService addrIn)
     // TODO: regtest is fine with any addresses for now,
     // should probably be a bit smarter if one day we start to implement tests for this
     return !Params().RequireRoutableExternalIP() ||
-           (addrIn.IsIPv4() && IsReachable(addrIn) && addrIn.IsRoutable());
+           ((addrIn.IsIPv4() || addrIn.IsIPv6()) && IsReachable(addrIn) && addrIn.IsRoutable());
 }

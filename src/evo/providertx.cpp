@@ -15,7 +15,7 @@
 #include <validation.h>
 
 template <typename ProTx>
-static bool CheckService(const uint256& proTxHash, const ProTx& proTx, CValidationState& state)
+static bool CheckService(const uint256& proTxHash, const ProTx& proTx, CValidationState& state, const CBlockIndex* pindexPrev)
 {
     if (!proTx.addr.IsValid()) {
         return state.DoS(10, false, REJECT_INVALID, "bad-protx-ipaddr");
@@ -33,7 +33,13 @@ static bool CheckService(const uint256& proTxHash, const ProTx& proTx, CValidati
         return state.DoS(10, false, REJECT_INVALID, "bad-protx-ipaddr-port");
     }
 
-    if (!proTx.addr.IsIPv4()) {
+    bool fIPV6_MNActive;
+    {
+        LOCK(cs_main);
+        fIPV6_MNActive = VersionBitsState(pindexPrev, Params().GetConsensus(), Consensus::DEPLOYMENT_IPV6_MN, versionbitscache) == ThresholdState::ACTIVE;
+    }
+
+    if (!proTx.addr.IsIPv4() && !(fIPV6_MNActive && proTx.addr.IsIPv6())) {
         return state.DoS(10, false, REJECT_INVALID, "bad-protx-ipaddr");
     }
 
@@ -120,7 +126,7 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
 
     // It's allowed to set addr to 0, which will put the MN into PoSe-banned state and require a ProUpServTx to be issues later
     // If any of both is set, it must be valid however
-    if (ptx.addr != CService() && !CheckService(tx.GetHash(), ptx, state)) {
+    if (ptx.addr != CService() && !CheckService(tx.GetHash(), ptx, state, pindexPrev)) {
         // pass the state returned by the function above
         return false;
     }
@@ -227,7 +233,7 @@ bool CheckProUpServTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVa
         return state.DoS(100, false, REJECT_INVALID, "bad-protx-version");
     }
 
-    if (!CheckService(ptx.proTxHash, ptx, state)) {
+    if (!CheckService(ptx.proTxHash, ptx, state, pindexPrev)) {
         // pass the state returned by the function above
         return false;
     }
