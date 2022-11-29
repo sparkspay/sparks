@@ -701,8 +701,8 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].bit = 8;
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nStartTime = 1669291200; // Nov 24th, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nTimeout = 1700827200; // Nov 24th, 2023
-        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nWindowSize = 100;
-        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nThresholdStart = 60; // 60% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nWindowSize = 10;
+        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nThresholdStart = 8; // 80% of 10
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000000000000000100010");
