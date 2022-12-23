@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2015-2022 The PIVX developers
 // Copyright (c) 2016-2022 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -1508,6 +1509,7 @@ void CWallet::BlockConnected(const std::shared_ptr<const CBlock>& pblock, const 
     }
 
     m_last_block_processed = pindex;
+    m_last_block_processed_time = pindex->GetBlockTime();
 
     // The GUI expects a NotifyTransactionChanged when a coinbase tx
     // which is in our wallet moves from in-the-best-block to
@@ -1539,6 +1541,14 @@ void CWallet::BlockConnected(const std::shared_ptr<const CBlock>& pblock, const 
     // reset cache to make sure no longer immature coins are included
     fAnonymizableTallyCached = false;
     fAnonymizableTallyCachedNonDenom = false;
+
+    // Auto-combine functionality
+    // If turned on Auto Combine will scan wallet for dust to combine
+    // Outside of the cs_wallet lock because requires cs_main for now
+    // due CreateTransaction/CommitTransaction dependency.
+    if (fCombineDust) {
+        AutoCombineDust(g_connman.get());
+    }
 }
 
 void CWallet::BlockDisconnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexDisconnected) {
@@ -3007,6 +3017,24 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
             }
         }
     }
+}
+
+std::map<CTxDestination , std::vector<COutput> > CWallet::AvailableCoinsByAddress(bool fOnlySafe, CAmount maxCoinValue)
+{
+    std::vector<COutput> vCoins;
+    AvailableCoins(vCoins, true, nullptr, 1, maxCoinValue);
+
+    std::map<CTxDestination, std::vector<COutput> > mapCoins;
+    for (const COutput& out : vCoins) {
+        CTxDestination address;
+        if (!ExtractDestination(out.tx->tx->vout[out.i].scriptPubKey, address)) {
+            if (!ExtractDestination(out.tx->tx->vout[out.i].scriptPubKey, address) )
+                continue;
+        }
+        mapCoins[address].emplace_back(out);
+    }
+
+    return mapCoins;
 }
 
 std::map<CTxDestination, std::vector<COutput>> CWallet::ListCoins() const
@@ -4931,6 +4959,111 @@ std::vector<std::string> CWallet::GetDestValues(const std::string& prefix) const
     return values;
 }
 
+void CWallet::AutoCombineDust(CConnman* connman)
+{
+    {
+        LOCK(cs_wallet);
+        if (m_last_block_processed ||
+            m_last_block_processed_time < (GetAdjustedTime() - 300) ||
+            IsLocked()) {
+            return;
+        }
+    }
+
+    std::map<CTxDestination, std::vector<COutput> > mapCoinsByAddress =
+            AvailableCoinsByAddress(true, nAutoCombineThreshold);
+
+    //coins are sectioned by address. This combination code only wants to combine inputs that belong to the same address
+    for (const auto& entry : mapCoinsByAddress) {
+        std::vector<COutput> vCoins, vRewardCoins;
+        bool maxSize = false;
+        vCoins = entry.second;
+
+        // We don't want the tx to be refused for being too large
+        // we use 50 bytes as a base tx size (2 output: 2*34 + overhead: 10 -> 90 to be certain)
+        unsigned int txSizeEstimate = 90;
+
+        //find masternode rewards that need to be combined
+        CCoinControl* coinControl = new CCoinControl();
+        CAmount nTotalRewardsValue = 0;
+        for (const COutput& out : vCoins) {
+            if (!out.fSpendable)
+                continue;
+
+            COutPoint outpt(out.tx->GetHash(), out.i);
+            coinControl->Select(outpt);
+            vRewardCoins.push_back(out);
+            nTotalRewardsValue += out.Value();
+
+            // Combine to the threshold and not way above
+            if (nTotalRewardsValue > nAutoCombineThreshold)
+                break;
+
+            // Around 180 bytes per input. We use 190 to be certain
+            txSizeEstimate += 190;
+            if (txSizeEstimate >= MAX_STANDARD_TX_SIZE - 200) {
+                maxSize = true;
+                break;
+            }
+        }
+
+        //if no inputs found then return
+        if (!coinControl->HasSelected())
+            continue;
+
+        //we cannot combine one coin with itself
+        if (vRewardCoins.size() <= 1)
+            continue;
+
+        std::vector<CRecipient> vecSend;
+        const CScript& scriptPubKey = GetScriptForDestination(entry.first);
+        CRecipient recipient = {scriptPubKey, nTotalRewardsValue, false};
+        vecSend.push_back(recipient);
+
+        //Send change to same address
+        CTxDestination destMyAddress;
+        if (!ExtractDestination(scriptPubKey, destMyAddress)) {
+            LogPrintf("AutoCombineDust: failed to extract destination\n");
+            continue;
+        }
+        coinControl->destChange = destMyAddress;
+
+        // Create the transaction and commit it to the network
+        CTransactionRef wtx;
+        CReserveKey keyChange(this); // this change address does not end up being used, because change is returned with coin control switch
+        std::string strErr;
+        CAmount nFeeRet = 0;
+        int nChangePosInOut = -1;
+
+        // 10% safety margin to avoid "Insufficient funds" errors
+        vecSend[0].nAmount = nTotalRewardsValue - (nTotalRewardsValue / 10);
+
+        {
+            // For now, CreateTransaction requires cs_main lock.
+            LOCK2(cs_main, cs_wallet);
+            if (!CreateTransaction(vecSend, wtx, keyChange, nFeeRet, nChangePosInOut, strErr, *coinControl,
+                                   true, CAmount(0))) {
+                LogPrintf("AutoCombineDust createtransaction failed, reason: %s\n", strErr);
+                continue;
+            }
+        }
+
+        //we don't combine below the threshold unless the fees are 0 to avoid paying fees over fees over fees
+        if (!maxSize && nTotalRewardsValue < nAutoCombineThreshold && nFeeRet > 0)
+            continue;
+
+        CValidationState state;
+        if (CommitTransaction(wtx,{}, {}, {}, keyChange, connman, state)) {
+            LogPrintf("AutoCombineDust transaction commit failed\n");
+            continue;
+        }
+
+        LogPrintf("AutoCombineDust sent transaction\n");
+
+        delete coinControl;
+    }
+}
+
 bool CWallet::Verify(const WalletLocation& location, bool salvage_wallet, std::string& error_string, std::string& warning_string)
 {
     // Do some checking on wallet path. It should be either a:
@@ -5526,4 +5659,11 @@ bool CWalletTx::AcceptToMemoryPool(const CAmount& nAbsurdFee, CValidationState& 
                                 false /* bypass_limits */, nAbsurdFee);
     fInMempool |= ret;
     return ret;
+}
+
+void CWallet::SetNull()
+{
+    //Auto Combine Dust
+    fCombineDust = false;
+    nAutoCombineThreshold = 0;
 }

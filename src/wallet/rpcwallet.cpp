@@ -1,6 +1,7 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2015-2022 The PIVX developers
 // Copyright (c) 2016-2022 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -3059,6 +3060,8 @@ UniValue getwalletinfo(const JSONRPCRequest& request)
     obj.pushKV("immature_balance",    ValueFromAmount(pwallet->GetImmatureBalance()));
     obj.pushKV("txcount",       (int)pwallet->mapWallet.size());
     obj.pushKV("timefirstkey", pwallet->GetTimeFirstKey());
+    obj.pushKV("autocombine_enabled", pwallet->fCombineDust);
+    obj.pushKV("autocombine_threshold", ValueFromAmount(pwallet->nAutoCombineThreshold));
     obj.pushKV("keypoololdest", pwallet->GetOldestKeyPoolTime());
     obj.pushKV("keypoolsize",   (int64_t)pwallet->KeypoolCountExternalKeys());
     if (fHDEnabled) {
@@ -4336,6 +4339,99 @@ UniValue listlabels(const JSONRPCRequest& request)
     return ret;
 }
 
+UniValue setautocombinethreshold(const JSONRPCRequest& request)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
+    CWallet* const pwallet = wallet.get();
+
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp))
+        return NullUniValue;
+
+    if (request.fHelp || request.params.empty() || request.params.size() > 2)
+        throw std::runtime_error(
+            "setautocombinethreshold enable ( value )\n"
+            "\nThis will set the auto-combine threshold value.\n"
+            "\nWallet will automatically monitor for any coins with value below the threshold amount, and combine them if they reside with the same Sparks address\n"
+            "When auto-combine runs it will create a transaction, and therefore will be subject to transaction fees.\n"
+
+            "\nArguments:\n"
+            "1. enable          (boolean, required) Enable auto combine (true) or disable (false).\n"
+            "2. threshold       (numeric, optional. required if enable is true) Threshold amount. Must be greater than 1.\n"
+
+            "\nResult:\n"
+            "{\n"
+            "  \"enabled\": true|false,      (boolean) true if auto-combine is enabled, otherwise false\n"
+            "  \"threshold\": n.nnn,         (numeric) auto-combine threshold in PIV\n"
+            "  \"saved\": true|false         (boolean) true if setting was saved to the database, otherwise false\n"
+            "}\n"
+
+            "\nExamples:\n" +
+            HelpExampleCli("setautocombinethreshold", "true 500.12") + HelpExampleRpc("setautocombinethreshold", "true, 500.12"));
+
+    bool fEnable = ParseBoolV(request.params[0], "enable");
+    CAmount nThreshold = 0;
+
+    if (fEnable) {
+        if (request.params.size() < 2) {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Missing threshold value");
+        }
+        nThreshold = AmountFromValue(ParseDoubleV(request.params[1], "threshold"));
+        if (nThreshold < COIN)
+            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("The threshold value cannot be less than %s", FormatMoney(COIN)));
+    }
+
+    WalletBatch batch(pwallet->GetDBHandle());
+
+    {
+        LOCK(pwallet->cs_wallet);
+        pwallet->fCombineDust = fEnable;
+        pwallet->nAutoCombineThreshold = nThreshold;
+
+        UniValue result(UniValue::VOBJ);
+        result.pushKV("enabled", fEnable);
+        result.pushKV("threshold", ValueFromAmount(pwallet->nAutoCombineThreshold));
+        if (batch.WriteAutoCombineSettings(fEnable, nThreshold)) {
+            result.pushKV("saved", "true");
+        } else {
+            result.pushKV("saved", "false");
+        }
+
+        return result;
+    }
+}
+
+UniValue getautocombinethreshold(const JSONRPCRequest& request)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
+    CWallet* const pwallet = wallet.get();
+
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp))
+        return NullUniValue;
+
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error(
+            "getautocombinethreshold\n"
+            "\nReturns the current threshold for auto combining UTXOs, if any\n"
+
+            "\nResult:\n"
+            "{\n"
+            "  \"enabled\": true|false,        (boolean) true if auto-combine is enabled, otherwise false\n"
+            "  \"threshold\": n.nnn            (numeric) the auto-combine threshold amount in PIV\n"
+            "}\n"
+
+            "\nExamples:\n" +
+            HelpExampleCli("getautocombinethreshold", "") + HelpExampleRpc("getautocombinethreshold", ""));
+
+    LOCK(pwallet->cs_wallet);
+
+    UniValue result(UniValue::VOBJ);
+    result.pushKV("enabled", pwallet->fCombineDust);
+    result.pushKV("threshold", ValueFromAmount(pwallet->nAutoCombineThreshold));
+
+    return result;
+}
+
+
 extern UniValue abortrescan(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue dumpprivkey(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue importprivkey(const JSONRPCRequest& request);
@@ -4347,6 +4443,8 @@ extern UniValue importprunedfunds(const JSONRPCRequest& request);
 extern UniValue removeprunedfunds(const JSONRPCRequest& request);
 extern UniValue importmulti(const JSONRPCRequest& request);
 extern UniValue rescanblockchain(const JSONRPCRequest& request);
+extern UniValue setautocombinethreshold(const JSONRPCRequest& request);
+extern UniValue getautocombinethreshold(const JSONRPCRequest& request);
 
 extern UniValue dumphdinfo(const JSONRPCRequest& request);
 extern UniValue importelectrumwallet(const JSONRPCRequest& request);
@@ -4403,6 +4501,8 @@ static const CRPCCommand commands[] =
     { "wallet",             "walletpassphrase",                 &walletpassphrase,              {"passphrase","timeout","mixingonly"} },
     { "wallet",             "removeprunedfunds",                &removeprunedfunds,             {"txid"} },
     { "wallet",             "rescanblockchain",                 &rescanblockchain,              {"start_height", "stop_height"} },
+    { "wallet",             "setautocombinethreshold",  &setautocombinethreshold,  {"enable","threshold"} },
+    { "wallet",             "getautocombinethreshold",  &getautocombinethreshold,  {} },
 
     /** Account functions (deprecated) */
     { "wallet",             "getaccountaddress",                &getaccountaddress,             {"account"} },
