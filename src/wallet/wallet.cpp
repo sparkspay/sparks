@@ -4963,9 +4963,7 @@ void CWallet::AutoCombineDust(CConnman* connman)
 {
     {
         LOCK(cs_wallet);
-        if (m_last_block_processed ||
-            m_last_block_processed_time < (GetAdjustedTime() - 300) ||
-            IsLocked()) {
+        if (IsLocked()) {
             return;
         }
     }
