@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2015-2022 The PIVX developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -131,6 +132,14 @@ bool WalletBatch::ReadBestBlock(CBlockLocator& locator)
 {
     if (m_batch.Read(std::string("bestblock"), locator) && !locator.vHave.empty()) return true;
     return m_batch.Read(std::string("bestblock_nomerkle"), locator);
+}
+
+bool WalletBatch::WriteAutoCombineSettings(bool fEnable, CAmount nCombineThreshold)
+{
+    std::pair<bool, CAmount> pSettings;
+    pSettings.first = fEnable;
+    pSettings.second = nCombineThreshold;
+    return WriteIC(std::string("autocombinesettings"), pSettings, true);
 }
 
 bool WalletBatch::WriteOrderPosNext(int64_t nOrderPosNext)
@@ -512,6 +521,16 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         else if (strType == "orderposnext")
         {
             ssValue >> pwallet->nOrderPosNext;
+        }
+        else if (strType == "autocombinesettings")
+        {
+            std::pair<bool, CAmount> pSettings;
+            ssValue >> pSettings;
+            pwallet->fCombineDust = pSettings.first;
+            pwallet->nAutoCombineThreshold = pSettings.second;
+            // originally saved as integer
+            if (pwallet->nAutoCombineThreshold < COIN)
+                pwallet->nAutoCombineThreshold *= COIN;
         }
         else if (strType == "destdata")
         {
