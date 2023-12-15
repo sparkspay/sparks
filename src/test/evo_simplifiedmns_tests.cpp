@@ -1,8 +1,9 @@
-// Copyright (c) 2018-2020 The Dash Core developers
+// Copyright (c) 2018-2022 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <test/test_sparks.h>
+#include <test/util/setup_common.h>
 
 #include <bls/bls.h>
 #include <evo/simplifiedmns.h>
@@ -14,6 +15,8 @@ BOOST_FIXTURE_TEST_SUITE(evo_simplifiedmns_tests, BasicTestingSetup)
 
 BOOST_AUTO_TEST_CASE(simplifiedmns_merkleroots)
 {
+    //TODO: Provide raw data for basic scheme as well
+    bls::bls_legacy_scheme.store(true);
     std::vector<CSimplifiedMNListEntry> entries;
     for (size_t i = 0; i < 15; i++) {
         CSimplifiedMNListEntry smle;

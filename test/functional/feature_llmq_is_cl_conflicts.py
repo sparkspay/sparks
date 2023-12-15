@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2021 The Dash Core developers
+# Copyright (c) 2015-2022 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 import time
@@ -17,6 +17,17 @@ Checks conflict handling between ChainLocks and InstantSend
 
 '''
 
+from codecs import encode
+from decimal import Decimal
+import struct
+
+from test_framework.blocktools import get_masternode_payment, create_coinbase, create_block
+from test_framework.messages import CCbTx, CInv, COIN, CTransaction, FromHex, hash256, msg_clsig, msg_inv, ser_string, ToHex, uint256_from_str, uint256_to_string
+from test_framework.mininode import P2PInterface
+from test_framework.test_framework import DashTestFramework
+from test_framework.util import assert_equal, assert_raises_rpc_error, hex_str_to_bytes, get_bip9_status, wait_until
+
+
 class TestP2PConn(P2PInterface):
     def __init__(self):
         super().__init__()
@@ -30,11 +41,11 @@ class TestP2PConn(P2PInterface):
         inv = msg_inv([CInv(29, hash)])
         self.send_message(inv)
 
-    def send_islock(self, islock):
+    def send_islock(self, islock, deterministic=False):
         hash = uint256_from_str(hash256(islock.serialize()))
         self.islocks[hash] = islock
 
-        inv = msg_inv([CInv(30, hash)])
+        inv = msg_inv([CInv(31 if deterministic else 30, hash)])
         self.send_message(inv)
 
     def on_getdata(self, message):
@@ -47,17 +58,16 @@ class TestP2PConn(P2PInterface):
 
 class LLMQ_IS_CL_Conflicts(SparksTestFramework):
     def set_test_params(self):
-        self.set_sparks_test_params(4, 3, fast_dip3_enforcement=True)
-        #disable_mocktime()
+        self.set_sparks_test_params(5, 4, fast_dip3_enforcement=True)
+        self.set_sparks_llmq_test_params(4, 4)
+        self.supports_cli = False
 
     def run_test(self):
         self.activate_dip8()
 
         self.test_node = self.nodes[0].add_p2p_connection(TestP2PConn())
-        network_thread_start()
-        self.nodes[0].p2p.wait_for_verack()
 
-        self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
+        self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
 
         self.mine_quorum()
@@ -69,7 +79,16 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         self.test_chainlock_overrides_islock(False)
         self.test_chainlock_overrides_islock(True, False)
         self.test_chainlock_overrides_islock(True, True)
-        self.test_chainlock_overrides_islock_overrides_nonchainlock()
+        self.test_chainlock_overrides_islock_overrides_nonchainlock(False)
+        self.activate_dip0024()
+        self.log.info("Activated DIP0024 at height:" + str(self.nodes[0].getblockcount()))
+        self.test_chainlock_overrides_islock_overrides_nonchainlock(False)
+        # At this point, we need to move forward 3 cycles (3 x 24 blocks) so the first 3 quarters can be created (without DKG sessions)
+        self.move_to_next_cycle()
+        self.move_to_next_cycle()
+        self.move_to_next_cycle()
+        self.mine_cycle_quorum()
+        self.test_chainlock_overrides_islock_overrides_nonchainlock(True)
 
     def test_chainlock_overrides_islock(self, test_block_conflict, mine_confllicting=False):
         if not test_block_conflict:
@@ -105,12 +124,14 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         if test_block_conflict:
             # The block shouldn't be accepted/connected but it should be known to node 0 now
             submit_result = self.nodes[0].submitblock(ToHex(block))
-            assert(submit_result == "conflict-tx-lock")
+            assert submit_result == "conflict-tx-lock"
 
         cl = self.create_chainlock(self.nodes[0].getblockcount() + 1, block)
 
         if mine_confllicting:
             islock_tip = self.nodes[0].generate(1)[-1]
+            # Make sure we won't sent clsig too early
+            self.sync_blocks()
 
         self.test_node.send_clsig(cl)
 
@@ -137,13 +158,12 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         submit_result = self.nodes[1].submitblock(ToHex(block))
         if test_block_conflict:
             # Node 1 should receive the block from node 0 and should not accept it again via submitblock
-            assert(submit_result == "duplicate")
+            assert submit_result == "duplicate"
         else:
             # The block should get accepted now, and at the same time prune the conflicting ISLOCKs
-            assert(submit_result is None)
+            assert submit_result is None
 
-        for node in self.nodes:
-            self.wait_for_chainlocked_block(node, block.hash)
+        self.wait_for_chainlocked_block_all_nodes(block.hash)
 
         # Create a chained TX on top of tx2
         inputs = []
@@ -189,7 +209,7 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
                 assert rawtx['instantlock']
                 assert not rawtx['instantlock_internal']
 
-    def test_chainlock_overrides_islock_overrides_nonchainlock(self):
+    def test_chainlock_overrides_islock_overrides_nonchainlock(self, deterministic):
         # create two raw TXs, they will conflict with each other
         rawtx1 = self.create_raw_tx(self.nodes[0], self.nodes[0], 1, 1, 100)['hex']
         rawtx2 = self.create_raw_tx(self.nodes[0], self.nodes[0], 1, 1, 100)['hex']
@@ -198,10 +218,13 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         rawtx2_txid = encode(hash256(hex_str_to_bytes(rawtx2))[::-1], 'hex_codec').decode('ascii')
 
         # Create an ISLOCK but don't broadcast it yet
-        islock = self.create_islock(rawtx2)
+        islock = self.create_islock(rawtx2, deterministic)
 
-        # Disable ChainLocks to avoid accidential locking
-        self.nodes[0].spork("SPORK_19_CHAINLOCKS_ENABLED", 4070908800)
+        # Ensure spork uniqueness in multiple function runs
+        self.bump_mocktime(1)
+        # Disable ChainLocks to avoid accidental locking
+        self.nodes[0].sporkupdate("SPORK_19_CHAINLOCKS_ENABLED", 4070908800)
+        self.wait_for_sporks_same()
 
         # Send tx1, which will later conflict with the ISLOCK
         self.nodes[0].sendrawtransaction(rawtx1)
@@ -215,7 +238,7 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         self.sync_all()
 
         # Assert that the conflicting tx got mined and the locked TX is not valid
-        assert(self.nodes[0].getrawtransaction(rawtx1_txid, True)['confirmations'] > 0)
+        assert self.nodes[0].getrawtransaction(rawtx1_txid, True)['confirmations'] > 0
         assert_raises_rpc_error(-25, "Missing inputs", self.nodes[0].sendrawtransaction, rawtx2)
 
         # Create the block and the corresponding clsig but do not relay clsig yet
@@ -225,32 +248,40 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         self.sync_all()
         assert self.nodes[0].getbestblockhash() == cl_block.hash
 
-        # Send the ISLOCK, which should result in the last 2 blocks to be invalidated, even though the nodes don't know
-        # the locked transaction yet
-        self.test_node.send_islock(islock)
-        time.sleep(5)
+        # Send the ISLOCK, which should result in the last 2 blocks to be disconnected,
+        # even though the nodes don't know the locked transaction yet
+        self.test_node.send_islock(islock, deterministic)
+        for node in self.nodes:
+            wait_until(lambda: node.getbestblockhash() == good_tip, timeout=10, sleep=0.5)
+            # islock for tx2 is incomplete, tx1 should return in mempool now that blocks are disconnected
+            assert rawtx1_txid in set(node.getrawmempool())
 
-        assert(self.nodes[0].getbestblockhash() == good_tip)
-        assert(self.nodes[1].getbestblockhash() == good_tip)
-
-        # Send the actual transaction and mine it
+        # Should drop tx1 and accept tx2 because there is an islock waiting for it
         self.nodes[0].sendrawtransaction(rawtx2)
-        self.nodes[0].generate(1)
+        # bump mocktime to force tx relay
+        self.bump_mocktime(60)
+        for node in self.nodes:
+            self.wait_for_instantlock(rawtx2_txid, node)
+
+        # Should not allow competing txes now
+        assert_raises_rpc_error(-26, "tx-txlock-conflict", self.nodes[0].sendrawtransaction, rawtx1)
+
+        islock_tip = self.nodes[0].generate(1)[0]
         self.sync_all()
 
-        assert(self.nodes[0].getrawtransaction(rawtx2_txid, True)['confirmations'] > 0)
-        assert(self.nodes[1].getrawtransaction(rawtx2_txid, True)['confirmations'] > 0)
-        assert(self.nodes[0].getrawtransaction(rawtx2_txid, True)['instantlock'])
-        assert(self.nodes[1].getrawtransaction(rawtx2_txid, True)['instantlock'])
-        assert(self.nodes[0].getbestblockhash() != good_tip)
-        assert(self.nodes[1].getbestblockhash() != good_tip)
+        for node in self.nodes:
+            self.wait_for_instantlock(rawtx2_txid, node)
+            assert_equal(node.getrawtransaction(rawtx2_txid, True)['confirmations'], 1)
+            assert_equal(node.getbestblockhash(), islock_tip)
 
         # Check that the CL-ed block overrides the one with islocks
-        self.nodes[0].spork("SPORK_19_CHAINLOCKS_ENABLED", 0)  # Re-enable ChainLocks to accept clsig
+        self.nodes[0].sporkupdate("SPORK_19_CHAINLOCKS_ENABLED", 0)  # Re-enable ChainLocks to accept clsig
         self.test_node.send_clsig(cl)  # relay clsig ASAP to prevent nodes from locking islock-ed tip
         self.wait_for_sporks_same()
         for node in self.nodes:
             self.wait_for_chainlocked_block(node, cl_block.hash)
+            # Previous tip should be marked as conflicting now
+            assert_equal(node.getchaintips(2)[1]["status"], "conflicting")
 
     def create_block(self, node, vtx=[]):
         bt = node.getblocktemplate()
@@ -305,7 +336,7 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
 
         coinbase.calc_sha256()
 
-        block = create_block(int(tip_hash, 16), coinbase, nTime=bt['curtime'])
+        block = create_block(int(tip_hash, 16), coinbase, ntime=bt['curtime'], version=bt['version'])
         block.vtx += vtx
 
         # Add quorum commitments from template

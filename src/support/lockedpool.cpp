@@ -7,13 +7,10 @@
 
 #if defined(HAVE_CONFIG_H)
 #include <config/sparks-config.h>
+#include <config/bitcoin-config.h>
 #endif
 
 #ifdef WIN32
-#ifdef _WIN32_WINNT
-#undef _WIN32_WINNT
-#endif
-#define _WIN32_WINNT 0x0501
 #define WIN32_LEAN_AND_MEAN 1
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -79,7 +76,7 @@ void* Arena::alloc(size_t size)
 
     // Create the used-chunk, taking its space from the end of the free-chunk
     const size_t size_remaining = size_ptr_it->first - size;
-    auto alloced = chunks_used.emplace(size_ptr_it->second + size_remaining, size).first;
+    auto allocated = chunks_used.emplace(size_ptr_it->second + size_remaining, size).first;
     chunks_free_end.erase(size_ptr_it->second + size_ptr_it->first);
     if (size_ptr_it->first == size) {
         // whole chunk is used up
@@ -92,7 +89,7 @@ void* Arena::alloc(size_t size)
     }
     size_to_free_chunk.erase(size_ptr_it);
 
-    return reinterpret_cast<void*>(alloced->first);
+    return reinterpret_cast<void*>(allocated->first);
 }
 
 void Arena::free(void *ptr)
@@ -145,7 +142,7 @@ Arena::Stats Arena::stats() const
 }
 
 #ifdef ARENA_DEBUG
-void printchunk(void* base, size_t sz, bool used) {
+static void printchunk(void* base, size_t sz, bool used) {
     std::cout <<
         "0x" << std::hex << std::setw(16) << std::setfill('0') << base <<
         " 0x" << std::hex << std::setw(16) << std::setfill('0') << sz <<
@@ -252,8 +249,16 @@ void *PosixLockedPageAllocator::AllocateLocked(size_t len, bool *lockingSuccess)
     void *addr;
     len = align_up(len, page_size);
     addr = mmap(nullptr, len, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+    if (addr == MAP_FAILED) {
+        return nullptr;
+    }
     if (addr) {
         *lockingSuccess = mlock(addr, len) == 0;
+#if defined(MADV_DONTDUMP) // Linux
+        madvise(addr, len, MADV_DONTDUMP);
+#elif defined(MADV_NOCORE) // FreeBSD
+        madvise(addr, len, MADV_NOCORE);
+#endif
     }
     return addr;
 }
@@ -400,9 +405,9 @@ void LockedPoolManager::CreateInstance()
     // have a static deinitialization order/problem, but the check in
     // LockedPoolManagerBase's destructor helps us detect if that ever happens.
 #ifdef WIN32
-    std::unique_ptr<LockedPageAllocator> allocator(new Win32LockedPageAllocator());
+    std::unique_ptr<LockedPageAllocator> allocator{std::make_unique<Win32LockedPageAllocator>()};
 #else
-    std::unique_ptr<LockedPageAllocator> allocator(new PosixLockedPageAllocator());
+    std::unique_ptr<LockedPageAllocator> allocator{std::make_unique<PosixLockedPageAllocator>()};
 #endif
     static LockedPoolManager instance(std::move(allocator));
     LockedPoolManager::_instance = &instance;

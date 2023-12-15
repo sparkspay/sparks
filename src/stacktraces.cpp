@@ -1,34 +1,34 @@
-// Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2014-2022 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
 #include <config/sparks-config.h>
+#include <config/bitcoin-config.h>
 #endif // HAVE_CONFIG_H
 
 #include <stacktraces.h>
 #include <fs.h>
 #include <logging.h>
-#include <random.h>
 #include <streams.h>
-#include <utilstrencodings.h>
+#include <threadsafety.h>
+#include <util/strencodings.h>
 
-#include <mutex>
 #include <map>
 #include <vector>
 #include <memory>
-#include <thread>
 #include <atomic>
 
 #if WIN32
 #include <windows.h>
 #include <dbghelp.h>
+#include <thread>
 #else
 #ifdef ENABLE_STACKTRACES
 #include <execinfo.h>
 #endif
 #include <unistd.h>
-#include <signal.h>
+#include <csignal>
 #endif
 
 #if !WIN32
@@ -49,7 +49,7 @@
 #include <backtrace.h>
 #endif
 
-#include <string.h>
+#include <cstring>
 
 std::string DemangleSymbol(const std::string& name)
 {
@@ -110,7 +110,7 @@ static std::string GetExeFileName()
         if (len < 0) {
             return "";
         }
-        if (len < buf.size()) {
+        if (len < int64_t(buf.size())) {
             return std::string(buf.begin(), buf.begin() + len);
         }
         buf.resize(buf.size() * 2);
@@ -170,8 +170,8 @@ static __attribute__((noinline)) std::vector<uint64_t> GetStackFrames(size_t ski
     static BOOL symInitialized = SymInitialize(GetCurrentProcess(), nullptr, TRUE);
 
     // dbghelp is not thread safe
-    static std::mutex m;
-    std::lock_guard<std::mutex> l(m);
+    static StdMutex m;
+    StdLockGuard l(m);
 
     HANDLE process = GetCurrentProcess();
     HANDLE thread = GetCurrentThread();
@@ -267,7 +267,7 @@ static uint64_t GetBaseAddress()
 #else
 static int dl_iterate_callback(struct dl_phdr_info* info, size_t s, void* data)
 {
-    uint64_t* p = (uint64_t*)data;
+    uint64_t* p = reinterpret_cast<uint64_t*>(data);
     if (info->dlpi_name == nullptr || info->dlpi_name[0] == '\0') {
         *p = info->dlpi_addr;
     }
@@ -311,15 +311,9 @@ struct stackframe_info {
     int lineno{-1};
     std::string function;
 
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
+    SERIALIZE_METHODS(stackframe_info, obj)
     {
-        READWRITE(pc);
-        READWRITE(filename);
-        READWRITE(lineno);
-        READWRITE(function);
+        READWRITE(obj.pc, obj.filename, obj.lineno, obj.function);
     }
 };
 
@@ -356,8 +350,8 @@ static std::vector<stackframe_info> GetStackFrameInfos(const std::vector<uint64_
     std::vector<stackframe_info> infos;
     infos.reserve(stackframes.size());
 
-    for (size_t i = 0; i < stackframes.size(); i++) {
-        if (backtrace_pcinfo(GetLibBacktraceState(), stackframes[i], my_backtrace_full_callback, my_backtrace_error_callback, &infos)) {
+    for (uint64_t stackframe : stackframes) {
+        if (backtrace_pcinfo(GetLibBacktraceState(), stackframe, my_backtrace_full_callback, my_backtrace_error_callback, &infos)) {
             break;
         }
     }
@@ -374,17 +368,12 @@ static std::vector<stackframe_info> GetStackFrameInfos(const std::vector<uint64_
 struct crash_info_header
 {
     std::string magic;
-    uint16_t version;
+    uint16_t version{0};
     std::string exeFileName;
 
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
+    SERIALIZE_METHODS(crash_info_header, obj)
     {
-        READWRITE(magic);
-        READWRITE(version);
-        READWRITE(exeFileName);
+        READWRITE(obj.magic, obj.version, obj.exeFileName);
     }
 };
 
@@ -394,14 +383,9 @@ struct crash_info
     std::vector<uint64_t> stackframes;
     std::vector<stackframe_info> stackframeInfos;
 
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
+    SERIALIZE_METHODS(crash_info, obj)
     {
-        READWRITE(crashDescription);
-        READWRITE(stackframes);
-        READWRITE(stackframeInfos);
+        READWRITE(obj.crashDescription, obj.stackframes, obj.stackframeInfos);
     }
 
     void ConvertAddresses(int64_t offset)
@@ -430,7 +414,7 @@ static std::string GetCrashInfoStrNoDebugInfo(crash_info ci)
     ci.ConvertAddresses(-(int64_t)basePtr);
     ds << ci;
 
-    auto ciStr = EncodeBase32((const unsigned char*)ds.data(), ds.size());
+    auto ciStr = EncodeBase32(ds.str());
     std::string s = ci.crashDescription + "\n";
     s += strprintf("No debug information available for stacktrace. You should add debug information and then run:\n"
                    "%s -printcrashinfo=%s\n", g_exeFileBaseName, ciStr);
@@ -499,9 +483,7 @@ static std::string GetCrashInfoStr(const crash_info& ci, size_t spaces)
     std::vector<std::string> lstrs;
     lstrs.reserve(ci.stackframeInfos.size());
 
-    for (size_t i = 0; i < ci.stackframeInfos.size(); i++) {
-        auto& si = ci.stackframeInfos[i];
-
+    for (const auto& si : ci.stackframeInfos) {
         std::string lstr;
         if (!si.filename.empty()) {
             lstr += fs::path(si.filename).filename().string();
@@ -545,12 +527,12 @@ static void PrintCrashInfo(const crash_info& ci)
 {
     auto str = GetCrashInfoStr(ci);
     LogPrintf("%s", str); /* Continued */
-    fprintf(stderr, "%s", str.c_str());
+    tfm::format(std::cerr, "%s", str);
     fflush(stderr);
 }
 
 #ifdef ENABLE_CRASH_HOOKS
-static std::mutex g_stacktraces_mutex;
+static StdMutex g_stacktraces_mutex;
 static std::map<void*, std::shared_ptr<std::vector<uint64_t>>> g_stacktraces;
 
 #if CRASH_HOOKS_WRAPPED_CXX_ABI
@@ -613,7 +595,7 @@ extern "C" void* __attribute__((noinline)) WRAPPED_NAME(__cxa_allocate_exception
 
     void* p = __real___cxa_allocate_exception(thrown_size);
 
-    std::lock_guard<std::mutex> l(g_stacktraces_mutex);
+    StdLockGuard l(g_stacktraces_mutex);
     g_stacktraces.emplace(p, st);
     return p;
 }
@@ -622,7 +604,7 @@ extern "C" void __attribute__((noinline)) WRAPPED_NAME(__cxa_free_exception)(voi
 {
     __real___cxa_free_exception(thrown_exception);
 
-    std::lock_guard<std::mutex> l(g_stacktraces_mutex);
+    StdLockGuard l(g_stacktraces_mutex);
     g_stacktraces.erase(thrown_exception);
 }
 
@@ -686,7 +668,7 @@ static std::shared_ptr<std::vector<uint64_t>> GetExceptionStacktrace(const std::
 #ifdef ENABLE_CRASH_HOOKS
     void* p = *(void**)&e;
 
-    std::lock_guard<std::mutex> l(g_stacktraces_mutex);
+    StdLockGuard l(g_stacktraces_mutex);
     auto it = g_stacktraces.find(p);
     if (it == g_stacktraces.end()) {
         return nullptr;
@@ -721,18 +703,18 @@ crash_info GetCrashInfoFromException(const std::exception_ptr& e)
     try {
         // rethrow and catch the exception as there is no other way to reliably cast to the real type (not possible with RTTI)
         std::rethrow_exception(e);
-    } catch (const std::exception& e) {
+    } catch (const std::exception& e2) {
         type = getExceptionType();
-        what = GetExceptionWhat(e);
-    } catch (const std::string& e) {
+        what = GetExceptionWhat(e2);
+    } catch (const std::string& e2) {
         type = getExceptionType();
-        what = GetExceptionWhat(e);
-    } catch (const char* e) {
+        what = GetExceptionWhat(e2);
+    } catch (const char* e2) {
         type = getExceptionType();
-        what = GetExceptionWhat(e);
-    } catch (int e) {
+        what = GetExceptionWhat(e2);
+    } catch (int e2) {
         type = getExceptionType();
-        what = GetExceptionWhat(e);
+        what = GetExceptionWhat(e2);
     } catch (...) {
         type = getExceptionType();
         what = "<unknown>";
@@ -759,7 +741,6 @@ static void terminate_handler()
     auto exc = std::current_exception();
 
     crash_info ci;
-    ci.crashDescription = "std::terminate() called, aborting";
 
     if (exc) {
         auto ci2 = GetCrashInfoFromException(exc);
@@ -769,9 +750,8 @@ static void terminate_handler()
     } else {
         ci.crashDescription = "std::terminate() called due unknown reason";
         ci.stackframes = GetStackFrames(0, 16);
+        ci.stackframeInfos = GetStackFrameInfos(ci.stackframes);
     }
-
-    ci.stackframeInfos = GetStackFrameInfos(ci.stackframes);
 
     PrintCrashInfo(ci);
 

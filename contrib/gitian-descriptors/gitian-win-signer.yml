@@ -1,11 +1,12 @@
 ---
 name: "sparks-win-signer"
+distro: "ubuntu"
 suites:
-- "bionic"
+- "focal"
 architectures:
 - "amd64"
 packages:
-- "libssl-dev"
+- "libssl-dev" # do not merge bitcoin#13782, see https://github.com/sparkspay/sparks/pull/3894
 - "autoconf"
 - "automake"
 - "libtool"
@@ -17,7 +18,9 @@ files:
 - "osslsigncode-2.0.tar.gz"
 - "sparkscore-win-unsigned.tar.gz"
 script: |
-  BUILD_DIR=`pwd`
+  set -e -o pipefail
+
+  BUILD_DIR="$PWD"
   SIGDIR=${BUILD_DIR}/signature/win
   UNSIGNED_DIR=${BUILD_DIR}/unsigned
 
@@ -33,7 +36,7 @@ script: |
   ./configure --without-gsf --without-curl --disable-dependency-tracking
   make
   find ${UNSIGNED_DIR} -name "*-unsigned.exe" | while read i; do
-    INFILE="`basename "${i}"`"
-    OUTFILE="`echo "${INFILE}" | sed s/-unsigned//`"
+    INFILE="$(basename "${i}")"
+    OUTFILE="${INFILE/-unsigned}"
     ./osslsigncode attach-signature -in "${i}" -out "${OUTDIR}/${OUTFILE}" -sigin "${SIGDIR}/${INFILE}.pem"
   done

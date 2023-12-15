@@ -7,9 +7,8 @@
 #include <qt/clientmodel.h>
 #include <qt/guiutil.h>
 
-#include <boost/bind.hpp>
-
 #include <QPainter>
+#include <QPainterPath>
 #include <QColor>
 #include <QTimer>
 
@@ -22,14 +21,14 @@
 
 TrafficGraphWidget::TrafficGraphWidget(QWidget *parent) :
     QWidget(parent),
-    timer(0),
+    timer(nullptr),
     fMax(DEFAULT_SAMPLE_HEIGHT),
     nMins(0),
-    clientModel(0),
+    clientModel(nullptr),
     trafficGraphData(TrafficGraphData::Range_30m)
 {
     timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), SLOT(updateRates()));
+    connect(timer, &QTimer::timeout, this, &TrafficGraphWidget::updateRates);
     timer->setInterval(TrafficGraphData::SMALLEST_SAMPLE_PERIOD);
     timer->start();
 }
@@ -126,11 +125,12 @@ void TrafficGraphWidget::paintEvent(QPaintEvent *)
     const TrafficGraphData::SampleQueue& queue = trafficGraphData.getCurrentRangeQueueWithAverageBandwidth();
 
     if(!queue.empty()) {
+        painter.setRenderHint(QPainter::Antialiasing);
         QPainterPath pIn;
         QColor lucentGreen = green;
         lucentGreen.setAlpha(128);
 
-        paintPath(pIn, queue, boost::bind(chooseIn,_1));
+        paintPath(pIn, queue, std::bind(chooseIn, std::placeholders::_1));
         painter.fillPath(pIn, lucentGreen);
         painter.setPen(green);
         painter.drawPath(pIn);
@@ -139,10 +139,11 @@ void TrafficGraphWidget::paintEvent(QPaintEvent *)
         QColor lucentRed = red;
         lucentRed.setAlpha(128);
 
-        paintPath(pOut, queue, boost::bind(chooseOut,_1));
+        paintPath(pOut, queue, std::bind(chooseOut, std::placeholders::_1));
         painter.fillPath(pOut, lucentRed);
         painter.setPen(red);
         painter.drawPath(pOut);
+        painter.setRenderHint(QPainter::Antialiasing, false);
     }
 
     // draw text

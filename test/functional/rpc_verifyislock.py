@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020-2021 The Dash Core developers
+# Copyright (c) 2020-2022 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -40,18 +40,18 @@ class RPCVerifyISLockTest(SparksTestFramework):
         self.wait_for_instantlock(txid, node)
 
         request_id = self.get_request_id(self.nodes[0].getrawtransaction(txid))
-        wait_until(lambda: node.quorum("hasrecsig", 100, request_id, txid))
+        wait_until(lambda: node.quorum("hasrecsig", 104, request_id, txid))
 
-        rec_sig = node.quorum("getrecsig", 100, request_id, txid)['sig']
-        assert(node.verifyislock(request_id, txid, rec_sig))
+        rec_sig = node.quorum("getrecsig", 104, request_id, txid)['sig']
+        assert node.verifyislock(request_id, txid, rec_sig)
         # Not mined, should use maxHeight
         assert not node.verifyislock(request_id, txid, rec_sig, 1)
         node.generate(1)
-        assert(txid not in node.getrawmempool())
+        assert txid not in node.getrawmempool()
         # Mined but at higher height, should use maxHeight
         assert not node.verifyislock(request_id, txid, rec_sig, 1)
         # Mined, should ignore higher maxHeight
-        assert(node.verifyislock(request_id, txid, rec_sig, node.getblockcount() + 100))
+        assert node.verifyislock(request_id, txid, rec_sig, node.getblockcount() + 100)
 
         # Mine one more quorum to have a full active set
         self.mine_quorum()
@@ -59,7 +59,7 @@ class RPCVerifyISLockTest(SparksTestFramework):
         # out of the active set when a new quorum appears
         selected_hash = None
         request_id = None
-        oldest_quorum_hash = node.quorum("list")["llmq_test"][-1]
+        oldest_quorum_hash = node.quorum("list")["llmq_test_instantsend"][-1]
         utxos = node.listunspent()
         fee = 0.001
         amount = 1
@@ -77,21 +77,21 @@ class RPCVerifyISLockTest(SparksTestFramework):
             rawtx = node.createrawtransaction([utxo], outputs)
             rawtx = node.signrawtransactionwithwallet(rawtx)["hex"]
             request_id = self.get_request_id(rawtx)
-            selected_hash = node.quorum('selectquorum', 100, request_id)["quorumHash"]
+            selected_hash = node.quorum('selectquorum', 104, request_id)["quorumHash"]
             if selected_hash == oldest_quorum_hash:
                 break
         assert selected_hash == oldest_quorum_hash
         # Create the ISLOCK, then mine a quorum to move the signing quorum out of the active set
-        islock = self.create_islock(rawtx)
+        islock = self.create_islock(rawtx, False)
         # Mine one block to trigger the "signHeight + dkgInterval" verification for the ISLOCK
         self.mine_quorum()
         # Verify the ISLOCK for a transaction that is not yet known by the node
         rawtx_txid = node.decoderawtransaction(rawtx)["txid"]
         assert_raises_rpc_error(-5, "No such mempool or blockchain transaction", node.getrawtransaction, rawtx_txid)
-        assert node.verifyislock(request_id, rawtx_txid, bytes_to_hex_str(islock.sig), node.getblockcount())
+        assert node.verifyislock(request_id, rawtx_txid, islock.sig.hex(), node.getblockcount())
         # Send the tx and verify the ISLOCK for a now known transaction
         assert rawtx_txid == node.sendrawtransaction(rawtx)
-        assert node.verifyislock(request_id, rawtx_txid, bytes_to_hex_str(islock.sig), node.getblockcount())
+        assert node.verifyislock(request_id, rawtx_txid, islock.sig.hex(), node.getblockcount())
 
 
 if __name__ == '__main__':

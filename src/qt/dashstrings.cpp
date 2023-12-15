@@ -9,8 +9,10 @@
 #define UNUSED
 #endif
 static const char UNUSED *sparks_strings[] = {
-QT_TRANSLATE_NOOP("sparks-core", "Sparks Core"),
 QT_TRANSLATE_NOOP("sparks-core", "The %s developers"),
+QT_TRANSLATE_NOOP("sparks-core", ""
+"%s corrupt. Try using the wallet tool sparks-wallet to salvage or restoring a "
+"backup."),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "%s file contains all private keys from this wallet. Do not share it with "
 "anyone!"),
@@ -18,11 +20,11 @@ QT_TRANSLATE_NOOP("sparks-core", ""
 "%s uses exact denominated amounts to send funds, you might simply need to "
 "mix some more coins."),
 QT_TRANSLATE_NOOP("sparks-core", ""
-"-masternode option is deprecated and ignored, specifying -"
-"masternodeblsprivkey is enough to start this node as a masternode."),
-QT_TRANSLATE_NOOP("sparks-core", ""
 "-maxtxfee is set very high! Fees this large could be paid on a single "
 "transaction."),
+QT_TRANSLATE_NOOP("sparks-core", ""
+"Can't generate a change-address key. No keys in the internal keypool and "
+"can't generate any keys."),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "Cannot obtain a lock on data directory %s. %s is probably already running."),
 QT_TRANSLATE_NOOP("sparks-core", ""
@@ -42,6 +44,9 @@ QT_TRANSLATE_NOOP("sparks-core", ""
 "Failed to create backup, file already exists! This could happen if you "
 "restarted wallet in less than 60 seconds. You can continue if you are ok "
 "with this."),
+QT_TRANSLATE_NOOP("sparks-core", ""
+"Fee estimation failed. Fallbackfee is disabled. Wait a few blocks or enable -"
+"fallbackfee."),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "Found unconfirmed denominated outputs, will wait till they confirm to "
 "continue."),
@@ -78,6 +83,10 @@ QT_TRANSLATE_NOOP("sparks-core", ""
 QT_TRANSLATE_NOOP("sparks-core", ""
 "The transaction amount is too small to send after the fee has been deducted"),
 QT_TRANSLATE_NOOP("sparks-core", ""
+"This error could occur if this wallet was not shutdown cleanly and was last "
+"loaded using a build with a newer version of Berkeley DB. If so, please use "
+"the software that last loaded this wallet"),
+QT_TRANSLATE_NOOP("sparks-core", ""
 "This is a pre-release test build - use at your own risk - do not use for "
 "mining or merchant applications"),
 QT_TRANSLATE_NOOP("sparks-core", ""
@@ -85,10 +94,6 @@ QT_TRANSLATE_NOOP("sparks-core", ""
 "at this level"),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "This is the transaction fee you may pay when fee estimates are not available."),
-QT_TRANSLATE_NOOP("sparks-core", ""
-"This product includes software developed by the OpenSSL Project for use in "
-"the OpenSSL Toolkit %s and cryptographic software written by Eric Young and "
-"UPnP software written by Thomas Bernard."),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "Total length of network version string (%i) exceeds maximum length (%i). "
 "Reduce the number or size of uacomments."),
@@ -100,26 +105,15 @@ QT_TRANSLATE_NOOP("sparks-core", ""
 "Unable to replay blocks. You will need to rebuild the database using -"
 "reindex-chainstate."),
 QT_TRANSLATE_NOOP("sparks-core", ""
-"Unsupported argument -socks found. Setting SOCKS version isn't possible "
-"anymore, only SOCKS5 proxies are supported."),
-QT_TRANSLATE_NOOP("sparks-core", ""
-"Unsupported argument -whitelistalwaysrelay ignored, use -whitelistrelay and/"
-"or -whitelistforcerelay."),
-QT_TRANSLATE_NOOP("sparks-core", ""
 "WARNING! Failed to replenish keypool, please unlock your wallet to do so."),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "Wallet is locked, can't replenish keypool! Automatic backups and mixing are "
 "disabled, please unlock your wallet to replenish keypool."),
 QT_TRANSLATE_NOOP("sparks-core", ""
+"Warning: Private keys detected in wallet {%s} with disabled private keys"),
+QT_TRANSLATE_NOOP("sparks-core", ""
 "Warning: The network does not appear to fully agree! Some miners appear to "
 "be experiencing issues."),
-QT_TRANSLATE_NOOP("sparks-core", ""
-"Warning: Unknown block versions being mined! It's possible unknown rules are "
-"in effect"),
-QT_TRANSLATE_NOOP("sparks-core", ""
-"Warning: Wallet file corrupt, data salvaged! Original %s saved as %s in %s; "
-"if your balance or transactions are incorrect you should restore from a "
-"backup."),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "Warning: We do not appear to fully agree with our peers! You may need to "
 "upgrade, or other nodes may need to upgrade."),
@@ -130,17 +124,17 @@ QT_TRANSLATE_NOOP("sparks-core", ""
 "mode.  This will redownload the entire blockchain"),
 QT_TRANSLATE_NOOP("sparks-core", "%d of last 100 blocks have unexpected version"),
 QT_TRANSLATE_NOOP("sparks-core", "%s can't be lower than %s"),
-QT_TRANSLATE_NOOP("sparks-core", "%s corrupt, salvage failed"),
 QT_TRANSLATE_NOOP("sparks-core", "%s failed"),
 QT_TRANSLATE_NOOP("sparks-core", "%s is idle."),
 QT_TRANSLATE_NOOP("sparks-core", "%s is not a valid backup folder!"),
+QT_TRANSLATE_NOOP("sparks-core", "%s is only allowed with a single wallet file"),
 QT_TRANSLATE_NOOP("sparks-core", "%s is set very high!"),
-QT_TRANSLATE_NOOP("sparks-core", "%s request incomplete: %s"),
+QT_TRANSLATE_NOOP("sparks-core", "%s request incomplete:"),
 QT_TRANSLATE_NOOP("sparks-core", "-devnet can only be specified once"),
-QT_TRANSLATE_NOOP("sparks-core", "-litemode is deprecated."),
 QT_TRANSLATE_NOOP("sparks-core", "-maxmempool must be at least %d MB"),
 QT_TRANSLATE_NOOP("sparks-core", "-port must be specified when -devnet and -listen are specified"),
 QT_TRANSLATE_NOOP("sparks-core", "-rpcport must be specified when -devnet and -server are specified"),
+QT_TRANSLATE_NOOP("sparks-core", "A fatal internal error occurred, see debug.log for details"),
 QT_TRANSLATE_NOOP("sparks-core", "Already have that input."),
 QT_TRANSLATE_NOOP("sparks-core", "Automatic backups disabled"),
 QT_TRANSLATE_NOOP("sparks-core", "Can't find random Masternode."),
@@ -148,11 +142,16 @@ QT_TRANSLATE_NOOP("sparks-core", "Can't mix while sync in progress."),
 QT_TRANSLATE_NOOP("sparks-core", "Can't mix: no compatible inputs found!"),
 QT_TRANSLATE_NOOP("sparks-core", "Cannot downgrade wallet"),
 QT_TRANSLATE_NOOP("sparks-core", "Cannot resolve -%s address: '%s'"),
+QT_TRANSLATE_NOOP("sparks-core", "Cannot set -peerblockfilters without -blockfilterindex."),
 QT_TRANSLATE_NOOP("sparks-core", "Cannot write to data directory '%s'; check permissions."),
 QT_TRANSLATE_NOOP("sparks-core", "Change index out of range"),
 QT_TRANSLATE_NOOP("sparks-core", "Collateral not valid."),
+QT_TRANSLATE_NOOP("sparks-core", "Config setting for %s only applied on %s network when in [%s] section."),
 QT_TRANSLATE_NOOP("sparks-core", "Copyright (C)"),
 QT_TRANSLATE_NOOP("sparks-core", "Corrupted block database detected"),
+QT_TRANSLATE_NOOP("sparks-core", "Could not find asmap file %s"),
+QT_TRANSLATE_NOOP("sparks-core", "Could not parse asmap file %s"),
+QT_TRANSLATE_NOOP("sparks-core", "Disk space is too low!"),
 QT_TRANSLATE_NOOP("sparks-core", "Do you want to rebuild the block database now?"),
 QT_TRANSLATE_NOOP("sparks-core", "Done loading"),
 QT_TRANSLATE_NOOP("sparks-core", "ERROR! Failed to create automatic backup"),
@@ -161,6 +160,7 @@ QT_TRANSLATE_NOOP("sparks-core", "Entry exceeds maximum size."),
 QT_TRANSLATE_NOOP("sparks-core", "Error initializing block database"),
 QT_TRANSLATE_NOOP("sparks-core", "Error initializing wallet database environment %s!"),
 QT_TRANSLATE_NOOP("sparks-core", "Error loading %s"),
+QT_TRANSLATE_NOOP("sparks-core", "Error loading %s: Private keys can only be disabled during creation"),
 QT_TRANSLATE_NOOP("sparks-core", "Error loading %s: Wallet corrupted"),
 QT_TRANSLATE_NOOP("sparks-core", "Error loading %s: Wallet requires newer version of %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Error loading %s: You can't disable HD on an already existing HD wallet"),
@@ -170,25 +170,24 @@ QT_TRANSLATE_NOOP("sparks-core", "Error opening block database"),
 QT_TRANSLATE_NOOP("sparks-core", "Error reading from database, shutting down."),
 QT_TRANSLATE_NOOP("sparks-core", "Error upgrading chainstate database"),
 QT_TRANSLATE_NOOP("sparks-core", "Error upgrading evo database"),
-QT_TRANSLATE_NOOP("sparks-core", "Error"),
 QT_TRANSLATE_NOOP("sparks-core", "Error: A fatal internal error occurred, see debug.log for details"),
-QT_TRANSLATE_NOOP("sparks-core", "Error: Disk space is low!"),
+QT_TRANSLATE_NOOP("sparks-core", "Error: Disk space is low for %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Error: failed to add socket to epollfd (epoll_ctl returned error %s)"),
 QT_TRANSLATE_NOOP("sparks-core", "Error: failed to add socket to kqueuefd (kevent returned error %s)"),
 QT_TRANSLATE_NOOP("sparks-core", "Exceeded max tries."),
-QT_TRANSLATE_NOOP("sparks-core", "Failed to clear fulfilled requests cache at"),
-QT_TRANSLATE_NOOP("sparks-core", "Failed to clear governance cache at"),
-QT_TRANSLATE_NOOP("sparks-core", "Failed to clear masternode cache at"),
+QT_TRANSLATE_NOOP("sparks-core", "Failed to clear fulfilled requests cache at %s"),
+QT_TRANSLATE_NOOP("sparks-core", "Failed to clear governance cache at %s"),
+QT_TRANSLATE_NOOP("sparks-core", "Failed to clear masternode cache at %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Failed to commit EvoDB"),
 QT_TRANSLATE_NOOP("sparks-core", "Failed to create backup %s!"),
 QT_TRANSLATE_NOOP("sparks-core", "Failed to create backup, error: %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Failed to delete backup, error: %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Failed to find mixing queue to join"),
 QT_TRANSLATE_NOOP("sparks-core", "Failed to listen on any port. Use -listen=0 if you want this."),
-QT_TRANSLATE_NOOP("sparks-core", "Failed to load fulfilled requests cache from"),
-QT_TRANSLATE_NOOP("sparks-core", "Failed to load governance cache from"),
-QT_TRANSLATE_NOOP("sparks-core", "Failed to load masternode cache from"),
-QT_TRANSLATE_NOOP("sparks-core", "Failed to load sporks cache from"),
+QT_TRANSLATE_NOOP("sparks-core", "Failed to load fulfilled requests cache from %s"),
+QT_TRANSLATE_NOOP("sparks-core", "Failed to load governance cache from %s"),
+QT_TRANSLATE_NOOP("sparks-core", "Failed to load masternode cache from %s"),
+QT_TRANSLATE_NOOP("sparks-core", "Failed to load sporks cache from %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Failed to rescan the wallet during initialization"),
 QT_TRANSLATE_NOOP("sparks-core", "Failed to start a new mixing queue"),
 QT_TRANSLATE_NOOP("sparks-core", "Found enough users, signing ( waiting %s )"),
@@ -198,13 +197,13 @@ QT_TRANSLATE_NOOP("sparks-core", "Incompatible mode."),
 QT_TRANSLATE_NOOP("sparks-core", "Incompatible version."),
 QT_TRANSLATE_NOOP("sparks-core", "Incorrect -rescan mode, falling back to default value"),
 QT_TRANSLATE_NOOP("sparks-core", "Incorrect or no genesis block found. Wrong datadir for network?"),
-QT_TRANSLATE_NOOP("sparks-core", "Information"),
 QT_TRANSLATE_NOOP("sparks-core", "Initialization sanity check failed. %s is shutting down."),
 QT_TRANSLATE_NOOP("sparks-core", "Input is not valid."),
 QT_TRANSLATE_NOOP("sparks-core", "Inputs vs outputs size mismatch."),
 QT_TRANSLATE_NOOP("sparks-core", "Insufficient funds."),
 QT_TRANSLATE_NOOP("sparks-core", "Invalid -onion address or hostname: '%s'"),
 QT_TRANSLATE_NOOP("sparks-core", "Invalid -proxy address or hostname: '%s'"),
+QT_TRANSLATE_NOOP("sparks-core", "Invalid P2P permission: '%s'"),
 QT_TRANSLATE_NOOP("sparks-core", "Invalid amount for -%s=<amount>: '%s'"),
 QT_TRANSLATE_NOOP("sparks-core", "Invalid amount for -discardfee=<amount>: '%s'"),
 QT_TRANSLATE_NOOP("sparks-core", "Invalid amount for -fallbackfee=<amount>: '%s'"),
@@ -214,8 +213,6 @@ QT_TRANSLATE_NOOP("sparks-core", "Invalid minimum number of spork signers specif
 QT_TRANSLATE_NOOP("sparks-core", "Invalid netmask specified in -whitelist: '%s'"),
 QT_TRANSLATE_NOOP("sparks-core", "Invalid script detected."),
 QT_TRANSLATE_NOOP("sparks-core", "Invalid spork address specified with -sporkaddr"),
-QT_TRANSLATE_NOOP("sparks-core", "It has been replaced by -disablegovernance."),
-QT_TRANSLATE_NOOP("sparks-core", "Its replacement -disablegovernance has been forced instead."),
 QT_TRANSLATE_NOOP("sparks-core", "Keypool ran out, please call keypoolrefill first"),
 QT_TRANSLATE_NOOP("sparks-core", "Last queue was created too recently."),
 QT_TRANSLATE_NOOP("sparks-core", "Last successful action was too recent."),
@@ -243,12 +240,14 @@ QT_TRANSLATE_NOOP("sparks-core", "Not enough file descriptors available."),
 QT_TRANSLATE_NOOP("sparks-core", "Not enough funds to mix."),
 QT_TRANSLATE_NOOP("sparks-core", "Not in the Masternode list."),
 QT_TRANSLATE_NOOP("sparks-core", "Prune cannot be configured with a negative value."),
+QT_TRANSLATE_NOOP("sparks-core", "Prune mode is incompatible with -blockfilterindex."),
 QT_TRANSLATE_NOOP("sparks-core", "Prune mode is incompatible with -disablegovernance=false."),
 QT_TRANSLATE_NOOP("sparks-core", "Prune mode is incompatible with -txindex."),
 QT_TRANSLATE_NOOP("sparks-core", "Pruning blockstore..."),
 QT_TRANSLATE_NOOP("sparks-core", "Reducing -maxconnections from %d to %d, because of system limitations."),
 QT_TRANSLATE_NOOP("sparks-core", "Replaying blocks..."),
 QT_TRANSLATE_NOOP("sparks-core", "Rescanning..."),
+QT_TRANSLATE_NOOP("sparks-core", "Section [%s] is not recognized."),
 QT_TRANSLATE_NOOP("sparks-core", "Session not complete!"),
 QT_TRANSLATE_NOOP("sparks-core", "Session timed out."),
 QT_TRANSLATE_NOOP("sparks-core", "Signing transaction failed"),
@@ -262,6 +261,7 @@ QT_TRANSLATE_NOOP("sparks-core", "Synchronization finished"),
 QT_TRANSLATE_NOOP("sparks-core", "Synchronizing blockchain..."),
 QT_TRANSLATE_NOOP("sparks-core", "Synchronizing governance objects..."),
 QT_TRANSLATE_NOOP("sparks-core", "The source code is available from %s."),
+QT_TRANSLATE_NOOP("sparks-core", "The specified config file %s does not exist\n"),
 QT_TRANSLATE_NOOP("sparks-core", "The transaction amount is too small to pay the fee"),
 QT_TRANSLATE_NOOP("sparks-core", "The wallet will avoid paying less than the minimum relay fee."),
 QT_TRANSLATE_NOOP("sparks-core", "This is expected because you are running a pruned node."),
@@ -275,33 +275,29 @@ QT_TRANSLATE_NOOP("sparks-core", "Transaction fees are too high."),
 QT_TRANSLATE_NOOP("sparks-core", "Transaction has too long of a mempool chain"),
 QT_TRANSLATE_NOOP("sparks-core", "Transaction must have at least one recipient"),
 QT_TRANSLATE_NOOP("sparks-core", "Transaction not valid."),
-QT_TRANSLATE_NOOP("sparks-core", "Transaction too large for fee policy"),
 QT_TRANSLATE_NOOP("sparks-core", "Transaction too large"),
 QT_TRANSLATE_NOOP("sparks-core", "Trying to connect..."),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to bind to %s on this computer (bind returned error %s)"),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to bind to %s on this computer. %s is probably already running."),
+QT_TRANSLATE_NOOP("sparks-core", "Unable to create the PID file '%s': %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to generate initial keys"),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to locate enough mixed funds for this transaction."),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to locate enough non-denominated funds for this transaction."),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to sign spork message, wrong key?"),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to start HTTP server. See debug log for details."),
+QT_TRANSLATE_NOOP("sparks-core", "Unknown -blockfilterindex value %s."),
 QT_TRANSLATE_NOOP("sparks-core", "Unknown network specified in -onlynet: '%s'"),
 QT_TRANSLATE_NOOP("sparks-core", "Unknown response."),
 QT_TRANSLATE_NOOP("sparks-core", "Unknown state: id = %u"),
-QT_TRANSLATE_NOOP("sparks-core", "Unsupported argument -benchmark ignored, use -debug=bench."),
-QT_TRANSLATE_NOOP("sparks-core", "Unsupported argument -debugnet ignored, use -debug=net."),
-QT_TRANSLATE_NOOP("sparks-core", "Unsupported argument -tor found, use -onion."),
 QT_TRANSLATE_NOOP("sparks-core", "Unsupported logging category %s=%s."),
 QT_TRANSLATE_NOOP("sparks-core", "Upgrading UTXO database"),
+QT_TRANSLATE_NOOP("sparks-core", "Upgrading txindex database"),
 QT_TRANSLATE_NOOP("sparks-core", "User Agent comment (%s) contains unsafe characters."),
 QT_TRANSLATE_NOOP("sparks-core", "Verifying blocks..."),
 QT_TRANSLATE_NOOP("sparks-core", "Verifying wallet(s)..."),
 QT_TRANSLATE_NOOP("sparks-core", "Very low number of keys left: %d"),
-QT_TRANSLATE_NOOP("sparks-core", "Wallet %s resides outside wallet directory %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Wallet is locked."),
 QT_TRANSLATE_NOOP("sparks-core", "Wallet needed to be rewritten: restart %s to complete"),
-QT_TRANSLATE_NOOP("sparks-core", "Warning"),
-QT_TRANSLATE_NOOP("sparks-core", "Warning: %s is deprecated, please use %s instead"),
 QT_TRANSLATE_NOOP("sparks-core", "Warning: can't use %s and %s together, will prefer %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Warning: incorrect parameter %s, path must exist! Using default path."),
 QT_TRANSLATE_NOOP("sparks-core", "Warning: unknown new rules activated (versionbit %i)"),
@@ -312,9 +308,7 @@ QT_TRANSLATE_NOOP("sparks-core", "You can not disable governance validation on a
 QT_TRANSLATE_NOOP("sparks-core", "You can not start a masternode with wallet enabled."),
 QT_TRANSLATE_NOOP("sparks-core", "You need to rebuild the database using -reindex to change -addressindex"),
 QT_TRANSLATE_NOOP("sparks-core", "You need to rebuild the database using -reindex to change -spentindex"),
-QT_TRANSLATE_NOOP("sparks-core", "You need to rebuild the database using -reindex to change -txindex"),
 QT_TRANSLATE_NOOP("sparks-core", "Your entries added successfully."),
-QT_TRANSLATE_NOOP("sparks-core", "Zapping all transactions from wallet..."),
 QT_TRANSLATE_NOOP("sparks-core", "no mixing available."),
 QT_TRANSLATE_NOOP("sparks-core", "see debug.log for details."),
 };

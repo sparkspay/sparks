@@ -8,7 +8,7 @@
 cmake_minimum_required(VERSION 3.7)
 project(sparks)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 include_directories(
         src
@@ -20,7 +20,18 @@ include_directories(
 if(UNIX AND NOT APPLE)
     set(DEPENDS_PREFIX depends/x86_64-pc-linux-gnu)
 elseif(APPLE)
-    set(DEPENDS_PREFIX depends/x86_64-apple-darwin14)
+    EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
+    EXECUTE_PROCESS( COMMAND system_profiler -detailLevel mini -json SPSoftwareDataType
+            COMMAND jq .SPSoftwareDataType
+            COMMAND jq .[]
+            COMMAND jq .kernel_version
+            COMMAND tr -d "Dawrin\" "
+            OUTPUT_VARIABLE DARWIN_KERNEL_VERSION)
+    if( ${ARCHITECTURE} STREQUAL "arm64" )
+        set(DEPENDS_PREFIX depends/aarch64-apple-darwin${DARWIN_KERNEL_VERSION})
+    else()
+        set(DEPENDS_PREFIX depends/x86_64-apple-darwin${DARWIN_KERNEL_VERSION})
+    endif()
 elseif(WIN32)
     set(DEPENDS_PREFIX depends/x86_64-w64-mingw32)
 endif()

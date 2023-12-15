@@ -1,0 +1,22 @@
+QT_TS = \
+  qt/locale/sparks_ar.ts \
+  qt/locale/sparks_bg.ts \
+  qt/locale/sparks_de.ts \
+  qt/locale/sparks_en.ts \
+  qt/locale/sparks_es.ts \
+  qt/locale/sparks_fi.ts \
+  qt/locale/sparks_fr.ts \
+  qt/locale/sparks_it.ts \
+  qt/locale/sparks_ja.ts \
+  qt/locale/sparks_ko.ts \
+  qt/locale/sparks_nl.ts \
+  qt/locale/sparks_pl.ts \
+  qt/locale/sparks_pt.ts \
+  qt/locale/sparks_ro.ts \
+  qt/locale/sparks_ru.ts \
+  qt/locale/sparks_sk.ts \
+  qt/locale/sparks_th.ts \
+  qt/locale/sparks_tr.ts \
+  qt/locale/sparks_vi.ts \
+  qt/locale/sparks_zh_CN.ts \
+  qt/locale/sparks_zh_TW.ts

@@ -3,7 +3,7 @@
 <plist version="0.9">
 <dict>
   <key>LSMinimumSystemVersion</key>
-  <string>10.10.0</string>
+  <string>10.15.0</string>
 
   <key>LSArchitecturePriority</key>
   <array>
@@ -17,17 +17,16 @@
   <string>APPL</string>
 
   <key>CFBundleShortVersionString</key>
-  <string>@CLIENT_VERSION_MAJOR@.@CLIENT_VERSION_MINOR@.@CLIENT_VERSION_REVISION@.@CLIENT_VERSION_BUILD@</string>
+  <string>@CLIENT_VERSION_MAJOR@.@CLIENT_VERSION_MINOR@.@CLIENT_VERSION_BUILD@</string>
 
   <key>CFBundleVersion</key>
-  <string>@CLIENT_VERSION_MAJOR@.@CLIENT_VERSION_MINOR@.@CLIENT_VERSION_REVISION@.@CLIENT_VERSION_BUILD@</string>
+  <string>@CLIENT_VERSION_MAJOR@.@CLIENT_VERSION_MINOR@.@CLIENT_VERSION_BUILD@</string>
 
   <key>CFBundleSignature</key>
   <string>????</string>
 
   <key>CFBundleExecutable</key>
-  <string>Sparks-Qt</string>
-  
+  <string>Dash-Qt</string>
   <key>CFBundleName</key>
   <string>Sparks-Qt</string>
 
@@ -51,6 +50,7 @@
     </dict>
   </array>
 
+<<<<<<< HEAD
   <key>UTExportedTypeDeclarations</key>
   <array>
     <dict>
@@ -88,6 +88,8 @@
     </dict>
   </array>
 
+=======
+>>>>>>> refs/tags/v18.2.2
   <key>NSPrincipalClass</key>
     <string>NSApplication</string>
 
@@ -99,7 +101,6 @@
 
   <key>NSHumanReadableCopyright</key>
   <string>Copyright © 2009-@COPYRIGHT_YEAR@ The Bitcoin Core developers, 2014-@COPYRIGHT_YEAR@ @COPYRIGHT_HOLDERS_FINAL@</string>
-
   <key>LSApplicationCategoryType</key>
     <string>public.app-category.finance</string>
 </dict>

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021 The Dash Core developers
+# Copyright (c) 2021-2022 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 import time
 from test_framework.mininode import logger
-from test_framework.test_framework import SparksTestFramework
-from test_framework.util import force_finish_mnsync, connect_nodes
+from test_framework.test_framework import DashTestFramework
+from test_framework.util import force_finish_mnsync, wait_until
 
 '''
 feature_llmq_data_recovery.py
@@ -29,15 +29,24 @@ class QuorumDataRecoveryTest(SparksTestFramework):
         self.set_sparks_llmq_test_params(4, 3)
 
     def restart_mn(self, mn, reindex=False, qvvec_sync=[], qdata_recovery_enabled=True):
-        args = self.extra_args[mn.nodeIdx] + ['-masternodeblsprivkey=%s' % mn.keyOperator,
+        args = self.extra_args[mn.node.index] + ['-masternodeblsprivkey=%s' % mn.keyOperator,
                                               '-llmq-data-recovery=%d' % qdata_recovery_enabled]
-        if reindex:
-            args.append('-reindex')
         for llmq_sync in qvvec_sync:
             args.append('-llmq-qvvec-sync=%s:%d' % (llmq_type_strings[llmq_sync[0]], llmq_sync[1]))
-        self.restart_node(mn.nodeIdx, args)
+        if reindex:
+            args.append('-reindex')
+            bb_hash = mn.node.getbestblockhash()
+            self.restart_node(mn.node.index, args)
+            wait_until(lambda: mn.node.getbestblockhash() == bb_hash)
+        else:
+            self.restart_node(mn.node.index, args)
         force_finish_mnsync(mn.node)
-        connect_nodes(mn.node, 0)
+        self.connect_nodes(mn.node.index, 0)
+        if qdata_recovery_enabled:
+            # trigger recovery threads and wait for them to start
+            self.nodes[0].generate(1)
+            self.bump_mocktime(self.quorum_data_thread_request_timeout_seconds + 1)
+            time.sleep(self.quorum_data_thread_request_timeout_seconds + 1)
         self.sync_blocks()
 
     def restart_mns(self, mns=None, exclude=[], reindex=False, qvvec_sync=[], qdata_recovery_enabled=True):
@@ -121,8 +130,8 @@ class QuorumDataRecoveryTest(SparksTestFramework):
     def run_test(self):
 
         node = self.nodes[0]
-        node.spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
-        node.spork("SPORK_21_QUORUM_ALL_CONNECTED", 0)
+        node.sporkupdate("SPORK_18_QUORUM_DKG_ENABLED", 0)
+        node.sporkupdate("SPORK_21_QUORUM_ALL_CONNECTED", 0)
         self.wait_for_sporks_same()
         self.activate_dip8()
 
@@ -173,7 +182,7 @@ class QuorumDataRecoveryTest(SparksTestFramework):
         self.test_mns(llmq_test, quorum_hash_recover, valid_mns=member_mns_recover_test, recover=True)
         self.test_mns(llmq_test_v17, quorum_hash_recover, valid_mns=member_mns_recover_v17, recover=True)
         # Mining a block should result in a chainlock now because the quorum should be healed
-        self.wait_for_chainlocked_block(node, node.getbestblockhash())
+        self.wait_for_chainlocked_block_all_nodes(node.getbestblockhash())
         logger.info("Test -llmq-qvvec-sync command line parameter")
         # Run with one type separated and then both possible (for regtest) together, both calls generate new quorums
         # and are restarting the nodes with the other parameters

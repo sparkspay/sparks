@@ -6,13 +6,14 @@
 #include <script/interpreter.h>
 
 #include <test/test_sparks.h>
+#include <test/util/setup_common.h>
 
 #include <boost/test/unit_test.hpp>
 
 #include <array>
 
-typedef std::vector<uint8_t> valtype;
-typedef std::vector<valtype> stacktype;
+using valtype = std::vector<uint8_t>;
+using stacktype = std::vector<valtype>;
 
 BOOST_FIXTURE_TEST_SUITE(dip0020opcodes_tests, BasicTestingSetup)
 
@@ -566,7 +567,7 @@ static void CheckTypeConversionOp(const valtype& bin, const valtype& num)
                                    << bin.size() << OP_NUM2BIN,
                                {rebuilt_bin});
 
-    // BIN2NUM is indempotent.
+    // BIN2NUM is idempotent.
     CheckTestResultForAllFlags({bin}, CScript() << OP_BIN2NUM << OP_BIN2NUM,
                                {num});
 }

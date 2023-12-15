@@ -3,22 +3,19 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <blockencodings.h>
-#include <consensus/merkle.h>
 #include <chainparams.h>
+#include <consensus/merkle.h>
 #include <pow.h>
-#include <random.h>
+#include <streams.h>
 
 #include <test/test_sparks.h>
+#include <test/util/setup_common.h>
 
 #include <boost/test/unit_test.hpp>
 
 std::vector<std::pair<uint256, CTransactionRef>> extra_txn;
 
-struct RegtestingSetup : public TestingSetup {
-    RegtestingSetup() : TestingSetup(CBaseChainParams::REGTEST) {}
-};
-
-BOOST_FIXTURE_TEST_SUITE(blockencodings_tests, RegtestingSetup)
+BOOST_FIXTURE_TEST_SUITE(blockencodings_tests, RegTestingSetup)
 
 static CBlock BuildBlockTestCase() {
     CBlock block;
@@ -53,8 +50,8 @@ static CBlock BuildBlockTestCase() {
 }
 
 // Number of shared use_counts we expect for a tx we haven't touched
-// == 2 (mempool + our copy from the GetSharedTx call)
-#define SHARED_TX_OFFSET 2
+// (block + mempool + our copy from the GetSharedTx call)
+constexpr long SHARED_TX_OFFSET{3};
 
 BOOST_AUTO_TEST_CASE(SimpleRoundTripTest)
 {
@@ -62,8 +59,8 @@ BOOST_AUTO_TEST_CASE(SimpleRoundTripTest)
     TestMemPoolEntryHelper entry;
     CBlock block(BuildBlockTestCase());
 
-    LOCK(pool.cs);
-    pool.addUnchecked(block.vtx[2]->GetHash(), entry.FromTx(*block.vtx[2]));
+    LOCK2(cs_main, pool.cs);
+    pool.addUnchecked(entry.FromTx(block.vtx[2]));
     BOOST_CHECK_EQUAL(pool.mapTx.find(block.vtx[2]->GetHash())->GetSharedTx().use_count(), SHARED_TX_OFFSET + 0);
 
     // Do a simple ShortTxIDs RT
@@ -85,7 +82,7 @@ BOOST_AUTO_TEST_CASE(SimpleRoundTripTest)
         BOOST_CHECK_EQUAL(pool.mapTx.find(block.vtx[2]->GetHash())->GetSharedTx().use_count(), SHARED_TX_OFFSET + 1);
 
         size_t poolSize = pool.size();
-        pool.removeRecursive(*block.vtx[2]);
+        pool.removeRecursive(*block.vtx[2], MemPoolRemovalReason::MANUAL);
         BOOST_CHECK_EQUAL(pool.size(), poolSize - 1);
 
         CBlock block2;
@@ -136,24 +133,7 @@ public:
         return base.GetShortID(txhash);
     }
 
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action) {
-        READWRITE(header);
-        READWRITE(nonce);
-        size_t shorttxids_size = shorttxids.size();
-        READWRITE(VARINT(shorttxids_size));
-        shorttxids.resize(shorttxids_size);
-        for (size_t i = 0; i < shorttxids.size(); i++) {
-            uint32_t lsb = shorttxids[i] & 0xffffffff;
-            uint16_t msb = (shorttxids[i] >> 32) & 0xffff;
-            READWRITE(lsb);
-            READWRITE(msb);
-            shorttxids[i] = (uint64_t(msb) << 32) | uint64_t(lsb);
-        }
-        READWRITE(prefilledtxn);
-    }
+    SERIALIZE_METHODS(TestHeaderAndShortIDs, obj) { READWRITE(obj.header, obj.nonce, Using<VectorFormatter<CustomUintFormatter<CBlockHeaderAndShortTxIDs::SHORTTXIDS_LENGTH>>>(obj.shorttxids), obj.prefilledtxn); }
 };
 
 BOOST_AUTO_TEST_CASE(NonCoinbasePreforwardRTTest)
@@ -162,8 +142,8 @@ BOOST_AUTO_TEST_CASE(NonCoinbasePreforwardRTTest)
     TestMemPoolEntryHelper entry;
     CBlock block(BuildBlockTestCase());
 
-    LOCK(pool.cs);
-    pool.addUnchecked(block.vtx[2]->GetHash(), entry.FromTx(*block.vtx[2]));
+    LOCK2(cs_main, pool.cs);
+    pool.addUnchecked(entry.FromTx(block.vtx[2]));
     BOOST_CHECK_EQUAL(pool.mapTx.find(block.vtx[2]->GetHash())->GetSharedTx().use_count(), SHARED_TX_OFFSET + 0);
 
     uint256 txhash;
@@ -189,7 +169,7 @@ BOOST_AUTO_TEST_CASE(NonCoinbasePreforwardRTTest)
         BOOST_CHECK( partialBlock.IsTxAvailable(1));
         BOOST_CHECK( partialBlock.IsTxAvailable(2));
 
-        BOOST_CHECK_EQUAL(pool.mapTx.find(block.vtx[2]->GetHash())->GetSharedTx().use_count(), SHARED_TX_OFFSET + 1);
+        BOOST_CHECK_EQUAL(pool.mapTx.find(block.vtx[2]->GetHash())->GetSharedTx().use_count(), SHARED_TX_OFFSET + 1); // +1 because of partialBlock
 
         CBlock block2;
         {
@@ -204,6 +184,7 @@ BOOST_AUTO_TEST_CASE(NonCoinbasePreforwardRTTest)
             partialBlock.FillBlock(block2, {block.vtx[1]}); // Current implementation doesn't check txn here, but don't require that
             partialBlock = tmp;
         }
+        BOOST_CHECK_EQUAL(pool.mapTx.find(block.vtx[2]->GetHash())->GetSharedTx().use_count(), SHARED_TX_OFFSET + 2); // +2 because of partialBlock and block2
         bool mutated;
         BOOST_CHECK(block.hashMerkleRoot != BlockMerkleRoot(block2, &mutated));
 
@@ -214,13 +195,15 @@ BOOST_AUTO_TEST_CASE(NonCoinbasePreforwardRTTest)
         BOOST_CHECK_EQUAL(block.hashMerkleRoot.ToString(), BlockMerkleRoot(block3, &mutated).ToString());
         BOOST_CHECK(!mutated);
 
+        BOOST_CHECK_EQUAL(pool.mapTx.find(block.vtx[2]->GetHash())->GetSharedTx().use_count(), SHARED_TX_OFFSET + 3); // +2 because of partialBlock and block2 and block3
+
         txhash = block.vtx[2]->GetHash();
         block.vtx.clear();
         block2.vtx.clear();
         block3.vtx.clear();
-        BOOST_CHECK_EQUAL(pool.mapTx.find(txhash)->GetSharedTx().use_count(), SHARED_TX_OFFSET + 1); // + 1 because of partialBlockCopy.
+        BOOST_CHECK_EQUAL(pool.mapTx.find(txhash)->GetSharedTx().use_count(), SHARED_TX_OFFSET + 1 - 1); // + 1 because of partialBlock; -1 because of block.
     }
-    BOOST_CHECK_EQUAL(pool.mapTx.find(txhash)->GetSharedTx().use_count(), SHARED_TX_OFFSET + 0);
+    BOOST_CHECK_EQUAL(pool.mapTx.find(txhash)->GetSharedTx().use_count(), SHARED_TX_OFFSET - 1); // -1 because of block
 }
 
 BOOST_AUTO_TEST_CASE(SufficientPreforwardRTTest)
@@ -229,8 +212,8 @@ BOOST_AUTO_TEST_CASE(SufficientPreforwardRTTest)
     TestMemPoolEntryHelper entry;
     CBlock block(BuildBlockTestCase());
 
-    LOCK(pool.cs);
-    pool.addUnchecked(block.vtx[1]->GetHash(), entry.FromTx(*block.vtx[1]));
+    LOCK2(cs_main, pool.cs);
+    pool.addUnchecked(entry.FromTx(block.vtx[1]));
     BOOST_CHECK_EQUAL(pool.mapTx.find(block.vtx[1]->GetHash())->GetSharedTx().use_count(), SHARED_TX_OFFSET + 0);
 
     uint256 txhash;
@@ -269,9 +252,9 @@ BOOST_AUTO_TEST_CASE(SufficientPreforwardRTTest)
         txhash = block.vtx[1]->GetHash();
         block.vtx.clear();
         block2.vtx.clear();
-        BOOST_CHECK_EQUAL(pool.mapTx.find(txhash)->GetSharedTx().use_count(), SHARED_TX_OFFSET + 1); // + 1 because of partialBlockCopy.
+        BOOST_CHECK_EQUAL(pool.mapTx.find(txhash)->GetSharedTx().use_count(), SHARED_TX_OFFSET + 1 - 1); // + 1 because of partialBlock; -1 because of block.
     }
-    BOOST_CHECK_EQUAL(pool.mapTx.find(txhash)->GetSharedTx().use_count(), SHARED_TX_OFFSET + 0);
+    BOOST_CHECK_EQUAL(pool.mapTx.find(txhash)->GetSharedTx().use_count(), SHARED_TX_OFFSET - 1); // -1 because of block
 }
 
 BOOST_AUTO_TEST_CASE(EmptyBlockRoundTripTest)
@@ -383,6 +366,7 @@ BOOST_AUTO_TEST_CASE(TransactionsRequestDeserializationOverflowTest) {
         BOOST_CHECK(0);
     } catch(std::ios_base::failure &) {
         // deserialize should fail
+        BOOST_CHECK(true); // Needed to suppress "Test case [...] did not check any assertions"
     }
 }
 

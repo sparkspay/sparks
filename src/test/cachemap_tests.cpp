@@ -1,14 +1,18 @@
-// Copyright (c) 2014-2020 The Dash Core developers
+// Copyright (c) 2014-2022 The Dash Core developers
 
 #include <cachemap.h>
 
+<<<<<<< HEAD
 #include <test/test_sparks.h>
+=======
+#include <test/util/setup_common.h>
+>>>>>>> refs/tags/v18.2.2
 
 #include <boost/test/unit_test.hpp>
 
 BOOST_FIXTURE_TEST_SUITE(cachemap_tests, BasicTestingSetup)
 
-bool Compare(const CacheMap<int,int>& cmap1, const CacheMap<int,int>& cmap2)
+static bool Compare(const CacheMap<int,int>& cmap1, const CacheMap<int,int>& cmap2)
 {
     if(cmap1.GetMaxSize() != cmap2.GetMaxSize()) {
         return false;

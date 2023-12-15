@@ -11,6 +11,7 @@
 #include <script/script.h>
 #include <serialize.h>
 #include <uint256.h>
+#include <tuple>
 
 /** Transaction types */
 enum {
@@ -21,6 +22,7 @@ enum {
     TRANSACTION_PROVIDER_UPDATE_REVOKE = 4,
     TRANSACTION_COINBASE = 5,
     TRANSACTION_QUORUM_COMMITMENT = 6,
+    TRANSACTION_MNHF_SIGNAL = 7,
 };
 
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
@@ -30,19 +32,15 @@ public:
     uint256 hash;
     uint32_t n;
 
-    COutPoint(): n((uint32_t) -1) { }
+    static constexpr uint32_t NULL_INDEX = std::numeric_limits<uint32_t>::max();
+
+    COutPoint(): n(NULL_INDEX) { }
     COutPoint(const uint256& hashIn, uint32_t nIn): hash(hashIn), n(nIn) { }
 
-    ADD_SERIALIZE_METHODS;
+    SERIALIZE_METHODS(COutPoint, obj) { READWRITE(obj.hash, obj.n); }
 
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action) {
-        READWRITE(hash);
-        READWRITE(n);
-    }
-
-    void SetNull() { hash.SetNull(); n = (uint32_t) -1; }
-    bool IsNull() const { return (hash.IsNull() && n == (uint32_t) -1); }
+    void SetNull() { hash.SetNull(); n = NULL_INDEX; }
+    bool IsNull() const { return (hash.IsNull() && n == NULL_INDEX); }
 
     friend bool operator<(const COutPoint& a, const COutPoint& b)
     {
@@ -82,7 +80,7 @@ public:
     /* Below flags apply in the context of BIP 68*/
     /* If this flag set, CTxIn::nSequence is NOT interpreted as a
      * relative lock-time. */
-    static const uint32_t SEQUENCE_LOCKTIME_DISABLE_FLAG = (1 << 31);
+    static const uint32_t SEQUENCE_LOCKTIME_DISABLE_FLAG = (1U << 31);
 
     /* If CTxIn::nSequence encodes a relative lock-time and this flag
      * is set, the relative lock-time has units of 512 seconds,
@@ -110,14 +108,7 @@ public:
     explicit CTxIn(COutPoint prevoutIn, CScript scriptSigIn=CScript(), uint32_t nSequenceIn=SEQUENCE_FINAL);
     CTxIn(uint256 hashPrevTx, uint32_t nOut, CScript scriptSigIn=CScript(), uint32_t nSequenceIn=SEQUENCE_FINAL);
 
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action) {
-        READWRITE(prevout);
-        READWRITE(scriptSig);
-        READWRITE(nSequence);
-    }
+    SERIALIZE_METHODS(CTxIn, obj) { READWRITE(obj.prevout, obj.scriptSig, obj.nSequence); }
 
     friend bool operator==(const CTxIn& a, const CTxIn& b)
     {
@@ -155,13 +146,7 @@ public:
 
     CTxOut(const CAmount& nValueIn, CScript scriptPubKeyIn);
 
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action) {
-        READWRITE(nValue);
-        READWRITE(scriptPubKey);
-    }
+    SERIALIZE_METHODS(CTxOut, obj) { READWRITE(obj.nValue, obj.scriptPubKey); }
 
     void SetNull()
     {
@@ -213,7 +198,7 @@ public:
     const std::vector<CTxIn> vin;
     const std::vector<CTxOut> vout;
     const int16_t nVersion;
-    const int16_t nType;
+    const uint16_t nType;
     const uint32_t nLockTime;
     const std::vector<uint8_t> vExtraPayload; // only available for special transaction types
 
@@ -228,7 +213,7 @@ public:
     CTransaction();
 
     /** Convert a CMutableTransaction into a CTransaction. */
-    CTransaction(const CMutableTransaction &tx);
+    explicit CTransaction(const CMutableTransaction &tx);
     CTransaction(CMutableTransaction &&tx);
 
     template <typename Stream>
@@ -251,9 +236,7 @@ public:
         return vin.empty() && vout.empty();
     }
 
-    const uint256& GetHash() const {
-        return hash;
-    }
+    const uint256& GetHash() const { return hash; }
 
     // Return sum of txouts.
     CAmount GetValueOut() const;
@@ -291,28 +274,23 @@ struct CMutableTransaction
     std::vector<CTxIn> vin;
     std::vector<CTxOut> vout;
     int16_t nVersion;
-    int16_t nType;
+    uint16_t nType;
     uint32_t nLockTime;
     std::vector<uint8_t> vExtraPayload; // only available for special transaction types
 
     CMutableTransaction();
-    CMutableTransaction(const CTransaction& tx);
+    explicit CMutableTransaction(const CTransaction& tx);
 
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action) {
-        int32_t n32bitVersion = this->nVersion | (this->nType << 16);
+    SERIALIZE_METHODS(CMutableTransaction, obj)
+    {
+        int32_t n32bitVersion;
+        SER_WRITE(obj, n32bitVersion = obj.nVersion | (obj.nType << 16));
         READWRITE(n32bitVersion);
-        if (ser_action.ForRead()) {
-            this->nVersion = (int16_t) (n32bitVersion & 0xffff);
-            this->nType = (int16_t) ((n32bitVersion >> 16) & 0xffff);
-        }
-        READWRITE(vin);
-        READWRITE(vout);
-        READWRITE(nLockTime);
-        if (this->nVersion == 3 && this->nType != TRANSACTION_NORMAL) {
-            READWRITE(vExtraPayload);
+        SER_READ(obj, obj.nVersion = (int16_t) (n32bitVersion & 0xffff));
+        SER_READ(obj, obj.nType = (uint16_t) ((n32bitVersion >> 16) & 0xffff));
+        READWRITE(obj.vin, obj.vout, obj.nLockTime);
+        if (obj.nVersion == 3 && obj.nType != TRANSACTION_NORMAL) {
+            READWRITE(obj.vExtraPayload);
         }
     }
 
@@ -327,17 +305,6 @@ struct CMutableTransaction
     uint256 GetHash() const;
 
     std::string ToString() const;
-
-    friend bool operator==(const CMutableTransaction& a, const CMutableTransaction& b)
-    {
-        return a.GetHash() == b.GetHash();
-    }
-
-    friend bool operator!=(const CMutableTransaction& a, const CMutableTransaction& b)
-    {
-        return !(a == b);
-    }
-
 };
 
 typedef std::shared_ptr<const CTransaction> CTransactionRef;

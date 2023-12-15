@@ -4,12 +4,16 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <clientversion.h>
 #include <key.h>
 #include <key_io.h>
 #include <uint256.h>
 #include <util.h>
 #include <utilstrencodings.h>
 #include <test/test_sparks.h>
+#include <streams.h>
+#include <util/strencodings.h>
+#include <test/util/setup_common.h>
 
 #include <string>
 #include <vector>
@@ -87,11 +91,11 @@ TestVector test3 =
      "xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L",
       0);
 
-void RunTest(const TestVector &test) {
+static void RunTest(const TestVector &test) {
     std::vector<unsigned char> seed = ParseHex(test.strHexMaster);
     CExtKey key;
     CExtPubKey pubkey;
-    key.SetMaster(seed.data(), seed.size());
+    key.SetSeed(seed.data(), seed.size());
     pubkey = key.Neuter();
     for (const TestDerivation &derive : test.vDerive) {
         unsigned char data[74];

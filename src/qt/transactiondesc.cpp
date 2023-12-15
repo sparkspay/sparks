@@ -1,7 +1,11 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2020 The Dash Core developers
+// Copyright (c) 2014-2022 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#ifdef HAVE_CONFIG_H
+#include <config/bitcoin-config.h>
+#endif
 
 #include <qt/transactiondesc.h>
 
@@ -15,13 +19,13 @@
 #include <interfaces/node.h>
 #include <validation.h>
 #include <script/script.h>
-#include <timedata.h>
-#include <util.h>
+#include <util/system.h>
+#include <wallet/ismine.h>
 
 #include <stdint.h>
 #include <string>
 
-QString TransactionDesc::FormatTxStatus(const interfaces::WalletTx& wtx, const interfaces::WalletTxStatus& status, bool inMempool, int numBlocks, int64_t adjustedTime)
+QString TransactionDesc::FormatTxStatus(const interfaces::WalletTx& wtx, const interfaces::WalletTxStatus& status, bool inMempool, int numBlocks)
 {
     if (!status.is_final)
     {
@@ -61,11 +65,10 @@ QString TransactionDesc::FormatTxStatus(const interfaces::WalletTx& wtx, const i
 QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wallet, TransactionRecord *rec, int unit)
 {
     int numBlocks;
-    int64_t adjustedTime;
     interfaces::WalletTxStatus status;
     interfaces::WalletOrderForm orderForm;
     bool inMempool;
-    interfaces::WalletTx wtx = wallet.getWalletTxDetails(rec->hash, status, orderForm, inMempool, numBlocks, adjustedTime);
+    interfaces::WalletTx wtx = wallet.getWalletTxDetails(rec->hash, status, orderForm, inMempool, numBlocks);
 
     QString strHTML;
 
@@ -77,7 +80,7 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
     CAmount nDebit = wtx.debit;
     CAmount nNet = nCredit - nDebit;
 
-    strHTML += "<b>" + tr("Status") + ":</b> " + FormatTxStatus(wtx, status, inMempool, numBlocks, adjustedTime);
+    strHTML += "<b>" + tr("Status") + ":</b> " + FormatTxStatus(wtx, status, inMempool, numBlocks);
     strHTML += "<br>";
 
     strHTML += "<b>" + tr("Date") + ":</b> " + (nTime ? GUIUtil::dateTimeStr(nTime) : "") + "<br>";
@@ -104,7 +107,7 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
             if (IsValidDestination(address)) {
                 std::string name;
                 isminetype ismine;
-                if (wallet.getAddress(address, &name, &ismine))
+                if (wallet.getAddress(address, &name, &ismine, /* purpose= */ nullptr))
                 {
                     strHTML += "<b>" + tr("From") + ":</b> " + tr("unknown") + "<br>";
                     strHTML += "<b>" + tr("To") + ":</b> ";
@@ -130,7 +133,8 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
         strHTML += "<b>" + tr("To") + ":</b> ";
         CTxDestination dest = DecodeDestination(strAddress);
         std::string name;
-        if (wallet.getAddress(dest, &name) && !name.empty())
+        if (wallet.getAddress(
+                dest, &name, /* is_mine= */ nullptr, /* purpose= */ nullptr) && !name.empty())
             strHTML += GUIUtil::HtmlEscape(name) + " ";
         strHTML += GUIUtil::HtmlEscape(strAddress) + "<br>";
     }
@@ -163,13 +167,13 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
     else
     {
         isminetype fAllFromMe = ISMINE_SPENDABLE;
-        for (isminetype mine : wtx.txin_is_mine)
+        for (const isminetype mine : wtx.txin_is_mine)
         {
             if(fAllFromMe > mine) fAllFromMe = mine;
         }
 
         isminetype fAllToMe = ISMINE_SPENDABLE;
-        for (isminetype mine : wtx.txout_is_mine)
+        for (const isminetype mine : wtx.txout_is_mine)
         {
             if(fAllToMe > mine) fAllToMe = mine;
         }
@@ -198,7 +202,8 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
                     {
                         strHTML += "<b>" + tr("To") + ":</b> ";
                         std::string name;
-                        if (wallet.getAddress(address, &name) && !name.empty())
+                        if (wallet.getAddress(
+                                address, &name, /* is_mine= */ nullptr, /* purpose= */ nullptr) && !name.empty())
                             strHTML += GUIUtil::HtmlEscape(name) + " ";
                         strHTML += GUIUtil::HtmlEscape(EncodeDestination(address));
                         if(toSelf == ISMINE_SPENDABLE)
@@ -262,23 +267,9 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
     strHTML += "<b>" + tr("Transaction total size") + ":</b> " + QString::number(wtx.tx->GetTotalSize()) + " bytes<br>";
 
     // Message from normal sparks:URI (sparks:XyZ...?message=example)
-    for (const std::pair<std::string, std::string>& r : orderForm)
+    for (const std::pair<std::string, std::string>& r : orderForm) {
         if (r.first == "Message")
             strHTML += "<br><b>" + tr("Message") + ":</b><br>" + GUIUtil::HtmlEscape(r.second, true) + "<br>";
-
-    //
-    // PaymentRequest info:
-    //
-    for (const std::pair<std::string, std::string>& r : orderForm)
-    {
-        if (r.first == "PaymentRequest")
-        {
-            PaymentRequestPlus req;
-            req.parse(QByteArray::fromRawData(r.second.data(), r.second.size()));
-            QString merchant;
-            if (req.getMerchant(PaymentServer::getCertStore(), merchant))
-                strHTML += "<b>" + tr("Merchant") + ":</b> " + GUIUtil::HtmlEscape(merchant) + "<br>";
-        }
     }
 
     if (wtx.is_coinbase)
@@ -320,7 +311,7 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
                     if (ExtractDestination(txout.scriptPubKey, address))
                     {
                         std::string name;
-                        if (wallet.getAddress(address, &name) && !name.empty())
+                        if (wallet.getAddress(address, &name, /* is_mine= */ nullptr, /* purpose= */ nullptr) && !name.empty())
                             strHTML += GUIUtil::HtmlEscape(name) + " ";
                         strHTML += QString::fromStdString(EncodeDestination(address));
                     }

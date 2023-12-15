@@ -1,4 +1,4 @@
-Sparks Core staging tree 0.17
+Sparks Core staging tree 18.0
 ===========================
 
 |CI|master|develop|
@@ -19,7 +19,11 @@ source software which enables the use of this currency.
 
 For more information, as well as an immediately useable, binary version of
 the Sparks Core software, see https://www.sparkspay.io
+Pre-Built Binary
+----------------
 
+For more information, as well as an immediately usable, binary version of
+the Dash Core software, see https://www.sparks.org/downloads/.
 
 License
 -------
@@ -34,7 +38,8 @@ The `master` branch is meant to be stable. Development is normally done in separ
 [Tags](https://github.com/sparkspay/sparks/tags) are created to indicate new official,
 stable release versions of Sparks Core.
 
-The contribution workflow is described in [CONTRIBUTING.md](CONTRIBUTING.md).
+The contribution workflow is described in [CONTRIBUTING.md](CONTRIBUTING.md)
+and useful hints for developers can be found in [doc/developer-notes.md](doc/developer-notes.md).
 
 Testing
 -------
@@ -55,7 +60,7 @@ There are also [regression and integration tests](/test), written
 in Python, that are run automatically on the build server.
 These tests can be run (if the [test dependencies](/test) are installed) with: `test/functional/test_runner.py`
 
-The Travis CI system makes sure that every pull request is built for Windows, Linux, and OS X, and that unit/sanity tests are run automatically.
+The Travis CI system makes sure that every pull request is built for Windows, Linux, and macOS, and that unit/sanity tests are run automatically.
 
 ### Manual Quality Assurance (QA) Testing
 

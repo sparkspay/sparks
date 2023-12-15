@@ -10,6 +10,7 @@
 #include <streams.h>
 
 #include <test/test_sparks.h>
+#include <test/util/setup_common.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -209,8 +210,8 @@ public:
 
     prevector_tester() {
         SeedInsecureRand();
-        rand_seed = insecure_rand_seed;
-        rand_cache = insecure_rand_ctx;
+        rand_seed = InsecureRand256();
+        rand_cache = FastRandomContext(rand_seed);
     }
 };
 

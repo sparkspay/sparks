@@ -5,13 +5,9 @@
 #ifndef BITCOIN_SCHEDULER_H
 #define BITCOIN_SCHEDULER_H
 
-//
-// NOTE:
-// boost::thread / boost::chrono should be ported to std::thread / std::chrono
-// when we support C++11.
-//
-#include <boost/chrono/chrono.hpp>
-#include <boost/thread.hpp>
+#include <condition_variable>
+#include <functional>
+#include <list>
 #include <map>
 
 #include <sync.h>
@@ -25,10 +21,10 @@
 // CScheduler* s = new CScheduler();
 // s->scheduleFromNow(doSomething, 11); // Assuming a: void doSomething() { }
 // s->scheduleFromNow(std::bind(Class::func, this, argument), 3);
-// boost::thread* t = new boost::thread(boost::bind(CScheduler::serviceQueue, s));
+// std::thread* t = new std::thread([&] { s->serviceQueue(); });
 //
-// ... then at program shutdown, clean up the thread running serviceQueue:
-// t->interrupt();
+// ... then at program shutdown, make sure to call stop() to clean up the thread(s) running serviceQueue:
+// s->stop();
 // t->join();
 // delete t;
 // delete s; // Must be done after thread is interrupted/joined.
@@ -40,20 +36,27 @@ public:
     CScheduler();
     ~CScheduler();
 
-    typedef std::function<void(void)> Function;
+    typedef std::function<void()> Function;
 
     // Call func at/after time t
-    void schedule(Function f, boost::chrono::system_clock::time_point t=boost::chrono::system_clock::now());
+    void schedule(Function f, std::chrono::system_clock::time_point t);
 
-    // Convenience method: call f once deltaSeconds from now
+    // Convenience method: call f once deltaMilliSeconds from now
     void scheduleFromNow(Function f, int64_t deltaMilliSeconds);
 
     // Another convenience method: call f approximately
-    // every deltaSeconds forever, starting deltaSeconds from now.
+    // every deltaMilliSeconds forever, starting deltaMilliSeconds from now.
     // To be more precise: every time f is finished, it
-    // is rescheduled to run deltaSeconds later. If you
+    // is rescheduled to run deltaMilliSeconds later. If you
     // need more accurate scheduling, don't use this method.
     void scheduleEvery(Function f, int64_t deltaMilliSeconds);
+
+    /**
+     * Mock the scheduler to fast forward in time.
+     * Iterates through items on taskQueue and reschedules them
+     * to be delta_seconds sooner.
+     */
+    void MockForward(std::chrono::seconds delta_seconds);
 
     // To keep things as simple as possible, there is no unschedule.
 
@@ -68,20 +71,20 @@ public:
 
     // Returns number of tasks waiting to be serviced,
     // and first and last task times
-    size_t getQueueInfo(boost::chrono::system_clock::time_point &first,
-                        boost::chrono::system_clock::time_point &last) const;
+    size_t getQueueInfo(std::chrono::system_clock::time_point &first,
+                        std::chrono::system_clock::time_point &last) const;
 
     // Returns true if there are threads actively running in serviceQueue()
     bool AreThreadsServicingQueue() const;
 
 private:
-    std::multimap<boost::chrono::system_clock::time_point, Function> taskQueue;
-    boost::condition_variable newTaskScheduled;
-    mutable boost::mutex newTaskMutex;
-    int nThreadsServicingQueue;
-    bool stopRequested;
-    bool stopWhenEmpty;
-    bool shouldStop() const { return stopRequested || (stopWhenEmpty && taskQueue.empty()); }
+    mutable Mutex newTaskMutex;
+    std::condition_variable newTaskScheduled;
+    std::multimap<std::chrono::system_clock::time_point, Function> taskQueue GUARDED_BY(newTaskMutex);
+    int nThreadsServicingQueue GUARDED_BY(newTaskMutex);
+    bool stopRequested GUARDED_BY(newTaskMutex);
+    bool stopWhenEmpty GUARDED_BY(newTaskMutex);
+    bool shouldStop() const EXCLUSIVE_LOCKS_REQUIRED(newTaskMutex) { return stopRequested || (stopWhenEmpty && taskQueue.empty()); }
 };
 
 /**
@@ -99,7 +102,7 @@ private:
     CScheduler *m_pscheduler;
 
     CCriticalSection m_cs_callbacks_pending;
-    std::list<std::function<void (void)>> m_callbacks_pending GUARDED_BY(m_cs_callbacks_pending);
+    std::list<std::function<void ()>> m_callbacks_pending GUARDED_BY(m_cs_callbacks_pending);
     bool m_are_callbacks_running GUARDED_BY(m_cs_callbacks_pending) = false;
 
     void MaybeScheduleProcessQueue();
@@ -111,10 +114,10 @@ public:
     /**
      * Add a callback to be executed. Callbacks are executed serially
      * and memory is release-acquire consistent between callback executions.
-     * Practially, this means that callbacks can behave as if they are executed
+     * Practically, this means that callbacks can behave as if they are executed
      * in order by a single thread.
      */
-    void AddToProcessQueue(std::function<void (void)> func);
+    void AddToProcessQueue(std::function<void ()> func);
 
     // Processes all remaining queue members on the calling thread, blocking until queue is empty
     // Must be called after the CScheduler has no remaining processing threads!

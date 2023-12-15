@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
+# Copyright (c) 2018-2019 The Bitcoin Core developers
+# Distributed under the MIT software license, see the accompanying
+# file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 export LC_ALL=C
 
 KNOWN_VIOLATIONS=(
-    "src/base58.cpp:.*isspace"
     "src/bench/string_cast.cpp.*atoi"
     "src/sparks-tx.cpp.*stoul"
     "src/sparks-tx.cpp.*trim_right"
@@ -11,40 +13,43 @@ KNOWN_VIOLATIONS=(
     "src/core_read.cpp.*is_digit"
     "src/dbwrapper.cpp.*stoul"
     "src/dbwrapper.cpp:.*vsnprintf"
-    "src/governance/governance-validators.cpp.*isspace"
-    "src/governance/governance-validators.cpp.*tolower"
+    "src/governance/vote.cpp.*std::to_string"
     "src/httprpc.cpp.*trim"
     "src/init.cpp:.*atoi"
-    "src/netbase.cpp.*to_lower"
+    "src/qt/optionsmodel.cpp.*std::to_string"
     "src/qt/rpcconsole.cpp:.*atoi"
-    "src/qt/rpcconsole.cpp:.*isdigit"
     "src/rest.cpp:.*strtol"
-    "src/rpc/server.cpp.*to_upper"
     "src/rpc/blockchain.cpp.*atoi"
     "src/rpc/governance.cpp.*atoi"
     "src/rpc/masternode.cpp.*atoi"
-    "src/rpc/masternode.cpp.*tolower"
-    "src/rpc/server.cpp.*tolower"
     "src/statsd_client.cpp:.*snprintf"
+    "src/rpc/net.cpp.*std::to_string"
+    "src/rpc/rawtransaction.cpp.*std::to_string"
+    "src/rpc/util.cpp.*std::to_string"
+    "src/spork.cpp.*std::to_string"
+    "src/test/addrman_tests.cpp.*std::to_string"
+    "src/test/blockchain_tests.cpp.*std::to_string"
     "src/test/dbwrapper_tests.cpp:.*snprintf"
-    "src/test/getarg_tests.cpp.*split"
+    "src/test/denialofservice_tests.cpp.*std::to_string"
+    "src/test/fuzz/locale.cpp"
+    "src/test/fuzz/parse_numbers.cpp:.*atoi"
+    "src/test/key_tests.cpp.*std::to_string"
+    "src/test/net_tests.cpp.*std::to_string"
+    "src/test/settings_tests.cpp.*std::to_string"
+    "src/test/timedata_tests.cpp.*std::to_string"
+    "src/test/util/setup_common.cpp.*std::to_string"
+    "src/test/util_tests.cpp.*std::to_string"
+    "src/test/util_threadnames_tests.cpp.*std::to_string"
+    "src/test/fuzz/string.cpp"
     "src/torcontrol.cpp:.*atoi"
     "src/torcontrol.cpp:.*strtol"
-    "src/uint256.cpp:.*isspace"
-    "src/uint256.cpp:.*tolower"
-    "src/util.cpp:.*atoi"
-    "src/util.cpp:.*fprintf"
-    "src/util.cpp:.*tolower"
-    "src/utilmoneystr.cpp:.*isdigit"
-    "src/utilmoneystr.cpp:.*isspace"
-    "src/utilstrencodings.cpp:.*atoi"
-    "src/utilstrencodings.cpp:.*isspace"
-    "src/utilstrencodings.cpp:.*strtol"
-    "src/utilstrencodings.cpp:.*strtoll"
-    "src/utilstrencodings.cpp:.*strtoul"
-    "src/utilstrencodings.cpp:.*strtoull"
-    "src/utilstrencodings.h:.*atoi"
+    "src/util/strencodings.cpp:.*atoi"
+    "src/util/strencodings.cpp:.*strtoll"
+    "src/util/strencodings.h:.*atoi"
     "src/wallet/wallet.cpp:.*atoi"
+    "src/util/system.cpp:.*atoi"
+    "src/util/system.cpp:.*fprintf"
+    "src/wallet/scriptpubkeyman.cpp.*std::to_string"
 )
 
 REGEXP_IGNORE_EXTERNAL_DEPENDENCIES="^src/(crypto/ctaes/|leveldb/|secp256k1/|tinyformat.h|univalue/)"
@@ -111,7 +116,7 @@ LOCALE_DEPENDENT_FUNCTIONS=(
     mbtowc       # LC_CTYPE
     mktime
     normalize    # boost::locale::normalize
-#   printf       # LC_NUMERIC
+    printf       # LC_NUMERIC
     putwc
     putwchar
     scanf        # LC_NUMERIC
@@ -119,6 +124,8 @@ LOCALE_DEPENDENT_FUNCTIONS=(
     snprintf
     sprintf
     sscanf
+    std::locale::global
+    std::to_string
     stod
     stof
     stoi
@@ -215,8 +222,7 @@ GIT_GREP_OUTPUT=$(git grep -E "[^a-zA-Z0-9_\`'\"<>](${REGEXP_LOCALE_DEPENDENT_FU
 EXIT_CODE=0
 for LOCALE_DEPENDENT_FUNCTION in "${LOCALE_DEPENDENT_FUNCTIONS[@]}"; do
     MATCHES=$(grep -E "[^a-zA-Z0-9_\`'\"<>]${LOCALE_DEPENDENT_FUNCTION}(_r|_s)?[^a-zA-Z0-9_\`'\"<>]" <<< "${GIT_GREP_OUTPUT}" | \
-        grep -vE "\.(c|cpp|h):\s*(//|\*|/\*|\").*${LOCALE_DEPENDENT_FUNCTION}" | \
-        grep -vE 'fprintf\(.*(stdout|stderr)')
+        grep -vE "\.(c|cpp|h):\s*(//|\*|/\*|\").*${LOCALE_DEPENDENT_FUNCTION}")
     if [[ ${REGEXP_IGNORE_EXTERNAL_DEPENDENCIES} != "" ]]; then
         MATCHES=$(grep -vE "${REGEXP_IGNORE_EXTERNAL_DEPENDENCIES}" <<< "${MATCHES}")
     fi

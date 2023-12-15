@@ -4,10 +4,11 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test gettxoutproof and verifytxoutproof RPCs."""
 
+from decimal import Decimal
+
+from test_framework.messages import CMerkleBlock, FromHex, ToHex
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import *
-from test_framework.mininode import FromHex, ToHex
-from test_framework.messages import CMerkleBlock
+from test_framework.util import assert_equal, assert_raises_rpc_error
 
 class MerkleBlockTest(BitcoinTestFramework):
     def set_test_params(self):
@@ -16,11 +17,14 @@ class MerkleBlockTest(BitcoinTestFramework):
         # Nodes 0/1 are "wallet" nodes, Nodes 2/3 are used for testing
         self.extra_args = [[], [], [], ["-txindex"]]
 
+    def skip_test_if_missing_module(self):
+        self.skip_if_no_wallet()
+
     def setup_network(self):
         self.setup_nodes()
-        connect_nodes(self.nodes[0], 1)
-        connect_nodes(self.nodes[0], 2)
-        connect_nodes(self.nodes[0], 3)
+        self.connect_nodes(0, 1)
+        self.connect_nodes(0, 2)
+        self.connect_nodes(0, 3)
 
         self.sync_all()
 

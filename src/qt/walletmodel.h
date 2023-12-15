@@ -10,13 +10,15 @@
 #include <serialize.h>
 #include <script/standard.h>
 
-#include <qt/paymentrequestplus.h>
+#if defined(HAVE_CONFIG_H)
+#include <config/bitcoin-config.h>
+#endif
+
 #include <qt/walletmodeltransaction.h>
 
 #include <interfaces/wallet.h>
 #include <support/allocators/secure.h>
 
-#include <map>
 #include <vector>
 
 #include <QObject>
@@ -59,9 +61,9 @@ public:
     CAmount amount;
     // If from a payment request, this is used for storing the memo
     QString message;
-
-    // If from a payment request, paymentRequest.IsInitialized() will be true
-    PaymentRequestPlus paymentRequest;
+    // Keep the payment request around as a serialized string to ensure
+    // load/store is lossless.
+    std::string sPaymentRequest;
     // Empty if no authentication or invalid signature/cert/etc.
     QString authenticatedMerchant;
 
@@ -70,35 +72,20 @@ public:
     static const int CURRENT_VERSION = 1;
     int nVersion;
 
-    ADD_SERIALIZE_METHODS;
+    SERIALIZE_METHODS(SendCoinsRecipient, obj)
+    {
+        std::string address_str, label_str, message_str, auth_merchant_str;
+        SER_WRITE(obj, address_str = obj.address.toStdString());
+        SER_WRITE(obj, label_str = obj.label.toStdString());
+        SER_WRITE(obj, message_str = obj.message.toStdString());
+        SER_WRITE(obj, auth_merchant_str = obj.authenticatedMerchant.toStdString());
 
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action) {
-        std::string sAddress = address.toStdString();
-        std::string sLabel = label.toStdString();
-        std::string sMessage = message.toStdString();
-        std::string sPaymentRequest;
-        if (!ser_action.ForRead() && paymentRequest.IsInitialized())
-            paymentRequest.SerializeToString(&sPaymentRequest);
-        std::string sAuthenticatedMerchant = authenticatedMerchant.toStdString();
+        READWRITE(obj.nVersion, address_str, label_str, obj.amount, message_str, obj.sPaymentRequest, auth_merchant_str);
 
-        READWRITE(this->nVersion);
-        READWRITE(sAddress);
-        READWRITE(sLabel);
-        READWRITE(amount);
-        READWRITE(sMessage);
-        READWRITE(sPaymentRequest);
-        READWRITE(sAuthenticatedMerchant);
-
-        if (ser_action.ForRead())
-        {
-            address = QString::fromStdString(sAddress);
-            label = QString::fromStdString(sLabel);
-            message = QString::fromStdString(sMessage);
-            if (!sPaymentRequest.empty())
-                paymentRequest.parse(QByteArray::fromRawData(sPaymentRequest.data(), sPaymentRequest.size()));
-            authenticatedMerchant = QString::fromStdString(sAuthenticatedMerchant);
-        }
+        SER_READ(obj, obj.address = QString::fromStdString(address_str));
+        SER_READ(obj, obj.label = QString::fromStdString(label_str));
+        SER_READ(obj, obj.message = QString::fromStdString(message_str));
+        SER_READ(obj, obj.authenticatedMerchant = QString::fromStdString(auth_merchant_str));
     }
 };
 
@@ -108,7 +95,7 @@ class WalletModel : public QObject
     Q_OBJECT
 
 public:
-    explicit WalletModel(std::unique_ptr<interfaces::Wallet> wallet, interfaces::Node& node, OptionsModel *optionsModel, QObject *parent = 0);
+    explicit WalletModel(std::unique_ptr<interfaces::Wallet> wallet, interfaces::Node& node, OptionsModel *optionsModel, QObject *parent = nullptr);
     ~WalletModel();
 
     enum StatusCode // Returned by sendCoins
@@ -120,7 +107,6 @@ public:
         AmountWithFeeExceedsBalance,
         DuplicateAddress,
         TransactionCreationFailed, // Error returned when wallet is still locked
-        TransactionCommitFailed,
         AbsurdFee,
         PaymentRequestExpired
     };
@@ -180,16 +166,19 @@ public:
 
         bool isValid() const { return valid; }
 
-        // Copy operator and constructor transfer the context
-        UnlockContext(const UnlockContext& obj) { CopyFrom(obj); }
-        UnlockContext& operator=(const UnlockContext& rhs) { CopyFrom(rhs); return *this; }
+        // Copy constructor is disabled.
+        UnlockContext(const UnlockContext&) = delete;
+        // Move operator and constructor transfer the context
+        UnlockContext(UnlockContext&& obj) { CopyFrom(std::move(obj)); }
+        UnlockContext& operator=(UnlockContext&& rhs) { CopyFrom(std::move(rhs)); return *this; }
     private:
         WalletModel *wallet;
         bool valid;
         mutable bool was_locked; // mutable, as it can be set to false by copying
         mutable bool was_mixing; // mutable, as it can be set to false by copying
 
-        void CopyFrom(const UnlockContext& rhs);
+        UnlockContext& operator=(const UnlockContext&) = default;
+        void CopyFrom(UnlockContext&& rhs);
     };
 
     UnlockContext requestUnlock(bool fForMixingOnly=false);
@@ -198,6 +187,8 @@ public:
     bool saveReceiveRequest(const std::string &sAddress, const int64_t nId, const std::string &sRequest);
 
     static bool isWalletEnabled();
+    bool privateKeysDisabled() const;
+    bool canGetAddresses() const;
 
     int getNumBlocks() const;
     int getNumISLocks() const;
@@ -210,8 +201,11 @@ public:
     interfaces::CoinJoin::Client& coinJoin() const { return m_wallet->coinJoin(); }
 
     QString getWalletName() const;
+    QString getDisplayName() const;
 
     bool isMultiwallet();
+
+    AddressTableModel* getAddressTableModel() const { return addressTableModel; }
 private:
     std::unique_ptr<interfaces::Wallet> m_wallet;
     std::unique_ptr<interfaces::Handler> m_handler_unload;
@@ -222,10 +216,11 @@ private:
     std::unique_ptr<interfaces::Handler> m_handler_chainlock_received;
     std::unique_ptr<interfaces::Handler> m_handler_show_progress;
     std::unique_ptr<interfaces::Handler> m_handler_watch_only_changed;
+    std::unique_ptr<interfaces::Handler> m_handler_can_get_addrs_changed;
     interfaces::Node& m_node;
 
     bool fHaveWatchOnly;
-    bool fForceCheckBalanceChanged;
+    bool fForceCheckBalanceChanged{false};
 
     // Wallet has an options model for wallet-specific options
     // (transaction fee, for example)
@@ -241,8 +236,6 @@ private:
     int cachedNumBlocks;
     int cachedNumISLocks;
     int cachedCoinJoinRounds;
-
-    QTimer *pollTimer;
 
     void subscribeToCoreSignals();
     void unsubscribeFromCoreSignals();
@@ -275,7 +268,13 @@ Q_SIGNALS:
     // Signal that wallet is about to be removed
     void unload();
 
+    // Notify that there are now keys in the keypool
+    void canGetAddressesChanged();
+
 public Q_SLOTS:
+    /* Starts a timer to periodically update the balance */
+    void startPollBalance();
+
     /* Wallet status might have changed */
     void updateStatus();
     /* New transaction, or transaction changed status */

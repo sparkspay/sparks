@@ -5,10 +5,10 @@
 #include <random.h>
 
 #include <test/test_sparks.h>
+#include <test/util/setup_common.h>
 
 #include <boost/test/unit_test.hpp>
 
-#include <random>
 #include <algorithm>
 
 BOOST_FIXTURE_TEST_SUITE(random_tests, BasicTestingSetup)
@@ -48,11 +48,19 @@ BOOST_AUTO_TEST_CASE(fastrandom_tests)
         BOOST_CHECK(GetRand(std::numeric_limits<uint64_t>::max()) != uint64_t{10393729187455219830U});
         BOOST_CHECK(GetRandInt(std::numeric_limits<int>::max()) != int{769702006});
     }
-    FastRandomContext ctx3;
-    FastRandomContext ctx4;
-    BOOST_CHECK(ctx3.rand64() != ctx4.rand64()); // extremely unlikely to be equal
-    BOOST_CHECK(ctx3.rand256() != ctx4.rand256());
-    BOOST_CHECK(ctx3.randbytes(7) != ctx4.randbytes(7));
+
+    {
+        FastRandomContext ctx3, ctx4;
+        BOOST_CHECK(ctx3.rand64() != ctx4.rand64()); // extremely unlikely to be equal
+    }
+    {
+        FastRandomContext ctx3, ctx4;
+        BOOST_CHECK(ctx3.rand256() != ctx4.rand256());
+    }
+    {
+        FastRandomContext ctx3, ctx4;
+        BOOST_CHECK(ctx3.randbytes(7) != ctx4.randbytes(7));
+    }
 }
 
 BOOST_AUTO_TEST_CASE(fastrandom_randbits)
@@ -62,7 +70,7 @@ BOOST_AUTO_TEST_CASE(fastrandom_randbits)
     for (int bits = 0; bits < 63; ++bits) {
         for (int j = 0; j < 1000; ++j) {
             uint64_t rangebits = ctx1.randbits(bits);
-            BOOST_CHECK_EQUAL(rangebits >> bits, 0);
+            BOOST_CHECK_EQUAL(rangebits >> bits, 0U);
             uint64_t range = ((uint64_t)1) << bits | rangebits;
             uint64_t rand = ctx2.randrange(range);
             BOOST_CHECK(rand < range);
