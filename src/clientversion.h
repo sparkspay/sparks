@@ -6,7 +6,7 @@
 #define BITCOIN_CLIENTVERSION_H
 
 #if defined(HAVE_CONFIG_H)
-#include <config/sparks-config.h>
+
 #include <config/bitcoin-config.h>
 #endif //HAVE_CONFIG_H
 
