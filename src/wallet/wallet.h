@@ -624,16 +624,10 @@ public:
         }
     }
 
-<<<<<<< HEAD
-    //Used with Darksend. Will return largest nondenom, then denominations, then very small inputs
-    int Priority() const;
-
-    CAmount Value() const { return tx->tx->vout[i].nValue; }
+CAmount Value() const { return tx->tx->vout[i].nValue; }
 =======
 >>>>>>> refs/tags/v18.2.2
     std::string ToString() const;
-
-    inline CInputCoin GetInputCoin() const
     {
         return CInputCoin(tx->tx, i, nInputBytes);
     }
@@ -766,12 +760,8 @@ private:
      * Processed hash is a pointer on node's tip and doesn't imply that the wallet
      * has scanned sequentially all blocks up to this one.
      */
-<<<<<<< HEAD
-    const CBlockIndex* m_last_block_processed = nullptr;
-    int64_t m_last_block_processed_time GUARDED_BY(cs_wallet) = 0;
-=======
     uint256 m_last_block_processed GUARDED_BY(cs_wallet);
->>>>>>> refs/tags/v18.2.2
+    int64_t m_last_block_processed_time GUARDED_BY(cs_wallet) = 0;
 
     /** Pulled from wallet DB ("ps_salt") and used when mixing a random number of rounds.
      *  This salt is needed to prevent an attacker from learning how many extra times
@@ -850,18 +840,13 @@ public:
         encrypted_batch = nullptr;
     }
 
-<<<<<<< HEAD
     void SetNull();
-
-    std::map<uint256, CWalletTx> mapWallet;
-    std::list<CAccountingEntry> laccentries;
-=======
+    
     /** Interface to assert chain access */
     bool HaveChain() const { return m_chain ? true : false; }
     bool IsCrypted() const { return fUseCrypto; }
     bool IsLocked(bool fForMixing = false) const override;
     bool Lock(bool fForMixing = false);
->>>>>>> refs/tags/v18.2.2
 
     std::map<uint256, CWalletTx> mapWallet GUARDED_BY(cs_wallet);
 
@@ -969,20 +954,9 @@ public:
     //! Look up a destination data tuple in the store, return true if found false otherwise
     bool GetDestData(const CTxDestination& dest, const std::string& key, std::string* value) const EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
     //! Get all destination values matching a prefix.
-<<<<<<< HEAD
-    std::vector<std::string> GetDestValues(const std::string& prefix) const;
+    std::vector<std::string> GetDestValues(const std::string& prefix) const EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
 
     void AutoCombineDust(CConnman* connman);
-
-    //! Adds a watch-only address to the store, and saves it to disk.
-    bool AddWatchOnly(const CScript& dest, int64_t nCreateTime) EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
-
-    bool RemoveWatchOnly(const CScript &dest) override EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
-    //! Adds a watch-only address to the store, without saving it to disk (used by LoadWallet)
-    bool LoadWatchOnly(const CScript &dest);
-=======
-    std::vector<std::string> GetDestValues(const std::string& prefix) const EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
->>>>>>> refs/tags/v18.2.2
 
     //! Holds a timestamp at which point the wallet is scheduled (externally) to be relocked. Caller must arrange for actual relocking to occur via Lock().
     int64_t nRelockTime = 0;
