@@ -1,493 +1,144 @@
-// Copyright (c) 2021-2022 The Dash Core developers
-// Copyright (c) 2021-2023 The Sparks Core developers
+// Copyright (c) 2009-2010 Satoshi Nakamoto
+// Copyright (c) 2009-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_LLMQ_PARAMS_H
-#define BITCOIN_LLMQ_PARAMS_H
+#ifndef BITCOIN_CONSENSUS_PARAMS_H
+#define BITCOIN_CONSENSUS_PARAMS_H
 
-#include <array>
-#include <cstdint>
-#include <string_view>
+#include <uint256.h>
+#include <llmq/params.h>
+
+#include <map>
 
 namespace Consensus {
 
-enum class LLMQType : uint8_t {
-    LLMQ_NONE = 0xff,
-
-    LLMQ_50_60 = 1,  // 50 members, 30 (60%) threshold, one per hour
-    LLMQ_400_60 = 2, // 400 members, 240 (60%) threshold, one every 12 hours
-    LLMQ_400_85 = 3, // 400 members, 340 (85%) threshold, one every 24 hours
-    LLMQ_15_60 = 4, // 15 members, 9 (60%) threshold, one per hour
-    LLMQ_25_60 = 5, // 25 members, 15 (60%) threshold, one every 12 hours
-    LLMQ_25_80 = 6, // 25 members, 20 (80%) threshold, one every 24 hours
-    LLMQ_20_70 = 7, // 20 members, 14 (70%) threshold, one per hour
-    LLMQ_60_75 = 8,  // 60 members, 45 (75%) threshold, one every 12 hours
-    // for testing only
-    LLMQ_TEST = 100, // 3 members, 2 (66%) threshold, one per hour. Params might differ when -llmqtestparams is used
-
-    // for devnets only
-    LLMQ_DEVNET = 101, // 12 members, 6 (50%) threshold, one per hour. Params might differ when -llmqdevnetparams is used
-
-    // for testing activation of new quorums only
-    LLMQ_TEST_V17 = 102, // 3 members, 2 (66%) threshold, one per hour. Params might differ when -llmqtestparams is used
-
-    // for testing only
-    LLMQ_TEST_DIP0024 = 103, // 4 members, 2 (66%) threshold, one per hour. Params might differ when -llmqtestparams is used
-    LLMQ_TEST_INSTANTSEND = 104, // 3 members, 2 (66%) threshold, one per hour. Params might differ when -llmqtestinstantsendparams is used
-
-    // for devnets only. rotated version (v2) for devnets
-    LLMQ_DEVNET_DIP0024 = 105 // 8 members, 4 (50%) threshold, one per hour. Params might differ when -llmqdevnetparams is used
+enum DeploymentPos {
+    DEPLOYMENT_TESTDUMMY,
+    DEPLOYMENT_CSV,     // Deployment of BIP68, BIP112, and BIP113.
+    DEPLOYMENT_DIP0001, // Deployment of DIP0001 and lower transaction fees.
+    DEPLOYMENT_BIP147,  // Deployment of BIP147 (NULLDUMMY)
+    DEPLOYMENT_DIP0003, // Deployment of DIP0002 and DIP0003 (txv3 and deterministic MN lists)
+    DEPLOYMENT_DIP0008, // Deployment of ChainLock enforcement
+    DEPLOYMENT_REALLOC, // Deployment of Block Reward Reallocation
+    DEPLOYMENT_DIP0020, // Deployment of DIP0020, DIP0021 and LMQ_100_67 quorums
+    DEPLOYMENT_IPV6_MN, // Deployment of IPv6 Masternodes
+    DEPLOYMENT_DIP0024, // Deployment of DIP0024 (Quorum Rotation) and decreased governance proposal fee
+    // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
+    MAX_VERSION_BITS_DEPLOYMENTS
 };
 
-// Configures a LLMQ and its DKG
-// See https://github.com/sparkspay/dips/blob/master/dip-0006.md for more details
-struct LLMQParams {
-    LLMQType type;
-
-    // not consensus critical, only used in logging, RPC and UI
-    std::string_view name;
-
-    // Whether this is a DIP0024 quorum or not
-    bool useRotation;
-
-    // the size of the quorum, e.g. 50 or 400
-    int size;
-
-    // The minimum number of valid members after the DKK. If less members are determined valid, no commitment can be
-    // created. Should be higher then the threshold to allow some room for failing nodes, otherwise quorum might end up
-    // not being able to ever created a recovered signature if more nodes fail after the DKG
-    int minSize;
-
-    // The threshold required to recover a final signature. Should be at least 50%+1 of the quorum size. This value
-    // also controls the size of the public key verification vector and has a large influence on the performance of
-    // recovery. It also influences the amount of minimum messages that need to be exchanged for a single signing session.
-    // This value has the most influence on the security of the quorum. The number of total malicious masternodes
-    // required to negatively influence signing sessions highly correlates to the threshold percentage.
-    int threshold;
-
-    // The interval in number blocks for DKGs and the creation of LLMQs. If set to 24 for example, a DKG will start
-    // every 24 blocks, which is approximately once every hour.
-    int dkgInterval;
-
-    // The number of blocks per phase in a DKG session. There are 6 phases plus the mining phase that need to be processed
-    // per DKG. Set this value to a number of blocks so that each phase has enough time to propagate all required
-    // messages to all members before the next phase starts. If blocks are produced too fast, whole DKG sessions will
-    // fail.
-    int dkgPhaseBlocks;
-
-    // The starting block inside the DKG interval for when mining of commitments starts. The value is inclusive.
-    // Starting from this block, the inclusion of (possibly null) commitments is enforced until the first non-null
-    // commitment is mined. The chosen value should be at least 5 * dkgPhaseBlocks so that it starts right after the
-    // finalization phase.
-    int dkgMiningWindowStart;
-
-    // The ending block inside the DKG interval for when mining of commitments ends. The value is inclusive.
-    // Choose a value so that miners have enough time to receive the commitment and mine it. Also take into consideration
-    // that miners might omit real commitments and revert to always including null commitments. The mining window should
-    // be large enough so that other miners have a chance to produce a block containing a non-null commitment. The window
-    // should at the same time not be too large so that not too much space is wasted with null commitments in case a DKG
-    // session failed.
-    int dkgMiningWindowEnd;
-
-    // In the complaint phase, members will vote on other members being bad (missing valid contribution). If at least
-    // dkgBadVotesThreshold have voted for another member to be bad, it will considered to be bad by all other members
-    // as well. This serves as a protection against late-comers who send their contribution on the bring of
-    // phase-transition, which would otherwise result in inconsistent views of the valid members set
-    int dkgBadVotesThreshold;
-
-    // Number of quorums to consider "active" for signing sessions
-    int signingActiveQuorumCount;
-
-    // Used for intra-quorum communication. This is the number of quorums for which we should keep old connections.
-    // For non-rotated quorums it should be at least one more than the active quorums set.
-    // For rotated quorums it should be equal to 2 x active quorums set.
-    int keepOldConnections;
-
-    // How many members should we try to send all sigShares to before we give up.
-    int recoveryMembers;
+/**
+ * Struct for each individual consensus rule change using BIP9.
+ */
+struct BIP9Deployment {
+    /** Bit position to select the particular bit in nVersion. */
+    int bit;
+    /** Start MedianTime for version bits miner confirmation. Can be a date in the past */
+    int64_t nStartTime;
+    /** Timeout/expiry MedianTime for the deployment attempt. */
+    int64_t nTimeout;
+    /** The number of past blocks (including the block under consideration) to be taken into account for locking in a fork. */
+    int64_t nWindowSize{0};
+    /** A starting number of blocks, in the range of 1..nWindowSize, which must signal for a fork in order to lock it in. */
+    int64_t nThresholdStart{0};
+    /** A minimum number of blocks, in the range of 1..nWindowSize, which must signal for a fork in order to lock it in. */
+    int64_t nThresholdMin{0};
+    /** A coefficient which adjusts the speed a required number of signaling blocks is decreasing from nThresholdStart to nThresholdMin at with each period. */
+    int64_t nFalloffCoeff{0};
 };
 
-//static_assert(std::is_trivial_v<Consensus::LLMQParams>, "LLMQParams is not a trivial type");
-static_assert(std::is_trivially_copyable_v<Consensus::LLMQParams>, "LLMQParams is not trivially copyable");
-//static_assert(std::is_trivially_default_constructible_v<Consensus::LLMQParams>, "LLMQParams is not trivially default constructible");
-static_assert(std::is_trivially_assignable_v<Consensus::LLMQParams, Consensus::LLMQParams>, "LLMQParams is not trivially assignable");
+/**
+ * Parameters that influence chain consensus.
+ */
+struct Params {
+    uint256 hashGenesisBlock;
+    uint256 hashDevnetGenesisBlock;
+    int nSubsidyHalvingInterval;
+    int nMasternodePaymentsStartBlock;
+    int nMasternodePaymentsIncreaseBlock;
+    int nMasternodePaymentsIncreasePeriod; // in blocks
+    int nInstantSendConfirmationsRequired; // in blocks
+    int nInstantSendKeepLock; // in blocks
+    int nBudgetPaymentsStartBlock;
+    int nBudgetPaymentsCycleBlocks;
+    int nBudgetPaymentsWindowBlocks;
+    int nSuperblockStartBlock;
+    uint256 nSuperblockStartHash;
+    int nSuperblockCycle; // in blocks
+    int nSuperblockMaturityWindow; // in blocks
+    int nGovernanceMinQuorum; // Min absolute vote count to trigger an action
+    int nGovernanceFilterElements;
+    int nMasternodeMinimumConfirmations;
+    /** Block height and hash at which BIP34 becomes active */
+    int BIP34Height;
+    uint256 BIP34Hash;
+    /** Block height at which BIP65 becomes active */
+    int BIP65Height;
+    /** Block height at which BIP66 becomes active */
+    int BIP66Height;
+    /** Block height at which DIP0001 becomes active */
+    int DIP0001Height;
+    /** Block height at which Guardian nodes become active */
+    int GuardianHeight;
 
 
-static constexpr std::array<LLMQParams, 12> available_llmqs = {
-
+    int nSPKHeight;
+    unsigned int nSPKPremine;
+    unsigned int nSPKPostmine;
+    unsigned int nSPKSubsidyLegacy;
+    unsigned int nSPKSubidyReborn;
+    unsigned int nSPKBlocksPerMonth;
+    std::vector<std::string> vBannedAddresses;
+    float fSPKRatioMN;
+    float fReallocRatioMN;
+    /** Block height at which DIP0003 becomes active */
+    int DIP0003Height;
+    /** Block height at which DIP0003 becomes enforced */
+    int DIP0003EnforcementHeight;
+    uint256 DIP0003EnforcementHash;
+    /** Block height at which DIP0008 becomes active */
+    int DIP0008Height;
+    /** Block height at which BRR becomes active */
+    int BRRHeight;
+    /** Don't warn about unknown BIP 9 activations below this height.
+     * This prevents us from warning about the CSV and DIP activations. */
+    int MinBIP9WarningHeight;
     /**
-     * llmq_test
-     * This quorum is only used for testing
-     *
+     * Minimum blocks including miner confirmation of the total of nMinerConfirmationWindow blocks in a retargeting period,
+     * (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.
+     * Default BIP9Deployment::nThresholdStart value for deployments where it's not specified and for unknown deployments.
+     * Examples: 1916 for 95%, 1512 for testchains.
      */
-    LLMQParams{
-        .type = LLMQType::LLMQ_TEST,
-        .name = "llmq_test",
-        .useRotation = false,
-        .size = 3,
-        .minSize = 2,
-        .threshold = 2,
+    uint32_t nRuleChangeActivationThreshold;
+    // Default BIP9Deployment::nWindowSize value for deployments where it's not specified and for unknown deployments.
+    uint32_t nMinerConfirmationWindow;
+    BIP9Deployment vDeployments[MAX_VERSION_BITS_DEPLOYMENTS];
+    /** Proof of work parameters */
+    uint256 powLimit;
+    bool fPowAllowMinDifficultyBlocks;
+    bool fPowNoRetargeting;
+    int64_t nPowTargetSpacing;
+    int64_t nPowTargetTimespan;
+    int nPowKGWHeight;
+    int nPowDGWHeight;
+    int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
+    uint256 nMinimumChainWork;
+    uint256 defaultAssumeValid;
 
-        .dkgInterval = 24, // one DKG per hour
-        .dkgPhaseBlocks = 2,
-        .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 2,
+    /** these parameters are only used on devnet and can be configured from the outside */
+    int nMinimumDifficultyBlocks{0};
+    int nHighSubsidyBlocks{0};
+    int nHighSubsidyFactor{1};
 
-        .signingActiveQuorumCount = 2, // just a few ones to allow easier testing
-
-        .keepOldConnections = 3,
-        .recoveryMembers = 3,
-    },
-
-    /**
-     * llmq_test_instantsend (same as llmq_test but used for InstantSend exclusively)
-     * This quorum is only used for testing
-     *
-     */
-    LLMQParams{
-        .type = LLMQType::LLMQ_TEST_INSTANTSEND,
-        .name = "llmq_test_instantsend",
-        .useRotation = false,
-        .size = 3,
-        .minSize = 2,
-        .threshold = 2,
-
-        .dkgInterval = 24, // one DKG per hour
-        .dkgPhaseBlocks = 2,
-        .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 2,
-
-        .signingActiveQuorumCount = 2, // just a few ones to allow easier testing
-
-        .keepOldConnections = 3,
-        .recoveryMembers = 3,
-    },
-
-    /**
-     * llmq_test (Dash Core 0.17) aka llmq_test_v17
-     * This quorum is only used for testing
-     *
-     */
-    LLMQParams{
-        .type = LLMQType::LLMQ_TEST_V17,
-        .name = "llmq_test_v17",
-        .useRotation = false,
-        .size = 3,
-        .minSize = 2,
-        .threshold = 2,
-
-        .dkgInterval = 24, // one DKG per hour
-        .dkgPhaseBlocks = 2,
-        .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 2,
-
-        .signingActiveQuorumCount = 2, // just a few ones to allow easier testing
-
-        .keepOldConnections = 3,
-        .recoveryMembers = 3,
-    },
-
-    /**
-     * llmq_test_dip0024
-     * This quorum is only used for testing
-     *
-     */
-    LLMQParams{
-        .type = LLMQType::LLMQ_TEST_DIP0024,
-        .name = "llmq_test_dip0024",
-        .useRotation = true,
-        .size = 4,
-        .minSize = 3,
-        .threshold = 2,
-
-        .dkgInterval = 24, // DKG cycle
-        .dkgPhaseBlocks = 2,
-        .dkgMiningWindowStart = 12, // signingActiveQuorumCount + dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 20,
-        .dkgBadVotesThreshold = 2,
-
-        .signingActiveQuorumCount = 2, // just a few ones to allow easier testing
-
-        .keepOldConnections = 4,
-        .recoveryMembers = 3,
-    },
-
-    /**
-     * llmq_devnet
-     * This quorum is only used for testing on devnets
-     *
-     */
-    LLMQParams{
-        .type = LLMQType::LLMQ_DEVNET,
-        .name = "llmq_devnet",
-        .useRotation = false,
-        .size = 12,
-        .minSize = 7,
-        .threshold = 6,
-
-        .dkgInterval = 24, // one DKG per hour
-        .dkgPhaseBlocks = 2,
-        .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 7,
-
-        .signingActiveQuorumCount = 4, // just a few ones to allow easier testing
-
-        .keepOldConnections = 5,
-        .recoveryMembers = 6,
-    },
-
-    /**
-     * llmq_devnet_dip0024
-     * This quorum is only used for testing on devnets
-     *
-     */
-    LLMQParams{
-        .type = LLMQType::LLMQ_DEVNET_DIP0024,
-        .name = "llmq_devnet_dip0024",
-        .useRotation = true,
-        .size = 8,
-        .minSize = 6,
-        .threshold = 4,
-
-        .dkgInterval = 48, // DKG cycle
-        .dkgPhaseBlocks = 2,
-        .dkgMiningWindowStart = 12, // signingActiveQuorumCount + dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 20,
-        .dkgBadVotesThreshold = 7,
-
-        .signingActiveQuorumCount = 2, // just a few ones to allow easier testing
-
-        .keepOldConnections = 4,
-        .recoveryMembers = 4,
-    },
-
-    /**
-     * llmq_50_60
-     * This quorum is deployed on mainnet and requires
-     * 40 - 50 participants
-     *
-     */
-    LLMQParams{
-        .type = LLMQType::LLMQ_50_60,
-        .name = "llmq_50_60",
-        .useRotation = false,
-        .size = 50,
-        .minSize = 40,
-        .threshold = 30,
-
-        .dkgInterval = 24, // one DKG per hour
-        .dkgPhaseBlocks = 2,
-        .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 40,
-
-        .signingActiveQuorumCount = 24, // a full day worth of LLMQs
-        .keepOldConnections = 25,
-        .recoveryMembers = 25,
-    },
-
-    /**
-     * llmq_60_75
-     * This quorum is deployed on mainnet and requires
-     * 50 - 60 participants
-     *
-     */
-    LLMQParams{
-        .type = LLMQType::LLMQ_60_75,
-        .name = "llmq_60_75",
-        .useRotation = true,
-        .size = 60,
-        .minSize = 50,
-        .threshold = 45,
-
-        .dkgInterval = 24 * 12, // DKG cycle every 12 hours
-        .dkgPhaseBlocks = 2,
-        .dkgMiningWindowStart = 42, // signingActiveQuorumCount + dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 50,
-        .dkgBadVotesThreshold = 48,
-
-        .signingActiveQuorumCount = 32,
-        .keepOldConnections = 64,
-        .recoveryMembers = 25,
-    },
-
-    /**
-     * llmq_400_60
-     * This quorum is deployed on mainnet and requires
-     * 300 - 400 participants
-     *
-     */
-    LLMQParams{
-        .type = LLMQType::LLMQ_400_60,
-        .name = "llmq_400_60",
-        .useRotation = false,
-        .size = 400,
-        .minSize = 300,
-        .threshold = 240,
-
-        .dkgInterval = 24 * 12, // one DKG every 12 hours
-        .dkgPhaseBlocks = 4,
-        .dkgMiningWindowStart = 20, // dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 28,
-        .dkgBadVotesThreshold = 300,
-
-        .signingActiveQuorumCount = 4, // two days worth of LLMQs
-
-        .keepOldConnections = 5,
-        .recoveryMembers = 100,
-    },
-
-    /**
-     * llmq_400_85
-     * This quorum is deployed on mainnet and requires
-     * 300 - 400 participants _with_ a supermajority
-     *
-     * Used for deployment and min-proto-version signalling
-     */
-    LLMQParams{
-        .type = LLMQType::LLMQ_400_85,
-        .name = "llmq_400_85",
-        .useRotation = false,
-        .size = 400,
-        .minSize = 350,
-        .threshold = 340,
-
-        .dkgInterval = 24 * 24, // one DKG every 24 hours
-        .dkgPhaseBlocks = 4,
-        .dkgMiningWindowStart = 20, // dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 48,   // give it a larger mining window to make sure it is mined
-        .dkgBadVotesThreshold = 300,
-
-        .signingActiveQuorumCount = 4, // four days worth of LLMQs
-
-        .keepOldConnections = 5,
-        .recoveryMembers = 100,
-    },
-
-    LLMQParams{
-        .type = Consensus::LLMQ_15_60,
-        .name = "llmq_15_60",
-        .size = 15,
-        .minSize = 12,
-        .threshold = 9,
-
-        .dkgInterval = 24, // one DKG per hour
-        .dkgPhaseBlocks = 2,
-        .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 12,
-
-        .signingActiveQuorumCount = 5, // 5 hours worth of LLMQs
-
-        .keepOldConnections = 25,
-        .recoveryMembers = 8,
-    },
-
-    LLMQParams{
-        .type = Consensus::LLMQ_25_60,
-        .name = "llmq_25_60",
-        .size = 25,
-        .minSize = 20,
-        .threshold = 15,
-
-        .dkgInterval = 24 * 12, // one DKG every 12 hours
-        .dkgPhaseBlocks = 4,
-        .dkgMiningWindowStart = 20, // dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 28,
-        .dkgBadVotesThreshold = 20,
-
-        .signingActiveQuorumCount = 4, // two days worth of LLMQs
-
-        .keepOldConnections = 5,
-        .recoveryMembers = 7,
-    },
-
-    // Used for deployment and min-proto-version signalling, so it needs a higher threshold
-    LLMQParams{
-        .type = Consensus::LLMQ_25_80,
-        .name = "llmq_25_80",
-        .size = 25,
-        .minSize = 23,
-        .threshold = 20,
-
-        .dkgInterval = 24 * 24, // one DKG every 24 hours
-        .dkgPhaseBlocks = 4,
-        .dkgMiningWindowStart = 20, // dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 48, // give it a larger mining window to make sure it is mined
-        .dkgBadVotesThreshold = 23,
-
-        .signingActiveQuorumCount = 4, // two days worth of LLMQs
-
-        .keepOldConnections = 5,
-        .recoveryMembers = 7,
-    },
-
-
-    /**
-     * llmq_20_70
-     * This quorum is deployed on mainnet and requires
-     * 16 - 20 participants
-     *
-     * Used by Sparks Platform
-     */
-    LLMQParams{
-        .type = LLMQType::LLMQ_20_70,
-        .name = "llmq_20_70",
-        .useRotation = false,
-        .size = 20,
-        .minSize = 16,
-        .threshold = 14,
-
-        .dkgInterval = 24, // one DKG per hour
-        .dkgPhaseBlocks = 2,
-        .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 26,
-
-        .signingActiveQuorumCount = 5, // a full day worth of LLMQs
-
-        .keepOldConnections = 5,
-        .recoveryMembers = 10,
-    },
-    /**
-     * llmq_25_67
-     * This quorum is deployed on Testnet and requires
-     * 25 participants
-     *
-     * Used by Dash Platform
-     */
-    LLMQParams{
-        .type = LLMQType::LLMQ_25_67,
-        .name = "llmq_25_67",
-        .useRotation = false,
-        .size = 25,
-        .minSize = 22,
-        .threshold = 17,
-
-        .dkgInterval = 24, // one DKG per hour
-        .dkgPhaseBlocks = 2,
-        .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
-        .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 22,
-
-        .signingActiveQuorumCount = 24, // a full day worth of LLMQs
-
-        .keepOldConnections = 25,
-        .recoveryMembers = 12,
-    },
-
-}; // available_llmqs
-
+    std::vector<LLMQParams> llmqs;
+    std::vector<LLMQParams> llmqs_old;
+    LLMQType llmqTypeChainLocks;
+    LLMQType llmqTypeInstantSend{LLMQType::LLMQ_NONE};
+    LLMQType llmqTypeDIP0024InstantSend{LLMQType::LLMQ_NONE};
+    LLMQType llmqTypePlatform{LLMQType::LLMQ_NONE};
+    LLMQType llmqTypeMnhf{LLMQType::LLMQ_NONE};
+};
 } // namespace Consensus
 
-// This must be outside of all namespaces. We must also duplicate the forward declaration of is_serializable_enum to
-// avoid inclusion of serialize.h here.
-template<typename T> struct is_serializable_enum;
-template<> struct is_serializable_enum<Consensus::LLMQType> : std::true_type {};
-
-#endif // BITCOIN_LLMQ_PARAMS_H
+#endif // BITCOIN_CONSENSUS_PARAMS_H

@@ -1,4 +1,5 @@
 // Copyright (c) 2021-2022 The Dash Core developers
+// Copyright (c) 2021-2023 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -17,10 +18,11 @@ enum class LLMQType : uint8_t {
     LLMQ_50_60 = 1,  // 50 members, 30 (60%) threshold, one per hour
     LLMQ_400_60 = 2, // 400 members, 240 (60%) threshold, one every 12 hours
     LLMQ_400_85 = 3, // 400 members, 340 (85%) threshold, one every 24 hours
-    LLMQ_100_67 = 4, // 100 members, 67 (67%) threshold, one per hour
-    LLMQ_60_75 = 5,  // 60 members, 45 (75%) threshold, one every 12 hours
-    LLMQ_25_67 = 6, // 25 members, 67 (67%) threshold, one per hour
-
+    LLMQ_15_60 = 4, // 15 members, 9 (60%) threshold, one per hour
+    LLMQ_25_60 = 5, // 25 members, 15 (60%) threshold, one every 12 hours
+    LLMQ_25_80 = 6, // 25 members, 20 (80%) threshold, one every 24 hours
+    LLMQ_20_70 = 7, // 20 members, 14 (70%) threshold, one per hour
+    LLMQ_60_75 = 8,  // 60 members, 45 (75%) threshold, one every 12 hours
     // for testing only
     LLMQ_TEST = 100, // 3 members, 2 (66%) threshold, one per hour. Params might differ when -llmqtestparams is used
 
@@ -112,7 +114,7 @@ static_assert(std::is_trivially_copyable_v<Consensus::LLMQParams>, "LLMQParams i
 static_assert(std::is_trivially_assignable_v<Consensus::LLMQParams, Consensus::LLMQParams>, "LLMQParams is not trivially assignable");
 
 
-static constexpr std::array<LLMQParams, 12> available_llmqs = {
+static constexpr std::array<LLMQParams, 14> available_llmqs = {
 
     /**
      * llmq_test
@@ -367,58 +369,90 @@ static constexpr std::array<LLMQParams, 12> available_llmqs = {
         .recoveryMembers = 100,
     },
 
-    /**
-     * llmq_100_67
-     * This quorum is deployed on mainnet and requires
-     * 80 - 100 participants
-     *
-     * Used by Dash Platform
-     */
     LLMQParams{
-        .type = LLMQType::LLMQ_100_67,
-        .name = "llmq_100_67",
-        .useRotation = false,
-        .size = 100,
-        .minSize = 80,
-        .threshold = 67,
+        .type = LLMQType::LLMQ_15_60,
+        .name = "llmq_15_60",
+        .size = 15,
+        .minSize = 12,
+        .threshold = 9,
 
         .dkgInterval = 24, // one DKG per hour
         .dkgPhaseBlocks = 2,
         .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
         .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 80,
+        .dkgBadVotesThreshold = 12,
 
-        .signingActiveQuorumCount = 24, // a full day worth of LLMQs
+        .signingActiveQuorumCount = 5, // 5 hours worth of LLMQs
 
         .keepOldConnections = 25,
-        .recoveryMembers = 50,
+        .recoveryMembers = 8,
     },
 
+    LLMQParams{
+        .type = LLMQType::LLMQ_25_60,
+        .name = "llmq_25_60",
+        .size = 25,
+        .minSize = 20,
+        .threshold = 15,
+
+        .dkgInterval = 24 * 12, // one DKG every 12 hours
+        .dkgPhaseBlocks = 4,
+        .dkgMiningWindowStart = 20, // dkgPhaseBlocks * 5 = after finalization
+        .dkgMiningWindowEnd = 28,
+        .dkgBadVotesThreshold = 20,
+
+        .signingActiveQuorumCount = 4, // two days worth of LLMQs
+
+        .keepOldConnections = 5,
+        .recoveryMembers = 7,
+    },
+
+    // Used for deployment and min-proto-version signalling, so it needs a higher threshold
+    LLMQParams{
+        .type = LLMQType::LLMQ_25_80,
+        .name = "llmq_25_80",
+        .size = 25,
+        .minSize = 23,
+        .threshold = 20,
+
+        .dkgInterval = 24 * 24, // one DKG every 24 hours
+        .dkgPhaseBlocks = 4,
+        .dkgMiningWindowStart = 20, // dkgPhaseBlocks * 5 = after finalization
+        .dkgMiningWindowEnd = 48, // give it a larger mining window to make sure it is mined
+        .dkgBadVotesThreshold = 23,
+
+        .signingActiveQuorumCount = 4, // two days worth of LLMQs
+
+        .keepOldConnections = 5,
+        .recoveryMembers = 7,
+    },
+
+
     /**
-     * llmq_25_67
-     * This quorum is deployed on Testnet and requires
-     * 25 participants
+     * llmq_20_70
+     * This quorum is deployed on mainnet and requires
+     * 16 - 20 participants
      *
-     * Used by Dash Platform
+     * Used by Sparks Platform
      */
     LLMQParams{
-        .type = LLMQType::LLMQ_25_67,
-        .name = "llmq_25_67",
+        .type = LLMQType::LLMQ_20_70,
+        .name = "llmq_20_70",
         .useRotation = false,
-        .size = 25,
-        .minSize = 22,
-        .threshold = 17,
+        .size = 20,
+        .minSize = 16,
+        .threshold = 14,
 
         .dkgInterval = 24, // one DKG per hour
         .dkgPhaseBlocks = 2,
         .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
         .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 22,
+        .dkgBadVotesThreshold = 26,
 
-        .signingActiveQuorumCount = 24, // a full day worth of LLMQs
+        .signingActiveQuorumCount = 5, // a full day worth of LLMQs
 
-        .keepOldConnections = 25,
-        .recoveryMembers = 12,
+        .keepOldConnections = 5,
+        .recoveryMembers = 10,
     },
 
 }; // available_llmqs
