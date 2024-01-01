@@ -624,10 +624,11 @@ public:
         }
     }
 
-CAmount Value() const { return tx->tx->vout[i].nValue; }
-=======
->>>>>>> refs/tags/v18.2.2
+    CAmount Value() const { return tx->tx->vout[i].nValue; }
+
     std::string ToString() const;
+
+    inline CInputCoin GetInputCoin() const
     {
         return CInputCoin(tx->tx, i, nInputBytes);
     }

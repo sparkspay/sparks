@@ -42,15 +42,6 @@
 #if defined(HAVE_CONFIG_H)
 #include <config/sparks-config.h>
 #endif
-#ifdef ENABLE_WALLET
-#include <config/bitcoin-config.h>
-#include <coinjoin/coinjoin-client-options.h>
-#include <wallet/fees.h>
-#include <wallet/wallet.h>
-#define CHECK_WALLET(x) x
-#else
-#define CHECK_WALLET(x) throw std::logic_error("Wallet function called in non-wallet build.")
-#endif
 
 #include <coinjoin/coinjoin.h>
 #include <coinjoin/options.h>
