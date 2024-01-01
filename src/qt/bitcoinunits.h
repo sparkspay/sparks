@@ -1,9 +1,6 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2022 The Dash Core developers
-<<<<<<< HEAD
-// Copyright (c) 2016-2022 The Sparks Core developers
-=======
->>>>>>> refs/tags/v18.2.2
+// Copyright (c) 2016-2023 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 

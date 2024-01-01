@@ -1512,12 +1512,8 @@ void BitcoinGUI::setAdditionalDataSyncProgress(double nSyncProgress)
 
 void BitcoinGUI::message(const QString& title, QString message, unsigned int style, bool* ret, const QString& detailed_message)
 {
-<<<<<<< HEAD
-    QString strTitle = tr("Sparks Core"); // default title
-=======
     // Default title. On macOS, the window title is ignored (as required by the macOS Guidelines).
     QString strTitle{PACKAGE_NAME};
->>>>>>> refs/tags/v18.2.2
     // Default to information icon
     int nMBoxIcon = QMessageBox::Information;
     int nNotifyIcon = Notificator::Information;
@@ -1543,12 +1539,6 @@ void BitcoinGUI::message(const QString& title, QString message, unsigned int sty
             break;
         }
     }
-<<<<<<< HEAD
-    // Append title to "Sparks Core - "
-    if (!msgType.isEmpty())
-        strTitle += " - " + msgType;
-=======
->>>>>>> refs/tags/v18.2.2
 
     if (!msgType.isEmpty()) {
         strTitle += " - " + msgType;

@@ -2,11 +2,7 @@
 
 #include <cachemap.h>
 
-<<<<<<< HEAD
-#include <test/test_sparks.h>
-=======
 #include <test/util/setup_common.h>
->>>>>>> refs/tags/v18.2.2
 
 #include <boost/test/unit_test.hpp>
 

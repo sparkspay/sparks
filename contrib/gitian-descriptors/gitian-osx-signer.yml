@@ -1,10 +1,6 @@
 ---
-<<<<<<< HEAD
-name: "sparks-dmg-signer"
-=======
 name: "sparks-dmg-signer"
 distro: "ubuntu"
->>>>>>> refs/tags/v18.2.2
 suites:
 - "focal"
 architectures:

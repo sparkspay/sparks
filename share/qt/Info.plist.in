@@ -50,46 +50,6 @@
     </dict>
   </array>
 
-<<<<<<< HEAD
-  <key>UTExportedTypeDeclarations</key>
-  <array>
-    <dict>
-      <key>UTTypeIdentifier</key>
-      <string>org.sparks.paymentrequest</string>
-      <key>UTTypeDescription</key>
-      <string>Sparks payment request</string>
-      <key>UTTypeConformsTo</key>
-      <array>
-        <string>public.data</string>
-      </array>
-      <key>UTTypeTagSpecification</key>
-      <dict>
-        <key>public.mime-type</key>
-        <string>application/x-sparks-payment-request</string>
-        <key>public.filename-extension</key>
-        <array>
-          <string>sparkspaymentrequest</string>
-        </array>
-      </dict>
-    </dict>
-  </array>
-
-  <key>CFBundleDocumentTypes</key>
-  <array>
-    <dict>
-      <key>CFBundleTypeRole</key>
-      <string>Editor</string>
-      <key>LSItemContentTypes</key>
-      <array>
-        <string>org.sparks.paymentrequest</string>
-      </array>
-      <key>LSHandlerRank</key>
-      <string>Owner</string>
-    </dict>
-  </array>
-
-=======
->>>>>>> refs/tags/v18.2.2
   <key>NSPrincipalClass</key>
     <string>NSApplication</string>
 

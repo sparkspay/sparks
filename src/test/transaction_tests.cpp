@@ -4,11 +4,7 @@
 
 #include <test/data/tx_invalid.json.h>
 #include <test/data/tx_valid.json.h>
-<<<<<<< HEAD
-#include <test/test_sparks.h>
-=======
 #include <test/util/setup_common.h>
->>>>>>> refs/tags/v18.2.2
 
 #include <clientversion.h>
 #include <checkqueue.h>

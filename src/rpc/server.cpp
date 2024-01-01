@@ -1,12 +1,7 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-<<<<<<< HEAD
-// Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
-// Copyright (c) 2016-2022 The Sparks Core developers
-=======
 // Copyright (c) 2009-2019 The Bitcoin Core developers
 // Copyright (c) 2014-2022 The Dash Core developers
->>>>>>> refs/tags/v18.2.2
+// Copyright (c) 2016-2023 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -189,13 +184,7 @@ static RPCHelpMan stop()
     // Also accept the hidden 'wait' integer argument (milliseconds)
     // For instance, 'stop 1000' makes the call wait 1 second before returning
     // to the client (intended for testing)
-<<<<<<< HEAD
-    if (jsonRequest.fHelp || jsonRequest.params.size() > 1)
-        throw std::runtime_error(
-            "stop\n"
-            "\nStop Sparks Core server.");
-=======
-        "\nStop Dash Core server.",
+        "\nStop Sparks Core server.",
         {
             {"wait", RPCArg::Type::NUM, RPCArg::Optional::OMITTED_NAMED_ARG, "how long to wait in ms", "", {}, /* hidden */ true},
         },
@@ -203,20 +192,15 @@ static RPCHelpMan stop()
         RPCExamples{""},
         [&](const RPCHelpMan& self, const JSONRPCRequest& jsonRequest) -> UniValue
 {
->>>>>>> refs/tags/v18.2.2
     // Event loop will exit after current HTTP requests have been handled, so
     // this reply will get back to the client.
     StartShutdown();
     if (jsonRequest.params[0].isNum()) {
         UninterruptibleSleep(std::chrono::milliseconds{jsonRequest.params[0].get_int()});
     }
-<<<<<<< HEAD
-    return "Sparks Core server stopping";
-=======
     return RESULT;
 },
     };
->>>>>>> refs/tags/v18.2.2
 }
 
 static RPCHelpMan uptime()
@@ -580,21 +564,6 @@ std::vector<std::string> CRPCTable::listCommands() const
     return commandList;
 }
 
-<<<<<<< HEAD
-std::string HelpExampleCli(const std::string& methodname, const std::string& args)
-{
-    return "> sparks-cli " + methodname + " " + args + "\n";
-}
-
-std::string HelpExampleRpc(const std::string& methodname, const std::string& args)
-{
-    return "> curl --user myusername --data-binary '{\"jsonrpc\": \"1.0\", \"id\":\"curltest\", "
-        "\"method\": \"" + methodname + "\", \"params\": [" + args + "] }' -H 'content-type: text/plain;'"
-        " http://127.0.0.1:" + strprintf("%d", gArgs.GetArg("-rpcport", BaseParams().RPCPort())) + "/\n";
-}
-
-=======
->>>>>>> refs/tags/v18.2.2
 void RPCSetTimerInterfaceIfUnset(RPCTimerInterface *iface)
 {
     if (!timerInterface)

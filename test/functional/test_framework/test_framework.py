@@ -1689,29 +1689,3 @@ class DashTestFramework(BitcoinTestFramework):
                     c += 1
             return c >= count
         wait_until(test, timeout=timeout)
-<<<<<<< HEAD
-
-
-class SkipTest(Exception):
-    """This exception is raised to skip a test"""
-    def __init__(self, message):
-        self.message = message
-
-
-def skip_if_no_py3_zmq():
-    """Attempt to import the zmq package and skip the test if the import fails."""
-    try:
-        import zmq  # noqa
-    except ImportError:
-        raise SkipTest("python3-zmq module not available.")
-
-
-def skip_if_no_bitcoind_zmq(test_instance):
-    """Skip the running test if sparksd has not been compiled with zmq support."""
-    config = configparser.ConfigParser()
-    config.read_file(open(test_instance.options.configfile))
-
-    if not config["components"].getboolean("ENABLE_ZMQ"):
-        raise SkipTest("sparksd has not been built with zmq enabled.")
-=======
->>>>>>> refs/tags/v18.2.2

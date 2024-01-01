@@ -110,13 +110,8 @@ static CMutableTransaction CreateProRegTx(const CTxMemPool& mempool, SimpleUTXOM
     CMutableTransaction tx;
     tx.nVersion = 3;
     tx.nType = TRANSACTION_PROVIDER_REGISTER;
-<<<<<<< HEAD
     FundTransaction(tx, utxos, scriptPayout, 25000 * COIN, coinbaseKey);
-    proTx.inputsHash = CalcTxInputsHash(tx);
-=======
-    FundTransaction(tx, utxos, scriptPayout, 1000 * COIN, coinbaseKey);
     proTx.inputsHash = CalcTxInputsHash(CTransaction(tx));
->>>>>>> refs/tags/v18.2.2
     SetTxPayload(tx, proTx);
     SignTransaction(mempool, tx, coinbaseKey);
 

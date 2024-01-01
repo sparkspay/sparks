@@ -44,12 +44,8 @@ class TestP2PConn(P2PInterface):
 
 class LLMQCoinbaseCommitmentsTest(SparksTestFramework):
     def set_test_params(self):
-<<<<<<< HEAD
-        self.set_sparks_test_params(4, 3, fast_dip3_enforcement=True)
-=======
         extra_args = [["-vbparams=dip0024:999999999999:999999999999"]] * 4 # disable dip0024
         self.set_sparks_test_params(4, 3, extra_args=extra_args, fast_dip3_enforcement=True)
->>>>>>> refs/tags/v18.2.2
 
     def run_test(self):
         self.test_node = self.nodes[0].add_p2p_connection(TestP2PConn())
@@ -104,13 +100,8 @@ class LLMQCoinbaseCommitmentsTest(SparksTestFramework):
         first_quorum = self.test_dip8_quorum_merkle_root_activation(False, True)
 
         # Re-enable ChainLocks again
-<<<<<<< HEAD
-        self.nodes[0].spork("SPORK_19_CHAINLOCKS_ENABLED", 0)
-        self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
-=======
         self.nodes[0].sporkupdate("SPORK_19_CHAINLOCKS_ENABLED", 0)
         self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
->>>>>>> refs/tags/v18.2.2
         self.wait_for_sporks_same()
 
         # Verify that the first quorum appears in MNLISTDIFF
@@ -255,21 +246,13 @@ class LLMQCoinbaseCommitmentsTest(SparksTestFramework):
 
     def test_dip8_quorum_merkle_root_activation(self, with_initial_quorum, slow_mode=False):
         if with_initial_quorum:
-<<<<<<< HEAD
-            self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
-=======
-            self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
->>>>>>> refs/tags/v18.2.2
+            self.nodes[0].sporkupdate("SPORK_18_QUORUM_DKG_ENABLED", 0)
             self.wait_for_sporks_same()
 
             # Mine one quorum before dip8 is activated
             self.mine_quorum()
 
-<<<<<<< HEAD
-        self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 4070908800)
-=======
-        self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 4070908800)
->>>>>>> refs/tags/v18.2.2
+        self.nodes[0].sporkupdate("SPORK_18_QUORUM_DKG_ENABLED", 4070908800)
         self.wait_for_sporks_same()
 
         cbtx = self.nodes[0].getblock(self.nodes[0].getbestblockhash(), 2)["tx"][0]
@@ -289,11 +272,7 @@ class LLMQCoinbaseCommitmentsTest(SparksTestFramework):
             assert_equal(merkleRootQuorums, 0)
 
         self.bump_mocktime(1)
-<<<<<<< HEAD
-        self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
-=======
-        self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
->>>>>>> refs/tags/v18.2.2
+        self.nodes[0].sporkupdate("SPORK_18_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
 
         # Mine quorum and verify that merkleRootQuorums has changed

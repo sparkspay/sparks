@@ -633,17 +633,10 @@ void CNode::copyStats(CNodeStats &stats, const std::vector<bool> &m_asmap)
         nPingUsecWait = GetTimeMicros() - nPingUsecStart;
     }
 
-<<<<<<< HEAD
     // Raw ping time is in microseconds, but show it to user as whole seconds (Sparks users should be well used to small numbers with many decimal places by now :)
-    stats.dPingTime = (((double)nPingUsecTime) / 1e6);
-    stats.dMinPing  = (((double)nMinPingUsecTime) / 1e6);
-    stats.dPingWait = (((double)nPingUsecWait) / 1e6);
-=======
-    // Raw ping time is in microseconds, but show it to user as whole seconds (Dash users should be well used to small numbers with many decimal places by now :)
     stats.m_ping_usec = nPingUsecTime;
     stats.m_min_ping_usec  = nMinPingUsecTime;
     stats.m_ping_wait_usec = nPingUsecWait;
->>>>>>> refs/tags/v18.2.2
 
     // Leave string empty if addrLocal invalid (not filled in yet)
     CService addrLocalUnlocked = GetAddrLocal();
@@ -2075,11 +2068,7 @@ void CConnman::ThreadDNSAddressSeed()
             }
         }
 
-<<<<<<< HEAD
-        std::string strDesc = "Sparks Core " + FormatFullVersion();
-=======
         if (interruptNet) return;
->>>>>>> refs/tags/v18.2.2
 
         // hold off on querying seeds if P2P network deactivated
         if (!fNetworkActive) {

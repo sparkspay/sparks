@@ -87,6 +87,7 @@ bool IsQuorumTypeEnabled(Consensus::LLMQType llmqType, const CQuorumManager& qma
 bool IsQuorumTypeEnabledInternal(Consensus::LLMQType llmqType, const CQuorumManager& qman, const CBlockIndex* pindex, std::optional<bool> optDIP0024IsActive, std::optional<bool> optHaveDIP0024Quorums);
 
 std::vector<Consensus::LLMQType> GetEnabledQuorumTypes(const CBlockIndex* pindex);
+std::map<Consensus::LLMQType, Consensus::LLMQParams> GetEnabledQuorums(const CBlockIndex* pindex);
 std::vector<std::reference_wrapper<const Consensus::LLMQParams>> GetEnabledQuorumParams(const CBlockIndex* pindex);
 
 bool IsQuorumRotationEnabled(const Consensus::LLMQParams& llmqParams, const CBlockIndex* pindex);

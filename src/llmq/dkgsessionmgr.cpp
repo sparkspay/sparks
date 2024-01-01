@@ -501,7 +501,7 @@ void CDKGSessionManager::CleanupOldContributions() const
 
 bool IsQuorumDKGEnabled(const CSporkManager& sporkManager)
 {
-    return sporkManager.IsSporkActive(SPORK_17_QUORUM_DKG_ENABLED);
+    return sporkManager.IsSporkActive(SPORK_18_QUORUM_DKG_ENABLED);
 }
 
 } // namespace llmq

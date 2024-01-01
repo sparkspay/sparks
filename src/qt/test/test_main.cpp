@@ -46,16 +46,6 @@ const std::function<void(const std::string&)> G_TEST_LOG_FUN{};
 // This is all you need to run all the tests
 int main(int argc, char* argv[])
 {
-<<<<<<< HEAD
-    SetupEnvironment();
-    SetupNetworking();
-    SelectParams(CBaseChainParams::MAIN);
-    noui_connect();
-    ClearDatadirCache();
-    fs::path pathTemp = fs::temp_directory_path() / strprintf("test_sparks-qt_%lu_%i", (unsigned long)GetTime(), (int)GetRand(100000));
-    fs::create_directories(pathTemp);
-    gArgs.ForceSetArg("-datadir", pathTemp.string());
-=======
     // Initialize persistent globals with the testing setup state for sanity.
     // E.g. -datadir in gArgs is set to a temp directory dummy value (instead
     // of defaulting to the default datadir), or globalChainParams is set to
@@ -68,7 +58,6 @@ int main(int argc, char* argv[])
 
     NodeContext node_context;
     std::unique_ptr<interfaces::Node> node = interfaces::MakeNode(&node_context);
->>>>>>> refs/tags/v18.2.2
 
     bool fInvalid = false;
 
@@ -83,13 +72,8 @@ int main(int argc, char* argv[])
 
     // Don't remove this, it's needed to access
     // QApplication:: and QCoreApplication:: in the tests
-<<<<<<< HEAD
-    QApplication app(argc, argv);
-    app.setApplicationName("Sparks-Qt-test");
-=======
     BitcoinApplication app(*node);
-    app.setApplicationName("Dash-Qt-test");
->>>>>>> refs/tags/v18.2.2
+    app.setApplicationName("Sparks-Qt-test");
 
     node->setupServerArgs();            // Make gArgs available in the NodeContext
     node->context()->args->ClearArgs(); // Clear added args again

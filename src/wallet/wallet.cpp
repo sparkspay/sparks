@@ -1,13 +1,8 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-<<<<<<< HEAD
-// Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
-// Copyright (c) 2015-2022 The PIVX developers
-// Copyright (c) 2016-2022 The Sparks Core developers
-=======
 // Copyright (c) 2009-2019 The Bitcoin Core developers
 // Copyright (c) 2014-2023 The Dash Core developers
->>>>>>> refs/tags/v18.2.2
+// Copyright (c) 2015-2022 The PIVX developers
+// Copyright (c) 2016-2023 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -1209,6 +1204,7 @@ void CWallet::BlockConnected(const CBlock& block, const std::vector<CTransaction
 
     m_last_block_processed_height = height;
     m_last_block_processed = block_hash;
+    m_last_block_processed_time = pindex->GetBlockTime();
     for (size_t index = 0; index < block.vtx.size(); index++) {
         CWalletTx::Confirmation confirm(CWalletTx::Status::CONFIRMED, height, block_hash, index);
         SyncTransaction(block.vtx[index], confirm);
@@ -1217,44 +1213,6 @@ void CWallet::BlockConnected(const CBlock& block, const std::vector<CTransaction
     for (const CTransactionRef& ptx : vtxConflicted) {
         TransactionRemovedFromMempool(ptx, MemPoolRemovalReason::MANUAL);
     }
-<<<<<<< HEAD
-    for (size_t i = 0; i < pblock->vtx.size(); i++) {
-        SyncTransaction(pblock->vtx[i], pindex, i);
-        // UNKNOWN because it's a manual removal, not using mempool logic
-        TransactionRemovedFromMempool(pblock->vtx[i], MemPoolRemovalReason::UNKNOWN);
-    }
-
-    m_last_block_processed = pindex;
-    m_last_block_processed_time = pindex->GetBlockTime();
-
-    // The GUI expects a NotifyTransactionChanged when a coinbase tx
-    // which is in our wallet moves from in-the-best-block to
-    // 2-confirmations (as it only displays them at that time).
-    // We do that here.
-    if (hashPrevBestCoinbase.IsNull()) {
-        // Immediately after restart we have no idea what the coinbase
-        // transaction from the previous block is.
-        // For correctness we scan over the entire wallet, looking for
-        // the previous block's coinbase, just in case it is ours, so
-        // that we can notify the UI that it should now be displayed.
-        if (pindex->pprev) {
-            for (const std::pair<const uint256, CWalletTx>& p : mapWallet) {
-                if (p.second.IsCoinBase() && p.second.hashBlock == pindex->pprev->GetBlockHash()) {
-                    NotifyTransactionChanged(this, p.first, CT_UPDATED);
-                    break;
-                }
-            }
-        }
-    } else {
-        std::map<uint256, CWalletTx>::const_iterator mi = mapWallet.find(hashPrevBestCoinbase);
-        if (mi != mapWallet.end()) {
-            NotifyTransactionChanged(this, hashPrevBestCoinbase, CT_UPDATED);
-        }
-    }
-
-    hashPrevBestCoinbase = pblock->vtx[0]->GetHash();
-=======
->>>>>>> refs/tags/v18.2.2
 
     // reset cache to make sure no longer immature coins are included
     fAnonymizableTallyCached = false;
@@ -4293,7 +4251,6 @@ std::vector<std::string> CWallet::GetDestValues(const std::string& prefix) const
     return values;
 }
 
-<<<<<<< HEAD
 void CWallet::AutoCombineDust(CConnman* connman)
 {
     {
@@ -4397,10 +4354,7 @@ void CWallet::AutoCombineDust(CConnman* connman)
     }
 }
 
-bool CWallet::Verify(const WalletLocation& location, bool salvage_wallet, std::string& error_string, std::string& warning_string)
-=======
 std::unique_ptr<WalletDatabase> MakeWalletDatabase(const std::string& name, const DatabaseOptions& options, DatabaseStatus& status, bilingual_str& error_string)
->>>>>>> refs/tags/v18.2.2
 {
     // Do some checking on wallet path. It should be either a:
     //

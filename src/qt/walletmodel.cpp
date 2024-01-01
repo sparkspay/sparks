@@ -288,23 +288,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(WalletModelTransaction &tran
         std::vector<std::pair<std::string, std::string>> vOrderForm;
         for (const SendCoinsRecipient &rcp : transaction.getRecipients())
         {
-<<<<<<< HEAD
-            if (rcp.paymentRequest.IsInitialized())
-            {
-                // Make sure any payment requests involved are still valid.
-                if (PaymentServer::verifyExpired(rcp.paymentRequest.getDetails())) {
-                    return PaymentRequestExpired;
-                }
-
-                // Store PaymentRequests in wtx.vOrderForm in wallet.
-                std::string value;
-                rcp.paymentRequest.SerializeToString(&value);
-                vOrderForm.emplace_back("PaymentRequest", std::move(value));
-            }
-            else if (!rcp.message.isEmpty()) // Message from normal sparks:URI (sparks:XyZ...?message=example)
-=======
             if (!rcp.message.isEmpty()) // Message from normal sparks:URI (sparks:XyZ...?message=example)
->>>>>>> refs/tags/v18.2.2
                 vOrderForm.emplace_back("Message", rcp.message.toStdString());
         }
 

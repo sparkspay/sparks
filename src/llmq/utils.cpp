@@ -580,7 +580,7 @@ static bool EvalSpork(Consensus::LLMQType llmqType, int64_t spork_value)
     if (spork_value == 0) {
         return true;
     }
-    if (spork_value == 1 && llmqType != Consensus::LLMQType::LLMQ_100_67 && llmqType != Consensus::LLMQType::LLMQ_400_60 && llmqType != Consensus::LLMQType::LLMQ_400_85) {
+    if (spork_value == 1 && llmqType != Consensus::LLMQType::LLMQ_20_70 && llmqType != Consensus::LLMQType::LLMQ_25_60 && llmqType != Consensus::LLMQType::LLMQ_25_80) {
         return true;
     }
     return false;
@@ -941,6 +941,18 @@ std::vector<Consensus::LLMQType> GetEnabledQuorumTypes(const CBlockIndex* pindex
     for (const auto& params : Params().GetConsensus().llmqs) {
         if (IsQuorumTypeEnabled(params.type, *llmq::quorumManager, pindex)) {
             ret.push_back(params.type);
+        }
+    }
+    return ret;
+}
+
+// created for sparks
+std::map<Consensus::LLMQType, Consensus::LLMQParams> GetEnabledQuorums(const CBlockIndex* pindex)
+{
+    std::map<Consensus::LLMQType, Consensus::LLMQParams> ret;
+    for (const auto& p : Params().GetConsensus().llmqs) {
+        if (IsQuorumTypeEnabled(p.first, pindex)) {
+            ret.insert({p.first, p.second});
         }
     }
     return ret;

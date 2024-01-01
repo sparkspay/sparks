@@ -3,11 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <test/data/blockfilters.json.h>
-<<<<<<< HEAD
-#include <test/test_sparks.h>
-=======
 #include <test/util/setup_common.h>
->>>>>>> refs/tags/v18.2.2
 
 #include <blockfilter.h>
 #include <core_io.h>

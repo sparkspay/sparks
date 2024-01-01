@@ -275,7 +275,7 @@ void CQuorumManager::UpdatedBlockTip(const CBlockIndex* pindexNew, bool fInitial
     }
 
     //modified for sparks
-    for (auto& p : llmq::CLLMQUtils::GetEnabledQuorums(pindexNew)) {
+    for (auto& params : llmq::utils::GetEnabledQuorums(pindexNew)) {
         CheckQuorumConnections(params, pindexNew);
     }
 
