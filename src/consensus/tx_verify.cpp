@@ -158,7 +158,7 @@ unsigned int GetTransactionSigOpCount(const CTransaction& tx, const CCoinsViewCa
 
     return nSigOps;
 }
-
+#if JANAKA_COMMENT
 bool CheckTransaction(const CTransaction& tx, CValidationState &state)
 {
     bool allowEmptyTxInOut = false;
@@ -219,7 +219,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
 }
 
 
-
+#endif
 bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, CAmount& txfee)
 {
     // are the actual inputs available?
@@ -244,10 +244,12 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
         if (!MoneyRange(coin.out.nValue) || !MoneyRange(nValueIn)) {
             return state.Invalid(ValidationInvalidReason::CONSENSUS, false, REJECT_INVALID, "bad-txns-inputvalues-outofrange");
         }
+        #if janaka_cemmneted
         // Check for banned inputs
         if (nSpendHeight >= consensusParams.nSPKHeight && IsInputBanned(consensusParams, tx.vin[i], coin.out))  {
             return state.DoS(100, false, REJECT_INVALID, "bad-txns-in-banned");
         }
+        #endif
     }
 
     const CAmount value_out = tx.GetValueOut();
