@@ -884,11 +884,16 @@ bool IsQuorumTypeEnabledInternal(Consensus::LLMQType llmqType, const CQuorumMana
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
 
+    bool f_dip0008_Active = pindex && pindex->nHeight + 1 >= consensusParams.DIP0008Height;
+
     switch (llmqType)
     {
         case Consensus::LLMQType::LLMQ_TEST_INSTANTSEND:
         case Consensus::LLMQType::LLMQ_DEVNET:
         case Consensus::LLMQType::LLMQ_50_60: {
+            if (f_dip0008_Active) {
+                return false;
+            }
             if (IsInstantSendLLMQTypeShared()) {
                 break;
             }
@@ -903,11 +908,21 @@ bool IsQuorumTypeEnabledInternal(Consensus::LLMQType llmqType, const CQuorumMana
             }
             break;
         }
-        case Consensus::LLMQType::LLMQ_TEST:
         case Consensus::LLMQType::LLMQ_400_60:
         case Consensus::LLMQType::LLMQ_400_85:
+            if (f_dip0008_Active) {
+                return false;
+            }
             break;
-        case Consensus::LLMQType::LLMQ_100_67:
+        case Consensus::LLMQType::LLMQ_15_60:
+        case Consensus::LLMQType::LLMQ_25_60:
+        case Consensus::LLMQType::LLMQ_25_80:
+        case Consensus::LLMQType::LLMQ_TEST:
+            if (!f_dip0008_Active) {
+                return false;
+            }
+            break;    
+        case Consensus::LLMQType::LLMQ_20_70:
         case Consensus::LLMQType::LLMQ_TEST_V17:
             if (LOCK(cs_llmq_vbc); VersionBitsState(pindex, consensusParams, Consensus::DEPLOYMENT_DIP0020, llmq_versionbitscache) != ThresholdState::ACTIVE) {
                 return false;
