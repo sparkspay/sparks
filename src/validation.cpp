@@ -41,6 +41,7 @@
 #include <ui_interface.h>
 #include <uint256.h>
 #include <undo.h>
+#include <spork.h>
 #include <util/check.h> // For NDEBUG compile time check
 #include <util/strencodings.h>
 #include <util/translation.h>
