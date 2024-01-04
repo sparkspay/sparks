@@ -40,7 +40,7 @@
 #include <warnings.h>
 
 #if defined(HAVE_CONFIG_H)
-//#include <config/sparks-config.h>
+#include <config/sparks-config.h>
 #endif
 
 #include <coinjoin/coinjoin.h>

@@ -6,7 +6,7 @@
 #define BITCOIN_NETBASE_H
 
 #if defined(HAVE_CONFIG_H)
-////#include <config/sparks-config.h>//janaka 2024-01-03
+#include <config/sparks-config.h>
 #include <config/bitcoin-config.h>
 #endif
 
