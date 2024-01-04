@@ -1432,9 +1432,9 @@ bool IsInputBanned(const Params& consensusParams, const CTxIn& input, const CTxO
     // Determine script type
     const CScript& prevScript = prev.scriptPubKey;
     std::vector<std::vector<unsigned char> > vSolutions;
-    txnouttype whichType;
+    txnouttype whichType = Solver(prevScript, whichType, vSolutions);
 
-    if (!Solver(prevScript, whichType, vSolutions))
+    if (whichType == TX_NONSTANDARD)
     {
         LogPrintf("IsInputBanned() : Solver returned false\n");
         return true;
