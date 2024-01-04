@@ -314,10 +314,10 @@ public:
         AddLLMQ(Consensus::LLMQType::LLMQ_25_60);
         AddLLMQ(Consensus::LLMQType::LLMQ_25_80);
         AddLLMQ(Consensus::LLMQType::LLMQ_20_70);
-        consensus.llmqTypeChainLocks = Consensus::LLMQ_25_60;
-        consensus.llmqTypeInstantSend = Consensus::LLMQ_15_60;
+        consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_25_60;
+        consensus.llmqTypeInstantSend = Consensus::LLMQType::LLMQ_15_60;
         consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_60_75;
-        consensus.llmqTypePlatform = Consensus::LLMQ_20_70;
+        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_20_70;
         consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_400_85;
 
         fDefaultConsistencyChecks = false;
@@ -556,10 +556,10 @@ public:
         AddLLMQ(Consensus::LLMQType::LLMQ_25_80);
         AddLLMQ(Consensus::LLMQType::LLMQ_20_70);
         AddLLMQ(Consensus::LLMQType::LLMQ_25_67);
-        consensus.llmqTypeChainLocks = Consensus::LLMQ_TEST;
-        consensus.llmqTypeInstantSend = Consensus::LLMQ_TEST;
+        consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_TEST;
+        consensus.llmqTypeInstantSend = Consensus::LLMQType::LLMQ_TEST;
         consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_60_75;
-        consensus.llmqTypePlatform = Consensus::LLMQ_20_70;
+        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_20_70;
         consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_TEST;
 
         fDefaultConsistencyChecks = false;
@@ -752,10 +752,10 @@ public:
         AddLLMQ(Consensus::LLMQType::LLMQ_20_70);
         AddLLMQ(Consensus::LLMQType::LLMQ_DEVNET);
         AddLLMQ(Consensus::LLMQType::LLMQ_DEVNET_DIP0024);
-        consensus.llmqTypeChainLocks = Consensus::LLMQ_15_60;
-        consensus.llmqTypeInstantSend = Consensus::LLMQ_15_60;
+        consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_15_60;
+        consensus.llmqTypeInstantSend = Consensus::LLMQType::LLMQ_15_60;
         consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_60_75;
-        consensus.llmqTypePlatform = Consensus::LLMQ_20_70;
+        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_20_70;
         consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_15_60;
 
         fDefaultConsistencyChecks = false;

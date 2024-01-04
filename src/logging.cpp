@@ -191,26 +191,6 @@ bool GetLogCategory(BCLog::LogFlags& flag, const std::string& str)
             flag = category_desc.flag;
             return true;
         }
-        if (*str == "sparks") {
-            *f = BCLog::CHAINLOCKS
-                 | BCLog::GOBJECT
-                 | BCLog::INSTANTSEND
-                 | BCLog::KEEPASS
-                 | BCLog::LLMQ
-                 | BCLog::LLMQ_DKG
-                 | BCLog::LLMQ_SIGS
-                 | BCLog::MNPAYMENTS
-                 | BCLog::MNSYNC
-                 | BCLog::COINJOIN
-                 | BCLog::SPORK;
-            return true;
-        }
-        for (unsigned int i = 0; i < ARRAYLEN(LogCategories); i++) {
-            if (LogCategories[i].category == *str) {
-                *f = LogCategories[i].flag;
-                return true;
-            }
-        }
     }
     return false;
 }
