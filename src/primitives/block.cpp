@@ -9,7 +9,6 @@
 #include <hash.h>
 #include <streams.h>
 #include <tinyformat.h>
-#include <utilstrencodings.h>
 #include <crypto/common.h>
 #include <crypto/neoscrypt.h>
 
