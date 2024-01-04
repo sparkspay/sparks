@@ -219,7 +219,6 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
 }
 
 
-#endif
 bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, CAmount& txfee)
 {
     // are the actual inputs available?
