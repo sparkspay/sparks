@@ -35,7 +35,7 @@ endif #ENABLE_STACKTRACES
 
 BITCOIN_INCLUDES=-I$(builddir) -I$(srcdir)/secp256k1/include -I$(srcdir)/$(UNIVALUE_INCLUDE_DIR_INT) $(BDB_CPPFLAGS) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS)
 
-BLS_LIBS=-lbls-sparks -lrelic_s
+BLS_LIBS=-lbls-dash -lrelic_s
 
 LIBBITCOIN_SERVER=libbitcoin_server.a
 LIBBITCOIN_COMMON=libbitcoin_common.a
