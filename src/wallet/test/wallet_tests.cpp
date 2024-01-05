@@ -15,7 +15,6 @@
 #include <node/context.h>
 #include <policy/policy.h>
 #include <rpc/server.h>
-#include <test/test_sparks.h>
 #include <rpc/rawtransaction_util.h>
 #include <test/util/logging.h>
 #include <test/util/setup_common.h>

@@ -4,7 +4,6 @@
 
 #include <compat/sanity.h>
 #include <key.h>
-#include <test/test_sparks.h>
 #include <test/util/setup_common.h>
 
 #include <boost/test/unit_test.hpp>

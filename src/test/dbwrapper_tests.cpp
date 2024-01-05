@@ -5,7 +5,6 @@
 #include <dbwrapper.h>
 #include <uint256.h>
 #include <random.h>
-#include <test/test_sparks.h>
 #include <test/util/setup_common.h>
 
 #include <memory>

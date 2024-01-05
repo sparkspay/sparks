@@ -9,9 +9,6 @@
 #include <script/script.h>
 #include <script/script_error.h>
 #include <script/sign.h>
-#include <util.h>
-#include <utilstrencodings.h>
-#include <test/test_sparks.h>
 #include <script/signingprovider.h>
 #include <util/strencodings.h>
 #include <rpc/util.h>
@@ -20,7 +17,6 @@
 #include <streams.h>
 
 #if defined(HAVE_CONSENSUS_LIB)
-#include <script/sparksconsensus.h>
 #include <script/bitcoinconsensus.h>
 #endif
 

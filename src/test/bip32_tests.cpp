@@ -7,10 +7,6 @@
 #include <clientversion.h>
 #include <key.h>
 #include <key_io.h>
-#include <uint256.h>
-#include <util.h>
-#include <utilstrencodings.h>
-#include <test/test_sparks.h>
 #include <streams.h>
 #include <util/strencodings.h>
 #include <test/util/setup_common.h>

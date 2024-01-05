@@ -12,9 +12,6 @@
 #include <serialize.h>
 #include <streams.h>
 #include <uint256.h>
-#include <util.h>
-#include <utilstrencodings.h>
-#include <test/test_sparks.h>
 #include <util/strencodings.h>
 #include <test/util/setup_common.h>
 

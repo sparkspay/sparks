@@ -18,7 +18,6 @@
 #include <util/time.h>
 #include <validation.h>
 
-#include <test/test_sparks.h>
 #include <test/util/setup_common.h>
 
 #include <stdint.h>

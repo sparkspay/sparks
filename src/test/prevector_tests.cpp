@@ -9,7 +9,6 @@
 #include <serialize.h>
 #include <streams.h>
 
-#include <test/test_sparks.h>
 #include <test/util/setup_common.h>
 
 #include <boost/test/unit_test.hpp>

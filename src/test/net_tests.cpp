@@ -6,7 +6,6 @@
 
 #include <addrdb.h>
 #include <addrman.h>
-#include <test/test_sparks.h>
 #include <string>
 #include <boost/test/unit_test.hpp>
 #include <hash.h>

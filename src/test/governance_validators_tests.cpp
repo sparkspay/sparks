@@ -6,7 +6,6 @@
 #include <test/data/proposals_valid.json.h>
 #include <test/data/proposals_invalid.json.h>
 
-#include <test/test_sparks.h>
 #include <test/util/setup_common.h>
 
 #include <string>

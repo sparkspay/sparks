@@ -9,7 +9,6 @@
 
 #include <support/events.h>
 
-#include <test/test_sparks.h>
 
 #include <vector>
 #include <test/util/setup_common.h>

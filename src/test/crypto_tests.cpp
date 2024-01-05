@@ -17,8 +17,6 @@
 #include <crypto/sha512.h>
 #include <crypto/muhash.h>
 #include <random.h>
-#include <utilstrencodings.h>
-#include <test/test_sparks.h>
 #include <streams.h>
 #include <util/strencodings.h>
 #include <test/util/setup_common.h>

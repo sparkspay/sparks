@@ -6,8 +6,6 @@
 #include <chainparams.h>
 #include <pow.h>
 #include <random.h>
-#include <util.h>
-#include <test/test_sparks.h>
 #include <test/util/setup_common.h>
 
 #include <boost/test/unit_test.hpp>

@@ -5,8 +5,6 @@
 
 #include <netaddress.h>
 #include <netbase.h>
-#include <test/test_sparks.h>
-#include <utilstrencodings.h>
 #include <net_permissions.h>
 #include <protocol.h>
 #include <serialize.h>

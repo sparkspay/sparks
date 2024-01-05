@@ -8,7 +8,6 @@
 
 #include <chain.h>
 #include <rpc/blockchain.h>
-#include <test/test_sparks.h>
 #include <test/util/setup_common.h>
 
 /* Equality between doubles is imprecise. Comparison should be done

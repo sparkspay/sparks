@@ -4,7 +4,6 @@
 
 #include <bls/bls.h>
 #include <bls/bls_batchverifier.h>
-#include <test/test_sparks.h>
 #include <random.h>
 #include <test/util/setup_common.h>
 

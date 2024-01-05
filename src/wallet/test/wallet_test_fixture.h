@@ -5,7 +5,6 @@
 #ifndef BITCOIN_WALLET_TEST_WALLET_TEST_FIXTURE_H
 #define BITCOIN_WALLET_TEST_WALLET_TEST_FIXTURE_H
 
-#include <test/test_sparks.h>
 #include <test/util/setup_common.h>
 
 #include <interfaces/chain.h>

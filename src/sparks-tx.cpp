@@ -5,7 +5,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-//#include <config/sparks-config.h>
 #endif
 
 #include <clientversion.h>
@@ -19,9 +18,7 @@
 #include <script/script.h>
 #include <script/sign.h>
 #include <univalue.h>
-#include <util.h>
 #include <utilmoneystr.h>
-#include <utilstrencodings.h>
 
 #include <memory>
 #include <stdio.h>

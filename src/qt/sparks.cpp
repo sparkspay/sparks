@@ -5,7 +5,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-//#include <config/sparks-config.h>
+#include <config/bitcoin-config.h>
 #endif
 
 #include <qt/bitcoingui.h>
@@ -35,7 +35,6 @@
 #include <stacktraces.h>
 #include <ui_interface.h>
 #include <uint256.h>
-#include <util.h>
 #include <warnings.h>
 
 #include <walletinitinterface.h>

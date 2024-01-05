@@ -4,7 +4,6 @@
 
 #include <chain.h>
 #include <versionbits.h>
-#include <test/test_sparks.h>
 #include <test/util/setup_common.h>
 #include <chainparams.h>
 #include <validation.h>

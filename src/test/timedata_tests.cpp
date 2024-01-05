@@ -8,7 +8,6 @@
 #include <test/util/logging.h>
 #include <test/util/setup_common.h>
 #include <timedata.h>
-#include <test/test_sparks.h>
 #include <warnings.h>
 
 #include <string>

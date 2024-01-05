@@ -8,9 +8,6 @@
 #include <hash.h> // For Hash()
 #include <key.h> // For CKey
 #include <sync.h>
-#include <utilstrencodings.h>
-#include <utilmoneystr.h>
-#include <test/test_sparks.h>
 #include <test/util/logging.h>
 #include <test/util.h>
 #include <uint256.h>

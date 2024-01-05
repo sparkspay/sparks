@@ -1204,7 +1204,7 @@ void CWallet::BlockConnected(const CBlock& block, const std::vector<CTransaction
 
     m_last_block_processed_height = height;
     m_last_block_processed = block_hash;
-    m_last_block_processed_time = pindex->GetBlockTime();
+    m_last_block_processed_time = block.GetBlockTime();
     for (size_t index = 0; index < block.vtx.size(); index++) {
         CWalletTx::Confirmation confirm(CWalletTx::Status::CONFIRMED, height, block_hash, index);
         SyncTransaction(block.vtx[index], confirm);
@@ -1223,7 +1223,7 @@ void CWallet::BlockConnected(const CBlock& block, const std::vector<CTransaction
     // Outside of the cs_wallet lock because requires cs_main for now
     // due CreateTransaction/CommitTransaction dependency.
     if (fCombineDust) {
-        AutoCombineDust(g_connman.get());
+        AutoCombineDust();
     }
 }
 
@@ -4251,7 +4251,7 @@ std::vector<std::string> CWallet::GetDestValues(const std::string& prefix) const
     return values;
 }
 
-void CWallet::AutoCombineDust(CConnman* connman)
+void CWallet::AutoCombineDust()
 {
     {
         LOCK(cs_wallet);
@@ -4320,8 +4320,7 @@ void CWallet::AutoCombineDust(CConnman* connman)
 
         // Create the transaction and commit it to the network
         CTransactionRef wtx;
-        CReserveKey keyChange(this); // this change address does not end up being used, because change is returned with coin control switch
-        std::string strErr;
+        bilingual_str strErr;
         CAmount nFeeRet = 0;
         int nChangePosInOut = -1;
 
@@ -4331,9 +4330,9 @@ void CWallet::AutoCombineDust(CConnman* connman)
         {
             // For now, CreateTransaction requires cs_main lock.
             LOCK2(cs_main, cs_wallet);
-            if (!CreateTransaction(vecSend, wtx, keyChange, nFeeRet, nChangePosInOut, strErr, *coinControl,
+            if (!CreateTransaction(vecSend, wtx, nFeeRet, nChangePosInOut, strErr, *coinControl,
                                    true, CAmount(0))) {
-                LogPrintf("AutoCombineDust createtransaction failed, reason: %s\n", strErr);
+                LogPrintf("AutoCombineDust createtransaction failed, reason: %s\n", strErr.original);
                 continue;
             }
         }
@@ -4343,7 +4342,8 @@ void CWallet::AutoCombineDust(CConnman* connman)
             continue;
 
         CValidationState state;
-        if (CommitTransaction(wtx,{}, {}, {}, keyChange, connman, state)) {
+        // if (CommitTransaction(wtx, {}, {})) { //TODO : test this before v18 release
+        if (false) { //TODO : test this before v18 release
             LogPrintf("AutoCombineDust transaction commit failed\n");
             continue;
         }

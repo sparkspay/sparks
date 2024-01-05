@@ -11,7 +11,6 @@
 #include <key_io.h>
 #include <netbase.h>
 
-#include <test/test_sparks.h>
 #include <interfaces/chain.h>
 #include <node/context.h>
 #include <test/util/setup_common.h>

@@ -3,7 +3,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include <cuckoocache.h>
 #include <script/sigcache.h>
-#include <test/test_sparks.h>
 #include <test/util/setup_common.h>
 #include <random.h>
 

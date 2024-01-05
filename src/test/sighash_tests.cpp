@@ -10,9 +10,6 @@
 #include <script/script.h>
 #include <serialize.h>
 #include <streams.h>
-#include <test/test_sparks.h>
-#include <util.h>
-#include <utilstrencodings.h>
 #include <test/util/setup_common.h>
 #include <util/strencodings.h>
 #include <version.h>

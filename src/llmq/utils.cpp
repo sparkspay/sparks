@@ -962,15 +962,15 @@ std::vector<Consensus::LLMQType> GetEnabledQuorumTypes(const CBlockIndex* pindex
 }
 
 // created for sparks
-std::map<Consensus::LLMQType, Consensus::LLMQParams> GetEnabledQuorums(const CBlockIndex* pindex)
+std::vector<Consensus::LLMQParams> GetEnabledQuorums(const CBlockIndex* pindex)
 {
-   std::map<Consensus::LLMQType, Consensus::LLMQParams> ret;
-   for (const auto& p : Params().GetConsensus().llmqs) {
-       if (IsQuorumTypeEnabled(p.first, pindex)) {
-           ret.insert({p.first, p.second});
-       }
-  }
-   return ret;
+    std::vector<Consensus::LLMQParams> ret;
+    for (const auto& p : Params().GetConsensus().llmqs) {
+        if (IsQuorumTypeEnabled(p.type, *llmq::quorumManager, pindex)) {
+            ret.push_back(p);
+        }
+    }
+    return ret;
 }
 
 std::vector<std::reference_wrapper<const Consensus::LLMQParams>> GetEnabledQuorumParams(const CBlockIndex* pindex)

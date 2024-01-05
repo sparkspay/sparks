@@ -6,7 +6,6 @@
 #include <scheduler.h>
 #include <util/time.h>
 
-#include <test/test_sparks.h>
 
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>

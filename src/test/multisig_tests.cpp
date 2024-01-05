@@ -11,7 +11,6 @@
 #include <script/signingprovider.h>
 #include <tinyformat.h>
 #include <uint256.h>
-#include <test/test_sparks.h>
 #include <test/util/setup_common.h>
 
 

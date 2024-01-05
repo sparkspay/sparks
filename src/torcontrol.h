@@ -7,6 +7,7 @@
  */
 #ifndef BITCOIN_TORCONTROL_H
 #define BITCOIN_TORCONTROL_H
+#include <string>
 
 
 extern const std::string DEFAULT_TOR_CONTROL;

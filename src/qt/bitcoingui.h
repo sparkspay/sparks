@@ -6,7 +6,6 @@
 #define BITCOIN_QT_BITCOINGUI_H
 
 #if defined(HAVE_CONFIG_H)
-//#include <config/sparks-config.h>
 #include <config/bitcoin-config.h>
 #endif
 

@@ -10,8 +10,6 @@
 #include <txdb.h>
 #include <uint256.h>
 #include <undo.h>
-#include <utilstrencodings.h>
-#include <test/test_sparks.h>
 #include <validation.h>
 #include <consensus/validation.h>
 #include <util/strencodings.h>

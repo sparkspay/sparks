@@ -9,8 +9,6 @@
 #include <key.h>
 #include <key_io.h>
 #include <script/script.h>
-#include <utilstrencodings.h>
-#include <test/test_sparks.h>
 #include <util/strencodings.h>
 #include <test/util/setup_common.h>
 

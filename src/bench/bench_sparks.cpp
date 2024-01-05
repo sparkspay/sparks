@@ -8,7 +8,6 @@
 #include <key.h>
 #include <stacktraces.h>
 #include <validation.h>
-#include <util.h>
 #include <random.h>
 
 #include <boost/lexical_cast.hpp>

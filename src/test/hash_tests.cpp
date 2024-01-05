@@ -5,8 +5,6 @@
 #include <clientversion.h>
 #include <crypto/siphash.h>
 #include <hash.h>
-#include <utilstrencodings.h>
-#include <test/test_sparks.h>
 
 #include <vector>
 #include <util/strencodings.h>

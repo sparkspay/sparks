@@ -9,7 +9,6 @@
 #include <amount.h>
 #include <primitives/transaction.h>
 #include <random.h>
-#include <test/test_sparks.h>
 #include <test/util/setup_common.h>
 #include <validation.h>
 #include <wallet/test/wallet_test_fixture.h>
