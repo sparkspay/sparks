@@ -1192,7 +1192,7 @@ bool CDeterministicMNManager::UpgradeDBIfNeeded()
 }
 
 template <typename ProTx>
-static bool CheckService(const ProTx& proTx, CValidationState& state)
+static bool CheckService(const ProTx& proTx, CValidationState& state, const CBlockIndex* pindexPrev)
 {
     if (!proTx.addr.IsValid()) {
         return state.Invalid(ValidationInvalidReason::TX_BAD_SPECIAL, false, REJECT_INVALID, "bad-protx-ipaddr");
@@ -1210,7 +1210,13 @@ static bool CheckService(const ProTx& proTx, CValidationState& state)
         return state.Invalid(ValidationInvalidReason::TX_BAD_SPECIAL, false, REJECT_INVALID, "bad-protx-ipaddr-port");
     }
 
-    if (!proTx.addr.IsIPv4()) {
+    bool fIPV6_MNActive;
+    {
+        LOCK(cs_main);
+        fIPV6_MNActive = VersionBitsState(pindexPrev, Params().GetConsensus(), Consensus::DEPLOYMENT_IPV6_MN, versionbitscache) == ThresholdState::ACTIVE;
+    }
+
+    if (!proTx.addr.IsIPv4() && !(fIPV6_MNActive && proTx.addr.IsIPv6())) {
         return state.Invalid(ValidationInvalidReason::TX_BAD_SPECIAL, false, REJECT_INVALID, "bad-protx-ipaddr");
     }
 
@@ -1263,7 +1269,7 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
 
     // It's allowed to set addr to 0, which will put the MN into PoSe-banned state and require a ProUpServTx to be issues later
     // If any of both is set, it must be valid however
-    if (ptx.addr != CService() && !CheckService(ptx, state)) {
+    if (ptx.addr != CService() && !CheckService(ptx, state, pindexPrev)) {
         // pass the state returned by the function above
         return false;
     }
@@ -1274,7 +1280,7 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
 
     if (!ptx.collateralOutpoint.hash.IsNull()) {
         Coin coin;
-        if (!view.GetCoin(ptx.collateralOutpoint, coin) || coin.IsSpent() || coin.out.nValue != 1000 * COIN) {
+        if (!view.GetCoin(ptx.collateralOutpoint, coin) || coin.IsSpent() || coin.out.nValue != 25000 * COIN) {
             return state.Invalid(ValidationInvalidReason::TX_BAD_SPECIAL, false, REJECT_INVALID, "bad-protx-collateral");
         }
 
@@ -1294,7 +1300,7 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
         if (ptx.collateralOutpoint.n >= tx.vout.size()) {
             return state.Invalid(ValidationInvalidReason::TX_BAD_SPECIAL, false, REJECT_INVALID, "bad-protx-collateral-index");
         }
-        if (tx.vout[ptx.collateralOutpoint.n].nValue != 1000 * COIN) {
+        if (tx.vout[ptx.collateralOutpoint.n].nValue != 25000 * COIN) {
             return state.Invalid(ValidationInvalidReason::TX_BAD_SPECIAL, false, REJECT_INVALID, "bad-protx-collateral");
         }
 
@@ -1366,7 +1372,7 @@ bool CheckProUpServTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVa
         return state.Invalid(maybe_err.reason, false, REJECT_INVALID, std::string(maybe_err.error_str));
     }
 
-    if (!CheckService(ptx, state)) {
+    if (!CheckService(ptx, state, pindexPrev)) {
         // pass the state returned by the function above
         return false;
     }
