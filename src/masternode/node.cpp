@@ -204,13 +204,13 @@ bool CActiveMasternodeManager::GetLocalAddress(CService& addrRet)
         auto service = WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.service);
         connman.ForEachNodeContinueIf(CConnman::AllNodes, [&](CNode* pnode) {
             empty = false;
-            if (pnode->addr.IsIPv4())
+            if (pnode->addr.IsIPv4() || pnode->addr.IsIPv6())
                 fFoundLocal = GetLocal(service, &pnode->addr) && IsValidNetAddr(service);
             return !fFoundLocal;
         });
         // nothing and no live connections, can't do anything for now
         if (empty) {
-            strError = "Can't detect valid external address. Please consider using the externalip configuration option if problem persists. Make sure to use IPv4 address only.";
+            strError = "Can't detect valid external address. Please consider using the externalip configuration option if problem persists.";
             LogPrintf("CActiveMasternodeManager::GetLocalAddress -- ERROR: %s\n", strError);
             return false;
         }
@@ -223,5 +223,5 @@ bool CActiveMasternodeManager::IsValidNetAddr(CService addrIn)
     // TODO: regtest is fine with any addresses for now,
     // should probably be a bit smarter if one day we start to implement tests for this
     return !Params().RequireRoutableExternalIP() ||
-           (addrIn.IsIPv4() && IsReachable(addrIn) && addrIn.IsRoutable());
+           ((addrIn.IsIPv4() || addrIn.IsIPv6()) && IsReachable(addrIn) && addrIn.IsRoutable());
 }
