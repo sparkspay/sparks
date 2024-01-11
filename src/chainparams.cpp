@@ -289,6 +289,11 @@ public:
         vSeeds.emplace_back("seed2.sparkspay.io");
         vSeeds.emplace_back("seed3.sparkspay.io");
         vSeeds.emplace_back("seed4.sparkspay.io");
+        vSeeds.emplace_back("seed5.sparkspay.io");
+        vSeeds.emplace_back("seed6.sparkspay.io");
+        vSeeds.emplace_back("seed7.sparkspay.io");
+        vSeeds.emplace_back("seed8.sparkspay.io");
+        vSeeds.emplace_back("seed9.sparkspay.io");
 
         // Sparks addresses start with 'G'
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,38);
