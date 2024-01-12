@@ -126,20 +126,20 @@ static constexpr std::array<LLMQParams, 15> available_llmqs = {
         .type = LLMQType::LLMQ_TEST,
         .name = "llmq_test",
         .useRotation = false,
-        .size = 3,
-        .minSize = 2,
-        .threshold = 2,
+        .size = 5,//3,
+        .minSize = 3,//2,
+        .threshold =3,// 2,
 
         .dkgInterval = 24, // one DKG per hour
         .dkgPhaseBlocks = 2,
         .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
         .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 2,
+        .dkgBadVotesThreshold =3,// 2,
 
         .signingActiveQuorumCount = 2, // just a few ones to allow easier testing
 
         .keepOldConnections = 3,
-        .recoveryMembers = 3,
+        .recoveryMembers = 5,//3,
     },
 
     /**
@@ -448,7 +448,7 @@ static constexpr std::array<LLMQParams, 15> available_llmqs = {
         .dkgPhaseBlocks = 2,
         .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
         .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 26,
+        .dkgBadVotesThreshold = 16,//26
 
         .signingActiveQuorumCount = 5, // a full day worth of LLMQs
 
