@@ -480,7 +480,7 @@ public:
         // Deployment of IPv6 Masternodes
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].bit = 8;
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nStartTime = 1669291200; // Nov 24th, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nTimeout = 1700827200; // Nov 24th, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nTimeout = 1732386600; // Nov 24th, 2024
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nWindowSize = 10;
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nThresholdStart = 8; // 80% of 10
 
