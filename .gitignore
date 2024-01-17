@@ -42,6 +42,8 @@ configure
 libtool
 src/config/sparks-config.h
 src/config/sparks-config.h.in
+src/config/bitcoin-config.h
+src/config/bitcoin-config.h.in
 src/config/stamp-h1
 src/obj
 share/setup.nsi
