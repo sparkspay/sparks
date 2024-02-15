@@ -25,6 +25,7 @@
 #include <evo/providertx.h>
 #include <evo/deterministicmns.h>
 #include <evo/simplifiedmns.h>
+#include <evo/datatx.h>
 
 #include <bls/bls.h>
 
@@ -1189,6 +1190,84 @@ UniValue protx(const JSONRPCRequest& request)
     }
 }
 
+#ifdef ENABLE_WALLET
+UniValue datatx_submit(const JSONRPCRequest& request)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
+    CWallet* const pwallet = wallet.get();
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp))
+        return NullUniValue;
+
+    if (request.fHelp || request.params.size() != 4) {
+        protx_register_submit_help(pwallet);
+    }
+
+    EnsureWalletIsUnlocked(pwallet);
+
+    CMutableTransaction tx;
+    tx.nVersion = 3;
+    tx.nType = TRANSACTION_DATA;
+
+
+    // if (!DecodeHexTx(tx, request.params[1].get_str())) {
+    //     throw JSONRPCError(RPC_INVALID_PARAMETER, "transaction not deserializable");
+    // }
+    if (tx.nType != TRANSACTION_DATA) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "transaction not a ProRegTx");
+    }
+    CDataTx dtx;
+
+    // if (!GetTxPayload(tx, dtx)) {
+    //     throw JSONRPCError(RPC_INVALID_PARAMETER, "transaction payload not deserializable");
+    // }
+    std::string s_guid = request.params[1].get_str().c_str();
+    std::vector<unsigned char> vchData(s_guid.begin(), s_guid.end());
+    dtx.GUID = vchData;
+    dtx.hash = uint256S(request.params[2].get_str().c_str());
+    CTxDestination feeSourceDest = DecodeDestination(request.params[3].get_str());
+
+    FundSpecialTx(pwallet, tx, dtx, feeSourceDest);
+    SetTxPayload(tx, dtx);
+    return SignAndSendSpecialTx(tx);
+}
+#endif
+
+[[ noreturn ]] void datatx_help()
+{
+    throw std::runtime_error(
+            "datatx \"command\" ...\n"
+            "Set of commands to execute DataTx related actions.\n"
+            "To get help on individual commands, use \"help protx command\".\n"
+            "\nArguments:\n"
+            "1. \"command\"        (string, required) The command to execute\n"
+            "\nAvailable commands:\n"
+#ifdef ENABLE_WALLET
+
+            "submit   - Sign and submit a DataTx\n"
+#endif
+    );
+}
+
+
+UniValue datatx(const JSONRPCRequest& request)
+{
+    if (request.fHelp && request.params.empty()) {
+        datatx_help();
+    }
+
+    std::string command;
+    if (!request.params[0].isNull()) {
+        command = request.params[0].get_str();
+    }
+
+#ifdef ENABLE_WALLET
+    if (command == "submit") {
+        return datatx_submit(request);
+    }
+#endif
+    datatx_help();
+}
+
 void bls_generate_help()
 {
     throw std::runtime_error(
@@ -1292,6 +1371,7 @@ static const CRPCCommand commands[] =
   //  --------------------- ------------------------  -----------------------
     { "evo",                "bls",                    &_bls,                   {}  },
     { "evo",                "protx",                  &protx,                  {}  },
+    { "evo",                "datatx",                  &datatx,                  {}  },
 };
 
 void RegisterEvoRPCCommands(CRPCTable &tableRPC)

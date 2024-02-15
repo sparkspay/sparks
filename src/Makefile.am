@@ -313,6 +313,7 @@ libsparks_server_a_SOURCES = \
   evo/providertx.cpp \
   evo/simplifiedmns.cpp \
   evo/specialtx.cpp \
+  evo/datatx.cpp \
   httprpc.cpp \
   httpserver.cpp \
   init.cpp \
