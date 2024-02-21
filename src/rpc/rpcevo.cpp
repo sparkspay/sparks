@@ -211,6 +211,10 @@ static void FundSpecialTx(CWallet* pwallet, CMutableTransaction& tx, const Speci
     CTransactionRef newTx;
     CReserveKey reservekey(pwallet);
     CAmount nFee;
+    if(tx.nType == TRANSACTION_DATA){
+        coinControl.fOverrideFeeRate = true;
+        coinControl.m_feerate = CFeeRate(DEFAULT_DATA_TRANSACTION_MINFEE);
+    }
     int nChangePos = -1;
     std::string strFailReason;
 
@@ -1213,7 +1217,7 @@ UniValue datatx_submit(const JSONRPCRequest& request)
     //     throw JSONRPCError(RPC_INVALID_PARAMETER, "transaction not deserializable");
     // }
     if (tx.nType != TRANSACTION_DATA) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "transaction not a ProRegTx");
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "transaction not a DataTx");
     }
     CDataTx dtx;
 
