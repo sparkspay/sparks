@@ -254,6 +254,7 @@ uint256 hashAssumeValid;
 arith_uint256 nMinimumChainWork;
 
 CFeeRate minRelayTxFee = CFeeRate(DEFAULT_MIN_RELAY_TX_FEE);
+CFeeRate minRelayDataTxFee = CFeeRate(DEFAULT_DATA_TRANSACTION_MINFEE);
 CAmount maxTxFee = DEFAULT_TRANSACTION_MAXFEE;
 
 CBlockPolicyEstimator feeEstimator;
@@ -805,11 +806,13 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         }
 
         if(ptx->nType == TRANSACTION_DATA){
-            minRelayTxFee = CFeeRate(DEFAULT_DATA_TRANSACTION_MINFEE);
+            CAmount nSporkDataTxFee = sporkManager.GetSporkValue(SPORK_24_DATATX_FEE);
+            CAmount nDataTxFeeRate = nSporkDataTxFee > 0 ? nSporkDataTxFee : DEFAULT_DATA_TRANSACTION_MINFEE;
+            minRelayDataTxFee = CFeeRate(nDataTxFeeRate);
         }
 
-        // No transactions are allowed below minRelayTxFee except from disconnected blocks
-        if (!bypass_limits && nModifiedFees < ::minRelayTxFee.GetFee(nSize)) {
+        // No transactions are allowed below minRelayTxFee except from disconnected blocks, data transactions are not allowed below minRelayDataTxFee(variable with spork value)
+        if (!bypass_limits && nModifiedFees < (ptx->nType == TRANSACTION_DATA ? ::minRelayDataTxFee.GetFee(nSize) : ::minRelayTxFee.GetFee(nSize))) {
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "min relay fee not met", false, strprintf("%d < %d", nModifiedFees, ::minRelayTxFee.GetFee(nSize)));
         }
 

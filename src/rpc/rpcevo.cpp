@@ -212,8 +212,10 @@ static void FundSpecialTx(CWallet* pwallet, CMutableTransaction& tx, const Speci
     CReserveKey reservekey(pwallet);
     CAmount nFee;
     if(tx.nType == TRANSACTION_DATA){
+        CAmount nSporkDataTxFee = sporkManager.GetSporkValue(SPORK_24_DATATX_FEE);
+        CAmount nDataTxFeeRate = nSporkDataTxFee > 0 ? nSporkDataTxFee : DEFAULT_DATA_TRANSACTION_MINFEE;
         coinControl.fOverrideFeeRate = true;
-        coinControl.m_feerate = CFeeRate(DEFAULT_DATA_TRANSACTION_MINFEE);
+        coinControl.m_feerate = CFeeRate(nDataTxFeeRate);
     }
     int nChangePos = -1;
     std::string strFailReason;
@@ -1195,6 +1197,24 @@ UniValue protx(const JSONRPCRequest& request)
 }
 
 #ifdef ENABLE_WALLET
+void datatx_submit_help(CWallet* const pwallet)
+{
+    throw std::runtime_error(
+            "datatx submit \"tx\" \"sig\"\n"
+            "\nCombines the unsigned DataTx and a signature of the signMessage, signs all inputs\n"
+            "which were added to cover fees and submits the resulting transaction to the network.\n"
+            "Note: See \"help datatx register_prepare\" for more info about creating a DataTx and a message to sign.\n"
+            + HelpRequiringPassphrase(pwallet) + "\n"
+            "\nArguments:\n"
+            "1. \"tx\"                 (string, required) The serialized unsigned DataTx in hex format.\n"
+            "2. \"sig\"                (string, required) The signature signed with the collateral key. Must be in base64 format.\n"
+            "\nResult:\n"
+            "\"txid\"                  (string) The transaction id.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("datatx", "submit \"tx\" \"sig\"")
+    );
+}
+
 UniValue datatx_submit(const JSONRPCRequest& request)
 {
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
@@ -1203,7 +1223,7 @@ UniValue datatx_submit(const JSONRPCRequest& request)
         return NullUniValue;
 
     if (request.fHelp || request.params.size() != 4) {
-        protx_register_submit_help(pwallet);
+        datatx_submit_help(pwallet);
     }
 
     EnsureWalletIsUnlocked(pwallet);
@@ -1241,7 +1261,7 @@ UniValue datatx_submit(const JSONRPCRequest& request)
     throw std::runtime_error(
             "datatx \"command\" ...\n"
             "Set of commands to execute DataTx related actions.\n"
-            "To get help on individual commands, use \"help protx command\".\n"
+            "To get help on individual commands, use \"help datatx command\".\n"
             "\nArguments:\n"
             "1. \"command\"        (string, required) The command to execute\n"
             "\nAvailable commands:\n"

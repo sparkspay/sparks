@@ -142,7 +142,7 @@ static const bool DEFAULT_PEERBLOOMFILTERS = true;
 static const int DEFAULT_STOPATHEIGHT = 0;
 
 //! -mindatatxfee default
-static const CAmount DEFAULT_DATA_TRANSACTION_MINFEE = 100000;
+static const CAmount DEFAULT_DATA_TRANSACTION_MINFEE = 1000000;
 struct BlockHasher
 {
     size_t operator()(const uint256& hash) const { return hash.GetCheapHash(); }
