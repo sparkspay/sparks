@@ -1200,18 +1200,18 @@ UniValue protx(const JSONRPCRequest& request)
 void datatx_submit_help(CWallet* const pwallet)
 {
     throw std::runtime_error(
-            "datatx submit \"tx\" \"sig\"\n"
+            "datatx submit \"data\" \"feeSourceAddress\"\n"
             "\nCombines the unsigned DataTx and a signature of the signMessage, signs all inputs\n"
             "which were added to cover fees and submits the resulting transaction to the network.\n"
             "Note: See \"help datatx register_prepare\" for more info about creating a DataTx and a message to sign.\n"
             + HelpRequiringPassphrase(pwallet) + "\n"
             "\nArguments:\n"
-            "1. \"tx\"                 (string, required) The serialized unsigned DataTx in hex format.\n"
-            "2. \"sig\"                (string, required) The signature signed with the collateral key. Must be in base64 format.\n"
+            "1. \"data\"                 (string, required) Data payload.\n"
+            "2. \"feeSourceAddress\"     (string, required) wallet will only use coins from this address to fund DataTx. The private key belonging to this address must be known in your wallet.\n"
             "\nResult:\n"
             "\"txid\"                  (string) The transaction id.\n"
             "\nExamples:\n"
-            + HelpExampleCli("datatx", "submit \"tx\" \"sig\"")
+            + HelpExampleCli("datatx", "submit \"data\" \"sig\"")
     );
 }
 
@@ -1222,7 +1222,7 @@ UniValue datatx_submit(const JSONRPCRequest& request)
     if (!EnsureWalletIsAvailable(pwallet, request.fHelp))
         return NullUniValue;
 
-    if (request.fHelp || request.params.size() != 4) {
+    if (request.fHelp || request.params.size() != 3) {
         datatx_submit_help(pwallet);
     }
 
@@ -1232,23 +1232,14 @@ UniValue datatx_submit(const JSONRPCRequest& request)
     tx.nVersion = 3;
     tx.nType = TRANSACTION_DATA;
 
-
-    // if (!DecodeHexTx(tx, request.params[1].get_str())) {
-    //     throw JSONRPCError(RPC_INVALID_PARAMETER, "transaction not deserializable");
-    // }
-    if (tx.nType != TRANSACTION_DATA) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "transaction not a DataTx");
-    }
     CDataTx dtx;
 
-    // if (!GetTxPayload(tx, dtx)) {
-    //     throw JSONRPCError(RPC_INVALID_PARAMETER, "transaction payload not deserializable");
-    // }
-    std::string s_guid = request.params[1].get_str().c_str();
-    std::vector<unsigned char> vchData(s_guid.begin(), s_guid.end());
-    dtx.GUID = vchData;
-    dtx.hash = uint256S(request.params[2].get_str().c_str());
-    CTxDestination feeSourceDest = DecodeDestination(request.params[3].get_str());
+    std::string s_data = request.params[1].get_str().c_str();
+    std::vector<unsigned char> vchData(s_data.begin(), s_data.end());
+    dtx.data = vchData;
+    CTxDestination feeSourceDest = DecodeDestination(request.params[2].get_str());
+    if (!IsValidDestination(feeSourceDest))
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Sparks address: ") + request.params[2].get_str());
 
     FundSpecialTx(pwallet, tx, dtx, feeSourceDest);
     SetTxPayload(tx, dtx);
@@ -1267,7 +1258,7 @@ UniValue datatx_submit(const JSONRPCRequest& request)
             "\nAvailable commands:\n"
 #ifdef ENABLE_WALLET
 
-            "submit   - Sign and submit a DataTx\n"
+            "submit   - submit a DataTx\n"
 #endif
     );
 }

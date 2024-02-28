@@ -21,8 +21,7 @@ public:
 
 public:
     uint16_t nVersion{CURRENT_VERSION};
-    std::vector<unsigned char> GUID;
-    uint256 hash;
+    std::vector<unsigned char> data;
 
 public:
     ADD_SERIALIZE_METHODS;
@@ -31,8 +30,7 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action)
     {
         READWRITE(nVersion);
-        READWRITE(GUID);
-        READWRITE(hash);
+        READWRITE(data);
     }
 
     std::string ToString() const;
@@ -42,9 +40,8 @@ public:
         obj.clear();
         obj.setObject();
         obj.pushKV("version", (int)nVersion);
-        std::string s_guid(GUID.begin(), GUID.end());
-        obj.pushKV("GUID", s_guid);
-        obj.pushKV("hash", hash.ToString());
+        std::string s_data(data.begin(), data.end());
+        obj.pushKV("data", s_data);
     }
 
 };
