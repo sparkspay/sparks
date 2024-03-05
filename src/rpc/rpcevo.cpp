@@ -1247,6 +1247,59 @@ UniValue datatx_submit(const JSONRPCRequest& request)
 }
 #endif
 
+UniValue datatx_get(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+        throw std::runtime_error(
+            "datatx get \"txid\"\n"
+
+            "\nReturn the datatx payload data.\n"
+
+            "\nArguments:\n"
+            "1. \"txid\"      (string, required) The transaction id\n"
+
+            "\nResult :\n"
+            "{\n"
+            "  \"version\" : n,        (numeric) datatx transaction version"
+            "  \"data\" : \"payload\", (string) datatx payload\n"
+            "}\n"
+        );
+
+    LOCK(cs_main);
+
+    uint256 hash = ParseHashV(request.params[1], "parameter 1");
+
+    if (hash == Params().GenesisBlock().hashMerkleRoot) {
+        // Special exception for the genesis block coinbase transaction
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "The genesis block coinbase is not considered an ordinary transaction and cannot be retrieved");
+    }
+
+    CTransactionRef tx;
+    uint256 hash_block;
+    if (!GetTransaction(hash, tx, Params().GetConsensus(), hash_block, true, nullptr)) {
+        std::string errmsg;
+        errmsg = fTxIndex
+              ? "No such mempool or blockchain transaction"
+              : "No such mempool transaction. Use -txindex to enable blockchain transaction queries";
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, errmsg + ". Use gettransaction for wallet transactions.");
+    } else if (hash_block.IsNull()) {
+        throw JSONRPCError(RPC_MISC_ERROR, "No such blockchain transaction.");
+    }
+
+    UniValue result(UniValue::VOBJ);
+    if (tx->nType == TRANSACTION_DATA) {
+        CDataTx dataTx;
+        if (GetTxPayload(*tx, dataTx)) {
+            UniValue obj;
+            dataTx.ToJson(obj);
+            result.pushKV("dataTx", obj);
+        }
+    } else {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Not a valid datatx transaction.");
+    }
+    return result;
+}
+
 [[ noreturn ]] void datatx_help()
 {
     throw std::runtime_error(
@@ -1260,6 +1313,7 @@ UniValue datatx_submit(const JSONRPCRequest& request)
 
             "submit   - submit a DataTx\n"
 #endif
+            "get   - get a DataTx payload\n"
     );
 }
 
@@ -1280,6 +1334,9 @@ UniValue datatx(const JSONRPCRequest& request)
         return datatx_submit(request);
     }
 #endif
+    if (command == "get") {
+        return datatx_get(request);
+    }
     datatx_help();
 }
 
