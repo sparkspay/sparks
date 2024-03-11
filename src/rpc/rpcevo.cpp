@@ -1197,25 +1197,22 @@ UniValue protx(const JSONRPCRequest& request)
 }
 
 #ifdef ENABLE_WALLET
-void datatx_submit_help(CWallet* const pwallet)
+void datatx_publish_help(CWallet* const pwallet)
 {
     throw std::runtime_error(
             "datatx submit \"data\" \"feeSourceAddress\"\n"
-            "\nCombines the unsigned DataTx and a signature of the signMessage, signs all inputs\n"
-            "which were added to cover fees and submits the resulting transaction to the network.\n"
-            "Note: See \"help datatx register_prepare\" for more info about creating a DataTx and a message to sign.\n"
             + HelpRequiringPassphrase(pwallet) + "\n"
             "\nArguments:\n"
             "1. \"data\"                 (string, required) Data payload.\n"
-            "2. \"feeSourceAddress\"     (string, required) wallet will only use coins from this address to fund DataTx. The private key belonging to this address must be known in your wallet.\n"
+            "2. \"feeSourceAddress\"     (string, required) wallet will only use coins from this address to fund datatx. The private key belonging to this address must be known in your wallet.\n"
             "\nResult:\n"
             "\"txid\"                  (string) The transaction id.\n"
             "\nExamples:\n"
-            + HelpExampleCli("datatx", "submit \"data\" \"sig\"")
+            + HelpExampleCli("datatx", "publish \"data\" \"feeSourceAddress\"")
     );
 }
 
-UniValue datatx_submit(const JSONRPCRequest& request)
+UniValue datatx_publish(const JSONRPCRequest& request)
 {
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
     CWallet* const pwallet = wallet.get();
@@ -1223,7 +1220,7 @@ UniValue datatx_submit(const JSONRPCRequest& request)
         return NullUniValue;
 
     if (request.fHelp || request.params.size() != 3) {
-        datatx_submit_help(pwallet);
+        datatx_publish_help(pwallet);
     }
 
     EnsureWalletIsUnlocked(pwallet);
@@ -1292,7 +1289,7 @@ UniValue datatx_get(const JSONRPCRequest& request)
         if (GetTxPayload(*tx, dataTx)) {
             UniValue obj;
             dataTx.ToJson(obj);
-            result.pushKV("dataTx", obj);
+            result.pushKV("datatx", obj);
         }
     } else {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Not a valid datatx transaction.");
@@ -1304,16 +1301,16 @@ UniValue datatx_get(const JSONRPCRequest& request)
 {
     throw std::runtime_error(
             "datatx \"command\" ...\n"
-            "Set of commands to execute DataTx related actions.\n"
+            "Set of commands to execute datatx related actions.\n"
             "To get help on individual commands, use \"help datatx command\".\n"
             "\nArguments:\n"
             "1. \"command\"        (string, required) The command to execute\n"
             "\nAvailable commands:\n"
 #ifdef ENABLE_WALLET
 
-            "submit   - submit a DataTx\n"
+            "publish   - publish a datatx\n"
 #endif
-            "get   - get a DataTx payload\n"
+            "get   - get a datatx payload\n"
     );
 }
 
@@ -1330,8 +1327,8 @@ UniValue datatx(const JSONRPCRequest& request)
     }
 
 #ifdef ENABLE_WALLET
-    if (command == "submit") {
-        return datatx_submit(request);
+    if (command == "publish") {
+        return datatx_publish(request);
     }
 #endif
     if (command == "get") {

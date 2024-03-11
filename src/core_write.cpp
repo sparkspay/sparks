@@ -287,7 +287,7 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
         if (GetTxPayload(tx, dataTx)) {
             UniValue obj;
             dataTx.ToJson(obj);
-            entry.pushKV("dataTx", obj);
+            entry.pushKV("datatx", obj);
         }
     }
     
