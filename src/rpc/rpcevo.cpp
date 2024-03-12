@@ -1200,7 +1200,7 @@ UniValue protx(const JSONRPCRequest& request)
 void datatx_publish_help(CWallet* const pwallet)
 {
     throw std::runtime_error(
-            "datatx submit \"data\" \"feeSourceAddress\"\n"
+            "datatx publish \"data\" \"feeSourceAddress\"\n"
             + HelpRequiringPassphrase(pwallet) + "\n"
             "\nArguments:\n"
             "1. \"data\"                 (string, required) Data payload.\n"
