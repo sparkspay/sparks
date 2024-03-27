@@ -161,6 +161,7 @@ BITCOIN_CORE_H = \
   evo/providertx.h \
   evo/simplifiedmns.h \
   evo/specialtx.h \
+  evo/datatx.h \
   dsnotificationinterface.h \
   governance/governance.h \
   governance/governance-classes.h \
