@@ -165,7 +165,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
     // Size limits
     if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) > MAX_LEGACY_BLOCK_SIZE)
         return state.DoS(100, false, REJECT_INVALID, "bad-txns-oversize");
-    if (tx.vExtraPayload.size() > MAX_TX_EXTRA_PAYLOAD)
+    if (tx.vExtraPayload.size() > (tx.nType == TRANSACTION_DATA ? MAX_DATATX_PAYLOAD : MAX_TX_EXTRA_PAYLOAD))
         return state.DoS(100, false, REJECT_INVALID, "bad-txns-payload-oversize");
 
     // Check for negative or overflow output values

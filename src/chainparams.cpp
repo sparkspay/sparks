@@ -477,6 +477,13 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nThresholdStart = 60; // 60% of 100
 
+        // Deployment of Data Transactions
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].bit = 9;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nStartTime = 1711929600; // Apr 1st, 2024
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nTimeout = 1743465600; // Apr 1st, 2025
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nThresholdStart = 60; // 60% of 100
+
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000eee93cb0b1f4be");//269664
 
@@ -523,6 +530,11 @@ public:
         vSeeds.emplace_back("seed2.sparkspay.io");
         vSeeds.emplace_back("seed3.sparkspay.io");
         vSeeds.emplace_back("seed4.sparkspay.io");
+        vSeeds.emplace_back("seed5.sparkspay.io");
+        vSeeds.emplace_back("seed6.sparkspay.io");
+        vSeeds.emplace_back("seed7.sparkspay.io");
+        vSeeds.emplace_back("seed8.sparkspay.io");
+        vSeeds.emplace_back("seed9.sparkspay.io");
 
         // Sparks addresses start with 'G'
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,38);
@@ -593,6 +605,11 @@ public:
                 {1000000, uint256S("0x00000008ea513eba0aa0d7dda4d2d0179564bea13075584ef024bd9b440bb533")},
                 {1012000, uint256S("0x0000000351f0eb82a74f338dc0bbc50b72ebfe3297ddb98098555d04650c93d0")},
                 {1050000, uint256S("0x00000000a821ff297d21633435aff4a7c59220bbc046aecc1e17b09f304b600c")},
+                {1100000, uint256S("0x00000001d05c75e914f6129eca732f22738d0a2941c147a212e3255e9834def2")},
+                {1150000, uint256S("0x000000009dc227d56da2fd523335f7685fcf1c74310df1e087f363cc147c183a")},
+                {1200000, uint256S("0x00000014793f72ce0df5646d23dc802b079e582b98880ee299ae2b9549f6bb52")},
+                {1250000, uint256S("0x000000016c784af1b951000499c64969110ebb608c12c948f7d02245e1cc0f5c")},
+                {1300000, uint256S("0x00000002164b731087a09122e0e1cc82cbbd25a6f18c64dd189f70c6a3b92cad")},
            }
         };
 
@@ -673,7 +690,7 @@ public:
         // Deployment of DIP0003
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 4;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nStartTime = 1638786047; // Dec 6th, 2021
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 1670302247; // Dec 6th, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 999999999999ULL; // Dec 6th, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nWindowSize = 10;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nThresholdStart = 5; // 50% of 10
 
@@ -687,23 +704,30 @@ public:
         // Deployment of Block Reward Reallocation
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].bit = 6;
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nStartTime = 1666310400; // Oct 21st, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nTimeout = 1697846400; // Oct 21st, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nTimeout = 999999999999ULL; // Oct 21st, 2023
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nWindowSize = 10;
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nThresholdStart = 8; // 80% of 10
 
         // Deployment of DIP0020, DIP0021 and LLMQ_20_70 quorums
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].bit = 7;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nStartTime = 1668421800; // Nov 14th, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nTimeout = 1699957800; // Nov 14th, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nTimeout = 999999999999ULL; // Nov 14th, 2023
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nWindowSize = 10;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nThresholdStart = 8; // 8% of 10
 
         // Deployment of IPv6 Masternodes
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].bit = 8;
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nStartTime = 1669291200; // Nov 24th, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nTimeout = 1700827200; // Nov 24th, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nTimeout = 999999999999ULL; // Nov 24th, 2023
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nWindowSize = 10;
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nThresholdStart = 8; // 80% of 10
+
+        // Deployment of Data Transactions
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].bit = 9;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nStartTime = 1709145000; // Feb 29th, 2024
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nWindowSize = 10;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nThresholdStart = 8; // 80% of 10
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000000000000000100010");
@@ -1056,6 +1080,13 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nThresholdStart = 80;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nThresholdMin = 60;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nFalloffCoeff = 5;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].bit = 9;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nWindowSize = 10;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nThresholdStart = 8; // 80%
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nThresholdMin = 6; // 60%
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nFalloffCoeff = 5;
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");
