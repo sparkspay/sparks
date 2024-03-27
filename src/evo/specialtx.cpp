@@ -11,6 +11,7 @@
 #include <evo/cbtx.h>
 #include <evo/deterministicmns.h>
 #include <evo/specialtx.h>
+#include <evo/datatx.h>
 
 #include <llmq/quorums_commitment.h>
 #include <llmq/quorums_blockprocessor.h>
@@ -38,6 +39,8 @@ bool CheckSpecialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVali
             return CheckCbTx(tx, pindexPrev, state);
         case TRANSACTION_QUORUM_COMMITMENT:
             return llmq::CheckLLMQCommitment(tx, pindexPrev, state);
+        case TRANSACTION_DATA:
+            return CheckDataTx(tx, pindexPrev, state);
         }
     } catch (const std::exception& e) {
         LogPrintf("%s -- failed: %s\n", __func__, e.what());
@@ -63,6 +66,8 @@ bool ProcessSpecialTx(const CTransaction& tx, const CBlockIndex* pindex, CValida
         return true; // nothing to do
     case TRANSACTION_QUORUM_COMMITMENT:
         return true; // handled per block
+    case TRANSACTION_DATA:
+        return true;    
     }
 
     return state.DoS(100, false, REJECT_INVALID, "bad-tx-type-proc");
@@ -84,6 +89,8 @@ bool UndoSpecialTx(const CTransaction& tx, const CBlockIndex* pindex)
         return true; // nothing to do
     case TRANSACTION_QUORUM_COMMITMENT:
         return true; // handled per block
+    case TRANSACTION_DATA:
+        return true; 
     }
 
     return false;

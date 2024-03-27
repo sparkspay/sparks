@@ -23,6 +23,7 @@ enum DeploymentPos
     DEPLOYMENT_REALLOC, // Deployment of Block Reward Reallocation
     DEPLOYMENT_DIP0020, // Deployment of DIP0020, DIP0021 and LMQ_100_67 quorums
     DEPLOYMENT_IPV6_MN, // Deployment of IPv6 Masternodes
+    DEPLOYMENT_DATATX, // Deployment of Data transactions
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
     MAX_VERSION_BITS_DEPLOYMENTS
 };
