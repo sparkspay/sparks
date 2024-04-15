@@ -25,6 +25,7 @@
 #include <util/validation.h>
 #include <util/translation.h>
 #include <validation.h>
+#include <spork.h>
 
 #ifdef ENABLE_WALLET
 #include <wallet/coincontrol.h>
@@ -233,6 +234,12 @@ static void FundSpecialTx(CWallet* pwallet, CMutableTransaction& tx, const Speci
 
     CTransactionRef newTx;
     CAmount nFee;
+    if(tx.nType == TRANSACTION_DATA){
+        CAmount nSporkDataTxFee = sporkManager->GetSporkValue(SPORK_24_DATATX_FEE);
+        CAmount nDataTxFeeRate = nSporkDataTxFee > 0 ? nSporkDataTxFee : DEFAULT_DATA_TRANSACTION_MINFEE;
+        coinControl.fOverrideFeeRate = true;
+        coinControl.m_feerate = CFeeRate(nDataTxFeeRate);
+    }
     int nChangePos = -1;
     bilingual_str strFailReason;
 
@@ -1343,7 +1350,6 @@ UniValue datatx_get(const JSONRPCRequest& request)
             "get   - get a datatx payload\n"
     );
 }
-
 
 UniValue datatx(const JSONRPCRequest& request)
 {
