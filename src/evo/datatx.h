@@ -26,15 +26,6 @@ public:
     uint256 hash;
 
 public:
-    // ADD_SERIALIZE_METHODS;
-
-    // template <typename Stream, typename Operation>
-    // inline void SerializationOp(Stream& s, Operation ser_action)
-    // {
-    //     READWRITE(nVersion);
-    //     READWRITE(GUID);
-    //     READWRITE(hash);
-    // }
     SERIALIZE_METHODS(CDataTx, obj){ READWRITE(obj.nVersion, obj.GUID, obj.hash); }
 
     std::string ToString() const;

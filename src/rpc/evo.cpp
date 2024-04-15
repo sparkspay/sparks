@@ -32,6 +32,8 @@
 #include <wallet/wallet.h>
 #endif//ENABLE_WALLET
 
+#include <evo/datatx.h>
+
 #ifdef ENABLE_WALLET
 extern UniValue signrawtransaction(const JSONRPCRequest& request);
 extern UniValue sendrawtransaction(const JSONRPCRequest& request);
@@ -1232,6 +1234,137 @@ static UniValue protx(const JSONRPCRequest& request)
     } else {
         protx_help();
     }
+}
+
+
+#ifdef ENABLE_WALLET
+void datatx_publish_help(CWallet* const pwallet)
+{
+    throw std::runtime_error(
+            "datatx publish \"data\" \"feeSourceAddress\"\n"
+            + HELP_REQUIRING_PASSPHRASE + "\n"
+            "\nArguments:\n"
+            "1. \"data\"                 (string, required) Data payload.\n"
+            "2. \"feeSourceAddress\"     (string, required) wallet will only use coins from this address to fund datatx. The private key belonging to this address must be known in your wallet.\n"
+            "\nResult:\n"
+            "\"txid\"                  (string) The transaction id.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("datatx", "publish \"data\" \"feeSourceAddress\"")
+    );
+}
+
+UniValue datatx_publish(const JSONRPCRequest& request)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
+    CWallet* const pwallet = wallet.get();
+
+    if (request.fHelp || request.params.size() != 3) {
+        datatx_publish_help(pwallet);
+    }
+
+    EnsureWalletIsUnlocked(pwallet);
+
+    CMutableTransaction tx;
+    tx.nVersion = 3;
+    tx.nType = TRANSACTION_DATA;
+
+    CDataTx dtx;
+
+    std::string s_data = request.params[1].get_str().c_str();
+    std::vector<unsigned char> vchData(s_data.begin(), s_data.end());
+    dtx.GUID = vchData;
+    CTxDestination feeSourceDest = DecodeDestination(request.params[2].get_str());
+    if (!IsValidDestination(feeSourceDest))
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Sparks address: ") + request.params[2].get_str());
+
+    FundSpecialTx(pwallet, tx, dtx, feeSourceDest);
+    SetTxPayload(tx, dtx);
+    return SignAndSendSpecialTx(request, tx);
+}
+#endif
+
+UniValue datatx_get(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+        throw std::runtime_error(
+            "datatx get \"txid\"\n"
+
+            "\nReturn the datatx payload data.\n"
+
+            "\nArguments:\n"
+            "1. \"txid\"      (string, required) The transaction id\n"
+
+            "\nResult :\n"
+            "{\n"
+            "  \"version\" : n,        (numeric) datatx transaction version"
+            "  \"data\" : \"payload\", (string) datatx payload\n"
+            "}\n"
+        );
+
+    LOCK(cs_main);
+
+    uint256 hash = ParseHashV(request.params[1], "parameter 1");
+
+    if (hash == Params().GenesisBlock().hashMerkleRoot) {
+        // Special exception for the genesis block coinbase transaction
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "The genesis block coinbase is not considered an ordinary transaction and cannot be retrieved");
+    }
+
+    CTransactionRef tx;
+    uint256 hash_block;
+
+    UniValue result(UniValue::VOBJ);
+    if (tx->nType == TRANSACTION_DATA) {
+        CDataTx dataTx;
+        if (GetTxPayload(*tx, dataTx)) {
+            UniValue obj;
+            dataTx.ToJson(obj);
+            result.pushKV("datatx", obj);
+        }
+    } else {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Not a valid datatx transaction.");
+    }
+    return result;
+}
+
+[[ noreturn ]] void datatx_help()
+{
+    throw std::runtime_error(
+            "datatx \"command\" ...\n"
+            "Set of commands to execute datatx related actions.\n"
+            "To get help on individual commands, use \"help datatx command\".\n"
+            "\nArguments:\n"
+            "1. \"command\"        (string, required) The command to execute\n"
+            "\nAvailable commands:\n"
+#ifdef ENABLE_WALLET
+
+            "publish   - publish a datatx\n"
+#endif
+            "get   - get a datatx payload\n"
+    );
+}
+
+
+UniValue datatx(const JSONRPCRequest& request)
+{
+    if (request.fHelp && request.params.empty()) {
+        datatx_help();
+    }
+
+    std::string command;
+    if (!request.params[0].isNull()) {
+        command = request.params[0].get_str();
+    }
+
+#ifdef ENABLE_WALLET
+    if (command == "publish") {
+        return datatx_publish(request);
+    }
+#endif
+    if (command == "get") {
+        return datatx_get(request);
+    }
+    datatx_help();
 }
 
 static void bls_generate_help(const JSONRPCRequest& request)

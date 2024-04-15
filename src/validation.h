@@ -127,7 +127,7 @@ static const unsigned int DEFAULT_CHECKLEVEL = 3;
 static const uint64_t MIN_DISK_SPACE_FOR_BLOCK_FILES = 945 * 1024 * 1024;
 
 //! -mindatatxfee default
-static const CAmount DEFAULT_DATA_TRANSACTION_MINFEE = 100000;
+static const CAmount DEFAULT_DATA_TRANSACTION_MINFEE = 1000000;
 struct BlockHasher
 {
     // this used to call `GetCheapHash()` in uint256, which was later moved; the
