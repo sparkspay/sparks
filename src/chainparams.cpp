@@ -502,10 +502,10 @@ public:
 
         // Deployment of Data Transactions
         consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].bit = 9;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nStartTime = 1669593600; // Nov 28th, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nTimeout = 1701129600; // Nov 28th, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nStartTime = 1709145000; // Feb 29th, 2024
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nTimeout = 999999999999ULL;
         consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nWindowSize = 10;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nThresholdStart = 8; // 60% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nThresholdStart = 8; // 80% of 10
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000000000000000100010");
