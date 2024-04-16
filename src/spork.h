@@ -71,7 +71,7 @@ struct CSporkDef
     MAKE_SPORK_DEF(SPORK_19_CHAINLOCKS_ENABLED,            4070908800ULL), // OFF
     MAKE_SPORK_DEF(SPORK_21_QUORUM_ALL_CONNECTED,          4070908800ULL), // OFF
     MAKE_SPORK_DEF(SPORK_23_QUORUM_POSE,                   4070908800ULL), // OFF
-    MAKE_SPORK_DEF(SPORK_24_DATATX_FEE,                    1000000), // default Datatx min fee rate
+    MAKE_SPORK_DEF(SPORK_24_DATATX_FEE,                    1000000), // default datatx min fee rate
 };
 #undef MAKE_SPORK_DEF
 extern std::unique_ptr<CSporkManager> sporkManager;
