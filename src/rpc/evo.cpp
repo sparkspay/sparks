@@ -1319,6 +1319,16 @@ UniValue datatx_get(const JSONRPCRequest& request)
 
     CTransactionRef tx;
     uint256 hash_block;
+    if (GetTransaction(/* block_index */ nullptr, /* mempool */ nullptr, hash, Params().GetConsensus(), hash_block) == nullptr) {
+        // std::string errmsg;
+        // errmsg = fTxIndex
+        //       ? "No such mempool or blockchain transaction"
+        //       : "No such mempool transaction. Use -txindex to enable blockchain transaction queries";
+        // throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, errmsg + ". Use gettransaction for wallet transactions.");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Use gettransaction for wallet transactions.");
+    } else if (hash_block.IsNull()) {
+        throw JSONRPCError(RPC_MISC_ERROR, "No such blockchain transaction.");
+    }
 
     UniValue result(UniValue::VOBJ);
     if (tx->nType == TRANSACTION_DATA) {
@@ -1326,7 +1336,7 @@ UniValue datatx_get(const JSONRPCRequest& request)
         if (GetTxPayload(*tx, dataTx)) {
             UniValue obj;
             dataTx.ToJson(obj);
-            result.pushKV("datatx", obj);
+            result.pushKV("dataTx", obj);
         }
     } else {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Not a valid datatx transaction.");
