@@ -5,28 +5,31 @@
 #ifndef BITCOIN_EVO_DATATX_H
 #define BITCOIN_EVO_DATATX_H
 
-#include <consensus/validation.h>
 #include <primitives/transaction.h>
 #include <univalue.h>
 
 class CBlock;
 class CBlockIndex;
 class CCoinsViewCache;
+class CValidationState;
+
+namespace llmq {
+class CQuorumBlockProcessor;
+}// namespace llmq
 
 // data transaction
 class CDataTx
 {
 public:
-    static constexpr auto SPECIALTX_TYPE = TRANSACTION_MNHF_SIGNAL;
-    static const uint16_t CURRENT_VERSION = 1;
+    static constexpr auto SPECIALTX_TYPE = TRANSACTION_DATA;
+    static constexpr uint16_t CURRENT_VERSION = 1;
 
 public:
     uint16_t nVersion{CURRENT_VERSION};
-    std::vector<unsigned char> GUID;
-    uint256 hash;
+    std::vector<unsigned char> data;
 
 public:
-    SERIALIZE_METHODS(CDataTx, obj){ READWRITE(obj.nVersion, obj.GUID, obj.hash); }
+    SERIALIZE_METHODS(CDataTx, obj){ READWRITE(obj.nVersion, obj.data); }
 
     std::string ToString() const;
 
@@ -35,9 +38,8 @@ public:
         obj.clear();
         obj.setObject();
         obj.pushKV("version", (int)nVersion);
-        std::string s_guid(GUID.begin(), GUID.end());
-        obj.pushKV("GUID", s_guid);
-        obj.pushKV("hash", hash.ToString());
+        std::string s_data(data.begin(), data.end());
+        obj.pushKV("data", s_data);
     }
 
 };

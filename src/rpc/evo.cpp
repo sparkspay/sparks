@@ -1279,7 +1279,7 @@ UniValue datatx_publish(const JSONRPCRequest& request)
 
     std::string s_data = request.params[1].get_str().c_str();
     std::vector<unsigned char> vchData(s_data.begin(), s_data.end());
-    dtx.GUID = vchData;
+    dtx.data = vchData;
     CTxDestination feeSourceDest = DecodeDestination(request.params[2].get_str());
     if (!IsValidDestination(feeSourceDest))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Sparks address: ") + request.params[2].get_str());
