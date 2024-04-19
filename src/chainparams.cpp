@@ -496,8 +496,15 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nWindowSize = 10;
         consensus.vDeployments[Consensus::DEPLOYMENT_IPV6_MN].nThresholdStart = 8; // 80% of 10
 
+        // Deployment of Data Transactions
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].bit = 9;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nStartTime = 1709145000; // Feb 29th, 2024
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nWindowSize = 10;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nThresholdStart = 8; // 80% of 10
+
         // Deployment of Quorum Rotation DIP and decreased proposal fee
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].bit = 7;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].bit = 10;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nStartTime = 1649980800; // Friday, April 15, 2022 0:00:00
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nTimeout = 999999999999ULL;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nWindowSize = 10;
@@ -505,12 +512,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nThresholdMin = 6;   // 60% of 10
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nFalloffCoeff = 5;      // this corresponds to 10 periods
 
-        // Deployment of Data Transactions
-        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].bit = 9;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nStartTime = 1709145000; // Feb 29th, 2024
-        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nTimeout = 999999999999ULL;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nWindowSize = 10;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nThresholdStart = 8; // 80% of 10
+ 
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000000000000000100010");
