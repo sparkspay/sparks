@@ -1319,13 +1319,12 @@ UniValue datatx_get(const JSONRPCRequest& request)
 
     CTransactionRef tx;
     uint256 hash_block;
-    if (GetTransaction(/* block_index */ nullptr, /* mempool */ nullptr, hash, Params().GetConsensus(), hash_block) == nullptr) {
-        // std::string errmsg;
-        // errmsg = fTxIndex
-        //       ? "No such mempool or blockchain transaction"
-        //       : "No such mempool transaction. Use -txindex to enable blockchain transaction queries";
-        // throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, errmsg + ". Use gettransaction for wallet transactions.");
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Use gettransaction for wallet transactions.");
+    if (!g_txindex->FindTx(hash, hash_block, tx)) {
+        std::string errmsg;
+        errmsg = g_txindex
+              ? "No such mempool or blockchain transaction"
+              : "No such mempool transaction. Use -txindex to enable blockchain transaction queries";
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, errmsg + ". Use gettransaction for wallet transactions.");
     } else if (hash_block.IsNull()) {
         throw JSONRPCError(RPC_MISC_ERROR, "No such blockchain transaction.");
     }
