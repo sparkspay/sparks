@@ -505,7 +505,7 @@ public:
 
         // Deployment of Quorum Rotation DIP and decreased proposal fee
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].bit = 10;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nStartTime = 1713962700; //Wednesday, April 24, 2024 12:45:00 PM //1649980800 Friday, April 15, 2022 0:00:00
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nStartTime = 1714501800; //Wed May 01 2024 00:00:00 //1649980800 Friday, April 15, 2022 0:00:00
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nTimeout = 999999999999ULL;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nWindowSize = 10;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nThresholdStart = 8; // 80% of 10
