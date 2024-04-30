@@ -330,7 +330,7 @@ static std::string SignAndSendSpecialTx(const JSONRPCRequest& request, const CMu
 static void protx_register_fund_help(const JSONRPCRequest& request)
 {
     RPCHelpMan{"protx register_fund",
-        "\nCreates, funds and sends a ProTx to the network. The resulting transaction will move 1000 Dash\n"
+        "\nCreates, funds and sends a ProTx to the network. The resulting transaction will move 25000 Sparks\n"
         "to the address specified by collateralAddress and will then function as the collateral of your\n"
         "masternode.\n"
         "A few of the limitations you see in the arguments are temporary and might be lifted after DIP3\n"
@@ -464,7 +464,7 @@ static UniValue protx_register(const JSONRPCRequest& request)
 
     size_t paramIdx = 0;
 
-    CAmount collateralAmount = 1000 * COIN;
+    CAmount collateralAmount = 25000 * COIN;
 
     CMutableTransaction tx;
     tx.nVersion = 3;
