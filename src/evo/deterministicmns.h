@@ -211,7 +211,7 @@ public:
     {
         size_t count = 0;
         for (const auto& p : mnMap) {
-            if (IsMNValid((const CDeterministicMN& )p.second) && p.second->pdmnState->addr.IsIPv4()) {//janaka cast was added 
+            if (IsMNValid(*p.second) && p.second->pdmnState->addr.IsIPv4()) {//janaka cast was added 
                 count++;
             }
         }
@@ -222,7 +222,7 @@ public:
     {
         size_t count = 0;
         for (const auto& p : mnMap) {
-            if (IsMNValid((const CDeterministicMN& )p.second) && p.second->pdmnState->addr.IsIPv6()) {//cast by janaka
+            if (IsMNValid(*p.second) && p.second->pdmnState->addr.IsIPv6()) {//cast by janaka
                 count++;
             }
         }
