@@ -126,6 +126,8 @@ static const unsigned int DEFAULT_CHECKLEVEL = 3;
 // Setting the target to > than 945 MiB will make it likely we can respect the target.
 static const uint64_t MIN_DISK_SPACE_FOR_BLOCK_FILES = 945 * 1024 * 1024;
 
+//! -mindatatxfee default
+static const CAmount DEFAULT_DATA_TRANSACTION_MINFEE = 1000000;
 struct BlockHasher
 {
     // this used to call `GetCheapHash()` in uint256, which was later moved; the

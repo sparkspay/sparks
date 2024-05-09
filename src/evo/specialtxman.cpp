@@ -2,19 +2,20 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <evo/specialtx.h>
-
 #include <chainparams.h>
 #include <consensus/validation.h>
+#include <hash.h>
+#include <primitives/block.h>
+#include <validation.h>
+#include <evo/specialtx.h>
 #include <evo/cbtx.h>
+#include <evo/datatx.h>
 #include <evo/deterministicmns.h>
 #include <evo/mnhftx.h>
 #include <evo/providertx.h>
-#include <hash.h>
+
 #include <llmq/blockprocessor.h>
 #include <llmq/commitment.h>
-#include <primitives/block.h>
-#include <validation.h>
 
 bool CheckSpecialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state, const CCoinsViewCache& view, bool check_sigs)
 {
@@ -43,6 +44,8 @@ bool CheckSpecialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVali
             return llmq::CheckLLMQCommitment(tx, pindexPrev, state);
         case TRANSACTION_MNHF_SIGNAL:
             return VersionBitsTipState(Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0024) == ThresholdState::ACTIVE && CheckMNHFTx(tx, pindexPrev, state);
+        case TRANSACTION_DATA:
+            return CheckDataTx(tx, pindexPrev, state);
         }
     } catch (const std::exception& e) {
         LogPrintf("%s -- failed: %s\n", __func__, e.what());
@@ -70,6 +73,8 @@ bool ProcessSpecialTx(const CTransaction& tx, const CBlockIndex* pindex, CValida
         return true; // handled per block
     case TRANSACTION_MNHF_SIGNAL:
         return true; // handled per block
+    case TRANSACTION_DATA:
+        return true;
     }
 
     return state.Invalid(ValidationInvalidReason::CONSENSUS, false, REJECT_INVALID, "bad-tx-type-proc");
@@ -93,6 +98,8 @@ bool UndoSpecialTx(const CTransaction& tx, const CBlockIndex* pindex)
         return true; // handled per block
     case TRANSACTION_MNHF_SIGNAL:
         return true; // handled per block
+    case TRANSACTION_DATA:
+        return true;    
     }
 
     return false;

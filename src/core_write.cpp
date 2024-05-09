@@ -21,6 +21,7 @@
 #include <evo/providertx.h>
 #include <evo/specialtx.h>
 #include <llmq/commitment.h>
+#include <evo/datatx.h>
 
 UniValue ValueFromAmount(const CAmount& amount)
 {
@@ -309,6 +310,13 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
             UniValue obj;
             mnhfTx.ToJson(obj);
             entry.pushKV("mnhfTx", obj);
+        }
+    } else if (tx.nType == TRANSACTION_DATA) {
+        CDataTx dataTx;
+        if (GetTxPayload(tx, dataTx)) {
+            UniValue obj;
+            dataTx.ToJson(obj);
+            entry.pushKV("dataTx", obj);
         }
     }
 

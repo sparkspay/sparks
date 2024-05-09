@@ -25,12 +25,15 @@
 #include <util/validation.h>
 #include <util/translation.h>
 #include <validation.h>
+#include <spork.h>
 
 #ifdef ENABLE_WALLET
 #include <wallet/coincontrol.h>
 #include <wallet/rpcwallet.h>
 #include <wallet/wallet.h>
 #endif//ENABLE_WALLET
+
+#include <evo/datatx.h>
 
 #ifdef ENABLE_WALLET
 extern UniValue signrawtransaction(const JSONRPCRequest& request);
@@ -231,6 +234,12 @@ static void FundSpecialTx(CWallet* pwallet, CMutableTransaction& tx, const Speci
 
     CTransactionRef newTx;
     CAmount nFee;
+    if(tx.nType == TRANSACTION_DATA){
+        CAmount nSporkDataTxFee = sporkManager->GetSporkValue(SPORK_24_DATATX_FEE);
+        CAmount nDataTxFeeRate = nSporkDataTxFee > 0 ? nSporkDataTxFee : DEFAULT_DATA_TRANSACTION_MINFEE;
+        coinControl.fOverrideFeeRate = true;
+        coinControl.m_feerate = CFeeRate(nDataTxFeeRate);
+    }
     int nChangePos = -1;
     bilingual_str strFailReason;
 
@@ -321,7 +330,7 @@ static std::string SignAndSendSpecialTx(const JSONRPCRequest& request, const CMu
 static void protx_register_fund_help(const JSONRPCRequest& request)
 {
     RPCHelpMan{"protx register_fund",
-        "\nCreates, funds and sends a ProTx to the network. The resulting transaction will move 1000 Dash\n"
+        "\nCreates, funds and sends a ProTx to the network. The resulting transaction will move 25000 Sparks\n"
         "to the address specified by collateralAddress and will then function as the collateral of your\n"
         "masternode.\n"
         "A few of the limitations you see in the arguments are temporary and might be lifted after DIP3\n"
@@ -455,7 +464,7 @@ static UniValue protx_register(const JSONRPCRequest& request)
 
     size_t paramIdx = 0;
 
-    CAmount collateralAmount = 1000 * COIN;
+    CAmount collateralAmount = 25000 * COIN;
 
     CMutableTransaction tx;
     tx.nVersion = 3;
@@ -1234,6 +1243,145 @@ static UniValue protx(const JSONRPCRequest& request)
     }
 }
 
+
+#ifdef ENABLE_WALLET
+void datatx_publish_help(CWallet* const pwallet)
+{
+    throw std::runtime_error(
+            "datatx publish \"data\" \"feeSourceAddress\"\n"
+            + HELP_REQUIRING_PASSPHRASE + "\n"
+            "\nArguments:\n"
+            "1. \"data\"                 (string, required) Data payload.\n"
+            "2. \"feeSourceAddress\"     (string, required) wallet will only use coins from this address to fund datatx. The private key belonging to this address must be known in your wallet.\n"
+            "\nResult:\n"
+            "\"txid\"                  (string) The transaction id.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("datatx", "publish \"data\" \"feeSourceAddress\"")
+    );
+}
+
+UniValue datatx_publish(const JSONRPCRequest& request)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
+    CWallet* const pwallet = wallet.get();
+
+    if (request.fHelp || request.params.size() != 3) {
+        datatx_publish_help(pwallet);
+    }
+
+    EnsureWalletIsUnlocked(pwallet);
+
+    CMutableTransaction tx;
+    tx.nVersion = 3;
+    tx.nType = TRANSACTION_DATA;
+
+    CDataTx dtx;
+
+    std::string s_data = request.params[1].get_str().c_str();
+    std::vector<unsigned char> vchData(s_data.begin(), s_data.end());
+    dtx.data = vchData;
+    CTxDestination feeSourceDest = DecodeDestination(request.params[2].get_str());
+    if (!IsValidDestination(feeSourceDest))
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Sparks address: ") + request.params[2].get_str());
+
+    FundSpecialTx(pwallet, tx, dtx, feeSourceDest);
+    SetTxPayload(tx, dtx);
+    return SignAndSendSpecialTx(request, tx);
+}
+#endif
+
+UniValue datatx_get(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+        throw std::runtime_error(
+            "datatx get \"txid\"\n"
+
+            "\nReturn the datatx payload data.\n"
+
+            "\nArguments:\n"
+            "1. \"txid\"      (string, required) The transaction id\n"
+
+            "\nResult :\n"
+            "{\n"
+            "  \"version\" : n,        (numeric) datatx transaction version"
+            "  \"data\" : \"payload\", (string) datatx payload\n"
+            "}\n"
+        );
+
+    LOCK(cs_main);
+
+    uint256 hash = ParseHashV(request.params[1], "parameter 1");
+
+    if (hash == Params().GenesisBlock().hashMerkleRoot) {
+        // Special exception for the genesis block coinbase transaction
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "The genesis block coinbase is not considered an ordinary transaction and cannot be retrieved");
+    }
+
+    CTransactionRef tx;
+    uint256 hash_block;
+    if (!g_txindex->FindTx(hash, hash_block, tx)) {
+        std::string errmsg;
+        errmsg = g_txindex
+              ? "No such mempool or blockchain transaction"
+              : "No such mempool transaction. Use -txindex to enable blockchain transaction queries";
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, errmsg + ". Use gettransaction for wallet transactions.");
+    } else if (hash_block.IsNull()) {
+        throw JSONRPCError(RPC_MISC_ERROR, "No such blockchain transaction.");
+    }
+
+    UniValue result(UniValue::VOBJ);
+    if (tx->nType == TRANSACTION_DATA) {
+        CDataTx dataTx;
+        if (GetTxPayload(*tx, dataTx)) {
+            UniValue obj;
+            dataTx.ToJson(obj);
+            result.pushKV("dataTx", obj);
+        }
+    } else {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Not a valid datatx transaction.");
+    }
+    return result;
+}
+
+[[ noreturn ]] void datatx_help()
+{
+    throw std::runtime_error(
+            "datatx \"command\" ...\n"
+            "Set of commands to execute datatx related actions.\n"
+            "To get help on individual commands, use \"help datatx command\".\n"
+            "\nArguments:\n"
+            "1. \"command\"        (string, required) The command to execute\n"
+            "\nAvailable commands:\n"
+#ifdef ENABLE_WALLET
+
+            "publish   - publish a datatx\n"
+#endif
+            "get   - get a datatx payload\n"
+    );
+}
+
+UniValue datatx(const JSONRPCRequest& request)
+{
+    if (request.fHelp && request.params.empty()) {
+        datatx_help();
+    }
+
+    std::string command;
+    if (!request.params[0].isNull()) {
+        command = request.params[0].get_str();
+    }
+
+#ifdef ENABLE_WALLET
+    if (command == "publish") {
+        return datatx_publish(request);
+    }
+#endif
+    if (command == "get") {
+        return datatx_get(request);
+    }
+    datatx_help();
+}
+
 static void bls_generate_help(const JSONRPCRequest& request)
 {
     RPCHelpMan{"bls generate",
@@ -1333,6 +1481,7 @@ static const CRPCCommand commands[] =
   //  --------------------- ------------------------  -----------------------
     { "evo",                "bls",                    &_bls,                   {}  },
     { "evo",                "protx",                  &protx,                  {}  },
+    { "evo",                "datatx",                  &datatx,                  {}  },
 };
 // clang-format on
 void RegisterEvoRPCCommands(CRPCTable &tableRPC)
