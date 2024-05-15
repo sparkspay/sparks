@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+#
+#  sparksd The Dash Core server.
+#
+#
+# chkconfig: 345 80 20
+# description: sparksd
+# processname: sparksd
+#
+
+# Source function library.
+. /etc/init.d/functions
+
+# you can override defaults in /etc/sysconfig/sparksd, see below
+if [ -f /etc/sysconfig/sparksd ]; then
+        . /etc/sysconfig/sparksd
+fi
+
+RETVAL=0
+
+prog=sparksd
+# you can override the lockfile via BITCOIND_LOCKFILE in /etc/sysconfig/sparksd
+lockfile=${BITCOIND_LOCKFILE-/var/lock/subsys/sparksd}
+
+# sparksd defaults to /usr/bin/sparksd, override with BITCOIND_BIN
+sparksd=${BITCOIND_BIN-/usr/bin/sparksd}
+
+# sparksd opts default to -disablewallet, override with BITCOIND_OPTS
+sparksd_opts=${BITCOIND_OPTS--disablewallet}
+
+start() {
+    echo -n $"Starting $prog: "
+    daemon $DAEMONOPTS $sparksd $sparksd_opts
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch $lockfile
+    return $RETVAL
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    killproc $prog -t600
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && rm -f $lockfile
+    return $RETVAL
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status $prog
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    *)
+        echo "Usage: service $prog {start|stop|status|restart}"
+        exit 1
+        ;;
+esac

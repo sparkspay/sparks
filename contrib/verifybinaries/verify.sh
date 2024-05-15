@@ -13,7 +13,7 @@
 
 export LC_ALL=C
 function clean_up {
-   for file in $*
+   for file in "$@"
    do
       rm "$file" 2> /dev/null
    done
@@ -24,10 +24,10 @@ TMPFILE="hashes.tmp"
 
 SIGNATUREFILENAME="SHA256SUMS.asc"
 RCSUBDIR="test"
-HOST1="https://bitcoincore.org"
-HOST2="https://bitcoin.org"
-BASEDIR="/bin/"
-VERSIONPREFIX="bitcoin-core-"
+HOST1="https://github.com/sparkspay/sparks/releases/download/v"
+HOST2="https://pasta.keybase.pub/Dash-Core-Releases/"
+BASEDIR=""
+VERSIONPREFIX=""
 RCVERSIONSTRING="rc"
 
 if [ ! -d "$WORKINGDIR" ]; then
@@ -82,22 +82,20 @@ else
    exit 2
 fi
 
-#first we fetch the file containing the signature
-WGETOUT=$(wget -N "$HOST1$BASEDIR$SIGNATUREFILENAME" 2>&1)
-
-#and then see if wget completed successfully
-if [ $? -ne 0 ]; then
+if ! WGETOUT=$(wget -N "$HOST1$BASEDIR$SIGNATUREFILENAME" 2>&1); then
    echo "Error: couldn't fetch signature file. Have you specified the version number in the following format?"
+   # shellcheck disable=SC1087
    echo "[$VERSIONPREFIX]<version>-[$RCVERSIONSTRING[0-9]] (example: ${VERSIONPREFIX}0.10.4-${RCVERSIONSTRING}1)"
    echo "wget output:"
+   # shellcheck disable=SC2001
    echo "$WGETOUT"|sed 's/^/\t/g'
    exit 2
 fi
 
-WGETOUT=$(wget -N -O "$SIGNATUREFILENAME.2" "$HOST2$BASEDIR$SIGNATUREFILENAME" 2>&1)
-if [ $? -ne 0 ]; then
-   echo "bitcoin.org failed to provide signature file, but bitcoincore.org did?"
+if ! WGETOUT=$(wget -N -O "$SIGNATUREFILENAME.2" "$HOST2$BASEDIR$SIGNATUREFILENAME" 2>&1); then
+   echo "pasta.keybase.pub failed to provide signature file, but github.com did?"
    echo "wget output:"
+   # shellcheck disable=SC2001
    echo "$WGETOUT"|sed 's/^/\t/g'
    clean_up $SIGNATUREFILENAME
    exit 3
@@ -105,7 +103,7 @@ fi
 
 SIGFILEDIFFS="$(diff $SIGNATUREFILENAME $SIGNATUREFILENAME.2)"
 if [ "$SIGFILEDIFFS" != "" ]; then
-   echo "bitcoin.org and bitcoincore.org signature files were not equal?"
+   echo "pasta.keybase.pub and github.com signature files were not equal?"
    clean_up $SIGNATUREFILENAME $SIGNATUREFILENAME.2
    exit 4
 fi
@@ -124,10 +122,11 @@ if [ $RET -ne 0 ]; then
       echo "Bad signature."
    elif [ $RET -eq 2 ]; then
       #or if a gpg error has occurred
-      echo "gpg error. Do you have the Bitcoin Core binary release signing key installed?"
+      echo "gpg error. Do you have the Dash Core binary release signing key installed?"
    fi
 
    echo "gpg output:"
+   # shellcheck disable=SC2001
    echo "$GPGOUT"|sed 's/^/\t/g'
    clean_up $SIGNATUREFILENAME $SIGNATUREFILENAME.2 $TMPFILE
    exit "$RET"

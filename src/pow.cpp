@@ -7,7 +7,6 @@
 
 #include <arith_uint256.h>
 #include <chain.h>
-#include <chainparams.h>
 #include <primitives/block.h>
 #include <uint256.h>
 
@@ -80,7 +79,7 @@ unsigned int static KimotoGravityWell(const CBlockIndex* pindexLast, const Conse
 }
 
 unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const Consensus::Params& params) {
-    /* current difficulty formula, sparks - DarkGravity v3, written by Evan Duffield - evan@dash.org */
+    /* current difficulty formula, sparks - DarkGravity v3, written by Evan Duffield - evan@sparks.org */
     const arith_uint256 bnPowLimit = UintToArith256(params.powLimit);
     int64_t nPastBlocks = 24;
 

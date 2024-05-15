@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2018-2020 The Dash Core developers
+# Copyright (c) 2018-2022 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,6 +7,8 @@ from test_framework.mininode import *
 from test_framework.test_framework import SparksTestFramework
 from test_framework.util import isolate_node, reconnect_isolated_node, assert_equal, \
     assert_raises_rpc_error
+from test_framework.test_framework import DashTestFramework
+from test_framework.util import assert_equal, assert_raises_rpc_error
 
 '''
 p2p_instantsend.py
@@ -45,7 +47,7 @@ class InstantSendTest(SparksTestFramework):
         # create doublespending transaction, but don't relay it
         dblspnd_tx = self.create_raw_tx(sender, isolated, 0.5, 1, 100)
         # isolate one node from network
-        isolate_node(isolated)
+        self.isolate_node(self.isolated_idx)
         # instantsend to receiver
         receiver_addr = receiver.getnewaddress()
         is_id = sender.sendtoaddress(receiver_addr, 0.9)
@@ -62,14 +64,14 @@ class InstantSendTest(SparksTestFramework):
         isolated.generate(1)
         wrong_block = isolated.getbestblockhash()
         # connect isolated block to network
-        reconnect_isolated_node(isolated, 0)
+        self.reconnect_isolated_node(self.isolated_idx, 0)
         # check doublespend block is rejected by other nodes
         timeout = 10
-        for i in range(0, self.num_nodes):
-            if i == self.isolated_idx:
+        for idx, node in enumerate(self.nodes):
+            if idx == self.isolated_idx:
                 continue
-            res = self.nodes[i].waitforblock(wrong_block, timeout)
-            assert (res['hash'] != wrong_block)
+            res = node.waitforblock(wrong_block, timeout)
+            assert res['hash'] != wrong_block
             # wait for long time only for first node
             timeout = 1
         # send coins back to the controller node without waiting for confirmations
@@ -87,6 +89,8 @@ class InstantSendTest(SparksTestFramework):
         sender = self.nodes[self.sender_idx]
         receiver = self.nodes[self.receiver_idx]
         isolated = self.nodes[self.isolated_idx]
+        connected_nodes = self.nodes.copy()
+        del connected_nodes[self.isolated_idx]
 
         # feed the sender with some balance
         sender_addr = sender.getnewaddress()
@@ -97,28 +101,31 @@ class InstantSendTest(SparksTestFramework):
 
         # create doublespending transaction, but don't relay it
         dblspnd_tx = self.create_raw_tx(sender, isolated, 0.5, 1, 100)
-        dblspnd_txid = bytes_to_hex_str(hash256(hex_str_to_bytes(dblspnd_tx['hex']))[::-1])
         # isolate one node from network
-        isolate_node(isolated)
+        self.isolate_node(self.isolated_idx)
         # send doublespend transaction to isolated node
-        isolated.sendrawtransaction(dblspnd_tx['hex'])
+        dblspnd_txid = isolated.sendrawtransaction(dblspnd_tx['hex'])
+        assert dblspnd_txid in set(isolated.getrawmempool())
         # let isolated node rejoin the network
         # The previously isolated node should NOT relay the doublespending TX
-        reconnect_isolated_node(isolated, 0)
-        for node in self.nodes:
-            if node is not isolated:
-                assert_raises_rpc_error(-5, "No such mempool or blockchain transaction", node.getrawtransaction, dblspnd_txid)
-        # instantsend to receiver. The previously isolated node should prune the doublespend TX and request the correct
-        # TX from other nodes.
+        self.reconnect_isolated_node(self.isolated_idx, 0)
+        for node in connected_nodes:
+            assert_raises_rpc_error(-5, "No such mempool or blockchain transaction", node.getrawtransaction, dblspnd_txid)
+        # Instantsend to receiver. The previously isolated node won't accept the tx but it should
+        # request the correct TX from other nodes once the corresponding lock is received.
+        # And this time the doublespend TX should be pruned once the correct tx is received.
         receiver_addr = receiver.getnewaddress()
         is_id = sender.sendtoaddress(receiver_addr, 0.9)
         # wait for the transaction to propagate
         self.sync_mempools()
         for node in self.nodes:
             self.wait_for_instantlock(is_id, node)
-        assert_raises_rpc_error(-5, "No such mempool or blockchain transaction", isolated.getrawtransaction, dblspnd_txid)
+        assert dblspnd_txid not in set(isolated.getrawmempool())
         # send coins back to the controller node without waiting for confirmations
-        receiver.sendtoaddress(self.nodes[0].getnewaddress(), 0.9, "", "", True)
+        sentback_id = receiver.sendtoaddress(self.nodes[0].getnewaddress(), 0.9, "", "", True)
+        self.sync_mempools()
+        for node in self.nodes:
+            self.wait_for_instantlock(sentback_id, node)
         assert_equal(receiver.getwalletinfo()["balance"], 0)
         # mine more blocks
         self.bump_mocktime(1)

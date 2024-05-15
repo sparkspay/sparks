@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 The Dash Core developers
+// Copyright (c) 2017-2022 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,16 +9,15 @@
 #include <merkleblock.h>
 #include <netaddress.h>
 #include <pubkey.h>
-#include <serialize.h>
-#include <version.h>
 
 class UniValue;
+class CBlockIndex;
 class CDeterministicMNList;
 class CDeterministicMN;
 
-namespace llmq
-{
-    class CFinalCommitment;
+namespace llmq {
+class CFinalCommitment;
+class CQuorumBlockProcessor;
 } // namespace llmq
 
 class CSimplifiedMNListEntry
@@ -29,9 +28,10 @@ public:
     CService service;
     CBLSLazyPublicKey pubKeyOperator;
     CKeyID keyIDVoting;
-    bool isValid;
+    bool isValid{false};
+    CScript scriptPayout; // mem-only
+    CScript scriptOperatorPayout; // mem-only
 
-public:
     CSimplifiedMNListEntry() = default;
     explicit CSimplifiedMNListEntry(const CDeterministicMN& dmn);
 
@@ -50,25 +50,22 @@ public:
         return !(rhs == *this);
     }
 
-public:
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
+    SERIALIZE_METHODS(CSimplifiedMNListEntry, obj)
     {
-        READWRITE(proRegTxHash);
-        READWRITE(confirmedHash);
-        READWRITE(service);
-        READWRITE(pubKeyOperator);
-        READWRITE(keyIDVoting);
-        READWRITE(isValid);
+        READWRITE(
+                obj.proRegTxHash,
+                obj.confirmedHash,
+                obj.service,
+                obj.pubKeyOperator,
+                obj.keyIDVoting,
+                obj.isValid
+                );
     }
 
-public:
     uint256 CalcHash() const;
 
     std::string ToString() const;
-    void ToJson(UniValue& obj) const;
+    void ToJson(UniValue& obj, bool extended = false) const;
 };
 
 class CSimplifiedMNList
@@ -76,12 +73,12 @@ class CSimplifiedMNList
 public:
     std::vector<std::unique_ptr<CSimplifiedMNListEntry>> mnList;
 
-public:
     CSimplifiedMNList() = default;
     explicit CSimplifiedMNList(const std::vector<CSimplifiedMNListEntry>& smlEntries);
     explicit CSimplifiedMNList(const CDeterministicMNList& dmnList);
 
     uint256 CalcMerkleRoot(bool* pmutated = nullptr) const;
+    bool operator==(const CSimplifiedMNList& rhs) const;
 };
 
 /// P2P messages
@@ -92,14 +89,9 @@ public:
     uint256 baseBlockHash;
     uint256 blockHash;
 
-public:
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
+    SERIALIZE_METHODS(CGetSimplifiedMNListDiff, obj)
     {
-        READWRITE(baseBlockHash);
-        READWRITE(blockHash);
+        READWRITE(obj.baseBlockHash, obj.blockHash);
     }
 };
 
@@ -113,38 +105,25 @@ public:
     std::vector<uint256> deletedMNs;
     std::vector<CSimplifiedMNListEntry> mnList;
 
-    // starting with proto version LLMQS_PROTO_VERSION, we also transfer changes in active quorums
     std::vector<std::pair<uint8_t, uint256>> deletedQuorums; // p<LLMQType, quorumHash>
     std::vector<llmq::CFinalCommitment> newQuorums;
 
-public:
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
+    SERIALIZE_METHODS(CSimplifiedMNListDiff, obj)
     {
-        READWRITE(baseBlockHash);
-        READWRITE(blockHash);
-        READWRITE(cbTxMerkleTree);
-        READWRITE(cbTx);
-        READWRITE(deletedMNs);
-        READWRITE(mnList);
-
-        if (s.GetVersion() >= LLMQS_PROTO_VERSION) {
-            READWRITE(deletedQuorums);
-            READWRITE(newQuorums);
-        }
+        READWRITE(obj.baseBlockHash, obj.blockHash, obj.cbTxMerkleTree, obj.cbTx, obj.deletedMNs, obj.mnList);
+        READWRITE(obj.deletedQuorums, obj.newQuorums);
     }
 
-public:
     CSimplifiedMNListDiff();
     ~CSimplifiedMNListDiff();
 
-    bool BuildQuorumsDiff(const CBlockIndex* baseBlockIndex, const CBlockIndex* blockIndex);
+    bool BuildQuorumsDiff(const CBlockIndex* baseBlockIndex, const CBlockIndex* blockIndex,
+                          const llmq::CQuorumBlockProcessor& quorum_block_processor);
 
-    void ToJson(UniValue& obj) const;
+    void ToJson(UniValue& obj, bool extended = false) const;
 };
 
-bool BuildSimplifiedMNListDiff(const uint256& baseBlockHash, const uint256& blockHash, CSimplifiedMNListDiff& mnListDiffRet, std::string& errorRet);
+bool BuildSimplifiedMNListDiff(const uint256& baseBlockHash, const uint256& blockHash, CSimplifiedMNListDiff& mnListDiffRet,
+                               const llmq::CQuorumBlockProcessor& quorum_block_processor, std::string& errorRet, bool extended = false);
 
 #endif // BITCOIN_EVO_SIMPLIFIEDMNS_H

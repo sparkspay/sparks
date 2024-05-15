@@ -8,20 +8,24 @@ from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import (
     assert_equal,
     assert_raises_rpc_error,
-    connect_nodes_bi,
     wait_until,
 )
 
 class DisconnectBanTest(BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 2
+        self.supports_cli = False
 
     def run_test(self):
+        self.log.info("Connect nodes both way")
+        self.connect_nodes(0, 1)
+        self.connect_nodes(1, 0)
+
         self.log.info("Test setban and listbanned RPCs")
 
         self.log.info("setban: successfully ban single IP address")
         assert_equal(len(self.nodes[1].getpeerinfo()), 2)  # node1 should have 2 connections to node0 at this point
-        self.nodes[1].setban("127.0.0.1", "add")
+        self.nodes[1].setban(subnet="127.0.0.1", command="add")
         wait_until(lambda: len(self.nodes[1].getpeerinfo()) == 0, timeout=10)
         assert_equal(len(self.nodes[1].getpeerinfo()), 0)  # all nodes must be disconnected at this point
         assert_equal(len(self.nodes[1].listbanned()), 1)
@@ -69,7 +73,9 @@ class DisconnectBanTest(BitcoinTestFramework):
 
         # Clear ban lists
         self.nodes[1].clearbanned()
-        connect_nodes_bi(self.nodes, 0, 1)
+        self.log.info("Connect nodes both way")
+        self.connect_nodes(0, 1)
+        self.connect_nodes(1, 0)
 
         self.log.info("Test disconnectnode RPCs")
 
@@ -88,7 +94,7 @@ class DisconnectBanTest(BitcoinTestFramework):
         assert not [node for node in self.nodes[0].getpeerinfo() if node['addr'] == address1]
 
         self.log.info("disconnectnode: successfully reconnect node")
-        connect_nodes_bi(self.nodes, 0, 1)  # reconnect the node
+        self.connect_nodes(0, 1)  # reconnect the node
         assert_equal(len(self.nodes[0].getpeerinfo()), 2)
         assert [node for node in self.nodes[0].getpeerinfo() if node['addr'] == address1]
 

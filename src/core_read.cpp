@@ -7,15 +7,14 @@
 #include <primitives/block.h>
 #include <primitives/transaction.h>
 #include <script/script.h>
+#include <script/sign.h>
 #include <serialize.h>
 #include <streams.h>
 #include <univalue.h>
-#include <util.h>
-#include <utilstrencodings.h>
+#include <util/strencodings.h>
 #include <version.h>
 
 #include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
 
 #include <algorithm>
@@ -40,8 +39,9 @@ CScript ParseScript(const std::string& s)
             std::string strName(name);
             mapOpNames[strName] = static_cast<opcodetype>(op);
             // Convenience: OP_ADD and just ADD are both recognized:
-            boost::algorithm::replace_first(strName, "OP_", "");
-            mapOpNames[strName] = static_cast<opcodetype>(op);
+            if (strName.compare(0, 3, "OP_") == 0) {  // strName starts with "OP_"
+                mapOpNames[strName.substr(3)] = static_cast<opcodetype>(op);
+            }
         }
     }
 
@@ -59,6 +59,14 @@ CScript ParseScript(const std::string& s)
         {
             // Number
             int64_t n = atoi64(*w);
+
+            //limit the range of numbers ParseScript accepts in decimal
+            //since numbers outside -0xFFFFFFFF...0xFFFFFFFF are illegal in scripts
+            if (n > int64_t{0xffffffff} || n < -1 * int64_t{0xffffffff}) {
+                throw std::runtime_error("script parse error: decimal numeric value only allowed in the "
+                                         "range -0xFFFFFFFF...0xFFFFFFFF");
+            }
+
             result << n;
         }
         else if (w->substr(0,2) == "0x" && w->size() > 2 && IsHex(std::string(w->begin()+2, w->end())))
@@ -107,6 +115,20 @@ bool DecodeHexTx(CMutableTransaction& tx, const std::string& strHexTx)
     return true;
 }
 
+bool DecodeHexBlockHeader(CBlockHeader& header, const std::string& hex_header)
+{
+    if (!IsHex(hex_header)) return false;
+
+    const std::vector<unsigned char> header_data{ParseHex(hex_header)};
+    CDataStream ser_header(header_data, SER_NETWORK, PROTOCOL_VERSION);
+    try {
+        ser_header >> header;
+    } catch (const std::exception&) {
+        return false;
+    }
+    return true;
+}
+
 bool DecodeHexBlk(CBlock& block, const std::string& strHexBlk)
 {
     if (!IsHex(strHexBlk))
@@ -124,14 +146,13 @@ bool DecodeHexBlk(CBlock& block, const std::string& strHexBlk)
     return true;
 }
 
-uint256 ParseHashStr(const std::string& strHex, const std::string& strName)
+bool ParseHashStr(const std::string& strHex, uint256& result)
 {
-    if (!IsHex(strHex)) // Note: IsHex("") is false
-        throw std::runtime_error(strName + " must be hexadecimal string (not '" + strHex + "')");
+    if ((strHex.size() != 64) || !IsHex(strHex))
+        return false;
 
-    uint256 result;
     result.SetHex(strHex);
-    return result;
+    return true;
 }
 
 std::vector<unsigned char> ParseHexUV(const UniValue& v, const std::string& strName)
@@ -142,4 +163,27 @@ std::vector<unsigned char> ParseHexUV(const UniValue& v, const std::string& strN
     if (!IsHex(strHex))
         throw std::runtime_error(strName + " must be hexadecimal string (not '" + strHex + "')");
     return ParseHex(strHex);
+}
+
+int ParseSighashString(const UniValue& sighash)
+{
+    int hash_type = SIGHASH_ALL;
+    if (!sighash.isNull()) {
+        static std::map<std::string, int> map_sighash_values = {
+            {std::string("ALL"), int(SIGHASH_ALL)},
+            {std::string("ALL|ANYONECANPAY"), int(SIGHASH_ALL|SIGHASH_ANYONECANPAY)},
+            {std::string("NONE"), int(SIGHASH_NONE)},
+            {std::string("NONE|ANYONECANPAY"), int(SIGHASH_NONE|SIGHASH_ANYONECANPAY)},
+            {std::string("SINGLE"), int(SIGHASH_SINGLE)},
+            {std::string("SINGLE|ANYONECANPAY"), int(SIGHASH_SINGLE|SIGHASH_ANYONECANPAY)},
+        };
+        std::string strHashType = sighash.get_str();
+        const auto& it = map_sighash_values.find(strHashType);
+        if (it != map_sighash_values.end()) {
+            hash_type = it->second;
+        } else {
+            throw std::runtime_error(strHashType + " is not a valid sighash parameter.");
+        }
+    }
+    return hash_type;
 }

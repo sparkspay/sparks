@@ -4,17 +4,42 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test descendant package tracking code."""
 
-from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import *
-from test_framework.mininode import COIN
+from decimal import Decimal
 
+from test_framework.messages import COIN
+from test_framework.test_framework import BitcoinTestFramework
+from test_framework.util import (
+    assert_equal,
+    assert_raises_rpc_error,
+    satoshi_round,
+    wait_until,
+)
+
+# default limits
 MAX_ANCESTORS = 25
 MAX_DESCENDANTS = 25
+# custom limits for node1
+MAX_ANCESTORS_CUSTOM = 5
+MAX_DESCENDANTS_CUSTOM = 10
+assert MAX_DESCENDANTS_CUSTOM >= MAX_ANCESTORS_CUSTOM
 
 class MempoolPackagesTest(BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 2
-        self.extra_args = [["-maxorphantxsize=1000"], ["-maxorphantxsize=1000", "-limitancestorcount=5"]]
+        self.extra_args = [
+            [
+                "-maxorphantxsize=1000",
+                "-whitelist=noban@127.0.0.1",  # immediate tx relay
+            ],
+            [
+                "-maxorphantxsize=1000",
+                "-limitancestorcount={}".format(MAX_ANCESTORS_CUSTOM),
+                "-limitdescendantcount={}".format(MAX_DESCENDANTS_CUSTOM),
+            ],
+        ]
+
+    def skip_test_if_missing_module(self):
+        self.skip_if_no_wallet()
 
     # Build a transaction that spends parent_txid:vout
     # Return amount sent
@@ -28,11 +53,11 @@ class MempoolPackagesTest(BitcoinTestFramework):
         signedtx = node.signrawtransactionwithwallet(rawtx)
         txid = node.sendrawtransaction(signedtx['hex'])
         fulltx = node.getrawtransaction(txid, 1)
-        assert(len(fulltx['vout']) == num_outputs) # make sure we didn't generate a change output
+        assert len(fulltx['vout']) == num_outputs  # make sure we didn't generate a change output
         return (txid, send_value)
 
     def run_test(self):
-        ''' Mine some blocks and have them mature. '''
+        # Mine some blocks and have them mature.
         self.nodes[0].generate(101)
         utxo = self.nodes[0].listunspent(10)
         txid = utxo[0]['txid']
@@ -53,9 +78,9 @@ class MempoolPackagesTest(BitcoinTestFramework):
         assert_equal(len(mempool), MAX_ANCESTORS)
         descendant_count = 1
         descendant_fees = 0
-        descendant_size = 0
+        descendant_vsize = 0
 
-        ancestor_size = sum([mempool[tx]['size'] for tx in mempool])
+        ancestor_vsize = sum([mempool[tx]['vsize'] for tx in mempool])
         ancestor_count = MAX_ANCESTORS
         ancestor_fees = sum([mempool[tx]['fee'] for tx in mempool])
 
@@ -74,15 +99,15 @@ class MempoolPackagesTest(BitcoinTestFramework):
             assert_equal(mempool[x]['fees']['modified'], mempool[x]['modifiedfee'])
             assert_equal(mempool[x]['descendantfees'], descendant_fees * COIN)
             assert_equal(mempool[x]['fees']['descendant'], descendant_fees)
-            descendant_size += mempool[x]['size']
-            assert_equal(mempool[x]['descendantsize'], descendant_size)
+            descendant_vsize += mempool[x]['vsize']
+            assert_equal(mempool[x]['descendantsize'], descendant_vsize)
             descendant_count += 1
 
             # Check that ancestor calculations are correct
             assert_equal(mempool[x]['ancestorcount'], ancestor_count)
             assert_equal(mempool[x]['ancestorfees'], ancestor_fees * COIN)
-            assert_equal(mempool[x]['ancestorsize'], ancestor_size)
-            ancestor_size -= mempool[x]['size']
+            assert_equal(mempool[x]['ancestorsize'], ancestor_vsize)
+            ancestor_vsize -= mempool[x]['vsize']
             ancestor_fees -= mempool[x]['fee']
             ancestor_count -= 1
 
@@ -120,13 +145,13 @@ class MempoolPackagesTest(BitcoinTestFramework):
         assert_equal(len(v_ancestors), len(chain)-1)
         for x in v_ancestors.keys():
             assert_equal(mempool[x], v_ancestors[x])
-        assert(chain[-1] not in v_ancestors.keys())
+        assert chain[-1] not in v_ancestors.keys()
 
         v_descendants = self.nodes[0].getmempooldescendants(chain[0], True)
         assert_equal(len(v_descendants), len(chain)-1)
         for x in v_descendants.keys():
             assert_equal(mempool[x], v_descendants[x])
-        assert(chain[0] not in v_descendants.keys())
+        assert chain[0] not in v_descendants.keys()
 
         # Check that ancestor modified fees includes fee deltas from
         # prioritisetransaction
@@ -179,7 +204,14 @@ class MempoolPackagesTest(BitcoinTestFramework):
             assert_equal(mempool[x]['descendantfees'], descendant_fees * COIN + 2000)
             assert_equal(mempool[x]['fees']['descendant'], descendant_fees+satoshi_round(0.00002))
 
-        # TODO: check that node1's mempool is as expected
+        # Check that node1's mempool is as expected (-> custom ancestor limit)
+        mempool0 = self.nodes[0].getrawmempool(False)
+        mempool1 = self.nodes[1].getrawmempool(False)
+        assert_equal(len(mempool1), MAX_ANCESTORS_CUSTOM)
+        assert set(mempool1).issubset(set(mempool0))
+        for tx in chain[:MAX_ANCESTORS_CUSTOM]:
+            assert tx in mempool1
+        # TODO: more detailed check of node1's mempool (fees etc.)
 
         # TODO: test ancestor size limits
 
@@ -197,9 +229,11 @@ class MempoolPackagesTest(BitcoinTestFramework):
             transaction_package.append({'txid': txid, 'vout': i, 'amount': sent_value})
 
         # Sign and send up to MAX_DESCENDANT transactions chained off the parent tx
+        chain = [] # save sent txs for the purpose of checking node1's mempool later (see below)
         for i in range(MAX_DESCENDANTS - 1):
             utxo = transaction_package.pop(0)
             (txid, sent_value) = self.chain_transaction(self.nodes[0], utxo['txid'], utxo['vout'], utxo['amount'], fee, 10)
+            chain.append(txid)
             if utxo['txid'] is parent_transaction:
                 tx_children.append(txid)
             for j in range(10):
@@ -216,7 +250,21 @@ class MempoolPackagesTest(BitcoinTestFramework):
         utxo = transaction_package.pop(0)
         assert_raises_rpc_error(-26, "too-long-mempool-chain", self.chain_transaction, self.nodes[0], utxo['txid'], utxo['vout'], utxo['amount'], fee, 10)
 
-        # TODO: check that node1's mempool is as expected
+        # Check that node1's mempool is as expected, containing:
+        # - txs from previous ancestor test (-> custom ancestor limit)
+        # - parent tx for descendant test
+        # - txs chained off parent tx (-> custom descendant limit)
+        wait_until(lambda: len(self.nodes[1].getrawmempool(False)) ==
+                           MAX_ANCESTORS_CUSTOM + 1 + MAX_DESCENDANTS_CUSTOM, timeout=10)
+        mempool0 = self.nodes[0].getrawmempool(False)
+        mempool1 = self.nodes[1].getrawmempool(False)
+        assert set(mempool1).issubset(set(mempool0))
+        assert parent_transaction in mempool1
+        for tx in chain[:MAX_DESCENDANTS_CUSTOM]:
+            assert tx in mempool1
+        for tx in chain[MAX_DESCENDANTS_CUSTOM:]:
+            assert tx not in mempool1
+        # TODO: more detailed check of node1's mempool (fees etc.)
 
         # TODO: test descendant size limits
 
