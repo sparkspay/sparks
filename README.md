@@ -23,7 +23,7 @@ Pre-Built Binary
 ----------------
 
 For more information, as well as an immediately usable, binary version of
-the Dash Core software, see https://www.sparks.org/downloads/.
+the Sparks Core software, see https://www.sparks.org/downloads/.
 
 License
 -------

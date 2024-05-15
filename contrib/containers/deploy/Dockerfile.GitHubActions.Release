@@ -1,6 +1,6 @@
 FROM ubuntu:bionic
-LABEL maintainer="Dash Developers <dev@sparks.org>"
-LABEL description="Dockerised DashCore"
+LABEL maintainer="Sparks Developers <dev@sparkspay.io>"
+LABEL description="Dockerised SparksCore"
 
 ARG USER_ID
 ARG GROUP_ID
