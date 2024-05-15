@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <evo/specialtx.h>
+#include <evo/datatx.h>
 
 #include <clientversion.h>
 #include <hash.h>
