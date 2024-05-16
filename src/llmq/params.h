@@ -168,7 +168,7 @@ static constexpr std::array<LLMQParams, 15> available_llmqs = {
     },
 
     /**
-     * llmq_test (Dash Core 0.17) aka llmq_test_v17
+     * llmq_test (Sparks Core 0.17) aka llmq_test_v17
      * This quorum is only used for testing
      *
      */
@@ -461,7 +461,7 @@ static constexpr std::array<LLMQParams, 15> available_llmqs = {
      * This quorum is deployed on Testnet and requires
      * 25 participants
      *
-     * Used by Dash Platform
+     * Used by Sparks Platform
      */
     LLMQParams{
         .type = LLMQType::LLMQ_25_67,

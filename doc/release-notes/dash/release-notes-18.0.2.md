@@ -1,4 +1,4 @@
-Dash Core version 18.0.2
+Sparks Core version 18.0.2
 ========================
 
 Release is now available from:
@@ -20,14 +20,14 @@ How to Upgrade
 
 If you are running an older version, shut it down. Wait until it has completely
 shut down (which might take a few minutes for older versions), then run the
-installer (on Windows) or just copy over /Applications/Dash-Qt (on Mac) or
+installer (on Windows) or just copy over /Applications/Sparks-Qt (on Mac) or
 sparksd/sparks-qt (on Linux). If you upgrade after DIP0003 activation and you were
 using version < 0.13 you will have to reindex (start with -reindex-chainstate
 or -reindex) to make sure your wallet has all the new data synced. Upgrading
 from version 0.13 should not require any additional actions.
 
 When upgrading from a version prior to 18.0.1, the
-first startup of Dash Core will run a migration process which can take anywhere
+first startup of Sparks Core will run a migration process which can take anywhere
 from a few minutes to thirty minutes to finish. After the migration, a
 downgrade to an older version is only possible with a reindex
 (or reindex-chainstate).
@@ -79,7 +79,7 @@ As well as everyone that submitted issues and reviewed pull requests.
 Older releases
 ==============
 
-Dash was previously known as Darkcoin.
+Sparks was previously known as Darkcoin.
 
 Darkcoin tree 0.8.x was a fork of Litecoin tree 0.8, original name was XCoin
 which was first released on Jan/18/2014.
@@ -90,12 +90,12 @@ the 0.8.x tree and was first released on Mar/13/2014.
 Darkcoin tree 0.10.x used to be the closed source implementation of Darksend
 which was released open source on Sep/25/2014.
 
-Dash Core tree 0.11.x was a fork of Bitcoin Core tree 0.9,
-Darkcoin was rebranded to Dash.
+Sparks Core tree 0.11.x was a fork of Bitcoin Core tree 0.9,
+Darkcoin was rebranded to Sparks.
 
-Dash Core tree 0.12.0.x was a fork of Bitcoin Core tree 0.10.
+Sparks Core tree 0.12.0.x was a fork of Bitcoin Core tree 0.10.
 
-Dash Core tree 0.12.1.x was a fork of Bitcoin Core tree 0.12.
+Sparks Core tree 0.12.1.x was a fork of Bitcoin Core tree 0.12.
 
 These release are considered obsolete. Old release notes can be found here:
 

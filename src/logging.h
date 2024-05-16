@@ -70,11 +70,11 @@ namespace BCLog {
         SPORK       = ((uint64_t)1 << 42),
         NETCONN     = ((uint64_t)1 << 43),
 
-        DASH        = CHAINLOCKS | GOBJECT | INSTANTSEND | LLMQ | LLMQ_DKG
+        SPARKS        = CHAINLOCKS | GOBJECT | INSTANTSEND | LLMQ | LLMQ_DKG
                     | LLMQ_SIGS | MNPAYMENTS | MNSYNC | COINJOIN | SPORK | NETCONN,
 
         NET_NETCONN = NET | NETCONN, // use this to have something logged in NET and NETCONN as well
-        //End Dash
+        //End Sparks
 
         ALL         = ~(uint64_t)0,
     };

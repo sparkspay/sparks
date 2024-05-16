@@ -353,10 +353,10 @@ https://github.com/bitcoin/bitcoin/pull/16189).
 Also see the [backport.py script](
 https://github.com/bitcoin-core/bitcoin-maintainer-tools#backport).
 
-Bitcoin Backports are an incredibly valuable part of Dash's development. Backporting allows us to easily implement new
+Bitcoin Backports are an incredibly valuable part of Sparks's development. Backporting allows us to easily implement new
 features, improvements and fixes as bitcoin implements them.
 
-To see detailed statistics & progress see Google Sheet tracker: [Bitcoin backports for Dash](https://docs.google.com/spreadsheets/d/1DnKxat0S0H62CJOzXpKGPXTa8hgoVOjGYZzoClmGSB8/edit?usp=sharing).
+To see detailed statistics & progress see Google Sheet tracker: [Bitcoin backports for Sparks](https://docs.google.com/spreadsheets/d/1DnKxat0S0H62CJOzXpKGPXTa8hgoVOjGYZzoClmGSB8/edit?usp=sharing).
 You should use this sheet to find what PRs to backport and its commit.
 
 Updating the Spreadsheet

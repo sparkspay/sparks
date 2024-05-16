@@ -1,8 +1,8 @@
-# Fuzzing Dash Core using libFuzzer
+# Fuzzing Sparks Core using libFuzzer
 
 ## Quickstart guide
 
-To quickly get started fuzzing Dash Core using [libFuzzer](https://llvm.org/docs/LibFuzzer.html):
+To quickly get started fuzzing Sparks Core using [libFuzzer](https://llvm.org/docs/LibFuzzer.html):
 
 ```sh
 $ git clone https://github.com/sparkspay/sparks
@@ -83,7 +83,7 @@ INFO: seed corpus: files: 991 min: 1b max: 1858b total: 288291b rss: 150Mb
 
 If you find coverage increasing inputs when fuzzing you are highly encouraged to submit them for inclusion in the [`bitcoin-core/qa-assets`](https://github.com/bitcoin-core/qa-assets) repo.
 
-Every single pull request submitted against the Dash Core repo is automatically tested against all inputs in the [`bitcoin-core/qa-assets`](https://github.com/bitcoin-core/qa-assets) repo. Contributing new coverage increasing inputs is an easy way to help make Dash Core more robust.
+Every single pull request submitted against the Sparks Core repo is automatically tested against all inputs in the [`bitcoin-core/qa-assets`](https://github.com/bitcoin-core/qa-assets) repo. Contributing new coverage increasing inputs is an easy way to help make Sparks Core more robust.
 
 ## macOS hints for libFuzzer
 
@@ -93,7 +93,7 @@ example using `brew install llvm`.
 
 Should you run into problems with the address sanitizer, it is possible you
 may need to run `./configure` with `--disable-asm` to avoid errors
-with certain assembly code from Dash Core's code. See [developer notes on sanitizers](https://github.com/sparkspay/sparks/blob/develop/doc/developer-notes.md#sanitizers)
+with certain assembly code from Sparks Core's code. See [developer notes on sanitizers](https://github.com/sparkspay/sparks/blob/develop/doc/developer-notes.md#sanitizers)
 for more information.
 
 You may also need to take care of giving the correct path for `clang` and
@@ -108,11 +108,11 @@ Full configure that was tested on macOS Catalina with `brew` installed `llvm`:
 
 Read the [libFuzzer documentation](https://llvm.org/docs/LibFuzzer.html) for more information. This [libFuzzer tutorial](https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md) might also be of interest.
 
-# Fuzzing Dash Core using american fuzzy lop (`afl-fuzz`)
+# Fuzzing Sparks Core using american fuzzy lop (`afl-fuzz`)
 
 ## Quickstart guide
 
-To quickly get started fuzzing Dash Core using [`afl-fuzz`](https://github.com/google/afl):
+To quickly get started fuzzing Sparks Core using [`afl-fuzz`](https://github.com/google/afl):
 
 ```sh
 $ git clone https://github.com/sparkspay/sparks
@@ -134,11 +134,11 @@ $ FUZZ=bech32 afl/afl-fuzz -i inputs/ -o outputs/ -- src/test/fuzz/fuzz
 
 Read the [`afl-fuzz` documentation](https://github.com/google/afl) for more information.
 
-# Fuzzing Dash Core using Honggfuzz
+# Fuzzing Sparks Core using Honggfuzz
 
 ## Quickstart guide
 
-To quickly get started fuzzing Dash Core using [Honggfuzz](https://github.com/google/honggfuzz):
+To quickly get started fuzzing Sparks Core using [Honggfuzz](https://github.com/google/honggfuzz):
 
 ```sh
 $ git clone https://github.com/sparkspay/sparks

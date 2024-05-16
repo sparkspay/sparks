@@ -43,7 +43,7 @@ script: |
   cd ..
 
   UNSIGNED_TARBALL=sparkscore-osx-unsigned.tar.gz
-  UNSIGNED_APP=dist/Dash-Qt.app
+  UNSIGNED_APP=dist/Sparks-Qt.app
   SIGNED=sparkscore-osx-signed.dmg
 
   tar -xf ${UNSIGNED_TARBALL}

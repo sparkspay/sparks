@@ -24,7 +24,7 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     "wallet/coincontrol -> wallet/wallet -> wallet/coincontrol"
     "txmempool -> validation -> validationinterface -> txmempool"
     "wallet/scriptpubkeyman -> wallet/wallet -> wallet/scriptpubkeyman"
-    # Dash
+    # Sparks
     "coinjoin/server -> net_processing -> coinjoin/server"
     "evo/cbtx -> evo/simplifiedmns -> evo/cbtx"
     "evo/deterministicmns -> evo/simplifiedmns -> evo/deterministicmns"

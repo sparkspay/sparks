@@ -39,31 +39,31 @@ Specifying `verbose` will list the full filenames of files of each category.
 
 copyright\_header.py update \<base\_directory\> [verbose]
 ---------------------------------------------------------
-Updates all the copyright headers of `The Dash Core developers` which were
+Updates all the copyright headers of `The Sparks Core developers` which were
 changed in a year more recent than is listed. For example:
 ```
-// Copyright (c) <firstYear>-<lastYear> The Dash Core developers
+// Copyright (c) <firstYear>-<lastYear> The Sparks Core developers
 ```
 will be updated to:
 ```
-// Copyright (c) <firstYear>-<lastModifiedYear> The Dash Core developers
+// Copyright (c) <firstYear>-<lastModifiedYear> The Sparks Core developers
 ```
 where `<lastModifiedYear>` is obtained from the `git log` history.
 
 This subcommand also handles copyright headers that have only a single year. In
 those cases:
 ```
-// Copyright (c) <year> The Dash Core developers
+// Copyright (c) <year> The Sparks Core developers
 ```
 will be updated to:
 ```
-// Copyright (c) <year>-<lastModifiedYear> The Dash Core developers
+// Copyright (c) <year>-<lastModifiedYear> The Sparks Core developers
 ```
 where the update is appropriate.
 
 copyright\_header.py insert \<file\>
 ------------------------------------
-Inserts a copyright header for `The Dash Core developers` at the top of the
+Inserts a copyright header for `The Sparks Core developers` at the top of the
 file in either Python or C++ style as determined by the file extension. If the
 file is a Python file and it has  `#!` starting the first line, the header is
 inserted in the line below it.
@@ -73,7 +73,7 @@ The copyright dates will be set to be `<year_introduced>-<current_year>` where
 `<year_introduced>` is equal to `<current_year>`, it will be set as a single
 year rather than two hyphenated years.
 
-If the file already has a copyright for `The Dash Core developers`, the
+If the file already has a copyright for `The Sparks Core developers`, the
 script will exit.
 
 gen-manpages.sh
@@ -118,7 +118,7 @@ couldn't mess with the sources.
 
 Setup
 ---------
-Configuring the github-merge tool for the Dash Core repository is done in the following way:
+Configuring the github-merge tool for the Sparks Core repository is done in the following way:
 
     git config githubmerge.repository sparkspay/sparks
     git config githubmerge.testcmd "make -j4 check" (adapt to whatever you want to use for testing)

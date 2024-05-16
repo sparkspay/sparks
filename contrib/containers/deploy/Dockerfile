@@ -1,6 +1,6 @@
 FROM phusion/baseimage:bionic-1.0.0
-LABEL maintainer="Dash Developers <dev@sparkspay.io>"
-LABEL description="Dockerised DashCore, built from Travis"
+LABEL maintainer="Sparks Developers <dev@sparkspay.io>"
+LABEL description="Dockerised SparksCore, built from Travis"
 
 ARG USER_ID
 ARG GROUP_ID

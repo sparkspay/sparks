@@ -49,7 +49,7 @@ rpcport=4000
 
 ## Configuration File Path
 
-The configuration file is not automatically created; you can create it using your favorite text editor. By default, the configuration file name is `sparks.conf` and it is located in the Dash data directory, but both the sparks data directory and the configuration file path may be changed using the `-datadir` and `-conf` command-line options.
+The configuration file is not automatically created; you can create it using your favorite text editor. By default, the configuration file name is `sparks.conf` and it is located in the Sparks data directory, but both the sparks data directory and the configuration file path may be changed using the `-datadir` and `-conf` command-line options.
 
 The `includeconf=<file>` option in the `sparks.conf` file can be used to include additional configuration files.
 
@@ -57,8 +57,8 @@ The `includeconf=<file>` option in the `sparks.conf` file can be used to include
 
 Operating System | Data Directory | Example Path
 -- | -- | --
-Windows | `%APPDATA%\DashCore\` | `C:\Users\username\AppData\Roaming\DashCore\sparks.conf`
+Windows | `%APPDATA%\SparksCore\` | `C:\Users\username\AppData\Roaming\SparksCore\sparks.conf`
 Linux | `$HOME/.sparkscore/` | `/home/username/.sparkscore/sparks.conf`
-macOS | `$HOME/Library/Application Support/DashCore/` | `/Users/username/Library/Application Support/DashCore/sparks.conf`
+macOS | `$HOME/Library/Application Support/SparksCore/` | `/Users/username/Library/Application Support/SparksCore/sparks.conf`
 
 You can find an example sparks.conf file in [share/examples/sparks.conf](../share/examples/sparks.conf).

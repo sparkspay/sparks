@@ -1,4 +1,4 @@
-Dash Core version v18.2.2
+Sparks Core version v18.2.2
 =========================
 
 Release is now available from:
@@ -75,7 +75,7 @@ None
 ### Changes in existing RPCs introduced through bitcoin backports:
 None
 
-### Dash-specific changes in existing RPCs:
+### Sparks-specific changes in existing RPCs:
 None
 
 Please check `help <command>` for more detailed information on specific RPCs.
