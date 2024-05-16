@@ -408,7 +408,7 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
             questionString.append("<br />");
             questionString.append("<span style='" + GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_ERROR) + "'>");
             questionString.append(tr("Warning: Using %1 with %2 or more inputs can harm your privacy and is not recommended").arg(strCoinJoinName).arg(10));
-            questionString.append("<a style='" + GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_COMMAND) + "' href=\"https://docs.sparks.org/en/stable/wallets/sparkscore/coinjoin-instantsend.html#inputs\">");
+            questionString.append("<a style='" + GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_COMMAND) + "' href=\"https://docs.sparkspay.io/en/stable/wallets/sparkscore/coinjoin-instantsend.html#inputs\">");
             questionString.append(tr("Click to learn more"));
             questionString.append("</a>");
             questionString.append("</span> ");

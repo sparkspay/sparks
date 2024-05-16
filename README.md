@@ -23,7 +23,7 @@ Pre-Built Binary
 ----------------
 
 For more information, as well as an immediately usable, binary version of
-the Sparks Core software, see https://www.sparks.org/downloads/.
+the Sparks Core software, see https://www.sparkspay.io/downloads/.
 
 License
 -------

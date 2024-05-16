@@ -3,7 +3,7 @@ Sparks Core version 0.16.1.0
 
 Release is now available from:
 
-  <https://www.sparks.org/downloads/#wallets>
+  <https://www.sparkspay.io/downloads/#wallets>
 
 This is a new minor version release, bringing various bugfixes and improvements.
 

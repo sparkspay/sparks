@@ -43,7 +43,7 @@ RUN mkdir built-target && \
 esac
 
 FROM ubuntu:focal
-LABEL maintainer="Dash Developers <dev@sparks.org>"
+LABEL maintainer="Dash Developers <dev@sparkspay.io>"
 LABEL description="Dockerised DashCore"
 
 ARG USER_ID

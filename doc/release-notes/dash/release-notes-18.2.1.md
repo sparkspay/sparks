@@ -3,7 +3,7 @@ Dash Core version v18.2.1
 
 Release is now available from:
 
-  <https://www.sparks.org/downloads/#wallets>
+  <https://www.sparkspay.io/downloads/#wallets>
 
 This is a new hotfix version release, bringing various bugfixes.
 
