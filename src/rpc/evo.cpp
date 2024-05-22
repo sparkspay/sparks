@@ -1335,7 +1335,7 @@ UniValue datatx_get(const JSONRPCRequest& request)
         if (GetTxPayload(*tx, dataTx)) {
             UniValue obj;
             dataTx.ToJson(obj);
-            result.pushKV("dataTx", obj);
+            result.pushKV("datatx", obj);
         }
     } else {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Not a valid datatx transaction.");
