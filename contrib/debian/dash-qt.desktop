@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Name=Dash Core
+Comment=Dash P2P Cryptocurrency
+Comment[de]=Verbinde mit dem Dash peer-to-peer Netzwerk
+Comment[fr]=Dash, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=Dash, eşten eşe kriptografik sanal para birimi
+Exec=sparks-qt %u
+Terminal=false
+Type=Application
+Icon=sparks128
+MimeType=x-scheme-handler/sparks;
+Categories=Office;Finance;P2P;Network;Qt;
+StartupWMClass=Dash-qt

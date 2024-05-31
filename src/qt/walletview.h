@@ -6,11 +6,11 @@
 #define BITCOIN_QT_WALLETVIEW_H
 
 #include <amount.h>
+#include <qt/governancelist.h>
 #include <qt/masternodelist.h>
 
 #include <QStackedWidget>
 
-class BitcoinGUI;
 class ClientModel;
 class OverviewPage;
 class ReceiveCoinsDialog;
@@ -40,7 +40,6 @@ public:
     explicit WalletView(QWidget* parent);
     ~WalletView();
 
-    void setBitcoinGUI(BitcoinGUI *gui);
     /** Set the client model.
         The client model represents the part of the core that communicates with the P2P network, and is wallet-agnostic.
     */
@@ -68,13 +67,16 @@ private:
     AddressBookPage *usedSendingAddressesPage;
     AddressBookPage *usedReceivingAddressesPage;
     MasternodeList *masternodeListPage;
+    GovernanceList* governanceListPage;
 
     TransactionView *transactionView;
 
-    QProgressDialog *progressDialog;
+    QProgressDialog* progressDialog{nullptr};
     QLabel *transactionSum;
 
 public Q_SLOTS:
+    /** Switch to governance page */
+    void gotoGovernancePage();
     /** Switch to overview (home) page */
     void gotoOverviewPage();
     /** Switch to history (transactions) page */
@@ -127,8 +129,8 @@ public Q_SLOTS:
     /** Update selected SPARKS amount from transactionview */
     void trxAmount(QString amount);
 Q_SIGNALS:
-    /** Signal that we want to show the main window */
-    void showNormalIfMinimized();
+    void transactionClicked();
+    void coinsSent();
     /**  Fired when a message should be reported to the user */
     void message(const QString &title, const QString &message, unsigned int style);
     /** Encryption status of wallet changed */

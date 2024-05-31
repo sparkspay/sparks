@@ -23,7 +23,6 @@ class QItemSelectionModel;
 class QLineEdit;
 class QMenu;
 class QModelIndex;
-class QSignalMapper;
 class QTableView;
 QT_END_NAMESPACE
 
@@ -35,7 +34,7 @@ class TransactionView : public QWidget
     Q_OBJECT
 
 public:
-    explicit TransactionView(QWidget* parent = 0);
+    explicit TransactionView(QWidget* parent = nullptr);
 
     void setModel(WalletModel *model);
 
@@ -71,12 +70,12 @@ private:
     QLineEdit *amountWidget;
 
     QMenu *contextMenu;
-    QSignalMapper *mapperThirdPartyTxUrls;
 
     QFrame *dateRangeWidget;
     QDateTimeEdit *dateFrom;
     QDateTimeEdit *dateTo;
     QAction *abandonAction;
+    QAction *resendAction;
 
     QWidget *createDateRangeWidget();
     void updateCalendarWidgets();
@@ -104,6 +103,7 @@ private Q_SLOTS:
     void updateWatchOnlyColumn(bool fHaveWatchOnly);
     void updateCoinJoinVisibility();
     void abandonTx();
+    void resendTx();
 
 Q_SIGNALS:
     void doubleClicked(const QModelIndex&);

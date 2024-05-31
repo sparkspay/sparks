@@ -6,11 +6,14 @@
 #ifndef BITCOIN_NET_PROCESSING_H
 #define BITCOIN_NET_PROCESSING_H
 
-#include <net.h>
-#include <validation.h>
-#include <validationinterface.h>
 #include <consensus/params.h>
+#include <net.h>
 #include <sync.h>
+#include <validationinterface.h>
+
+class CTxMemPool;
+class ChainstateManager;
+struct LLMQContext;
 
 extern CCriticalSection cs_main;
 
@@ -20,18 +23,27 @@ static const unsigned int DEFAULT_MAX_ORPHAN_TRANSACTIONS_SIZE = 10; // this all
 static const unsigned int DEFAULT_BLOCK_RECONSTRUCTION_EXTRA_TXN = 100;
 /** Default for BIP61 (sending reject messages) */
 static constexpr bool DEFAULT_ENABLE_BIP61 = true;
+static const bool DEFAULT_PEERBLOOMFILTERS = true;
+static const bool DEFAULT_PEERBLOCKFILTERS = false;
 
 class PeerLogicValidation final : public CValidationInterface, public NetEventsInterface {
 private:
     CConnman* const connman;
+    BanMan* const m_banman;
+    ChainstateManager& m_chainman;
+    CTxMemPool& m_mempool;
+    std::unique_ptr<LLMQContext>& m_llmq_ctx;
 
+    bool MaybeDiscourageAndDisconnect(CNode* pnode, bool enable_bip61) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 public:
-    explicit PeerLogicValidation(CConnman* connmanIn, CScheduler &scheduler, bool enable_bip61);
+    PeerLogicValidation(CConnman* connmanIn, BanMan* banman, CScheduler &scheduler, ChainstateManager& chainman, CTxMemPool& pool,
+                        std::unique_ptr<LLMQContext>& llmq_ctx, bool enable_bip61);
 
     /**
      * Overridden from CValidationInterface.
      */
     void BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexConnected, const std::vector<CTransactionRef>& vtxConflicted) override;
+    void BlockDisconnected(const std::shared_ptr<const CBlock> &block, const CBlockIndex* pindex) override;
     /**
      * Overridden from CValidationInterface.
      */
@@ -65,14 +77,16 @@ public:
     bool SendMessages(CNode* pto) override EXCLUSIVE_LOCKS_REQUIRED(pto->cs_sendProcessing);
 
     /** Consider evicting an outbound peer based on the amount of time they've been behind our tip */
-    void ConsiderEviction(CNode *pto, int64_t time_in_seconds);
+    void ConsiderEviction(CNode *pto, int64_t time_in_seconds) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
     /** Evict extra outbound peers. If we think our tip may be stale, connect to an extra outbound */
     void CheckForStaleTipAndEvictPeers(const Consensus::Params &consensusParams);
     /** If we have extra outbound peers, try to disconnect the one with the oldest block announcement */
     void EvictExtraOutboundPeers(int64_t time_in_seconds) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+    /** Retrieve unbroadcast transactions from the mempool and reattempt sending to peers */
+    void ReattemptInitialBroadcast(CScheduler& scheduler) const;
 
 private:
-    int64_t m_stale_tip_check_time; //! Next time to check for stale tip
+    int64_t m_stale_tip_check_time; //!< Next time to check for stale tip
 
     /** Enable BIP61 (sending reject messages) */
     const bool m_enable_bip61;
@@ -87,15 +101,18 @@ struct CNodeStateStats {
 
 /** Get statistics from node state */
 bool GetNodeStateStats(NodeId nodeid, CNodeStateStats &stats);
-bool IsBanned(NodeId nodeid);
+bool IsBanned(NodeId nodeid) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 // Upstream moved this into net_processing.cpp (13417), however since we use Misbehaving in a number of sparks specific
 // files such as mnauth.cpp and governance.cpp it makes sense to keep it in the header
 /** Increase a node's misbehavior score. */
 void Misbehaving(NodeId nodeid, int howmuch, const std::string& message="") EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
-void EraseObjectRequest(NodeId nodeId, const CInv& inv);
-void RequestObject(NodeId nodeId, const CInv& inv, std::chrono::microseconds current_time, bool fForce=false);
-size_t GetRequestedObjectCount(NodeId nodeId);
+void EraseObjectRequest(NodeId nodeId, const CInv& inv) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+void RequestObject(NodeId nodeId, const CInv& inv, std::chrono::microseconds current_time, bool fForce=false) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+size_t GetRequestedObjectCount(NodeId nodeId) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+
+/** Relay transaction to every node */
+void RelayTransaction(const uint256&, const CConnman& connman);
 
 #endif // BITCOIN_NET_PROCESSING_H

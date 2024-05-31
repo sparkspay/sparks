@@ -2,7 +2,8 @@ UNIX BUILD NOTES
 ====================
 Some notes on how to build Sparks Core in Unix.
 
-(for OpenBSD specific instructions, see [build-openbsd.md](build-openbsd.md))
+(For BSD specific instructions, see [build-openbsd.md](build-openbsd.md) and/or
+[build-netbsd.md](build-netbsd.md))
 
 Note
 ---------------------
@@ -13,7 +14,7 @@ Run the following commands to install required packages:
 
 ##### Debian/Ubuntu:
 ```bash
-$ sudo apt-get install curl build-essential libtool autotools-dev automake pkg-config python3 bsdmainutils
+$ sudo apt-get install curl build-essential libtool autotools-dev automake pkg-config python3 bsdmainutils bison
 ```
 
 This will build sparks-qt as well if the dependencies are met.
@@ -199,12 +200,10 @@ Hardening Flags:
 
 
 Hardening enables the following features:
-
-* Position Independent Executable
-    Build position independent code to take advantage of Address Space Layout Randomization
+* _Position Independent Executable_: Build position independent code to take advantage of Address Space Layout Randomization
     offered by some kernels. Attackers who can cause execution of code at an arbitrary memory
     location are thwarted if they don't know where anything useful is located.
-    The stack and heap are randomly located by default but this allows the code section to be
+    The stack and heap are randomly located by default, but this allows the code section to be
     randomly located as well.
 
     On an AMD64 processor where a library was not compiled with -fPIC, this will cause an error
@@ -229,7 +228,7 @@ Hardening enables the following features:
     To verify that the stack is non-executable after compiling use:
     `scanelf -e ./sparksd`
 
-    the output should contain:
+    The output should contain:
 	STK/REL/PTL
 	RW- R-- RW-
 
@@ -244,8 +243,7 @@ disable-wallet mode with:
 
 In this case there is no dependency on Berkeley DB 4.8.
 
-Mining is also possible in disable-wallet mode, but only using the `getblocktemplate` RPC
-call not `getwork`.
+Mining is also possible in disable-wallet mode using the `getblocktemplate` RPC call.
 
 Additional Configure Flags
 --------------------------

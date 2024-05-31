@@ -160,7 +160,7 @@ Build system
 ------------
 Multiple packaged in `depends` were updated. Current versions are:
 - biplist 1.0.3
-- bls-dash 1.0.1
+- bls-sparks 1.0.1
 - boost 1.70.0
 - cmake 3.14.7
 - expat 2.2.5
