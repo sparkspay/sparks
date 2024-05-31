@@ -11,7 +11,7 @@ MacOSX Cross-compilation
 Cross-compiling to MacOSX requires a few additional packages to be installed:
 
 ```bash
-$ sudo apt-get install python3-setuptools libcap-dev zlib1g-dev libbz2-dev
+$ sudo apt-get install python3-setuptools libcap-dev zlib1g-dev libbz2-dev cmake
 ```
 
 Additionally, the Mac OSX SDK must be downloaded and extracted manually:
@@ -19,20 +19,20 @@ Additionally, the Mac OSX SDK must be downloaded and extracted manually:
 ```bash
 $ mkdir -p depends/sdk-sources
 $ mkdir -p depends/SDKs
-$ curl https://bitcoincore.org/depends-sources/sdks/MacOSX10.11.sdk.tar.gz -o depends/sdk-sources/MacOSX10.11.sdk.tar.gz
-$ tar -C depends/SDKs -xf depends/sdk-sources/MacOSX10.11.sdk.tar.gz
+$ curl https://bitcoincore.org/depends-sources/sdks/Xcode-12.1-12A7403-extracted-SDK-with-libcxx-headers.tar.gz -o depends/sdk-sources/Xcode-12.1-12A7403-extracted-SDK-with-libcxx-headers.tar.gz
+$ tar -C depends/SDKs -xf depends/sdk-sources/Xcode-12.1-12A7403-extracted-SDK-with-libcxx-headers.tar.gz
 ```
 
 When building the dependencies, as described in [build-generic](build-generic.md), use
 
 ```bash
-$ make HOST=x86_64-apple-darwin14 -j4
+$ make HOST=x86_64-apple-darwin19 -j4
 ```
 
 When building Sparks Core, use
 
 ```bash
-$ ./configure --prefix=`pwd`/depends/x86_64-apple-darwin14
+$ ./configure --prefix=`pwd`/depends/x86_64-apple-darwin19
 ```
 
 Windows 64bit Cross-compilation

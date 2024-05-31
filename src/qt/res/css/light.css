@@ -804,6 +804,14 @@ EditAddressDialog
 /***** No light.css specific coloring here yet *****/
 
 /******************************************************
+GovernanceList
+******************************************************/
+
+GovernanceList QTableView {
+    color: #555;
+}
+
+/******************************************************
 HelpMessageDialog
 ******************************************************/
 
@@ -882,6 +890,10 @@ QWidget#RPCConsole { /* RPC Console Dialog Box */
 
 RPCConsole QTableView {
     color: #555;
+}
+
+RPCConsole QWidget#detailWidget {
+    background-color: #f2f2f4;
 }
 
 #rpcAutoCompleter {

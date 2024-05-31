@@ -38,7 +38,7 @@ public:
         MINIMUM_COLUMN_WIDTH = 130
     };
 
-    explicit ReceiveCoinsDialog(QWidget* parent = 0);
+    explicit ReceiveCoinsDialog(QWidget* parent = nullptr);
     ~ReceiveCoinsDialog();
 
     void setModel(WalletModel *model);
@@ -47,9 +47,6 @@ public Q_SLOTS:
     void clear();
     void reject() override;
     void accept() override;
-
-protected:
-    virtual void keyPressEvent(QKeyEvent *event) override;
 
 private:
     Ui::ReceiveCoinsDialog *ui;
@@ -70,6 +67,7 @@ private Q_SLOTS:
     void updateDisplayUnit();
     void showMenu(const QPoint &point);
     void copyURI();
+    void copyAddress();
     void copyLabel();
     void copyMessage();
     void copyAmount();

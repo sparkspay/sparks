@@ -16,9 +16,10 @@ stages:
 
 builder-image:
   stage: builder-image
-  image: docker:19.03.5
+  image: docker:20.10.20
   services:
-    - docker:19.03.5-dind
+    - name: docker:20.10.20-dind
+      command: ["--tls=false"]
   variables:
     DOCKER_HOST: "tcp://docker:2375"
     DOCKER_DRIVER: overlay2
@@ -26,10 +27,10 @@ builder-image:
   before_script:
     - echo $CI_JOB_TOKEN | docker login -u gitlab-ci-token --password-stdin $CI_REGISTRY
   script:
-    - cd ci
+    - cd contrib/containers/ci
     - docker pull $CI_REGISTRY_IMAGE:builder-$CI_COMMIT_REF_SLUG || true
     - docker pull $CI_REGISTRY_IMAGE:builder-develop || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE:builder-$CI_COMMIT_REF_SLUG --cache-from $CI_REGISTRY_IMAGE:builder-develop -t $CI_REGISTRY_IMAGE:builder-$CI_COMMIT_REF_SLUG -f Dockerfile.builder .
+    - docker build --cache-from $CI_REGISTRY_IMAGE:builder-$CI_COMMIT_REF_SLUG --cache-from $CI_REGISTRY_IMAGE:builder-develop -t $CI_REGISTRY_IMAGE:builder-$CI_COMMIT_REF_SLUG -f Dockerfile .
     - docker push $CI_REGISTRY_IMAGE:builder-$CI_COMMIT_REF_SLUG
 
 .build-depends-template:
@@ -37,41 +38,50 @@ builder-image:
   image: $CI_REGISTRY_IMAGE:builder-$CI_COMMIT_REF_SLUG
   variables:
     SDK_URL: https://bitcoincore.org/depends-sources/sdks
-    OSX_SDK: "10.11"
+    XCODE_VERSION: "12.1"
+    XCODE_BUILD_ID: 12A7403
     MAKEJOBS: -j4
   before_script:
     - echo HOST=$HOST
     - |
-      if [ "$HOST" = "x86_64-apple-darwin14" ]; then
-        echo "Downloading MacOS SDK"
+      if [ "$HOST" = "x86_64-apple-darwin19" ]; then
         mkdir -p depends/SDKs
         mkdir -p depends/sdk-sources
-        if [ ! -f depends/sdk-sources/MacOSX${OSX_SDK}.sdk.tar.gz ]; then
-          curl --location --fail $SDK_URL/MacOSX${OSX_SDK}.sdk.tar.gz -o depends/sdk-sources/MacOSX${OSX_SDK}.sdk.tar.gz
+        OSX_SDK_BASENAME="Xcode-${XCODE_VERSION}-${XCODE_BUILD_ID}-extracted-SDK-with-libcxx-headers.tar.gz"
+        OSX_SDK_PATH="depends/sdk-sources/${OSX_SDK_BASENAME}"
+        if [ ! -f "$OSX_SDK_PATH" ]; then
+          echo "Downloading MacOS SDK"
+          curl --location --fail "${SDK_URL}/${OSX_SDK_BASENAME}" -o "$OSX_SDK_PATH"
         fi
-        tar -C depends/SDKs -xf depends/sdk-sources/MacOSX${OSX_SDK}.sdk.tar.gz
+        if [ -f "$OSX_SDK_PATH" ]; then
+          echo "Extracting MacOS SDK"
+          tar -C depends/SDKs -xf "$OSX_SDK_PATH"
+        fi
       fi
   script:
     - make $MAKEJOBS -C depends HOST=$HOST $DEP_OPTS
   cache:
     # Let all branches share the same cache, which is ok because the depends subsystem is able to handle this properly (it works with hashes of all scripts)
-    key: ${CI_JOB_NAME}
+    key:
+      files:
+        - contrib/containers/ci/Dockerfile
+      prefix: ${CI_JOB_NAME}
     paths:
-      - $CI_PROJECT_DIR/depends/built
-      - $CI_PROJECT_DIR/depends/sdk-sources
+      - depends/built
+      - depends/sdk-sources
   artifacts:
     name: depends
     when: on_success
     paths:
-      - $CI_PROJECT_DIR/depends/$HOST
-      - $CI_PROJECT_DIR/depends/SDKs
+      - depends/$HOST
+      - depends/SDKs
 
 .base-template:
   image: $CI_REGISTRY_IMAGE:builder-$CI_COMMIT_REF_SLUG
   before_script:
     - export CACHE_DIR=$CI_PROJECT_DIR/cache
     - echo BUILD_TARGET=$BUILD_TARGET
-    - source ./ci/matrix.sh
+    - source ./ci/sparks/matrix.sh
 
     # Setup some environment variables
     - |
@@ -100,18 +110,30 @@ builder-image:
   stage: build
   extends: .base-template
   script:
-    - ./ci/build_src.sh
-    - ./ci/test_unittests.sh # Run unit tests in build stage to avoid creating too many parallel jobs
+    - ./ci/sparks/build_src.sh
+    - ./ci/sparks/test_unittests.sh # Run unit tests in build stage to avoid creating too many parallel jobs
   cache:
     # Let all branches share the same cache, which is ok because ccache is able to handle it
-    key: ${CI_JOB_NAME}
+    key:
+      files:
+        - contrib/containers/ci/Dockerfile
+      prefix: ${CI_JOB_NAME}
     paths:
-      - $CI_PROJECT_DIR/cache/ccache
+      - cache/ccache
   artifacts:
     name: binaries
     when: always
     paths:
-      - $CI_PROJECT_DIR/build-ci
+      - build-ci
+    # Exclude some less important binaries to reduce the size of the artifacts
+    exclude:
+      - build-ci/sparkscore-$BUILD_TARGET/src/bench/bench_sparks
+      - build-ci/sparkscore-$BUILD_TARGET/src/bench/bench_sparks.exe
+      - build-ci/sparkscore-$BUILD_TARGET/src/qt/test/test_sparks-qt
+      - build-ci/sparkscore-$BUILD_TARGET/src/qt/test/test_sparks-qt.exe
+      - build-ci/sparkscore-$BUILD_TARGET/src/test/test_sparks
+      - build-ci/sparkscore-$BUILD_TARGET/src/test/test_sparks.exe
+      - build-ci/sparkscore-$BUILD_TARGET/src/test/fuzz/*
     expire_in: 3 days
 
 .test-template:
@@ -121,14 +143,14 @@ builder-image:
     INTEGRATION_TESTS_ARGS: "--extended --exclude feature_pruning,feature_dbcrash"
   script:
     - echo "INTEGRATION_TESTS_ARGS=${INTEGRATION_TESTS_ARGS}"
-    - ./ci/test_integrationtests.sh $INTEGRATION_TESTS_ARGS
+    - ./ci/sparks/test_integrationtests.sh $INTEGRATION_TESTS_ARGS
   after_script:
     - mkdir -p $CI_PROJECT_DIR/testlogs
   artifacts:
     name: testlogs
     when: always
     paths:
-      - $CI_PROJECT_DIR/testlogs
+      - testlogs
     expire_in: 3 days
 
 .skip-in-fast-mode-template:
@@ -144,13 +166,6 @@ arm-linux-gnueabihf:
   variables:
     HOST: arm-linux-gnueabihf
 
-i686-w64-mingw32:
-  extends:
-    - .build-depends-template
-    - .skip-in-fast-mode-template
-  variables:
-    HOST: i686-w64-mingw32
-
 x86_64-w64-mingw32:
   extends:
     - .build-depends-template
@@ -165,34 +180,26 @@ i686-pc-linux-gnu:
   variables:
     HOST: i686-pc-linux-gnu
 
-x86_64-unknown-linux-gnu-debug:
+x86_64-pc-linux-gnu-debug:
   extends: .build-depends-template
   variables:
-    HOST: x86_64-unknown-linux-gnu
+    HOST: x86_64-pc-linux-gnu
     DEP_OPTS: "DEBUG=1"
 
-x86_64-unknown-linux-gnu-nowallet:
+x86_64-pc-linux-gnu-nowallet:
   extends:
     - .build-depends-template
     - .skip-in-fast-mode-template
   variables:
-    HOST: x86_64-unknown-linux-gnu
+    HOST: x86_64-pc-linux-gnu
     DEP_OPTS: "NO_WALLET=1"
 
-x86_64-unknown-linux-gnu-release:
+x86_64-apple-darwin19:
   extends:
     - .build-depends-template
     - .skip-in-fast-mode-template
   variables:
-    HOST: x86_64-unknown-linux-gnu
-    DEP_OPTS: "NO_UPNP=1"
-
-x86_64-apple-darwin14:
-  extends:
-    - .build-depends-template
-    - .skip-in-fast-mode-template
-  variables:
-    HOST: x86_64-apple-darwin14
+    HOST: x86_64-apple-darwin19
 
 ###
 
@@ -202,15 +209,6 @@ arm-linux-build:
     - arm-linux-gnueabihf
   variables:
     BUILD_TARGET: arm-linux
-
-win32-build:
-  extends:
-    - .build-template
-    - .skip-in-fast-mode-template
-  needs:
-    - i686-w64-mingw32
-  variables:
-    BUILD_TARGET: win32
 
 win64-build:
   extends:
@@ -230,37 +228,60 @@ linux32-build:
   variables:
     BUILD_TARGET: linux32
 
+linux32_ubsan-build:
+  extends:
+    - .build-template
+    - .skip-in-fast-mode-template
+  needs:
+    - i686-pc-linux-gnu
+  variables:
+    BUILD_TARGET: linux32_ubsan
+
 linux64-build:
   extends: .build-template
   needs:
-    - x86_64-unknown-linux-gnu-debug
+    - x86_64-pc-linux-gnu-debug
   variables:
     BUILD_TARGET: linux64
+
+linux64_cxx20-build:
+  extends: .build-template
+  needs:
+    - x86_64-pc-linux-gnu-debug
+  variables:
+    BUILD_TARGET: linux64_cxx20
+
+linux64_fuzz-build:
+  extends: .build-template
+  needs:
+    - x86_64-pc-linux-gnu-debug
+  variables:
+    BUILD_TARGET: linux64_fuzz
+
+linux64_tsan-build:
+  extends:
+    - .build-template
+    - .skip-in-fast-mode-template
+  needs:
+    - x86_64-pc-linux-gnu-debug
+  variables:
+    BUILD_TARGET: linux64_tsan
 
 linux64_nowallet-build:
   extends:
     - .build-template
     - .skip-in-fast-mode-template
   needs:
-    - x86_64-unknown-linux-gnu-nowallet
+    - x86_64-pc-linux-gnu-nowallet
   variables:
     BUILD_TARGET: linux64_nowallet
-
-linux64_release-build:
-  extends:
-    - .build-template
-    - .skip-in-fast-mode-template
-  needs:
-    - x86_64-unknown-linux-gnu-release
-  variables:
-    BUILD_TARGET: linux64_release
 
 mac-build:
   extends:
     - .build-template
     - .skip-in-fast-mode-template
   needs:
-    - x86_64-apple-darwin14
+    - x86_64-apple-darwin19
   variables:
     BUILD_TARGET: mac
 
@@ -275,9 +296,27 @@ linux32-test:
   variables:
     BUILD_TARGET: linux32
 
+linux32_ubsan-test:
+  extends:
+    - .test-template
+    - .skip-in-fast-mode-template
+  needs:
+    - linux32_ubsan-build
+  variables:
+    BUILD_TARGET: linux32_ubsan
+
 linux64-test:
   extends: .test-template
   needs:
     - linux64-build
   variables:
     BUILD_TARGET: linux64
+
+linux64_tsan-test:
+  extends:
+    - .test-template
+    - .skip-in-fast-mode-template
+  needs:
+    - linux64_tsan-build
+  variables:
+    BUILD_TARGET: linux64_tsan

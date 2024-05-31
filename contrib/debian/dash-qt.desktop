@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Name=Sparks Core
+Comment=Sparks P2P Cryptocurrency
+Comment[de]=Verbinde mit dem Sparks peer-to-peer Netzwerk
+Comment[fr]=Sparks, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=Sparks, eşten eşe kriptografik sanal para birimi
+Exec=sparks-qt %u
+Terminal=false
+Type=Application
+Icon=sparks128
+MimeType=x-scheme-handler/sparks;
+Categories=Office;Finance;P2P;Network;Qt;
+StartupWMClass=Sparks-qt

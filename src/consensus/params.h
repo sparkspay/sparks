@@ -7,22 +7,23 @@
 #define BITCOIN_CONSENSUS_PARAMS_H
 
 #include <uint256.h>
+#include <llmq/params.h>
+
 #include <map>
-#include <string>
 
 namespace Consensus {
 
-enum DeploymentPos
-{
+enum DeploymentPos {
     DEPLOYMENT_TESTDUMMY,
-    DEPLOYMENT_CSV, // Deployment of BIP68, BIP112, and BIP113.
+    DEPLOYMENT_CSV,     // Deployment of BIP68, BIP112, and BIP113.
     DEPLOYMENT_DIP0001, // Deployment of DIP0001 and lower transaction fees.
-    DEPLOYMENT_BIP147, // Deployment of BIP147 (NULLDUMMY)
+    DEPLOYMENT_BIP147,  // Deployment of BIP147 (NULLDUMMY)
     DEPLOYMENT_DIP0003, // Deployment of DIP0002 and DIP0003 (txv3 and deterministic MN lists)
     DEPLOYMENT_DIP0008, // Deployment of ChainLock enforcement
     DEPLOYMENT_REALLOC, // Deployment of Block Reward Reallocation
     DEPLOYMENT_DIP0020, // Deployment of DIP0020, DIP0021 and LMQ_100_67 quorums
     DEPLOYMENT_IPV6_MN, // Deployment of IPv6 Masternodes
+    DEPLOYMENT_DIP0024, // Deployment of DIP0024 (Quorum Rotation) and decreased governance proposal fee
     DEPLOYMENT_DATATX, // Deployment of Data transactions
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
     MAX_VERSION_BITS_DEPLOYMENTS
@@ -48,92 +49,6 @@ struct BIP9Deployment {
     int64_t nFalloffCoeff{0};
 };
 
-enum LLMQType : uint8_t
-{
-    LLMQ_NONE = 0xff,
-
-    LLMQ_50_60 = 1, // 50 members, 30 (60%) threshold, one per hour
-    LLMQ_400_60 = 2, // 400 members, 240 (60%) threshold, one every 12 hours
-    LLMQ_400_85 = 3, // 400 members, 340 (85%) threshold, one every 24 hours
-    LLMQ_15_60 = 4, // 15 members, 9 (60%) threshold, one per hour
-    LLMQ_25_60 = 5, // 25 members, 15 (60%) threshold, one every 12 hours
-    LLMQ_25_80 = 6, // 25 members, 20 (80%) threshold, one every 24 hours
-    LLMQ_20_70 = 7, // 20 members, 14 (70%) threshold, one per hour
-
-    // for testing only
-    LLMQ_TEST = 100, // 5 members, 3 (60%) threshold, one per hour. Params might differ when -llmqtestparams is used
-
-    // for devnets only
-    LLMQ_DEVNET = 101, // 10 members, 6 (60%) threshold, one per hour. Params might differ when -llmqdevnetparams is used
-
-    // for testing activation of new quorums only
-    LLMQ_TEST_V17 = 102, // 3 members, 2 (66%) threshold, one per hour. Params might differ when -llmqtestparams is used
-};
-
-// Configures a LLMQ and its DKG
-// See https://github.com/sparkspay/dips/blob/master/dip-0006.md for more details
-struct LLMQParams {
-    LLMQType type;
-
-    // not consensus critical, only used in logging, RPC and UI
-    std::string name;
-
-    // the size of the quorum, e.g. 50 or 400
-    int size;
-
-    // The minimum number of valid members after the DKK. If less members are determined valid, no commitment can be
-    // created. Should be higher then the threshold to allow some room for failing nodes, otherwise quorum might end up
-    // not being able to ever created a recovered signature if more nodes fail after the DKG
-    int minSize;
-
-    // The threshold required to recover a final signature. Should be at least 50%+1 of the quorum size. This value
-    // also controls the size of the public key verification vector and has a large influence on the performance of
-    // recovery. It also influences the amount of minimum messages that need to be exchanged for a single signing session.
-    // This value has the most influence on the security of the quorum. The number of total malicious masternodes
-    // required to negatively influence signing sessions highly correlates to the threshold percentage.
-    int threshold;
-
-    // The interval in number blocks for DKGs and the creation of LLMQs. If set to 24 for example, a DKG will start
-    // every 24 blocks, which is approximately once every hour.
-    int dkgInterval;
-
-    // The number of blocks per phase in a DKG session. There are 6 phases plus the mining phase that need to be processed
-    // per DKG. Set this value to a number of blocks so that each phase has enough time to propagate all required
-    // messages to all members before the next phase starts. If blocks are produced too fast, whole DKG sessions will
-    // fail.
-    int dkgPhaseBlocks;
-
-    // The starting block inside the DKG interval for when mining of commitments starts. The value is inclusive.
-    // Starting from this block, the inclusion of (possibly null) commitments is enforced until the first non-null
-    // commitment is mined. The chosen value should be at least 5 * dkgPhaseBlocks so that it starts right after the
-    // finalization phase.
-    int dkgMiningWindowStart;
-
-    // The ending block inside the DKG interval for when mining of commitments ends. The value is inclusive.
-    // Choose a value so that miners have enough time to receive the commitment and mine it. Also take into consideration
-    // that miners might omit real commitments and revert to always including null commitments. The mining window should
-    // be large enough so that other miners have a chance to produce a block containing a non-null commitment. The window
-    // should at the same time not be too large so that not too much space is wasted with null commitments in case a DKG
-    // session failed.
-    int dkgMiningWindowEnd;
-
-    // In the complaint phase, members will vote on other members being bad (missing valid contribution). If at least
-    // dkgBadVotesThreshold have voted for another member to be bad, it will considered to be bad by all other members
-    // as well. This serves as a protection against late-comers who send their contribution on the bring of
-    // phase-transition, which would otherwise result in inconsistent views of the valid members set
-    int dkgBadVotesThreshold;
-
-    // Number of quorums to consider "active" for signing sessions
-    int signingActiveQuorumCount;
-
-    // Used for intra-quorum communication. This is the number of quorums for which we should keep old connections. This
-    // should be at least one more then the active quorums set.
-    int keepOldConnections;
-
-    // How many members should we try to send all sigShares to before we give up.
-    int recoveryMembers;
-};
-
 /**
  * Parameters that influence chain consensus.
  */
@@ -152,6 +67,7 @@ struct Params {
     int nSuperblockStartBlock;
     uint256 nSuperblockStartHash;
     int nSuperblockCycle; // in blocks
+    int nSuperblockMaturityWindow; // in blocks
     int nGovernanceMinQuorum; // Min absolute vote count to trigger an action
     int nGovernanceFilterElements;
     int nMasternodeMinimumConfirmations;
@@ -184,6 +100,11 @@ struct Params {
     uint256 DIP0003EnforcementHash;
     /** Block height at which DIP0008 becomes active */
     int DIP0008Height;
+    /** Block height at which BRR becomes active */
+    int BRRHeight;
+    /** Don't warn about unknown BIP 9 activations below this height.
+     * This prevents us from warning about the CSV and DIP activations. */
+    int MinBIP9WarningHeight;
     /**
      * Minimum blocks including miner confirmation of the total of nMinerConfirmationWindow blocks in a retargeting period,
      * (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.
@@ -211,17 +132,14 @@ struct Params {
     int nHighSubsidyBlocks{0};
     int nHighSubsidyFactor{1};
 
-    std::map<LLMQType, LLMQParams> llmqs;
-    std::map<LLMQType, LLMQParams> llmqs_old; //old quorums list came from v0.13.x code
+    std::vector<LLMQParams> llmqs;
+    std::vector<LLMQParams> llmqs_old;
     LLMQType llmqTypeChainLocks;
-    LLMQType llmqTypeInstantSend{LLMQ_NONE};
-    LLMQType llmqTypePlatform{LLMQ_NONE};
+    LLMQType llmqTypeInstantSend{LLMQType::LLMQ_NONE};
+    LLMQType llmqTypeDIP0024InstantSend{LLMQType::LLMQ_NONE};
+    LLMQType llmqTypePlatform{LLMQType::LLMQ_NONE};
+    LLMQType llmqTypeMnhf{LLMQType::LLMQ_NONE};
 };
 } // namespace Consensus
-
-// This must be outside of all namespaces. We must also duplicate the forward declaration of is_serializable_enum to
-// avoid inclusion of serialize.h here.
-template<typename T> struct is_serializable_enum;
-template<> struct is_serializable_enum<Consensus::LLMQType> : std::true_type {};
 
 #endif // BITCOIN_CONSENSUS_PARAMS_H

@@ -1,5 +1,5 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2020 The Dash Core developers
+// Copyright (c) 2014-2022 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,12 +10,11 @@
 #include <qt/guiutil.h>
 #include <qt/walletmodel.h>
 
-#include <init.h>
 #include <key_io.h>
-#include <utilstrencodings.h>
-#include <validation.h> // For strMessageMagic
+#include <util/strencodings.h>
+#include <util/message.h> // For MessageSign(), MessageVerify()
+#include <validation.h>
 
-#include <string>
 #include <vector>
 
 #include <QButtonGroup>
@@ -24,21 +23,15 @@
 SignVerifyMessageDialog::SignVerifyMessageDialog(QWidget* parent) :
     QDialog(parent),
     ui(new Ui::SignVerifyMessageDialog),
-    model(0),
-    pageButtons(0)
+    model(nullptr),
+    pageButtons(nullptr)
 {
     ui->setupUi(this);
 
     pageButtons = new QButtonGroup(this);
     pageButtons->addButton(ui->btnSignMessage, pageButtons->buttons().size());
     pageButtons->addButton(ui->btnVerifyMessage, pageButtons->buttons().size());
-    connect(pageButtons, SIGNAL(buttonClicked(int)), this, SLOT(showPage(int)));
-
-    ui->messageIn_SM->setPlaceholderText(tr("Enter a message to be signed"));
-    ui->signatureOut_SM->setPlaceholderText(tr("Click \"Sign Message\" to generate signature"));
-
-    ui->messageIn_VM->setPlaceholderText(tr("Enter a message to be verified"));
-    ui->signatureIn_VM->setPlaceholderText(tr("Enter a signature for the message to be verified"));
+    connect(pageButtons, QOverload<int>::of(&QButtonGroup::buttonClicked), this, &SignVerifyMessageDialog::showPage);
 
     // These icons are needed on Mac also
     GUIUtil::setIcon(ui->addressBookButton_SM, "address-book");
@@ -152,7 +145,7 @@ void SignVerifyMessageDialog::on_signMessageButton_SM_clicked()
         ui->statusLabel_SM->setText(tr("The entered address is invalid.") + QString(" ") + tr("Please check the address and try again."));
         return;
     }
-    const CKeyID* keyID = boost::get<CKeyID>(&destination);
+    const CKeyID* keyID = std::get_if<CKeyID>(&destination);
     if (!keyID) {
         ui->addressIn_SM->setValid(false);
         ui->statusLabel_SM->setStyleSheet(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_ERROR));
@@ -176,13 +169,10 @@ void SignVerifyMessageDialog::on_signMessageButton_SM_clicked()
         return;
     }
 
-    CHashWriter ss(SER_GETHASH, 0);
-    ss << strMessageMagic;
-    ss << ui->messageIn_SM->document()->toPlainText().toStdString();
+    const std::string& message = ui->messageIn_SM->document()->toPlainText().toStdString();
+    std::string signature;
 
-    std::vector<unsigned char> vchSig;
-    if (!key.SignCompact(ss.GetHash(), vchSig))
-    {
+    if (!MessageSign(key, message, signature)) {
         ui->statusLabel_SM->setStyleSheet(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_ERROR));
         ui->statusLabel_SM->setText(QString("<nobr>") + tr("Message signing failed.") + QString("</nobr>"));
         return;
@@ -191,7 +181,7 @@ void SignVerifyMessageDialog::on_signMessageButton_SM_clicked()
     ui->statusLabel_SM->setStyleSheet(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_SUCCESS));
     ui->statusLabel_SM->setText(QString("<nobr>") + tr("Message signed.") + QString("</nobr>"));
 
-    ui->signatureOut_SM->setText(QString::fromStdString(EncodeBase64(vchSig.data(), vchSig.size())));
+    ui->signatureOut_SM->setText(QString::fromStdString(signature));
 }
 
 void SignVerifyMessageDialog::on_copySignatureButton_SM_clicked()
@@ -224,51 +214,57 @@ void SignVerifyMessageDialog::on_addressBookButton_VM_clicked()
 
 void SignVerifyMessageDialog::on_verifyMessageButton_VM_clicked()
 {
-    CTxDestination destination = DecodeDestination(ui->addressIn_VM->text().toStdString());
-    if (!IsValidDestination(destination)) {
+    const std::string& address = ui->addressIn_VM->text().toStdString();
+    const std::string& signature = ui->signatureIn_VM->text().toStdString();
+    const std::string& message = ui->messageIn_VM->document()->toPlainText().toStdString();
+
+    const auto result = MessageVerify(address, signature, message);
+
+    if (result == MessageVerificationResult::OK) {
+        ui->statusLabel_VM->setStyleSheet(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_SUCCESS));
+    } else {
         ui->statusLabel_VM->setStyleSheet(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_ERROR));
-        ui->statusLabel_VM->setText(tr("The entered address is invalid.") + QString(" ") + tr("Please check the address and try again."));
-        return;
     }
-    if (!boost::get<CKeyID>(&destination)) {
+
+    switch (result) {
+    case MessageVerificationResult::OK:
+        ui->statusLabel_VM->setText(
+            QString("<nobr>") + tr("Message verified.") + QString("</nobr>")
+        );
+        return;
+    case MessageVerificationResult::ERR_INVALID_ADDRESS:
+        ui->statusLabel_VM->setText(
+            tr("The entered address is invalid.") + QString(" ") +
+            tr("Please check the address and try again.")
+        );
+        return;
+    case MessageVerificationResult::ERR_ADDRESS_NO_KEY:
         ui->addressIn_VM->setValid(false);
-        ui->statusLabel_VM->setStyleSheet(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_ERROR));
-        ui->statusLabel_VM->setText(tr("The entered address does not refer to a key.") + QString(" ") + tr("Please check the address and try again."));
+        ui->statusLabel_VM->setText(
+            tr("The entered address does not refer to a key.") + QString(" ") +
+            tr("Please check the address and try again.")
+        );
         return;
-    }
-
-    bool fInvalid = false;
-    std::vector<unsigned char> vchSig = DecodeBase64(ui->signatureIn_VM->text().toStdString().c_str(), &fInvalid);
-
-    if (fInvalid)
-    {
+    case MessageVerificationResult::ERR_MALFORMED_SIGNATURE:
         ui->signatureIn_VM->setValid(false);
-        ui->statusLabel_VM->setStyleSheet(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_ERROR));
-        ui->statusLabel_VM->setText(tr("The signature could not be decoded.") + QString(" ") + tr("Please check the signature and try again."));
+        ui->statusLabel_VM->setText(
+            tr("The signature could not be decoded.") + QString(" ") +
+            tr("Please check the signature and try again.")
+        );
         return;
-    }
-
-    CHashWriter ss(SER_GETHASH, 0);
-    ss << strMessageMagic;
-    ss << ui->messageIn_VM->document()->toPlainText().toStdString();
-
-    CPubKey pubkey;
-    if (!pubkey.RecoverCompact(ss.GetHash(), vchSig))
-    {
+    case MessageVerificationResult::ERR_PUBKEY_NOT_RECOVERED:
         ui->signatureIn_VM->setValid(false);
-        ui->statusLabel_VM->setStyleSheet(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_ERROR));
-        ui->statusLabel_VM->setText(tr("The signature did not match the message digest.") + QString(" ") + tr("Please check the signature and try again."));
+        ui->statusLabel_VM->setText(
+            tr("The signature did not match the message digest.") + QString(" ") +
+            tr("Please check the signature and try again.")
+        );
+        return;
+    case MessageVerificationResult::ERR_NOT_SIGNED:
+        ui->statusLabel_VM->setText(
+            QString("<nobr>") + tr("Message verification failed.") + QString("</nobr>")
+        );
         return;
     }
-
-    if (!(CTxDestination(pubkey.GetID()) == destination)) {
-        ui->statusLabel_VM->setStyleSheet(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_ERROR));
-        ui->statusLabel_VM->setText(QString("<nobr>") + tr("Message verification failed.") + QString("</nobr>"));
-        return;
-    }
-
-    ui->statusLabel_VM->setStyleSheet(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_SUCCESS));
-    ui->statusLabel_VM->setText(QString("<nobr>") + tr("Message verified.") + QString("</nobr>"));
 }
 
 void SignVerifyMessageDialog::on_clearButton_VM_clicked()

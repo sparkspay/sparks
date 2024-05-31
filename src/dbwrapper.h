@@ -9,9 +9,8 @@
 #include <fs.h>
 #include <serialize.h>
 #include <streams.h>
-#include <util.h>
-#include <utilstrencodings.h>
-#include <version.h>
+#include <util/system.h>
+#include <util/strencodings.h>
 
 #include <typeindex>
 
@@ -245,6 +244,9 @@ public:
     CDBWrapper(const fs::path& path, size_t nCacheSize, bool fMemory = false, bool fWipe = false, bool obfuscate = false);
     ~CDBWrapper();
 
+    CDBWrapper(const CDBWrapper&) = delete;
+    CDBWrapper& operator=(const CDBWrapper&) = delete;
+
     template <typename K>
     bool ReadDataStream(const K& key, CDataStream& ssValue) const
     {
@@ -341,18 +343,6 @@ public:
 
     // Get an estimate of LevelDB memory usage (in bytes).
     size_t DynamicMemoryUsage() const;
-
-    // not available for LevelDB; provide for compatibility with BDB
-    bool Flush()
-    {
-        return true;
-    }
-
-    bool Sync()
-    {
-        CDBBatch batch(*this);
-        return WriteBatch(batch, true);
-    }
 
     CDBIterator *NewIterator()
     {
@@ -576,7 +566,7 @@ protected:
 
     struct ValueHolder {
         size_t memoryUsage;
-        ValueHolder(size_t _memoryUsage) : memoryUsage(_memoryUsage) {}
+        explicit ValueHolder(size_t _memoryUsage) : memoryUsage(_memoryUsage) {}
         virtual ~ValueHolder() = default;
         virtual void Write(const CDataStream& ssKey, CommitTarget &parent) = 0;
     };
@@ -586,7 +576,7 @@ protected:
     struct ValueHolderImpl : ValueHolder {
         ValueHolderImpl(const V &_value, size_t _memoryUsage) : ValueHolder(_memoryUsage), value(_value) {}
 
-        virtual void Write(const CDataStream& ssKey, CommitTarget &commitTarget) {
+        virtual void Write(const CDataStream& ssKey, CommitTarget &commitTarget) override {
             // we're moving the value instead of copying it. This means that Write() can only be called once per
             // ValueHolderImpl instance. Commit() clears the write maps, so this ok.
             commitTarget.Write(ssKey, std::move(value));
@@ -618,7 +608,7 @@ public:
 
     template <typename V>
     void Write(const CDataStream& ssKey, const V& v) {
-        auto valueMemoryUsage = ::GetSerializeSize(v, SER_DISK, CLIENT_VERSION);
+        auto valueMemoryUsage = ::GetSerializeSize(v, CLIENT_VERSION);
 
         if (deletes.erase(ssKey)) {
             memoryUsage -= ssKey.size();
@@ -705,7 +695,7 @@ public:
         Clear();
     }
 
-    bool IsClean() {
+    bool IsClean() const {
         return writes.empty() && deletes.empty();
     }
 

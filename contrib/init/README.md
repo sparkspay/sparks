@@ -5,7 +5,7 @@ Upstart: sparksd.conf
 OpenRC:  sparksd.openrc
          sparksd.openrcconf
 CentOS:  sparksd.init
-OS X:    org.sparks.sparksd.plist
+macOS:   org.sparks.sparksd.plist
 ```
 have been made available to assist packagers in creating node packages here.
 
