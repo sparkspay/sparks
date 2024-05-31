@@ -164,7 +164,7 @@ public:
         consensus.DIP0008Height = 977700; // 0000000162c9550ef012374fda0e1f6067023fbbc7ec2ad183c88390b3860e0f
         consensus.powLimit = uint256S("00000fffff000000000000000000000000000000000000000000000000000000");
         consensus.BRRHeight = 1010900; // 0000000175c6825da230b41a6e684e0ff2aed05e08fbe4e4b1c9f44bacca3c4a
-        consensus.MinBIP9WarningHeight = 979716.; // dip8 activation height + miner confirmation window
+        consensus.MinBIP9WarningHeight = 979716; // dip8 activation height + miner confirmation window
         consensus.nPowTargetTimespan = 60 * 60; // Sparks: 1 hour, 24 blocks
         consensus.nPowTargetSpacing = 2 * 60; // Sparks: 120 seconds
         consensus.fPowAllowMinDifficultyBlocks = false;

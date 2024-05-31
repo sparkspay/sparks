@@ -7,7 +7,7 @@
 #define BITCOIN_COMPAT_H
 
 #if defined(HAVE_CONFIG_H)
-
+#include <config/bitcoin-config.h>
 #endif
 
 #include <type_traits>
@@ -18,7 +18,6 @@
 #define IS_TRIVIALLY_CONSTRUCTIBLE std::is_trivial
 #else
 #define IS_TRIVIALLY_CONSTRUCTIBLE std::is_trivially_constructible
-#include <config/bitcoin-config.h>
 #endif
 
 #ifdef WIN32
