@@ -22,7 +22,7 @@ enum class LLMQType : uint8_t {
     LLMQ_25_60 = 5, // 25 members, 15 (60%) threshold, one every 12 hours
     LLMQ_25_80 = 6, // 25 members, 20 (80%) threshold, one every 24 hours
     LLMQ_20_70 = 7, // 20 members, 14 (70%) threshold, one per hour
-    LLMQ_60_75 = 8,  // 60 members, 45 (75%) threshold, one every 12 hours
+    LLMQ_20_75 = 8,  // 20 members, 15 (75%) threshold, one every 12 hours
     LLMQ_25_67 = 9, // 25 members, 67 (67%) threshold, one per hour
     // for testing only
     LLMQ_TEST = 100, // 3 members, 2 (66%) threshold, one per hour. Params might differ when -llmqtestparams is used
@@ -168,7 +168,7 @@ static constexpr std::array<LLMQParams, 15> available_llmqs = {
     },
 
     /**
-     * llmq_test (Dash Core 0.17) aka llmq_test_v17
+     * llmq_test (Sparks Core 0.17) aka llmq_test_v17
      * This quorum is only used for testing
      *
      */
@@ -293,28 +293,28 @@ static constexpr std::array<LLMQParams, 15> available_llmqs = {
     },
 
     /**
-     * llmq_60_75
+     * llmq_20_75
      * This quorum is deployed on mainnet and requires
      * 50 - 60 participants
      *
      */
     LLMQParams{
-        .type = LLMQType::LLMQ_60_75,
-        .name = "llmq_60_75",
+        .type = LLMQType::LLMQ_20_75,
+        .name = "llmq_20_75",
         .useRotation = true,
-        .size = 60,
-        .minSize = 50,
-        .threshold = 45,
+        .size = 20,
+        .minSize = 18,
+        .threshold = 15,
 
         .dkgInterval = 24 * 12, // DKG cycle every 12 hours
         .dkgPhaseBlocks = 2,
         .dkgMiningWindowStart = 42, // signingActiveQuorumCount + dkgPhaseBlocks * 5 = after finalization
         .dkgMiningWindowEnd = 50,
-        .dkgBadVotesThreshold = 48,
+        .dkgBadVotesThreshold = 18,
 
         .signingActiveQuorumCount = 32,
         .keepOldConnections = 64,
-        .recoveryMembers = 25,
+        .recoveryMembers = 10,
     },
 
     /**
@@ -461,7 +461,7 @@ static constexpr std::array<LLMQParams, 15> available_llmqs = {
      * This quorum is deployed on Testnet and requires
      * 25 participants
      *
-     * Used by Dash Platform
+     * Used by Sparks Platform
      */
     LLMQParams{
         .type = LLMQType::LLMQ_25_67,

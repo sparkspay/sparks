@@ -1,8 +1,8 @@
 Source: sparks
 Section: utils
 Priority: optional
-Maintainer: Holger Schinzel <holger@sparks.org>
-Uploaders: Holger Schinzel <holger@sparks.org>
+Maintainer: Holger Schinzel <holger@sparkspay.io>
+Uploaders: Holger Schinzel <holger@sparkspay.io>
 Build-Depends: debhelper,
  devscripts,
  automake,

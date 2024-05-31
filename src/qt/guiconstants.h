@@ -38,7 +38,7 @@ static const int TOOLTIP_WRAP_THRESHOLD = 80;
 #define SPINNER_FRAMES 90
 
 #define QAPP_ORG_NAME "Sparks"
-#define QAPP_ORG_DOMAIN "sparks.org"
+#define QAPP_ORG_DOMAIN "sparkspay.io"
 #define QAPP_APP_NAME_DEFAULT "Sparks-Qt"
 #define QAPP_APP_NAME_TESTNET "Sparks-Qt-testnet"
 #define QAPP_APP_NAME_DEVNET "Sparks-Qt-%s"

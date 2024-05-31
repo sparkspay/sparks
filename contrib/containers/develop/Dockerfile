@@ -40,7 +40,7 @@ RUN groupadd docker && \
 # Disable noninteractive mode
 ENV DEBIAN_FRONTEND="dialog"
 
-# Expose Dash P2P and RPC ports for main network and test networks
+# Expose Sparks P2P and RPC ports for main network and test networks
 EXPOSE 9998 9999 19998 19999
 
 # We're done, switch back to non-privileged user

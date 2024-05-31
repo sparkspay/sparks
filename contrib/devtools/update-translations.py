@@ -32,8 +32,8 @@ LOCALE_DIR = 'src/qt/locale'
 MIN_NUM_MESSAGES = 10
 # Regexp to check for Bitcoin addresses
 ADDRESS_REGEXP = re.compile('([13]|bc1)[a-zA-Z0-9]{30,}')
-# Regexp to check for Dash addresses
-ADDRESS_REGEXP_DASH = re.compile('[X7][a-zA-Z0-9]{30,}')
+# Regexp to check for Sparks addresses
+ADDRESS_REGEXP_SPARKS = re.compile('[X7][a-zA-Z0-9]{30,}')
 
 def check_at_repository_root():
     if not os.path.exists('.git'):
@@ -136,8 +136,8 @@ def contains_bitcoin_addr(text, errors):
     return False
 
 def contains_sparks_addr(text, errors):
-    if text is not None and ADDRESS_REGEXP_DASH.search(text) is not None:
-        errors.append('Translation "%s" contains a Dash address. This will be removed.' % (text))
+    if text is not None and ADDRESS_REGEXP_SPARKS.search(text) is not None:
+        errors.append('Translation "%s" contains a Sparks address. This will be removed.' % (text))
         return True
     return False
 

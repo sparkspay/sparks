@@ -12,7 +12,7 @@ export LC_ALL=C
 # Use GCOV_EXECUTABLE="llvm-cov gcov" if compiling with clang.
 GCOV_EXECUTABLE="gcov"
 
-# TODO this list is likely incomplete / incorrect for Dash
+# TODO this list is likely incomplete / incorrect for Sparks
 # Disable tests known to cause non-deterministic behaviour and document the source or point of non-determinism.
 NON_DETERMINISTIC_TESTS=(
     "blockfilter_index_tests/blockfilter_index_initial_sync"  # src/checkqueue.h: In CCheckQueue::Loop(): while (queue.empty()) { ... }

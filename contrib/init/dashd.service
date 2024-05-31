@@ -9,7 +9,7 @@
 # in ExecStart=
 
 [Unit]
-Description=Dash daemon
+Description=Sparks daemon
 After=network.target
 
 [Service]

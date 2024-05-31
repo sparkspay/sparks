@@ -164,7 +164,7 @@ public:
         consensus.DIP0008Height = 977700; // 0000000162c9550ef012374fda0e1f6067023fbbc7ec2ad183c88390b3860e0f
         consensus.powLimit = uint256S("00000fffff000000000000000000000000000000000000000000000000000000");
         consensus.BRRHeight = 1010900; // 0000000175c6825da230b41a6e684e0ff2aed05e08fbe4e4b1c9f44bacca3c4a
-        consensus.MinBIP9WarningHeight = 0; // dip8 activation height + miner confirmation window
+        consensus.MinBIP9WarningHeight = 979716; // dip8 activation height + miner confirmation window
         consensus.nPowTargetTimespan = 60 * 60; // Sparks: 1 hour, 24 blocks
         consensus.nPowTargetSpacing = 2 * 60; // Sparks: 120 seconds
         consensus.fPowAllowMinDifficultyBlocks = false;
@@ -319,7 +319,7 @@ public:
 
         // long living quorum params
         AddLLMQ(Consensus::LLMQType::LLMQ_50_60);
-        AddLLMQ(Consensus::LLMQType::LLMQ_60_75);
+        AddLLMQ(Consensus::LLMQType::LLMQ_20_75);
         AddLLMQ(Consensus::LLMQType::LLMQ_400_60);
         AddLLMQ(Consensus::LLMQType::LLMQ_400_85);
         AddLLMQ(Consensus::LLMQType::LLMQ_15_60);
@@ -328,9 +328,9 @@ public:
         AddLLMQ(Consensus::LLMQType::LLMQ_20_70);
         consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_25_60;
         consensus.llmqTypeInstantSend = Consensus::LLMQType::LLMQ_15_60;
-        consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_60_75;
+        consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_20_75;
         consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_20_70;
-        consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_400_85;
+        consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_25_80;
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
@@ -572,7 +572,7 @@ public:
 
         // long living quorum params
         AddLLMQ(Consensus::LLMQType::LLMQ_50_60);
-        AddLLMQ(Consensus::LLMQType::LLMQ_60_75);
+        AddLLMQ(Consensus::LLMQType::LLMQ_20_75);
         AddLLMQ(Consensus::LLMQType::LLMQ_400_60);
         AddLLMQ(Consensus::LLMQType::LLMQ_400_85);
         AddLLMQ(Consensus::LLMQType::LLMQ_TEST);
@@ -582,7 +582,7 @@ public:
         AddLLMQ(Consensus::LLMQType::LLMQ_25_67);       
         consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_TEST;
         consensus.llmqTypeInstantSend = Consensus::LLMQType::LLMQ_TEST;
-        consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_60_75;
+        consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_20_75;
         consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_20_70;
         consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_TEST;
         
@@ -767,7 +767,7 @@ public:
 
         // long living quorum params
         AddLLMQ(Consensus::LLMQType::LLMQ_50_60);
-        AddLLMQ(Consensus::LLMQType::LLMQ_60_75);
+        AddLLMQ(Consensus::LLMQType::LLMQ_20_75);
         AddLLMQ(Consensus::LLMQType::LLMQ_400_60);
         AddLLMQ(Consensus::LLMQType::LLMQ_400_85);
         AddLLMQ(Consensus::LLMQType::LLMQ_15_60);
@@ -778,7 +778,7 @@ public:
         AddLLMQ(Consensus::LLMQType::LLMQ_DEVNET_DIP0024);
         consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_15_60;
         consensus.llmqTypeInstantSend = Consensus::LLMQType::LLMQ_15_60;
-        consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_60_75;
+        consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_20_75;
         consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_20_70;
         consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_15_60;
 

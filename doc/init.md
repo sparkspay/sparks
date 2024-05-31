@@ -84,9 +84,9 @@ OpenRC).
 ### macOS
 
 Binary:              `/usr/local/bin/sparksd`
-Configuration file:  `~/Library/Application Support/DashCore/sparks.conf`
-Data directory:      `~/Library/Application Support/DashCore`
-Lock file:           `~/Library/Application Support/DashCore/.lock`
+Configuration file:  `~/Library/Application Support/SparksCore/sparks.conf`
+Data directory:      `~/Library/Application Support/SparksCore`
+Lock file:           `~/Library/Application Support/SparksCore/.lock`
 
 Installing Service Configuration
 -----------------------------------
