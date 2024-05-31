@@ -241,12 +241,10 @@ public:
 
         // Deployment of Quorum Rotation DIP and decreased proposal fee (Values to be determined)
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].bit = 10;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nStartTime = 1713963600; //Wednesday, April 24, 2024 1:00:00 PM //1660521600 Tuesday, August 15, 2022 12:00:00 AM
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nTimeout = 999999999999ULL;   // Tuesday, August 15, 2023 12:00:00 AM
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nWindowSize = 4032;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nThresholdStart = 3226; // 80% of 4032
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nThresholdMin = 2420;   // 60% of 4032
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nFalloffCoeff = 5;      // this corresponds to 10 periods
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nStartTime = 1718064000; // Tuesday, June 11, 2024 at 12:00:00 AM 
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nTimeout = 1749600000;   // Wednesday, June 11, 2025 at 12:00:00 AM 
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nThresholdStart = 60; // 60% of 100
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000eee93cb0b1f4be");//269664
@@ -380,6 +378,7 @@ public:
                 {1200000, uint256S("0x00000014793f72ce0df5646d23dc802b079e582b98880ee299ae2b9549f6bb52")},
                 {1250000, uint256S("0x000000016c784af1b951000499c64969110ebb608c12c948f7d02245e1cc0f5c")},
                 {1300000, uint256S("0x00000002164b731087a09122e0e1cc82cbbd25a6f18c64dd189f70c6a3b92cad")},
+                {1350000, uint256S("0x00000000c3201a1df55a622d690abc63c0f7f7cf1d31267f251e879393bb43e0")},
            }
         };
 
