@@ -330,7 +330,7 @@ endif
 if TARGET_WINDOWS
 else
 if ENABLE_BENCH
-# Disabled because benchmarks are too heavy in Dash
+# Disabled because benchmarks are too heavy in Sparks
 #	@echo "Running bench/bench_sparks"
 #	$(BENCH_BINARY)
 endif

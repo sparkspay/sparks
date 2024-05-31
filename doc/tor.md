@@ -110,7 +110,7 @@ API, to create and destroy 'ephemeral' hidden services programmatically.
 Sparks Core has been updated to make use of this.
 
 This means that if Tor is running (and proper authentication has been configured),
-Dash Core automatically creates a hidden service to listen on. This will positively
+Sparks Core automatically creates a hidden service to listen on. This will positively
 affect the number of available .onion nodes.
 
 This new feature is enabled by default if Sparks Core is listening (`-listen`), and

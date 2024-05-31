@@ -1,6 +1,6 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Sparks Core
-Upstream-Contact: Sparks Core Group, Inc https://www.sparks.org/team/
+Upstream-Contact: Sparks Core Group, Inc https://www.sparkspay.io/team/
 Source: https://github.com/sparkspay/sparks
 
 Files: *
@@ -9,7 +9,7 @@ Copyright: 2009-2017, Bitcoin Core Developers,
 License: Expat
 Comment: The Bitcoin Core Developers encompasses the current developers listed on bitcoin.org,
          as well as the numerous contributors to the project. The Sparks Core Developers
-         encompasses the current developers listed on https://www.sparks.org/team/, as well as
+         encompasses the current developers listed on https://www.sparkspay.io/team/, as well as
          the numerous contributors to the project.
 
 Files: debian/*

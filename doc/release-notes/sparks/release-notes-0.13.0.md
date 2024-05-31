@@ -3,7 +3,7 @@ Sparks Core version 0.13.0.0
 
 Release is now available from:
 
-  <https://www.sparks.org/downloads/#wallets>
+  <https://www.sparkspay.io/downloads/#wallets>
 
 This is a new major version release, bringing new features, various bugfixes and other improvements.
 
@@ -95,7 +95,7 @@ The new system is going to be activated via combination of a BIP9-like deploymen
 (`SPORK_16_DETERMINISTIC_MNS_ENABLED`).
 
 Read more: https://github.com/sparkspay/dips/blob/master/dip-0003.md
-Upgrade instructions: https://docs.sparks.org/DIP3-masternode-upgrade
+Upgrade instructions: https://docs.sparkspay.io/DIP3-masternode-upgrade
 
 DIP0004 - Simplified Verification of Deterministic Masternode Lists
 -------------------------------------------------------------------

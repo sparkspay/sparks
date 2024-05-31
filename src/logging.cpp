@@ -176,8 +176,8 @@ const CLogCategoryDesc LogCategories[] =
     {BCLog::COINJOIN, "coinjoin"},
     {BCLog::SPORK, "spork"},
     {BCLog::NETCONN, "netconn"},
-    {BCLog::DASH, "sparks"},
-    //End Dash
+    {BCLog::SPARKS, "sparks"},
+    //End Sparks
 };
 
 bool GetLogCategory(BCLog::LogFlags& flag, const std::string& str)
@@ -201,7 +201,7 @@ std::string ListLogCategories()
     int outcount = 0;
     for (const CLogCategoryDesc& category_desc : LogCategories) {
         // Omit the special cases.
-        if (category_desc.flag != BCLog::NONE && category_desc.flag != BCLog::ALL && category_desc.flag != BCLog::DASH) {
+        if (category_desc.flag != BCLog::NONE && category_desc.flag != BCLog::ALL && category_desc.flag != BCLog::SPARKS) {
             if (outcount != 0) ret += ", ";
             ret += category_desc.category;
             outcount++;
@@ -215,7 +215,7 @@ std::vector<CLogCategoryActive> ListActiveLogCategories()
     std::vector<CLogCategoryActive> ret;
     for (const CLogCategoryDesc& category_desc : LogCategories) {
         // Omit the special cases.
-        if (category_desc.flag != BCLog::NONE && category_desc.flag != BCLog::ALL && category_desc.flag != BCLog::DASH) {
+        if (category_desc.flag != BCLog::NONE && category_desc.flag != BCLog::ALL && category_desc.flag != BCLog::SPARKS) {
             CLogCategoryActive catActive;
             catActive.category = category_desc.category;
             catActive.active = LogAcceptCategory(category_desc.flag);
@@ -236,7 +236,7 @@ std::string ListActiveLogCategoriesString()
     int outcount = 0;
     for (const CLogCategoryDesc& category_desc : LogCategories) {
         // Omit the special cases.
-        if (category_desc.flag != BCLog::NONE && category_desc.flag != BCLog::ALL && category_desc.flag != BCLog::DASH && LogAcceptCategory(category_desc.flag)) {
+        if (category_desc.flag != BCLog::NONE && category_desc.flag != BCLog::ALL && category_desc.flag != BCLog::SPARKS && LogAcceptCategory(category_desc.flag)) {
             if (outcount != 0) ret += ", ";
             ret += category_desc.category;
             outcount++;

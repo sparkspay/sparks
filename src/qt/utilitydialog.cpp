@@ -142,7 +142,7 @@ For more information, see the <a style=\"%2\" href=\"%3\">%1 documentation</a>."
         )
         .arg(strCoinJoinName)
         .arg(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_COMMAND))
-        .arg("https://docs.sparks.org/en/stable/wallets/sparkscore/coinjoin-instantsend.html")
+        .arg("https://docs.sparkspay.io/en/stable/wallets/sparkscore/coinjoin-instantsend.html")
         );
         ui->aboutMessage->setWordWrap(true);
         ui->helpMessage->setVisible(false);

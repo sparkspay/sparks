@@ -3,7 +3,7 @@ Sparks Core version 0.12.3.4
 
 Release is now available from:
 
-  <https://www.sparks.org/downloads/#wallets>
+  <https://www.sparkspay.io/downloads/#wallets>
 
 This is an optional release and only contains changes for testnet. It is not required to update masternodes on mainnet.
 

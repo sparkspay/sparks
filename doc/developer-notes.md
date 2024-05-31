@@ -141,7 +141,7 @@ Refer to [/test/functional/README.md#style-guidelines](/test/functional/README.m
 Coding Style (Doxygen-compatible comments)
 ------------------------------------------
 
-Dash Core uses [Doxygen](http://www.doxygen.nl/) to generate its official documentation.
+Sparks Core uses [Doxygen](http://www.doxygen.nl/) to generate its official documentation.
 
 Use Doxygen-compatible comment blocks for functions, methods, and fields.
 
@@ -901,7 +901,7 @@ directly upstream without being PRed directly against the project. They will be 
 subtree merge.
 
 Others are external projects without a tight relationship with our project. Changes to these should also
-be sent upstream, but bugfixes may also be prudent to PR against Dash Core so that they can be integrated
+be sent upstream, but bugfixes may also be prudent to PR against Sparks Core so that they can be integrated
 quickly. Cosmetic changes should be purely taken upstream.
 
 There is a tool in `test/lint/git-subtree-check.sh` to check a subtree directory for consistency with
