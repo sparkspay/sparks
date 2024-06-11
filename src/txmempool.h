@@ -17,6 +17,7 @@
 #include <addressindex.h>
 #include <spentindex.h>
 #include <amount.h>
+#include <bls/bls.h>
 #include <coins.h>
 #include <crypto/siphash.h>
 #include <indirectmap.h>
@@ -27,13 +28,11 @@
 #include <netaddress.h>
 #include <pubkey.h>
 
+#include <boost/optional.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
-#include <boost/signals2/signal.hpp>
-
-class CBLSPublicKey;
 
 class CBlockIndex;
 extern CCriticalSection cs_main;
@@ -568,8 +567,8 @@ private:
     std::map<uint256, uint256> mapProTxBlsPubKeyHashes;
     std::map<COutPoint, uint256> mapProTxCollaterals;
 
-    void UpdateParent(txiter entry, txiter parent, bool add);
-    void UpdateChild(txiter entry, txiter child, bool add);
+    void UpdateParent(txiter entry, txiter parent, bool add) EXCLUSIVE_LOCKS_REQUIRED(cs);
+    void UpdateChild(txiter entry, txiter child, bool add) EXCLUSIVE_LOCKS_REQUIRED(cs);
 
     std::vector<indexed_transaction_set::const_iterator> GetSortedDepthAndScore() const EXCLUSIVE_LOCKS_REQUIRED(cs);
 
@@ -616,7 +615,7 @@ public:
     void removeForReorg(const CCoinsViewCache* pcoins, unsigned int nMemPoolHeight, int flags) EXCLUSIVE_LOCKS_REQUIRED(cs, cs_main);
     void removeConflicts(const CTransaction& tx) EXCLUSIVE_LOCKS_REQUIRED(cs);
     void removeProTxPubKeyConflicts(const CTransaction &tx, const CKeyID &keyId) EXCLUSIVE_LOCKS_REQUIRED(cs);
-    void removeProTxPubKeyConflicts(const CTransaction &tx, const CBLSPublicKey &pubKey) EXCLUSIVE_LOCKS_REQUIRED(cs);
+    void removeProTxPubKeyConflicts(const CTransaction &tx, const CBLSLazyPublicKey &pubKey) EXCLUSIVE_LOCKS_REQUIRED(cs);
     void removeProTxCollateralConflicts(const CTransaction &tx, const COutPoint &collateralOutpoint) EXCLUSIVE_LOCKS_REQUIRED(cs);
     void removeProTxSpentCollateralConflicts(const CTransaction &tx) EXCLUSIVE_LOCKS_REQUIRED(cs);
     void removeProTxKeyChangedConflicts(const CTransaction &tx, const uint256& proTxHash, const uint256& newKeyHash) EXCLUSIVE_LOCKS_REQUIRED(cs);
@@ -638,8 +637,8 @@ public:
 
     /** Affect CreateNewBlock prioritisation of transactions */
     void PrioritiseTransaction(const uint256& hash, const CAmount& nFeeDelta);
-    void ApplyDelta(const uint256 hash, CAmount &nFeeDelta) const;
-    void ClearPrioritisation(const uint256 hash);
+    void ApplyDelta(const uint256& hash, CAmount &nFeeDelta) const EXCLUSIVE_LOCKS_REQUIRED(cs);
+    void ClearPrioritisation(const uint256& hash) EXCLUSIVE_LOCKS_REQUIRED(cs);
 
     /** Get the transaction in the pool that spends the same prevout */
     const CTransaction* GetConflictTx(const COutPoint& prevout) const EXCLUSIVE_LOCKS_REQUIRED(cs);
@@ -722,9 +721,9 @@ public:
         return mapTx.size();
     }
 
-    uint64_t GetTotalTxSize() const
+    uint64_t GetTotalTxSize() const EXCLUSIVE_LOCKS_REQUIRED(cs)
     {
-        LOCK(cs);
+        AssertLockHeld(cs);
         return totalTxSize;
     }
 
@@ -741,9 +740,6 @@ public:
     bool existsProviderTxConflict(const CTransaction &tx) const;
 
     size_t DynamicMemoryUsage() const;
-
-    boost::signals2::signal<void (CTransactionRef)> NotifyEntryAdded;
-    boost::signals2::signal<void (CTransactionRef, MemPoolRemovalReason)> NotifyEntryRemoved;
 
     /** Adds a transaction to the unbroadcast set */
     void AddUnbroadcastTx(const uint256& txid) {

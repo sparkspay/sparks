@@ -19,14 +19,13 @@
 #include <univalue.h>
 #include <util/moneystr.h>
 #include <util/strencodings.h>
+#include <util/string.h>
 #include <util/system.h>
 #include <util/translation.h>
 
 #include <functional>
 #include <memory>
 #include <stdio.h>
-
-#include <boost/algorithm/string.hpp>
 
 #include <stacktraces.h>
 
@@ -187,10 +186,11 @@ static void RegisterLoad(const std::string& strInput)
 
 static CAmount ExtractAndValidateValue(const std::string& strValue)
 {
-    CAmount value;
-    if (!ParseMoney(strValue, value))
+    if (std::optional<CAmount> parsed = ParseMoney(strValue)) {
+        return parsed.value();
+    } else {
         throw std::runtime_error("invalid TX output value");
-    return value;
+    }
 }
 
 static void MutateTxVersion(CMutableTransaction& tx, const std::string& cmdVal)
@@ -213,8 +213,7 @@ static void MutateTxLocktime(CMutableTransaction& tx, const std::string& cmdVal)
 
 static void MutateTxAddInput(CMutableTransaction& tx, const std::string& strInput)
 {
-    std::vector<std::string> vStrInputParts;
-    boost::split(vStrInputParts, strInput, boost::is_any_of(":"));
+    std::vector<std::string> vStrInputParts = SplitString(strInput, ':');
 
     // separate TXID:VOUT in string
     if (vStrInputParts.size()<2)
@@ -248,8 +247,7 @@ static void MutateTxAddInput(CMutableTransaction& tx, const std::string& strInpu
 static void MutateTxAddOutAddr(CMutableTransaction& tx, const std::string& strInput)
 {
     // Separate into VALUE:ADDRESS
-    std::vector<std::string> vStrInputParts;
-    boost::split(vStrInputParts, strInput, boost::is_any_of(":"));
+    std::vector<std::string> vStrInputParts = SplitString(strInput, ':');
 
     if (vStrInputParts.size() != 2)
         throw std::runtime_error("TX output missing or too many separators");
@@ -273,8 +271,7 @@ static void MutateTxAddOutAddr(CMutableTransaction& tx, const std::string& strIn
 static void MutateTxAddOutPubKey(CMutableTransaction& tx, const std::string& strInput)
 {
     // Separate into VALUE:PUBKEY[:FLAGS]
-    std::vector<std::string> vStrInputParts;
-    boost::split(vStrInputParts, strInput, boost::is_any_of(":"));
+    std::vector<std::string> vStrInputParts = SplitString(strInput, ':');
 
     if (vStrInputParts.size() < 2 || vStrInputParts.size() > 3)
         throw std::runtime_error("TX output missing or too many separators");
@@ -297,7 +294,7 @@ static void MutateTxAddOutPubKey(CMutableTransaction& tx, const std::string& str
 
     if (bScriptHash) {
         // Get the ID for the script, and then construct a P2SH destination for it.
-        scriptPubKey = GetScriptForDestination(CScriptID(scriptPubKey));
+        scriptPubKey = GetScriptForDestination(ScriptHash(scriptPubKey));
     }
 
     // construct TxOut, append to transaction output list
@@ -308,8 +305,7 @@ static void MutateTxAddOutPubKey(CMutableTransaction& tx, const std::string& str
 static void MutateTxAddOutMultiSig(CMutableTransaction& tx, const std::string& strInput)
 {
     // Separate into VALUE:REQUIRED:NUMKEYS:PUBKEY1:PUBKEY2:....[:FLAGS]
-    std::vector<std::string> vStrInputParts;
-    boost::split(vStrInputParts, strInput, boost::is_any_of(":"));
+    std::vector<std::string> vStrInputParts = SplitString(strInput, ':');
 
     // Check that there are enough parameters
     if (vStrInputParts.size()<3)
@@ -330,7 +326,7 @@ static void MutateTxAddOutMultiSig(CMutableTransaction& tx, const std::string& s
 
     if (required < 1 || required > MAX_PUBKEYS_PER_MULTISIG || numkeys < 1 || numkeys > MAX_PUBKEYS_PER_MULTISIG || numkeys < required)
         throw std::runtime_error("multisig parameter mismatch. Required " \
-                            + std::to_string(required) + " of " + std::to_string(numkeys) + "signatures.");
+                            + ToString(required) + " of " + ToString(numkeys) + "signatures.");
 
     // extract and validate PUBKEYs
     std::vector<CPubKey> pubkeys;
@@ -360,7 +356,7 @@ static void MutateTxAddOutMultiSig(CMutableTransaction& tx, const std::string& s
                         "redeemScript exceeds size limit: %d > %d", scriptPubKey.size(), MAX_SCRIPT_ELEMENT_SIZE));
         }
         // Get the ID for the script, and then construct a P2SH destination for it.
-        scriptPubKey = GetScriptForDestination(CScriptID(scriptPubKey));
+        scriptPubKey = GetScriptForDestination(ScriptHash(scriptPubKey));
     }
 
     // construct TxOut, append to transaction output list
@@ -398,8 +394,7 @@ static void MutateTxAddOutData(CMutableTransaction& tx, const std::string& strIn
 static void MutateTxAddOutScript(CMutableTransaction& tx, const std::string& strInput)
 {
     // separate VALUE:SCRIPT[:FLAGS]
-    std::vector<std::string> vStrInputParts;
-    boost::split(vStrInputParts, strInput, boost::is_any_of(":"));
+    std::vector<std::string> vStrInputParts = SplitString(strInput, ':');
     if (vStrInputParts.size() < 2)
         throw std::runtime_error("TX output missing separator");
 
@@ -427,7 +422,7 @@ static void MutateTxAddOutScript(CMutableTransaction& tx, const std::string& str
             throw std::runtime_error(strprintf(
                         "redeemScript exceeds size limit: %d > %d", scriptPubKey.size(), MAX_SCRIPT_ELEMENT_SIZE));
         }
-        scriptPubKey = GetScriptForDestination(CScriptID(scriptPubKey));
+        scriptPubKey = GetScriptForDestination(ScriptHash(scriptPubKey));
     }
 
     // construct TxOut, append to transaction output list
@@ -720,9 +715,7 @@ static std::string readStdin()
     if (ferror(stdin))
         throw std::runtime_error("error reading stdin");
 
-    boost::algorithm::trim_right(ret);
-
-    return ret;
+    return TrimString(ret);
 }
 
 static int CommandLineRawTx(int argc, char* argv[])

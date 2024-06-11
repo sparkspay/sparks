@@ -1,6 +1,6 @@
 PACKAGE=qt
 $(package)_version=5.12.11
-$(package)_download_path=https://download.qt.io/official_releases/qt/5.12/$($(package)_version)/submodules
+$(package)_download_path=https://download.qt.io/archive/qt/5.12/$($(package)_version)/submodules
 $(package)_suffix=everywhere-src-$($(package)_version).tar.xz
 $(package)_file_name=qtbase-$($(package)_suffix)
 $(package)_sha256_hash=1c1b4e33137ca77881074c140d54c3c9747e845a31338cfe8680f171f0bc3a39
@@ -249,7 +249,8 @@ define $(package)_preprocess_cmds
   echo "!host_build: QMAKE_LFLAGS     += $($(package)_ldflags)" >> qtbase/mkspecs/common/gcc-base.conf && \
   sed -i.old "s|QMAKE_CC                = \$$$$\$$$${CROSS_COMPILE}clang|QMAKE_CC                = $($(package)_cc)|" qtbase/mkspecs/common/clang.conf && \
   sed -i.old "s|QMAKE_CXX               = \$$$$\$$$${CROSS_COMPILE}clang++|QMAKE_CXX               = $($(package)_cxx)|" qtbase/mkspecs/common/clang.conf && \
-  sed -i.old "s/error(\"failed to parse default search paths from compiler output\")/\!darwin: error(\"failed to parse default search paths from compiler output\")/g" qtbase/mkspecs/features/toolchain.prf
+  sed -i.old "s/error(\"failed to parse default search paths from compiler output\")/\!darwin: error(\"failed to parse default search paths from compiler output\")/g" qtbase/mkspecs/features/toolchain.prf && \
+  sed -i.old "s/LIBRARY_PATH/(CROSS_)?\0/g" qtbase/mkspecs/features/toolchain.prf
 endef
 
 define $(package)_config_cmds

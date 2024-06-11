@@ -10,13 +10,11 @@
 #include <script/signingprovider.h>
 #include <tinyformat.h>
 #include <util/system.h>
+#include <util/string.h>
 #include <util/strencodings.h>
 #include <util/translation.h>
 
 #include <tuple>
-
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
 
 const std::string UNIX_EPOCH_TIME = "UNIX epoch time";
 
@@ -151,7 +149,7 @@ bool ParseBoolV(const UniValue& v, const std::string &strName)
     if (v.isBool())
         return v.get_bool();
     else if (v.isNum())
-        strBool = itostr(v.get_int());
+        strBool = ToString(v.get_int());
     else if (v.isStr())
         strBool = v.get_str();
 
@@ -191,18 +189,18 @@ CPubKey HexToPubKey(const std::string& hex_in)
 }
 
 // Retrieves a public key for an address from the given FillableSigningProvider
-CPubKey AddrToPubKey(FillableSigningProvider* const keystore, const std::string& addr_in)
+CPubKey AddrToPubKey(const FillableSigningProvider& keystore, const std::string& addr_in)
 {
     CTxDestination dest = DecodeDestination(addr_in);
     if (!IsValidDestination(dest)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address: " + addr_in);
     }
-    const CKeyID *keyID = std::get_if<CKeyID>(&dest);
-    if (!keyID) {
+    const PKHash *pkhash = std::get_if<PKHash>(&dest);
+    if (!pkhash) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("%s does not refer to a key", addr_in));
     }
     CPubKey vchPubKey;
-    if (!keystore->GetPubKey(*keyID, vchPubKey)) {
+    if (!keystore.GetPubKey(CKeyID(*pkhash), vchPubKey)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("no full public key for address %s", addr_in));
     }
     if (!vchPubKey.IsFullyValid()) {
@@ -242,13 +240,13 @@ public:
 
     UniValue operator()(const CNoDestination &dest) const { return UniValue(UniValue::VOBJ); }
 
-    UniValue operator()(const CKeyID &keyID) const {
+    UniValue operator()(const PKHash &pkhash) const {
         UniValue obj(UniValue::VOBJ);
         obj.pushKV("isscript", false);
         return obj;
     }
 
-    UniValue operator()(const CScriptID &scriptID) const {
+    UniValue operator()(const ScriptHash &scriptID) const {
         UniValue obj(UniValue::VOBJ);
         obj.pushKV("isscript", true);
         return obj;
@@ -407,8 +405,7 @@ RPCHelpMan::RPCHelpMan(std::string name, std::string description, std::vector<RP
 {
     std::set<std::string> named_args;
     for (const auto& arg : m_args) {
-        std::vector<std::string> names;
-        boost::split(names, arg.m_names, boost::is_any_of("|"));
+        std::vector<std::string> names = SplitString(arg.m_names, '|');
         // Should have unique named arguments
         for (const std::string& name : names) {
             CHECK_NONFATAL(named_args.insert(name).second);
@@ -493,7 +490,7 @@ std::string RPCHelpMan::ToString() const
         if (i == 0) ret += "\nArguments:\n";
 
         // Push named argument name and description
-        sections.m_sections.emplace_back(std::to_string(i + 1) + ". " + arg.GetFirstName(), arg.ToDescriptionString());
+        sections.m_sections.emplace_back(::ToString(i + 1) + ". " + arg.GetFirstName(), arg.ToDescriptionString());
         sections.m_max_pad = std::max(sections.m_max_pad, sections.m_sections.back().m_left.size());
 
         // Recursively push nested args

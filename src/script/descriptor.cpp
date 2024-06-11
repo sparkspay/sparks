@@ -599,7 +599,7 @@ protected:
     {
         CKeyID id = keys[0].GetID();
         out.pubkeys.emplace(id, keys[0]);
-        return Singleton(GetScriptForDestination(id));
+        return Singleton(GetScriptForDestination(PKHash(id)));
     }
 public:
     PKHDescriptor(std::unique_ptr<PubkeyProvider> prov) : DescriptorImpl(Singleton(std::move(prov)), {}, "pkh") {}
@@ -620,7 +620,7 @@ public:
 class SHDescriptor final : public DescriptorImpl
 {
 protected:
-    std::vector<CScript> MakeScripts(const std::vector<CPubKey>&, const CScript* script, FlatSigningProvider&) const override { return Singleton(GetScriptForDestination(CScriptID(*script))); }
+    std::vector<CScript> MakeScripts(const std::vector<CPubKey>&, const CScript* script, FlatSigningProvider&) const override { return Singleton(GetScriptForDestination(ScriptHash(*script))); }
 public:
     SHDescriptor(std::unique_ptr<DescriptorImpl> desc) : DescriptorImpl({}, std::move(desc), "sh") {}
 };
@@ -636,10 +636,10 @@ protected:
         out.pubkeys.emplace(id, keys[0]);
         ret.emplace_back(GetScriptForRawPubKey(keys[0])); // P2PK
         if (keys[0].IsCompressed()) {
-            CScript p2wpkh = GetScriptForDestination(id);
+            CScript p2wpkh = GetScriptForDestination(PKHash(id));
             out.scripts.emplace(CScriptID(p2wpkh), p2wpkh);
             ret.emplace_back(p2wpkh);
-            ret.emplace_back(GetScriptForDestination(CScriptID(p2wpkh))); // P2SH-P2WPKH
+            ret.emplace_back(GetScriptForDestination(ScriptHash(p2wpkh))); // P2SH-P2WPKH
         }
         return ret;
     }
@@ -752,8 +752,9 @@ std::unique_ptr<PubkeyProvider> ParsePubkey(uint32_t key_exp_index, const Span<c
         return nullptr;
     }
     if (origin_split.size() == 1) return ParsePubkeyInner(key_exp_index, origin_split[0], permit_uncompressed, out, error);
-    if (origin_split[0].size() < 1 || origin_split[0][0] != '[') {
-        error = strprintf("Key origin start '[ character expected but not found, got '%c' instead", origin_split[0][0]);
+    if (origin_split[0].empty() || origin_split[0][0] != '[') {
+        error = strprintf("Key origin start '[ character expected but not found, got '%c' instead",
+                          origin_split[0].empty() ? /** empty, implies split char */ ']' : origin_split[0][0]);
         return nullptr;
     }
     auto slash_split = Split(origin_split[0].subspan(1), '/');
@@ -822,7 +823,7 @@ std::unique_ptr<DescriptorImpl> ParseScript(uint32_t key_exp_index, Span<const c
             providers.emplace_back(std::move(pk));
             key_exp_index++;
         }
-        if (providers.size() < 1 || providers.size() > 16) {
+        if (providers.empty() || providers.size() > 16) {
             error = strprintf("Cannot have %u keys in multisig; must have between 1 and 16 keys, inclusive", providers.size());
             return nullptr;
         } else if (thres < 1) {
@@ -892,15 +893,15 @@ std::unique_ptr<PubkeyProvider> InferPubkey(const CPubKey& pubkey, ParseScriptCo
 std::unique_ptr<DescriptorImpl> InferScript(const CScript& script, ParseScriptContext ctx, const SigningProvider& provider)
 {
     std::vector<std::vector<unsigned char>> data;
-    txnouttype txntype = Solver(script, data);
+    TxoutType txntype = Solver(script, data);
 
-    if (txntype == TX_PUBKEY) {
+    if (txntype == TxoutType::PUBKEY) {
         CPubKey pubkey(data[0].begin(), data[0].end());
         if (pubkey.IsValid()) {
             return std::make_unique<PKDescriptor>(InferPubkey(pubkey, ctx, provider));
         }
     }
-    if (txntype == TX_PUBKEYHASH) {
+    if (txntype == TxoutType::PUBKEYHASH) {
         uint160 hash(data[0]);
         CKeyID keyid(hash);
         CPubKey pubkey;
@@ -908,7 +909,7 @@ std::unique_ptr<DescriptorImpl> InferScript(const CScript& script, ParseScriptCo
             return std::make_unique<PKHDescriptor>(InferPubkey(pubkey, ctx, provider));
         }
     }
-    if (txntype == TX_MULTISIG) {
+    if (txntype == TxoutType::MULTISIG) {
         std::vector<std::unique_ptr<PubkeyProvider>> providers;
         for (size_t i = 1; i + 1 < data.size(); ++i) {
             CPubKey pubkey(data[i].begin(), data[i].end());
@@ -916,7 +917,7 @@ std::unique_ptr<DescriptorImpl> InferScript(const CScript& script, ParseScriptCo
         }
         return std::make_unique<MultisigDescriptor>((int)data[0][0], std::move(providers));
     }
-    if (txntype == TX_SCRIPTHASH && ctx == ParseScriptContext::TOP) {
+    if (txntype == TxoutType::SCRIPTHASH && ctx == ParseScriptContext::TOP) {
         uint160 hash(data[0]);
         CScriptID scriptid(hash);
         CScript subscript;

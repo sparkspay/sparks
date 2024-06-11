@@ -18,6 +18,7 @@
 #include <util/system.h>
 #include <util/translation.h>
 
+#include <cmath>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -364,6 +365,7 @@ static UniValue CallRPC(BaseRequestHandler *rh, const std::string& strMethod, co
     assert(output_headers);
     evhttp_add_header(output_headers, "Host", host.c_str());
     evhttp_add_header(output_headers, "Connection", "close");
+    evhttp_add_header(output_headers, "Content-Type", "application/json");
     evhttp_add_header(output_headers, "Authorization", (std::string("Basic ") + EncodeBase64(strRPCUserColonPass)).c_str());
 
     // Attach request data
@@ -556,7 +558,16 @@ static int CommandLineRPC(int argc, char *argv[])
     return nRet;
 }
 
+#ifdef WIN32
+// Export main() and ensure working ASLR on Windows.
+// Exporting a symbol will prevent the linker from stripping
+// the .reloc section from the binary, which is a requirement
+// for ASLR. This is a temporary workaround until a fixed
+// version of binutils is used for releases.
+__declspec(dllexport) int main(int argc, char* argv[])
+#else
 int main(int argc, char* argv[])
+#endif
 {
     RegisterPrettyTerminateHander();
     RegisterPrettySignalHandlers();

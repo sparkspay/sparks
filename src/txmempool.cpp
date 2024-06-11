@@ -17,8 +17,8 @@
 #include <util/moneystr.h>
 #include <util/time.h>
 #include <hash.h>
+#include <validationinterface.h>
 
-#include <bls/bls.h>
 #include <evo/specialtx.h>
 #include <evo/providertx.h>
 #include <evo/deterministicmns.h>
@@ -362,7 +362,6 @@ void CTxMemPool::AddTransactionsUpdated(unsigned int n)
 
 void CTxMemPool::addUnchecked(const CTxMemPoolEntry &entry, setEntries &setAncestors, bool validFeeEstimate)
 {
-    NotifyEntryAdded(entry.GetSharedTx());
     // Add to memory pool without checking anything.
     // Used by AcceptToMemoryPool(), which DOES do
     // all the appropriate checks.
@@ -443,7 +442,7 @@ void CTxMemPool::addUnchecked(const CTxMemPoolEntry &entry, setEntries &setAnces
         auto dmn = deterministicMNManager->GetListAtChainTip().GetMN(proTx.proTxHash);
         assert(dmn);
         newit->validForProTxKey = ::SerializeHash(dmn->pdmnState->pubKeyOperator);
-        if (dmn->pdmnState->pubKeyOperator.Get() != proTx.pubKeyOperator) {
+        if (dmn->pdmnState->pubKeyOperator != proTx.pubKeyOperator) {
             newit->isKeyChangeProTx = true;
         }
     } else if (tx.nType == TRANSACTION_PROVIDER_UPDATE_REVOKE) {
@@ -618,7 +617,14 @@ bool CTxMemPool::removeSpentIndex(const uint256 txhash)
 
 void CTxMemPool::removeUnchecked(txiter it, MemPoolRemovalReason reason)
 {
-    NotifyEntryRemoved(it->GetSharedTx(), reason);
+    if (reason != MemPoolRemovalReason::BLOCK) {
+        // Notify clients that a transaction has been removed from the mempool
+        // for any reason except being included in a block. Clients interested
+        // in transactions included in blocks can subscribe to the BlockConnected
+        // notification.
+        GetMainSignals().TransactionRemovedFromMempool(it->GetSharedTx(), reason);
+    }
+
     const uint256 hash = it->GetTx().GetHash();
     for (const CTxIn& txin : it->GetTx().vin)
         mapNextTx.erase(txin.prevout);
@@ -831,7 +837,7 @@ void CTxMemPool::removeProTxPubKeyConflicts(const CTransaction &tx, const CKeyID
     }
 }
 
-void CTxMemPool::removeProTxPubKeyConflicts(const CTransaction &tx, const CBLSPublicKey &pubKey)
+void CTxMemPool::removeProTxPubKeyConflicts(const CTransaction &tx, const CBLSLazyPublicKey &pubKey)
 {
     if (mapProTxBlsPubKeyHashes.count(pubKey.GetHash())) {
         uint256 conflictHash = mapProTxBlsPubKeyHashes[pubKey.GetHash()];
@@ -1294,7 +1300,7 @@ bool CTxMemPool::existsProviderTxConflict(const CTransaction &tx) const {
             return true; // i.e. failed to find validated ProTx == conflict
         }
         // only allow one operator key change in the mempool
-        if (dmn->pdmnState->pubKeyOperator.Get() != proTx.pubKeyOperator) {
+        if (dmn->pdmnState->pubKeyOperator != proTx.pubKeyOperator) {
             if (hasKeyChangeInMempool(proTx.proTxHash)) {
                 return true;
             }
@@ -1355,9 +1361,9 @@ void CTxMemPool::PrioritiseTransaction(const uint256& hash, const CAmount& nFeeD
     LogPrint(BCLog::MEMPOOL, "PrioritiseTransaction: %s feerate += %s\n", hash.ToString(), FormatMoney(nFeeDelta));
 }
 
-void CTxMemPool::ApplyDelta(const uint256 hash, CAmount &nFeeDelta) const
+void CTxMemPool::ApplyDelta(const uint256& hash, CAmount &nFeeDelta) const
 {
-    LOCK(cs);
+    AssertLockHeld(cs);
     std::map<uint256, CAmount>::const_iterator pos = mapDeltas.find(hash);
     if (pos == mapDeltas.end())
         return;
@@ -1365,9 +1371,9 @@ void CTxMemPool::ApplyDelta(const uint256 hash, CAmount &nFeeDelta) const
     nFeeDelta += delta;
 }
 
-void CTxMemPool::ClearPrioritisation(const uint256 hash)
+void CTxMemPool::ClearPrioritisation(const uint256& hash)
 {
-    LOCK(cs);
+    AssertLockHeld(cs);
     mapDeltas.erase(hash);
 }
 
@@ -1476,6 +1482,7 @@ void CTxMemPool::addUnchecked(const CTxMemPoolEntry &entry, bool validFeeEstimat
 
 void CTxMemPool::UpdateChild(txiter entry, txiter child, bool add)
 {
+    AssertLockHeld(cs);
     setEntries s;
     if (add && mapLinks[entry].children.insert(child).second) {
         cachedInnerUsage += memusage::IncrementalDynamicUsage(s);
@@ -1486,6 +1493,7 @@ void CTxMemPool::UpdateChild(txiter entry, txiter child, bool add)
 
 void CTxMemPool::UpdateParent(txiter entry, txiter parent, bool add)
 {
+    AssertLockHeld(cs);
     setEntries s;
     if (add && mapLinks[entry].parents.insert(parent).second) {
         cachedInnerUsage += memusage::IncrementalDynamicUsage(s);

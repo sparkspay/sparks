@@ -58,14 +58,15 @@ BlockAssembler::Options::Options() {
 
 BlockAssembler::BlockAssembler(const CSporkManager& sporkManager, CGovernanceManager& governanceManager,
                                const llmq::CQuorumBlockProcessor& quorumBlockProcessor, llmq::CChainLocksHandler& clhandler,
-                               llmq::CInstantSendManager& isman, const CTxMemPool& mempool, const CChainParams& params, const Options& options)
-    : spork_manager(sporkManager),
-      governance_manager(governanceManager),
-      quorum_block_processor(quorumBlockProcessor),
+                               llmq::CInstantSendManager& isman, CEvoDB& evoDb, const CTxMemPool& mempool, const CChainParams& params, const Options& options) :
       chainparams(params),
       m_mempool(mempool),
+      spork_manager(sporkManager),
+      governance_manager(governanceManager),
+      quorum_block_processor(quorumBlockProcessor),
       m_clhandler(clhandler),
-      m_isman(isman)
+      m_isman(isman),
+      m_evoDb(evoDb)
 {
     blockMinFeeRate = options.blockMinFeeRate;
     // Limit size to between 1K and MaxBlockSize()-1K for sanity:
@@ -80,19 +81,19 @@ static BlockAssembler::Options DefaultOptions()
     if (gArgs.IsArgSet("-blockmaxsize")) {
         options.nBlockMaxSize = gArgs.GetArg("-blockmaxsize", DEFAULT_BLOCK_MAX_SIZE);
     }
-    CAmount n = 0;
-    if (gArgs.IsArgSet("-blockmintxfee") && ParseMoney(gArgs.GetArg("-blockmintxfee", ""), n)) {
-        options.blockMinFeeRate = CFeeRate(n);
+    if (gArgs.IsArgSet("-blockmintxfee")) {
+        std::optional<CAmount> parsed = ParseMoney(gArgs.GetArg("-blockmintxfee", ""));
+        options.blockMinFeeRate = CFeeRate{parsed.value_or(DEFAULT_BLOCK_MIN_TX_FEE)};
     } else {
-        options.blockMinFeeRate = CFeeRate(DEFAULT_BLOCK_MIN_TX_FEE);
+        options.blockMinFeeRate = CFeeRate{DEFAULT_BLOCK_MIN_TX_FEE};
     }
     return options;
 }
 
 BlockAssembler::BlockAssembler(const CSporkManager& sporkManager, CGovernanceManager& governanceManager,
                                const llmq::CQuorumBlockProcessor& quorumBlockProcessor, llmq::CChainLocksHandler& clhandler,
-                               llmq::CInstantSendManager& isman, const CTxMemPool& mempool, const CChainParams& params)
-    : BlockAssembler(sporkManager, governanceManager, quorumBlockProcessor, clhandler, isman, mempool, params, DefaultOptions()) {}
+                               llmq::CInstantSendManager& isman, CEvoDB& evoDb, const CTxMemPool& mempool, const CChainParams& params)
+    : BlockAssembler(sporkManager, governanceManager, quorumBlockProcessor, clhandler, isman, evoDb, mempool, params, DefaultOptions()) {}
 
 void BlockAssembler::resetBlock()
 {
@@ -134,9 +135,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     bool fDIP0008Active_context = nHeight >= chainparams.GetConsensus().DIP0008Height;
 
     pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus(), chainparams.BIP9CheckMasternodesUpgraded());
-    // -regtest only: allow overriding block.nVersion with
+    // Non-mainnet only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
-    if (chainparams.MineBlocksOnDemand())
+    if (Params().NetworkIDString() != CBaseChainParams::MAIN)
         pblock->nVersion = gArgs.GetArg("-blockversion", pblock->nVersion);
 
     pblock->nTime = GetAdjustedTime();
@@ -233,7 +234,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblocktemplate->vTxSigOps[0] = GetLegacySigOpCount(*pblock->vtx[0]);
 
     CValidationState state;
-    if (!TestBlockValidity(state, m_clhandler, chainparams, *pblock, pindexPrev, false, false)) {
+    if (!TestBlockValidity(state, m_clhandler, m_evoDb, chainparams, *pblock, pindexPrev, false, false)) {
         throw std::runtime_error(strprintf("%s: TestBlockValidity failed: %s", __func__, FormatStateMessage(state)));
     }
     int64_t nTime2 = GetTimeMicros();

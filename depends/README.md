@@ -37,7 +37,7 @@ The paths are automatically configured and no other options are needed unless ta
 
 #### For macOS cross compilation
 
-    sudo apt-get install curl librsvg2-bin libtiff-tools bsdmainutils imagemagick libcap-dev libz-dev libbz2-dev python3-setuptools libtinfo5
+    sudo apt-get install curl librsvg2-bin libtiff-tools bsdmainutils cmake imagemagick libcap-dev libz-dev libbz2-dev python3-setuptools libtinfo5
 
 Note: You must obtain the macOS SDK before proceeding with a cross-compile.
 Under the depends directory, create a subdirectory named `SDKs`.
@@ -52,7 +52,7 @@ For more information, see [SDK Extraction](../contrib/macdeploy/README.md#sdk-ex
 
 Common linux dependencies:
 
-    sudo apt-get install make automake cmake curl g++-multilib libtool binutils-gold bsdmainutils pkg-config python3 patch bison
+    sudo apt-get install make automake curl g++-multilib libtool binutils-gold bsdmainutils pkg-config python3 patch bison
 
 For linux ARM cross compilation:
 
@@ -89,6 +89,10 @@ The following can be set when running make: `make FOO=bar`
 <dd>Don't download/build/cache packages needed for enabling zeromq</dd>
 <dt>NO_WALLET</dt>
 <dd>Don't download/build/cache libs needed to enable the wallet</dd>
+<dt>NO_BDB</dt>
+<dd>Don't download/build/cache BerkeleyDB</dd>
+<dt>NO_SQLITE</dt>
+<dd>Don't download/build/cache SQLite</dd>
 <dt>NO_UPNP</dt>
 <dd>Don't download/build/cache packages needed for enabling upnp</dd>
 <dt>NO_NATPMP</dt>

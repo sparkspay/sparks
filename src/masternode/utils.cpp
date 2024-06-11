@@ -15,9 +15,9 @@
 #include <util/ranges.h>
 
 
-void CMasternodeUtils::DoMaintenance(CConnman& connman)
+void CMasternodeUtils::DoMaintenance(CConnman& connman, const CMasternodeSync& mn_sync)
 {
-    if (masternodeSync == nullptr || !masternodeSync->IsBlockchainSynced()) return;
+    if (!mn_sync.IsBlockchainSynced()) return;
     if (ShutdownRequested()) return;
 
     std::vector<CDeterministicMNCPtr> vecDmns; // will be empty when no wallet
@@ -30,11 +30,11 @@ void CMasternodeUtils::DoMaintenance(CConnman& connman)
     // Don't disconnect masternode connections when we have less then the desired amount of outbound nodes
     int nonMasternodeCount = 0;
     connman.ForEachNode(CConnman::AllNodes, [&](CNode* pnode) {
-        if (!pnode->fInbound &&
+        if ((!pnode->fInbound &&
             !pnode->fFeeler &&
             !pnode->m_manual_connection &&
             !pnode->m_masternode_connection &&
-            !pnode->m_masternode_probe_connection
+            !pnode->m_masternode_probe_connection)
             ||
             // treat unverified MNs as non-MNs here
             pnode->GetVerifiedProRegTxHash().IsNull()) {

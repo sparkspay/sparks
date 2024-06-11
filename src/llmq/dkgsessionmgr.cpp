@@ -13,6 +13,7 @@
 #include <net_processing.h>
 #include <spork.h>
 #include <util/irange.h>
+#include <util/underlying.h>
 #include <validation.h>
 
 namespace llmq
@@ -23,7 +24,7 @@ static const std::string DB_ENC_CONTRIB = "qdkg_E";
 
 CDKGSessionManager::CDKGSessionManager(CConnman& _connman, CBLSWorker& _blsWorker, CDKGDebugManager& _dkgDebugManager, CQuorumBlockProcessor& _quorumBlockProcessor, CSporkManager& sporkManager, bool unitTests, bool fWipe) :
         db(std::make_unique<CDBWrapper>(unitTests ? "" : (GetDataDir() / "llmq/dkgdb"), 1 << 20, unitTests, fWipe)),
-        blsWorker(_blsWorker), connman(_connman), dkgDebugManager(_dkgDebugManager), quorumBlockProcessor(_quorumBlockProcessor),spork_manager(sporkManager)
+        blsWorker(_blsWorker), connman(_connman), spork_manager(sporkManager), dkgDebugManager(_dkgDebugManager), quorumBlockProcessor(_quorumBlockProcessor)
 {
     if (!fMasternodeMode && !utils::IsWatchQuorumsEnabled()) {
         // Regular nodes do not care about any DKG internals, bail out
@@ -34,7 +35,7 @@ CDKGSessionManager::CDKGSessionManager(CConnman& _connman, CBLSWorker& _blsWorke
 
     const Consensus::Params& consensus_params = Params().GetConsensus();
     for (const auto& params : consensus_params.llmqs) {
-        auto session_count = (params.type == consensus_params.llmqTypeDIP0024InstantSend) ? params.signingActiveQuorumCount : 1;
+        auto session_count = (params.useRotation) ? params.signingActiveQuorumCount : 1;
         for (const auto i : irange::range(session_count)) {
             dkgSessionHandlers.emplace(std::piecewise_construct,
                                        std::forward_as_tuple(params.type, i),
@@ -162,7 +163,7 @@ void CDKGSessionManager::UpdatedBlockTip(const CBlockIndex* pindexNew, bool fIni
     }
 }
 
-void CDKGSessionManager::ProcessMessage(CNode* pfrom, const CQuorumManager& quorum_manager, const std::string& msg_type, CDataStream& vRecv)
+void CDKGSessionManager::ProcessMessage(CNode& pfrom, const CQuorumManager& quorum_manager, const std::string& msg_type, CDataStream& vRecv)
 {
     static Mutex cs_indexedQuorumsCache;
     static std::map<Consensus::LLMQType, unordered_lru_cache<uint256, int, StaticSaltedHasher>> indexedQuorumsCache GUARDED_BY(cs_indexedQuorumsCache);
@@ -179,13 +180,13 @@ void CDKGSessionManager::ProcessMessage(CNode* pfrom, const CQuorumManager& quor
     }
 
     if (msg_type == NetMsgType::QWATCH) {
-        pfrom->qwatch = true;
+        pfrom.qwatch = true;
         return;
     }
 
     if (vRecv.empty()) {
         LOCK(cs_main);
-        Misbehaving(pfrom->GetId(), 100);
+        Misbehaving(pfrom.GetId(), 100);
         return;
     }
 
@@ -199,8 +200,8 @@ void CDKGSessionManager::ProcessMessage(CNode* pfrom, const CQuorumManager& quor
     const auto& llmq_params_opt = GetLLMQParams(llmqType);
     if (!llmq_params_opt.has_value()) {
         LOCK(cs_main);
-        LogPrintf("CDKGSessionManager -- invalid llmqType [%d]\n", uint8_t(llmqType));
-        Misbehaving(pfrom->GetId(), 100);
+        LogPrintf("CDKGSessionManager -- invalid llmqType [%d]\n", ToUnderlying(llmqType));
+        Misbehaving(pfrom.GetId(), 100);
         return;
     }
     const auto& llmq_params = llmq_params_opt.value();
@@ -223,14 +224,14 @@ void CDKGSessionManager::ProcessMessage(CNode* pfrom, const CQuorumManager& quor
             LOCK(cs_main);
             LogPrintf("CDKGSessionManager -- unknown quorumHash %s\n", quorumHash.ToString());
             // NOTE: do not insta-ban for this, we might be lagging behind
-            Misbehaving(pfrom->GetId(), 10);
+            Misbehaving(pfrom.GetId(), 10);
             return;
         }
 
         if (!utils::IsQuorumTypeEnabled(llmqType, quorum_manager, pQuorumBaseBlockIndex->pprev)) {
             LOCK(cs_main);
-            LogPrintf("CDKGSessionManager -- llmqType [%d] quorums aren't active\n", uint8_t(llmqType));
-            Misbehaving(pfrom->GetId(), 100);
+            LogPrintf("CDKGSessionManager -- llmqType [%d] quorums aren't active\n", ToUnderlying(llmqType));
+            Misbehaving(pfrom.GetId(), 100);
             return;
         }
 
@@ -241,14 +242,14 @@ void CDKGSessionManager::ProcessMessage(CNode* pfrom, const CQuorumManager& quor
         if (quorumIndex > quorumIndexMax) {
             LOCK(cs_main);
             LogPrintf("CDKGSessionManager -- invalid quorumHash %s\n", quorumHash.ToString());
-            Misbehaving(pfrom->GetId(), 100);
+            Misbehaving(pfrom.GetId(), 100);
             return;
         }
 
         if (!dkgSessionHandlers.count(std::make_pair(llmqType, quorumIndex))) {
             LOCK(cs_main);
             LogPrintf("CDKGSessionManager -- no session handlers for quorumIndex [%d]\n", quorumIndex);
-            Misbehaving(pfrom->GetId(), 100);
+            Misbehaving(pfrom.GetId(), 100);
             return;
         }
     }
@@ -463,9 +464,9 @@ void CDKGSessionManager::CleanupOldContributions() const
 
     for (const auto& params : Params().GetConsensus().llmqs) {
         // For how many blocks recent DKG info should be kept
-        const size_t MAX_STORE_DEPTH = 2 * params.signingActiveQuorumCount * params.dkgInterval;
+        const int MAX_STORE_DEPTH = 2 * params.signingActiveQuorumCount * params.dkgInterval;
 
-        LogPrint(BCLog::LLMQ, "CDKGSessionManager::%s -- looking for old entries for llmq type %d\n", __func__, uint8_t(params.type));
+        LogPrint(BCLog::LLMQ, "CDKGSessionManager::%s -- looking for old entries for llmq type %d\n", __func__, ToUnderlying(params.type));
 
         CDBBatch batch(*db);
         size_t cnt_old{0}, cnt_all{0};

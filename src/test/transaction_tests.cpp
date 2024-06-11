@@ -24,8 +24,6 @@
 #include <map>
 #include <string>
 
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <univalue.h>
@@ -57,8 +55,7 @@ unsigned int ParseScriptFlags(std::string strFlags)
         return 0;
     }
     unsigned int flags = 0;
-    std::vector<std::string> words;
-    boost::algorithm::split(words, strFlags, boost::algorithm::is_any_of(","));
+    std::vector<std::string> words = SplitString(strFlags, ',');
 
     for (const std::string& word : words)
     {
@@ -258,8 +255,8 @@ BOOST_AUTO_TEST_CASE(basic_transaction_tests)
 //
 // Helper: create two dummy transactions, each with
 // two outputs.  The first has 11 and 50 CENT outputs
-// paid to a TX_PUBKEY, the second 21 and 22 CENT outputs
-// paid to a TX_PUBKEYHASH.
+// paid to a TxoutType::PUBKEY, the second 21 and 22 CENT outputs
+// paid to a TxoutType::PUBKEYHASH.
 //
 static std::vector<CMutableTransaction>
 SetupDummyInputs(FillableSigningProvider& keystoreRet, CCoinsViewCache& coinsRet)
@@ -285,9 +282,9 @@ SetupDummyInputs(FillableSigningProvider& keystoreRet, CCoinsViewCache& coinsRet
 
     dummyTransactions[1].vout.resize(2);
     dummyTransactions[1].vout[0].nValue = 21*CENT;
-    dummyTransactions[1].vout[0].scriptPubKey = GetScriptForDestination(key[2].GetPubKey().GetID());
+    dummyTransactions[1].vout[0].scriptPubKey = GetScriptForDestination(PKHash(key[2].GetPubKey()));
     dummyTransactions[1].vout[1].nValue = 22*CENT;
-    dummyTransactions[1].vout[1].scriptPubKey = GetScriptForDestination(key[3].GetPubKey().GetID());
+    dummyTransactions[1].vout[1].scriptPubKey = GetScriptForDestination(PKHash(key[3].GetPubKey()));
     AddCoins(coinsRet, CTransaction(dummyTransactions[1]), 0);
 
     return dummyTransactions;
@@ -336,7 +333,7 @@ BOOST_AUTO_TEST_CASE(test_IsStandard)
     t.vout[0].nValue = 90*CENT;
     CKey key;
     key.MakeNewKey(true);
-    t.vout[0].scriptPubKey = GetScriptForDestination(key.GetPubKey().GetID());
+    t.vout[0].scriptPubKey = GetScriptForDestination(PKHash(key.GetPubKey()));
 
     std::string reason;
     BOOST_CHECK(IsStandardTx(CTransaction(t), reason));
@@ -396,12 +393,12 @@ BOOST_AUTO_TEST_CASE(test_IsStandard)
     BOOST_CHECK(!IsStandardTx(CTransaction(t), reason));
     BOOST_CHECK_EQUAL(reason, "scriptpubkey");
 
-    // MAX_OP_RETURN_RELAY-byte TX_NULL_DATA (standard)
+    // MAX_OP_RETURN_RELAY-byte TxoutType::NULL_DATA (standard)
     t.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
     BOOST_CHECK_EQUAL(MAX_OP_RETURN_RELAY, t.vout[0].scriptPubKey.size());
     BOOST_CHECK(IsStandardTx(CTransaction(t), reason));
 
-    // MAX_OP_RETURN_RELAY+1-byte TX_NULL_DATA (non-standard)
+    // MAX_OP_RETURN_RELAY+1-byte TxoutType::NULL_DATA (non-standard)
     t.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3800");
     BOOST_CHECK_EQUAL(MAX_OP_RETURN_RELAY + 1, t.vout[0].scriptPubKey.size());
     reason.clear();
@@ -425,12 +422,12 @@ BOOST_AUTO_TEST_CASE(test_IsStandard)
     BOOST_CHECK(!IsStandardTx(CTransaction(t), reason));
     BOOST_CHECK_EQUAL(reason, "scriptpubkey");
 
-    // TX_NULL_DATA w/o PUSHDATA
+    // TxoutType::NULL_DATA w/o PUSHDATA
     t.vout.resize(1);
     t.vout[0].scriptPubKey = CScript() << OP_RETURN;
     BOOST_CHECK(IsStandardTx(CTransaction(t), reason));
 
-    // Only one TX_NULL_DATA permitted in all cases
+    // Only one TxoutType::NULL_DATA permitted in all cases
     t.vout.resize(2);
     t.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
     t.vout[0].nValue = 0;
@@ -455,7 +452,7 @@ BOOST_AUTO_TEST_CASE(test_IsStandard)
     // Check large scriptSig (non-standard if size is >1650 bytes)
     t.vout.resize(1);
     t.vout[0].nValue = MAX_MONEY;
-    t.vout[0].scriptPubKey = GetScriptForDestination(key.GetPubKey().GetID());
+    t.vout[0].scriptPubKey = GetScriptForDestination(PKHash(key.GetPubKey()));
     // OP_PUSHDATA2 with len (3 bytes) + data (1647 bytes) = 1650 bytes
     t.vin[0].scriptSig = CScript() << std::vector<unsigned char>(1647, 0); // 1650
     BOOST_CHECK(IsStandardTx(CTransaction(t), reason));
@@ -475,6 +472,7 @@ BOOST_AUTO_TEST_CASE(test_IsStandard)
     reason.clear();
     BOOST_CHECK(!IsStandardTx(CTransaction(t), reason));
     BOOST_CHECK_EQUAL(reason, "bare-multisig");
+    fIsBareMultisigStd = DEFAULT_PERMIT_BAREMULTISIG;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

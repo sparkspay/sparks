@@ -70,9 +70,12 @@ class ToolWalletTest(BitcoinTestFramework):
         self.assert_raises_tool_error('Error: two methods provided (info and create). Only one method should be provided.', 'info', 'create')
         self.assert_raises_tool_error('Error parsing command line arguments: Invalid parameter -foo', '-foo')
         locked_dir = os.path.join(self.options.tmpdir, "node0", "regtest", "wallets")
+        error = "SQLiteDatabase: Unable to obtain an exclusive lock on the database, is it being used by another dashd?"
+        if self.is_bdb_compiled():
+            error = 'Error initializing wallet database environment "{}"!'.format(locked_dir)
         self.assert_raises_tool_error(
-            'Error initializing wallet database environment "{}"!'.format(locked_dir),
-            '-wallet=wallet.dat',
+            error,
+            '-wallet=' + self.default_wallet_name,
             'info',
         )
         path = os.path.join(self.options.tmpdir, "node0", "regtest", "wallets", "nonexistent.dat")
@@ -103,7 +106,7 @@ class ToolWalletTest(BitcoinTestFramework):
             Transactions: 0
             Address Book: 1
         ''')
-        self.assert_tool_output(out, '-wallet=wallet.dat', 'info')
+        self.assert_tool_output(out, '-wallet=' + self.default_wallet_name, 'info')
 
         self.start_node(0)
         self.nodes[0].upgradetohd()
@@ -118,7 +121,7 @@ class ToolWalletTest(BitcoinTestFramework):
             Transactions: 0
             Address Book: 1
         ''')
-        self.assert_tool_output(out, '-wallet=wallet.dat', 'info')
+        self.assert_tool_output(out, '-wallet=' + self.default_wallet_name, 'info')
         timestamp_after = self.wallet_timestamp()
         self.log.debug('Wallet file timestamp after calling info: {}'.format(timestamp_after))
         self.log_wallet_timestamp_comparison(timestamp_before, timestamp_after)
@@ -157,7 +160,7 @@ class ToolWalletTest(BitcoinTestFramework):
             Transactions: 1
             Address Book: 1
         ''')
-        self.assert_tool_output(out, '-wallet=wallet.dat', 'info')
+        self.assert_tool_output(out, '-wallet=' + self.default_wallet_name, 'info')
         shasum_after = self.wallet_shasum()
         timestamp_after = self.wallet_timestamp()
         self.log.debug('Wallet file timestamp after calling info: {}'.format(timestamp_after))
@@ -195,7 +198,7 @@ class ToolWalletTest(BitcoinTestFramework):
 
     def test_getwalletinfo_on_different_wallet(self):
         self.log.info('Starting node with arg -wallet=foo')
-        self.start_node(0, ['-wallet=foo'])
+        self.start_node(0, ['-nowallet', '-wallet=foo'])
 
         self.log.info('Calling getwalletinfo on a different wallet ("foo"), testing output')
         shasum_before = self.wallet_shasum()
@@ -219,20 +222,48 @@ class ToolWalletTest(BitcoinTestFramework):
     def test_salvage(self):
         # TODO: Check salvage actually salvages and doesn't break things. https://github.com/bitcoin/bitcoin/issues/7463
         self.log.info('Check salvage')
-        self.start_node(0, ['-wallet=salvage'])
+        self.start_node(0)
+        self.nodes[0].createwallet("salvage")
         self.stop_node(0)
 
         self.assert_tool_output('', '-wallet=salvage', 'salvage')
 
+    def test_wipe(self):
+        out = textwrap.dedent('''\
+            Wallet info
+            ===========
+            Encrypted: no
+            HD (hd seed available): yes
+            Keypool Size: 2
+            Transactions: 1
+            Address Book: 1
+        ''')
+        self.assert_tool_output(out, '-wallet=' + self.default_wallet_name, 'info')
+
+        self.assert_tool_output('', '-wallet=' + self.default_wallet_name, 'wipetxes')
+
+        out = textwrap.dedent('''\
+            Wallet info
+            ===========
+            Encrypted: no
+            HD (hd seed available): yes
+            Keypool Size: 2
+            Transactions: 0
+            Address Book: 1
+        ''')
+        self.assert_tool_output(out, '-wallet=' + self.default_wallet_name, 'info')
+
     def run_test(self):
-        self.wallet_path = os.path.join(self.nodes[0].datadir, self.chain, 'wallets', 'wallet.dat')
+        self.wallet_path = os.path.join(self.nodes[0].datadir, self.chain, 'wallets', self.default_wallet_name, self.wallet_data_filename)
         self.test_invalid_tool_commands_and_args()
         # Warning: The following tests are order-dependent.
         self.test_tool_wallet_info()
         self.test_tool_wallet_info_after_transaction()
         self.test_tool_wallet_create_on_existing_wallet()
         self.test_getwalletinfo_on_different_wallet()
-        self.test_salvage()
+        if self.is_bdb_compiled():
+            self.test_salvage()
+            self.test_wipe()
 
 if __name__ == '__main__':
     ToolWalletTest().main()

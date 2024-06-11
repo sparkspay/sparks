@@ -24,6 +24,7 @@ class CBlockIndex;
 class CScheduler;
 class CTxMemPool;
 class CSporkManager;
+class CMasternodeSync;
 
 namespace llmq
 {
@@ -45,6 +46,7 @@ private:
     CSporkManager& spork_manager;
     CSigningManager& sigman;
     CSigSharesManager& shareman;
+    const std::unique_ptr<CMasternodeSync>& m_mn_sync;
     std::unique_ptr<CScheduler> scheduler;
     std::unique_ptr<std::thread> scheduler_thread;
     mutable CCriticalSection cs;
@@ -77,7 +79,7 @@ private:
     int64_t lastCleanupTime GUARDED_BY(cs) {0};
 
 public:
-    explicit CChainLocksHandler(CTxMemPool& _mempool, CConnman& _connman, CSporkManager& sporkManager, CSigningManager& _sigman, CSigSharesManager& _shareman);
+    explicit CChainLocksHandler(CTxMemPool& _mempool, CConnman& _connman, CSporkManager& sporkManager, CSigningManager& _sigman, CSigSharesManager& _shareman, const std::unique_ptr<CMasternodeSync>& mn_sync);
     ~CChainLocksHandler();
 
     void Start();
@@ -87,12 +89,12 @@ public:
     bool GetChainLockByHash(const uint256& hash, CChainLockSig& ret) const;
     CChainLockSig GetBestChainLock() const;
 
-    void ProcessMessage(CNode* pfrom, const std::string& msg_type, CDataStream& vRecv);
+    void ProcessMessage(const CNode& pfrom, const std::string& msg_type, CDataStream& vRecv);
     void ProcessNewChainLock(NodeId from, const CChainLockSig& clsig, const uint256& hash);
     void AcceptedBlockHeader(const CBlockIndex* pindexNew);
     void UpdatedBlockTip();
     void TransactionAddedToMempool(const CTransactionRef& tx, int64_t nAcceptTime);
-    void BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex, const std::vector<CTransactionRef>& vtxConflicted);
+    void BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex);
     void BlockDisconnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexDisconnected);
     void CheckActiveState();
     void TrySignChainTip();
@@ -117,6 +119,7 @@ private:
 extern std::unique_ptr<CChainLocksHandler> chainLocksHandler;
 
 bool AreChainLocksEnabled(const CSporkManager& sporkManager);
+bool ChainLocksSigningEnabled(const CSporkManager& sporkManager);
 
 } // namespace llmq
 

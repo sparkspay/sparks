@@ -18,6 +18,7 @@ class CTxMemPool;
 class ChainstateManager;
 struct LLMQContext;
 class PeerLogicValidation;
+class CEvoDB;
 namespace interfaces {
 class Chain;
 class ChainClient;
@@ -36,7 +37,7 @@ class WalletClient;
 //! be used without pulling in unwanted dependencies or functionality.
 struct NodeContext {
     std::unique_ptr<CConnman> connman;
-    CTxMemPool* mempool{nullptr}; // Currently a raw pointer because the memory is not managed by this struct
+    std::unique_ptr<CTxMemPool> mempool;
     std::unique_ptr<PeerLogicValidation> peer_logic;
     ChainstateManager* chainman{nullptr}; // Currently a raw pointer because the memory is not managed by this struct
     std::unique_ptr<BanMan> banman;
@@ -51,6 +52,8 @@ struct NodeContext {
     std::function<void()> rpc_interruption_point = [] {};
     //! Sparks
     std::unique_ptr<LLMQContext> llmq_ctx;
+
+    std::unique_ptr<CEvoDB> evodb;
 
     //! Declare default constructor and destructor that are not inline, so code
     //! instantiating the NodeContext struct doesn't need to #include class

@@ -18,6 +18,10 @@ class HTTPBasicsTest(BitcoinTestFramework):
         self.num_nodes = 1
         self.supports_cli = False
 
+    def setup_nodes(self):
+        self.add_nodes(self.num_nodes)
+        self.start_nodes()
+
     def setup_chain(self):
         super().setup_chain()
         # Append rpcauth to sparks.conf before initialization
@@ -36,7 +40,6 @@ class HTTPBasicsTest(BitcoinTestFramework):
             f.write(rpcauthoperator+"\n")
 
     def run_test(self):
-
         url = urllib.parse.urlparse(self.nodes[0].url)
 
         def test_command(method, params, auth, expexted_status, should_not_match=False):
@@ -84,8 +87,8 @@ class HTTPBasicsTest(BitcoinTestFramework):
         test_command("getblockhash", [0], rpcuser_authpair_platform, 200)
         test_command("getblockcount", [], rpcuser_authpair_platform, 200)
         test_command("getbestchainlock", [], rpcuser_authpair_platform, 500)
-        test_command("quorum", ["sign", 100], rpcuser_authpair_platform, 500)
-        test_command("quorum", ["sign", 100, "0000000000000000000000000000000000000000000000000000000000000000",
+        test_command("quorum", ["sign", 106], rpcuser_authpair_platform, 500)
+        test_command("quorum", ["sign", 106, "0000000000000000000000000000000000000000000000000000000000000000",
                                 "0000000000000000000000000000000000000000000000000000000000000001"],
                                 rpcuser_authpair_platform, 200)
         test_command("quorum", ["verify"], rpcuser_authpair_platform, 500)
