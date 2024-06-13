@@ -117,7 +117,7 @@ static_assert(std::is_trivially_copyable_v<Consensus::LLMQParams>, "LLMQParams i
 static_assert(std::is_trivially_assignable_v<Consensus::LLMQParams, Consensus::LLMQParams>, "LLMQParams is not trivially assignable");
 
 
-static constexpr std::array<LLMQParams, 15> available_llmqs = {
+static constexpr std::array<LLMQParams, 17> available_llmqs = {
 
     /**
      * llmq_test

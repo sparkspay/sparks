@@ -245,9 +245,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nThresholdStart = 60; // 60% of 100
 
         // Deployment of Deployment of Basic BLS, AssetLocks, EHF
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].bit = 8;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nStartTime = 1686700800;     // Wednesday, June 14, 2023 12:00:00 AM
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nTimeout = 1718323200;       // Friday, June 14, 2024 12:00:00 AM
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].bit = 11;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nStartTime = 1749721906;//1686700800     // Wednesday, June 14, 2023 12:00:00 AM
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nTimeout = 999999999999ULL;//1718323200       // Friday, June 14, 2024 12:00:00 AM
         consensus.vDeployments[Consensus::DEPLOYMENT_V19].nWindowSize = 4032;
         consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdStart = 3226;       // 80% of 4032
         consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdMin = 2420;         // 60% of 4032
@@ -521,12 +521,12 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nFalloffCoeff = 5;      // this corresponds to 10 periods
 
         // Deployment of Deployment of Basic BLS, AssetLocks, EHF
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].bit = 8;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nStartTime = 1678838400;     // Wed, March 15, 2023 0:00:00
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].bit = 11;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nStartTime = 1749721906;//1678838400     // Wed, March 15, 2023 0:00:00
         consensus.vDeployments[Consensus::DEPLOYMENT_V19].nTimeout = 999999999999ULL;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nWindowSize = 100;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdStart = 80;         // 80% of 100
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdMin = 60;           // 60% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nWindowSize = 10;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdStart = 8;         // 80% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdMin = 6;           // 60% of 100
         consensus.vDeployments[Consensus::DEPLOYMENT_V19].nFalloffCoeff = 5;            // this corresponds to 10 periods
 
         // The best chain should have at least this much work.

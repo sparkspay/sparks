@@ -1446,9 +1446,9 @@ bool IsInputBanned(const Params& consensusParams, const CTxIn& input, const CTxO
     // Determine script type
     const CScript& prevScript = prev.scriptPubKey;
     std::vector<std::vector<unsigned char> > vSolutions;
-    txnouttype whichType = Solver(prevScript, vSolutions);
+    TxoutType whichType = Solver(prevScript, vSolutions);
 
-    if (whichType == TX_NONSTANDARD)
+    if (whichType == TxoutType::NONSTANDARD)
     {
         LogPrintf("IsInputBanned() : Solver returned false\n");
         return true;
@@ -1457,7 +1457,7 @@ bool IsInputBanned(const Params& consensusParams, const CTxIn& input, const CTxO
 
     // Evaluate P2PKH script
     // <sig> <pubkey>
-    if (whichType == TX_PUBKEYHASH)
+    if (whichType == TxoutType::PUBKEYHASH)
     {
         std::vector<std::vector<unsigned char> > stack;
         if (!EvalScript(stack, input.scriptSig, SCRIPT_VERIFY_P2SH, BaseSignatureChecker(), SigVersion::BASE))
@@ -1481,9 +1481,10 @@ bool IsInputBanned(const Params& consensusParams, const CTxIn& input, const CTxO
         // Check address against blacklist
         for(std::string bannedAddress : consensusParams.vBannedAddresses)
         {
-            if (EncodeDestination(pubkey.GetID()) == bannedAddress)
+            PKHash pkhash = PKHash(Hash160(prev.scriptPubKey.begin()+1, prev.scriptPubKey.end()-1));
+            if (EncodeDestination(pkhash) == bannedAddress)
             {
-                LogPrintf("IsInputBanned() : sender address %s is BANNED\n", EncodeDestination(pubkey.GetID()));
+                LogPrintf("IsInputBanned() : sender address %s is BANNED\n", EncodeDestination(pkhash));
                 return true;
             }
         }
