@@ -1331,6 +1331,10 @@ std::string CopyrightHolders(const std::string& strPrefix, unsigned int nStartYe
     if (copyright_devs.find("Sparks Core") == std::string::npos) {
         strCopyrightHolders += "\n" + strPrefix + strprintf(" %u-%u ", 2014, nEndYear) + "The Sparks Core developers";
     }
+    // Check for untranslated substitution to make sure Dash Core copyright is not removed by accident
+    if (copyright_devs.find("Dash Core") == std::string::npos) {
+        strCopyrightHolders += "\n" + strPrefix + strprintf(" %u-%u ", 2014, nEndYear) + "The Dash Core developers";
+    }
     // Check for untranslated substitution to make sure Bitcoin Core copyright is not removed by accident
     if (copyright_devs.find("Bitcoin Core") == std::string::npos) {
         strCopyrightHolders += "\n" + strPrefix + strprintf(" %u-%u ", 2009, nEndYear) + "The Bitcoin Core developers";
