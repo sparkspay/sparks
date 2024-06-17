@@ -11,7 +11,7 @@
 #include <util/strencodings.h>
 #include <util/ranges.h>
 
-// bls-sparks uses relic, which may define DEBUG and ERROR, which leads to many warnings in some build setups
+// bls-dash uses relic, which may define DEBUG and ERROR, which leads to many warnings in some build setups
 #undef ERROR
 #undef DEBUG
 #include <dashbls/bls.hpp>
