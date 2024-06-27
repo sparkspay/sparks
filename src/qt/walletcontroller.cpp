@@ -302,11 +302,27 @@ void OpenWalletActivity::open(const std::string& path)
         if (wallet) {
             m_wallet_model = m_wallet_controller->getOrCreateWallet(std::move(wallet));
 
+            std::set<COutPoint> setOutpts;
+            std::vector<COutPoint> vOutpts;
+            m_wallet_model->wallet().listProTxCoins(vOutpts);
+            for (const auto& outpt : vOutpts) {
+                setOutpts.emplace(outpt);
+            }
+
             //Lock masternode collatarels
             auto mnList = deterministicMNManager->GetListAtChainTip();
             // Iterate through the masternode list using a for loop
             mnList.ForEachMN(false, [&](auto& dmn) {
-                m_wallet_model->wallet().lockCoin(dmn.collateralOutpoint);
+                //Check is my masternode
+                bool fMyMasternode = setOutpts.count(dmn.collateralOutpoint) ||
+                m_wallet_model->wallet().isSpendable(PKHash(dmn.pdmnState->keyIDOwner)) ||
+                m_wallet_model->wallet().isSpendable(PKHash(dmn.pdmnState->keyIDVoting)) ||
+                m_wallet_model->wallet().isSpendable(dmn.pdmnState->scriptPayout) ||
+                m_wallet_model->wallet().isSpendable(dmn.pdmnState->scriptOperatorPayout);
+
+                if (fMyMasternode) {
+                    m_wallet_model->wallet().lockCoin(dmn.collateralOutpoint);
+                }
             });
         }
 
