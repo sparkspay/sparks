@@ -7,6 +7,7 @@
 #include <qt/guiconstants.h>
 #include <qt/guiutil.h>
 #include <qt/walletcontroller.h>
+#include <evo/deterministicmns.h>
 
 #include <wallet/wallet.h>
 
@@ -298,7 +299,16 @@ void OpenWalletActivity::open(const std::string& path)
     QTimer::singleShot(0, worker(), [this, path] {
         std::unique_ptr<interfaces::Wallet> wallet = node().walletClient().loadWallet(path, m_error_message, m_warning_message);
 
-        if (wallet) m_wallet_model = m_wallet_controller->getOrCreateWallet(std::move(wallet));
+        if (wallet) {
+            m_wallet_model = m_wallet_controller->getOrCreateWallet(std::move(wallet));
+
+            //Lock masternode collatarels
+            auto mnList = deterministicMNManager->GetListAtChainTip();
+            // Iterate through the masternode list using a for loop
+            mnList.ForEachMN(false, [&](auto& dmn) {
+                m_wallet_model->wallet().lockCoin(dmn.collateralOutpoint);
+            });
+        }
 
         QTimer::singleShot(0, this, &OpenWalletActivity::finish);
     });
