@@ -318,7 +318,7 @@ void OpenWalletActivity::open(const std::string& path)
                 m_wallet_model->wallet().isSpendable(PKHash(dmn.pdmnState->keyIDOwner)) ||
                 m_wallet_model->wallet().isSpendable(PKHash(dmn.pdmnState->keyIDVoting)) ||
                 m_wallet_model->wallet().isSpendable(dmn.pdmnState->scriptPayout) ||
-                m_wallet_model->wallet().isSpendable(dmn.pdmnState->scriptOperatorPayout);cle
+                m_wallet_model->wallet().isSpendable(dmn.pdmnState->scriptOperatorPayout);
 
                 if (fMyMasternode) {
                     m_wallet_model->wallet().lockCoin(dmn.collateralOutpoint);
