@@ -315,10 +315,10 @@ void OpenWalletActivity::open(const std::string& path)
             mnList.ForEachMN(false, [&](auto& dmn) {
                 //Check is my masternode
                 bool fMyMasternode = setOutpts.count(dmn.collateralOutpoint) ||
-                    m_wallet_model->wallet().isSpendable(dmn.pdmnState->keyIDOwner) ||
-                    m_wallet_model->wallet().isSpendable(dmn.pdmnState->keyIDVoting) ||
-                    m_wallet_model->wallet().isSpendable(dmn.pdmnState->scriptPayout) ||
-                    m_wallet_model->wallet().isSpendable(dmn.pdmnState->scriptOperatorPayout);
+                m_wallet_model->wallet().isSpendable(PKHash(dmn.pdmnState->keyIDOwner)) ||
+                m_wallet_model->wallet().isSpendable(PKHash(dmn.pdmnState->keyIDVoting)) ||
+                m_wallet_model->wallet().isSpendable(dmn.pdmnState->scriptPayout) ||
+                m_wallet_model->wallet().isSpendable(dmn.pdmnState->scriptOperatorPayout);cle
 
                 if (fMyMasternode) {
                     m_wallet_model->wallet().lockCoin(dmn.collateralOutpoint);
