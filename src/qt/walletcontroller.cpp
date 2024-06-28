@@ -7,6 +7,7 @@
 #include <qt/guiconstants.h>
 #include <qt/guiutil.h>
 #include <qt/walletcontroller.h>
+#include <evo/deterministicmns.h>
 
 #include <wallet/wallet.h>
 
@@ -298,7 +299,32 @@ void OpenWalletActivity::open(const std::string& path)
     QTimer::singleShot(0, worker(), [this, path] {
         std::unique_ptr<interfaces::Wallet> wallet = node().walletClient().loadWallet(path, m_error_message, m_warning_message);
 
-        if (wallet) m_wallet_model = m_wallet_controller->getOrCreateWallet(std::move(wallet));
+        if (wallet) {
+            m_wallet_model = m_wallet_controller->getOrCreateWallet(std::move(wallet));
+
+            std::set<COutPoint> setOutpts;
+            std::vector<COutPoint> vOutpts;
+            m_wallet_model->wallet().listProTxCoins(vOutpts);
+            for (const auto& outpt : vOutpts) {
+                setOutpts.emplace(outpt);
+            }
+
+            //Lock masternode collatarels
+            auto mnList = deterministicMNManager->GetListAtChainTip();
+            // Iterate through the masternode list using a for loop
+            mnList.ForEachMN(false, [&](auto& dmn) {
+                //Check is my masternode
+                bool fMyMasternode = setOutpts.count(dmn.collateralOutpoint) ||
+                    m_wallet_model->wallet().isSpendable(dmn.pdmnState->keyIDOwner) ||
+                    m_wallet_model->wallet().isSpendable(dmn.pdmnState->keyIDVoting) ||
+                    m_wallet_model->wallet().isSpendable(dmn.pdmnState->scriptPayout) ||
+                    m_wallet_model->wallet().isSpendable(dmn.pdmnState->scriptOperatorPayout);
+
+                if (fMyMasternode) {
+                    m_wallet_model->wallet().lockCoin(dmn.collateralOutpoint);
+                }
+            });
+        }
 
         QTimer::singleShot(0, this, &OpenWalletActivity::finish);
     });
