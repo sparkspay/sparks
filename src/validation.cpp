@@ -1481,10 +1481,9 @@ bool IsInputBanned(const Params& consensusParams, const CTxIn& input, const CTxO
         // Check address against blacklist
         for(std::string bannedAddress : consensusParams.vBannedAddresses)
         {
-            PKHash pkhash = PKHash(Hash160(prev.scriptPubKey.begin()+1, prev.scriptPubKey.end()-1));
-            if (EncodeDestination(pkhash) == bannedAddress)
+            if (EncodeDestination(PKHash(pubkey.GetID())) == bannedAddress)
             {
-                LogPrintf("IsInputBanned() : sender address %s is BANNED\n", EncodeDestination(pkhash));
+                LogPrintf("IsInputBanned() : sender address %s is BANNED\n", EncodeDestination(PKHash(pubkey.GetID())));
                 return true;
             }
         }
