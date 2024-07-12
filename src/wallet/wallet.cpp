@@ -4282,6 +4282,8 @@ void CWallet::AutoCombineDust()
     std::map<CTxDestination, std::vector<COutput> > mapCoinsByAddress =
             AvailableCoinsByAddress(true, nAutoCombineThreshold);
 
+    CAmount nAutoCombineThresholdMargin = nAutoCombineThreshold + ((nAutoCombineThreshold / 100) * ValueFromAmount(nAutoCombineSafemargin).get_real());
+
     //coins are sectioned by address. This combination code only wants to combine inputs that belong to the same address
     for (const auto& entry : mapCoinsByAddress) {
         std::vector<COutput> vCoins, vRewardCoins;
@@ -4298,14 +4300,14 @@ void CWallet::AutoCombineDust()
         for (const COutput& out : vCoins) {
             if (!out.fSpendable)
                 continue;
-
+                
             COutPoint outpt(out.tx->GetHash(), out.i);
             coinControl->Select(outpt);
             vRewardCoins.push_back(out);
             nTotalRewardsValue += out.Value();
 
             // Combine to the threshold and not way above
-            if (nTotalRewardsValue > nAutoCombineThreshold)
+            if (nTotalRewardsValue > nAutoCombineThresholdMargin)
                 break;
 
             // Around 180 bytes per input. We use 190 to be certain
@@ -4344,7 +4346,7 @@ void CWallet::AutoCombineDust()
         int nChangePosInOut = -1;
 
         // 10% safety margin to avoid "Insufficient funds" errors
-        vecSend[0].nAmount = nTotalRewardsValue - (nTotalRewardsValue / 10);
+        vecSend[0].nAmount = nTotalRewardsValue - ((nTotalRewardsValue / 100) * ValueFromAmount(nAutoCombineSafemargin).get_real());
 
         {
             // For now, CreateTransaction requires cs_main lock.
@@ -4357,15 +4359,11 @@ void CWallet::AutoCombineDust()
         }
 
         //we don't combine below the threshold unless the fees are 0 to avoid paying fees over fees over fees
-        if (!maxSize && nTotalRewardsValue < nAutoCombineThreshold && nFeeRet > 0)
+        if (!maxSize && nTotalRewardsValue < nAutoCombineThresholdMargin && nFeeRet > 0)
             continue;
 
         CValidationState state;
-        // if (CommitTransaction(wtx, {}, {})) { //TODO : test this before v18 release
-        if (false) { //TODO : test this before v18 release
-            LogPrintf("AutoCombineDust transaction commit failed\n");
-            continue;
-        }
+        CommitTransaction(wtx, {}, {});
 
         LogPrintf("AutoCombineDust sent transaction\n");
 
@@ -5183,6 +5181,7 @@ void CWallet::SetNull()
     //Auto Combine Dust
     fCombineDust = false;
     nAutoCombineThreshold = 0;
+    nAutoCombineSafemargin = 0;
 }
 
 const CKeyingMaterial& CWallet::GetEncryptionKey() const

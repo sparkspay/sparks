@@ -807,6 +807,7 @@ public:
     //Auto Combine Inputs
     bool fCombineDust;
     CAmount nAutoCombineThreshold;
+    CAmount nAutoCombineSafemargin;
 
     /** Construct wallet with specified name and database implementation. */
     CWallet(interfaces::Chain* chain, const std::string& name, std::unique_ptr<WalletDatabase> database)

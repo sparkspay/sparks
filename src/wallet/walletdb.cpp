@@ -170,11 +170,12 @@ bool WalletBatch::ReadBestBlock(CBlockLocator& locator)
     return m_batch->Read(DBKeys::BESTBLOCK_NOMERKLE, locator);
 }
 
-bool WalletBatch::WriteAutoCombineSettings(bool fEnable, CAmount nCombineThreshold)
+bool WalletBatch::WriteAutoCombineSettings(bool fEnable, CAmount nCombineThreshold, CAmount nCombineSafemargin)
 {
-    std::pair<bool, CAmount> pSettings;
+    std::pair<bool, std::pair<CAmount, CAmount>> pSettings;
     pSettings.first = fEnable;
-    pSettings.second = nCombineThreshold;
+    pSettings.second.first = nCombineThreshold;
+    pSettings.second.second = nCombineSafemargin;
     return WriteIC(std::string("autocombinesettings"), pSettings, true);
 }
 
@@ -431,10 +432,11 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         }
         else if (strType == "autocombinesettings")
         {
-            std::pair<bool, CAmount> pSettings;
+            std::pair<bool, std::pair<CAmount, CAmount>> pSettings;
             ssValue >> pSettings;
             pwallet->fCombineDust = pSettings.first;
-            pwallet->nAutoCombineThreshold = pSettings.second;
+            pwallet->nAutoCombineThreshold = pSettings.second.first;
+            pwallet->nAutoCombineSafemargin = pSettings.second.second;
             // originally saved as integer
             if (pwallet->nAutoCombineThreshold < COIN)
                 pwallet->nAutoCombineThreshold *= COIN;

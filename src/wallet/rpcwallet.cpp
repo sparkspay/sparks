@@ -2533,6 +2533,7 @@ static UniValue getwalletinfo(const JSONRPCRequest& request)
     obj.pushKV("txcount",       (int)pwallet->mapWallet.size());
     obj.pushKV("autocombine_enabled", pwallet->fCombineDust);
     obj.pushKV("autocombine_threshold", ValueFromAmount(pwallet->nAutoCombineThreshold));
+    obj.pushKV("autocombine_safemargin", pwallet->nAutoCombineSafemargin);
     if (spk_man) {
         AssertLockHeld(spk_man->cs_wallet);
         obj.pushKV("timefirstkey", spk_man->GetTimeFirstKey());
@@ -3956,9 +3957,9 @@ UniValue setautocombinethreshold(const JSONRPCRequest& request)
     if (!wallet) return NullUniValue;
     CWallet* const pwallet = wallet.get();
 
-    if (request.fHelp || request.params.empty() || request.params.size() > 2)
+    if (request.fHelp || request.params.empty() || request.params.size() > 3)
         throw std::runtime_error(
-            "setautocombinethreshold enable ( value )\n"
+            "setautocombinethreshold enable ( value ) ( value )\n"
             "\nThis will set the auto-combine threshold value.\n"
             "\nWallet will automatically monitor for any coins with value below the threshold amount, and combine them if they reside with the same Sparks address\n"
             "When auto-combine runs it will create a transaction, and therefore will be subject to transaction fees.\n"
@@ -3966,26 +3967,36 @@ UniValue setautocombinethreshold(const JSONRPCRequest& request)
             "\nArguments:\n"
             "1. enable          (boolean, required) Enable auto combine (true) or disable (false).\n"
             "2. threshold       (numeric, optional. required if enable is true) Threshold amount. Must be greater than 1.\n"
+            "3. safemargin      (numeric, optional. if enable is true, margin will set to default 0.0001%) safety margin percentage to avoid \"Insufficient funds\". Must be greater than or equal 0.0001.\n"
 
             "\nResult:\n"
             "{\n"
             "  \"enabled\": true|false,      (boolean) true if auto-combine is enabled, otherwise false\n"
             "  \"threshold\": n.nnn,         (numeric) auto-combine threshold in PIV\n"
+            "  \"safemargin\": n.nnn,        (numeric) auto-combine safety margin percentage to avoid \"Insufficient funds\"\n"
             "  \"saved\": true|false         (boolean) true if setting was saved to the database, otherwise false\n"
             "}\n"
 
             "\nExamples:\n" +
-            HelpExampleCli("setautocombinethreshold", "true 500.12") + HelpExampleRpc("setautocombinethreshold", "true, 500.12"));
+            HelpExampleCli("setautocombinethreshold", "true 500.12 0.0001") + HelpExampleRpc("setautocombinethreshold", "true, 500.12, 0.0001"));
 
     bool fEnable = ParseBoolV(request.params[0], "enable");
     CAmount nThreshold = 0;
-
+    CAmount nSafemargin = 0;
+    std::cout << "Request Size : " << request.params.size() << std::endl;
     if (fEnable) {
         if (request.params.size() < 2) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Missing threshold value");
         }
         nThreshold = AmountFromValue(ParseDoubleV(request.params[1], "threshold"));
-        if (nThreshold < COIN)
+        nSafemargin = AmountFromValue(0.0001);
+        if (request.params.size() == 3) {
+            nSafemargin = AmountFromValue(request.params[2]);
+            std::cout << "Safe Margin " << nSafemargin << std::endl;
+            if (nSafemargin < AmountFromValue(0.0001))
+                throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("The margin value cannot be less than %s", 0.0001));
+        }
+        if (nThreshold <= COIN)
             throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("The threshold value cannot be less than %s", FormatMoney(COIN)));
     }
 
@@ -3995,11 +4006,14 @@ UniValue setautocombinethreshold(const JSONRPCRequest& request)
         LOCK(pwallet->cs_wallet);
         pwallet->fCombineDust = fEnable;
         pwallet->nAutoCombineThreshold = nThreshold;
+        pwallet->nAutoCombineSafemargin = nSafemargin;
 
         UniValue result(UniValue::VOBJ);
         result.pushKV("enabled", fEnable);
         result.pushKV("threshold", ValueFromAmount(pwallet->nAutoCombineThreshold));
-        if (batch.WriteAutoCombineSettings(fEnable, nThreshold)) {
+        result.pushKV("safemargin", ValueFromAmount(pwallet->nAutoCombineSafemargin));
+        std::cout << "Safe Margin : " << nSafemargin << std::endl;
+        if (batch.WriteAutoCombineSettings(fEnable, nThreshold, nSafemargin)) {
             result.pushKV("saved", "true");
         } else {
             result.pushKV("saved", "false");
@@ -4024,6 +4038,7 @@ UniValue getautocombinethreshold(const JSONRPCRequest& request)
             "{\n"
             "  \"enabled\": true|false,        (boolean) true if auto-combine is enabled, otherwise false\n"
             "  \"threshold\": n.nnn            (numeric) the auto-combine threshold amount in PIV\n"
+            "  \"safemargin\": n.nnn,          (numeric) auto-combine safety margin percentage to avoid \"Insufficient funds\"\n"
             "}\n"
 
             "\nExamples:\n" +
@@ -4034,6 +4049,7 @@ UniValue getautocombinethreshold(const JSONRPCRequest& request)
     UniValue result(UniValue::VOBJ);
     result.pushKV("enabled", pwallet->fCombineDust);
     result.pushKV("threshold", ValueFromAmount(pwallet->nAutoCombineThreshold));
+    result.pushKV("safemargin", ValueFromAmount(pwallet->nAutoCombineSafemargin));
 
     return result;
 }

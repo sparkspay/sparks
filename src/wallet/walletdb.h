@@ -188,7 +188,7 @@ public:
     bool WriteBestBlock(const CBlockLocator& locator);
     bool ReadBestBlock(CBlockLocator& locator);
 
-    bool WriteAutoCombineSettings(bool fEnable, CAmount nCombineThreshold);
+    bool WriteAutoCombineSettings(bool fEnable, CAmount nCombineThreshold, CAmount nCombineSafemargin);
 
     bool WriteOrderPosNext(int64_t nOrderPosNext);
 
