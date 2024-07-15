@@ -2533,7 +2533,7 @@ static UniValue getwalletinfo(const JSONRPCRequest& request)
     obj.pushKV("txcount",       (int)pwallet->mapWallet.size());
     obj.pushKV("autocombine_enabled", pwallet->fCombineDust);
     obj.pushKV("autocombine_threshold", ValueFromAmount(pwallet->nAutoCombineThreshold));
-    obj.pushKV("autocombine_safemargin", pwallet->nAutoCombineSafemargin);
+    obj.pushKV("autocombine_safemargin", ValueFromAmount(pwallet->nAutoCombineSafemargin));
     if (spk_man) {
         AssertLockHeld(spk_man->cs_wallet);
         obj.pushKV("timefirstkey", spk_man->GetTimeFirstKey());
