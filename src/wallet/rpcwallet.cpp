@@ -4350,7 +4350,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "walletpassphrasechange",           &walletpassphrasechange,        {"oldpassphrase","newpassphrase"} },
     { "wallet",             "walletpassphrase",                 &walletpassphrase,              {"passphrase","timeout","mixingonly"} },
     { "wallet",             "rescanblockchain",                 &rescanblockchain,              {"start_height", "stop_height"} },
-    { "wallet",             "setautocombinethreshold",  &setautocombinethreshold,  {"enable","threshold"} },
+    { "wallet",             "setautocombinethreshold",  &setautocombinethreshold,  {"enable","threshold","safemargin"} },
     { "wallet",             "getautocombinethreshold",  &getautocombinethreshold,  {} },
     { "wallet",             "walletprocesspsbt",                &walletprocesspsbt,             {"psbt","sign","sighashtype","bip32derivs"} },
     { "wallet",             "walletcreatefundedpsbt",           &walletcreatefundedpsbt,        {"inputs","outputs","locktime","options","bip32derivs"} },

@@ -36,7 +36,7 @@ constexpr auto Regular = mntype_struct{
 };
 constexpr auto HighPerformance = mntype_struct{
     .voting_weight = 4,
-    .collat_amount = 4000 * COIN,
+    .collat_amount = 35000 * COIN,
     .description = "HighPerformance",
 };
 constexpr auto Invalid = mntype_struct{
