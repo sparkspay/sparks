@@ -1167,7 +1167,7 @@ class DashTestFramework(BitcoinTestFramework):
             tip = self.nodes[0].generate(1)[0]
             assert_equal(self.nodes[0].getrawtransaction(protx_result, 1, tip)['confirmations'], 1)
             self.sync_all(self.nodes)
-            self.log.info("Updated HPMN %s: platformNodeID=%s, platformP2PPort=%s, platformHTTPPort=%s" % (hpmn_info.proTxHash, platform_node_id, platform_p2p_port, platform_http_port))
+            self.log.info("Updated HPMN/Evonode %s: platformNodeID=%s, platformP2PPort=%s, platformHTTPPort=%s" % (hpmn_info.proTxHash, platform_node_id, platform_p2p_port, platform_http_port))
             protx_success = True
         except:
             self.log.info("protx_hpmn rejected")

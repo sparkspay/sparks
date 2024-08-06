@@ -786,7 +786,15 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
             }
 
             Coin coin;
-            CAmount expectedCollateral = GetMnType(proTx.nType).collat_amount;
+            CAmount expectedCollateral;
+            bool isv19Active = llmq::utils::IsV19Active(pindexPrev);
+            if (!isv19Active) {
+                expectedCollateral = 25000 * COIN; //Old regular masternode collateral
+            } else if (isv19Active && pindexPrev->nHeight < llmq::utils::V19ActivationHeight(pindexPrev) && proTx.nType == MnType::Regular){
+                expectedCollateral = 25000 * COIN; //Old regular masternode collateral
+            } else {
+                expectedCollateral = GetMnType(proTx.nType).collat_amount;
+            }
             if (!proTx.collateralOutpoint.hash.IsNull() && (!view.GetCoin(dmn->collateralOutpoint, coin) || coin.IsSpent() || coin.out.nValue != expectedCollateral)) {
                 // should actually never get to this point as CheckProRegTx should have handled this case.
                 // We do this additional check nevertheless to be 100% sure
@@ -1147,8 +1155,16 @@ bool CDeterministicMNManager::IsProTxWithCollateral(const CTransactionRef& tx, u
         return false;
     }
 
-    const CAmount expectedCollateral = GetMnType(proTx.nType).collat_amount;
-
+    CAmount expectedCollateral;
+    bool isv19Active = llmq::utils::IsV19Active(::ChainActive().Tip());
+    if (!isv19Active) {
+        expectedCollateral = 25000 * COIN; //Old regular masternode collateral
+    } else if (isv19Active && ::ChainActive().Height() < llmq::utils::V19ActivationHeight(::ChainActive().Tip()) && proTx.nType == MnType::Regular){
+        expectedCollateral = 25000 * COIN; //Old regular masternode collateral
+    } else {
+        expectedCollateral = GetMnType(proTx.nType).collat_amount;
+    }
+  
     if (tx->vout[n].nValue != expectedCollateral) {
         return false;
     }
@@ -1541,7 +1557,15 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
     const PKHash *keyForPayloadSig = nullptr;
     COutPoint collateralOutpoint;
 
-    CAmount expectedCollateral = GetMnType(ptx.nType).collat_amount;
+    CAmount expectedCollateral;
+    bool isv19Active = llmq::utils::IsV19Active(pindexPrev);
+    if (!isv19Active) {
+        expectedCollateral = 25000 * COIN; //Old regular masternode collateral
+    } else if (isv19Active && pindexPrev->nHeight < llmq::utils::V19ActivationHeight(pindexPrev) && ptx.nType == MnType::Regular){
+        expectedCollateral = 25000 * COIN; //Old regular masternode collateral
+    } else {
+        expectedCollateral = GetMnType(ptx.nType).collat_amount;
+    }
 
     if (!ptx.collateralOutpoint.hash.IsNull()) {
         Coin coin;

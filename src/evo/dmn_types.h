@@ -31,13 +31,13 @@ struct mntype_struct
 
 constexpr auto Regular = mntype_struct{
     .voting_weight = 1,
-    .collat_amount = 25000 * COIN,
-    .description = "Stakenode",
+    .collat_amount = 5000 * COIN,
+    .description = "Masternode",
 };
 constexpr auto HighPerformance = mntype_struct{
     .voting_weight = 4,
     .collat_amount = 25000 * COIN,
-    .description = "Masternode",
+    .description = "Evonode",
 };
 constexpr auto Invalid = mntype_struct{
     .voting_weight = 0,

@@ -368,7 +368,7 @@ static void protx_register_fund_help(const JSONRPCRequest& request, bool legacy)
     std::string pubkey_operator = legacy ? "\"0532646990082f4fd639f90387b1551f2c7c39d37392cb9055a06a7e85c1d23692db8f87f827886310bccc1e29db9aee\"" : "\"8532646990082f4fd639f90387b1551f2c7c39d37392cb9055a06a7e85c1d23692db8f87f827886310bccc1e29db9aee\"";
     std::string rpc_example = rpc_name.append(" \"XrVhS9LogauRJGJu2sHuryjhpuex4RNPSb\" \"1.2.3.4:1234\" \"Xt9AMWaYSz7tR7Uo7gzXA3m4QmeWgrR3rr\" ").append(pubkey_operator).append(" \"Xt9AMWaYSz7tR7Uo7gzXA3m4QmeWgrR3rr\" 0 \"XrVhS9LogauRJGJu2sHuryjhpuex4RNPSb\"");
     RPCHelpMan{rpc_full_name,
-        "\nCreates, funds and sends a ProTx to the network. The resulting transaction will move 25000 Sparks\n"
+        "\nCreates, funds and sends a ProTx to the network. The resulting transaction will move 5000 Sparks\n"
         "to the address specified by collateralAddress and will then function as the collateral of your\n"
         "masternode.\n"
         "A few of the limitations you see in the arguments are temporary and might be lifted after DIP3\n"
@@ -490,9 +490,9 @@ static void protx_register_fund_hpmn_help(const JSONRPCRequest& request)
 {
     RPCHelpMan{
         "protx register_fund_hpmn",
-        "\nCreates, funds and sends a ProTx to the network. The resulting transaction will move 4000 Dash\n"
+        "\nCreates, funds and sends a ProTx to the network. The resulting transaction will move 25000 Dash\n"
         "to the address specified by collateralAddress and will then function as the collateral of your\n"
-        "HPMN.\n"
+        "HPMN/Evonode.\n"
         "A few of the limitations you see in the arguments are temporary and might be lifted after DIP3\n"
         "is fully deployed.\n" +
             HELP_REQUIRING_PASSPHRASE,
@@ -621,7 +621,7 @@ static UniValue protx_register_common_wrapper(const JSONRPCRequest& request,
 
     bool isV19active = llmq::utils::IsV19Active(WITH_LOCK(cs_main, return ::ChainActive().Tip();));
     if (isHPMNrequested && !isV19active) {
-        throw JSONRPCError(RPC_INVALID_REQUEST, "HPMN aren't allowed yet");
+        throw JSONRPCError(RPC_INVALID_REQUEST, "HPMNs/Evonodes aren't allowed yet");
     }
 
     size_t paramIdx = 0;
@@ -875,8 +875,8 @@ static void protx_update_service_hpmn_help(const JSONRPCRequest& request)
     RPCHelpMan{
         "protx update_service_hpmn",
         "\nCreates and sends a ProUpServTx to the network. This will update the IP address and the Platform fields\n"
-        "of a HPMN.\n"
-        "If this is done for a HPMN that got PoSe-banned, the ProUpServTx will also revive this HPMN.\n" +
+        "of a HPMN/Evonode.\n"
+        "If this is done for a HPMN/Evonode that got PoSe-banned, the ProUpServTx will also revive this HPMN/Evonode.\n" +
             HELP_REQUIRING_PASSPHRASE,
         {
             GetRpcArg("proTxHash"),
@@ -911,7 +911,7 @@ static UniValue protx_update_service_common_wrapper(const JSONRPCRequest& reques
 
     bool isV19active = llmq::utils::IsV19Active(WITH_LOCK(cs_main, return ::ChainActive().Tip();));
     if (isHPMNrequested && !isV19active) {
-        throw JSONRPCError(RPC_INVALID_REQUEST, "HPMN aren't allowed yet");
+        throw JSONRPCError(RPC_INVALID_REQUEST, "HPMNs/Evonodes aren't allowed yet");
     }
 
     CProUpServTx ptx;
@@ -1213,7 +1213,8 @@ static void protx_list_help(const JSONRPCRequest& request)
                 "  registered   - List all ProTx which are registered at the given chain height.\n"
                 "                 This will also include ProTx which failed PoSe verification.\n"
                 "  valid        - List only ProTx which are active/valid at the given chain height.\n"
-                "  hpmn         - List only ProTx corresponding to HPMNs at the given chain height.\n"
+                "  hpmn         - List only ProTx corresponding to HPMNs/Evonodes at the given chain height.\n"
+                "  rgmn         - List only ProTx corresponding to Regular Masternodes at the given chain height.\n"
 #ifdef ENABLE_WALLET
                 "  wallet       - List only ProTx which are found in your wallet at the given chain height.\n"
                 "                 This will also include ProTx which failed PoSe verification.\n"
@@ -1359,7 +1360,7 @@ static UniValue protx_list(const JSONRPCRequest& request)
             }
         });
 #endif
-    } else if (type == "valid" || type == "registered" || type == "hpmn") {
+    } else if (type == "valid" || type == "registered" || type == "hpmn" || type == "rgmn") {
         if (request.params.size() > 3) {
             protx_list_help(request);
         }
@@ -1376,8 +1377,10 @@ static UniValue protx_list(const JSONRPCRequest& request)
         CDeterministicMNList mnList = deterministicMNManager->GetListForBlock(::ChainActive()[height]);
         bool onlyValid = type == "valid";
         bool onlyHPMN = type == "hpmn";
+        bool onlyRGMN = type == "rgmn"; //Only regular masternodes
         mnList.ForEachMN(onlyValid, [&](const auto& dmn) {
             if (onlyHPMN && dmn.nType != MnType::HighPerformance) return;
+            else if (onlyRGMN && dmn.nType != MnType::Regular) return;
             ret.push_back(BuildDMNListEntry(wallet.get(), dmn, detailed));
         });
     } else {
@@ -1495,9 +1498,9 @@ static UniValue protx_diff(const JSONRPCRequest& request)
         "  register                 - Create and send ProTx to network\n"
         "  register_fund            - Fund, create and send ProTx to network\n"
         "  register_prepare         - Create an unsigned ProTx\n"
-        "  register_hpmn            - Create and send ProTx to network for a HPMN\n"
-        "  register_fund_hpmn       - Fund, create and send ProTx to network for a HPMN\n"
-        "  register_prepare_hpmn    - Create an unsigned ProTx for a HPMN\n"
+        "  register_hpmn            - Create and send ProTx to network for a HPMN/Evonode\n"
+        "  register_fund_hpmn       - Fund, create and send ProTx to network for a HPMN/Evonode\n"
+        "  register_prepare_hpmn    - Create an unsigned ProTx for a HPMN/Evonode\n"
         "  register_legacy          - Create a ProTx by parsing BLS using the legacy scheme and send it to network\n"
         "  register_fund_legacy     - Fund and create a ProTx by parsing BLS using the legacy scheme, then send it to network\n"
         "  register_prepare_legacy  - Create an unsigned ProTx by parsing BLS using the legacy scheme\n"
@@ -1507,7 +1510,7 @@ static UniValue protx_diff(const JSONRPCRequest& request)
         "  info                     - Return information about a ProTx\n"
 #ifdef ENABLE_WALLET
         "  update_service           - Create and send ProUpServTx to network\n"
-        "  update_service_hpmn      - Create and send ProUpServTx to network for a HPMN\n"
+        "  update_service_hpmn      - Create and send ProUpServTx to network for a HPMN/Evonode\n"
         "  update_registrar         - Create and send ProUpRegTx to network\n"
         "  update_registrar_legacy  - Create ProUpRegTx by parsing BLS using the legacy scheme, then send it to network\n"
         "  revoke                   - Create and send ProUpRevTx to network\n"
