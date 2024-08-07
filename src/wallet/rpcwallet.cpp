@@ -3983,7 +3983,6 @@ UniValue setautocombinethreshold(const JSONRPCRequest& request)
     bool fEnable = ParseBoolV(request.params[0], "enable");
     CAmount nThreshold = 0;
     CAmount nSafemargin = 0;
-    std::cout << "Request Size : " << request.params.size() << std::endl;
     if (fEnable) {
         if (request.params.size() < 2) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Missing threshold value");
@@ -3992,7 +3991,6 @@ UniValue setautocombinethreshold(const JSONRPCRequest& request)
         nSafemargin = AmountFromValue(0.0001);
         if (request.params.size() == 3) {
             nSafemargin = AmountFromValue(request.params[2]);
-            std::cout << "Safe Margin " << nSafemargin << std::endl;
             if (nSafemargin < AmountFromValue(0.0001))
                 throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("The margin value cannot be less than %s", 0.0001));
         }
@@ -4012,7 +4010,7 @@ UniValue setautocombinethreshold(const JSONRPCRequest& request)
         result.pushKV("enabled", fEnable);
         result.pushKV("threshold", ValueFromAmount(pwallet->nAutoCombineThreshold));
         result.pushKV("safemargin", ValueFromAmount(pwallet->nAutoCombineSafemargin));
-        std::cout << "Safe Margin : " << nSafemargin << std::endl;
+
         if (batch.WriteAutoCombineSettings(fEnable, nThreshold, nSafemargin)) {
             result.pushKV("saved", "true");
         } else {

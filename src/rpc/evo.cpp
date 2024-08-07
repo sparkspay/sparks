@@ -1495,9 +1495,9 @@ static UniValue protx_diff(const JSONRPCRequest& request)
         "To get help on individual commands, use \"help protx command\".\n"
         "\nAvailable commands:\n"
 #ifdef ENABLE_WALLET
-        "  register                 - Create and send ProTx to network\n"
-        "  register_fund            - Fund, create and send ProTx to network\n"
-        "  register_prepare         - Create an unsigned ProTx\n"
+        // "  register                 - Create and send ProTx to network\n"
+        // "  register_fund            - Fund, create and send ProTx to network\n"
+        // "  register_prepare         - Create an unsigned ProTx\n"
         "  register_hpmn            - Create and send ProTx to network for a HPMN/Evonode\n"
         "  register_fund_hpmn       - Fund, create and send ProTx to network for a HPMN/Evonode\n"
         "  register_prepare_hpmn    - Create an unsigned ProTx for a HPMN/Evonode\n"
@@ -1509,7 +1509,7 @@ static UniValue protx_diff(const JSONRPCRequest& request)
         "  list                     - List ProTxs\n"
         "  info                     - Return information about a ProTx\n"
 #ifdef ENABLE_WALLET
-        "  update_service           - Create and send ProUpServTx to network\n"
+        // "  update_service           - Create and send ProUpServTx to network\n"
         "  update_service_hpmn      - Create and send ProUpServTx to network for a HPMN/Evonode\n"
         "  update_registrar         - Create and send ProUpRegTx to network\n"
         "  update_registrar_legacy  - Create ProUpRegTx by parsing BLS using the legacy scheme, then send it to network\n"
@@ -1530,17 +1530,20 @@ static UniValue protx(const JSONRPCRequest& request)
     const std::string command{new_request.strMethod};
 
 #ifdef ENABLE_WALLET
-    if (command == "protxregister" || command == "protxregister_fund" || command == "protxregister_prepare") {
-        return protx_register(new_request);
-    } else if (command == "protxregister_hpmn" || command == "protxregister_fund_hpmn" || command == "protxregister_prepare_hpmn") {
+    // if (command == "protxregister" || command == "protxregister_fund" || command == "protxregister_prepare") {
+    //     return protx_register(new_request);
+    // } else 
+    if (command == "protxregister_hpmn" || command == "protxregister_fund_hpmn" || command == "protxregister_prepare_hpmn") {
         return protx_register_hpmn(new_request);
     } else if (command == "protxregister_legacy" || command == "protxregister_fund_legacy" || command == "protxregister_prepare_legacy") {
         return protx_register_legacy(new_request);
     } else if (command == "protxregister_submit") {
         return protx_register_submit(new_request);
-    } else if (command == "protxupdate_service") {
-        return protx_update_service_common_wrapper(new_request, MnType::Regular);
-    } else if (command == "protxupdate_service_hpmn") {
+    } 
+    // else if (command == "protxupdate_service") {
+    //     return protx_update_service_common_wrapper(new_request, MnType::Regular);
+    // } 
+    else if (command == "protxupdate_service_hpmn") {
         return protx_update_service_common_wrapper(new_request, MnType::HighPerformance);
     } else if (command == "protxupdate_registrar") {
         return protx_update_registrar(new_request);

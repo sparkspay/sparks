@@ -72,7 +72,7 @@ class LLMQHPMNTest(DashTestFramework):
 
         self.mine_quorum(llmq_type_name='llmq_test', llmq_type=100)
 
-        self.log.info("Test that HPMN registration is rejected before v19")
+        self.log.info("Test that HPMN/Evonode registration is rejected before v19")
         self.test_hpmn_is_rejected_before_v19()
 
         self.test_masternode_count(expected_mns_count=4, expected_hpmns_count=0)
@@ -103,15 +103,15 @@ class LLMQHPMNTest(DashTestFramework):
             self.test_masternode_count(expected_mns_count=4, expected_hpmns_count=i+1)
             self.dynamically_hpmn_update_service(hpmn_info)
 
-        self.log.info("Test llmq_platform are formed only with HPMNs")
+        self.log.info("Test llmq_platform are formed only with HPMNs/Evonodes")
         for i in range(3):
             quorum_i_hash = self.mine_quorum(llmq_type_name='llmq_test_platform', llmq_type=106, expected_connections=2, expected_members=3, expected_contributions=3, expected_complaints=0, expected_justifications=0, expected_commitments=3 )
             self.test_quorum_members_are_high_performance(quorum_i_hash, llmq_type=106)
 
-        self.log.info("Test that HPMNs are present in MN list")
+        self.log.info("Test that HPMNs/Evonodes are present in MN list")
         self.test_hpmn_protx_are_in_mnlist(hpmn_protxhash_list)
 
-        self.log.info("Test that HPMNs are paid 4x blocks in a row")
+        self.log.info("Test that HPMNs/Evonodes are paid 4x blocks in a row")
         self.test_hpmn_payments(window_analysis=256)
 
         self.log.info(self.nodes[0].masternodelist())

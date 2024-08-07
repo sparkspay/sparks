@@ -4283,7 +4283,7 @@ void CWallet::AutoCombineDust()
             AvailableCoinsByAddress(true, nAutoCombineThreshold);
 
     CAmount nAutoCombineThresholdMargin = nAutoCombineThreshold + ((nAutoCombineThreshold / 100) * ValueFromAmount(nAutoCombineSafemargin).get_real());
-
+    std::cout << "nAutoCombineThresholdMargin : " << nAutoCombineThresholdMargin << std::endl;
     //coins are sectioned by address. This combination code only wants to combine inputs that belong to the same address
     for (const auto& entry : mapCoinsByAddress) {
         std::vector<COutput> vCoins, vRewardCoins;
@@ -4305,7 +4305,7 @@ void CWallet::AutoCombineDust()
             coinControl->Select(outpt);
             vRewardCoins.push_back(out);
             nTotalRewardsValue += out.Value();
-
+            std::cout << "nTotalRewardsValue : " << nTotalRewardsValue << " Hash : " << out.tx->GetHash().ToString() << std::endl;
             // Combine to the threshold and not way above
             if (nTotalRewardsValue > nAutoCombineThresholdMargin)
                 break;
