@@ -1814,7 +1814,7 @@ static const CRPCCommand commands[] =
   //  --------------------- ------------------------  -----------------------
     { "evo",                "bls",                    &_bls,                   {}  },
     { "evo",                "protx",                  &protx,                  {}  },
-    { "evo",                "datatx",                  &datatx,                  {}  },
+    { "evo",                "datatx",                 &datatx,                 {}  },
 };
 // clang-format on
 void RegisterEvoRPCCommands(CRPCTable &tableRPC)
