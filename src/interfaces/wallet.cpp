@@ -21,8 +21,9 @@
 #include <wallet/context.h>
 #include <wallet/fees.h>
 #include <wallet/ismine.h>
-#include <wallet/rpcwallet.h>
 #include <wallet/load.h>
+#include <wallet/psbtwallet.h>
+#include <wallet/rpcwallet.h>
 #include <wallet/wallet.h>
 
 #include <memory>
@@ -189,19 +190,21 @@ public:
         std::string error;
         return m_wallet->GetNewDestination(label, dest, error);
     }
-    bool getPubKey(const CKeyID& address, CPubKey& pub_key) override {
-        auto spk_man = m_wallet->GetLegacyScriptPubKeyMan();
-        if (!spk_man) {
-            return false;
+    bool getPubKey(const CScript& script, const CKeyID& address, CPubKey& pub_key) override
+    {
+        const SigningProvider* provider = m_wallet->GetSigningProvider(script);
+        if (provider) {
+            return provider->GetPubKey(address, pub_key);
         }
-        return spk_man->GetPubKey(address, pub_key);
+        return false;
     }
-    bool getPrivKey(const CKeyID& address, CKey& key) override {
-        auto spk_man = m_wallet->GetLegacyScriptPubKeyMan();
-        if (!spk_man) {
-            return false;
+    bool getPrivKey(const CScript& script, const CKeyID& address, CKey& key) override
+    {
+        const SigningProvider* provider = m_wallet->GetSigningProvider(script);
+        if (provider) {
+            return provider->GetKey(address, key);
         }
-        return spk_man->GetKey(address, key);
+        return false;
     }
     bool isSpendable(const CScript& script) override { return m_wallet->IsMine(script) & ISMINE_SPENDABLE; }
     bool isSpendable(const CTxDestination& dest) override { return m_wallet->IsMine(dest) & ISMINE_SPENDABLE; }
@@ -255,12 +258,14 @@ public:
     bool addDestData(const CTxDestination& dest, const std::string& key, const std::string& value) override
     {
         LOCK(m_wallet->cs_wallet);
-        return m_wallet->AddDestData(dest, key, value);
+        WalletBatch batch{m_wallet->GetDatabase()};
+        return m_wallet->AddDestData(batch, dest, key, value);
     }
     bool eraseDestData(const CTxDestination& dest, const std::string& key) override
     {
         LOCK(m_wallet->cs_wallet);
-        return m_wallet->EraseDestData(dest, key);
+        WalletBatch batch{m_wallet->GetDatabase()};
+        return m_wallet->EraseDestData(batch, dest, key);
     }
     std::vector<std::string> getDestValues(const std::string& prefix) override
     {
@@ -395,6 +400,15 @@ public:
     }
     int getRealOutpointCoinJoinRounds(const COutPoint& outpoint) override { return m_wallet->GetRealOutpointCoinJoinRounds(outpoint); }
     bool isFullyMixed(const COutPoint& outpoint) override { return m_wallet->IsFullyMixed(outpoint); }
+
+    TransactionError fillPSBT(PartiallySignedTransaction& psbtx,
+        bool& complete,
+        int sighash_type = 1 /* SIGHASH_ALL */,
+        bool sign = true,
+        bool bip32derivs = false) override
+    {
+        return FillPSBT(m_wallet.get(), psbtx, complete, sighash_type, sign, bip32derivs);
+    }
     WalletBalances getBalances() override
     {
         const auto bal = m_wallet->GetBalance();
@@ -581,8 +595,7 @@ public:
 class WalletClientImpl : public WalletClient
 {
 public:
-    WalletClientImpl(Chain& chain, ArgsManager& args, std::vector<std::string> wallet_filenames)
-        : m_wallet_filenames(std::move(wallet_filenames))
+    WalletClientImpl(Chain& chain, ArgsManager& args)
     {
         m_context.chain = &chain;
         m_context.args = &args;
@@ -599,8 +612,8 @@ public:
             m_rpc_handlers.emplace_back(m_context.chain->handleRpc(m_rpc_commands.back()));
         }
     }
-    bool verify() override { return VerifyWallets(*m_context.chain, m_wallet_filenames); }
-    bool load() override { return LoadWallets(*m_context.chain, m_wallet_filenames); }
+    bool verify() override { return VerifyWallets(*m_context.chain); }
+    bool load() override { return LoadWallets(*m_context.chain); }
     void start(CScheduler& scheduler) override { return StartWallets(scheduler, *Assert(m_context.args)); }
     void flush() override { return FlushWallets(); }
     void stop() override { return StopWallets(); }
@@ -631,7 +644,7 @@ public:
     std::vector<std::string> listWalletDir() override
     {
         std::vector<std::string> paths;
-        for (auto& path : ListWalletDir()) {
+        for (auto& path : ListDatabases(GetWalletDir())) {
             paths.push_back(path.string());
         }
         return paths;
@@ -659,9 +672,9 @@ public:
 
 std::unique_ptr<Wallet> MakeWallet(const std::shared_ptr<CWallet>& wallet) { return wallet ? std::make_unique<WalletImpl>(wallet) : nullptr; }
 
-std::unique_ptr<WalletClient> MakeWalletClient(Chain& chain, ArgsManager& args, std::vector<std::string> wallet_filenames)
+std::unique_ptr<WalletClient> MakeWalletClient(Chain& chain, ArgsManager& args)
 {
-    return std::make_unique<WalletClientImpl>(chain, args, std::move(wallet_filenames));
+    return std::make_unique<WalletClientImpl>(chain, args);
 }
 
 } // namespace interfaces

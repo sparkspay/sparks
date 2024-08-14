@@ -39,6 +39,7 @@
 
 #include <evo/specialtx.h>
 #include <evo/cbtx.h>
+#include <evo/evodb.h>
 
 #include <llmq/chainlocks.h>
 #include <llmq/instantsend.h>
@@ -61,7 +62,7 @@ static Mutex cs_blockchange;
 static std::condition_variable cond_blockchange;
 static CUpdatedBlock latestblock GUARDED_BY(cs_blockchange);
 
-extern void TxToJSON(const CTransaction& tx, const uint256 hashBlock, llmq::CChainLocksHandler& clhandler, llmq::CInstantSendManager& isman, UniValue& entry);
+extern void TxToJSON(const CTransaction& tx, const uint256 hashBlock, CTxMemPool& mempool, llmq::CChainLocksHandler& clhandler, llmq::CInstantSendManager& isman, UniValue& entry);
 
 NodeContext& EnsureNodeContext(const CoreContext& context)
 {
@@ -985,10 +986,8 @@ static CBlock GetBlockChecked(const CBlockIndex* pblockindex)
 
     if (!ReadBlockFromDisk(block, pblockindex, Params().GetConsensus())) {
         // Block not found on disk. This could be because we have the block
-        // header in our index but don't have the block (for example if a
-        // non-whitelisted node sends us an unrequested long chain of valid
-        // blocks, we add the headers to our index, but don't accept the
-        // block).
+        // header in our index but not yet have the block or did not accept the
+        // block.
         throw JSONRPCError(RPC_MISC_ERROR, "Block not found on disk");
     }
 
@@ -1036,7 +1035,6 @@ static UniValue getmerkleblocks(const JSONRPCRequest& request)
     if (!filter.IsWithinSizeConstraints()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Filter is not within size constraints");
     }
-    filter.UpdateEmptyFull();
 
     std::string strHash = request.params[1].get_str();
     uint256 hash(uint256S(strHash));
@@ -1136,7 +1134,6 @@ static UniValue getblock(const JSONRPCRequest& request)
                                     {RPCResult::Type::ELISION, "", "The transactions in the format of the getrawtransaction RPC. Different from verbosity = 1 \"tx\" result"},
                                 }},
                             }},
-                            {RPCResult::Type::ELISION, "", "Same output as verbosity = 1"},
                         }},
                 },
                 RPCExamples{
@@ -1389,13 +1386,11 @@ static UniValue gettxout(const JSONRPCRequest& request)
 
 static UniValue verifychain(const JSONRPCRequest& request)
 {
-    int nCheckLevel = gArgs.GetArg("-checklevel", DEFAULT_CHECKLEVEL);
-    int nCheckDepth = gArgs.GetArg("-checkblocks", DEFAULT_CHECKBLOCKS);
     RPCHelpMan{"verifychain",
         "\nVerifies blockchain database.\n",
         {
-            {"checklevel", RPCArg::Type::NUM, /* default */ strprintf("%d, range=0-4", nCheckLevel), "How thorough the block verification is."},
-            {"nblocks", RPCArg::Type::NUM, /* default */ strprintf("%d, 0=all", nCheckDepth), "The number of blocks to check."},
+            {"checklevel", RPCArg::Type::NUM, /* default */ strprintf("%d, range=0-4", DEFAULT_CHECKLEVEL), "How thorough the block verification is."},
+            {"nblocks", RPCArg::Type::NUM, /* default */ strprintf("%d, 0=all", DEFAULT_CHECKBLOCKS), "The number of blocks to check."},
         },
         RPCResult{
             RPCResult::Type::BOOL, "", "Verified or not"},
@@ -1405,15 +1400,15 @@ static UniValue verifychain(const JSONRPCRequest& request)
         },
     }.Check(request);
 
+    const int check_level(request.params[0].isNull() ? DEFAULT_CHECKLEVEL : request.params[0].get_int());
+    const int check_depth{request.params[1].isNull() ? DEFAULT_CHECKBLOCKS : request.params[1].get_int()};
+
     LOCK(cs_main);
 
-    if (!request.params[0].isNull())
-        nCheckLevel = request.params[0].get_int();
-    if (!request.params[1].isNull())
-        nCheckDepth = request.params[1].get_int();
+    const NodeContext& node_context = EnsureNodeContext(request.context);
 
     return CVerifyDB().VerifyDB(
-        Params(), &::ChainstateActive().CoinsTip(), nCheckLevel, nCheckDepth);
+        Params(), &::ChainstateActive().CoinsTip(), *node_context.evodb, check_level, check_depth);
 }
 
 /** Implementation of IsSuperMajority with better feedback */
@@ -2338,6 +2333,7 @@ static UniValue getspecialtxes(const JSONRPCRequest& request)
     int nTxNum = 0;
     UniValue result(UniValue::VARR);
     LLMQContext& llmq_ctx = EnsureLLMQContext(request.context);
+    CTxMemPool& mempool = EnsureMemPool(request.context);
 
     for(const auto& tx : block.vtx)
     {
@@ -2357,7 +2353,7 @@ static UniValue getspecialtxes(const JSONRPCRequest& request)
             case 2 :
                 {
                     UniValue objTx(UniValue::VOBJ);
-                    TxToJSON(*tx, uint256(), *llmq_ctx.clhandler, *llmq_ctx.isman, objTx);
+                    TxToJSON(*tx, uint256(), mempool, *llmq_ctx.clhandler, *llmq_ctx.isman, objTx);
                     result.push_back(objTx);
                     break;
                 }

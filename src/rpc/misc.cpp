@@ -12,6 +12,7 @@
 #include <init.h>
 #include <interfaces/chain.h>
 #include <key_io.h>
+#include <llmq/utils.h>
 #include <net.h>
 #include <node/context.h>
 #include <rpc/blockchain.h>
@@ -34,8 +35,6 @@
 #ifdef HAVE_MALLOC_INFO
 #include <malloc.h>
 #endif
-
-#include <boost/algorithm/string.hpp>
 
 #include <univalue.h>
 
@@ -64,9 +63,7 @@ static UniValue debug(const JSONRPCRequest& request)
     std::string strMode = request.params[0].get_str();
     LogInstance().DisableCategory(BCLog::ALL);
 
-    std::vector<std::string> categories;
-    boost::split(categories, strMode, boost::is_any_of("+"));
-
+    std::vector<std::string> categories = SplitString(strMode, '+');
     if (std::find(categories.begin(), categories.end(), std::string("0")) == categories.end()) {
         for (const auto& cat : categories) {
             LogInstance().EnableCategory(cat);
@@ -83,32 +80,45 @@ static UniValue mnsync(const JSONRPCRequest& request)
         {
             {"mode", RPCArg::Type::STR, RPCArg::Optional::NO, "[status|next|reset]"},
         },
-        RPCResults{},/*TODO*/
-        RPCExamples{""}
+        {
+            RPCResult{"for mode = status",
+                RPCResult::Type::OBJ, "", "",
+                {
+                    {RPCResult::Type::NUM, "AssetID", "The asset ID"},
+                    {RPCResult::Type::STR, "AssetName", "The asset name"},
+                    {RPCResult::Type::NUM, "AssetStartTime", "The asset start time"},
+                    {RPCResult::Type::NUM, "Attempt", "The attempt"},
+                    {RPCResult::Type::BOOL, "IsBlockchainSynced", "true if the blockchain synced"},
+                    {RPCResult::Type::BOOL, "IsSynced", "true if synced"},
+                }},
+            RPCResult{"for mode = next|reset",
+                RPCResult::Type::STR, "", ""},
+        },
+        RPCExamples{""},
     }.Check(request);
 
     std::string strMode = request.params[0].get_str();
 
     if(strMode == "status") {
         UniValue objStatus(UniValue::VOBJ);
-        objStatus.pushKV("AssetID", masternodeSync->GetAssetID());
-        objStatus.pushKV("AssetName", masternodeSync->GetAssetName());
-        objStatus.pushKV("AssetStartTime", masternodeSync->GetAssetStartTime());
-        objStatus.pushKV("Attempt", masternodeSync->GetAttempt());
-        objStatus.pushKV("IsBlockchainSynced", masternodeSync->IsBlockchainSynced());
-        objStatus.pushKV("IsSynced", masternodeSync->IsSynced());
+        objStatus.pushKV("AssetID", ::masternodeSync->GetAssetID());
+        objStatus.pushKV("AssetName", ::masternodeSync->GetAssetName());
+        objStatus.pushKV("AssetStartTime", ::masternodeSync->GetAssetStartTime());
+        objStatus.pushKV("Attempt", ::masternodeSync->GetAttempt());
+        objStatus.pushKV("IsBlockchainSynced", ::masternodeSync->IsBlockchainSynced());
+        objStatus.pushKV("IsSynced", ::masternodeSync->IsSynced());
         return objStatus;
     }
 
     if(strMode == "next")
     {
-        masternodeSync->SwitchToNextAsset();
-        return "sync updated to " + masternodeSync->GetAssetName();
+        ::masternodeSync->SwitchToNextAsset();
+        return "sync updated to " + ::masternodeSync->GetAssetName();
     }
 
     if(strMode == "reset")
     {
-        masternodeSync->Reset(true);
+        ::masternodeSync->Reset(true);
         return "success";
     }
     return "failure";
@@ -249,7 +259,7 @@ static UniValue createmultisig(const JSONRPCRequest& request)
                 "It returns a json object with the address and redeemScript.\n",
                 {
                     {"nrequired", RPCArg::Type::NUM, RPCArg::Optional::NO, "The number of required signatures out of the n keys."},
-                    {"keys", RPCArg::Type::ARR, RPCArg::Optional::NO, "A json array of hex-encoded public keys.",
+                    {"keys", RPCArg::Type::ARR, RPCArg::Optional::NO, "The hex-encoded public keys.",
                         {
                             {"key", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The hex-encoded public key"},
                         }},
@@ -287,7 +297,7 @@ static UniValue createmultisig(const JSONRPCRequest& request)
     CScriptID innerID(inner);
 
     UniValue result(UniValue::VOBJ);
-    result.pushKV("address", EncodeDestination(innerID));
+    result.pushKV("address", EncodeDestination(ScriptHash(innerID)));
     result.pushKV("redeemScript", HexStr(inner));
 
     return result;
@@ -556,7 +566,8 @@ static UniValue mnauth(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "proTxHash invalid");
     }
     CBLSPublicKey publicKey;
-    publicKey.SetHexStr(request.params[2].get_str());
+    bool bls_legacy_scheme = !llmq::utils::IsV19Active(::ChainActive().Tip());
+    publicKey.SetHexStr(request.params[2].get_str(), bls_legacy_scheme);
     if (!publicKey.IsValid()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "publicKey invalid");
     }
@@ -574,9 +585,9 @@ static UniValue mnauth(const JSONRPCRequest& request)
 static bool getAddressFromIndex(const int &type, const uint160 &hash, std::string &address)
 {
     if (type == 2) {
-        address = EncodeDestination(CScriptID(hash));
+        address = EncodeDestination(ScriptHash(hash));
     } else if (type == 1) {
-        address = EncodeDestination(CKeyID(hash));
+        address = EncodeDestination(PKHash(hash));
     } else {
         return false;
     }
@@ -590,10 +601,10 @@ static bool getIndexKey(const std::string& str, uint160& hashBytes, int& type)
         type = 0;
         return false;
     }
-    const CKeyID *keyID = std::get_if<CKeyID>(&dest);
-    const CScriptID *scriptID = std::get_if<CScriptID>(&dest);
-    type = keyID ? 1 : 2;
-    hashBytes = keyID ? *keyID : *scriptID;
+    const PKHash *pkhash = std::get_if<PKHash>(&dest);
+    const ScriptHash *scriptID = std::get_if<ScriptHash>(&dest);
+    type = pkhash ? 1 : 2;
+    hashBytes = pkhash ? uint160(*pkhash) : uint160(*scriptID);
     return true;
 }
 
@@ -680,6 +691,7 @@ static UniValue getaddressmempool(const JSONRPCRequest& request)
 
     std::vector<std::pair<CMempoolAddressDeltaKey, CMempoolAddressDelta> > indexes;
 
+    CTxMemPool& mempool = EnsureMemPool(request.context);
     if (!mempool.getAddressIndex(addresses, indexes)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available for address");
     }
@@ -1048,7 +1060,8 @@ static UniValue getspentinfo(const JSONRPCRequest& request)
     CSpentIndexKey key(txid, outputIndex);
     CSpentIndexValue value;
 
-    if (!GetSpentIndex(key, value)) {
+    CTxMemPool& mempool = EnsureMemPool(request.context);
+    if (!GetSpentIndex(mempool, key, value)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Unable to get spent info");
     }
 
@@ -1210,11 +1223,11 @@ static UniValue logging(const JSONRPCRequest& request)
     "  - \"none\", \"0\" : even if other logging categories are specified, ignore all of them.\n"
     ,
         {
-            {"include", RPCArg::Type::ARR, RPCArg::Optional::OMITTED_NAMED_ARG, "A json array of categories to add debug logging",
+            {"include", RPCArg::Type::ARR, RPCArg::Optional::OMITTED_NAMED_ARG, "The of categories to add to debug logging",
                 {
                     {"include_category", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "the valid logging category"},
                 }},
-            {"exclude", RPCArg::Type::ARR, RPCArg::Optional::OMITTED_NAMED_ARG, "A json array of categories to remove debug logging",
+            {"exclude", RPCArg::Type::ARR, RPCArg::Optional::OMITTED_NAMED_ARG, "The categories to remove from debug logging",
                 {
                     {"exclude_category", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "the valid logging category"},
                 }},

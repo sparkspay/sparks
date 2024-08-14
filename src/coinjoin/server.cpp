@@ -29,7 +29,7 @@ constexpr static CAmount DEFAULT_MAX_RAW_TX_FEE{COIN / 10};
 void CCoinJoinServer::ProcessMessage(CNode& peer, std::string_view msg_type, CDataStream& vRecv)
 {
     if (!fMasternodeMode) return;
-    if (!masternodeSync->IsBlockchainSynced()) return;
+    if (!m_mn_sync->IsBlockchainSynced()) return;
 
     if (msg_type == NetMsgType::DSACCEPT) {
         ProcessDSACCEPT(peer, vRecv);
@@ -112,6 +112,23 @@ void CCoinJoinServer::ProcessDSQUEUE(const CNode& peer, CDataStream& vRecv)
     CCoinJoinQueue dsq;
     vRecv >> dsq;
 
+    if (dsq.masternodeOutpoint.IsNull() && dsq.m_protxHash.IsNull()) {
+        LOCK(cs_main);
+        Misbehaving(peer.GetId(), 100);
+        return;
+    }
+
+    if (dsq.masternodeOutpoint.IsNull()) {
+        auto mnList = deterministicMNManager->GetListAtChainTip();
+        if (auto dmn = mnList.GetValidMN(dsq.m_protxHash)) {
+            dsq.masternodeOutpoint = dmn->collateralOutpoint;
+        } else {
+            LOCK(cs_main);
+            Misbehaving(peer.GetId(), 10);
+            return;
+        }
+    }
+
     {
         TRY_LOCK(cs_vecqueue, lockRecv);
         if (!lockRecv) return;
@@ -136,6 +153,10 @@ void CCoinJoinServer::ProcessDSQUEUE(const CNode& peer, CDataStream& vRecv)
     auto mnList = deterministicMNManager->GetListAtChainTip();
     auto dmn = mnList.GetValidMNByCollateral(dsq.masternodeOutpoint);
     if (!dmn) return;
+
+    if (dsq.m_protxHash.IsNull()) {
+        dsq.m_protxHash = dmn->proTxHash;
+    }
 
     if (!dsq.CheckSignature(dmn->pdmnState->pubKeyOperator.Get())) {
         LOCK(cs_main);
@@ -317,7 +338,10 @@ void CCoinJoinServer::CommitFinalTransaction()
 
     // create and sign masternode dstx transaction
     if (!CCoinJoin::GetDSTX(hashTx)) {
-        CCoinJoinBroadcastTx dstxNew(finalTransaction, WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.outpoint), GetAdjustedTime());
+        CCoinJoinBroadcastTx dstxNew(finalTransaction,
+                                    WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.outpoint),
+                                    WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.proTxHash),
+                                    GetAdjustedTime());
         dstxNew.Sign();
         CCoinJoin::AddDSTX(dstxNew);
     }
@@ -483,7 +507,10 @@ void CCoinJoinServer::CheckForCompleteQueue()
     if (nState == POOL_STATE_QUEUE && IsSessionReady()) {
         SetState(POOL_STATE_ACCEPTING_ENTRIES);
 
-        CCoinJoinQueue dsq(nSessionDenom, WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.outpoint), GetAdjustedTime(), true);
+        CCoinJoinQueue dsq(nSessionDenom,
+                            WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.outpoint),
+                            WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.proTxHash),
+                            GetAdjustedTime(), true);
         LogPrint(BCLog::COINJOIN, "CCoinJoinServer::CheckForCompleteQueue -- queue is ready, signing and relaying (%s) " /* Continued */
                                      "with %d participants\n", dsq.ToString(), vecSessionCollaterals.size());
         dsq.Sign();
@@ -550,7 +577,7 @@ bool CCoinJoinServer::AddEntry(const CCoinJoinEntry& entry, PoolMessage& nMessag
         return false;
     }
 
-    if (!CCoinJoin::IsCollateralValid(*entry.txCollateral)) {
+    if (!CCoinJoin::IsCollateralValid(mempool, *entry.txCollateral)) {
         LogPrint(BCLog::COINJOIN, "CCoinJoinServer::%s -- ERROR: collateral not valid!\n", __func__);
         nMessageIDRet = ERR_INVALID_COLLATERAL;
         return false;
@@ -584,7 +611,7 @@ bool CCoinJoinServer::AddEntry(const CCoinJoinEntry& entry, PoolMessage& nMessag
     }
 
     bool fConsumeCollateral{false};
-    if (!IsValidInOuts(vin, entry.vecTxOut, nMessageIDRet, &fConsumeCollateral)) {
+    if (!IsValidInOuts(mempool, vin, entry.vecTxOut, nMessageIDRet, &fConsumeCollateral)) {
         LogPrint(BCLog::COINJOIN, "CCoinJoinServer::%s -- ERROR! IsValidInOuts() failed: %s\n", __func__, CCoinJoin::GetMessageByID(nMessageIDRet).translated);
         if (fConsumeCollateral) {
             ConsumeCollateral(entry.txCollateral);
@@ -661,7 +688,7 @@ bool CCoinJoinServer::IsAcceptableDSA(const CCoinJoinAccept& dsa, PoolMessage& n
     }
 
     // check collateral
-    if (!fUnitTest && !CCoinJoin::IsCollateralValid(CTransaction(dsa.txCollateral))) {
+    if (!fUnitTest && !CCoinJoin::IsCollateralValid(mempool, CTransaction(dsa.txCollateral))) {
         LogPrint(BCLog::COINJOIN, "CCoinJoinServer::%s -- collateral not valid!\n", __func__);
         nMessageIDRet = ERR_INVALID_COLLATERAL;
         return false;
@@ -694,7 +721,10 @@ bool CCoinJoinServer::CreateNewSession(const CCoinJoinAccept& dsa, PoolMessage& 
 
     if (!fUnitTest) {
         //broadcast that I'm accepting entries, only if it's the first entry through
-        CCoinJoinQueue dsq(nSessionDenom, WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.outpoint), GetAdjustedTime(), false);
+        CCoinJoinQueue dsq(nSessionDenom,
+                            WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.outpoint),
+                            WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.proTxHash),
+                            GetAdjustedTime(), false);
         LogPrint(BCLog::COINJOIN, "CCoinJoinServer::CreateNewSession -- signing and relaying new queue: %s\n", dsq.ToString());
         dsq.Sign();
         dsq.Relay(connman);
@@ -862,7 +892,7 @@ void CCoinJoinServer::SetState(PoolState nStateNew)
 void CCoinJoinServer::DoMaintenance() const
 {
     if (!fMasternodeMode) return; // only run on masternodes
-    if (masternodeSync == nullptr || !masternodeSync->IsBlockchainSynced()) return;
+    if (m_mn_sync == nullptr || !m_mn_sync->IsBlockchainSynced()) return;
     if (ShutdownRequested()) return;
 
     if (!coinJoinServer) return;

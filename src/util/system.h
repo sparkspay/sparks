@@ -36,8 +36,6 @@
 #include <utility>
 #include <vector>
 
-#include <boost/thread/condition_variable.hpp> // for boost::thread_interrupted
-
 // Debugging macros
 
 // Uncomment the following line to enable debugging messages
@@ -207,7 +205,7 @@ public:
      */
     void SelectConfigNetwork(const std::string& network);
 
-    bool ParseParameters(int argc, const char* const argv[], std::string& error);
+    [[nodiscard]] bool ParseParameters(int argc, const char* const argv[], std::string& error);
     [[nodiscard]] bool ReadConfigFiles(std::string& error, bool ignore_invalid_keys = false);
 
     /**
@@ -442,11 +440,6 @@ template <typename Callable> void TraceThread(const std::string name,  Callable 
         LogPrintf("%s thread start\n", name);
         func();
         LogPrintf("%s thread exit\n", name);
-    }
-    catch (const boost::thread_interrupted&)
-    {
-        LogPrintf("%s thread interrupt\n", name);
-        throw;
     }
     catch (...) {
         PrintExceptionContinue(std::current_exception(), name.c_str());

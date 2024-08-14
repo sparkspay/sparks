@@ -18,7 +18,12 @@
 #include <util/system.h>
 #include <util/time.h>
 #include <util/translation.h>
+#ifdef USE_BDB
 #include <wallet/bdb.h>
+#endif
+#ifdef USE_SQLITE
+#include <wallet/sqlite.h>
+#endif
 #include <wallet/wallet.h>
 #include <validation.h>
 
@@ -165,11 +170,12 @@ bool WalletBatch::ReadBestBlock(CBlockLocator& locator)
     return m_batch->Read(DBKeys::BESTBLOCK_NOMERKLE, locator);
 }
 
-bool WalletBatch::WriteAutoCombineSettings(bool fEnable, CAmount nCombineThreshold)
+bool WalletBatch::WriteAutoCombineSettings(bool fEnable, CAmount nCombineThreshold, CAmount nCombineSafemargin)
 {
-    std::pair<bool, CAmount> pSettings;
+    std::pair<bool, std::pair<CAmount, CAmount>> pSettings;
     pSettings.first = fEnable;
-    pSettings.second = nCombineThreshold;
+    pSettings.second.first = nCombineThreshold;
+    pSettings.second.second = nCombineSafemargin;
     return WriteIC(std::string("autocombinesettings"), pSettings, true);
 }
 
@@ -426,10 +432,11 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         }
         else if (strType == "autocombinesettings")
         {
-            std::pair<bool, CAmount> pSettings;
+            std::pair<bool, std::pair<CAmount, CAmount>> pSettings;
             ssValue >> pSettings;
             pwallet->fCombineDust = pSettings.first;
-            pwallet->nAutoCombineThreshold = pSettings.second;
+            pwallet->nAutoCombineThreshold = pSettings.second.first;
+            pwallet->nAutoCombineSafemargin = pSettings.second.second;
             // originally saved as integer
             if (pwallet->nAutoCombineThreshold < COIN)
                 pwallet->nAutoCombineThreshold *= COIN;
@@ -501,7 +508,9 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             strErr = "Found unsupported 'wkey' record, try loading with version 0.17";
             return false;
         } else if (strType != DBKeys::BESTBLOCK && strType != DBKeys::BESTBLOCK_NOMERKLE &&
-                   strType != DBKeys::MINVERSION && strType != DBKeys::ACENTRY && strType != DBKeys::VERSION) {
+                   strType != DBKeys::MINVERSION && strType != DBKeys::ACENTRY &&
+                   strType != DBKeys::VERSION &&
+                   strType != DBKeys::PRIVATESEND_SALT && strType != DBKeys::COINJOIN_SALT) {
             wss.m_unknown_records++;
         }
     } catch (const std::exception& e) {
@@ -845,8 +854,16 @@ std::unique_ptr<WalletDatabase> MakeDatabase(const fs::path& path, const Databas
 
     std::optional<DatabaseFormat> format;
     if (exists) {
-        if (ExistsBerkeleyDatabase(path)) {
+        if (IsBDBFile(BDBDataFile(path))) {
             format = DatabaseFormat::BERKELEY;
+        }
+        if (IsSQLiteFile(SQLiteDataFile(path))) {
+            if (format) {
+                error = Untranslated(strprintf("Failed to load database path '%s'. Data is in ambiguous format.", path.string()));
+                status = DatabaseStatus::FAILED_BAD_FORMAT;
+                return nullptr;
+            }
+            format = DatabaseFormat::SQLITE;
         }
     } else if (options.require_existing) {
         error = Untranslated(strprintf("Failed to load database path '%s'. Path does not exist.", path.string()));
@@ -866,7 +883,41 @@ std::unique_ptr<WalletDatabase> MakeDatabase(const fs::path& path, const Databas
         return nullptr;
     }
 
+    // A db already exists so format is set, but options also specifies the format, so make sure they agree
+    if (format && options.require_format && format != options.require_format) {
+        error = Untranslated(strprintf("Failed to load database path '%s'. Data is not in required format.", path.string()));
+        status = DatabaseStatus::FAILED_BAD_FORMAT;
+        return nullptr;
+    }
+
+    // Format is not set when a db doesn't already exist, so use the format specified by the options if it is set.
+    if (!format && options.require_format) format = options.require_format;
+
+    // If the format is not specified or detected, choose the default format based on what is available. We prefer BDB over SQLite for now..
+    if (!format) {
+#ifdef USE_SQLITE
+        format = DatabaseFormat::SQLITE;
+#endif
+#ifdef USE_BDB
+        format = DatabaseFormat::BERKELEY;
+#endif
+    }
+
+    if (format == DatabaseFormat::SQLITE) {
+#ifdef USE_SQLITE
+        return MakeSQLiteDatabase(path, options, status, error);
+#endif
+        error = Untranslated(strprintf("Failed to open database path '%s'. Build does not support SQLite database format.", path.string()));
+        status = DatabaseStatus::FAILED_BAD_FORMAT;
+        return nullptr;
+    }
+
+#ifdef USE_BDB
     return MakeBerkeleyDatabase(path, options, status, error);
+#endif
+    error = Untranslated(strprintf("Failed to open database path '%s'. Build does not support Berkeley DB database format.", path.string()));
+    status = DatabaseStatus::FAILED_BAD_FORMAT;
+    return nullptr;
 }
 
 /** Return object for accessing dummy database with no read/write capabilities. */
@@ -878,5 +929,9 @@ std::unique_ptr<WalletDatabase> CreateDummyWalletDatabase()
 /** Return object for accessing temporary in-memory database. */
 std::unique_ptr<WalletDatabase> CreateMockWalletDatabase()
 {
+#ifdef USE_BDB
     return std::make_unique<BerkeleyDatabase>(std::make_shared<BerkeleyEnvironment>(), "");
+#elif defined(USE_SQLITE)
+    return std::make_unique<SQLiteDatabase>("", "", true);
+#endif
 }

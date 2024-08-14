@@ -2,10 +2,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <rpc/server.h>
-#include <rpc/client.h>
-#include <rpc/util.h>
-
 #include <context.h>
 #include <core_io.h>
 #include <key_io.h>
@@ -13,15 +9,15 @@
 
 #include <interfaces/chain.h>
 #include <node/context.h>
+#include <rpc/blockchain.h>
+#include <rpc/client.h>
+#include <rpc/server.h>
+#include <rpc/util.h>
 #include <test/util/setup_common.h>
+#include <univalue.h>
 #include <util/time.h>
 
-#include <boost/algorithm/string.hpp>
 #include <boost/test/unit_test.hpp>
-
-#include <univalue.h>
-
-#include <rpc/blockchain.h>
 
 class RPCTestingSetup : public TestingSetup
 {
@@ -31,8 +27,7 @@ public:
 
 UniValue RPCTestingSetup::CallRPC(std::string args)
 {
-    std::vector<std::string> vArgs;
-    boost::split(vArgs, args, boost::is_any_of(" \t"));
+    std::vector<std::string> vArgs{SplitString(args, ' ')};
     std::string strMethod = vArgs[0];
     vArgs.erase(vArgs.begin());
     CoreContext context{m_node};
@@ -422,6 +417,52 @@ BOOST_AUTO_TEST_CASE(rpc_getblockstats_calculate_percentiles_by_size)
     for (int64_t i = 0; i < NUM_GETBLOCKSTATS_PERCENTILES; i++) {
         BOOST_CHECK_EQUAL(result4[i], 1);
     }
+}
+
+BOOST_AUTO_TEST_CASE(rpc_bls)
+{
+    UniValue r;
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls generate")));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "legacy");
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls generate 1")));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "legacy");
+    std::string secret_legacy = find_value(r.get_obj(), "secret").get_str();
+    std::string public_legacy = find_value(r.get_obj(), "public").get_str();
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls generate 0")));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "basic");
+    std::string secret_basic = find_value(r.get_obj(), "secret").get_str();
+    std::string public_basic = find_value(r.get_obj(), "public").get_str();
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls fromsecret ") + secret_legacy));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "legacy");
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "public").get_str(), public_legacy);
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls fromsecret ") + secret_legacy + std::string(" 1")));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "legacy");
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "public").get_str(), public_legacy);
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls fromsecret ") + secret_legacy + std::string(" 0")));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "basic");
+    BOOST_CHECK(find_value(r.get_obj(), "public").get_str() != public_legacy);
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls fromsecret ") + secret_basic + std::string(" 0")));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "basic");
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "public").get_str(), public_basic);
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls fromsecret ") + secret_basic + std::string(" 1")));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "legacy");
+    BOOST_CHECK(find_value(r.get_obj(), "public").get_str() != public_basic);
+
+    std::string secret = "0b072b1b8b28335b0460aa695ee8ce1f60dc01e6eb12655ece2a877379dfdb51";
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls fromsecret ") + secret));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "legacy");
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "public").get_str(), "9379c28e0f50546906fe733f1222c8f7e39574d513790034f1fec1476286eb652a350c8c0e630cd2cc60d10c26d6f6ee");
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls fromsecret ") + secret + " 0"));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "basic");
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "public").get_str(), "b379c28e0f50546906fe733f1222c8f7e39574d513790034f1fec1476286eb652a350c8c0e630cd2cc60d10c26d6f6ee");
 }
 
 BOOST_AUTO_TEST_SUITE_END()

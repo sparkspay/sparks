@@ -10,6 +10,7 @@
 #include <consensus/validation.h>
 #include <llmq/chainlocks.h>
 #include <llmq/instantsend.h>
+#include <llmq/utils.h>
 #include <masternode/node.h>
 #include <masternode/sync.h>
 #include <messagesigner.h>
@@ -40,29 +41,31 @@ bool CCoinJoinEntry::AddScriptSig(const CTxIn& txin)
     return false;
 }
 
-uint256 CCoinJoinQueue::GetSignatureHash() const
+uint256 CCoinJoinQueue::GetSignatureHash(bool legacy) const
 {
-    return SerializeHash(*this);
+    int version = legacy ? COINJOIN_PROTX_HASH_PROTO_VERSION - 1 : PROTOCOL_VERSION;
+    return SerializeHash(*this, SER_GETHASH, version);
 }
 
 bool CCoinJoinQueue::Sign()
 {
     if (!fMasternodeMode) return false;
 
-
-    uint256 hash = GetSignatureHash();
+    bool legacy_bls_scheme = !llmq::utils::IsV19Active(::ChainActive().Tip());
+    uint256 hash = GetSignatureHash(legacy_bls_scheme);
     CBLSSignature sig = WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.blsKeyOperator->Sign(hash));
     if (!sig.IsValid()) {
         return false;
     }
-    vchSig = sig.ToByteVector();
+    vchSig = sig.ToByteVector(legacy_bls_scheme);
 
     return true;
 }
 
 bool CCoinJoinQueue::CheckSignature(const CBLSPublicKey& blsPubKey) const
 {
-    if (!CBLSSignature(vchSig).VerifyInsecure(blsPubKey, GetSignatureHash())) {
+    bool legacy_bls_scheme = !llmq::utils::IsV19Active(::ChainActive().Tip());
+    if (!CBLSSignature(vchSig).VerifyInsecure(blsPubKey, GetSignatureHash(legacy_bls_scheme))) {
         LogPrint(BCLog::COINJOIN, "CCoinJoinQueue::CheckSignature -- VerifyInsecure() failed\n");
         return false;
     }
@@ -87,29 +90,31 @@ bool CCoinJoinQueue::IsTimeOutOfBounds(int64_t current_time) const
            nTime - current_time > COINJOIN_QUEUE_TIMEOUT;
 }
 
-uint256 CCoinJoinBroadcastTx::GetSignatureHash() const
+uint256 CCoinJoinBroadcastTx::GetSignatureHash(bool legacy) const
 {
-    return SerializeHash(*this);
+    int version = legacy ? COINJOIN_PROTX_HASH_PROTO_VERSION - 1 : PROTOCOL_VERSION;
+    return SerializeHash(*this, SER_GETHASH, version);
 }
 
 bool CCoinJoinBroadcastTx::Sign()
 {
     if (!fMasternodeMode) return false;
 
-    uint256 hash = GetSignatureHash();
-
+    bool legacy_bls_scheme = !llmq::utils::IsV19Active(::ChainActive().Tip());
+    uint256 hash = GetSignatureHash(legacy_bls_scheme);
     CBLSSignature sig = WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.blsKeyOperator->Sign(hash));
     if (!sig.IsValid()) {
         return false;
     }
-    vchSig = sig.ToByteVector();
+    vchSig = sig.ToByteVector(legacy_bls_scheme);
 
     return true;
 }
 
 bool CCoinJoinBroadcastTx::CheckSignature(const CBLSPublicKey& blsPubKey) const
 {
-    if (!CBLSSignature(vchSig).VerifyInsecure(blsPubKey, GetSignatureHash())) {
+    bool legacy_bls_scheme = !llmq::utils::IsV19Active(::ChainActive().Tip());
+    if (!CBLSSignature(vchSig).VerifyInsecure(blsPubKey, GetSignatureHash(legacy_bls_scheme))) {
         LogPrint(BCLog::COINJOIN, "CCoinJoinBroadcastTx::CheckSignature -- VerifyInsecure() failed\n");
         return false;
     }
@@ -128,6 +133,9 @@ bool CCoinJoinBroadcastTx::IsExpired(const CBlockIndex* pindex, const llmq::CCha
 bool CCoinJoinBroadcastTx::IsValidStructure() const
 {
     // some trivial checks only
+    if (masternodeOutpoint.IsNull() && m_protxHash.IsNull()) {
+        return false;
+    }
     if (tx->vin.size() != tx->vout.size()) {
         return false;
     }
@@ -212,7 +220,7 @@ std::string CCoinJoinBaseSession::GetStateString() const
     }
 }
 
-bool CCoinJoinBaseSession::IsValidInOuts(const std::vector<CTxIn>& vin, const std::vector<CTxOut>& vout, PoolMessage& nMessageIDRet, bool* fConsumeCollateralRet) const
+bool CCoinJoinBaseSession::IsValidInOuts(const CTxMemPool& mempool, const std::vector<CTxIn>& vin, const std::vector<CTxOut>& vout, PoolMessage& nMessageIDRet, bool* fConsumeCollateralRet) const
 {
     std::set<CScript> setScripPubKeys;
     nMessageIDRet = MSG_NOERR;
@@ -226,8 +234,7 @@ bool CCoinJoinBaseSession::IsValidInOuts(const std::vector<CTxIn>& vin, const st
     }
 
     auto checkTxOut = [&](const CTxOut& txout) {
-        int nDenom = CCoinJoin::AmountToDenomination(txout.nValue);
-        if (nDenom != nSessionDenom) {
+        if (int nDenom = CCoinJoin::AmountToDenomination(txout.nValue); nDenom != nSessionDenom) {
             LogPrint(BCLog::COINJOIN, "CCoinJoinBaseSession::IsValidInOuts -- ERROR: incompatible denom %d (%s) != nSessionDenom %d (%s)\n",
                     nDenom, CCoinJoin::DenominationToString(nDenom), nSessionDenom, CCoinJoin::DenominationToString(nSessionDenom));
             nMessageIDRet = ERR_DENOM;
@@ -303,7 +310,7 @@ Mutex CCoinJoin::cs_mapdstx;
 std::map<uint256, CCoinJoinBroadcastTx> CCoinJoin::mapDSTX GUARDED_BY(CCoinJoin::cs_mapdstx);
 
 // check to make sure the collateral provided by the client is valid
-bool CCoinJoin::IsCollateralValid(const CTransaction& txCollateral)
+bool CCoinJoin::IsCollateralValid(CTxMemPool& mempool, const CTransaction& txCollateral)
 {
     if (txCollateral.vout.empty()) return false;
     if (txCollateral.nLockTime != 0) return false;
@@ -359,9 +366,7 @@ bool CCoinJoin::IsCollateralValid(const CTransaction& txCollateral)
 
 std::string CCoinJoin::DenominationToString(int nDenom)
 {
-    CAmount nDenomAmount = DenominationToAmount(nDenom);
-
-    switch (nDenomAmount) {
+    switch (CAmount nDenomAmount = DenominationToAmount(nDenom)) {
         case  0: return "N/A";
         case -1: return "out-of-bounds";
         case -2: return "non-denom";
@@ -455,16 +460,16 @@ void CCoinJoin::CheckDSTXes(const CBlockIndex* pindex, const llmq::CChainLocksHa
     LogPrint(BCLog::COINJOIN, "CCoinJoin::CheckDSTXes -- mapDSTX.size()=%llu\n", mapDSTX.size());
 }
 
-void CCoinJoin::UpdatedBlockTip(const CBlockIndex* pindex, const llmq::CChainLocksHandler& clhandler)
+void CCoinJoin::UpdatedBlockTip(const CBlockIndex* pindex, const llmq::CChainLocksHandler& clhandler, const std::unique_ptr<CMasternodeSync>& mn_sync)
 {
-    if (pindex && masternodeSync->IsBlockchainSynced()) {
+    if (pindex && mn_sync->IsBlockchainSynced()) {
         CheckDSTXes(pindex, clhandler);
     }
 }
 
-void CCoinJoin::NotifyChainLock(const CBlockIndex* pindex, const llmq::CChainLocksHandler& clhandler)
+void CCoinJoin::NotifyChainLock(const CBlockIndex* pindex, const llmq::CChainLocksHandler& clhandler, const std::unique_ptr<CMasternodeSync>& mn_sync)
 {
-    if (pindex && masternodeSync->IsBlockchainSynced()) {
+    if (pindex && mn_sync->IsBlockchainSynced()) {
         CheckDSTXes(pindex, clhandler);
     }
 }
@@ -489,13 +494,10 @@ void CCoinJoin::TransactionAddedToMempool(const CTransactionRef& tx)
     UpdateDSTXConfirmedHeight(tx, -1);
 }
 
-void CCoinJoin::BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex, const std::vector<CTransactionRef>& vtxConflicted)
+void CCoinJoin::BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex)
 {
     AssertLockNotHeld(cs_mapdstx);
     LOCK(cs_mapdstx);
-    for (const auto& tx : vtxConflicted) {
-        UpdateDSTXConfirmedHeight(tx, -1);
-    }
 
     for (const auto& tx : pblock->vtx) {
         UpdateDSTXConfirmedHeight(tx, pindex->nHeight);

@@ -10,6 +10,7 @@
 #include <evo/deterministicmns.h>
 #include <governance/governance.h>
 #include <governance/validators.h>
+#include <llmq/utils.h>
 #include <masternode/meta.h>
 #include <masternode/sync.h>
 #include <messagesigner.h>
@@ -313,7 +314,11 @@ bool CGovernanceObject::Sign(const CBLSSecretKey& key)
 
 bool CGovernanceObject::CheckSignature(const CBLSPublicKey& pubKey) const
 {
-    if (!CBLSSignature(vchSig).VerifyInsecure(pubKey, GetSignatureHash())) {
+    CBLSSignature sig;
+    const auto pindex = llmq::utils::V19ActivationIndex(::ChainActive().Tip());
+    bool is_bls_legacy_scheme = pindex == nullptr || nTime < pindex->pprev->nTime;
+    sig.SetByteVector(vchSig, is_bls_legacy_scheme);
+    if (!sig.VerifyInsecure(pubKey, GetSignatureHash(), is_bls_legacy_scheme)) {
         LogPrintf("CGovernanceObject::CheckSignature -- VerifyInsecure() failed\n");
         return false;
     }
@@ -496,7 +501,7 @@ bool CGovernanceObject::IsValidLocally(std::string& strError, bool& fMissingConf
 
         // Check that we have a valid MN signature
         if (!CheckSignature(dmn->pdmnState->pubKeyOperator.Get())) {
-            strError = "Invalid masternode signature for: " + strOutpoint + ", pubkey = " + dmn->pdmnState->pubKeyOperator.Get().ToString();
+            strError = "Invalid masternode signature for: " + strOutpoint + ", pubkey = " + dmn->pdmnState->pubKeyOperator.ToString();
             return false;
         }
 
@@ -526,7 +531,6 @@ CAmount CGovernanceObject::GetMinCollateralFee(bool fork_active) const
 bool CGovernanceObject::IsCollateralValid(std::string& strError, bool& fMissingConfirmations) const
 {
     AssertLockHeld(cs_main);
-    AssertLockHeld(::mempool.cs); // because of GetTransaction
 
     strError = "";
     fMissingConfirmations = false;
@@ -615,6 +619,8 @@ bool CGovernanceObject::IsCollateralValid(std::string& strError, bool& fMissingC
 
 int CGovernanceObject::CountMatchingVotes(vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn) const
 {
+    auto mnList = deterministicMNManager->GetListAtChainTip();
+
     LOCK(cs);
 
     int nCount = 0;
@@ -622,7 +628,10 @@ int CGovernanceObject::CountMatchingVotes(vote_signal_enum_t eVoteSignalIn, vote
         const vote_rec_t& recVote = votepair.second;
         auto it2 = recVote.mapInstances.find(eVoteSignalIn);
         if (it2 != recVote.mapInstances.end() && it2->second.eOutcome == eVoteOutcomeIn) {
-            ++nCount;
+            // 4x times weight vote for HPMN owners.
+            // No need to check if v19 is active since no HPMN are allowed to register before v19s
+            auto dmn = mnList.GetMNByCollateral(votepair.first);
+            if (dmn != nullptr) nCount += GetMnType(dmn->nType).voting_weight;
         }
     }
     return nCount;
@@ -672,7 +681,7 @@ bool CGovernanceObject::GetCurrentMNVotes(const COutPoint& mnCollateralOutpoint,
 void CGovernanceObject::Relay(CConnman& connman) const
 {
     // Do not relay until fully synced
-    if (!masternodeSync->IsSynced()) {
+    if (!::masternodeSync->IsSynced()) {
         LogPrint(BCLog::GOBJECT, "CGovernanceObject::Relay -- won't relay until fully synced\n");
         return;
     }
@@ -702,13 +711,13 @@ void CGovernanceObject::UpdateSentinelVariables()
 {
     // CALCULATE MINIMUM SUPPORT LEVELS REQUIRED
 
-    int nMnCount = (int)deterministicMNManager->GetListAtChainTip().GetValidMNsCount();
-    if (nMnCount == 0) return;
+    int nWeightedMnCount = (int)deterministicMNManager->GetListAtChainTip().GetValidWeightedMNsCount();
+    if (nWeightedMnCount == 0) return;
 
     // CALCULATE THE MINIMUM VOTE COUNT REQUIRED FOR FULL SIGNAL
 
-    int nAbsVoteReq = std::max(Params().GetConsensus().nGovernanceMinQuorum, nMnCount / 10);
-    int nAbsDeleteReq = std::max(Params().GetConsensus().nGovernanceMinQuorum, (2 * nMnCount) / 3);
+    int nAbsVoteReq = std::max(Params().GetConsensus().nGovernanceMinQuorum, nWeightedMnCount / 10);
+    int nAbsDeleteReq = std::max(Params().GetConsensus().nGovernanceMinQuorum, (2 * nWeightedMnCount) / 3);
 
     // SET SENTINEL FLAGS TO FALSE
 

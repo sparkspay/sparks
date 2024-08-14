@@ -24,8 +24,14 @@ namespace llmq
 {
 std::unique_ptr<CChainLocksHandler> chainLocksHandler;
 
-CChainLocksHandler::CChainLocksHandler(CTxMemPool& _mempool, CConnman& _connman, CSporkManager& sporkManager, CSigningManager& _sigman, CSigSharesManager& _shareman) :
-    scheduler(std::make_unique<CScheduler>()), mempool(_mempool), connman(_connman), spork_manager(sporkManager), sigman(_sigman), shareman(_shareman),
+CChainLocksHandler::CChainLocksHandler(CTxMemPool& _mempool, CConnman& _connman, CSporkManager& sporkManager, CSigningManager& _sigman, CSigSharesManager& _shareman, const std::unique_ptr<CMasternodeSync>& mn_sync) :
+    connman(_connman),
+    mempool(_mempool),
+    spork_manager(sporkManager),
+    sigman(_sigman),
+    shareman(_shareman),
+    m_mn_sync(mn_sync),
+    scheduler(std::make_unique<CScheduler>()),
     scheduler_thread(std::make_unique<std::thread>([&] { TraceThread("cl-schdlr", [&] { scheduler->serviceQueue(); }); }))
 {
 }
@@ -44,7 +50,7 @@ void CChainLocksHandler::Start()
         EnforceBestChainLock();
         // regularly retry signing the current chaintip as it might have failed before due to missing islocks
         TrySignChainTip();
-    }, 5000);
+    }, std::chrono::seconds{5});
 }
 
 void CChainLocksHandler::Stop()
@@ -78,7 +84,7 @@ CChainLockSig CChainLocksHandler::GetBestChainLock() const
     return bestChainLock;
 }
 
-void CChainLocksHandler::ProcessMessage(CNode* pfrom, const std::string& msg_type, CDataStream& vRecv)
+void CChainLocksHandler::ProcessMessage(const CNode& pfrom, const std::string& msg_type, CDataStream& vRecv)
 {
     if (!AreChainLocksEnabled(spork_manager)) {
         return;
@@ -88,7 +94,7 @@ void CChainLocksHandler::ProcessMessage(CNode* pfrom, const std::string& msg_typ
         CChainLockSig clsig;
         vRecv >> clsig;
 
-        ProcessNewChainLock(pfrom->GetId(), clsig, ::SerializeHash(clsig));
+        ProcessNewChainLock(pfrom.GetId(), clsig, ::SerializeHash(clsig));
     }
 }
 
@@ -162,7 +168,7 @@ void CChainLocksHandler::ProcessNewChainLock(const NodeId from, const llmq::CCha
     scheduler->scheduleFromNow([&]() {
         CheckActiveState();
         EnforceBestChainLock();
-    }, 0);
+    }, std::chrono::seconds{0});
 
     LogPrint(BCLog::CHAINLOCKS, "CChainLocksHandler::%s -- processed new CLSIG (%s), peer=%d\n",
               __func__, clsig.ToString(), from);
@@ -202,7 +208,7 @@ void CChainLocksHandler::UpdatedBlockTip()
             EnforceBestChainLock();
             TrySignChainTip();
             tryLockChainTipScheduled = false;
-        }, 0);
+        }, std::chrono::seconds{0});
     }
 }
 
@@ -233,11 +239,15 @@ void CChainLocksHandler::TrySignChainTip()
         return;
     }
 
-    if (!masternodeSync->IsBlockchainSynced()) {
+    if (!m_mn_sync->IsBlockchainSynced()) {
         return;
     }
 
     if (!isEnabled) {
+        return;
+    }
+
+    if (!ChainLocksSigningEnabled(spork_manager)) {
         return;
     }
 
@@ -347,9 +357,9 @@ void CChainLocksHandler::TransactionAddedToMempool(const CTransactionRef& tx, in
     txFirstSeenTime.emplace(tx->GetHash(), nAcceptTime);
 }
 
-void CChainLocksHandler::BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex, const std::vector<CTransactionRef>& vtxConflicted)
+void CChainLocksHandler::BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex)
 {
-    if (!masternodeSync->IsBlockchainSynced()) {
+    if (!m_mn_sync->IsBlockchainSynced()) {
         return;
     }
 
@@ -609,7 +619,7 @@ bool CChainLocksHandler::InternalHasConflictingChainLock(int nHeight, const uint
 
 void CChainLocksHandler::Cleanup()
 {
-    if (!masternodeSync->IsBlockchainSynced()) {
+    if (!m_mn_sync->IsBlockchainSynced()) {
         return;
     }
 
@@ -670,6 +680,11 @@ void CChainLocksHandler::Cleanup()
 bool AreChainLocksEnabled(const CSporkManager& sporkManager)
 {
     return sporkManager.IsSporkActive(SPORK_19_CHAINLOCKS_ENABLED);
+}
+
+bool ChainLocksSigningEnabled(const CSporkManager& sporkManager)
+{
+    return sporkManager.GetSporkValue(SPORK_19_CHAINLOCKS_ENABLED) == 0;
 }
 
 } // namespace llmq

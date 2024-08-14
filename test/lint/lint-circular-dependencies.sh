@@ -21,8 +21,6 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     "txmempool -> validation -> txmempool"
     "wallet/fees -> wallet/wallet -> wallet/fees"
     "wallet/wallet -> wallet/walletdb -> wallet/wallet"
-    "wallet/coincontrol -> wallet/wallet -> wallet/coincontrol"
-    "txmempool -> validation -> validationinterface -> txmempool"
     "wallet/scriptpubkeyman -> wallet/wallet -> wallet/scriptpubkeyman"
     # Sparks
     "coinjoin/server -> net_processing -> coinjoin/server"
@@ -49,6 +47,7 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     "llmq/signing_shares -> net_processing -> llmq/signing_shares"
     "logging -> util/system -> logging"
     "masternode/payments -> validation -> masternode/payments"
+    "masternode/sync -> validation -> masternode/sync"
     "net -> netmessagemaker -> net"
     "net_processing -> spork -> net_processing"
     "netaddress -> netbase -> netaddress"
@@ -72,7 +71,7 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     "coinjoin/client -> net_processing -> coinjoin/client"
     "llmq/quorums -> net_processing -> llmq/quorums"
     "llmq/dkgsession -> llmq/dkgsessionmgr -> llmq/dkgsession"
-    "evo/deterministicmns -> validationinterface -> txmempool -> evo/deterministicmns"
+    "evo/deterministicmns -> evo/simplifiedmns -> llmq/blockprocessor -> net_processing -> txmempool -> evo/deterministicmns"
     "llmq/chainlocks -> validation -> llmq/chainlocks"
     "coinjoin/coinjoin -> llmq/chainlocks -> net -> coinjoin/coinjoin"
     "evo/deterministicmns -> llmq/utils -> net -> evo/deterministicmns"
@@ -90,6 +89,8 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     "llmq/snapshot -> llmq/utils -> llmq/snapshot"
     "spork -> validation -> spork"
     "governance/governance -> validation -> governance/governance"
+    "llmq/debug -> llmq/dkgsessionhandler -> llmq/debug"
+    "llmq/debug -> llmq/dkgsessionhandler -> llmq/dkgsession -> llmq/debug"
 )
 
 EXIT_CODE=0
