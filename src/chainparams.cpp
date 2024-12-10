@@ -246,12 +246,10 @@ public:
 
         // Deployment of Deployment of Basic BLS, AssetLocks, EHF
         consensus.vDeployments[Consensus::DEPLOYMENT_V19].bit = 11;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nStartTime = 1749721906;//1686700800     // Wednesday, June 14, 2023 12:00:00 AM
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nTimeout = 999999999999ULL;//1718323200       // Friday, June 14, 2024 12:00:00 AM
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nWindowSize = 4032;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdStart = 3226;       // 80% of 4032
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdMin = 2420;         // 60% of 4032
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nFalloffCoeff = 5;            // this corresponds to 10 periods
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nStartTime = 1735689600;//1735689600     // Wednesday, January 1, 2025 12:00:00 AM
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nTimeout = 1767225600;//1767225600       // Thursday, January 1, 2026 12:00:00 AM
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdStart = 60;       // 60% of 100
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000eee93cb0b1f4be");//269664
@@ -283,7 +281,7 @@ public:
         pchMessageStart[3] = 0xd4;
         nDefaultPort = 8890;
 
-        nDefaultPlatformP2PPort = 26656;
+        nDefaultPlatformP2PPort = 26700;
         nDefaultPlatformHTTPPort = 443;
         nPruneAfterHeight = 100000;
         m_assumed_blockchain_size = 45;
@@ -392,7 +390,7 @@ public:
            }
         };
 
-        // getchaintxstats 17280 00000000000000075300e852d5bf5380f905b2768241f8b442498442084807a7
+
         chainTxData = ChainTxData{
             1549015815, // * UNIX timestamp of last known number of transactions
             354527,    // * total number of transactions between genesis and that timestamp
