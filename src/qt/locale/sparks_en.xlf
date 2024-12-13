@@ -2086,7 +2086,7 @@
   <file original="../modaloverlay.cpp" datatype="cpp" source-language="en" target-language="en"><body>
     <group restype="x-trolltech-linguist-context" resname="ModalOverlay">
       <trans-unit id="_msg384">
-        <source xml:space="preserve">Dash Core is currently syncing.  It will download headers and blocks from peers and validate them until reaching the tip of the block chain.</source>
+        <source xml:space="preserve">Sparks Core is currently syncing.  It will download headers and blocks from peers and validate them until reaching the tip of the block chain.</source>
         <target xml:space="preserve"></target>
         <context-group purpose="location"><context context-type="linenumber">48</context></context-group>
       </trans-unit>

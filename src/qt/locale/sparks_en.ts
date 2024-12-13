@@ -406,8 +406,8 @@
         <source>A fatal error occurred. Sparks Core can no longer continue safely and will quit.</source>
         <translation>A fatal error occurred. Sparks Core can no longer continue safely and will quit.</translation>
         <location filename="../bitcoin.cpp" line="+396"/>
-        <source>A fatal error occurred. Dash Core can no longer continue safely and will quit.</source>
-        <translation>A fatal error occurred. Dash Core can no longer continue safely and will quit.</translation>
+        <source>A fatal error occurred. Sparks Core can no longer continue safely and will quit.</source>
+        <translation>A fatal error occurred. Sparks Core can no longer continue safely and will quit.</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="+1401"/>
@@ -742,8 +742,8 @@
     </message>
     <message>
         <location line="+27"/>
-        <source>Open a dash: URI</source>
-        <translation>Open a dash: URI</translation>
+        <source>Open a sparks: URI</source>
+        <translation>Open a sparks: URI</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -789,7 +789,7 @@
         <location line="+540"/>
         <source>%n active connection(s) to Sparks network</source>
         <location line="+547"/>
-        <source>%n active connection(s) to Dash network</source>
+        <source>%n active connection(s) to Sparks network</source>
         <translation>
             <numerusform>%n active connection to Sparks network</numerusform>
             <numerusform>%n active connections to Sparks network</numerusform>
@@ -1763,8 +1763,8 @@
     </message>
     <message>
         <location filename="../modaloverlay.cpp" line="-110"/>
-        <source>Dash Core is currently syncing.  It will download headers and blocks from peers and validate them until reaching the tip of the block chain.</source>
-        <translation>Dash Core is currently syncing.  It will download headers and blocks from peers and validate them until reaching the tip of the block chain.</translation>
+        <source>Sparks Core is currently syncing.  It will download headers and blocks from peers and validate them until reaching the tip of the block chain.</source>
+        <translation>Sparks Core is currently syncing.  It will download headers and blocks from peers and validate them until reaching the tip of the block chain.</translation>
     </message>
     <message>
         <location line="+116"/>
@@ -2057,8 +2057,8 @@
     </message>
     <message>
         <location line="+7"/>
-        <source>Automatically open the Dash Core client port on the router. This only works when your router supports NAT-PMP and it is enabled. The external port could be random.</source>
-        <translation>Automatically open the Dash Core client port on the router. This only works when your router supports NAT-PMP and it is enabled. The external port could be random.</translation>
+        <source>Automatically open the Sparks Core client port on the router. This only works when your router supports NAT-PMP and it is enabled. The external port could be random.</source>
+        <translation>Automatically open the Sparks Core client port on the router. This only works when your router supports NAT-PMP and it is enabled. The external port could be random.</translation>
     </message>
     <message>
         <location line="+32"/>
@@ -2810,8 +2810,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <location filename="../guiutil.cpp" line="+280"/>
-        <source>Enter a Dash address (e.g. %1)</source>
-        <translation>Enter a Dash address (e.g. %1)</translation>
+        <source>Enter a Sparks address (e.g. %1)</source>
+        <translation>Enter a Sparks address (e.g. %1)</translation>
     </message>
     <message>
         <location line="+29"/>
@@ -3898,8 +3898,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <location line="+150"/>
-        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for dash transactions than the network can process.</source>
-        <translation>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for dash transactions than the network can process.</translation>
+        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
+        <translation>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for sparks transactions than the network can process.</translation>
     </message>
     <message>
         <location line="+3"/>

@@ -568,8 +568,8 @@
         <translation>Otwórz debugowanie i konsolę diagnostyczną</translation>
     </message>
     <message>
-        <source>Open a dash: URI</source>
-        <translation>Otwórz dash: URI</translation>
+        <source>Open a sparks: URI</source>
+        <translation>Otwórz sparks: URI</translation>
     </message>
     <message>
         <source>Create Wallet...</source>
@@ -1451,8 +1451,8 @@
         <translation>Docelowe saldo</translation>
     </message>
     <message>
-        <source>Automatically open the Dash Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Automatycznie otwórz port klienta Dash Core na ruterze. Opcja działa jedynie, jeżeli router obsługuje UPnP i funkcja UPnP jest włączona.</translation>
+        <source>Automatically open the Sparks Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Automatycznie otwórz port klienta Sparks Core na ruterze. Opcja działa jedynie, jeżeli router obsługuje UPnP i funkcja UPnP jest włączona.</translation>
     </message>
     <message>
         <source>Map port using NA&amp;T-PMP</source>
