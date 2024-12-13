@@ -163,7 +163,7 @@ static RPCArg GetRpcArg(const std::string& strParamName)
         },
         {"platformP2PPort",
             {"platformP2PPort", RPCArg::Type::NUM, RPCArg::Optional::NO,
-                "TCP port of Dash Platform peer-to-peer communication between nodes (network byte order)."}
+                "TCP port of Sparks Platform peer-to-peer communication between nodes (network byte order)."}
         },
         {"platformHTTPPort",
             {"platformHTTPPort", RPCArg::Type::NUM, RPCArg::Optional::NO,
@@ -490,7 +490,7 @@ static void protx_register_fund_hpmn_help(const JSONRPCRequest& request)
 {
     RPCHelpMan{
         "protx register_fund_hpmn",
-        "\nCreates, funds and sends a ProTx to the network. The resulting transaction will move 25000 Dash\n"
+        "\nCreates, funds and sends a ProTx to the network. The resulting transaction will move 25000 Sparks\n"
         "to the address specified by collateralAddress and will then function as the collateral of your\n"
         "HPMN/Evonode.\n"
         "A few of the limitations you see in the arguments are temporary and might be lifted after DIP3\n"
