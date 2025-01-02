@@ -17,22 +17,25 @@
 #include <llmq/context.h>
 #include <llmq/chainlocks.h>
 #include <llmq/instantsend.h>
+#include <evo/evodb.h>
 #include <miner.h>
 #include <net.h>
 #include <node/context.h>
 #include <policy/fees.h>
 #include <pow.h>
 #include <rpc/blockchain.h>
-#include <rpc/mining.h>
 #include <rpc/server.h>
 #include <rpc/util.h>
 #include <script/descriptor.h>
+#include <script/script.h>
 #include <script/sign.h>
 #include <shutdown.h>
 #include <spork.h>
 #include <txmempool.h>
+#include <univalue.h>
 #include <util/fees.h>
 #include <util/strencodings.h>
+#include <util/string.h>
 #include <util/system.h>
 #include <util/validation.h>
 #include <validation.h>
@@ -143,8 +146,9 @@ static bool GenerateBlock(ChainstateManager& chainman, CBlock& block, uint64_t& 
     return true;
 }
 
-UniValue generateBlocks(ChainstateManager& chainman, const CTxMemPool& mempool, llmq::CQuorumBlockProcessor& quorum_block_processor, llmq::CChainLocksHandler& clhandler,
-                        llmq::CInstantSendManager& isman, std::shared_ptr<CReserveScript> coinbaseScript, int nGenerate, uint64_t nMaxTries, bool keepScript)
+static UniValue generateBlocks(ChainstateManager& chainman, const CTxMemPool& mempool, CEvoDB& evodb,
+                        llmq::CQuorumBlockProcessor& quorum_block_processor, llmq::CChainLocksHandler& clhandler,
+                        llmq::CInstantSendManager& isman, const CScript& coinbase_script, int nGenerate, uint64_t nMaxTries)
 {
     int nHeightEnd = 0;
     int nHeight = 0;
@@ -158,7 +162,7 @@ UniValue generateBlocks(ChainstateManager& chainman, const CTxMemPool& mempool, 
     UniValue blockHashes(UniValue::VARR);
     while (nHeight < nHeightEnd && !ShutdownRequested())
     {
-        std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(*sporkManager, *governance, quorum_block_processor, clhandler, isman, mempool, Params()).CreateNewBlock(coinbaseScript->reserveScript));
+        std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(*sporkManager, *governance, quorum_block_processor, clhandler, isman, evodb, mempool, Params()).CreateNewBlock(coinbase_script));
         if (!pblocktemplate.get())
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
         CBlock *pblock = &pblocktemplate->block;
@@ -171,12 +175,6 @@ UniValue generateBlocks(ChainstateManager& chainman, const CTxMemPool& mempool, 
         if (!block_hash.IsNull()) {
             ++nHeight;
             blockHashes.push_back(block_hash.GetHex());
-        }
-
-        // mark script as important because it was used at least for one coinbase output if the script came from the wallet
-        if (keepScript) {
-            LOCK(cs_main);
-            coinbaseScript->KeepScript();
         }
     }
     return blockHashes;
@@ -246,14 +244,12 @@ static UniValue generatetodescriptor(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, error);
     }
 
+    const NodeContext& node_context = EnsureNodeContext(request.context);
     const CTxMemPool& mempool = EnsureMemPool(request.context);
     ChainstateManager& chainman = EnsureChainman(request.context);
     LLMQContext& llmq_ctx = EnsureLLMQContext(request.context);
 
-    std::shared_ptr<CReserveScript> coinbaseScript = std::make_shared<CReserveScript>();
-    coinbaseScript->reserveScript = coinbase_script;
-
-    return generateBlocks(chainman, mempool, *llmq_ctx.quorum_block_processor, *llmq_ctx.clhandler, *llmq_ctx.isman, coinbaseScript, num_blocks, max_tries, false);
+    return generateBlocks(chainman, mempool, *node_context.evodb, *llmq_ctx.quorum_block_processor, *llmq_ctx.clhandler, *llmq_ctx.isman, coinbase_script, num_blocks, max_tries);
 }
 
 static UniValue generatetoaddress(const JSONRPCRequest& request)
@@ -288,14 +284,14 @@ static UniValue generatetoaddress(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Error: Invalid address");
     }
 
+    const NodeContext& node_context = EnsureNodeContext(request.context);
     const CTxMemPool& mempool = EnsureMemPool(request.context);
     ChainstateManager& chainman = EnsureChainman(request.context);
     LLMQContext& llmq_ctx = EnsureLLMQContext(request.context);
 
-    std::shared_ptr<CReserveScript> coinbaseScript = std::make_shared<CReserveScript>();
-    coinbaseScript->reserveScript = GetScriptForDestination(destination);
+    CScript coinbase_script = GetScriptForDestination(destination);
 
-    return generateBlocks(chainman, mempool, *llmq_ctx.quorum_block_processor, *llmq_ctx.clhandler, *llmq_ctx.isman, coinbaseScript, nGenerate, nMaxTries, false);
+    return generateBlocks(chainman, mempool, *node_context.evodb, *llmq_ctx.quorum_block_processor, *llmq_ctx.clhandler, *llmq_ctx.isman, coinbase_script, nGenerate, nMaxTries);
 }
 
 static UniValue generateblock(const JSONRPCRequest& request)
@@ -337,6 +333,7 @@ static UniValue generateblock(const JSONRPCRequest& request)
         coinbase_script = GetScriptForDestination(destination);
     }
 
+    const NodeContext& node_context = EnsureNodeContext(request.context);
     const CTxMemPool& mempool = EnsureMemPool(request.context);
 
     std::vector<CTransactionRef> txs;
@@ -371,7 +368,7 @@ static UniValue generateblock(const JSONRPCRequest& request)
         LOCK(cs_main);
 
         CTxMemPool empty_mempool;
-        std::unique_ptr<CBlockTemplate> blocktemplate(BlockAssembler(*sporkManager, *governance, *llmq_ctx.quorum_block_processor, *llmq_ctx.clhandler, *llmq_ctx.isman, empty_mempool, chainparams).CreateNewBlock(coinbase_script));
+        std::unique_ptr<CBlockTemplate> blocktemplate(BlockAssembler(*sporkManager, *governance, *llmq_ctx.quorum_block_processor, *llmq_ctx.clhandler, *llmq_ctx.isman, *node_context.evodb, empty_mempool, chainparams).CreateNewBlock(coinbase_script));
         if (!blocktemplate) {
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
         }
@@ -387,7 +384,7 @@ static UniValue generateblock(const JSONRPCRequest& request)
         LOCK(cs_main);
 
         CValidationState state;
-        if (!TestBlockValidity(state, *llmq_ctx.clhandler, chainparams, block, LookupBlockIndex(block.hashPrevBlock), false, false)) {
+        if (!TestBlockValidity(state, *llmq_ctx.clhandler, *node_context.evodb, chainparams, block, LookupBlockIndex(block.hashPrevBlock), false, false)) {
             throw JSONRPCError(RPC_VERIFY_ERROR, strprintf("TestBlockValidity failed: %s", state.GetRejectReason()));
         }
     }
@@ -526,7 +523,7 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
         "    https://github.com/bitcoin/bips/blob/master/bip-0023.mediawiki\n"
         "    https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki#getblocktemplate_changes\n",
         {
-            {"template_request", RPCArg::Type::OBJ, /* default_val */ "", "A json object in the following spec",
+            {"template_request", RPCArg::Type::OBJ, /* default_val */ "", "Format of the template",
                 {
                     {"mode", RPCArg::Type::STR, /* treat as named arg */ RPCArg::Optional::OMITTED_NAMED_ARG, "This must be set to \"template\", \"proposal\" (see BIP 23), or omitted"},
                     {"capabilities", RPCArg::Type::ARR, /* treat as named arg */ RPCArg::Optional::OMITTED_NAMED_ARG, "A list of strings",
@@ -630,6 +627,8 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
 
     LOCK(cs_main);
 
+    const NodeContext& node_context = EnsureNodeContext(request.context);
+
     std::string strMode = "template";
     UniValue lpval = NullUniValue;
     std::set<std::string> setClientRules;
@@ -675,7 +674,7 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
             if (block.hashPrevBlock != pindexPrev->GetBlockHash())
                 return "inconclusive-not-best-prevblk";
             CValidationState state;
-            TestBlockValidity(state, *llmq_ctx.clhandler, Params(), block, pindexPrev, false, true);
+            TestBlockValidity(state, *llmq_ctx.clhandler, *node_context.evodb, Params(), block, pindexPrev, false, true);
             return BIP22ValidationResult(state);
         }
 
@@ -709,7 +708,7 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
 
     // next bock is a superblock and we need governance info to correctly construct it
     if (AreSuperblocksEnabled(*sporkManager)
-        && !masternodeSync->IsSynced()
+        && !::masternodeSync->IsSynced()
         && CSuperblock::IsValidBlockHeight(::ChainActive().Height() + 1))
             throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, PACKAGE_NAME " is syncing with network...");
 
@@ -729,7 +728,7 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
             std::string lpstr = lpval.get_str();
 
             hashWatchedChain.SetHex(lpstr.substr(0, 64));
-            nTransactionsUpdatedLastLP = atoi64(lpstr.substr(64));
+            nTransactionsUpdatedLastLP = LocaleIndependentAtoi<int64_t>(lpstr.substr(64));
         }
         else
         {
@@ -781,7 +780,7 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
         // Create new block
         CScript scriptDummy = CScript() << OP_TRUE;
         LLMQContext& llmq_ctx = EnsureLLMQContext(request.context);
-        pblocktemplate = BlockAssembler(*sporkManager, *governance, *llmq_ctx.quorum_block_processor, *llmq_ctx.clhandler, *llmq_ctx.isman, mempool, Params()).CreateNewBlock(scriptDummy);
+        pblocktemplate = BlockAssembler(*sporkManager, *governance, *llmq_ctx.quorum_block_processor, *llmq_ctx.clhandler, *llmq_ctx.isman, *node_context.evodb, mempool, Params()).CreateNewBlock(scriptDummy);
         if (!pblocktemplate)
             throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
 
@@ -901,7 +900,7 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
     result.pushKV("transactions", transactions);
     result.pushKV("coinbaseaux", aux);
     result.pushKV("coinbasevalue", (int64_t)pblock->vtx[0]->GetValueOut());
-    result.pushKV("longpollid", ::ChainActive().Tip()->GetBlockHash().GetHex() + i64tostr(nTransactionsUpdatedLast));
+    result.pushKV("longpollid", ::ChainActive().Tip()->GetBlockHash().GetHex() + ToString(nTransactionsUpdatedLast));
     result.pushKV("target", hashTarget.GetHex());
     result.pushKV("mintime", (int64_t)pindexPrev->GetMedianTimePast()+1);
     result.pushKV("mutable", aMutable);

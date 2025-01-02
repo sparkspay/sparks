@@ -9,7 +9,6 @@
 
 #include <amount.h>
 #include <script/sign.h>
-#include <wallet/bdb.h>
 #include <wallet/db.h>
 #include <key.h>
 
@@ -159,8 +158,8 @@ private:
     }
 
 public:
-    explicit WalletBatch(WalletDatabase& database, const char* pszMode = "r+", bool _fFlushOnClose = true) :
-        m_batch(database.MakeBatch(pszMode, _fFlushOnClose)),
+    explicit WalletBatch(WalletDatabase &database, bool _fFlushOnClose = true) :
+        m_batch(database.MakeBatch(_fFlushOnClose)),
         m_database(database)
     {
     }
@@ -189,7 +188,7 @@ public:
     bool WriteBestBlock(const CBlockLocator& locator);
     bool ReadBestBlock(CBlockLocator& locator);
 
-    bool WriteAutoCombineSettings(bool fEnable, CAmount nCombineThreshold);
+    bool WriteAutoCombineSettings(bool fEnable, CAmount nCombineThreshold, CAmount nCombineSafemargin);
 
     bool WriteOrderPosNext(int64_t nOrderPosNext);
 

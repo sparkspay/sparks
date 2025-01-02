@@ -43,8 +43,9 @@ RUN pip3 install \
     multiprocess
 
 # sparks_hash
-RUN git clone --depth 1 --no-tags https://github.com/sparkspay/sparks_hash
-RUN cd sparks_hash && python3 setup.py install
+ARG SPARKS_HASH_VERSION=1.4.0
+RUN git clone --depth 1 --no-tags --branch=${SPARKS_HASH_VERSION} https://github.com/sparkspay/sparks_hash
+RUN cd sparks_hash && pip3 install -r requirements.txt .
 
 ARG USER_ID=1000
 ARG GROUP_ID=1000

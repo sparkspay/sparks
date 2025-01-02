@@ -2,6 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <evo/specialtxman.h>
+
 #include <chainparams.h>
 #include <consensus/validation.h>
 #include <hash.h>
@@ -16,6 +18,9 @@
 
 #include <llmq/blockprocessor.h>
 #include <llmq/commitment.h>
+#include <llmq/utils.h>
+#include <primitives/block.h>
+#include <validation.h>
 
 bool CheckSpecialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state, const CCoinsViewCache& view, bool check_sigs)
 {
@@ -159,6 +164,13 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, ll
         int64_t nTime5 = GetTimeMicros();
         nTimeMerkle += nTime5 - nTime4;
         LogPrint(BCLog::BENCHMARK, "        - CheckCbTxMerkleRoots: %.2fms [%.2fs]\n", 0.001 * (nTime5 - nTime4), nTimeMerkle * 0.000001);
+
+        if (llmq::utils::V19ActivationHeight(pindex) == pindex->nHeight + 1) {
+            // NOTE: The block next to the activation is the one that is using new rules.
+            // V19 activated just activated, so we must switch to the new rules here.
+            bls::bls_legacy_scheme.store(false);
+            LogPrintf("%s: bls_legacy_scheme=%d\n", __func__, bls::bls_legacy_scheme.load());
+        }
     } catch (const std::exception& e) {
         LogPrintf("%s -- failed: %s\n", __func__, e.what());
         return state.Invalid(ValidationInvalidReason::CONSENSUS, false, REJECT_INVALID, "failed-procspectxsinblock");
@@ -171,7 +183,16 @@ bool UndoSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, llmq:
 {
     AssertLockHeld(cs_main);
 
+    auto bls_legacy_scheme = bls::bls_legacy_scheme.load();
+
     try {
+        if (llmq::utils::V19ActivationHeight(pindex) == pindex->nHeight + 1) {
+            // NOTE: The block next to the activation is the one that is using new rules.
+            // Removing the activation block here, so we must switch back to the old rules.
+            bls::bls_legacy_scheme.store(true);
+            LogPrintf("%s: bls_legacy_scheme=%d\n", __func__, bls::bls_legacy_scheme.load());
+        }
+
         for (int i = (int)block.vtx.size() - 1; i >= 0; --i) {
             const CTransaction& tx = *block.vtx[i];
             if (!UndoSpecialTx(tx, pindex)) {
@@ -179,7 +200,7 @@ bool UndoSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, llmq:
             }
         }
 
-        if (!deterministicMNManager->UndoBlock(block, pindex)) {
+        if (!deterministicMNManager->UndoBlock(pindex)) {
             return false;
         }
 
@@ -187,6 +208,8 @@ bool UndoSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, llmq:
             return false;
         }
     } catch (const std::exception& e) {
+        bls::bls_legacy_scheme.store(bls_legacy_scheme);
+        LogPrintf("%s: bls_legacy_scheme=%d\n", __func__, bls::bls_legacy_scheme.load());
         return error(strprintf("%s -- failed: %s\n", __func__, e.what()).c_str());
     }
 

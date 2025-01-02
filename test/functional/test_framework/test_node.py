@@ -234,7 +234,12 @@ class TestNode():
                 raise FailedToStartError(self._node_msg(
                     'sparksd exited with status {} during initialization'.format(self.process.returncode)))
             try:
-                rpc = get_rpc_proxy(rpc_url(self.datadir, self.index, self.chain, self.rpchost), self.index, timeout=self.rpc_timeout, coveragedir=self.coverage_dir)
+                rpc = get_rpc_proxy(
+                    rpc_url(self.datadir, self.index, self.chain, self.rpchost),
+                    self.index,
+                    timeout=self.rpc_timeout // 2,  # Shorter timeout to allow for one retry in case of ETIMEDOUT
+                    coveragedir=self.coverage_dir,
+                )
                 rpc.getblockcount()
                 # If the call to getblockcount() succeeds then the RPC connection is up
                 wait_until(lambda: rpc.getmempoolinfo()['loaded'])
@@ -268,13 +273,17 @@ class TestNode():
                 if e.error['code'] != -28 and e.error['code'] != -342:
                     raise  # unknown JSON RPC exception
             except OSError as e:
-                if e.errno != errno.ECONNREFUSED:  # Port not yet open?
+                if e.errno == errno.ETIMEDOUT:
+                    pass  # Treat identical to ConnectionResetError
+                elif e.errno == errno.ECONNREFUSED:
+                    pass  # Port not yet open?
+                else:
                     raise  # unknown OS error
             except ValueError as e:  # cookie file not found and no rpcuser or rpcassword. sparksd still starting
                 if "No RPC credentials" not in str(e):
                     raise
             time.sleep(1.0 / poll_per_s)
-        self._raise_assertion_error("Unable to connect to sparksd")
+        self._raise_assertion_error("Unable to connect to sparksd after {}s".format(self.rpc_timeout))
 
     def generate(self, nblocks, maxtries=1000000):
         self.log.debug("TestNode.generate() dispatches `generate` call to `generatetoaddress`")
@@ -570,7 +579,6 @@ def arg_to_cli(arg):
 
 class TestNodeCLI():
     """Interface to sparks-cli for an individual node"""
-
     def __init__(self, binary, datadir):
         self.options = []
         self.binary = binary

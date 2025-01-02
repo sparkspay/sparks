@@ -40,7 +40,6 @@ void DummyWalletInit::AddWalletOptions(ArgsManager& argsman) const
         "-rescan=<mode>",
         "-salvagewallet",
         "-spendzeroconfchange",
-        "-upgradewallet",
         "-wallet=<path>",
         "-walletbackupsdir=<dir>",
         "-walletbroadcast",
@@ -66,7 +65,8 @@ void DummyWalletInit::AddWalletOptions(ArgsManager& argsman) const
         "-dblogsize=<n>",
         "-flushwallet",
         "-privdb",
-        "-walletrejectlongchains"
+        "-walletrejectlongchains",
+        "-unsafesqlitesync"
     });
 }
 

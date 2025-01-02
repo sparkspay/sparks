@@ -22,6 +22,7 @@
 #include <sync.h>
 #include <timedata.h>
 #include <util/strencodings.h>
+#include <util/string.h>
 #include <util/system.h>
 #include <validation.h>
 #include <version.h>
@@ -736,6 +737,27 @@ static UniValue clearbanned(const JSONRPCRequest& request)
     return NullUniValue;
 }
 
+static UniValue cleardiscouraged(const JSONRPCRequest& request)
+{
+    RPCHelpMan{"cleardiscouraged",
+               "\nClear all discouraged nodes.\n",
+               {},
+               RPCResult{RPCResult::Type::NONE, "", ""},
+               RPCExamples{
+                       HelpExampleCli("cleardiscouraged", "")
+                       + HelpExampleRpc("cleardiscouraged", "")
+               },
+    }.Check(request);
+    NodeContext& node = EnsureNodeContext(request.context);
+    if (!node.banman) {
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Error: Ban database not loaded");
+    }
+
+    node.banman->ClearDiscouraged();
+
+    return NullUniValue;
+}
+
 static UniValue setnetworkactive(const JSONRPCRequest& request)
 {
     RPCHelpMan{"setnetworkactive",
@@ -762,7 +784,7 @@ static UniValue getnodeaddresses(const JSONRPCRequest& request)
             RPCHelpMan{"getnodeaddresses",
                 "\nReturn known addresses which can potentially be used to find new nodes in the network\n",
                 {
-                    {"count", RPCArg::Type::NUM, /* default */ "1", "How many addresses to return. Limited to the smaller of " + std::to_string(ADDRMAN_GETADDR_MAX) + " or " + std::to_string(ADDRMAN_GETADDR_MAX_PCT) + "% of all known addresses."},
+                    {"count", RPCArg::Type::NUM, /* default */ "1", "How many addresses to return. Limited to the smaller of " + ToString(ADDRMAN_GETADDR_MAX) + " or " + ToString(ADDRMAN_GETADDR_MAX_PCT) + "% of all known addresses."},
                 },
                 RPCResult{
                     RPCResult::Type::ARR, "", "",
@@ -825,6 +847,7 @@ static const CRPCCommand commands[] =
     { "network",            "setban",                 &setban,                 {"subnet", "command", "bantime", "absolute"} },
     { "network",            "listbanned",             &listbanned,             {} },
     { "network",            "clearbanned",            &clearbanned,            {} },
+    { "network",            "cleardiscouraged",       &cleardiscouraged,        {} },
     { "network",            "setnetworkactive",       &setnetworkactive,       {"state"} },
     { "network",            "getnodeaddresses",       &getnodeaddresses,       {"count"} },
 };

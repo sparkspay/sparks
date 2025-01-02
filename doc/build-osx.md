@@ -20,15 +20,17 @@ Then install [Homebrew](https://brew.sh).
 ## Base build dependencies
 
 ```shell
-brew install automake libtool pkg-config libnatpmp
+brew install automake libtool pkg-config libnatpmp sqlite
 ```
 
-If you run into issues, check [Homebrew's troubleshooting page](https://docs.brew.sh/Troubleshooting).
+See [dependencies.md](dependencies.md) for a complete overview.
 
 If you want to build the disk image with `make deploy` (.dmg / optional), you need RSVG:
 ```shell
 brew install librsvg
 ```
+
+If you run into issues, check [Homebrew's troubleshooting page](https://docs.brew.sh/Troubleshooting).
 
 ## Building
 
@@ -46,7 +48,7 @@ compiled in `disable-wallet` mode with:
 ./configure --disable-wallet
 ```
 
-In this case there is no dependency on Berkeley DB 4.8.
+In this case there is no dependency on Berkeley DB 4.8 and SQLite.
 
 Mining is also possible in disable-wallet mode using the `getblocktemplate` RPC call.
 

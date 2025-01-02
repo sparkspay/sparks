@@ -18,6 +18,7 @@
 #include <rpc/blockchain.h>
 #include <rpc/server.h>
 #include <rpc/util.h>
+#include <util/strencodings.h>
 #include <util/system.h>
 #include <validation.h>
 #include <wallet/rpcwallet.h>
@@ -314,7 +315,7 @@ static UniValue gobject_submit(const JSONRPCRequest& request)
 {
     gobject_submit_help(request);
 
-    if(!masternodeSync->IsBlockchainSynced()) {
+    if(!::masternodeSync->IsBlockchainSynced()) {
         throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "Must wait for client to sync with masternode network. Try again in a minute or so.");
     }
 
@@ -322,7 +323,7 @@ static UniValue gobject_submit(const JSONRPCRequest& request)
     bool fMnFound = WITH_LOCK(activeMasternodeInfoCs, return mnList.HasValidMNByCollateral(activeMasternodeInfo.outpoint));
 
     LogPrint(BCLog::GOBJECT, "gobject_submit -- pubKeyOperator = %s, outpoint = %s, params.size() = %lld, fMnFound = %d\n",
-            (WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.blsPubKeyOperator ? activeMasternodeInfo.blsPubKeyOperator->ToString() : "N/A")),
+            (WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.blsPubKeyOperator ? activeMasternodeInfo.blsPubKeyOperator->ToString(activeMasternodeInfo.legacy) : "N/A")),
             WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.outpoint.ToStringShort()), request.params.size(), fMnFound);
 
     // ASSEMBLE NEW GOVERNANCE OBJECT FROM USER PARAMETERS
@@ -376,13 +377,14 @@ static UniValue gobject_submit(const JSONRPCRequest& request)
 
     std::string strHash = govobj.GetHash().ToString();
 
+    const CTxMemPool& mempool = EnsureMemPool(request.context);
     bool fMissingConfirmations;
     {
         if (g_txindex) {
             g_txindex->BlockUntilSyncedToCurrentChain();
         }
 
-        LOCK2(cs_main, ::mempool.cs);
+        LOCK2(cs_main, mempool.cs);
         std::string strError;
         if (!govobj.IsValidLocally(strError, fMissingConfirmations, true) && !fMissingConfirmations) {
             LogPrintf("gobject(submit) -- Object submission rejected because object is not valid - hash = %s, strError = %s\n", strHash, strError);
@@ -696,7 +698,7 @@ static UniValue gobject_vote_alias(const JSONRPCRequest& request)
 
     CKey votingKey;
     if (!spk_man->GetKey(dmn->pdmnState->keyIDVoting, votingKey)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Private key for voting address %s not known by wallet", EncodeDestination(dmn->pdmnState->keyIDVoting)));
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Private key for voting address %s not known by wallet", EncodeDestination(PKHash(dmn->pdmnState->keyIDVoting))));
     }
 
     std::map<uint256, CKey> votingKeys;
@@ -950,7 +952,7 @@ static UniValue gobject_getcurrentvotes(const JSONRPCRequest& request)
     if (!request.params[1].isNull() && !request.params[2].isNull()) {
         uint256 txid = ParseHashV(request.params[1], "Masternode Collateral hash");
         std::string strVout = request.params[2].get_str();
-        mnCollateralOutpoint = COutPoint(txid, (uint32_t)atoi(strVout));
+        mnCollateralOutpoint = COutPoint(txid, LocaleIndependentAtoi<uint32_t>(strVout));
     }
 
     // FIND OBJECT USER IS LOOKING FOR

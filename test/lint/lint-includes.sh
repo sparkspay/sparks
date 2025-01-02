@@ -9,7 +9,7 @@
 # Check includes: Check for duplicate includes. Enforce bracket syntax includes.
 
 export LC_ALL=C
-IGNORE_REGEXP="/(leveldb|secp256k1|univalue|crc32c)/"
+IGNORE_REGEXP="/(dashbls|immer|leveldb|secp256k1|univalue|crc32c)/"
 
 # cd to root folder of git repo for git ls-files to work properly
 cd "$(dirname $0)/../.." || exit 1
@@ -49,10 +49,7 @@ if [[ ${INCLUDED_CPP_FILES} != "" ]]; then
 fi
 
 EXPECTED_BOOST_INCLUDES=(
-    boost/algorithm/string.hpp
-    boost/algorithm/string/classification.hpp
     boost/algorithm/string/replace.hpp
-    boost/algorithm/string/split.hpp
     boost/date_time/posix_time/posix_time.hpp
     boost/filesystem.hpp
     boost/filesystem/fstream.hpp
@@ -62,6 +59,7 @@ EXPECTED_BOOST_INCLUDES=(
     boost/multi_index/ordered_index.hpp
     boost/multi_index/sequenced_index.hpp
     boost/multi_index_container.hpp
+    boost/optional.hpp
     boost/pool/pool_alloc.hpp
     boost/preprocessor/cat.hpp
     boost/preprocessor/stringize.hpp
@@ -69,11 +67,9 @@ EXPECTED_BOOST_INCLUDES=(
     boost/signals2/optional_last_value.hpp
     boost/signals2/signal.hpp
     boost/test/unit_test.hpp
-    boost/thread.hpp
-    boost/thread/condition_variable.hpp
 )
 
-for BOOST_INCLUDE in $(git grep '^#include <boost/' -- "*.cpp" "*.h" | cut -f2 -d: | cut -f2 -d'<' | cut -f1 -d'>' | sort -u); do
+for BOOST_INCLUDE in $(git grep '^#include <boost/' -- "*.cpp" "*.h" | grep -vE "src/(immer)/" | cut -f2 -d: | cut -f2 -d'<' | cut -f1 -d'>' | sort -u); do
     IS_EXPECTED_INCLUDE=0
     for EXPECTED_BOOST_INCLUDE in "${EXPECTED_BOOST_INCLUDES[@]}"; do
         if [[ "${BOOST_INCLUDE}" == "${EXPECTED_BOOST_INCLUDE}" ]]; then

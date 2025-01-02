@@ -19,13 +19,14 @@
 #include <timedata.h>
 #include <util/message.h> // for MESSAGE_MAGIC
 #include <util/ranges.h>
+#include <util/string.h>
 #include <validation.h>
 
 #include <string>
 
 std::unique_ptr<CSporkManager> sporkManager;
 
-std::optional<int64_t> CSporkManager::SporkValueIfActive(SporkId nSporkID) const
+std::optional<SporkValue> CSporkManager::SporkValueIfActive(SporkId nSporkID) const
 {
     AssertLockHeld(cs);
 
@@ -39,7 +40,7 @@ std::optional<int64_t> CSporkManager::SporkValueIfActive(SporkId nSporkID) const
     }
 
     // calc how many values we have and how many signers vote for every value
-    std::unordered_map<int64_t, int> mapValueCounts;
+    std::unordered_map<SporkValue, int> mapValueCounts;
     for (const auto& [_, spork] : mapSporksActive.at(nSporkID)) {
         mapValueCounts[spork.nValue]++;
         if (mapValueCounts.at(spork.nValue) >= nMinSporkKeys) {
@@ -105,16 +106,16 @@ void CSporkManager::CheckAndRemove()
     }
 }
 
-void CSporkManager::ProcessSporkMessages(CNode& peer, std::string_view msg_type, CDataStream& vRecv, CConnman& connman)
+void CSporkManager::ProcessMessage(CNode& peer, CConnman& connman, std::string_view msg_type, CDataStream& vRecv)
 {
     if (msg_type == NetMsgType::SPORK) {
-        ProcessSpork(peer, vRecv, connman);
+        ProcessSpork(peer, connman, vRecv);
     } else if (msg_type == NetMsgType::GETSPORKS) {
         ProcessGetSporks(peer, connman);
     }
 }
 
-void CSporkManager::ProcessSpork(const CNode& peer, CDataStream& vRecv, CConnman& connman)
+void CSporkManager::ProcessSpork(const CNode& peer, CConnman& connman, CDataStream& vRecv)
 {
     CSporkMessage spork;
     vRecv >> spork;
@@ -188,7 +189,7 @@ void CSporkManager::ProcessGetSporks(CNode& peer, CConnman& connman)
 }
 
 
-bool CSporkManager::UpdateSpork(SporkId nSporkID, int64_t nValue, CConnman& connman)
+bool CSporkManager::UpdateSpork(SporkId nSporkID, SporkValue nValue, CConnman& connman)
 {
     CSporkMessage spork(nSporkID, nValue, GetAdjustedTime());
 
@@ -229,7 +230,7 @@ bool CSporkManager::IsSporkActive(SporkId nSporkID) const
         }
     }
 
-    int64_t nSporkValue = GetSporkValue(nSporkID);
+    SporkValue nSporkValue = GetSporkValue(nSporkID);
     // Get time is somewhat costly it looks like
     bool ret = nSporkValue < GetAdjustedTime();
     // Only cache true values
@@ -240,7 +241,7 @@ bool CSporkManager::IsSporkActive(SporkId nSporkID) const
     return ret;
 }
 
-int64_t CSporkManager::GetSporkValue(SporkId nSporkID) const
+SporkValue CSporkManager::GetSporkValue(SporkId nSporkID) const
 {
     LOCK(cs);
 
@@ -283,12 +284,12 @@ bool CSporkManager::SetSporkAddress(const std::string& strAddress)
 {
     LOCK(cs);
     CTxDestination dest = DecodeDestination(strAddress);
-    const CKeyID* keyID = std::get_if<CKeyID>(&dest);
-    if (!keyID) {
+    const PKHash* pkhash = std::get_if<PKHash>(&dest);
+    if (!pkhash) {
         LogPrintf("CSporkManager::SetSporkAddress -- Failed to parse spork address\n");
         return false;
     }
-    setSporkPubKeyIDs.insert(*keyID);
+    setSporkPubKeyIDs.insert(CKeyID(*pkhash));
     return true;
 }
 
@@ -372,7 +373,7 @@ bool CSporkMessage::Sign(const CKey& key)
             return false;
         }
     } else {
-        std::string strMessage = std::to_string(nSporkID) + std::to_string(nValue) + std::to_string(nTimeSigned);
+        std::string strMessage = ToString(nSporkID) + ToString(nValue) + ToString(nTimeSigned);
 
         if (!CMessageSigner::SignMessage(strMessage, vchSig, key)) {
             LogPrintf("CSporkMessage::Sign -- SignMessage() failed\n");
@@ -399,7 +400,7 @@ bool CSporkMessage::CheckSignature(const CKeyID& pubKeyId) const
             return false;
         }
     } else {
-        std::string strMessage = std::to_string(nSporkID) + std::to_string(nValue) + std::to_string(nTimeSigned);
+        std::string strMessage = ToString(nSporkID) + ToString(nValue) + ToString(nTimeSigned);
 
         if (!CMessageSigner::VerifyMessage(pubKeyId, vchSig, strMessage, strError)) {
             LogPrint(BCLog::SPORK, "CSporkMessage::CheckSignature -- VerifyMessage() failed, error: %s\n", strError);
@@ -419,7 +420,7 @@ std::optional<CKeyID> CSporkMessage::GetSignerKeyID() const
             return std::nullopt;
         }
     } else {
-        std::string strMessage = std::to_string(nSporkID) + std::to_string(nValue) + std::to_string(nTimeSigned);
+        std::string strMessage = ToString(nSporkID) + ToString(nValue) + ToString(nTimeSigned);
         CHashWriter ss(SER_GETHASH, 0);
         ss << MESSAGE_MAGIC;
         ss << strMessage;

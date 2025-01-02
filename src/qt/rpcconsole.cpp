@@ -22,10 +22,14 @@
 #include <rpc/client.h>
 #include <util/strencodings.h>
 #include <util/system.h>
+#include <util/underlying.h>
 
 #include <univalue.h>
 
 #ifdef ENABLE_WALLET
+#ifdef USE_BDB
+#include <wallet/bdb.h>
+#endif
 #include <wallet/db.h>
 #include <wallet/walletutil.h>
 #endif
@@ -57,7 +61,6 @@ const TrafficGraphData::GraphRange INITIAL_TRAFFIC_GRAPH_SETTING = TrafficGraphD
 // Repair parameters
 const QString RESCAN1("-rescan=1");
 const QString RESCAN2("-rescan=2");
-const QString UPGRADEWALLET("-upgradewallet");
 const QString REINDEX("-reindex");
 
 namespace {
@@ -227,7 +230,7 @@ bool RPCConsole::RPCParseCommandLine(interfaces::Node* node, std::string &strRes
                                     for(char argch: curarg)
                                         if (!IsDigit(argch))
                                             throw std::runtime_error("Invalid result query");
-                                    subelement = lastResult[atoi(curarg.c_str())];
+                                    subelement = lastResult[LocaleIndependentAtoi<int>(curarg)];
                                 }
                                 else if (lastResult.isObject())
                                     subelement = find_value(lastResult, curarg);
@@ -493,10 +496,8 @@ RPCConsole::RPCConsole(interfaces::Node& node, QWidget* parent, Qt::WindowFlags 
     // Disable wallet repair options that require a wallet (enable them later when a wallet is added)
     ui->btn_rescan1->setEnabled(false);
     ui->btn_rescan2->setEnabled(false);
-    ui->btn_upgradewallet->setEnabled(false);
     connect(ui->btn_rescan1, &QPushButton::clicked, this, &RPCConsole::walletRescan1);
     connect(ui->btn_rescan2, &QPushButton::clicked, this, &RPCConsole::walletRescan2);
-    connect(ui->btn_upgradewallet, &QPushButton::clicked, this, &RPCConsole::walletUpgrade);
     connect(ui->btn_reindex, &QPushButton::clicked, this, &RPCConsole::walletReindex);
 
     // Register RPC timer interface
@@ -519,7 +520,7 @@ RPCConsole::RPCConsole(interfaces::Node& node, QWidget* parent, Qt::WindowFlags 
     pageButtons->addButton(ui->btnRepair, pageButtons->buttons().size());
     connect(pageButtons, QOverload<int>::of(&QButtonGroup::buttonClicked), this, &RPCConsole::showPage);
 
-    showPage(int(TabTypes::INFO));
+    showPage(ToUnderlying(TabTypes::INFO));
 
     reloadThemedWidgets();
 }
@@ -723,7 +724,6 @@ void RPCConsole::addWallet(WalletModel * const walletModel)
         // The only loaded wallet
         ui->btn_rescan1->setEnabled(true);
         ui->btn_rescan2->setEnabled(true);
-        ui->btn_upgradewallet->setEnabled(true);
         QString wallet_path = QString::fromStdString(GetWalletDir().string() + QDir::separator().toLatin1());
         QString wallet_name = walletModel->getWalletName().isEmpty() ? "wallet.dat" : walletModel->getWalletName();
         ui->wallet_path->setText(wallet_path + wallet_name);
@@ -733,7 +733,6 @@ void RPCConsole::addWallet(WalletModel * const walletModel)
         // No wallet recovery for multiple loaded wallets
         ui->btn_rescan1->setEnabled(false);
         ui->btn_rescan2->setEnabled(false);
-        ui->btn_upgradewallet->setEnabled(false);
         ui->wallet_path->clear();
     }
 }
@@ -747,7 +746,6 @@ void RPCConsole::removeWallet(WalletModel * const walletModel)
         // Back to the only loaded wallet
         ui->btn_rescan1->setEnabled(true);
         ui->btn_rescan2->setEnabled(true);
-        ui->btn_upgradewallet->setEnabled(true);
         WalletModel* wallet_model = ui->WalletSelector->itemData(1).value<WalletModel*>();
         QString wallet_path = QString::fromStdString(GetWalletDir().string() + QDir::separator().toLatin1());
         QString wallet_name = wallet_model->getWalletName().isEmpty() ? "wallet.dat" : wallet_model->getWalletName();
@@ -756,7 +754,6 @@ void RPCConsole::removeWallet(WalletModel * const walletModel)
         // No wallet recovery for multiple loaded wallets
         ui->btn_rescan1->setEnabled(false);
         ui->btn_rescan2->setEnabled(false);
-        ui->btn_upgradewallet->setEnabled(false);
         ui->wallet_path->clear();
     }
 }
@@ -818,12 +815,6 @@ void RPCConsole::walletRescan2()
     buildParameterlist(RESCAN2);
 }
 
-/** Restart wallet with "-upgradewallet" */
-void RPCConsole::walletUpgrade()
-{
-    buildParameterlist(UPGRADEWALLET);
-}
-
 /** Restart wallet with "-reindex" */
 void RPCConsole::walletReindex()
 {
@@ -849,7 +840,6 @@ void RPCConsole::buildParameterlist(QString arg)
     // Remove existing repair-options
     args.removeAll(RESCAN1);
     args.removeAll(RESCAN2);
-    args.removeAll(UPGRADEWALLET);
     args.removeAll(REINDEX);
 
     // Append repair parameter to command line.
@@ -968,10 +958,18 @@ void RPCConsole::updateMasternodeCount()
         return;
     }
     auto mnList = clientModel->getMasternodeList();
+    size_t total_mn_count = mnList.GetAllMNsCount();
+    size_t total_enabled_mn_count = mnList.GetValidMNsCount();
+    size_t total_hpmn_count = mnList.GetAllHPMNsCount();
+    size_t total_enabled_hpmn_count = mnList.GetValidHPMNsCount();
     QString strMasternodeCount = tr("Total: %1 (Enabled: %2)")
-        .arg(QString::number(mnList.GetAllMNsCount()))
-        .arg(QString::number(mnList.GetValidMNsCount()));
+        .arg(QString::number(total_mn_count - total_hpmn_count))
+        .arg(QString::number(total_enabled_mn_count - total_enabled_hpmn_count));
     ui->masternodeCount->setText(strMasternodeCount);
+    QString strHPMNCount = tr("Total: %1 (Enabled: %2)")
+            .arg(QString::number(total_hpmn_count))
+            .arg(QString::number(total_enabled_hpmn_count));
+    ui->hpmnCount->setText(strHPMNCount);
 }
 
 void RPCConsole::setMempoolSize(long numberOfTxs, size_t dynUsage)
@@ -1423,12 +1421,12 @@ void RPCConsole::showOrHideBanTableIfRequired()
 
 void RPCConsole::setTabFocus(enum TabTypes tabType)
 {
-    showPage(int(tabType));
+    showPage(ToUnderlying(tabType));
 }
 
 QString RPCConsole::tabTitle(TabTypes tab_type) const
 {
-    return pageButtons->button(int(tab_type))->text();
+    return pageButtons->button(ToUnderlying(tab_type))->text();
 }
 
 QKeySequence RPCConsole::tabShortcut(TabTypes tab_type) const

@@ -18,6 +18,8 @@
 
 #include <coinjoin/options.h>
 
+#include <cmath>
+
 #include <QAbstractItemDelegate>
 #include <QPainter>
 #include <QSettings>

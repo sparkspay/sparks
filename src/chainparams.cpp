@@ -13,14 +13,12 @@
 #include <tinyformat.h>
 #include <util/ranges.h>
 #include <util/system.h>
+#include <util/underlying.h>
 #include <versionbitsinfo.h>
 
 #include <arith_uint256.h>
 
 #include <assert.h>
-
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
 
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
@@ -246,6 +244,13 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nThresholdStart = 60; // 60% of 100
 
+        // Deployment of Deployment of Basic BLS, AssetLocks, EHF
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].bit = 11;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nStartTime = 1735689600;//1735689600     // Wednesday, January 1, 2025 12:00:00 AM
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nTimeout = 1767225600;//1767225600       // Thursday, January 1, 2026 12:00:00 AM
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdStart = 60;       // 60% of 100
+
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000eee93cb0b1f4be");//269664
 
@@ -276,6 +281,8 @@ public:
         pchMessageStart[3] = 0xd4;
         nDefaultPort = 8890;
 
+        nDefaultPlatformP2PPort = 26700;
+        nDefaultPlatformHTTPPort = 443;
         nPruneAfterHeight = 100000;
         m_assumed_blockchain_size = 45;
         m_assumed_chain_state_size = 1;
@@ -383,7 +390,7 @@ public:
            }
         };
 
-        // getchaintxstats 17280 000000000000001d531f36005159f19351bd49ca676398a561e55dcccb84eacd
+
         chainTxData = ChainTxData{
             1549015815, // * UNIX timestamp of last known number of transactions
             354527,    // * total number of transactions between genesis and that timestamp
@@ -512,6 +519,15 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nThresholdMin = 6;   // 60% of 10
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nFalloffCoeff = 5;      // this corresponds to 10 periods
 
+        // Deployment of Deployment of Basic BLS, AssetLocks, EHF
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].bit = 11;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nStartTime = 1721404800;//19th July 2024, 16:00:00 1678838400     // Wed, March 15, 2023 0:00:00
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nWindowSize = 10;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdStart = 8;         // 80% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdMin = 6;           // 60% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nFalloffCoeff = 5;            // this corresponds to 10 periods
+
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000000000000000100010");
 
@@ -609,7 +625,7 @@ public:
             }
         };
 
-        // getchaintxstats 17280 00000104cb60a2b5e00a8a4259582756e5bf0dca201c0993c63f0e54971ea91a
+        // getchaintxstats 17280 0000014d3b875540ff75517b7fbb1714e25d50ce92f65d7086cfce357928bb02
         chainTxData = ChainTxData{
             1513902563, // * UNIX timestamp of last known number of transactions
             0,       // * total number of transactions between genesis and that timestamp
@@ -651,7 +667,7 @@ public:
         consensus.DIP0003EnforcementHash = uint256();
         consensus.DIP0008Height = 2; // DIP0008 activated immediately on devnet
         consensus.BRRHeight = 300;
-        consensus.MinBIP9WarningHeight = 2018; // dip8 activation height + miner confirmation window
+        consensus.MinBIP9WarningHeight = 300 + 2016; // v19 activation height + miner confirmation window
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 1
         consensus.nPowTargetTimespan = 24 * 60 * 60; // Sparks: 1 day
         consensus.nPowTargetSpacing = 2.5 * 60; // Sparks: 2.5 minutes
@@ -724,6 +740,15 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nThresholdMin = 60;   // 60% of 100
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0024].nFalloffCoeff = 5;    // this corresponds to 10 periods
 
+        // Deployment of Deployment of Basic BLS, AssetLocks, EHF
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].bit = 8;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nStartTime = 1661990400; // Sep 1st, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdStart = 80; // 80% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdMin = 60;   // 60% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nFalloffCoeff = 5;     // this corresponds to 10 periods
+
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x000000000000000000000000000000000000000000000000000000000000000");
 
@@ -735,6 +760,8 @@ public:
         pchMessageStart[2] = 0xff;
         pchMessageStart[3] = 0xce;
         nDefaultPort = 19799;
+        nDefaultPlatformP2PPort = 22100;
+        nDefaultPlatformHTTPPort = 22101;
         nPruneAfterHeight = 1000;
         m_assumed_blockchain_size = 0;
         m_assumed_chain_state_size = 0;
@@ -776,11 +803,19 @@ public:
         AddLLMQ(Consensus::LLMQType::LLMQ_20_70);
         AddLLMQ(Consensus::LLMQType::LLMQ_DEVNET);
         AddLLMQ(Consensus::LLMQType::LLMQ_DEVNET_DIP0024);
+        AddLLMQ(Consensus::LLMQType::LLMQ_DEVNET_PLATFORM);
         consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_15_60;
         consensus.llmqTypeInstantSend = Consensus::LLMQType::LLMQ_15_60;
         consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_20_75;
         consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_20_70;
         consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_15_60;
+
+        UpdateDevnetLLMQChainLocksFromArgs(args);
+        UpdateDevnetLLMQInstantSendFromArgs(args);
+        UpdateDevnetLLMQInstantSendDIP0024FromArgs(args);
+        UpdateDevnetLLMQPlatformFromArgs(args);
+        UpdateLLMQDevnetParametersFromArgs(args);
+        UpdateDevnetPowTargetSpacingFromArgs(args);
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
@@ -851,6 +886,14 @@ public:
     }
 
     /**
+     * Allows modifying the LLMQ type for Platform.
+     */
+    void UpdateDevnetLLMQPlatform(Consensus::LLMQType llmqType)
+    {
+        consensus.llmqTypePlatform = llmqType;
+    }
+
+    /**
      * Allows modifying PowTargetSpacing
      */
     void UpdateDevnetPowTargetSpacing(int64_t nPowTargetSpacing)
@@ -873,6 +916,7 @@ public:
     void UpdateLLMQDevnetParametersFromArgs(const ArgsManager& args);
     void UpdateDevnetLLMQInstantSendFromArgs(const ArgsManager& args);
     void UpdateDevnetLLMQInstantSendDIP0024FromArgs(const ArgsManager& args);
+    void UpdateDevnetLLMQPlatformFromArgs(const ArgsManager& args);
     void UpdateDevnetPowTargetSpacingFromArgs(const ArgsManager& args);
 };
 
@@ -969,6 +1013,15 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nThresholdMin = 6; // 60%
         consensus.vDeployments[Consensus::DEPLOYMENT_DATATX].nFalloffCoeff = 5;
 
+        // Deployment of Deployment of Basic BLS, AssetLocks, EHF
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].bit = 8;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nWindowSize = 300;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdStart = 240; // 80% of 300
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdMin = 180;   // 60% of 300
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nFalloffCoeff = 5;     // this corresponds to 10 periods
+
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");
 
@@ -989,6 +1042,8 @@ public:
         pchMessageStart[3] = 0x7b;
         nDefaultPort = 18891;
 
+        nDefaultPlatformP2PPort = 22200;
+        nDefaultPlatformHTTPPort = 22201;
         nPruneAfterHeight = 1000;
         m_assumed_blockchain_size = 0;
         m_assumed_chain_state_size = 0;
@@ -1055,14 +1110,17 @@ public:
         AddLLMQ(Consensus::LLMQType::LLMQ_TEST_INSTANTSEND);
         AddLLMQ(Consensus::LLMQType::LLMQ_TEST_V17);
         AddLLMQ(Consensus::LLMQType::LLMQ_TEST_DIP0024);
+        AddLLMQ(Consensus::LLMQType::LLMQ_TEST_PLATFORM);
         consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_TEST;
         consensus.llmqTypeInstantSend = Consensus::LLMQType::LLMQ_TEST_INSTANTSEND;
         consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_TEST_DIP0024;
-        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_TEST;
+        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_TEST_PLATFORM;
         consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_TEST;
 
         UpdateLLMQTestParametersFromArgs(args, Consensus::LLMQType::LLMQ_TEST);
         UpdateLLMQTestParametersFromArgs(args, Consensus::LLMQType::LLMQ_TEST_INSTANTSEND);
+        UpdateLLMQInstantSendFromArgs(args);
+        UpdateLLMQInstantSendDIP0024FromArgs(args);
     }
 
     /**
@@ -1129,7 +1187,26 @@ public:
         params->threshold = threshold;
         params->dkgBadVotesThreshold = threshold;
     }
+
+    /**
+     * Allows modifying the LLMQ type for InstantSend.
+     */
+    void UpdateLLMQInstantSend(Consensus::LLMQType llmqType)
+    {
+        consensus.llmqTypeInstantSend = llmqType;
+    }
+
+    /**
+     * Allows modifying the LLMQ type for InstantSend (DIP0024).
+     */
+    void UpdateLLMQDIP0024InstantSend(Consensus::LLMQType llmqType)
+    {
+        consensus.llmqTypeDIP0024InstantSend = llmqType;
+    }
+
     void UpdateLLMQTestParametersFromArgs(const ArgsManager& args, const Consensus::LLMQType llmqType);
+    void UpdateLLMQInstantSendFromArgs(const ArgsManager& args);
+    void UpdateLLMQInstantSendDIP0024FromArgs(const ArgsManager& args);
 };
 
 void CRegTestParams::UpdateVersionBitsParametersFromArgs(const ArgsManager& args)
@@ -1137,8 +1214,7 @@ void CRegTestParams::UpdateVersionBitsParametersFromArgs(const ArgsManager& args
     if (!args.IsArgSet("-vbparams")) return;
 
     for (const std::string& strDeployment : args.GetArgs("-vbparams")) {
-        std::vector<std::string> vDeploymentParams;
-        boost::split(vDeploymentParams, strDeployment, boost::is_any_of(":"));
+        std::vector<std::string> vDeploymentParams = SplitString(strDeployment, ':');
         if (vDeploymentParams.size() != 3 && vDeploymentParams.size() != 5 && vDeploymentParams.size() != 7) {
             throw std::runtime_error("Version bits parameters malformed, expecting "
                     "<deployment>:<start>:<end> or "
@@ -1189,8 +1265,7 @@ void CRegTestParams::UpdateDIP3ParametersFromArgs(const ArgsManager& args)
     if (!args.IsArgSet("-dip3params")) return;
 
     std::string strParams = args.GetArg("-dip3params", "");
-    std::vector<std::string> vParams;
-    boost::split(vParams, strParams, boost::is_any_of(":"));
+    std::vector<std::string> vParams = SplitString(strParams, ':');
     if (vParams.size() != 2) {
         throw std::runtime_error("DIP3 parameters malformed, expecting <activation>:<enforcement>");
     }
@@ -1210,8 +1285,7 @@ void CRegTestParams::UpdateDIP8ParametersFromArgs(const ArgsManager& args)
     if (!args.IsArgSet("-dip8params")) return;
 
     std::string strParams = args.GetArg("-dip8params", "");
-    std::vector<std::string> vParams;
-    boost::split(vParams, strParams, boost::is_any_of(":"));
+    std::vector<std::string> vParams = SplitString(strParams, ':');
     if (vParams.size() != 1) {
         throw std::runtime_error("DIP8 parameters malformed, expecting <activation>");
     }
@@ -1228,8 +1302,7 @@ void CRegTestParams::UpdateBudgetParametersFromArgs(const ArgsManager& args)
     if (!args.IsArgSet("-budgetparams")) return;
 
     std::string strParams = args.GetArg("-budgetparams", "");
-    std::vector<std::string> vParams;
-    boost::split(vParams, strParams, boost::is_any_of(":"));
+    std::vector<std::string> vParams = SplitString(strParams, ':');
     if (vParams.size() != 3) {
         throw std::runtime_error("Budget parameters malformed, expecting <masternode>:<budget>:<superblock>");
     }
@@ -1260,8 +1333,7 @@ void CRegTestParams::UpdateLLMQTestParametersFromArgs(const ArgsManager& args, c
     if (!args.IsArgSet(cmd_param)) return;
 
     std::string strParams = args.GetArg(cmd_param, "");
-    std::vector<std::string> vParams;
-    boost::split(vParams, strParams, boost::is_any_of(":"));
+    std::vector<std::string> vParams = SplitString(strParams, ':');
     if (vParams.size() != 2) {
         throw std::runtime_error(strprintf("%s parameters malformed, expecting <size>:<threshold>", llmq_name));
     }
@@ -1274,6 +1346,50 @@ void CRegTestParams::UpdateLLMQTestParametersFromArgs(const ArgsManager& args, c
     }
     LogPrintf("Setting %s parameters to size=%ld, threshold=%ld\n", llmq_name, size, threshold);
     UpdateLLMQTestParameters(size, threshold, llmqType);
+}
+
+void CRegTestParams::UpdateLLMQInstantSendFromArgs(const ArgsManager& args)
+{
+    if (!args.IsArgSet("-llmqinstantsend")) return;
+
+    const auto& llmq_params_opt = GetLLMQ(consensus.llmqTypeInstantSend);
+    assert(llmq_params_opt.has_value());
+
+    std::string strLLMQType = gArgs.GetArg("-llmqinstantsend", std::string(llmq_params_opt->name));
+
+    Consensus::LLMQType llmqType = Consensus::LLMQType::LLMQ_NONE;
+    for (const auto& params : consensus.llmqs) {
+        if (params.name == strLLMQType) {
+            llmqType = params.type;
+        }
+    }
+    if (llmqType == Consensus::LLMQType::LLMQ_NONE) {
+        throw std::runtime_error("Invalid LLMQ type specified for -llmqinstantsend.");
+    }
+    LogPrintf("Setting llmqinstantsend to size=%ld\n", ToUnderlying(llmqType));
+    UpdateLLMQInstantSend(llmqType);
+}
+
+void CRegTestParams::UpdateLLMQInstantSendDIP0024FromArgs(const ArgsManager& args)
+{
+    if (!args.IsArgSet("-llmqinstantsenddip0024")) return;
+
+    const auto& llmq_params_opt = GetLLMQ(consensus.llmqTypeDIP0024InstantSend);
+    assert(llmq_params_opt.has_value());
+
+    std::string strLLMQType = gArgs.GetArg("-llmqinstantsenddip0024", std::string(llmq_params_opt->name));
+
+    Consensus::LLMQType llmqType = Consensus::LLMQType::LLMQ_NONE;
+    for (const auto& params : consensus.llmqs) {
+        if (params.name == strLLMQType) {
+            llmqType = params.type;
+        }
+    }
+    if (llmqType == Consensus::LLMQType::LLMQ_NONE) {
+        throw std::runtime_error("Invalid LLMQ type specified for -llmqinstantsenddip0024.");
+    }
+    LogPrintf("Setting llmqinstantsenddip0024 to size=%ld\n", ToUnderlying(llmqType));
+    UpdateLLMQDIP0024InstantSend(llmqType);
 }
 
 void CDevNetParams::UpdateDevnetSubsidyAndDiffParametersFromArgs(const ArgsManager& args)
@@ -1362,6 +1478,28 @@ void CDevNetParams::UpdateDevnetLLMQInstantSendDIP0024FromArgs(const ArgsManager
     UpdateDevnetLLMQDIP0024InstantSend(llmqType);
 }
 
+void CDevNetParams::UpdateDevnetLLMQPlatformFromArgs(const ArgsManager& args)
+{
+    if (!args.IsArgSet("-llmqplatform")) return;
+
+    const auto& llmq_params_opt = GetLLMQ(consensus.llmqTypePlatform);
+    assert(llmq_params_opt.has_value());
+
+    std::string strLLMQType = gArgs.GetArg("-llmqplatform", std::string(llmq_params_opt->name));
+
+    Consensus::LLMQType llmqType = Consensus::LLMQType::LLMQ_NONE;
+    for (const auto& params : consensus.llmqs) {
+        if (params.name == strLLMQType) {
+            llmqType = params.type;
+        }
+    }
+    if (llmqType == Consensus::LLMQType::LLMQ_NONE) {
+        throw std::runtime_error("Invalid LLMQ type specified for -llmqplatform.");
+    }
+    LogPrintf("Setting llmqplatform to size=%ld\n", static_cast<uint8_t>(llmqType));
+    UpdateDevnetLLMQPlatform(llmqType);
+}
+
 void CDevNetParams::UpdateDevnetPowTargetSpacingFromArgs(const ArgsManager& args)
 {
     if (!args.IsArgSet("-powtargetspacing")) return;
@@ -1386,8 +1524,7 @@ void CDevNetParams::UpdateLLMQDevnetParametersFromArgs(const ArgsManager& args)
     if (!args.IsArgSet("-llmqdevnetparams")) return;
 
     std::string strParams = args.GetArg("-llmqdevnetparams", "");
-    std::vector<std::string> vParams;
-    boost::split(vParams, strParams, boost::is_any_of(":"));
+    std::vector<std::string> vParams = SplitString(strParams, ':');
     if (vParams.size() != 2) {
         throw std::runtime_error("LLMQ_DEVNET parameters malformed, expecting <size>:<threshold>");
     }

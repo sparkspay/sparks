@@ -11,16 +11,16 @@
  */
 
 
-static const int PROTOCOL_VERSION = 70221;
+static const int PROTOCOL_VERSION = 70222;
 
 //! initial proto version, to be increased after version/verack negotiation
 static const int INIT_PROTO_VERSION = 209;
 
 //! disconnect from peers older than this proto version
-static const int MIN_PEER_PROTO_VERSION = 70219;
+static const int MIN_PEER_PROTO_VERSION = 70221;
 
 //! minimum proto version of masternode to accept in DKGs
-static const int MIN_MASTERNODE_PROTO_VERSION = 70219;
+static const int MIN_MASTERNODE_PROTO_VERSION = 70221;
 
 //! nTime field added to CAddress, starting with this version;
 //! if possible, avoid requesting addresses nodes older than this
@@ -43,6 +43,18 @@ static const int ADDRV2_PROTO_VERSION = 70223;
 
 //! CCoinJoinStatusUpdate bug fix was introduced in this version
 static const int COINJOIN_SU_PROTO_VERSION = 70224;
+
+//! BLS scheme was introduced in this version
+static const int BLS_SCHEME_PROTO_VERSION = 70220;
+
+//! DSQ and DSTX started using protx hash in this version
+static const int COINJOIN_PROTX_HASH_PROTO_VERSION = 70221;
+
+//! Masternode type was introduced in this version
+static const int DMN_TYPE_PROTO_VERSION = 70222;
+
+//! Versioned Simplified Masternode List Entries were introduced in this version
+static const int SMNLE_VERSIONED_PROTO_VERSION = 70222;
 
 // Make sure that none of the values above collide with `ADDRV2_FORMAT`.
 

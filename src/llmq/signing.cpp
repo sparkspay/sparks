@@ -17,6 +17,7 @@
 #include <netmessagemaker.h>
 #include <scheduler.h>
 #include <util/irange.h>
+#include <util/underlying.h>
 #include <validation.h>
 
 #include <algorithm>
@@ -27,7 +28,7 @@ namespace llmq
 UniValue CRecoveredSig::ToJson() const
 {
     UniValue ret(UniValue::VOBJ);
-    ret.pushKV("llmqType", (int)llmqType);
+    ret.pushKV("llmqType", ToUnderlying(llmqType));
     ret.pushKV("quorumHash", quorumHash.ToString());
     ret.pushKV("id", id.ToString());
     ret.pushKV("msgHash", msgHash.ToString());
@@ -557,7 +558,7 @@ bool CSigningManager::GetRecoveredSigForGetData(const uint256& hash, CRecoveredS
     return true;
 }
 
-void CSigningManager::ProcessMessage(CNode* pfrom, const std::string& msg_type, CDataStream& vRecv)
+void CSigningManager::ProcessMessage(const CNode& pfrom, const std::string& msg_type, CDataStream& vRecv)
 {
     if (msg_type == NetMsgType::QSIGREC) {
         auto recoveredSig = std::make_shared<CRecoveredSig>();
@@ -566,18 +567,18 @@ void CSigningManager::ProcessMessage(CNode* pfrom, const std::string& msg_type, 
     }
 }
 
-void CSigningManager::ProcessMessageRecoveredSig(CNode* pfrom, const std::shared_ptr<const CRecoveredSig>& recoveredSig)
+void CSigningManager::ProcessMessageRecoveredSig(const CNode& pfrom, const std::shared_ptr<const CRecoveredSig>& recoveredSig)
 {
     {
         LOCK(cs_main);
-        EraseObjectRequest(pfrom->GetId(), CInv(MSG_QUORUM_RECOVERED_SIG, recoveredSig->GetHash()));
+        EraseObjectRequest(pfrom.GetId(), CInv(MSG_QUORUM_RECOVERED_SIG, recoveredSig->GetHash()));
     }
 
     bool ban = false;
     if (!PreVerifyRecoveredSig(qman, *recoveredSig, ban)) {
         if (ban) {
             LOCK(cs_main);
-            Misbehaving(pfrom->GetId(), 100);
+            Misbehaving(pfrom.GetId(), 100);
         }
         return;
     }
@@ -589,16 +590,16 @@ void CSigningManager::ProcessMessageRecoveredSig(CNode* pfrom, const std::shared
     }
 
     LogPrint(BCLog::LLMQ, "CSigningManager::%s -- signHash=%s, id=%s, msgHash=%s, node=%d\n", __func__,
-             recoveredSig->buildSignHash().ToString(), recoveredSig->getId().ToString(), recoveredSig->getMsgHash().ToString(), pfrom->GetId());
+             recoveredSig->buildSignHash().ToString(), recoveredSig->getId().ToString(), recoveredSig->getMsgHash().ToString(), pfrom.GetId());
 
     LOCK(cs);
     if (pendingReconstructedRecoveredSigs.count(recoveredSig->GetHash())) {
         // no need to perform full verification
         LogPrint(BCLog::LLMQ, "CSigningManager::%s -- already pending reconstructed sig, signHash=%s, id=%s, msgHash=%s, node=%d\n", __func__,
-                 recoveredSig->buildSignHash().ToString(), recoveredSig->getId().ToString(), recoveredSig->getMsgHash().ToString(), pfrom->GetId());
+                 recoveredSig->buildSignHash().ToString(), recoveredSig->getId().ToString(), recoveredSig->getMsgHash().ToString(), pfrom.GetId());
         return;
     }
-    pendingRecoveredSigs[pfrom->GetId()].emplace_back(recoveredSig);
+    pendingRecoveredSigs[pfrom.GetId()].emplace_back(recoveredSig);
 }
 
 bool CSigningManager::PreVerifyRecoveredSig(const CQuorumManager& quorum_manager, const CRecoveredSig& recoveredSig, bool& retBan)
@@ -1008,7 +1009,7 @@ CQuorumCPtr CSigningManager::SelectQuorumForSigning(const Consensus::LLMQParams&
         //Extract last 64 bits of selectionHash
         uint64_t b = selectionHash.GetUint64(3);
         //Take last n bits of b
-        int signer = int((((1 << n) - 1) & (b >> (64 - n - 1))));
+        uint64_t signer = (((1 << n) - 1) & (b >> (64 - n - 1)));
 
         if (signer > quorums.size()) {
             return nullptr;
@@ -1016,7 +1017,7 @@ CQuorumCPtr CSigningManager::SelectQuorumForSigning(const Consensus::LLMQParams&
         auto itQuorum = std::find_if(quorums.begin(),
                                      quorums.end(),
                                      [signer](const CQuorumCPtr& obj) {
-                                         return int(obj->qc->quorumIndex) == signer;
+                                         return uint64_t(obj->qc->quorumIndex) == signer;
                                      });
         if (itQuorum == quorums.end()) {
             return nullptr;
