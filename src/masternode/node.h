@@ -28,10 +28,11 @@ struct CActiveMasternodeInfo {
     uint256 proTxHash;
     COutPoint outpoint;
     CService service;
+    bool legacy{true};
 };
 
 
-class CActiveMasternodeManager : public CValidationInterface
+class CActiveMasternodeManager final : public CValidationInterface
 {
 public:
     enum masternode_state_t {

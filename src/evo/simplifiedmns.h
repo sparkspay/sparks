@@ -6,6 +6,8 @@
 #define BITCOIN_EVO_SIMPLIFIEDMNS_H
 
 #include <bls/bls.h>
+#include <evo/deterministicmns.h>
+#include <evo/dmn_types.h>
 #include <merkleblock.h>
 #include <netaddress.h>
 #include <pubkey.h>
@@ -23,14 +25,21 @@ class CQuorumBlockProcessor;
 class CSimplifiedMNListEntry
 {
 public:
+    static constexpr uint16_t LEGACY_BLS_VERSION = 1;
+    static constexpr uint16_t BASIC_BLS_VERSION = 2;
+
     uint256 proRegTxHash;
     uint256 confirmedHash;
     CService service;
     CBLSLazyPublicKey pubKeyOperator;
     CKeyID keyIDVoting;
     bool isValid{false};
+    MnType nType{MnType::Regular};
+    uint16_t platformHTTPPort{0};
+    uint160 platformNodeID{};
     CScript scriptPayout; // mem-only
     CScript scriptOperatorPayout; // mem-only
+    uint16_t nVersion{LEGACY_BLS_VERSION};
 
     CSimplifiedMNListEntry() = default;
     explicit CSimplifiedMNListEntry(const CDeterministicMN& dmn);
@@ -42,7 +51,11 @@ public:
                service == rhs.service &&
                pubKeyOperator == rhs.pubKeyOperator &&
                keyIDVoting == rhs.keyIDVoting &&
-               isValid == rhs.isValid;
+               isValid == rhs.isValid &&
+               nVersion == rhs.nVersion &&
+               nType == rhs.nType &&
+               platformHTTPPort == rhs.platformHTTPPort &&
+               platformNodeID == rhs.platformNodeID;
     }
 
     bool operator!=(const CSimplifiedMNListEntry& rhs) const
@@ -52,14 +65,27 @@ public:
 
     SERIALIZE_METHODS(CSimplifiedMNListEntry, obj)
     {
+        if ((s.GetType() & SER_NETWORK) && s.GetVersion() >= SMNLE_VERSIONED_PROTO_VERSION) {
+            READWRITE(obj.nVersion);
+        }
         READWRITE(
                 obj.proRegTxHash,
                 obj.confirmedHash,
                 obj.service,
-                obj.pubKeyOperator,
+                CBLSLazyPublicKeyVersionWrapper(const_cast<CBLSLazyPublicKey&>(obj.pubKeyOperator), (obj.nVersion == LEGACY_BLS_VERSION)),
                 obj.keyIDVoting,
                 obj.isValid
                 );
+        if ((s.GetType() & SER_NETWORK) && s.GetVersion() < DMN_TYPE_PROTO_VERSION) {
+            return;
+        }
+        if (obj.nVersion == BASIC_BLS_VERSION) {
+            READWRITE(obj.nType);
+            if (obj.nType == MnType::HighPerformance) {
+                READWRITE(obj.platformHTTPPort);
+                READWRITE(obj.platformNodeID);
+            }
+        }
     }
 
     uint256 CalcHash() const;
@@ -98,19 +124,26 @@ public:
 class CSimplifiedMNListDiff
 {
 public:
+    static constexpr uint16_t CURRENT_VERSION = 1;
+
     uint256 baseBlockHash;
     uint256 blockHash;
     CPartialMerkleTree cbTxMerkleTree;
     CTransactionRef cbTx;
     std::vector<uint256> deletedMNs;
     std::vector<CSimplifiedMNListEntry> mnList;
+    uint16_t nVersion{CURRENT_VERSION};
 
     std::vector<std::pair<uint8_t, uint256>> deletedQuorums; // p<LLMQType, quorumHash>
     std::vector<llmq::CFinalCommitment> newQuorums;
 
     SERIALIZE_METHODS(CSimplifiedMNListDiff, obj)
     {
-        READWRITE(obj.baseBlockHash, obj.blockHash, obj.cbTxMerkleTree, obj.cbTx, obj.deletedMNs, obj.mnList);
+        READWRITE(obj.baseBlockHash, obj.blockHash, obj.cbTxMerkleTree, obj.cbTx);
+        if ((s.GetType() & SER_NETWORK) && s.GetVersion() >= BLS_SCHEME_PROTO_VERSION) {
+            READWRITE(obj.nVersion);
+        }
+        READWRITE(obj.deletedMNs, obj.mnList);
         READWRITE(obj.deletedQuorums, obj.newQuorums);
     }
 

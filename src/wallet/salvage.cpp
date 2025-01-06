@@ -4,9 +4,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <fs.h>
-#include <node/context.h>
 #include <streams.h>
 #include <util/translation.h>
+#include <wallet/bdb.h>
 #include <wallet/salvage.h>
 #include <wallet/wallet.h>
 #include <wallet/walletdb.h>
@@ -28,11 +28,13 @@ bool RecoverDatabaseFile(const fs::path& file_path, bilingual_str& error, std::v
     DatabaseStatus status;
     options.require_existing = true;
     options.verify = false;
+    options.require_format = DatabaseFormat::BERKELEY;
     std::unique_ptr<WalletDatabase> database = MakeDatabase(file_path, options, status, error);
     if (!database) return false;
 
-    std::string filename;
-    std::shared_ptr<BerkeleyEnvironment> env = GetWalletEnv(file_path, filename);
+    BerkeleyDatabase& berkeley_database = static_cast<BerkeleyDatabase&>(*database);
+    std::string filename = berkeley_database.Filename();
+    std::shared_ptr<BerkeleyEnvironment> env = berkeley_database.env;
 
     if (!env->Open(error)) {
         return false;
@@ -130,10 +132,8 @@ bool RecoverDatabaseFile(const fs::path& file_path, bilingual_str& error, std::v
         return false;
     }
 
-    NodeContext node;
-    auto chain = interfaces::MakeChain(node);
     DbTxn* ptxn = env->TxnBegin();
-    CWallet dummyWallet(chain.get(), "", CreateDummyWalletDatabase());
+    CWallet dummyWallet(nullptr, "", CreateDummyWalletDatabase());
     for (KeyValPair& row : salvagedData)
     {
         /* Filter for only private key type KV pairs to be added to the salvaged wallet */

@@ -21,6 +21,7 @@
 #include <univalue.h>
 #include <validation.h>
 #include <key_io.h>
+#include <util/underlying.h>
 
 CSimplifiedMNListEntry::CSimplifiedMNListEntry(const CDeterministicMN& dmn) :
     proRegTxHash(dmn.proTxHash),
@@ -30,7 +31,11 @@ CSimplifiedMNListEntry::CSimplifiedMNListEntry(const CDeterministicMN& dmn) :
     keyIDVoting(dmn.pdmnState->keyIDVoting),
     isValid(!dmn.pdmnState->IsBanned()),
     scriptPayout(dmn.pdmnState->scriptPayout),
-    scriptOperatorPayout(dmn.pdmnState->scriptOperatorPayout)
+    scriptOperatorPayout(dmn.pdmnState->scriptOperatorPayout),
+    nVersion(dmn.pdmnState->nVersion == CProRegTx::LEGACY_BLS_VERSION ? LEGACY_BLS_VERSION : BASIC_BLS_VERSION),
+    nType(dmn.nType),
+    platformHTTPPort(dmn.pdmnState->platformHTTPPort),
+    platformNodeID(dmn.pdmnState->platformNodeID)
 {
 }
 
@@ -53,20 +58,26 @@ std::string CSimplifiedMNListEntry::ToString() const
         operatorPayoutAddress = EncodeDestination(dest);
     }
 
-    return strprintf("CSimplifiedMNListEntry(proRegTxHash=%s, confirmedHash=%s, service=%s, pubKeyOperator=%s, votingAddress=%s, isValid=%d, payoutAddress=%s, operatorPayoutAddress=%s)",
-        proRegTxHash.ToString(), confirmedHash.ToString(), service.ToString(false), pubKeyOperator.Get().ToString(), EncodeDestination(keyIDVoting), isValid, payoutAddress, operatorPayoutAddress);
+    return strprintf("CSimplifiedMNListEntry(nVersion=%d, nType=%d, proRegTxHash=%s, confirmedHash=%s, service=%s, pubKeyOperator=%s, votingAddress=%s, isValid=%d, payoutAddress=%s, operatorPayoutAddress=%s, platformHTTPPort=%d, platformNodeID=%s)",
+                     nVersion, ToUnderlying(nType), proRegTxHash.ToString(), confirmedHash.ToString(), service.ToString(false), pubKeyOperator.ToString(), EncodeDestination(PKHash(keyIDVoting)), isValid, payoutAddress, operatorPayoutAddress, platformHTTPPort, platformNodeID.ToString());
 }
 
 void CSimplifiedMNListEntry::ToJson(UniValue& obj, bool extended) const
 {
     obj.clear();
     obj.setObject();
+    obj.pushKV("nVersion", nVersion);
+    obj.pushKV("nType", ToUnderlying(nType));
     obj.pushKV("proRegTxHash", proRegTxHash.ToString());
     obj.pushKV("confirmedHash", confirmedHash.ToString());
     obj.pushKV("service", service.ToString(false));
-    obj.pushKV("pubKeyOperator", pubKeyOperator.Get().ToString());
-    obj.pushKV("votingAddress", EncodeDestination(keyIDVoting));
+    obj.pushKV("pubKeyOperator", pubKeyOperator.ToString());
+    obj.pushKV("votingAddress", EncodeDestination(PKHash(keyIDVoting)));
     obj.pushKV("isValid", isValid);
+    if (nType == MnType::HighPerformance) {
+        obj.pushKV("platformHTTPPort", platformHTTPPort);
+        obj.pushKV("platformNodeID", platformNodeID.ToString());
+    }
 
     if (!extended) return;
 
@@ -79,6 +90,7 @@ void CSimplifiedMNListEntry::ToJson(UniValue& obj, bool extended) const
     }
 }
 
+// TODO: Invistigate if we can delete this constructor
 CSimplifiedMNList::CSimplifiedMNList(const std::vector<CSimplifiedMNListEntry>& smlEntries)
 {
     mnList.resize(smlEntries.size());
@@ -138,26 +150,27 @@ bool CSimplifiedMNListDiff::BuildQuorumsDiff(const CBlockIndex* baseBlockIndex, 
 
     std::set<std::pair<Consensus::LLMQType, uint256>> baseQuorumHashes;
     std::set<std::pair<Consensus::LLMQType, uint256>> quorumHashes;
-    for (const auto& p : baseQuorums) {
-        for (const auto& p2 : p.second) {
-            baseQuorumHashes.emplace(p.first, p2->GetBlockHash());
+    for (const auto& [llmqType, vecBlockIndex] : baseQuorums) {
+        for (const auto& blockindex : vecBlockIndex) {
+            baseQuorumHashes.emplace(llmqType, blockindex->GetBlockHash());
         }
     }
-    for (const auto& p : quorums) {
-        for (const auto& p2 : p.second) {
-            quorumHashes.emplace(p.first, p2->GetBlockHash());
+    for (const auto& [llmqType, vecBlockIndex] : quorums) {
+        for (const auto& blockindex : vecBlockIndex) {
+            quorumHashes.emplace(llmqType, blockindex->GetBlockHash());
         }
     }
 
-    for (auto& p : baseQuorumHashes) {
+    for (const auto& p : baseQuorumHashes) {
         if (!quorumHashes.count(p)) {
             deletedQuorums.emplace_back((uint8_t)p.first, p.second);
         }
     }
-    for (auto& p : quorumHashes) {
+    for (const auto& p : quorumHashes) {
+        const auto& [llmqType, hash] = p;
         if (!baseQuorumHashes.count(p)) {
             uint256 minedBlockHash;
-            llmq::CFinalCommitmentPtr qc = quorum_block_processor.GetMinedCommitment(p.first, p.second, minedBlockHash);
+            llmq::CFinalCommitmentPtr qc = quorum_block_processor.GetMinedCommitment(llmqType, hash, minedBlockHash);
             if (qc == nullptr) {
                 return false;
             }
@@ -171,6 +184,7 @@ void CSimplifiedMNListDiff::ToJson(UniValue& obj, bool extended) const
 {
     obj.setObject();
 
+    obj.pushKV("nVersion", nVersion);
     obj.pushKV("baseBlockHash", baseBlockHash.ToString());
     obj.pushKV("blockHash", blockHash.ToString());
 

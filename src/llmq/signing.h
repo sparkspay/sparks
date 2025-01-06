@@ -74,7 +74,7 @@ public:
     CRecoveredSig(Consensus::LLMQType _llmqType, const uint256& _quorumHash, const uint256& _id, const uint256& _msgHash, const CBLSLazySignature& _sig) :
                   CSigBase(_llmqType, _quorumHash, _id, _msgHash), sig(_sig) {UpdateHash();};
     CRecoveredSig(Consensus::LLMQType _llmqType, const uint256& _quorumHash, const uint256& _id, const uint256& _msgHash, const CBLSSignature& _sig) :
-                  CSigBase(_llmqType, _quorumHash, _id, _msgHash) {const_cast<CBLSLazySignature&>(sig).Set(_sig); UpdateHash();};
+                  CSigBase(_llmqType, _quorumHash, _id, _msgHash) {const_cast<CBLSLazySignature&>(sig).Set(_sig, bls::bls_legacy_scheme.load()); UpdateHash();};
 
 private:
     // only in-memory
@@ -164,8 +164,8 @@ class CSigningManager
 private:
     mutable CCriticalSection cs;
 
-    CConnman& connman;
     CRecoveredSigsDb db;
+    CConnman& connman;
     const CQuorumManager& qman;
 
     // Incoming and not verified yet
@@ -184,7 +184,7 @@ public:
     bool AlreadyHave(const CInv& inv) const;
     bool GetRecoveredSigForGetData(const uint256& hash, CRecoveredSig& ret) const;
 
-    void ProcessMessage(CNode* pnode, const std::string& msg_type, CDataStream& vRecv);
+    void ProcessMessage(const CNode& pnode, const std::string& msg_type, CDataStream& vRecv);
 
     // This is called when a recovered signature was was reconstructed from another P2P message and is known to be valid
     // This is the case for example when a signature appears as part of InstantSend or ChainLocks
@@ -197,7 +197,7 @@ public:
     void TruncateRecoveredSig(Consensus::LLMQType llmqType, const uint256& id);
 
 private:
-    void ProcessMessageRecoveredSig(CNode* pfrom, const std::shared_ptr<const CRecoveredSig>& recoveredSig);
+    void ProcessMessageRecoveredSig(const CNode& pfrom, const std::shared_ptr<const CRecoveredSig>& recoveredSig);
     static bool PreVerifyRecoveredSig(const CQuorumManager& quorum_manager, const CRecoveredSig& recoveredSig, bool& retBan);
 
     void CollectPendingRecoveredSigsToVerify(size_t maxUniqueSessions,

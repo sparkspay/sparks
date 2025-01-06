@@ -1,26 +1,23 @@
-Sparks Core version v18.2.2
+Sparks Core version v19.3.0
 =========================
 
 Release is now available from:
 
   <https://www.sparkspay.io/downloads/#wallets>
 
-This is a new hotfix version release.
+This is a new minor version release, bringing various bugfixes and other
+improvements.
 
-This release is optional for all nodes; however, v18.2.2 or higher is required
-to be able to use testnet right until v19 hard fork activation. Earlier
-versions will not be able to sync past block 847000 on testnet.
+This release is optional for all nodes.
 
 Please report bugs using the issue tracker at GitHub:
 
   <https://github.com/sparkspay/sparks/issues>
 
 
-Upgrading and downgrading
-=========================
+# Upgrading and downgrading
 
-How to Upgrade
---------------
+## How to Upgrade
 
 If you are running an older version, shut it down. Wait until it has completely
 shut down (which might take a few minutes for older versions), then run the
@@ -30,88 +27,63 @@ using version < 0.13 you will have to reindex (start with -reindex-chainstate
 or -reindex) to make sure your wallet has all the new data synced. Upgrading
 from version 0.13 should not require any additional actions.
 
-When upgrading from a version prior to 18.0.1, the
-first startup of Sparks Core will run a migration process which can take anywhere
-from a few minutes to thirty minutes to finish. After the migration, a
-downgrade to an older version is only possible with a reindex
-(or reindex-chainstate).
+## Downgrade warning
 
-Downgrade warning
------------------
+### Downgrade to a version < v19.2.0
 
-### Downgrade to a version < v18.2.2
+Downgrading to a version older than v19.2.0 is not supported due to changes
+in the evodb database. If you need to use an older version, you must either
+reindex or re-sync the whole chain.
 
-Downgrading to a version older than v18.2.2 is supported.
+# Notable changes
 
-### Downgrade to a version < v18.0.1
+## CoinJoin improvements
 
-Downgrading to a version older than v18.0.1 is not supported due to changes in
-the indexes database folder. If you need to use an older version, you must
-either reindex or re-sync the whole chain.
+This release fixes a couple of issues with mixing on nodes that start with no
+wallet loaded initially.
 
-Notable changes
-===============
+## Wallet GUI improvements
 
-Testnet Breaking Changes
-------------------------
+Wallets with 100k+ txes should now be able to rescan without hanging forever
+while processing notifications for every tx. Running `keypoolrefill` with a
+large number of keys will no longer lockup the GUI and can be interrupted.
+Running `upgradetohd` can also be interrupted now.
 
-A new testnet only LLMQ has been added. This LLMQ is of the type LLMQ_25_67; this LLMQ is only active on testnet.
-This LLMQ will not remove the LLMQ_100_67 from testnet; however that quorum (likely) will not form and will perform no role.
-See the [diff](https://github.com/sparkspay/sparks/pull/5225/files#diff-e70a38a3e8c2a63ca0494627301a5c7042141ad301193f78338d97cb1b300ff9R451-R469) for specific parameters of the LLMQ.
+## Changes in RPCs, commands and config options
 
-This LLMQ will become active at the height of 847000. **This will be a breaking change and a hard fork for testnet**
-This LLMQ is not activated with the v19 hardfork; as such testnet will experience two hardforks. One at height 847000,
-and the other to be determined by the BIP9 hard fork process.
+- `wipewallettxes`: New RPC command which removes all wallet transactions
+- `wipetxes`: New command for `sparks-wallet` that removes all wallet transactions
+- `masternodelist`: New mode `hpmn` filters only HPMNs/EvoNodes
+- `protx list`: New type `hpmn` filters only HPMNs/EvoNodes
+- `-blockversion` config option is allowed on non-mainnet networks now
 
-Remote Procedure Call (RPC) Changes
------------------------------------
+## Other changes
 
-### The new RPCs are:
-None
+There were a few other minor changes too, specifically:
+- Added Kittywhiskers Van Gogh (kittywhiskers) and Odysseas Gabrielides
+(ogabrielides) to contributors list in 19.2.0 release notes
+- There should be no false "unknown rules activated" warning in GUI and RPCs now
+- Empty `settings.json` file no longer results in node startup failure
+- Block processing was slightly optimized
+- BLS library was updated to version 1.3.0 to fix a couple tiny issues
+- Fixed a couple of small issues in tests
 
-### The removed RPCs are:
-None
+# v19.3.0 Change log
 
-### Changes in existing RPCs introduced through bitcoin backports:
-None
+See detailed [set of changes](https://github.com/sparkspay/sparks/compare/v18.2.2...sparkspay:v19.3.0).
 
-### Sparks-specific changes in existing RPCs:
-None
-
-Please check `help <command>` for more detailed information on specific RPCs.
-
-Command-line options
---------------------
-None
-
-Please check `Help -> Command-line options` in Qt wallet or `sparksd --help` for
-more information.
-
-Backports from Bitcoin Core
----------------------------
-None
-
-Other changes
--------------
-#5247 is backported to improve debugging experience.
-
-v18.2.2 Change log
-==================
-
-See detailed [set of changes](https://github.com/sparkspay/sparks/compare/v18.2.1...sparkspay:v18.2.2).
-
-Credits
-=======
+# Credits
 
 Thanks to everyone who directly contributed to this release:
 
-- Odysseas Gabrielides
+- Odysseas Gabrielides (ogabrielides)
+- PastaPastaPasta
 - UdjinM6
 
-As well as everyone that submitted issues, reviewed pull requests, helped debug the release candidates, and write DIPs that were implemented in this release.
+As well as everyone that submitted issues, reviewed pull requests and helped
+debug the release candidates.
 
-Older releases
-==============
+# Older releases
 
 Sparks was previously known as Darkcoin.
 

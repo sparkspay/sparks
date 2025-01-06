@@ -23,7 +23,7 @@ class CBlockIndex;
 
 class CDeterministicMN;
 using CDeterministicMNCPtr = std::shared_ptr<const CDeterministicMN>;
-
+class CMasternodeSync;
 
 namespace llmq
 {
@@ -39,14 +39,20 @@ static constexpr bool DEFAULT_WATCH_QUORUMS{false};
 struct CQuorumDataRequestKey
 {
     uint256 proRegTx;
-    //TODO: Investigate purpose of this flag and rename accordingly
-    bool flag;
+    bool m_we_requested;
     uint256 quorumHash;
     Consensus::LLMQType llmqType;
 
+    CQuorumDataRequestKey(const uint256& proRegTxIn, const bool _m_we_requested, const uint256& quorumHashIn, const Consensus::LLMQType llmqTypeIn) :
+        proRegTx(proRegTxIn),
+        m_we_requested(_m_we_requested),
+        quorumHash(quorumHashIn),
+        llmqType(llmqTypeIn)
+        {}
+
     bool operator ==(const CQuorumDataRequestKey& obj) const
     {
-        return (proRegTx == obj.proRegTx && flag == obj.flag && quorumHash == obj.quorumHash && llmqType == obj.llmqType);
+        return (proRegTx == obj.proRegTx && m_we_requested == obj.m_we_requested && quorumHash == obj.quorumHash && llmqType == obj.llmqType);
     }
 };
 
@@ -83,6 +89,7 @@ private:
     bool fProcessed{false};
 
     static constexpr int64_t EXPIRATION_TIMEOUT{300};
+    static constexpr int64_t EXPIRATION_BIAS{60};
 
 public:
 
@@ -119,7 +126,7 @@ public:
     Errors GetError() const { return nError; }
     std::string GetErrorString() const;
 
-    bool IsExpired() const { return (GetTime() - nTime) >= EXPIRATION_TIMEOUT; }
+    bool IsExpired(bool add_bias) const { return (GetTime() - nTime) >= (EXPIRATION_TIMEOUT + (add_bias ? EXPIRATION_BIAS : 0)); }
     bool IsProcessed() const { return fProcessed; }
     void SetProcessed() { fProcessed = true; }
 
@@ -205,11 +212,12 @@ private:
 class CQuorumManager
 {
 private:
-    CEvoDB& evoDb;
+    CEvoDB& m_evoDb;
     CConnman& connman;
     CBLSWorker& blsWorker;
     CDKGSessionManager& dkgManager;
     CQuorumBlockProcessor& quorumBlockProcessor;
+    const std::unique_ptr<CMasternodeSync>& m_mn_sync;
 
     mutable CCriticalSection cs_map_quorums;
     mutable std::map<Consensus::LLMQType, unordered_lru_cache<uint256, CQuorumPtr, StaticSaltedHasher>> mapQuorumsCache GUARDED_BY(cs_map_quorums);
@@ -221,7 +229,7 @@ private:
 
 public:
     CQuorumManager(CEvoDB& _evoDb, CConnman& _connman, CBLSWorker& _blsWorker, CQuorumBlockProcessor& _quorumBlockProcessor,
-                   CDKGSessionManager& _dkgManager);
+                   CDKGSessionManager& _dkgManager, const std::unique_ptr<CMasternodeSync>& mnSync);
     ~CQuorumManager() { Stop(); };
 
     void Start();
@@ -231,11 +239,11 @@ public:
 
     void UpdatedBlockTip(const CBlockIndex *pindexNew, bool fInitialDownload) const;
 
-    void ProcessMessage(CNode* pfrom, const std::string& msg_type, CDataStream& vRecv);
+    void ProcessMessage(CNode& pfrom, const std::string& msg_type, CDataStream& vRecv);
 
     static bool HasQuorum(Consensus::LLMQType llmqType, const CQuorumBlockProcessor& quorum_block_processor, const uint256& quorumHash);
 
-    bool RequestQuorumData(CNode* pFrom, Consensus::LLMQType llmqType, const CBlockIndex* pQuorumBaseBlockIndex, uint16_t nDataMask, const uint256& proTxHash = uint256()) const;
+    bool RequestQuorumData(CNode* pfrom, Consensus::LLMQType llmqType, const CBlockIndex* pQuorumBaseBlockIndex, uint16_t nDataMask, const uint256& proTxHash = uint256()) const;
 
     // all these methods will lock cs_main for a short period of time
     CQuorumCPtr GetQuorum(Consensus::LLMQType llmqType, const uint256& quorumHash) const;
@@ -273,7 +281,7 @@ struct SaltedHasherImpl<llmq::CQuorumDataRequestKey>
     {
         CSipHasher c(k0, k1);
         c.Write((unsigned char*)&(v.proRegTx), sizeof(v.proRegTx));
-        c.Write((unsigned char*)&(v.flag), sizeof(v.flag));
+        c.Write((unsigned char*)&(v.m_we_requested), sizeof(v.m_we_requested));
         c.Write((unsigned char*)&(v.quorumHash), sizeof(v.quorumHash));
         c.Write((unsigned char*)&(v.llmqType), sizeof(v.llmqType));
         return c.Finalize();

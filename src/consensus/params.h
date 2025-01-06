@@ -21,10 +21,11 @@ enum DeploymentPos {
     DEPLOYMENT_DIP0003, // Deployment of DIP0002 and DIP0003 (txv3 and deterministic MN lists)
     DEPLOYMENT_DIP0008, // Deployment of ChainLock enforcement
     DEPLOYMENT_REALLOC, // Deployment of Block Reward Reallocation
-    DEPLOYMENT_DIP0020, // Deployment of DIP0020, DIP0021 and LMQ_100_67 quorums
+    DEPLOYMENT_DIP0020, // Deployment of DIP0020, DIP0021 and llmq_20_70 quorums
     DEPLOYMENT_IPV6_MN, // Deployment of IPv6 Masternodes
     DEPLOYMENT_DATATX, // Deployment of Data transactions
     DEPLOYMENT_DIP0024, // Deployment of DIP0024 (Quorum Rotation) and decreased governance proposal fee
+    DEPLOYMENT_V19,     // Deployment of Basic BLS, AssetLocks, EHF
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
     MAX_VERSION_BITS_DEPLOYMENTS
 };

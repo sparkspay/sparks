@@ -29,7 +29,7 @@ class WalletHDTest(BitcoinTestFramework):
     def run_test(self):
         # Make sure can't switch off usehd after wallet creation
         self.stop_node(1)
-        self.nodes[1].assert_start_raises_init_error(['-usehd=0'], "Error: Error loading : You can't disable HD on an already existing HD wallet")
+        self.nodes[1].assert_start_raises_init_error(['-usehd=0'], "Error: Error loading %s: You can't disable HD on an already existing HD wallet" % self.default_wallet_name)
         self.start_node(1)
         self.connect_nodes(0, 1)
 
@@ -81,7 +81,10 @@ class WalletHDTest(BitcoinTestFramework):
         shutil.rmtree(os.path.join(self.nodes[1].datadir, self.chain, "chainstate"))
         shutil.rmtree(os.path.join(self.nodes[1].datadir, self.chain, "evodb"))
         shutil.rmtree(os.path.join(self.nodes[1].datadir, self.chain, "llmq"))
-        shutil.copyfile(os.path.join(self.nodes[1].datadir, "hd.bak"), os.path.join(self.nodes[1].datadir, self.chain, "wallets", "wallet.dat"))
+        shutil.copyfile(
+            os.path.join(self.nodes[1].datadir, "hd.bak"),
+            os.path.join(self.nodes[1].datadir, self.chain, 'wallets', self.default_wallet_name, self.wallet_data_filename),
+        )
         self.start_node(1)
 
         # Assert that derivation is deterministic
@@ -106,7 +109,10 @@ class WalletHDTest(BitcoinTestFramework):
         shutil.rmtree(os.path.join(self.nodes[1].datadir, self.chain, "chainstate"))
         shutil.rmtree(os.path.join(self.nodes[1].datadir, self.chain, "evodb"))
         shutil.rmtree(os.path.join(self.nodes[1].datadir, self.chain, "llmq"))
-        shutil.copyfile(os.path.join(self.nodes[1].datadir, "hd.bak"), os.path.join(self.nodes[1].datadir, self.chain, "wallets", "wallet.dat"))
+        shutil.copyfile(
+            os.path.join(self.nodes[1].datadir, "hd.bak"),
+            os.path.join(self.nodes[1].datadir, self.chain, "wallets", self.default_wallet_name, self.wallet_data_filename),
+        )
         self.start_node(1, extra_args=self.extra_args[1])
         self.connect_nodes(0, 1)
         self.sync_all()

@@ -48,6 +48,8 @@
 
 #include <univalue.h>
 
+#include <boost/signals2/signal.hpp>
+
 namespace interfaces {
 namespace {
 
@@ -84,15 +86,15 @@ class MasternodeSyncImpl : public Masternode::Sync
 public:
     bool isSynced() override
     {
-        return masternodeSync == nullptr ? false : masternodeSync->IsSynced();
+        return ::masternodeSync == nullptr ? false : ::masternodeSync->IsSynced();
     }
     bool isBlockchainSynced() override
     {
-        return masternodeSync == nullptr ? false : masternodeSync->IsBlockchainSynced();
+        return ::masternodeSync == nullptr ? false : ::masternodeSync->IsBlockchainSynced();
     }
     std::string getSyncStatus() override
     {
-        return masternodeSync == nullptr ? "" : masternodeSync->GetSyncStatus();
+        return ::masternodeSync == nullptr ? "" : ::masternodeSync->GetSyncStatus();
     }
 };
 

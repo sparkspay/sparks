@@ -28,6 +28,7 @@
 #include <util/check.h>
 #include <util/moneystr.h>
 #include <util/strencodings.h>
+#include <util/string.h>
 #include <util/system.h>
 #include <util/time.h>
 #include <version.h>
@@ -78,9 +79,8 @@ FUZZ_TARGET_INIT(integer, initialize_integer)
     (void)FormatISO8601DateTime(i64);
     // FormatMoney(i) not defined when i == std::numeric_limits<int64_t>::min()
     if (i64 != std::numeric_limits<int64_t>::min()) {
-        int64_t parsed_money;
-        if (ParseMoney(FormatMoney(i64), parsed_money)) {
-            assert(parsed_money == i64);
+        if (std::optional<CAmount> parsed = ParseMoney(FormatMoney(i64))) {
+            assert(parsed.value() == i64);
         }
     }
     (void)GetSizeOfCompactSize(u64);
@@ -93,11 +93,10 @@ FUZZ_TARGET_INIT(integer, initialize_integer)
     }
     (void)HexDigit(ch);
     (void)MoneyRange(i64);
-    (void)i64tostr(i64);
+    (void)ToString(i64);
     (void)IsDigit(ch);
     (void)IsSpace(ch);
     (void)IsSwitchChar(ch);
-    (void)itostr(i32);
     (void)memusage::DynamicUsage(ch);
     (void)memusage::DynamicUsage(i16);
     (void)memusage::DynamicUsage(i32);
@@ -127,13 +126,24 @@ FUZZ_TARGET_INIT(integer, initialize_integer)
     (void)ToUpper(ch);
     // ValueFromAmount(i) not defined when i == std::numeric_limits<int64_t>::min()
     if (i64 != std::numeric_limits<int64_t>::min()) {
-        int64_t parsed_money;
-        if (ParseMoney(ValueFromAmount(i64).getValStr(), parsed_money)) {
-            assert(parsed_money == i64);
+        if (std::optional<CAmount> parsed = ParseMoney(ValueFromAmount(i64).getValStr())) {
+            assert(parsed.value() == i64);
         }
     }
+    if (i32 >= 0 && i32 <= 16) {
+        assert(i32 == CScript::DecodeOP_N(CScript::EncodeOP_N(i32)));
+    }
+
     const std::chrono::seconds seconds{i64};
     assert(count_seconds(seconds) == i64);
+
+    const CScriptNum script_num{i64};
+    (void)script_num.getint();
+    // Avoid negation failure:
+    // script/script.h:332:35: runtime error: negation of -9223372036854775808 cannot be represented in type 'int64_t' (aka 'long'); cast to an unsigned type to negate this value to itself
+    if (script_num != CScriptNum{std::numeric_limits<int64_t>::min()}) {
+        (void)script_num.getvch();
+    }
 
     const arith_uint256 au256 = UintToArith256(u256);
     assert(ArithToUint256(au256) == u256);
@@ -147,9 +157,9 @@ FUZZ_TARGET_INIT(integer, initialize_integer)
     (void)au256.size();
     (void)au256.ToString();
 
-    const CKeyID key_id{u160};
-    const CScriptID script_id{u160};
-    // CTxDestination = CNoDestination ∪ CKeyID ∪ CScriptID
+    const PKHash key_id{u160};
+    const ScriptHash script_id{u160};
+    // CTxDestination = CNoDestination ∪ PKHash ∪ ScriptHash
     const std::vector<CTxDestination> destinations{key_id, script_id};
     for (const CTxDestination& destination : destinations) {
         (void)DescribeAddress(destination);

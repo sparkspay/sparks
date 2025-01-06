@@ -21,21 +21,22 @@
 #include <cxxtimer.hpp>
 #include <memory>
 #include <util/irange.h>
+#include <util/underlying.h>
 
 namespace llmq
 {
-static std::array<std::atomic<double>, int(DKGError::type::_COUNT)> simDkgErrorMap{};
+static std::array<std::atomic<double>, ToUnderlying(DKGError::type::_COUNT)> simDkgErrorMap{};
 
 void SetSimulatedDKGErrorRate(DKGError::type type, double rate)
 {
-    if (int(type) >= DKGError::type::_COUNT) return;
-    simDkgErrorMap[int(type)] = rate;
+    if (type >= DKGError::type::_COUNT) return;
+    simDkgErrorMap[ToUnderlying(type)] = rate;
 }
 
 double GetSimulatedErrorRate(DKGError::type type)
 {
-    if (int(type) >= DKGError::type::_COUNT) return 0;
-    return simDkgErrorMap[int(type)];
+    if (ToUnderlying(type) >= DKGError::type::_COUNT) return 0;
+    return simDkgErrorMap[ToUnderlying(type)];
 }
 
 bool CDKGSession::ShouldSimulateError(DKGError::type type) const
@@ -1207,9 +1208,10 @@ std::vector<CFinalCommitment> CDKGSession::FinalizeCommitments()
         fqc.quorumVvecHash = first.quorumVvecHash;
 
         if (utils::IsQuorumRotationEnabled(params, m_quorum_base_block_index)) {
-            fqc.nVersion = CFinalCommitment::INDEXED_QUORUM_VERSION;
+            fqc.nVersion = utils::IsV19Active(m_quorum_base_block_index) ? CFinalCommitment::BASIC_BLS_INDEXED_QUORUM_VERSION : CFinalCommitment::LEGACY_BLS_INDEXED_QUORUM_VERSION;
             fqc.quorumIndex = quorumIndex;
         } else {
+            fqc.nVersion = utils::IsV19Active(m_quorum_base_block_index) ? CFinalCommitment::BASIC_BLS_NON_INDEXED_QUORUM_VERSION : CFinalCommitment::LEGACY_BLS_NON_INDEXED_QUORUM_VERSION;
             fqc.quorumIndex = 0;
         }
 

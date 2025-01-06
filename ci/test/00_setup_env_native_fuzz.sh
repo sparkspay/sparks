@@ -9,10 +9,10 @@ export LC_ALL=C.UTF-8
 export PACKAGES="clang llvm python3 libevent-dev bsdmainutils libboost-filesystem-dev libboost-test-dev libboost-thread-dev"
 export DEP_OPTS="NO_UPNP=1 DEBUG=1"
 export CPPFLAGS="-DDEBUG_LOCKORDER -DENABLE_SPARKS_DEBUG -DARENA_DEBUG"
-export CXXFLAGS="-Werror -Wno-unused-command-line-argument"
+export CXXFLAGS="-Werror -Wno-unused-command-line-argument -Wno-unused-value"
 export PYZMQ=true
 export RUN_UNIT_TESTS=false
 export RUN_INTEGRATION_TESTS=false
 export RUN_FUZZ_TESTS=true
 export GOAL="install"
-export BITCOIN_CONFIG="--enable-zmq --disable-ccache --enable-fuzz --with-sanitizers=fuzzer,address,undefined CC=clang CXX=clang++"
+export BITCOIN_CONFIG="--enable-zmq --disable-ccache --enable-fuzz --with-sanitizers=fuzzer,address,undefined --enable-c++17 CC=clang CXX=clang++"

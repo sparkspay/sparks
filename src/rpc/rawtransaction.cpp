@@ -34,6 +34,7 @@
 #include <util/bip32.h>
 #include <util/moneystr.h>
 #include <util/strencodings.h>
+#include <util/string.h>
 #include <util/validation.h>
 #include <validation.h>
 #include <validationinterface.h>
@@ -49,13 +50,13 @@
 
 #include <univalue.h>
 
-/** High fee for sendrawtransaction and testmempoolaccept.
- * By default, transaction with a fee higher than this will be rejected by the
- * RPCs. This can be overridden with the maxfeerate argument.
+/** Maximum fee rate for sendrawtransaction and testmempoolaccept.
+ * By default, a transaction with a fee rate higher than this will be rejected
+ * by the RPCs. This can be overridden with the maxfeerate argument.
  */
-constexpr static CAmount DEFAULT_MAX_RAW_TX_FEE{COIN / 10};
+static const CFeeRate DEFAULT_MAX_RAW_TX_FEE_RATE{COIN / 10};
 
-void TxToJSON(const CTransaction& tx, const uint256 hashBlock, llmq::CChainLocksHandler& clhandler, llmq::CInstantSendManager& isman, UniValue& entry)
+void TxToJSON(const CTransaction& tx, const uint256 hashBlock, CTxMemPool& mempool, llmq::CChainLocksHandler& clhandler, llmq::CInstantSendManager& isman, UniValue& entry)
 {
     // Call into TxToUniv() in bitcoin-common to decode the transaction hex.
     //
@@ -71,7 +72,7 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, llmq::CChainLocks
         if (!tx.IsCoinBase()) {
             CSpentIndexValue spentInfo;
             CSpentIndexKey spentKey(txin.prevout.hash, txin.prevout.n);
-            if (GetSpentIndex(spentKey, spentInfo)) {
+            if (GetSpentIndex(mempool, spentKey, spentInfo)) {
                 txSpentInfo.mSpentInfo.emplace(spentKey, spentInfo);
             }
         }
@@ -79,7 +80,7 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, llmq::CChainLocks
     for (unsigned int i = 0; i < tx.vout.size(); i++) {
         CSpentIndexValue spentInfo;
         CSpentIndexKey spentKey(txid, i);
-        if (GetSpentIndex(spentKey, spentInfo)) {
+        if (GetSpentIndex(mempool, spentKey, spentInfo)) {
             txSpentInfo.mSpentInfo.emplace(spentKey, spentInfo);
         }
     }
@@ -142,7 +143,7 @@ static UniValue getrawtransaction(const JSONRPCRequest& request)
                             {RPCResult::Type::STR_HEX, "txid", "The transaction id (same as provided)"},
                             {RPCResult::Type::NUM, "size", "The serialized transaction size"},
                             {RPCResult::Type::NUM, "version", "The version"},
-                            {RPCResult::Type::NUM, "version", "The type"},
+                            {RPCResult::Type::NUM, "type", "The type"},
                             {RPCResult::Type::NUM_TIME, "locktime", "The lock time"},
                             {RPCResult::Type::ARR, "vin", "",
                             {
@@ -234,7 +235,7 @@ static UniValue getrawtransaction(const JSONRPCRequest& request)
     }
 
     uint256 hash_block;
-    const CTransactionRef tx = GetTransaction(blockindex, node.mempool, hash, Params().GetConsensus(), hash_block);
+    const CTransactionRef tx = GetTransaction(blockindex, node.mempool.get(), hash, Params().GetConsensus(), hash_block);
     if (!tx) {
         std::string errmsg;
         if (blockindex) {
@@ -257,10 +258,11 @@ static UniValue getrawtransaction(const JSONRPCRequest& request)
     }
 
     LLMQContext& llmq_ctx = EnsureLLMQContext(request.context);
+    CTxMemPool& mempool = EnsureMemPool(request.context);
 
     UniValue result(UniValue::VOBJ);
     if (blockindex) result.pushKV("in_active_chain", in_active_chain);
-    TxToJSON(*tx, hash_block, *llmq_ctx.clhandler, *llmq_ctx.isman, result);
+    TxToJSON(*tx, hash_block, mempool, *llmq_ctx.clhandler, *llmq_ctx.isman, result);
     return result;
 }
 
@@ -273,7 +275,7 @@ static UniValue gettxoutproof(const JSONRPCRequest& request)
         "you need to maintain a transaction index, using the -txindex command line option or\n"
         "specify the block in which the transaction is included manually (by blockhash).\n",
         {
-            {"txids", RPCArg::Type::ARR, RPCArg::Optional::NO, "A json array of txids to filter",
+            {"txids", RPCArg::Type::ARR, RPCArg::Optional::NO, "The of txids to filter",
                 {
                     {"txid", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "A transaction hash"},
                 },
@@ -426,7 +428,7 @@ static UniValue createrawtransaction(const JSONRPCRequest& request)
         "Note that the transaction's inputs are not signed, and\n"
         "it is not stored in the wallet or transmitted to the network.\n",
         {
-            {"inputs", RPCArg::Type::ARR, RPCArg::Optional::NO, "A json array of json objects",
+            {"inputs", RPCArg::Type::ARR, RPCArg::Optional::NO, "The inputs",
                 {
                     {"", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED, "",
                         {
@@ -437,7 +439,7 @@ static UniValue createrawtransaction(const JSONRPCRequest& request)
                         },
                 },
                 },
-            {"outputs", RPCArg::Type::ARR, RPCArg::Optional::NO, "a json array with outputs (key-value pairs), where none of the keys are duplicated.\n"
+            {"outputs", RPCArg::Type::ARR, RPCArg::Optional::NO, "The outputs (key-value pairs), where none of the keys are duplicated.\n"
                     "That is, each address can only appear once and there can only be one 'data' object.\n"
                     "For compatibility reasons, a dictionary, which holds the key-value pairs directly, is also\n"
                     "                             accepted as second parameter.",
@@ -492,7 +494,7 @@ static UniValue decoderawtransaction(const JSONRPCRequest& request)
                         {RPCResult::Type::STR_HEX, "txid", "The transaction id"},
                         {RPCResult::Type::NUM, "size", "The transaction size"},
                         {RPCResult::Type::NUM, "version", "The version"},
-                        {RPCResult::Type::NUM, "version", "The type"},
+                        {RPCResult::Type::NUM, "type", "The type"},
                         {RPCResult::Type::NUM_TIME, "locktime", "The lock time"},
                         {RPCResult::Type::ARR, "vin", "",
                         {
@@ -552,12 +554,12 @@ static UniValue decoderawtransaction(const JSONRPCRequest& request)
 
 static std::string GetAllOutputTypes()
 {
-    std::string ret;
-    for (int i = TX_NONSTANDARD; i <= TX_NULL_DATA; ++i) {
-        if (i != TX_NONSTANDARD) ret += ", ";
-        ret += GetTxnOutputType(static_cast<txnouttype>(i));
+    std::vector<std::string> ret;
+    using U = std::underlying_type<TxoutType>::type;
+    for (U i = (U)TxoutType::NONSTANDARD; i <= (U)TxoutType::NULL_DATA; ++i) {
+        ret.emplace_back(GetTxnOutputType(static_cast<TxoutType>(i)));
     }
-    return ret;
+    return Join(ret, ", ");
 }
 
 static UniValue decodescript(const JSONRPCRequest& request)
@@ -605,7 +607,7 @@ static UniValue decodescript(const JSONRPCRequest& request)
     if (type.isStr() && type.get_str() != "scripthash") {
         // P2SH cannot be wrapped in a P2SH. If this script is already a P2SH,
         // don't return the address for a P2SH of the P2SH.
-        r.pushKV("p2sh", EncodeDestination(CScriptID(script)));
+        r.pushKV("p2sh", EncodeDestination(ScriptHash(script)));
     }
 
     return r;
@@ -618,7 +620,7 @@ static UniValue combinerawtransaction(const JSONRPCRequest& request)
         "The combined transaction may be another partially signed transaction or a \n"
         "fully signed transaction.",
         {
-            {"txs", RPCArg::Type::ARR, RPCArg::Optional::NO, "A json array of hex strings of partially signed transactions",
+            {"txs", RPCArg::Type::ARR, RPCArg::Optional::NO, "The of hex strings of partially signed transactions",
                 {
                     {"hexstring", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "A hex-encoded raw transaction"},
                 },
@@ -704,12 +706,12 @@ static UniValue signrawtransactionwithkey(const JSONRPCRequest& request)
         "this transaction depends on but may not yet be in the block chain.\n",
         {
             {"hexstring", RPCArg::Type::STR, RPCArg::Optional::NO, "The transaction hex string"},
-            {"privkeys", RPCArg::Type::ARR, RPCArg::Optional::NO, "A json array of base58-encoded private keys for signing",
+            {"privkeys", RPCArg::Type::ARR, RPCArg::Optional::NO, "The base58-encoded private keys for signing",
                 {
                     {"privatekey", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "private key in base58-encoding"},
                 },
                 },
-            {"prevtxs", RPCArg::Type::ARR, RPCArg::Optional::OMITTED_NAMED_ARG, "A json array of previous dependent transaction outputs",
+            {"prevtxs", RPCArg::Type::ARR, RPCArg::Optional::OMITTED_NAMED_ARG, "The previous dependent transaction outputs",
                 {
                     {"", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED, "",
                         {
@@ -798,7 +800,9 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
                 "\nAlso see createrawtransaction and signrawtransactionwithkey calls.\n",
                 {
                     {"hexstring", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The hex string of the raw transaction"},
-                    {"maxfeerate", RPCArg::Type::AMOUNT, /* default */ FormatMoney(DEFAULT_MAX_RAW_TX_FEE), "Reject transactions whose fee rate is higher than the specified value, expressed in " + CURRENCY_UNIT + "/kB\n"},
+                    {"maxfeerate", RPCArg::Type::AMOUNT, /* default */ FormatMoney(DEFAULT_MAX_RAW_TX_FEE_RATE.GetFeePerK()),
+                        "Reject transactions whose fee rate is higher than the specified value, expressed in " + CURRENCY_UNIT +
+                            "/kB.\nSet to 0 to accept any fee rate.\n"},
                     {"instantsend", RPCArg::Type::BOOL, RPCArg::Optional::OMITTED, "Deprecated and ignored"},
                     {"bypasslimits", RPCArg::Type::BOOL, /* default_val */ "false", "Bypass transaction policy limits"},
                 },
@@ -819,7 +823,7 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
 
     RPCTypeCheck(request.params, {
         UniValue::VSTR,
-        UniValueType(), // NUM or BOOL, checked later
+        UniValueType(), // VNUM or VSTR, checked inside AmountFromValue()
         UniValue::VBOOL
     });
 
@@ -828,15 +832,13 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
     if (!DecodeHexTx(mtx, request.params[0].get_str()))
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
     CTransactionRef tx(MakeTransactionRef(std::move(mtx)));
-    CAmount max_raw_tx_fee = DEFAULT_MAX_RAW_TX_FEE;
 
-    // TODO: temporary migration code for old clients. Remove in v0.20
-    if (request.params[1].isBool()) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Second argument must be numeric (maxfeerate) and no longer supports a boolean. To allow a transaction with high fees, set maxfeerate to 0.");
-    } else if (!request.params[1].isNull()) {
-        CFeeRate fr(AmountFromValue(request.params[1]));
-        max_raw_tx_fee = fr.GetFee(GetVirtualTransactionSize(*tx));
-    }
+    const CFeeRate max_raw_tx_fee_rate = request.params[1].isNull() ?
+                                             DEFAULT_MAX_RAW_TX_FEE_RATE :
+                                             CFeeRate(AmountFromValue(request.params[1]));
+
+    int64_t virtual_size = GetVirtualTransactionSize(*tx);
+    CAmount max_raw_tx_fee = max_raw_tx_fee_rate.GetFee(virtual_size);
 
     bool bypass_limits = false;
     if (!request.params[3].isNull()) bypass_limits = request.params[3].get_bool();
@@ -863,7 +865,7 @@ static UniValue testmempoolaccept(const JSONRPCRequest& request)
                             {"rawtx", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, ""},
                         },
                         },
-                    {"maxfeerate", RPCArg::Type::AMOUNT, /* default */ FormatMoney(DEFAULT_MAX_RAW_TX_FEE), "Reject transactions whose fee rate is higher than the specified value, expressed in " + CURRENCY_UNIT + "/kB\n"},
+                    {"maxfeerate", RPCArg::Type::AMOUNT, /* default */ FormatMoney(DEFAULT_MAX_RAW_TX_FEE_RATE.GetFeePerK()), "Reject transactions whose fee rate is higher than the specified value, expressed in " + CURRENCY_UNIT + "/kB\n"},
                 },
                 RPCResult{
                     RPCResult::Type::ARR, "", "The result of the mempool acceptance test for each raw transaction in the input array.\n"
@@ -891,7 +893,7 @@ static UniValue testmempoolaccept(const JSONRPCRequest& request)
 
     RPCTypeCheck(request.params, {
         UniValue::VARR,
-        UniValueType(), // NUM or BOOL, checked later
+        UniValueType(), // VNUM or VSTR, checked inside AmountFromValue()
     });
 
     if (request.params[0].get_array().size() != 1) {
@@ -905,14 +907,13 @@ static UniValue testmempoolaccept(const JSONRPCRequest& request)
     CTransactionRef tx(MakeTransactionRef(std::move(mtx)));
     const uint256& tx_hash = tx->GetHash();
 
-    CAmount max_raw_tx_fee = DEFAULT_MAX_RAW_TX_FEE;
-    // TODO: temporary migration code for old clients. Remove in v0.20
-    if (request.params[1].isBool()) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Second argument must be numeric (maxfeerate) and no longer supports a boolean. To allow a transaction with high fees, set maxfeerate to 0.");
-    } else if (!request.params[1].isNull()) {
-        CFeeRate fr(AmountFromValue(request.params[1]));
-        max_raw_tx_fee = fr.GetFee(GetVirtualTransactionSize(*tx));
-    }
+    const CFeeRate max_raw_tx_fee_rate = request.params[1].isNull() ?
+                                             DEFAULT_MAX_RAW_TX_FEE_RATE :
+                                             CFeeRate(AmountFromValue(request.params[1]));
+
+    int64_t virtual_size = GetVirtualTransactionSize(*tx);
+    CAmount max_raw_tx_fee = max_raw_tx_fee_rate.GetFee(virtual_size);
+
 
     CTxMemPool& mempool = EnsureMemPool(request.context);
 
@@ -941,25 +942,6 @@ static UniValue testmempoolaccept(const JSONRPCRequest& request)
 
     result.push_back(std::move(result_0));
     return result;
-}
-
-static std::string WriteHDKeypath(std::vector<uint32_t>& keypath)
-{
-    std::string keypath_str = "m";
-    for (uint32_t num : keypath) {
-        keypath_str += "/";
-        bool hardened = false;
-        if (num & 0x80000000) {
-            hardened = true;
-            num &= ~0x80000000;
-        }
-
-        keypath_str += std::to_string(num);
-        if (hardened) {
-            keypath_str += "'";
-        }
-    }
-    return keypath_str;
 }
 
 UniValue decodepsbt(const JSONRPCRequest& request)
@@ -1086,7 +1068,13 @@ UniValue decodepsbt(const JSONRPCRequest& request)
             UniValue non_wit(UniValue::VOBJ);
             TxToUniv(*input.non_witness_utxo, uint256(), non_wit, false);
             in.pushKV("non_witness_utxo", non_wit);
-            total_in += input.non_witness_utxo->vout[psbtx.tx->vin[i].prevout.n].nValue;
+            CAmount utxo_val = input.non_witness_utxo->vout[psbtx.tx->vin[i].prevout.n].nValue;
+            if (MoneyRange(utxo_val) && MoneyRange(total_in + utxo_val)) {
+                total_in += utxo_val;
+            } else {
+                // Hack to just not show fee later
+                have_all_utxos = false;
+            }
         } else {
             have_all_utxos = false;
         }
@@ -1185,7 +1173,12 @@ UniValue decodepsbt(const JSONRPCRequest& request)
         outputs.push_back(out);
 
         // Fee calculation
-        output_value += psbtx.tx->vout[i].nValue;
+        if (MoneyRange(psbtx.tx->vout[i].nValue) && MoneyRange(output_value + psbtx.tx->vout[i].nValue)) {
+            output_value += psbtx.tx->vout[i].nValue;
+        } else {
+            // Hack to just not show fee later
+            have_all_utxos = false;
+        }
     }
     result.pushKV("outputs", outputs);
     if (have_all_utxos) {
@@ -1201,7 +1194,7 @@ UniValue combinepsbt(const JSONRPCRequest& request)
         "\nCombine multiple partially signed Sparks transactions into one transaction.\n"
         "Implements the Combiner role.\n",
         {
-            {"txs", RPCArg::Type::ARR, RPCArg::Optional::NO, "A json array of base64 strings of partially signed transactions",
+            {"txs", RPCArg::Type::ARR, RPCArg::Optional::NO, "The base64 strings of partially signed transactions",
                 {
                     {"psbt", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "A base64 string of a PSBT"},
                 },
@@ -1306,7 +1299,7 @@ UniValue createpsbt(const JSONRPCRequest& request)
         "\nCreates a transaction in the Partially Signed Transaction format.\n"
         "Implements the Creator role.\n",
         {
-            {"inputs", RPCArg::Type::ARR, RPCArg::Optional::NO, "A json array of json objects",
+            {"inputs", RPCArg::Type::ARR, RPCArg::Optional::NO, "The json objects",
                 {
                     {"", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED, "",
                         {
@@ -1317,7 +1310,7 @@ UniValue createpsbt(const JSONRPCRequest& request)
                         },
                 },
                 },
-            {"outputs", RPCArg::Type::ARR, RPCArg::Optional::NO, "a json array with outputs (key-value pairs), where none of the keys are duplicated.\n"
+            {"outputs", RPCArg::Type::ARR, RPCArg::Optional::NO, "The with outputs (key-value pairs), where none of the keys are duplicated.\n"
                     "That is, each address can only appear once and there can only be one 'data' object.\n"
                     "For compatibility reasons, a dictionary, which holds the key-value pairs directly, is also\n"
                     "                             accepted as second parameter.",
@@ -1378,7 +1371,7 @@ UniValue converttopsbt(const JSONRPCRequest& request)
                 "createpsbt and walletcreatefundedpsbt should be used for new applications.\n",
                 {
                     {"hexstring", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The hex string of a raw transaction"},
-                    {"permitsigdata", RPCArg::Type::BOOL, /* default */ "false", "If true, any signatures in the input will be discarded and conversion.\n"
+                    {"permitsigdata", RPCArg::Type::BOOL, /* default */ "false", "If true, any signatures in the input will be discarded and conversion\n"
                             "                              will continue. If false, RPC will fail if any signatures are present."},
                 },
                 RPCResult{
@@ -1514,7 +1507,7 @@ UniValue joinpsbts(const JSONRPCRequest& request)
     "\nJoins multiple distinct PSBTs with different inputs and outputs into one PSBT with inputs and outputs from all of the PSBTs\n"
     "No input in any of the PSBTs can be in more than one of the PSBTs.\n",
     {
-        {"txs", RPCArg::Type::ARR, RPCArg::Optional::NO, "A json array of base64 strings of partially signed transactions",
+        {"txs", RPCArg::Type::ARR, RPCArg::Optional::NO, "The base64 strings of partially signed transactions",
             {
                 {"psbt", RPCArg::Type::STR, RPCArg::Optional::NO, "A base64 string of a PSBT"}
             }}
@@ -1664,7 +1657,7 @@ UniValue analyzepsbt(const JSONRPCRequest& request)
         }
         inputs_result.push_back(input_univ);
     }
-    result.pushKV("inputs", inputs_result);
+    if (!inputs_result.empty()) result.pushKV("inputs", inputs_result);
 
     if (psbta.estimated_vsize) {
         result.pushKV("estimated_vsize", (int)*psbta.estimated_vsize);
@@ -1676,6 +1669,9 @@ UniValue analyzepsbt(const JSONRPCRequest& request)
         result.pushKV("fee", ValueFromAmount(*psbta.fee));
     }
     result.pushKV("next", PSBTRoleName(psbta.next));
+    if (!psbta.error.empty()) {
+        result.pushKV("error", psbta.error);
+    }
 
     return result;
 }
@@ -1688,16 +1684,16 @@ static const CRPCCommand commands[] =
     { "rawtransactions",    "createrawtransaction",         &createrawtransaction,      {"inputs","outputs","locktime"} },
     { "rawtransactions",    "decoderawtransaction",         &decoderawtransaction,      {"hexstring"} },
     { "rawtransactions",    "decodescript",                 &decodescript,              {"hexstring"} },
-    { "rawtransactions",    "sendrawtransaction",           &sendrawtransaction,        {"hexstring","allowhighfees|maxfeerate","instantsend","bypasslimits"} },
+    { "rawtransactions",    "sendrawtransaction",           &sendrawtransaction,        {"hexstring","maxfeerate","instantsend","bypasslimits"} },
     { "rawtransactions",    "combinerawtransaction",        &combinerawtransaction,     {"txs"} },
     { "rawtransactions",    "signrawtransactionwithkey",    &signrawtransactionwithkey, {"hexstring","privkeys","prevtxs","sighashtype"} },
-    { "rawtransactions",    "testmempoolaccept",            &testmempoolaccept,         {"rawtxs","allowhighfees|maxfeerate"} },
+    { "rawtransactions",    "testmempoolaccept",            &testmempoolaccept,         {"rawtxs","maxfeerate"} },
     { "rawtransactions",    "decodepsbt",                   &decodepsbt,                {"psbt"} },
     { "rawtransactions",    "combinepsbt",                  &combinepsbt,               {"txs"} },
     { "rawtransactions",    "finalizepsbt",                 &finalizepsbt,              {"psbt", "extract"} },
     { "rawtransactions",    "createpsbt",                   &createpsbt,                {"inputs","outputs","locktime"} },
     { "rawtransactions",    "converttopsbt",                &converttopsbt,             {"hexstring","permitsigdata"} },
-    { "rawtransactions",    "utxoupdatepsbt",               &utxoupdatepsbt,            {"psbt"} },
+    { "rawtransactions",    "utxoupdatepsbt",               &utxoupdatepsbt,            {"psbt", "descriptors"} },
     { "rawtransactions",    "joinpsbts",                    &joinpsbts,                 {"txs"} },
     { "rawtransactions",    "analyzepsbt",                  &analyzepsbt,               {"psbt"} },
 

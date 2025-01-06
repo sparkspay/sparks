@@ -120,6 +120,12 @@ bool LegacyParseUInt64(const std::string& str, uint64_t* out)
     return endp && *endp == 0 && !errno &&
            n <= std::numeric_limits<uint64_t>::max();
 }
+
+// For backwards compatibility checking.
+int64_t atoi64_legacy(const std::string& str)
+{
+    return strtoll(str.c_str(), nullptr, 10);
+}
 }; // namespace
 
 FUZZ_TARGET(string)
@@ -212,6 +218,12 @@ FUZZ_TARGET(string)
         (void)ParseFixedPoint(random_string_1, fuzzed_data_provider.ConsumeIntegralInRange<int>(0, 1024), &amount_out);
     }
     {
+        const auto single_split{SplitString(random_string_1, fuzzed_data_provider.ConsumeIntegral<char>())};
+        assert(single_split.size() >= 1);
+        const auto any_split{SplitString(random_string_1, random_string_2)};
+        assert(any_split.size() >= 1);
+    }
+    {
         (void)Untranslated(random_string_1);
         const bilingual_str bs1{random_string_1, random_string_2};
         const bilingual_str bs2{random_string_2, random_string_1};
@@ -261,5 +273,23 @@ FUZZ_TARGET(string)
         if (ok_u8) {
             assert(u8 == u8_legacy);
         }
+    }
+
+    {
+        const int atoi_result = atoi(random_string_1.c_str());
+        const int locale_independent_atoi_result = LocaleIndependentAtoi<int>(random_string_1);
+        const int64_t atoi64_result = atoi64_legacy(random_string_1);
+        const bool out_of_range = atoi64_result < std::numeric_limits<int>::min() || atoi64_result > std::numeric_limits<int>::max();
+        if (out_of_range) {
+            assert(locale_independent_atoi_result == 0);
+        } else {
+            assert(atoi_result == locale_independent_atoi_result);
+        }
+    }
+
+    {
+        const int64_t atoi64_result = atoi64_legacy(random_string_1);
+        const int64_t locale_independent_atoi_result = LocaleIndependentAtoi<int64_t>(random_string_1);
+        assert(atoi64_result == locale_independent_atoi_result || locale_independent_atoi_result == 0);
     }
 }

@@ -10,14 +10,19 @@
 #include <net.h>
 #include <node/context.h>
 #include <univalue.h>
+#include <ui_interface.h>
 #include <util/check.h>
 #include <util/error.h>
 #include <util/system.h>
 #include <util/moneystr.h>
 #include <util/translation.h>
 #include <validation.h>
-#include <walletinitinterface.h>
+#ifdef USE_BDB
+#include <wallet/bdb.h>
+#endif
+#include <wallet/coincontrol.h>
 #include <wallet/wallet.h>
+#include <walletinitinterface.h>
 
 #include <coinjoin/client.h>
 #include <coinjoin/options.h>
@@ -57,8 +62,7 @@ void WalletInit::AddWalletOptions(ArgsManager& argsman) const
     argsman.AddArg("-rescan=<mode>", "Rescan the block chain for missing wallet transactions on startup"
                                             " (1 = start from wallet creation time, 2 = start from genesis block)", ArgsManager::ALLOW_ANY, OptionsCategory::WALLET);
     argsman.AddArg("-spendzeroconfchange", strprintf("Spend unconfirmed change when sending transactions (default: %u)", DEFAULT_SPEND_ZEROCONF_CHANGE), ArgsManager::ALLOW_ANY, OptionsCategory::WALLET);
-    argsman.AddArg("-upgradewallet", "Upgrade wallet to latest format on startup", ArgsManager::ALLOW_ANY, OptionsCategory::WALLET);
-    argsman.AddArg("-wallet=<path>", "Specify wallet database path. Can be specified multiple times to load multiple wallets. Path is interpreted relative to <walletdir> if it is not absolute, and will be created if it does not exist (as a directory containing a wallet.dat file and log files). For backwards compatibility this will also accept names of existing data files in <walletdir>.)", ArgsManager::ALLOW_ANY | ArgsManager::NETWORK_ONLY, OptionsCategory::WALLET);
+    argsman.AddArg("-wallet=<path>", "Specify wallet path to load at startup. Can be used multiple times to load multiple wallets. Path is to a directory containing wallet data and log files. If the path is not absolute, it is interpreted relative to <walletdir>. This only loads existing wallets and does not create new ones. For backwards compatibility this also accepts names of existing top-level data files in <walletdir>.", ArgsManager::ALLOW_ANY | ArgsManager::NETWORK_ONLY, OptionsCategory::WALLET);
     argsman.AddArg("-walletbackupsdir=<dir>", "Specify full path to directory for automatic wallet backups (must exist)", ArgsManager::ALLOW_ANY, OptionsCategory::WALLET);
     argsman.AddArg("-walletbroadcast", strprintf("Make the wallet broadcast transactions (default: %u)", DEFAULT_WALLETBROADCAST), ArgsManager::ALLOW_ANY, OptionsCategory::WALLET);
     argsman.AddArg("-walletdir=<dir>", "Specify directory to hold wallets (default: <datadir>/wallets if it exists, otherwise <datadir>)", ArgsManager::ALLOW_ANY | ArgsManager::NETWORK_ONLY, OptionsCategory::WALLET);
@@ -93,9 +97,20 @@ void WalletInit::AddWalletOptions(ArgsManager& argsman) const
     argsman.AddArg("-coinjoinrounds=<n>", strprintf("Use N separate masternodes for each denominated input to mix funds (%u-%u, default: %u)", MIN_COINJOIN_ROUNDS, MAX_COINJOIN_ROUNDS, DEFAULT_COINJOIN_ROUNDS), ArgsManager::ALLOW_ANY, OptionsCategory::WALLET_COINJOIN);
     argsman.AddArg("-coinjoinsessions=<n>", strprintf("Use N separate masternodes in parallel to mix funds (%u-%u, default: %u)", MIN_COINJOIN_SESSIONS, MAX_COINJOIN_SESSIONS, DEFAULT_COINJOIN_SESSIONS), ArgsManager::ALLOW_ANY, OptionsCategory::WALLET_COINJOIN);
 
+#ifdef USE_BDB
     argsman.AddArg("-dblogsize=<n>", strprintf("Flush wallet database activity from memory to disk log every <n> megabytes (default: %u)", DEFAULT_WALLET_DBLOGSIZE), ArgsManager::ALLOW_ANY | ArgsManager::DEBUG_ONLY, OptionsCategory::WALLET_DEBUG_TEST);
     argsman.AddArg("-flushwallet", strprintf("Run a thread to flush wallet periodically (default: %u)", DEFAULT_FLUSHWALLET), ArgsManager::ALLOW_ANY | ArgsManager::DEBUG_ONLY, OptionsCategory::WALLET_DEBUG_TEST);
     argsman.AddArg("-privdb", strprintf("Sets the DB_PRIVATE flag in the wallet db environment (default: %u)", DEFAULT_WALLET_PRIVDB), ArgsManager::ALLOW_ANY | ArgsManager::DEBUG_ONLY, OptionsCategory::WALLET_DEBUG_TEST);
+#else
+    argsman.AddHiddenArgs({"-dblogsize", "-flushwallet", "-privdb"});
+#endif
+
+#ifdef USE_SQLITE
+    argsman.AddArg("-unsafesqlitesync", "Set SQLite synchronous=OFF to disable waiting for the database to sync to disk. This is unsafe and can cause data loss and corruption. This option is only used by tests to improve their performance (default: false)", ArgsManager::ALLOW_BOOL | ArgsManager::DEBUG_ONLY, OptionsCategory::WALLET_DEBUG_TEST);
+#else
+    argsman.AddHiddenArgs({"-unsafesqlitesync"});
+#endif
+
     argsman.AddArg("-walletrejectlongchains", strprintf("Wallet will not create transactions that violate mempool chain limits (default: %u)", DEFAULT_WALLET_REJECT_LONG_CHAINS), ArgsManager::ALLOW_ANY | ArgsManager::DEBUG_ONLY, OptionsCategory::WALLET_DEBUG_TEST);
 
     argsman.AddHiddenArgs({"-zapwallettxes"});
@@ -113,8 +128,6 @@ bool WalletInit::ParameterInteraction() const
         return InitError(_("You can not start a masternode with wallet enabled."));
     }
 
-    const bool is_multiwallet = gArgs.GetArgs("-wallet").size() > 1;
-
     if (gArgs.GetBoolArg("-blocksonly", DEFAULT_BLOCKSONLY) && gArgs.SoftSetBoolArg("-walletbroadcast", false)) {
         LogPrintf("%s: parameter interaction: -blocksonly=1 -> setting -walletbroadcast=0\n", __func__);
     }
@@ -128,12 +141,6 @@ bool WalletInit::ParameterInteraction() const
         LogPrintf("%s: Warning: incorrect -rescan mode, falling back to default value.\n", __func__);
         InitWarning(_("Incorrect -rescan mode, falling back to default value"));
         gArgs.ForceRemoveArg("rescan");
-    }
-
-    if (is_multiwallet) {
-        if (gArgs.GetBoolArg("-upgradewallet", false)) {
-            return InitError(strprintf(_("%s is only allowed with a single wallet file"), "-upgradewallet"));
-        }
     }
 
     if (gArgs.GetBoolArg("-sysperms", false))
@@ -166,16 +173,7 @@ void WalletInit::Construct(NodeContext& node) const
         LogPrintf("Wallet disabled!\n");
         return;
     }
-    // If there's no -wallet setting with a list of wallets to load, set it to
-    // load the default "" wallet.
-    if (!args.IsArgSet("wallet")) {
-        args.LockSettings([&](util::Settings& settings) {
-            util::SettingsValue wallets(util::SettingsValue::VARR);
-            wallets.push_back(""); // Default wallet name is ""
-            settings.rw_settings["wallet"] = wallets;
-        });
-    }
-    auto wallet_client = interfaces::MakeWalletClient(*node.chain, args, args.GetArgs("-wallet"));
+    auto wallet_client = interfaces::MakeWalletClient(*node.chain, args);
     node.wallet_client = wallet_client.get();
     node.chain_clients.emplace_back(std::move(wallet_client));
 }

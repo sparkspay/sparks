@@ -30,6 +30,9 @@ extern UniValue importmulti(const JSONRPCRequest& request);
 extern UniValue dumpwallet(const JSONRPCRequest& request);
 extern UniValue importwallet(const JSONRPCRequest& request);
 extern UniValue getnewaddress(const JSONRPCRequest& request);
+extern UniValue getrawchangeaddress(const JSONRPCRequest& request);
+extern UniValue getaddressinfo(const JSONRPCRequest& request);
+extern UniValue addmultisigaddress(const JSONRPCRequest& request);
 
 BOOST_FIXTURE_TEST_SUITE(wallet_tests, WalletTestingSetup)
 
@@ -85,6 +88,7 @@ BOOST_FIXTURE_TEST_CASE(scan_for_wallet_transactions, TestChain100Setup)
     CBlockIndex* newTip = ::ChainActive().Tip();
 
     NodeContext node;
+    node.mempool = std::make_unique<CTxMemPool>(&::feeEstimator);
     auto chain = interfaces::MakeChain(node);
 
     // Verify ScanForWalletTransactions accommodates a null start block.
@@ -185,6 +189,7 @@ BOOST_FIXTURE_TEST_CASE(importmulti_rescan, TestChain100Setup)
     CBlockIndex* newTip = ::ChainActive().Tip();
 
     NodeContext node;
+    node.mempool = std::make_unique<CTxMemPool>(&::feeEstimator);
     auto chain = interfaces::MakeChain(node);
 
     // Prune the older block file.
@@ -255,6 +260,7 @@ BOOST_FIXTURE_TEST_CASE(importwallet_rescan, TestChain100Setup)
     m_coinbase_txns.emplace_back(CreateAndProcessBlock({}, GetScriptForRawPubKey(coinbaseKey.GetPubKey())).vtx[0]);
 
     NodeContext node;
+    node.mempool = std::make_unique<CTxMemPool>(&::feeEstimator);
     auto chain = interfaces::MakeChain(node);
 
     std::string backup_file = (GetDataDir() / "wallet.backup").string();
@@ -303,6 +309,81 @@ BOOST_FIXTURE_TEST_CASE(importwallet_rescan, TestChain100Setup)
     SetMockTime(0);
 }
 
+// Verify getaddressinfo RPC produces more or less expected results
+BOOST_FIXTURE_TEST_CASE(rpc_getaddressinfo, TestChain100Setup)
+{
+    NodeContext node;
+    auto chain = interfaces::MakeChain(node);
+
+    std::shared_ptr<CWallet> wallet = std::make_shared<CWallet>(chain.get(), "", CreateMockWalletDatabase());
+    AddWallet(wallet);
+    CoreContext context{m_node};
+    JSONRPCRequest request(context);
+    UniValue response;
+
+    // test p2pkh
+    std::string addr;
+    BOOST_CHECK_NO_THROW(addr = ::getrawchangeaddress(request).get_str());
+
+    request.params.clear();
+    request.params.setArray();
+    request.params.push_back(addr);
+    BOOST_CHECK_NO_THROW(response = ::getaddressinfo(request).get_obj());
+
+    BOOST_CHECK_EQUAL(find_value(response, "ismine").get_bool(), true);
+    BOOST_CHECK_EQUAL(find_value(response, "solvable").get_bool(), true);
+    BOOST_CHECK_EQUAL(find_value(response, "iswatchonly").get_bool(), false);
+    BOOST_CHECK_EQUAL(find_value(response, "isscript").get_bool(), false);
+    BOOST_CHECK_EQUAL(find_value(response, "ischange").get_bool(), true);
+    BOOST_CHECK(find_value(response, "pubkeys").isNull());
+    BOOST_CHECK(find_value(response, "addresses").isNull());
+    BOOST_CHECK(find_value(response, "sigsrequired").isNull());
+    BOOST_CHECK(find_value(response, "label").isNull());
+
+    // test p2sh/multisig
+    std::string addr1;
+    std::string addr2;
+    BOOST_CHECK_NO_THROW(addr1 = ::getnewaddress(request).get_str());
+    BOOST_CHECK_NO_THROW(addr2 = ::getnewaddress(request).get_str());
+
+    UniValue keys;
+    keys.setArray();
+    keys.push_back(addr1);
+    keys.push_back(addr2);
+
+    request.params.clear();
+    request.params.setArray();
+    request.params.push_back(2);
+    request.params.push_back(keys);
+
+    BOOST_CHECK_NO_THROW(response = ::addmultisigaddress(request));
+
+    std::string multisig = find_value(response.get_obj(), "address").get_str();
+
+    request.params.clear();
+    request.params.setArray();
+    request.params.push_back(multisig);
+    BOOST_CHECK_NO_THROW(response = ::getaddressinfo(request).get_obj());
+
+    BOOST_CHECK_EQUAL(find_value(response, "ismine").get_bool(), true);
+    BOOST_CHECK_EQUAL(find_value(response, "solvable").get_bool(), true);
+    BOOST_CHECK_EQUAL(find_value(response, "iswatchonly").get_bool(), false);
+    BOOST_CHECK_EQUAL(find_value(response, "isscript").get_bool(), true);
+    BOOST_CHECK_EQUAL(find_value(response, "ischange").get_bool(), false);
+    BOOST_CHECK_EQUAL(find_value(response, "label").get_str(), "");
+    BOOST_CHECK_EQUAL(find_value(response, "sigsrequired").get_int(), 2);
+
+    UniValue pubkeys = find_value(response, "pubkeys").get_array();
+    UniValue addresses = find_value(response, "addresses").get_array();
+
+    BOOST_CHECK_EQUAL(addresses.size(), 2);
+    BOOST_CHECK_EQUAL(addresses[0].get_str(), addr1);
+    BOOST_CHECK_EQUAL(addresses[1].get_str(), addr2);
+    BOOST_CHECK_EQUAL(pubkeys.size(), 2);
+
+    RemoveWallet(wallet, std::nullopt);
+}
+
 // Check that GetImmatureCredit() returns a newly calculated value instead of
 // the cached value after a MarkDirty() call.
 //
@@ -312,6 +393,7 @@ BOOST_FIXTURE_TEST_CASE(importwallet_rescan, TestChain100Setup)
 BOOST_FIXTURE_TEST_CASE(coin_mark_dirty_immature_credit, TestChain100Setup)
 {
     NodeContext node;
+    node.mempool = std::make_unique<CTxMemPool>(&::feeEstimator);
     auto chain = interfaces::MakeChain(node);
 
     CWallet wallet(chain.get(), "", CreateDummyWalletDatabase());
@@ -399,11 +481,12 @@ BOOST_AUTO_TEST_CASE(ComputeTimeSmart)
 
 BOOST_AUTO_TEST_CASE(LoadReceiveRequests)
 {
-    CTxDestination dest = CKeyID();
+    CTxDestination dest = PKHash();
     LOCK(m_wallet.cs_wallet);
-    m_wallet.AddDestData(dest, "misc", "val_misc");
-    m_wallet.AddDestData(dest, "rr0", "val_rr0");
-    m_wallet.AddDestData(dest, "rr1", "val_rr1");
+    WalletBatch batch{m_wallet.GetDatabase()};
+    m_wallet.AddDestData(batch, dest, "misc", "val_misc");
+    m_wallet.AddDestData(batch, dest, "rr0", "val_rr0");
+    m_wallet.AddDestData(batch, dest, "rr1", "val_rr1");
 
     auto values = m_wallet.GetDestValues("rr");
     BOOST_CHECK_EQUAL(values.size(), 2U);
@@ -483,7 +566,7 @@ BOOST_FIXTURE_TEST_CASE(ListCoins, ListCoinsTestingSetup)
         list = wallet->ListCoins();
     }
     BOOST_CHECK_EQUAL(list.size(), 1U);
-    BOOST_CHECK_EQUAL(std::get<CKeyID>(list.begin()->first).ToString(), coinbaseAddress);
+    BOOST_CHECK_EQUAL(std::get<PKHash>(list.begin()->first).ToString(), coinbaseAddress);
     BOOST_CHECK_EQUAL(list.begin()->second.size(), 1U);
 
     // Check initial balance from one mature coinbase transaction.
@@ -499,7 +582,7 @@ BOOST_FIXTURE_TEST_CASE(ListCoins, ListCoinsTestingSetup)
         list = wallet->ListCoins();
     }
     BOOST_CHECK_EQUAL(list.size(), 1U);
-    BOOST_CHECK_EQUAL(std::get<CKeyID>(list.begin()->first).ToString(), coinbaseAddress);
+    BOOST_CHECK_EQUAL(std::get<PKHash>(list.begin()->first).ToString(), coinbaseAddress);
     BOOST_CHECK_EQUAL(list.begin()->second.size(), 2U);
 
     // Lock both coins. Confirm number of available coins drops to 0.
@@ -528,7 +611,7 @@ BOOST_FIXTURE_TEST_CASE(ListCoins, ListCoinsTestingSetup)
         list = wallet->ListCoins();
     }
     BOOST_CHECK_EQUAL(list.size(), 1U);
-    BOOST_CHECK_EQUAL(std::get<CKeyID>(list.begin()->first).ToString(), coinbaseAddress);
+    BOOST_CHECK_EQUAL(std::get<PKHash>(list.begin()->first).ToString(), coinbaseAddress);
     BOOST_CHECK_EQUAL(list.begin()->second.size(), 2U);
 }
 
@@ -1040,6 +1123,7 @@ BOOST_FIXTURE_TEST_CASE(select_coins_grouped_by_addresses, ListCoinsTestingSetup
 BOOST_FIXTURE_TEST_CASE(wallet_disableprivkeys, TestChain100Setup)
 {
     NodeContext node;
+    node.mempool = std::make_unique<CTxMemPool>(&::feeEstimator);
     auto chain = interfaces::MakeChain(node);
     std::shared_ptr<CWallet> wallet = std::make_shared<CWallet>(chain.get(), "", CreateDummyWalletDatabase());
     wallet->SetMinVersion(FEATURE_LATEST);
@@ -1061,6 +1145,7 @@ BOOST_FIXTURE_TEST_CASE(wallet_disableprivkeys, TestChain100Setup)
 //! matter. The test could be extended to cover other scenarios in the future.
 BOOST_FIXTURE_TEST_CASE(CreateWalletFromFile, TestChain100Setup)
 {
+    gArgs.ForceSetArg("-unsafesqlitesync", "1");
     // Create new wallet with known key and unload it.
     auto chain = interfaces::MakeChain(m_node);
     auto wallet = TestLoadWallet(*chain);

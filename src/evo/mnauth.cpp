@@ -4,6 +4,8 @@
 
 #include <evo/mnauth.h>
 
+#include <bls/bls.h>
+#include <chain.h>
 #include <chainparams.h>
 #include <evo/deterministicmns.h>
 #include <llmq/utils.h>
@@ -13,10 +15,11 @@
 #include <net.h>
 #include <net_processing.h>
 #include <netmessagemaker.h>
+#include <validation.h>
 
 #include <unordered_set>
 
-void CMNAuth::PushMNAUTH(CNode& peer, CConnman& connman)
+void CMNAuth::PushMNAUTH(CNode& peer, CConnman& connman, const CBlockIndex* tip)
 {
     LOCK(activeMasternodeInfoCs);
     if (!fMasternodeMode || activeMasternodeInfo.proTxHash.IsNull()) {
@@ -38,10 +41,12 @@ void CMNAuth::PushMNAUTH(CNode& peer, CConnman& connman)
     if (Params().NetworkIDString() != CBaseChainParams::MAIN && gArgs.IsArgSet("-pushversion")) {
         nOurNodeVersion = gArgs.GetArg("-pushversion", PROTOCOL_VERSION);
     }
+    bool isV19active = llmq::utils::IsV19Active(tip);
+    const CBLSPublicKeyVersionWrapper pubKey(*activeMasternodeInfo.blsPubKeyOperator, !isV19active);
     if (peer.nVersion < MNAUTH_NODE_VER_VERSION || nOurNodeVersion < MNAUTH_NODE_VER_VERSION) {
-        signHash = ::SerializeHash(std::make_tuple(*activeMasternodeInfo.blsPubKeyOperator, receivedMNAuthChallenge, peer.fInbound));
+        signHash = ::SerializeHash(std::make_tuple(pubKey, receivedMNAuthChallenge, peer.fInbound));
     } else {
-        signHash = ::SerializeHash(std::make_tuple(*activeMasternodeInfo.blsPubKeyOperator, receivedMNAuthChallenge, peer.fInbound, nOurNodeVersion));
+        signHash = ::SerializeHash(std::make_tuple(pubKey, receivedMNAuthChallenge, peer.fInbound, nOurNodeVersion));
     }
 
     CMNAuth mnauth;
@@ -53,9 +58,9 @@ void CMNAuth::PushMNAUTH(CNode& peer, CConnman& connman)
     connman.PushMessage(&peer, CNetMsgMaker(peer.GetSendVersion()).Make(NetMsgType::MNAUTH, mnauth));
 }
 
-void CMNAuth::ProcessMessage(CNode& peer, std::string_view msg_type, CDataStream& vRecv, CConnman& connman)
+void CMNAuth::ProcessMessage(CNode& peer, CConnman& connman, std::string_view msg_type, CDataStream& vRecv)
 {
-    if (msg_type != NetMsgType::MNAUTH || !masternodeSync->IsBlockchainSynced()) {
+    if (msg_type != NetMsgType::MNAUTH || !::masternodeSync->IsBlockchainSynced()) {
         // we can't verify MNAUTH messages when we don't have the latest MN list
         return;
     }
@@ -86,6 +91,7 @@ void CMNAuth::ProcessMessage(CNode& peer, std::string_view msg_type, CDataStream
     if (!mnauth.sig.IsValid()) {
         LOCK(cs_main);
         Misbehaving(peer.GetId(), 100, "invalid mnauth signature");
+        LogPrint(BCLog::NET_NETCONN, "CMNAuth::ProcessMessage -- invalid mnauth for protx=%s with sig=%s\n", mnauth.proRegTxHash.ToString(), mnauth.sig.ToString());
         return;
     }
 
@@ -105,11 +111,14 @@ void CMNAuth::ProcessMessage(CNode& peer, std::string_view msg_type, CDataStream
     if (Params().NetworkIDString() != CBaseChainParams::MAIN && gArgs.IsArgSet("-pushversion")) {
         nOurNodeVersion = gArgs.GetArg("-pushversion", PROTOCOL_VERSION);
     }
+    const CBlockIndex* tip = ::ChainActive().Tip();
+    bool isV19active = llmq::utils::IsV19Active(tip);
+    ConstCBLSPublicKeyVersionWrapper pubKey(dmn->pdmnState->pubKeyOperator.Get(), !isV19active);
     // See comment in PushMNAUTH (fInbound is negated here as we're on the other side of the connection)
     if (peer.nVersion < MNAUTH_NODE_VER_VERSION || nOurNodeVersion < MNAUTH_NODE_VER_VERSION) {
-        signHash = ::SerializeHash(std::make_tuple(dmn->pdmnState->pubKeyOperator, peer.GetSentMNAuthChallenge(), !peer.fInbound));
+        signHash = ::SerializeHash(std::make_tuple(pubKey, peer.GetSentMNAuthChallenge(), !peer.fInbound));
     } else {
-        signHash = ::SerializeHash(std::make_tuple(dmn->pdmnState->pubKeyOperator, peer.GetSentMNAuthChallenge(), !peer.fInbound, peer.nVersion.load()));
+        signHash = ::SerializeHash(std::make_tuple(pubKey, peer.GetSentMNAuthChallenge(), !peer.fInbound, peer.nVersion.load()));
     }
     LogPrint(BCLog::NET_NETCONN, "CMNAuth::%s -- constructed signHash for nVersion %d, peer=%d\n", __func__, peer.nVersion, peer.GetId());
 
