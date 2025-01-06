@@ -246,8 +246,8 @@ public:
 
         // Deployment of Deployment of Basic BLS, AssetLocks, EHF
         consensus.vDeployments[Consensus::DEPLOYMENT_V19].bit = 11;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nStartTime = 1738348200;     // Saturday, February 1, 2025 12:00:00 AM
-        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nTimeout = 1769884200;       // Sunday, February 1, 2026 12:00:00 AM
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nStartTime = 1738368000;     // Saturday, February 1, 2025 12:00:00 AM
+        consensus.vDeployments[Consensus::DEPLOYMENT_V19].nTimeout = 1769904000;       // Sunday, February 1, 2026 12:00:00 AM
         consensus.vDeployments[Consensus::DEPLOYMENT_V19].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_V19].nThresholdStart = 60;       // 60% of 100
 
