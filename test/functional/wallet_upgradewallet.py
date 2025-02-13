@@ -4,66 +4,54 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """upgradewallet RPC functional test
 
-Test upgradewallet RPC. Download v0.15.2 v0.16.3 node binaries:
-
-contrib/devtools/previous_release.sh -b v0.15.2 v0.16.3
+Requires previous releases binaries, see test/README.md.
+Only v0.15.2 and v0.16.3 are required by this test. The others are used in feature_backwards_compatibility.py
 """
 
 import os
 import shutil
 
-from test_framework.test_framework import BitcoinTestFramework, SkipTest
+from test_framework.blocktools import COINBASE_MATURITY
+from test_framework.test_framework import (BitcoinTestFramework, SkipTest)
 from test_framework.util import (
-    adjust_bitcoin_conf_for_pre_17,
+    adjust_bitcoin_conf_for_pre_16,
     assert_equal,
     assert_greater_than,
-    assert_is_hex_string
+    assert_is_hex_string,
 )
+
 
 class UpgradeWalletTest(BitcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 3
         self.extra_args = [
-            ["-addresstype=bech32"], # current wallet version
+            [], # current wallet version
             ["-usehd=1"],            # v0.16.3 wallet
             ["-usehd=0"]             # v0.15.2 wallet
         ]
+        self.wallet_names = [self.default_wallet_name]
 
     def skip_test_if_missing_module(self):
         self.skip_if_no_wallet()
         self.skip_if_no_bdb()
+        self.skip_if_no_previous_releases()
+        # TODO: this test doesn't work yet
+        raise SkipTest("Test wallet_upgradewallet.py is not adapted for Sparks Core yet.")
 
     def setup_network(self):
         self.setup_nodes()
 
     def setup_nodes(self):
-        if os.getenv("TEST_PREVIOUS_RELEASES") == "false":
-            raise SkipTest("upgradewallet RPC tests")
-
-        releases_path = os.getenv("PREVIOUS_RELEASES_DIR") or os.getcwd() + "/releases"
-        if not os.path.isdir(releases_path):
-            if os.getenv("TEST_PREVIOUS_RELEASES") == "true":
-                raise AssertionError("TEST_PREVIOUS_RELEASES=1 but releases missing: " + releases_path)
-            raise SkipTest("This test requires binaries for previous releases")
-
         self.add_nodes(self.num_nodes, extra_args=self.extra_args, versions=[
             None,
             160300,
-            150200
-        ], binary=[
-            self.options.bitcoind,
-            releases_path + "/v0.16.3/bin/bitcoind",
-            releases_path + "/v0.15.2/bin/bitcoind",
-        ], binary_cli=[
-            self.options.bitcoincli,
-            releases_path + "/v0.16.3/bin/bitcoin-cli",
-            releases_path + "/v0.15.2/bin/bitcoin-cli",
+            150200,
         ])
-        # adapt bitcoin.conf, because older bitcoind's don't recognize config sections
-        adjust_bitcoin_conf_for_pre_17(self.nodes[1].bitcoinconf)
-        adjust_bitcoin_conf_for_pre_17(self.nodes[2].bitcoinconf)
+        # adapt sparks.conf, because older sparksd's don't recognize config sections
+        adjust_bitcoin_conf_for_pre_16(self.nodes[2].bitcoinconf)
         self.start_nodes()
+        self.import_deterministic_coinbase_privkeys()
 
     def dumb_sync_blocks(self):
         """
@@ -85,11 +73,11 @@ class UpgradeWalletTest(BitcoinTestFramework):
         assert_equal(v16_3_node.getblockcount(), to_height)
 
     def run_test(self):
-        self.nodes[0].generatetoaddress(101, self.nodes[0].getnewaddress())
+        self.nodes[0].generatetoaddress(COINBASE_MATURITY + 1, self.nodes[0].getnewaddress())
         self.dumb_sync_blocks()
         # # Sanity check the test framework:
         res = self.nodes[0].getblockchaininfo()
-        assert_equal(res['blocks'], 101)
+        assert_equal(res['blocks'], COINBASE_MATURITY + 1)
         node_master = self.nodes[0]
         v16_3_node  = self.nodes[1]
         v15_2_node  = self.nodes[2]
@@ -97,7 +85,7 @@ class UpgradeWalletTest(BitcoinTestFramework):
         # Send coins to old wallets for later conversion checks.
         v16_3_wallet  = v16_3_node.get_wallet_rpc('wallet.dat')
         v16_3_address = v16_3_wallet.getnewaddress()
-        node_master.generatetoaddress(101, v16_3_address)
+        node_master.generatetoaddress(COINBASE_MATURITY + 1, v16_3_address)
         self.dumb_sync_blocks()
         v16_3_balance = v16_3_wallet.getbalance()
 
@@ -108,7 +96,7 @@ class UpgradeWalletTest(BitcoinTestFramework):
         v15_2_wallet       = os.path.join(v15_2_node.datadir, "regtest/wallet.dat")
         self.stop_nodes()
 
-        # Copy the 0.16.3 wallet to the last Bitcoin Core version and open it:
+        # Copy the 0.16.3 wallet to the last Sparks Core version and open it:
         shutil.rmtree(node_master_wallet_dir)
         os.mkdir(node_master_wallet_dir)
         shutil.copy(
@@ -131,7 +119,7 @@ class UpgradeWalletTest(BitcoinTestFramework):
         assert_equal(wallet.getbalance(), v16_3_balance)
 
         self.stop_node(0)
-        # Copy the 0.15.2 wallet to the last Bitcoin Core version and open it:
+        # Copy the 0.15.2 wallet to the last Sparks Core version and open it:
         shutil.rmtree(node_master_wallet_dir)
         os.mkdir(node_master_wallet_dir)
         shutil.copy(

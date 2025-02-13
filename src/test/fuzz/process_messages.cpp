@@ -9,24 +9,20 @@
 #include <test/fuzz/FuzzedDataProvider.h>
 #include <test/fuzz/fuzz.h>
 #include <test/fuzz/util.h>
-#include <test/util.h>
+#include <test/util/mining.h>
 #include <test/util/net.h>
 #include <test/util/setup_common.h>
 #include <validation.h>
 #include <validationinterface.h>
 
+namespace {
 const TestingSetup* g_setup;
+} // namespace
 
 void initialize_process_messages()
 {
-    static TestingSetup setup{
-        CBaseChainParams::REGTEST,
-        {
-            "-nodebuglogfile",
-        },
-    };
-    g_setup = &setup;
-
+    static const auto testing_setup = MakeNoLogFileContext<const TestingSetup>();
+    g_setup = testing_setup.get();
     for (int i = 0; i < 2 * COINBASE_MATURITY; i++) {
         MineBlock(g_setup->m_node, CScript() << OP_TRUE);
     }
@@ -42,16 +38,14 @@ FUZZ_TARGET_INIT(process_messages, initialize_process_messages)
 
     const auto num_peers_to_add = fuzzed_data_provider.ConsumeIntegralInRange(1, 3);
     for (int i = 0; i < num_peers_to_add; ++i) {
-        const ServiceFlags service_flags = ServiceFlags(fuzzed_data_provider.ConsumeIntegral<uint64_t>());
-        const bool inbound{fuzzed_data_provider.ConsumeBool()};
-        peers.push_back(std::make_unique<CNode>(i, service_flags, 0, INVALID_SOCKET, CAddress{CService{in_addr{0x0100007f}, 7777}, NODE_NETWORK}, 0, 0, CAddress{}, std::string{}, inbound).release());
+        peers.push_back(ConsumeNodeAsUniquePtr(fuzzed_data_provider, i).release());
         CNode& p2p_node = *peers.back();
 
-        p2p_node.fSuccessfullyConnected = true;
+        const bool successfully_connected{fuzzed_data_provider.ConsumeBool()};
+        p2p_node.fSuccessfullyConnected = successfully_connected;
         p2p_node.fPauseSend = false;
-        p2p_node.nVersion = PROTOCOL_VERSION;
-        p2p_node.SetSendVersion(PROTOCOL_VERSION);
-        g_setup->m_node.peer_logic->InitializeNode(&p2p_node);
+        g_setup->m_node.peerman->InitializeNode(&p2p_node);
+        FillNode(fuzzed_data_provider, p2p_node, /* init_version */ successfully_connected);
 
         connman.AddTestNode(p2p_node);
     }
@@ -72,7 +66,12 @@ FUZZ_TARGET_INIT(process_messages, initialize_process_messages)
             connman.ProcessMessagesOnce(random_node);
         } catch (const std::ios_base::failure&) {
         }
+        {
+            LOCK(random_node.cs_sendProcessing);
+            g_setup->m_node.peerman->SendMessages(&random_node);
+        }
     }
-    connman.ClearTestNodes();
     SyncWithValidationInterfaceQueue();
+    LOCK2(::cs_main, g_cs_orphans); // See init.cpp for rationale for implicit locking order requirement
+    g_setup->m_node.connman->StopNodes();
 }

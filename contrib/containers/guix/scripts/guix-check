@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+if [[ -n "${1}" ]]; then
+    WORKSPACE_PATH="$1"
+else
+    WORKSPACE_PATH="/src/sparks"
+fi
+
+if [[ ! -d "$WORKSPACE_PATH" ]]; then
+    echo "$0: $WORKSPACE_PATH is not a valid directory, exiting!"
+    exit 1
+fi
+
+cd "$WORKSPACE_PATH"
+COMMIT_ID="$(git rev-parse --short=12 HEAD)"
+
+printf "\nBinaries:\n\n"
+( \
+SRC_PATH_PREFIX="guix-build-${COMMIT_ID}/distsrc-" && \
+sha256sum ${SRC_PATH_PREFIX}*/src/sparks{d,-cli,-tx,-wallet}{,.exe} && \
+sha256sum ${SRC_PATH_PREFIX}*/src/qt/sparks-qt{,.exe} && \
+sha256sum ${SRC_PATH_PREFIX}*/src/test/test_sparks{,.exe} \
+) | sort -k 2
+
+printf "\nArchives:\n\n"
+find "guix-build-${COMMIT_ID}/output" -type f | grep -v SHA256 | xargs sha256sum | sort -k 2

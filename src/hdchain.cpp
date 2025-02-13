@@ -55,7 +55,7 @@ void CHDChain::Debug(const std::string& strName) const
             std::cout << "seed: " << HexStr(vchSeed).c_str() << std::endl;
 
             CExtKey extkey;
-            extkey.SetSeed(vchSeed.data(), vchSeed.size());
+            extkey.SetSeed(vchSeed);
 
             std::cout << "extended private masterkey: " << EncodeExtKey(extkey).c_str() << std::endl;
 
@@ -88,7 +88,7 @@ bool CHDChain::SetMnemonic(const SecureString& ssMnemonic, const SecureString& s
 
         // empty mnemonic i.e. "generate a new one"
         if (ssMnemonic.empty()) {
-            ssMnemonicTmp = CMnemonic::Generate(256);
+            ssMnemonicTmp = CMnemonic::Generate(gArgs.GetArg("-mnemonicbits", DEFAULT_MNEMONIC_BITS));
         }
         // NOTE: default mnemonic passphrase is an empty string
 
@@ -153,7 +153,7 @@ SecureVector CHDChain::GetSeed() const
 uint256 CHDChain::GetSeedHash()
 {
     LOCK(cs);
-    return Hash(vchSeed.begin(), vchSeed.end());
+    return Hash(vchSeed);
 }
 
 void CHDChain::DeriveChildExtKey(uint32_t nAccountIndex, bool fInternal, uint32_t nChildIndex, CExtKey& extKeyRet, KeyOriginInfo& key_origin)
@@ -167,7 +167,7 @@ void CHDChain::DeriveChildExtKey(uint32_t nAccountIndex, bool fInternal, uint32_
     CExtKey changeKey;              //key at m/purpose'/coin_type'/account'/change
     CExtKey childKey;               //key at m/purpose'/coin_type'/account'/change/address_index
 
-    masterKey.SetSeed(vchSeed.data(), vchSeed.size());
+    masterKey.SetSeed(vchSeed);
 
     // Use hardened derivation for purpose, coin_type and account
     // (keys >= 0x80000000 are hardened after bip32)

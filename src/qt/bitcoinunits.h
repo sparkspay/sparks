@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Copyright (c) 2014-2022 The Dash Core developers
 // Copyright (c) 2016-2023 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying

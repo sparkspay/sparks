@@ -7,7 +7,7 @@ from test_framework.mininode import *
 from test_framework.test_framework import SparksTestFramework
 from test_framework.util import isolate_node, reconnect_isolated_node, assert_equal, \
     assert_raises_rpc_error
-from test_framework.test_framework import DashTestFramework
+from test_framework.test_framework import SparksTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error
 
 '''
@@ -28,6 +28,9 @@ class InstantSendTest(SparksTestFramework):
         self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
         self.mine_quorum()
+        self.nodes[self.isolated_idx].createwallet(self.default_wallet_name)
+        self.nodes[self.receiver_idx].createwallet(self.default_wallet_name)
+        self.nodes[self.sender_idx].createwallet(self.default_wallet_name)
 
         self.test_mempool_doublespend()
         self.test_block_doublespend()
@@ -39,7 +42,9 @@ class InstantSendTest(SparksTestFramework):
 
         # feed the sender with some balance
         sender_addr = sender.getnewaddress()
-        self.nodes[0].sendtoaddress(sender_addr, 1)
+        is_id = self.nodes[0].sendtoaddress(sender_addr, 1)
+        for node in self.nodes:
+            self.wait_for_instantlock(is_id, node)
         self.bump_mocktime(1)
         self.nodes[0].generate(2)
         self.sync_all()
@@ -58,11 +63,15 @@ class InstantSendTest(SparksTestFramework):
         for node in connected_nodes:
             self.wait_for_instantlock(is_id, node)
         # send doublespend transaction to isolated node
-        isolated.sendrawtransaction(dblspnd_tx['hex'])
+        dblspnd_txid = isolated.sendrawtransaction(dblspnd_tx['hex'])
         # generate block on isolated node with doublespend transaction
+        self.bump_mocktime(599)
+        wrong_early_block = isolated.generate(1)[0]
+        assert not "confirmation" in isolated.getrawtransaction(dblspnd_txid, 1)
+        isolated.invalidateblock(wrong_early_block)
         self.bump_mocktime(1)
-        isolated.generate(1)
-        wrong_block = isolated.getbestblockhash()
+        wrong_block = isolated.generate(1)[0]
+        assert_equal(isolated.getrawtransaction(dblspnd_txid, 1)["confirmations"], 1)
         # connect isolated block to network
         self.reconnect_isolated_node(self.isolated_idx, 0)
         # check doublespend block is rejected by other nodes
@@ -94,7 +103,9 @@ class InstantSendTest(SparksTestFramework):
 
         # feed the sender with some balance
         sender_addr = sender.getnewaddress()
-        self.nodes[0].sendtoaddress(sender_addr, 1)
+        is_id = self.nodes[0].sendtoaddress(sender_addr, 1)
+        for node in self.nodes:
+            self.wait_for_instantlock(is_id, node)
         self.bump_mocktime(1)
         self.nodes[0].generate(2)
         self.sync_all()

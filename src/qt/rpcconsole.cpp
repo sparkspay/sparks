@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Copyright (c) 2014-2022 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -37,20 +37,18 @@
 #include <QButtonGroup>
 #include <QDir>
 #include <QFontDatabase>
+#include <QDateTime>
 #include <QKeyEvent>
 #include <QMenu>
 #include <QMessageBox>
-#include <QScrollBar>
 #include <QScreen>
+#include <QScrollBar>
 #include <QSettings>
 #include <QTime>
 #include <QTimer>
 #include <QStringList>
 #include <QStyledItemDelegate>
 
-// TODO: add a scrollback limit, as there is currently none
-// TODO: make it possible to filter out categories (esp debug messages when implemented)
-// TODO: receive errors and debug messages through ClientModel
 
 const int CONSOLE_HISTORY = 50;
 const QSize FONT_RANGE(4, 40);
@@ -518,7 +516,11 @@ RPCConsole::RPCConsole(interfaces::Node& node, QWidget* parent, Qt::WindowFlags 
     pageButtons->addButton(ui->btnNetTraffic, pageButtons->buttons().size());
     pageButtons->addButton(ui->btnPeers, pageButtons->buttons().size());
     pageButtons->addButton(ui->btnRepair, pageButtons->buttons().size());
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+    connect(pageButtons, &QButtonGroup::idClicked, this, &RPCConsole::showPage);
+#else
     connect(pageButtons, QOverload<int>::of(&QButtonGroup::buttonClicked), this, &RPCConsole::showPage);
+#endif
 
     showPage(ToUnderlying(TabTypes::INFO));
 
@@ -583,6 +585,17 @@ bool RPCConsole::eventFilter(QObject* obj, QEvent *event)
 void RPCConsole::setClientModel(ClientModel *model, int bestblock_height, int64_t bestblock_date, uint256 bestblock_hash, double verification_progress)
 {
     clientModel = model;
+
+    bool wallet_enabled{false};
+#ifdef ENABLE_WALLET
+    wallet_enabled = WalletModel::isWalletEnabled();
+#endif // ENABLE_WALLET
+    if (model && !wallet_enabled) {
+        // Show warning, for example if this is a prerelease version
+        connect(model, &ClientModel::alertsChanged, this, &RPCConsole::updateAlerts);
+        updateAlerts(model->getStatusBarWarnings());
+    }
+
     ui->trafficGraph->setClientModel(model);
     if (model && clientModel->getPeerTableModel() && clientModel->getBanTableModel()) {
         // Keep up to date with client
@@ -784,7 +797,9 @@ void RPCConsole::setFontSize(int newSize)
 {
     QSettings settings;
 
-    newSize = std::min(std::max(newSize, FONT_RANGE.width()), FONT_RANGE.height());
+    //don't allow an insane font size
+    if (newSize < FONT_RANGE.width() || newSize > FONT_RANGE.height())
+        return;
 
     // temp. store the console content
     QString str = ui->messagesWidget->toHtml();
@@ -957,19 +972,19 @@ void RPCConsole::updateMasternodeCount()
     if (!clientModel) {
         return;
     }
-    auto mnList = clientModel->getMasternodeList();
+    auto mnList = clientModel->getMasternodeList().first;
     size_t total_mn_count = mnList.GetAllMNsCount();
     size_t total_enabled_mn_count = mnList.GetValidMNsCount();
-    size_t total_hpmn_count = mnList.GetAllHPMNsCount();
-    size_t total_enabled_hpmn_count = mnList.GetValidHPMNsCount();
+    size_t total_evo_count = mnList.GetAllEvoCount();
+    size_t total_enabled_evo_count = mnList.GetValidEvoCount();
     QString strMasternodeCount = tr("Total: %1 (Enabled: %2)")
-        .arg(QString::number(total_mn_count - total_hpmn_count))
-        .arg(QString::number(total_enabled_mn_count - total_enabled_hpmn_count));
+        .arg(QString::number(total_mn_count - total_evo_count))
+        .arg(QString::number(total_enabled_mn_count - total_enabled_evo_count));
     ui->masternodeCount->setText(strMasternodeCount);
-    QString strHPMNCount = tr("Total: %1 (Enabled: %2)")
-            .arg(QString::number(total_hpmn_count))
-            .arg(QString::number(total_enabled_hpmn_count));
-    ui->hpmnCount->setText(strHPMNCount);
+    QString strEvoCount = tr("Total: %1 (Enabled: %2)")
+            .arg(QString::number(total_evo_count))
+            .arg(QString::number(total_enabled_evo_count));
+    ui->evoCount->setText(strEvoCount);
 }
 
 void RPCConsole::setMempoolSize(long numberOfTxs, size_t dynUsage)
@@ -1227,16 +1242,17 @@ void RPCConsole::updateNodeDetail(const CNodeCombinedStats *stats)
     ui->peerPingWait->setText(GUIUtil::formatPingTime(stats->nodeStats.m_ping_wait_usec));
     ui->peerMinPing->setText(GUIUtil::formatPingTime(stats->nodeStats.m_min_ping_usec));
     ui->timeoffset->setText(GUIUtil::formatTimeOffset(stats->nodeStats.nTimeOffset));
-    ui->peerVersion->setText(QString("%1").arg(QString::number(stats->nodeStats.nVersion)));
+    ui->peerVersion->setText(QString::number(stats->nodeStats.nVersion));
     ui->peerSubversion->setText(QString::fromStdString(stats->nodeStats.cleanSubVer));
     ui->peerDirection->setText(stats->nodeStats.fInbound
             ? tr("Inbound")
             : stats->nodeStats.fRelayTxes
                 ? tr("Outbound")
                 : tr("Outbound block-relay"));
-    ui->peerHeight->setText(QString("%1").arg(QString::number(stats->nodeStats.nStartingHeight)));
+    ui->peerHeight->setText(QString::number(stats->nodeStats.nStartingHeight));
     ui->peerWhitelisted->setText(stats->nodeStats.m_legacyWhitelisted ? tr("Yes") : tr("No"));
-    auto dmn = clientModel->getMasternodeList().GetMNByService(stats->nodeStats.addr);
+    ui->peerMappedAS->setText(stats->nodeStats.m_mapped_as != 0 ? QString::number(stats->nodeStats.m_mapped_as) : tr("N/A"));
+    auto dmn = clientModel->getMasternodeList().first.GetMNByService(stats->nodeStats.addr);
     if (dmn == nullptr) {
         ui->peerNodeType->setText(tr("Regular"));
         ui->peerPoSeScore->setText(tr("N/A"));
@@ -1253,7 +1269,7 @@ void RPCConsole::updateNodeDetail(const CNodeCombinedStats *stats)
     // nodeStateStats couldn't be fetched.
     if (stats->fNodeStateStatsAvailable) {
         // Ban score is init to 0
-        ui->peerBanScore->setText(QString("%1").arg(stats->nodeStateStats.nMisbehavior));
+        ui->peerBanScore->setText(QString("%1").arg(stats->nodeStateStats.m_misbehavior_score));
 
         // Sync height is init to -1
         if (stats->nodeStateStats.nSyncHeight > -1)
@@ -1348,7 +1364,7 @@ void RPCConsole::disconnectSelectedNode()
         // Get currently selected peer address
         NodeId id = nodes.at(i).data().toLongLong();
         // Find the node, disconnect it and clear the selected node
-        if(m_node.disconnect(id))
+        if(m_node.disconnectById(id))
             clearSelectedNode();
     }
 }
@@ -1373,7 +1389,7 @@ void RPCConsole::banSelectedNode(int bantime)
         const CNodeCombinedStats *stats = clientModel->getPeerTableModel()->getNodeStats(detailNodeRow);
         if (stats) {
             m_node.ban(stats->nodeStats.addr, bantime);
-            m_node.disconnect(stats->nodeStats.addr);
+            m_node.disconnectByAddress(stats->nodeStats.addr);
         }
     }
     clearSelectedNode();
@@ -1440,4 +1456,10 @@ QKeySequence RPCConsole::tabShortcut(TabTypes tab_type) const
     } // no default case, so the compiler can warn about missing cases
 
     assert(false);
+}
+
+void RPCConsole::updateAlerts(const QString& warnings)
+{
+    this->ui->label_alerts->setVisible(!warnings.isEmpty());
+    this->ui->label_alerts->setText(warnings);
 }

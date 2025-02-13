@@ -16,7 +16,7 @@ $ FUZZ=process_message src/test/fuzz/fuzz
 # abort fuzzing using ctrl-c
 ```
 
-## Fuzzing harnesses, fuzzing output and fuzzing corpora
+## Fuzzing harnesses and output
 
 [`process_message`](https://github.com/sparkspay/sparks/blob/develop/src/test/fuzz/process_message.cpp) is a fuzzing harness for the [`ProcessMessage(...)` function (`net_processing`)](https://github.com/sparkspay/sparks/blob/develop/src/net_processing.cpp). The available fuzzing harnesses are found in [`src/test/fuzz/`](https://github.com/sparkspay/sparks/tree/develop/src/test/fuzz).
 
@@ -64,6 +64,8 @@ block^@M-^?M-^?M-^?M-^?M-^?nM-^?M-^?
 
 In this case the fuzzer managed to create a `block` message which when passed to `ProcessMessage(...)` increased coverage.
 
+## Fuzzing corpora
+
 The project's collection of seed corpora is found in the [`bitcoin-core/qa-assets`](https://github.com/bitcoin-core/qa-assets) repo.
 
 To fuzz `process_message` using the [`bitcoin-core/qa-assets`](https://github.com/bitcoin-core/qa-assets) seed corpus:
@@ -80,6 +82,24 @@ INFO: seed corpus: files: 991 min: 1b max: 1858b total: 288291b rss: 150Mb
 #993    INITED cov: 7063 ft: 8236 corp: 25/3821b exec/s: 0 rss: 181Mb
 …
 ```
+
+## Run without sanitizers for increased throughput
+
+Fuzzing on a harness compiled with `--with-sanitizers=address,fuzzer,undefined` is good for finding bugs. However, the very slow execution even under libFuzzer will limit the ability to find new coverage. A good approach is to perform occasional long runs without the additional bug-detectors (configure `--with-sanitizers=fuzzer`) and then merge new inputs into a corpus as described in the qa-assets repo (https://github.com/bitcoin-core/qa-assets/blob/main/.github/PULL_REQUEST_TEMPLATE.md).  Patience is useful; even with improved throughput, libFuzzer may need days and 10s of millions of executions to reach deep/hard targets.
+
+## Reproduce a fuzzer crash reported by the CI
+
+- `cd` into the `qa-assets` directory and update it with `git pull qa-assets`
+- locate the crash case described in the CI output, e.g. `Test unit written to
+  ./crash-1bc91feec9fc00b107d97dc225a9f2cdaa078eb6`
+- make sure to compile with all sanitizers, if they are needed (fuzzing runs
+  more slowly with sanitizers enabled, but a crash should be reproducible very
+  quickly from a crash case)
+- run the fuzzer with the case number appended to the seed corpus path:
+  `FUZZ=process_message src/test/fuzz/fuzz
+  qa-assets/fuzz_seed_corpus/process_message/1bc91feec9fc00b107d97dc225a9f2cdaa078eb6`
+
+## Submit improved coverage
 
 If you find coverage increasing inputs when fuzzing you are highly encouraged to submit them for inclusion in the [`bitcoin-core/qa-assets`](https://github.com/bitcoin-core/qa-assets) repo.
 
@@ -108,33 +128,32 @@ Full configure that was tested on macOS Catalina with `brew` installed `llvm`:
 
 Read the [libFuzzer documentation](https://llvm.org/docs/LibFuzzer.html) for more information. This [libFuzzer tutorial](https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md) might also be of interest.
 
-# Fuzzing Sparks Core using american fuzzy lop (`afl-fuzz`)
+# Fuzzing Sparks Core using afl++
 
 ## Quickstart guide
 
-To quickly get started fuzzing Sparks Core using [`afl-fuzz`](https://github.com/google/afl):
+To quickly get started fuzzing Sparks Core using [afl++](https://github.com/AFLplusplus/AFLplusplus):
 
 ```sh
 $ git clone https://github.com/sparkspay/sparks
 $ cd sparks/
-$ git clone https://github.com/google/afl
-$ make -C afl/
-$ make -C afl/llvm_mode/
+$ git clone https://github.com/AFLplusplus/AFLplusplus
+$ make -C AFLplusplus/ source-only
 $ ./autogen.sh
-# It is possible to compile with afl-gcc and afl-g++ instead of afl-clang. However, running afl-fuzz
-# may require more memory via the -m flag.
-$ CC=$(pwd)/afl/afl-clang-fast CXX=$(pwd)/afl/afl-clang-fast++ ./configure --enable-fuzz --enable-c++17
+# If afl-clang-lto is not available, see
+# https://github.com/AFLplusplus/AFLplusplus#a-selecting-the-best-afl-compiler-for-instrumenting-the-target
+$ CC=$(pwd)/AFLplusplus/afl-clang-lto CXX=$(pwd)/AFLplusplus/afl-clang-lto++ ./configure --enable-fuzz --enable-c++17
 $ make
 # For macOS you may need to ignore x86 compilation checks when running "make". If so,
 # try compiling using: AFL_NO_X86=1 make
 $ mkdir -p inputs/ outputs/
 $ echo A > inputs/thin-air-input
-$ FUZZ=bech32 afl/afl-fuzz -i inputs/ -o outputs/ -- src/test/fuzz/fuzz
+$ FUZZ=bech32 AFLplusplus/afl-fuzz -i inputs/ -o outputs/ -- src/test/fuzz/fuzz
 # You may have to change a few kernel parameters to test optimally - afl-fuzz
 # will print an error and suggestion if so.
 ```
 
-Read the [`afl-fuzz` documentation](https://github.com/google/afl) for more information.
+Read the [afl++ documentation](https://github.com/AFLplusplus/AFLplusplus) for more information.
 
 # Fuzzing Sparks Core using Honggfuzz
 

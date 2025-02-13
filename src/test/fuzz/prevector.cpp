@@ -2,11 +2,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <test/fuzz/fuzz.h>
 #include <test/fuzz/FuzzedDataProvider.h>
+#include <test/fuzz/fuzz.h>
 
-#include <vector>
 #include <prevector.h>
+#include <vector>
 
 #include <reverse_iterator.h>
 #include <serialize.h>
@@ -206,10 +206,14 @@ public:
 
 FUZZ_TARGET(prevector)
 {
+    // Pick an arbitrary upper bound to limit the runtime and avoid timeouts on
+    // inputs.
+    int limit_max_ops{3000};
+
     FuzzedDataProvider prov(buffer.data(), buffer.size());
     prevector_tester<8, int> test;
 
-    while (prov.remaining_bytes()) {
+    while (--limit_max_ops >= 0 && prov.remaining_bytes()) {
         switch (prov.ConsumeIntegralInRange<int>(0, 13 + 3 * (test.size() > 0))) {
         case 0:
             test.insert(prov.ConsumeIntegralInRange<size_t>(0, test.size()), prov.ConsumeIntegral<int>());

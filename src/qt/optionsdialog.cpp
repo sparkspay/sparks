@@ -125,7 +125,11 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
     pageButtons->addButton(ui->btnDisplay, pageButtons->buttons().size());
     pageButtons->addButton(ui->btnAppearance, pageButtons->buttons().size());
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+    connect(pageButtons, &QButtonGroup::idClicked, this, &OptionsDialog::showPage);
+#else
     connect(pageButtons, QOverload<int>::of(&QButtonGroup::buttonClicked), this, &OptionsDialog::showPage);
+#endif
 
     showPage(0);
 
@@ -287,6 +291,9 @@ void OptionsDialog::setModel(OptionsModel *_model)
             ui->coinJoinEnabled->click();
         }
     });
+
+    connect(ui->coinJoinDenomsGoal, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &OptionsDialog::updateCoinJoinDenomGoal);
+    connect(ui->coinJoinDenomsHardCap, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &OptionsDialog::updateCoinJoinDenomHardCap);
 #endif
 }
 
@@ -322,8 +329,11 @@ void OptionsDialog::setMapper()
     mapper->addMapping(ui->lowKeysWarning, OptionsModel::LowKeysWarning);
     mapper->addMapping(ui->coinJoinMultiSession, OptionsModel::CoinJoinMultiSession);
     mapper->addMapping(ui->spendZeroConfChange, OptionsModel::SpendZeroConfChange);
+    mapper->addMapping(ui->coinJoinSessions, OptionsModel::CoinJoinSessions);
     mapper->addMapping(ui->coinJoinRounds, OptionsModel::CoinJoinRounds);
     mapper->addMapping(ui->coinJoinAmount, OptionsModel::CoinJoinAmount);
+    mapper->addMapping(ui->coinJoinDenomsGoal, OptionsModel::CoinJoinDenomsGoal);
+    mapper->addMapping(ui->coinJoinDenomsHardCap, OptionsModel::CoinJoinDenomsHardCap);
 
     /* Network */
     mapper->addMapping(ui->mapPortUpnp, OptionsModel::MapPortUPnP);
@@ -397,7 +407,7 @@ void OptionsDialog::on_okButton_clicked()
     appearance->accept();
 #ifdef ENABLE_WALLET
     if (m_enable_wallet) {
-        for (auto& wallet : model->node().walletClient().getWallets()) {
+        for (auto& wallet : model->node().walletLoader().getWallets()) {
             wallet->coinJoin().resetCachedBlocks();
             wallet->markDirty();
         }
@@ -503,6 +513,20 @@ void OptionsDialog::updateCoinJoinVisibility()
 #endif
     ui->btnCoinJoin->setVisible(fEnabled);
     GUIUtil::updateButtonGroupShortcuts(pageButtons);
+}
+
+void OptionsDialog::updateCoinJoinDenomGoal()
+{
+    if (ui->coinJoinDenomsGoal->value() > ui->coinJoinDenomsHardCap->value()) {
+        ui->coinJoinDenomsGoal->setValue(ui->coinJoinDenomsHardCap->value());
+    }
+}
+
+void OptionsDialog::updateCoinJoinDenomHardCap()
+{
+    if (ui->coinJoinDenomsGoal->value() > ui->coinJoinDenomsHardCap->value()) {
+        ui->coinJoinDenomsHardCap->setValue(ui->coinJoinDenomsGoal->value());
+    }
 }
 
 void OptionsDialog::updateWidth()

@@ -1,5 +1,5 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2019 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -207,6 +207,9 @@ void ParsePrevouts(const UniValue& prevTxsUnival, FillableSigningProvider* keyst
                         throw JSONRPCError(RPC_INVALID_PARAMETER, "redeemScript does not match scriptPubKey");
                     }
                 }
+                if (rs.isNull()) {
+                    throw JSONRPCError(RPC_INVALID_PARAMETER, "Missing redeemScript");
+                }
             }
         }
     }
@@ -228,6 +231,10 @@ void SignTransactionResultToJSON(CMutableTransaction& mtx, bool complete, const 
     // Make errors UniValue
     UniValue vErrors(UniValue::VARR);
     for (const auto& err_pair : input_errors) {
+        if (err_pair.second == "Missing amount") {
+            // This particular error needs to be an exception for some reason
+            throw JSONRPCError(RPC_TYPE_ERROR, strprintf("Missing amount for %s", coins.at(mtx.vin.at(err_pair.first).prevout).out.ToString()));
+        }
         TxInErrorToJSON(mtx.vin.at(err_pair.first), vErrors, err_pair.second);
     }
 

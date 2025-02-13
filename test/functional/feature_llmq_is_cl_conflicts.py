@@ -17,15 +17,13 @@ Checks conflict handling between ChainLocks and InstantSend
 
 '''
 
-from codecs import encode
-from decimal import Decimal
 import struct
 
-from test_framework.blocktools import get_masternode_payment, create_coinbase, create_block
-from test_framework.messages import CCbTx, CInv, COIN, CTransaction, FromHex, hash256, msg_clsig, msg_inv, ser_string, ToHex, uint256_from_str, uint256_to_string
+from test_framework.blocktools import create_block_with_mnpayments
+from test_framework.messages import CInv, CTransaction, FromHex, hash256, msg_clsig, msg_inv, ser_string, ToHex, uint256_from_str
 from test_framework.mininode import P2PInterface
-from test_framework.test_framework import DashTestFramework
-from test_framework.util import assert_equal, assert_raises_rpc_error, hex_str_to_bytes, get_bip9_status, wait_until
+from test_framework.test_framework import SparksTestFramework
+from test_framework.util import assert_equal, assert_raises_rpc_error, hex_str_to_bytes, wait_until
 
 
 class TestP2PConn(P2PInterface):
@@ -101,7 +99,7 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         rawtx2_obj = FromHex(CTransaction(), rawtx2)
 
         rawtx1_txid = self.nodes[0].sendrawtransaction(rawtx1)
-        rawtx2_txid = encode(hash256(hex_str_to_bytes(rawtx2))[::-1], 'hex_codec').decode('ascii')
+        rawtx2_txid = hash256(hex_str_to_bytes(rawtx2))[::-1].hex()
 
         # Create a chained TX on top of tx1
         inputs = []
@@ -120,7 +118,7 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
             self.wait_for_instantlock(rawtx1_txid, node)
             self.wait_for_instantlock(rawtx4_txid, node)
 
-        block = self.create_block(self.nodes[0], [rawtx2_obj])
+        block = create_block_with_mnpayments(self.mninfo, self.nodes[0], [rawtx2_obj])
         if test_block_conflict:
             # The block shouldn't be accepted/connected but it should be known to node 0 now
             submit_result = self.nodes[0].submitblock(ToHex(block))
@@ -214,8 +212,8 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         rawtx1 = self.create_raw_tx(self.nodes[0], self.nodes[0], 1, 1, 100)['hex']
         rawtx2 = self.create_raw_tx(self.nodes[0], self.nodes[0], 1, 1, 100)['hex']
 
-        rawtx1_txid = encode(hash256(hex_str_to_bytes(rawtx1))[::-1], 'hex_codec').decode('ascii')
-        rawtx2_txid = encode(hash256(hex_str_to_bytes(rawtx2))[::-1], 'hex_codec').decode('ascii')
+        rawtx1_txid = hash256(hex_str_to_bytes(rawtx1))[::-1].hex()
+        rawtx2_txid = hash256(hex_str_to_bytes(rawtx2))[::-1].hex()
 
         # Create an ISLOCK but don't broadcast it yet
         islock = self.create_islock(rawtx2, deterministic)
@@ -239,10 +237,10 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
 
         # Assert that the conflicting tx got mined and the locked TX is not valid
         assert self.nodes[0].getrawtransaction(rawtx1_txid, True)['confirmations'] > 0
-        assert_raises_rpc_error(-25, "Missing inputs", self.nodes[0].sendrawtransaction, rawtx2)
+        assert_raises_rpc_error(-25, "bad-txns-inputs-missingorspent", self.nodes[0].sendrawtransaction, rawtx2)
 
         # Create the block and the corresponding clsig but do not relay clsig yet
-        cl_block = self.create_block(self.nodes[0])
+        cl_block = create_block_with_mnpayments(self.mninfo, self.nodes[0])
         cl = self.create_chainlock(self.nodes[0].getblockcount() + 1, cl_block)
         self.nodes[0].submitblock(ToHex(cl_block))
         self.sync_all()
@@ -283,84 +281,12 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
             # Previous tip should be marked as conflicting now
             assert_equal(node.getchaintips(2)[1]["status"], "conflicting")
 
-    def create_block(self, node, vtx=[]):
-        bt = node.getblocktemplate()
-        height = bt['height']
-        tip_hash = bt['previousblockhash']
-
-        coinbasevalue = bt['coinbasevalue']
-        miner_address = node.getnewaddress()
-        mn_payee = bt['masternode'][0]['payee']
-
-        # calculate fees that the block template included (we'll have to remove it from the coinbase as we won't
-        # include the template's transactions
-        bt_fees = 0
-        for tx in bt['transactions']:
-            bt_fees += tx['fee']
-
-        new_fees = 0
-        for tx in vtx:
-            in_value = 0
-            out_value = 0
-            for txin in tx.vin:
-                txout = node.gettxout(uint256_to_string(txin.prevout.hash), txin.prevout.n, False)
-                in_value += int(txout['value'] * COIN)
-            for txout in tx.vout:
-                out_value += txout.nValue
-            new_fees += in_value - out_value
-
-        # fix fees
-        coinbasevalue -= bt_fees
-        coinbasevalue += new_fees
-
-        realloc_info = get_bip9_status(self.nodes[0], 'realloc')
-        realloc_height = 99999999
-        if realloc_info['status'] == 'active':
-            realloc_height = realloc_info['since']
-        mn_amount = get_masternode_payment(height, coinbasevalue, realloc_height)
-        miner_amount = coinbasevalue - mn_amount
-
-        outputs = {miner_address: str(Decimal(miner_amount) / COIN)}
-        if mn_amount > 0:
-            outputs[mn_payee] = str(Decimal(mn_amount) / COIN)
-
-        coinbase = FromHex(CTransaction(), node.createrawtransaction([], outputs))
-        coinbase.vin = create_coinbase(height).vin
-
-        # We can't really use this one as it would result in invalid merkle roots for masternode lists
-        if len(bt['coinbase_payload']) != 0:
-            cbtx = FromHex(CCbTx(version=1), bt['coinbase_payload'])
-            coinbase.nVersion = 3
-            coinbase.nType = 5 # CbTx
-            coinbase.vExtraPayload = cbtx.serialize()
-
-        coinbase.calc_sha256()
-
-        block = create_block(int(tip_hash, 16), coinbase, ntime=bt['curtime'], version=bt['version'])
-        block.vtx += vtx
-
-        # Add quorum commitments from template
-        for tx in bt['transactions']:
-            tx2 = FromHex(CTransaction(), tx['data'])
-            if tx2.nType == 6:
-                block.vtx.append(tx2)
-
-        block.hashMerkleRoot = block.calc_merkle_root()
-        block.solve()
-        return block
-
     def create_chainlock(self, height, block):
         request_id_buf = ser_string(b"clsig") + struct.pack("<I", height)
         request_id = hash256(request_id_buf)[::-1].hex()
         message_hash = block.hash
 
-        quorum_member = None
-        for mn in self.mninfo:
-            res = mn.node.quorum('sign', 100, request_id, message_hash)
-            if res and quorum_member is None:
-                quorum_member = mn
-
-        recSig = self.get_recovered_sig(request_id, message_hash, node=quorum_member.node)
+        recSig = self.get_recovered_sig(request_id, message_hash)
         clsig = msg_clsig(height, block.sha256, hex_str_to_bytes(recSig['sig']))
         return clsig
 

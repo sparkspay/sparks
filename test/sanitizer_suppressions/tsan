@@ -6,6 +6,9 @@
 # Data races from zmq namespace
 race:zmq::*
 
+# race (TODO fix)
+race:validation_chainstatemanager_tests
+
 # WalletBatch (unidentified deadlock)
 deadlock:WalletBatch
 
@@ -37,3 +40,6 @@ race:CZMQAbstractPublishNotifier::SendZmqMessage
 
 # https://github.com/bitcoin/bitcoin/pull/20218, https://github.com/bitcoin/bitcoin/pull/20745
 race:epoll_ctl
+
+# https://github.com/bitcoin/bitcoin/issues/23366
+race:std::__1::ios_base::*

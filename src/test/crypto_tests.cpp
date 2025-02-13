@@ -1,25 +1,25 @@
-// Copyright (c) 2014-2015 The Bitcoin Core developers
+// Copyright (c) 2014-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <crypto/aes.h>
 #include <crypto/chacha20.h>
 #include <crypto/chacha_poly_aead.h>
-#include <crypto/poly1305.h>
 #include <crypto/hkdf_sha256_32.h>
 #include <crypto/hmac_sha256.h>
 #include <crypto/hmac_sha512.h>
+#include <crypto/muhash.h>
 #include <crypto/pkcs5_pbkdf2_hmac_sha512.h>
+#include <crypto/poly1305.h>
 #include <crypto/ripemd160.h>
 #include <crypto/sha1.h>
 #include <crypto/sha256.h>
 #include <crypto/sha3.h>
 #include <crypto/sha512.h>
-#include <crypto/muhash.h>
 #include <random.h>
 #include <streams.h>
-#include <util/strencodings.h>
 #include <test/util/setup_common.h>
+#include <util/strencodings.h>
 
 #include <vector>
 
@@ -794,8 +794,8 @@ static void TestSHA3_256(const std::string& input, const std::string& output)
     int s1 = InsecureRandRange(in_bytes.size() + 1);
     int s2 = InsecureRandRange(in_bytes.size() + 1 - s1);
     int s3 = in_bytes.size() - s1 - s2;
-    sha.Write(MakeSpan(in_bytes).first(s1)).Write(MakeSpan(in_bytes).subspan(s1, s2));
-    sha.Write(MakeSpan(in_bytes).last(s3)).Finalize(out);
+    sha.Write(Span{in_bytes}.first(s1)).Write(Span{in_bytes}.subspan(s1, s2));
+    sha.Write(Span{in_bytes}.last(s3)).Finalize(out);
     BOOST_CHECK(std::equal(std::begin(out_bytes), std::end(out_bytes), out));
 }
 

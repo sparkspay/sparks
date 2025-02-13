@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -32,6 +32,7 @@ WalletFrame::WalletFrame(BitcoinGUI* _gui) :
 
     // hbox for no wallet
     no_wallet_group = new QGroupBox(walletStack);
+    no_wallet_group->setObjectName("no_wallet_group");
     QVBoxLayout* no_wallet_layout = new QVBoxLayout(no_wallet_group);
 
     QLabel *noWallet = new QLabel(tr("No wallet has been loaded.\nGo to File > Open Wallet to load a wallet.\n- OR -"));
@@ -235,6 +236,14 @@ void WalletFrame::gotoVerifyMessageTab(QString addr)
     WalletView *walletView = currentWalletView();
     if (walletView)
         walletView->gotoVerifyMessageTab(addr);
+}
+
+void WalletFrame::gotoLoadPSBT()
+{
+    WalletView *walletView = currentWalletView();
+    if (walletView) {
+        walletView->gotoLoadPSBT();
+    }
 }
 
 void WalletFrame::encryptWallet()

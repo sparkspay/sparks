@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Copyright (c) 2014-2022 The Dash Core developers
 // Copyright (c) 2016-2023 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
@@ -186,12 +186,8 @@ void OptionsModel::Init(bool resetSettings)
     if (!settings.contains("bPrune"))
         settings.setValue("bPrune", false);
     if (!settings.contains("nPruneSize"))
-        settings.setValue("nPruneSize", 2);
-    // Convert prune size from GB to MiB:
-    const uint64_t nPruneSizeMiB = (settings.value("nPruneSize").toInt() * GB_BYTES) >> 20;
-    if (!m_node.softSetArg("-prune", settings.value("bPrune").toBool() ? ToString(nPruneSizeMiB) : "0")) {
-        addOverriddenOption("-prune");
-    }
+        settings.setValue("nPruneSize", DEFAULT_PRUNE_TARGET_GB);
+    SetPruneEnabled(settings.value("bPrune").toBool());
 
     // If GUI is setting prune, then we also must set disablegovernance and txindex
     if (settings.value("bPrune").toBool()) {
@@ -226,6 +222,10 @@ void OptionsModel::Init(bool resetSettings)
         addOverriddenOption("-spendzeroconfchange");
 
     // CoinJoin
+    if (!settings.contains("nCoinJoinSessions"))
+        settings.setValue("nCoinJoinSessions", DEFAULT_COINJOIN_SESSIONS);
+    m_node.coinJoinOptions().setSessions(settings.value("nCoinJoinSessions").toInt());
+
     if (!settings.contains("nCoinJoinRounds"))
         settings.setValue("nCoinJoinRounds", DEFAULT_COINJOIN_ROUNDS);
     if (!m_node.softSetArg("-coinjoinrounds", settings.value("nCoinJoinRounds").toString().toStdString()))
@@ -248,6 +248,14 @@ void OptionsModel::Init(bool resetSettings)
     if (!m_node.softSetBoolArg("-coinjoinmultisession", settings.value("fCoinJoinMultiSession").toBool()))
         addOverriddenOption("-coinjoinmultisession");
     m_node.coinJoinOptions().setMultiSessionEnabled(settings.value("fCoinJoinMultiSession").toBool());
+
+    if (!settings.contains("nCoinJoinDenomsGoal"))
+        settings.setValue("nCoinJoinDenomsGoal", DEFAULT_COINJOIN_DENOMS_GOAL);
+    m_node.coinJoinOptions().setDenomsGoal(settings.value("nCoinJoinDenomsGoal").toInt());
+
+    if (!settings.contains("nCoinJoinDenomsHardCap"))
+        settings.setValue("nCoinJoinDenomsHardCap", DEFAULT_COINJOIN_DENOMS_HARDCAP);
+    m_node.coinJoinOptions().setDenomsHardCap(settings.value("nCoinJoinDenomsHardCap").toInt());
 #endif
 
     // Network
@@ -360,7 +368,7 @@ static ProxySetting GetProxySetting(QSettings &settings, const QString &name)
         return default_val;
     }
     // contains IP at index 0 and port at index 1
-    QStringList ip_port = settings.value(name).toString().split(":", QString::SkipEmptyParts);
+    QStringList ip_port = GUIUtil::SplitSkipEmptyParts(settings.value(name).toString(), ":");
     if (ip_port.size() == 2) {
         return {true, ip_port.at(0), ip_port.at(1)};
     } else { // Invalid: return default
@@ -376,6 +384,31 @@ static void SetProxySetting(QSettings &settings, const QString &name, const Prox
 static const QString GetDefaultProxyAddress()
 {
     return QString("%1:%2").arg(DEFAULT_GUI_PROXY_HOST).arg(DEFAULT_GUI_PROXY_PORT);
+}
+
+void OptionsModel::SetPruneEnabled(bool prune, bool force)
+{
+    QSettings settings;
+    settings.setValue("bPrune", prune);
+    const int64_t prune_target_mib = PruneGBtoMiB(settings.value("nPruneSize").toInt());
+    std::string prune_val = prune ? ToString(prune_target_mib) : "0";
+    if (force) {
+        m_node.forceSetArg("-prune", prune_val);
+        return;
+    }
+    if (!m_node.softSetArg("-prune", prune_val)) {
+        addOverriddenOption("-prune");
+    }
+}
+
+void OptionsModel::SetPruneTargetGB(int prune_target_gb, bool force)
+{
+    const bool prune = prune_target_gb > 0;
+    if (prune) {
+        QSettings settings;
+        settings.setValue("nPruneSize", prune_target_gb);
+    }
+    SetPruneEnabled(prune, force);
 }
 
 // read QSettings values and return them
@@ -438,10 +471,16 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             return settings.value("fShowCoinJoinPopups");
         case LowKeysWarning:
             return settings.value("fLowKeysWarning");
+        case CoinJoinSessions:
+            return settings.value("nCoinJoinSessions");
         case CoinJoinRounds:
             return settings.value("nCoinJoinRounds");
         case CoinJoinAmount:
             return settings.value("nCoinJoinAmount");
+        case CoinJoinDenomsGoal:
+            return settings.value("nCoinJoinDenomsGoal");
+        case CoinJoinDenomsHardCap:
+            return settings.value("nCoinJoinDenomsHardCap");
         case CoinJoinMultiSession:
             return settings.value("fCoinJoinMultiSession");
 #endif
@@ -620,6 +659,13 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
         case LowKeysWarning:
             settings.setValue("fLowKeysWarning", value);
             break;
+        case CoinJoinSessions:
+            if (settings.value("nCoinJoinSessions") != value) {
+                m_node.coinJoinOptions().setSessions(value.toInt());
+                settings.setValue("nCoinJoinSessions", m_node.coinJoinOptions().getSessions());
+                Q_EMIT coinJoinRoundsChanged();
+            }
+            break;
         case CoinJoinRounds:
             if (settings.value("nCoinJoinRounds") != value)
             {
@@ -634,6 +680,18 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
                 m_node.coinJoinOptions().setAmount(value.toInt());
                 settings.setValue("nCoinJoinAmount", m_node.coinJoinOptions().getAmount());
                 Q_EMIT coinJoinAmountChanged();
+            }
+            break;
+        case CoinJoinDenomsGoal:
+            if (settings.value("nCoinJoinDenomsGoal") != value) {
+                m_node.coinJoinOptions().setDenomsGoal(value.toInt());
+                settings.setValue("nCoinJoinDenomsGoal", m_node.coinJoinOptions().getDenomsGoal());
+            }
+            break;
+        case CoinJoinDenomsHardCap:
+            if (settings.value("nCoinJoinDenomsHardCap") != value) {
+                m_node.coinJoinOptions().setDenomsHardCap(value.toInt());
+                settings.setValue("nCoinJoinDenomsHardCap", m_node.coinJoinOptions().getDenomsHardCap());
             }
             break;
         case CoinJoinMultiSession:

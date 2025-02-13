@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Bitcoin Core developers
+// Copyright (c) 2018-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -12,7 +12,7 @@
 #include <script/standard.h>           // For CTxDestination
 #include <support/allocators/secure.h> // For SecureString
 #include <ui_interface.h>              // For ChangeType
-#include <util/system.h>
+#include <util/message.h>
 
 #include <functional>
 #include <map>
@@ -26,6 +26,7 @@
 
 class CCoinControl;
 class CFeeRate;
+class CJClientManager;
 class CKey;
 class CWallet;
 enum class FeeReason;
@@ -117,8 +118,8 @@ public:
     //! Get public key.
     virtual bool getPubKey(const CScript& script, const CKeyID& address, CPubKey& pub_key) = 0;
 
-    //! Get private key.
-    virtual bool getPrivKey(const CScript& script, const CKeyID& address, CKey& key) = 0;
+    //! Sign message
+    virtual SigningResult signMessage(const std::string& message, const PKHash& pkhash, std::string& str_sig) = 0;
 
     //! Return whether wallet has private key.
     virtual bool isSpendable(const CScript& script) = 0;
@@ -203,6 +204,7 @@ public:
     //! Try to get updated status for a particular transaction, if possible without blocking.
     virtual bool tryGetTxStatus(const uint256& txid,
         WalletTxStatus& tx_status,
+        int& num_blocks,
         int64_t& block_time) = 0;
 
     //! Get transaction details.
@@ -219,17 +221,17 @@ public:
     virtual bool isFullyMixed(const COutPoint& outpoint) = 0;
 
     //! Fill PSBT.
-    virtual TransactionError fillPSBT(PartiallySignedTransaction& psbtx,
-        bool& complete,
-        int sighash_type = 1 /* SIGHASH_ALL */,
-        bool sign = true,
-        bool bip32derivs = false) = 0;
+    virtual TransactionError fillPSBT(int sighash_type,
+        bool sign,
+        bool bip32derivs,
+        PartiallySignedTransaction& psbtx,
+        bool& complete) = 0;
 
     //! Get balances.
     virtual WalletBalances getBalances() = 0;
 
     //! Get balances if possible without blocking.
-    virtual bool tryGetBalances(WalletBalances& balances, int& num_blocks) = 0;
+    virtual bool tryGetBalances(WalletBalances& balances, uint256& block_hash) = 0;
 
     //! Get balance.
     virtual CAmount getBalance() = 0;
@@ -290,8 +292,8 @@ public:
     // Return whether the wallet is blank.
     virtual bool canGetAddresses() = 0;
 
-    // check if a certain wallet flag is set.
-    virtual bool IsWalletFlagSet(uint64_t flag) = 0;
+    // Return whether private keys enabled.
+    virtual bool privateKeysDisabled() = 0;
 
     virtual CoinJoin::Client& coinJoin() = 0;
 
@@ -348,14 +350,14 @@ public:
 //! Wallet chain client that in addition to having chain client methods for
 //! starting up, shutting down, and registering RPCs, also has additional
 //! methods (called by the GUI) to load and create wallets.
-class WalletClient : public ChainClient
+class WalletLoader : public ChainClient
 {
 public:
     //! Create new wallet.
-    virtual std::unique_ptr<Wallet> createWallet(const std::string& name, const SecureString& passphrase, uint64_t wallet_creation_flags, bilingual_str& error, std::vector<bilingual_str>& warnings) = 0;
+    virtual std::unique_ptr<Wallet> createWallet(const CJClientManager& client_man, const std::string& name, const SecureString& passphrase, uint64_t wallet_creation_flags, bilingual_str& error, std::vector<bilingual_str>& warnings) = 0;
 
    //! Load existing wallet.
-   virtual std::unique_ptr<Wallet> loadWallet(const std::string& name, bilingual_str& error, std::vector<bilingual_str>& warnings) = 0;
+   virtual std::unique_ptr<Wallet> loadWallet(const CJClientManager& client_man, const std::string& name, bilingual_str& error, std::vector<bilingual_str>& warnings) = 0;
 
    //! Return default wallet directory.
    virtual std::string getWalletDir() = 0;
@@ -453,11 +455,11 @@ struct WalletTxOut
 
 //! Return implementation of Wallet interface. This function is defined in
 //! dummywallet.cpp and throws if the wallet component is not compiled.
-std::unique_ptr<Wallet> MakeWallet(const std::shared_ptr<CWallet>& wallet);
+std::unique_ptr<Wallet> MakeWallet(const std::shared_ptr<CWallet>& wallet, const CJClientManager& clientman);
 
-//! Return implementation of ChainClient interface for a wallet client. This
+//! Return implementation of ChainClient interface for a wallet loader. This
 //! function will be undefined in builds where ENABLE_WALLET is false.
-std::unique_ptr<WalletClient> MakeWalletClient(Chain& chain, ArgsManager& args);
+std::unique_ptr<WalletLoader> MakeWalletLoader(Chain& chain, ArgsManager& args);
 
 } // namespace interfaces
 

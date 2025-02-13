@@ -231,7 +231,7 @@ void ProposalModel::remove(int row)
     endRemoveRows();
 }
 
-void ProposalModel::reconcile(const std::vector<const Proposal*>& proposals)
+void ProposalModel::reconcile(Span<const Proposal*> proposals)
 {
     // Vector of m_data.count() false values. Going through new proposals,
     // set keep_index true for each old proposal found in the new proposals.
@@ -304,6 +304,7 @@ GovernanceList::GovernanceList(QWidget* parent) :
     ui->govTableView->setModel(proposalModelProxy);
     ui->govTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->govTableView->horizontalHeader()->setStretchLastSection(true);
+    ui->govTableView->verticalHeader()->setVisible(false);
 
     for (int i = 0; i < proposalModel->columnCount(); ++i) {
         ui->govTableView->setColumnWidth(i, proposalModel->columnWidth(i));
@@ -347,7 +348,7 @@ void GovernanceList::updateProposalList()
         // A proposal is considered passing if (YES votes - NO votes) >= (Total Weight of Masternodes / 10),
         // count total valid (ENABLED) masternodes to determine passing threshold.
         // Need to query number of masternodes here with access to clientModel.
-        const int nWeightedMnCount = clientModel->getMasternodeList().GetValidWeightedMNsCount();
+        const int nWeightedMnCount = clientModel->getMasternodeList().first.GetValidWeightedMNsCount();
         const int nAbsVoteReq = std::max(Params().GetConsensus().nGovernanceMinQuorum, nWeightedMnCount / 10);
         proposalModel->setVotingParams(nAbsVoteReq);
 
@@ -355,7 +356,7 @@ void GovernanceList::updateProposalList()
         clientModel->getAllGovernanceObjects(govObjList);
         std::vector<const Proposal*> newProposals;
         for (const auto& govObj : govObjList) {
-            if (govObj.GetObjectType() != GOVERNANCE_OBJECT_PROPOSAL) {
+            if (govObj.GetObjectType() != GovernanceObject::PROPOSAL) {
                 continue; // Skip triggers.
             }
 

@@ -82,7 +82,7 @@ public:
         }
     }
 
-    void ToJson(UniValue& obj) const;
+    [[nodiscard]] UniValue ToJson() const;
 };
 
 class CGetQuorumRotationInfo
@@ -204,17 +204,17 @@ public:
     CQuorumRotationInfo() = default;
     CQuorumRotationInfo(const CQuorumRotationInfo& dmn) {}
 
-    void ToJson(UniValue& obj) const;
+    [[nodiscard]] UniValue ToJson() const;
 };
 
 bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotationInfo& response,
                              const CQuorumManager& qman, const CQuorumBlockProcessor& quorumBlockProcessor, std::string& errorRet);
-uint256 GetLastBaseBlockHash(const std::vector<const CBlockIndex*>& baseBlockIndexes, const CBlockIndex* blockIndex);
+uint256 GetLastBaseBlockHash(Span<const CBlockIndex*> baseBlockIndexes, const CBlockIndex* blockIndex);
 
 class CQuorumSnapshotManager
 {
 private:
-    mutable CCriticalSection snapshotCacheCs;
+    mutable RecursiveMutex snapshotCacheCs;
 
     CEvoDB& m_evoDb;
 

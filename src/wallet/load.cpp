@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2018 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -79,7 +79,7 @@ bool VerifyWallets(interfaces::Chain& chain)
         bilingual_str error_string;
         if (!MakeWalletDatabase(wallet_file, options, status, error_string)) {
             if (status == DatabaseStatus::FAILED_NOT_FOUND) {
-                chain.initWarning(Untranslated(strprintf("Skipping -wallet path that doesn't exist. %s\n", error_string.original)));
+                chain.initWarning(Untranslated(strprintf("Skipping -wallet path that doesn't exist. %s", error_string.original)));
             } else {
                 chain.initError(error_string);
                 return false;
@@ -141,9 +141,10 @@ void FlushWallets()
     for (const std::shared_ptr<CWallet>& pwallet : GetWallets()) {
         if (CCoinJoinClientOptions::IsEnabled()) {
             // Stop CoinJoin, release keys
-            auto it = coinJoinClientManagers.find(pwallet->GetName());
-            it->second->ResetPool();
-            it->second->StopMixing();
+            auto cj_clientman = ::coinJoinClientManagers->Get(*pwallet);
+            assert(cj_clientman != nullptr);
+            cj_clientman->ResetPool();
+            cj_clientman->StopMixing();
         }
         pwallet->Flush();
     }

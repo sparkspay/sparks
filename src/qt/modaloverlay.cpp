@@ -1,4 +1,4 @@
-// Copyright (c) 2016 The Bitcoin Core developers
+// Copyright (c) 2016-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -45,7 +45,7 @@ foreverHidden(false)
     GUIUtil::updateFonts();
     if (!enable_wallet) {
         ui->infoText->setVisible(false);
-        ui->infoTextStrong->setText(tr("Sparks Core is currently syncing.  It will download headers and blocks from peers and validate them until reaching the tip of the block chain."));
+        ui->infoTextStrong->setText(tr("%1 is currently syncing.  It will download headers and blocks from peers and validate them until reaching the tip of the block chain.").arg(PACKAGE_NAME));
     }
 }
 

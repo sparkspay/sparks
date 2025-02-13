@@ -23,9 +23,9 @@ static const std::string DB_QUORUM_SNAPSHOT = "llmq_S";
 
 std::unique_ptr<CQuorumSnapshotManager> quorumSnapshotManager;
 
-void CQuorumSnapshot::ToJson(UniValue& obj) const
+UniValue CQuorumSnapshot::ToJson() const
 {
-    //TODO Check this function if correct
+    UniValue obj;
     obj.setObject();
     UniValue activeQ(UniValue::VARR);
     for (const bool h : activeQuorumMembers) {
@@ -40,81 +40,50 @@ void CQuorumSnapshot::ToJson(UniValue& obj) const
         skipList.push_back(h);
     }
     obj.pushKV("mnSkipList", skipList);
+    return obj;
 }
 
-void CQuorumRotationInfo::ToJson(UniValue& obj) const
+UniValue CQuorumRotationInfo::ToJson() const
 {
+    UniValue obj;
     obj.setObject();
     obj.pushKV("extraShare", extraShare);
 
-    UniValue objc;
-    quorumSnapshotAtHMinusC.ToJson(objc);
-    obj.pushKV("quorumSnapshotAtHMinusC", objc);
-
-    UniValue obj2c;
-    quorumSnapshotAtHMinus2C.ToJson(obj2c);
-    obj.pushKV("quorumSnapshotAtHMinus2C", obj2c);
-
-    UniValue obj3c;
-    quorumSnapshotAtHMinus3C.ToJson(obj3c);
-    obj.pushKV("quorumSnapshotAtHMinus3C", obj3c);
+    obj.pushKV("quorumSnapshotAtHMinusC", quorumSnapshotAtHMinusC.ToJson());
+    obj.pushKV("quorumSnapshotAtHMinus2C", quorumSnapshotAtHMinus2C.ToJson());
+    obj.pushKV("quorumSnapshotAtHMinus3C", quorumSnapshotAtHMinus3C.ToJson());
 
     if (extraShare && quorumSnapshotAtHMinus4C.has_value()) {
-        UniValue obj4c;
-        quorumSnapshotAtHMinus4C.value().ToJson(obj4c);
-        obj.pushKV("quorumSnapshotAtHMinus4C", obj4c);
+        obj.pushKV("quorumSnapshotAtHMinus4C", quorumSnapshotAtHMinus4C->ToJson());
     }
 
-    UniValue objdifftip;
-    mnListDiffTip.ToJson(objdifftip);
-    obj.pushKV("mnListDiffTip", objdifftip);
-
-    UniValue objdiffh;
-    mnListDiffH.ToJson(objdiffh);
-    obj.pushKV("mnListDiffH", objdiffh);
-
-    UniValue objdiffc;
-    mnListDiffAtHMinusC.ToJson(objdiffc);
-    obj.pushKV("mnListDiffAtHMinusC", objdiffc);
-
-    UniValue objdiff2c;
-    mnListDiffAtHMinus2C.ToJson(objdiff2c);
-    obj.pushKV("mnListDiffAtHMinus2C", objdiff2c);
-
-    UniValue objdiff3c;
-    mnListDiffAtHMinus3C.ToJson(objdiff3c);
-    obj.pushKV("mnListDiffAtHMinus3C", objdiff3c);
+    obj.pushKV("mnListDiffTip", mnListDiffTip.ToJson());
+    obj.pushKV("mnListDiffH", mnListDiffH.ToJson());
+    obj.pushKV("mnListDiffAtHMinusC", mnListDiffAtHMinusC.ToJson());
+    obj.pushKV("mnListDiffAtHMinus2C", mnListDiffAtHMinus2C.ToJson());
+    obj.pushKV("mnListDiffAtHMinus3C", mnListDiffAtHMinus3C.ToJson());
 
     if (extraShare && mnListDiffAtHMinus4C.has_value()) {
-        UniValue objdiff4c;
-        mnListDiffAtHMinus4C.value().ToJson(objdiff4c);
-        obj.pushKV("mnListDiffAtHMinus4C", objdiff4c);
+        obj.pushKV("mnListDiffAtHMinus4C", mnListDiffAtHMinus4C->ToJson());
     }
     UniValue hqclists(UniValue::VARR);
     for (const auto& qc : lastCommitmentPerIndex) {
-        UniValue objqc;
-        qc.ToJson(objqc);
-        hqclists.push_back(objqc);
+        hqclists.push_back(qc.ToJson());
     }
     obj.pushKV("lastCommitmentPerIndex", hqclists);
 
     UniValue snapshotlist(UniValue::VARR);
     for (const auto& snap : quorumSnapshotList) {
-        UniValue o;
-        o.setObject();
-        snap.ToJson(o);
-        snapshotlist.push_back(o);
+        snapshotlist.push_back(snap.ToJson());
     }
     obj.pushKV("quorumSnapshotList", snapshotlist);
 
     UniValue mnlistdifflist(UniValue::VARR);
     for (const auto& mnlist : mnListDiffList) {
-        UniValue o;
-        o.setObject();
-        mnlist.ToJson(o);
-        mnlistdifflist.push_back(o);
+        mnlistdifflist.push_back(mnlist.ToJson());
     }
     obj.pushKV("mnListDiffList", mnlistdifflist);
+    return obj;
 }
 
 bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotationInfo& response,
@@ -132,7 +101,7 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
         baseBlockIndexes.push_back(blockIndex);
     } else {
         for (const auto& blockHash : request.baseBlockHashes) {
-            const CBlockIndex* blockIndex = LookupBlockIndex(blockHash);
+            const CBlockIndex* blockIndex = g_chainman.m_blockman.LookupBlockIndex(blockHash);
             if (!blockIndex) {
                 errorRet = strprintf("block %s not found", blockHash.ToString());
                 return false;
@@ -158,7 +127,7 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
         return false;
     }
 
-    const CBlockIndex* blockIndex = LookupBlockIndex(request.blockRequestHash);
+    const CBlockIndex* blockIndex = g_chainman.m_blockman.LookupBlockIndex(request.blockRequestHash);
     if (!blockIndex) {
         errorRet = strprintf("block not found");
         return false;
@@ -251,7 +220,7 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
 
     auto snapshotHMinus2C = quorumSnapshotManager->GetSnapshotForBlock(llmqType, pBlockHMinus2CIndex);
     if (!snapshotHMinus2C.has_value()) {
-        errorRet = strprintf("Can not find quorum snapshot at H-C");
+        errorRet = strprintf("Can not find quorum snapshot at H-2C");
         return false;
     } else {
         response.quorumSnapshotAtHMinus2C = std::move(snapshotHMinus2C.value());
@@ -263,7 +232,7 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
 
     auto snapshotHMinus3C = quorumSnapshotManager->GetSnapshotForBlock(llmqType, pBlockHMinus3CIndex);
     if (!snapshotHMinus3C.has_value()) {
-        errorRet = strprintf("Can not find quorum snapshot at H-C");
+        errorRet = strprintf("Can not find quorum snapshot at H-3C");
         return false;
     } else {
         response.quorumSnapshotAtHMinus3C = std::move(snapshotHMinus3C.value());
@@ -352,7 +321,7 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
     return true;
 }
 
-uint256 GetLastBaseBlockHash(const std::vector<const CBlockIndex*>& baseBlockIndexes, const CBlockIndex* blockIndex)
+uint256 GetLastBaseBlockHash(Span<const CBlockIndex*> baseBlockIndexes, const CBlockIndex* blockIndex)
 {
     uint256 hash;
     for (const auto baseBlock : baseBlockIndexes) {

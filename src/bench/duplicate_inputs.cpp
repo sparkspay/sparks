@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,7 +13,6 @@
 #include <validation.h>
 
 
-
 static void DuplicateInputs(benchmark::Bench& bench)
 {
     RegTestingSetup test_setup;
@@ -26,7 +25,8 @@ static void DuplicateInputs(benchmark::Bench& bench)
     CMutableTransaction coinbaseTx{};
     CMutableTransaction naughtyTx{};
 
-    CBlockIndex* pindexPrev = ::ChainActive().Tip();
+    assert(std::addressof(::ChainActive()) == std::addressof(test_setup.m_node.chainman->ActiveChain()));
+    CBlockIndex* pindexPrev = test_setup.m_node.chainman->ActiveChain().Tip();
     assert(pindexPrev != nullptr);
     block.nBits = GetNextWorkRequired(pindexPrev, &block, chainparams.GetConsensus());
     block.nNonce = 0;
@@ -37,7 +37,7 @@ static void DuplicateInputs(benchmark::Bench& bench)
     coinbaseTx.vin[0].prevout.SetNull();
     coinbaseTx.vout.resize(1);
     coinbaseTx.vout[0].scriptPubKey = SCRIPT_PUB;
-    coinbaseTx.vout[0].nValue = GetBlockSubsidy(block.nBits, nHeight, chainparams.GetConsensus());
+    coinbaseTx.vout[0].nValue = GetBlockSubsidyInner(block.nBits, nHeight, chainparams.GetConsensus(), /*fV20Active=*/ false);
     coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
 
     naughtyTx.vout.resize(1);
@@ -56,7 +56,7 @@ static void DuplicateInputs(benchmark::Bench& bench)
     block.hashMerkleRoot = BlockMerkleRoot(block);
 
     bench.minEpochIterations(10).run([&] {
-        CValidationState cvstate{};
+        BlockValidationState cvstate{};
         assert(!CheckBlock(block, cvstate, chainparams.GetConsensus(), false, false));
         assert(cvstate.GetRejectReason() == "bad-txns-inputs-duplicate");
     });

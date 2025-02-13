@@ -12,10 +12,12 @@
 #include <util/strencodings.h>
 #include <util/underlying.h>
 
+#include <gsl/pointers.h>
+
 #include <univalue.h>
 
 class CBlockIndex;
-class CValidationState;
+class TxValidationState;
 
 namespace llmq
 {
@@ -59,7 +61,7 @@ public:
         return int(std::count(validMembers.begin(), validMembers.end(), true));
     }
 
-    bool Verify(const CBlockIndex* pQuorumBaseBlockIndex, bool checkSigs) const;
+    bool Verify(gsl::not_null<const CBlockIndex*> pQuorumBaseBlockIndex, bool checkSigs) const;
     bool VerifyNull() const;
     bool VerifySizes(const Consensus::LLMQParams& params) const;
 
@@ -111,8 +113,9 @@ public:
         return true;
     }
 
-    void ToJson(UniValue& obj) const
+    [[nodiscard]] UniValue ToJson() const
     {
+        UniValue obj;
         obj.setObject();
         obj.pushKV("version", int{nVersion});
         obj.pushKV("llmqType", ToUnderlying(llmqType));
@@ -126,6 +129,7 @@ public:
         obj.pushKV("quorumVvecHash", quorumVvecHash.ToString());
         obj.pushKV("quorumSig", quorumSig.ToString(nVersion == LEGACY_BLS_NON_INDEXED_QUORUM_VERSION || nVersion == LEGACY_BLS_INDEXED_QUORUM_VERSION));
         obj.pushKV("membersSig", membersSig.ToString(nVersion == LEGACY_BLS_NON_INDEXED_QUORUM_VERSION || nVersion == LEGACY_BLS_INDEXED_QUORUM_VERSION));
+        return obj;
     }
 
 private:
@@ -156,19 +160,18 @@ public:
         READWRITE(obj.nVersion, obj.nHeight, obj.commitment);
     }
 
-    void ToJson(UniValue& obj) const
+    [[nodiscard]] UniValue ToJson() const
     {
+        UniValue obj;
         obj.setObject();
         obj.pushKV("version", int{nVersion});
         obj.pushKV("height", int(nHeight));
-
-        UniValue qcObj;
-        commitment.ToJson(qcObj);
-        obj.pushKV("commitment", qcObj);
+        obj.pushKV("commitment", commitment.ToJson());
+        return obj;
     }
 };
 
-bool CheckLLMQCommitment(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state);
+bool CheckLLMQCommitment(const CTransaction& tx, gsl::not_null<const CBlockIndex*> pindexPrev, TxValidationState& state);
 
 } // namespace llmq
 

@@ -5,8 +5,9 @@
 # See "man systemd.service" for details.
 
 # Note that almost all daemon options could be specified in
-# /etc/sparks/sparks.conf, except for those explicitly specified as arguments
-# in ExecStart=
+# /etc/sparks/sparks.conf, but keep in mind those explicitly
+# specified as arguments in ExecStart= will override those in the
+# config file.
 
 [Unit]
 Description=Sparks daemon
@@ -17,6 +18,10 @@ ExecStart=/usr/bin/sparksd -daemon \
                                                             -pid=/run/sparksd/sparksd.pid \
                                                             -conf=/etc/sparks/sparks.conf  \
                                                             -datadir=/var/lib/sparksd
+
+# Make sure the config directory is readable by the service user
+PermissionsStartOnly=true
+ExecStartPre=/bin/chgrp sparkscore /etc/sparks
 
 # Process management
 ####################
@@ -53,6 +58,9 @@ PrivateTmp=true
 
 # Mount /usr, /boot/ and /etc read-only for the process.
 ProtectSystem=full
+
+# Deny access to /home, /root and /run/user
+ProtectHome=true
 
 # Disallow the process and all of its children to gain
 # new privileges through execve().

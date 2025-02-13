@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2016 The Bitcoin Core developers
+# Copyright (c) 2015-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test BIP65 (CHECKLOCKTIMEVERIFY).
@@ -60,19 +60,17 @@ class BIP65Test(BitcoinTestFramework):
             '-dip3params=9000:9000',
             '-par=1',  # Use only one script thread to get the exact reject reason for testing
             '-acceptnonstdtxn=1',  # cltv_invalidate is nonstandard
+            '-vbparams=v20:0:999999999999:480:384:288:5:0' # Delay v20 for this test as we don't need it
         ]]
         self.setup_clean_chain = True
-        self.rpc_timeout = 120
+        self.rpc_timeout = 480
 
     def test_cltv_info(self, *, is_active):
-        assert_equal(
-            next(s for s in self.nodes[0].getblockchaininfo()['softforks'] if s['id'] == 'bip65'),
+        assert_equal(self.nodes[0].getblockchaininfo()['softforks']['bip65'],
             {
-                "id": "bip65",
-                "version": 4,
-                "reject": {
-                    "status": is_active
-                }
+                "active": is_active,
+                "height": CLTV_HEIGHT,
+                "type": "buried",
             },
         )
 
@@ -103,9 +101,9 @@ class BIP65Test(BitcoinTestFramework):
         block.hashMerkleRoot = block.calc_merkle_root()
         block.solve()
 
-        self.test_cltv_info(is_active=False)
+        self.test_cltv_info(is_active=False)  # Not active as of current tip and next block does not need to obey rules
         self.nodes[0].p2p.send_and_ping(msg_block(block))
-        self.test_cltv_info(is_active=False)  # Not active as of current tip, but next block must obey rules
+        self.test_cltv_info(is_active=True)  # Not active as of current tip, but next block must obey rules
         assert_equal(self.nodes[0].getbestblockhash(), block.hash)
 
         self.log.info("Test that blocks must now be at least version 4")
@@ -130,14 +128,14 @@ class BIP65Test(BitcoinTestFramework):
 
         # First we show that this tx is valid except for CLTV by getting it
         # rejected from the mempool for exactly that reason.
-        assert_raises_rpc_error(-26, 'non-mandatory-script-verify-flag (Negative locktime) (code 64)', self.nodes[0].sendrawtransaction, spendtx.serialize().hex(), 0)
+        assert_raises_rpc_error(-26, 'non-mandatory-script-verify-flag (Negative locktime)', self.nodes[0].sendrawtransaction, spendtx.serialize().hex(), 0)
 
         # Now we verify that a block with this transaction is also invalid.
         block.vtx.append(spendtx)
         block.hashMerkleRoot = block.calc_merkle_root()
         block.solve()
 
-        with self.nodes[0].assert_debug_log(expected_msgs=['CheckInputs on {} failed with non-mandatory-script-verify-flag (Negative locktime)'.format(block.vtx[-1].hash)]):
+        with self.nodes[0].assert_debug_log(expected_msgs=['CheckInputScripts on {} failed with non-mandatory-script-verify-flag (Negative locktime)'.format(block.vtx[-1].hash)]):
             self.nodes[0].p2p.send_and_ping(msg_block(block))
             assert_equal(int(self.nodes[0].getbestblockhash(), 16), tip)
             self.nodes[0].p2p.sync_with_ping()
@@ -151,7 +149,7 @@ class BIP65Test(BitcoinTestFramework):
         block.hashMerkleRoot = block.calc_merkle_root()
         block.solve()
 
-        self.test_cltv_info(is_active=False)  # Not active as of current tip, but next block must obey rules
+        self.test_cltv_info(is_active=True)  # Not active as of current tip, but next block must obey rules
         self.nodes[0].p2p.send_and_ping(msg_block(block))
         self.test_cltv_info(is_active=True)  # Active as of current tip
         assert_equal(int(self.nodes[0].getbestblockhash(), 16), block.sha256)

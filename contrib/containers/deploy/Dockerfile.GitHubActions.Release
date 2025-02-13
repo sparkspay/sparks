@@ -1,4 +1,4 @@
-FROM ubuntu:bionic
+FROM ubuntu:focal
 LABEL maintainer="Sparks Developers <dev@sparkspay.io>"
 LABEL description="Dockerised SparksCore"
 

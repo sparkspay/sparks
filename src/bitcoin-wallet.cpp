@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2018 The Bitcoin Core developers
+// Copyright (c) 2016-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -12,15 +12,18 @@
 #include <util/strencodings.h>
 #include <util/system.h>
 #include <util/translation.h>
+#include <util/url.h>
 #include <wallet/wallettool.h>
 
 const std::function<std::string(const char*)> G_TRANSLATION_FUN = nullptr;
+UrlDecodeFn* const URL_DECODE = nullptr;
 
 static void SetupWalletToolArgs(ArgsManager& argsman)
 {
     SetupHelpOptions(argsman);
     SetupChainParamsBaseOptions(argsman);
 
+    argsman.AddArg("-version", "Print version and exit", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-datadir=<dir>", "Specify data directory", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-wallet=<wallet-name>", "Specify wallet name", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-debug=<category>", "Output debugging information (default: 0).", ArgsManager::ALLOW_ANY, OptionsCategory::DEBUG_TEST);
@@ -30,7 +33,7 @@ static void SetupWalletToolArgs(ArgsManager& argsman)
     argsman.AddArg("create", "Create new wallet file", ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
 
     // Hidden
-    argsman.AddArg("salvage", "Attempt to recover private keys from a corrupt wallet", ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
+    argsman.AddArg("salvage", "Attempt to recover private keys from a corrupt wallet. Warning: 'salvage' is experimental.", ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
     argsman.AddArg("wipetxes", "Wipe all transactions from a wallet", ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
 }
 
@@ -42,16 +45,18 @@ static bool WalletAppInit(int argc, char* argv[])
         tfm::format(std::cerr, "Error parsing command line arguments: %s\n", error_message);
         return false;
     }
-    if (argc < 2 || HelpRequested(gArgs)) {
-        std::string usage = strprintf("%s sparks-wallet version", PACKAGE_NAME) + " " + FormatFullVersion() + "\n\n" +
-                                      "sparks-wallet is an offline tool for creating and interacting with Dash Core wallet files.\n" +
-                                      "By default sparks-wallet will act on wallets in the default mainnet wallet directory in the datadir.\n" +
-                                      "To change the target wallet, use the -datadir, -wallet and -testnet/-regtest arguments.\n\n" +
-                                      "Usage:\n" +
-                                     "  sparks-wallet [options] <command>\n\n" +
-                                     gArgs.GetHelpMessage();
-
-        tfm::format(std::cout, "%s", usage);
+    if (argc < 2 || HelpRequested(gArgs) || gArgs.IsArgSet("-version")) {
+        std::string strUsage = strprintf("%s sparks-wallet version", PACKAGE_NAME) + " " + FormatFullVersion() + "\n";
+            if (!gArgs.IsArgSet("-version")) {
+                strUsage += "\n"
+                    "sparks-wallet is an offline tool for creating and interacting with " PACKAGE_NAME " wallet files.\n"
+                    "By default sparks-wallet will act on wallets in the default mainnet wallet directory in the datadir.\n"
+                    "To change the target wallet, use the -datadir, -wallet and -testnet/-regtest arguments.\n\n"
+                    "Usage:\n"
+                    "  sparks-wallet [options] <command>\n";
+                strUsage += "\n" + gArgs.GetHelpMessage();
+            }
+        tfm::format(std::cout, "%s", strUsage);
         return false;
     }
 

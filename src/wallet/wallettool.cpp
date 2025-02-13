@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2018 The Bitcoin Core developers
+// Copyright (c) 2016-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -23,9 +23,11 @@ static void WalletToolReleaseWallet(CWallet* wallet)
 
 static void WalletCreate(CWallet* wallet_instance)
 {
+    LOCK(wallet_instance->cs_wallet);
     wallet_instance->SetMinVersion(FEATURE_COMPRPUBKEY);
 
     // generate a new HD seed
+    wallet_instance->SetupLegacyScriptPubKeyMan();
     // NOTE: we do not yet create HD wallets by default
     // auto spk_man = wallet_instance->GetLegacyScriptPubKeyMan();
     // spk_man->GenerateNewHDChain("", "");
@@ -99,7 +101,7 @@ static void WalletShowInfo(CWallet* wallet_instance)
     tfm::format(std::cout, "HD (hd seed available): %s\n", wallet_instance->IsHDEnabled() ? "yes" : "no");
     tfm::format(std::cout, "Keypool Size: %u\n", wallet_instance->GetKeyPoolSize());
     tfm::format(std::cout, "Transactions: %zu\n", wallet_instance->mapWallet.size());
-    tfm::format(std::cout, "Address Book: %zu\n", wallet_instance->mapAddressBook.size());
+    tfm::format(std::cout, "Address Book: %zu\n", wallet_instance->m_address_book.size());
 }
 
 bool ExecuteWalletToolFunc(const std::string& command, const std::string& name)

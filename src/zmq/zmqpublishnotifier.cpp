@@ -1,4 +1,4 @@
-// Copyright (c) 2015 The Bitcoin Core developers
+// Copyright (c) 2015-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,6 +6,7 @@
 
 #include <chain.h>
 #include <chainparams.h>
+#include <node/blockstorage.h>
 #include <streams.h>
 #include <validation.h>
 #include <zmq/zmqutil.h>
@@ -380,7 +381,7 @@ bool CZMQPublishRawGovernanceVoteNotifier::NotifyGovernanceVote(const std::share
 bool CZMQPublishRawGovernanceObjectNotifier::NotifyGovernanceObject(const std::shared_ptr<const CGovernanceObject>& govobj)
 {
     uint256 nHash = govobj->GetHash();
-    LogPrint(BCLog::ZMQ, "zmq: Publish rawgovernanceobject: hash = %s, type = %d\n", nHash.ToString(), govobj->GetObjectType());
+    LogPrint(BCLog::ZMQ, "zmq: Publish rawgovernanceobject: hash = %s, type = %d\n", nHash.ToString(), ToUnderlying(govobj->GetObjectType()));
     CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
     ss << *govobj;
     return SendZmqMessage(MSG_RAWGOBJ, &(*ss.begin()), ss.size());

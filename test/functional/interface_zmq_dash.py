@@ -12,7 +12,7 @@ import random
 import struct
 import time
 
-from test_framework.test_framework import DashTestFramework
+from test_framework.test_framework import SparksTestFramework
 from test_framework.mininode import P2PInterface
 from test_framework.util import assert_equal, assert_raises_rpc_error
 from test_framework.messages import (
@@ -190,7 +190,8 @@ class SparksZMQTest (SparksTestFramework):
 
         def validate_recovered_sig(request_id, msg_hash):
             # Make sure the recovered sig exists by RPC
-            rpc_recovered_sig = self.get_recovered_sig(request_id, msg_hash)
+            self.wait_for_recovered_sig(request_id, msg_hash)
+            rpc_recovered_sig = self.mninfo[0].node.quorum('getrecsig', 100, request_id, msg_hash)
             # Validate hashrecoveredsig
             zmq_recovered_sig_hash = self.subscribers[ZMQPublisher.hash_recovered_sig].receive().read(32).hex()
             assert_equal(zmq_recovered_sig_hash, msg_hash)

@@ -17,10 +17,12 @@
 
 #include <unordered_map>
 
-using NodeId = int64_t;
 class CConnman;
 class CInv;
 class CNode;
+class PeerManager;
+
+using NodeId = int64_t;
 
 namespace llmq
 {
@@ -107,7 +109,7 @@ class CRecoveredSigsDb
 private:
     std::unique_ptr<CDBWrapper> db{nullptr};
 
-    mutable CCriticalSection cs;
+    mutable RecursiveMutex cs;
     mutable unordered_lru_cache<std::pair<Consensus::LLMQType, uint256>, bool, StaticSaltedHasher, 30000> hasSigForIdCache GUARDED_BY(cs);
     mutable unordered_lru_cache<uint256, bool, StaticSaltedHasher, 30000> hasSigForSessionCache GUARDED_BY(cs);
     mutable unordered_lru_cache<uint256, bool, StaticSaltedHasher, 30000> hasSigForHashCache GUARDED_BY(cs);
@@ -162,11 +164,13 @@ class CSigningManager
     static constexpr int SIGN_HEIGHT_OFFSET{8};
 
 private:
-    mutable CCriticalSection cs;
+    mutable RecursiveMutex cs;
 
     CRecoveredSigsDb db;
     CConnman& connman;
     const CQuorumManager& qman;
+
+    const std::unique_ptr<PeerManager>& m_peerman;
 
     // Incoming and not verified yet
     std::unordered_map<NodeId, std::list<std::shared_ptr<const CRecoveredSig>>> pendingRecoveredSigs GUARDED_BY(cs);
@@ -179,7 +183,8 @@ private:
     std::vector<CRecoveredSigsListener*> recoveredSigsListeners GUARDED_BY(cs);
 
 public:
-    CSigningManager(CConnman& _connman, const CQuorumManager& _qman, bool fMemory, bool fWipe);
+    CSigningManager(CConnman& _connman, const CQuorumManager& _qman,
+                    const std::unique_ptr<PeerManager>& peerman, bool fMemory, bool fWipe);
 
     bool AlreadyHave(const CInv& inv) const;
     bool GetRecoveredSigForGetData(const uint256& hash, CRecoveredSig& ret) const;

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Bitcoin Core developers
+// Copyright (c) 2018-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -24,7 +24,7 @@ public:
 
     // Sparks Specific WalletInitInterface InitCoinJoinSettings
     void AutoLockMasternodeCollaterals() const override {}
-    void InitCoinJoinSettings() const override {}
+    void InitCoinJoinSettings(const CJClientManager& clientman) const override {}
     bool InitAutoBackup() const override {return true;}
 };
 
@@ -74,7 +74,7 @@ const WalletInitInterface& g_wallet_init_interface = DummyWalletInit();
 
 namespace interfaces {
 
-std::unique_ptr<Wallet> MakeWallet(const std::shared_ptr<CWallet>& wallet)
+std::unique_ptr<Wallet> MakeWallet(const std::shared_ptr<CWallet>& wallet, const CJClientManager& clientman)
 {
     throw std::logic_error("Wallet function called in non-wallet build.");
 }

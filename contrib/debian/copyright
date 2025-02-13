@@ -4,8 +4,8 @@ Upstream-Contact: Sparks Core Group, Inc https://www.sparkspay.io/team/
 Source: https://github.com/sparkspay/sparks
 
 Files: *
-Copyright: 2009-2017, Bitcoin Core Developers,
-           2019-2020, Sparks Core Developers
+Copyright: 2009-2020, Bitcoin Core Developers,
+           2019-2020, Dash Core Developers
 License: Expat
 Comment: The Bitcoin Core Developers encompasses the current developers listed on bitcoin.org,
          as well as the numerous contributors to the project. The Sparks Core Developers

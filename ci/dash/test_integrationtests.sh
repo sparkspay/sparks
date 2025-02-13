@@ -18,7 +18,12 @@ if [ "$RUN_INTEGRATION_TESTS" != "true" ]; then
   exit 0
 fi
 
-export LD_LIBRARY_PATH=$BASE_BUILD_DIR/depends/$HOST/lib
+export LD_LIBRARY_PATH=$DEPENDS_DIR/$HOST/lib
+
+if [ -n "$PREVIOUS_RELEASES_TO_DOWNLOAD" ]; then
+  echo "Downloading previous releases: $PREVIOUS_RELEASES_TO_DOWNLOAD"
+  ./test/get_previous_releases.py -b -t "$PREVIOUS_RELEASES_DIR" ${PREVIOUS_RELEASES_TO_DOWNLOAD}
+fi
 
 cd build-ci/sparkscore-$BUILD_TARGET
 
@@ -37,7 +42,7 @@ echo "Using socketevents mode: $SOCKETEVENTS"
 EXTRA_ARGS="--sparksd-arg=-socketevents=$SOCKETEVENTS"
 
 set +e
-./test/functional/test_runner.py --ci --combinedlogslen=4000 ${TEST_RUNNER_EXTRA} --failfast --nocleanup --tmpdir=$(pwd)/testdatadirs $PASS_ARGS $EXTRA_ARGS
+./test/functional/test_runner.py --ci --attempts=3 --ansi --combinedlogslen=4000 ${TEST_RUNNER_EXTRA} --failfast --nocleanup --tmpdir=$(pwd)/testdatadirs $PASS_ARGS $EXTRA_ARGS
 RESULT=$?
 set -e
 
@@ -51,7 +56,8 @@ if [ "$BASEDIR" != "" ]; then
     [[ "$d" != "cache" ]] || continue # skip cache dir
     mkdir testlogs/$d
     PYTHONIOENCODING=UTF-8 ./test/functional/combine_logs.py -c ./testdatadirs/$BASEDIR/$d > ./testlogs/$d/combined.log
-    PYTHONIOENCODING=UTF-8 ./test/functional/combine_logs.py --html ./testdatadirs/$BASEDIR/$d > ./testlogs/$d/combined.html
+    # Disabled creation of combined.html: 40% smaller CI job artifacts
+    # PYTHONIOENCODING=UTF-8 ./test/functional/combine_logs.py --html ./testdatadirs/$BASEDIR/$d > ./testlogs/$d/combined.html
     cd testdatadirs/$BASEDIR/$d
     LOGFILES="$(find . -name 'debug.log' -or -name "test_framework.log")"
     cd ../../..

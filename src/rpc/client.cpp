@@ -1,5 +1,5 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Copyright (c) 2014-2022 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -105,7 +105,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "getchaintxstats", 0, "nblocks" },
     { "getmerkleblocks", 2, "count" },
     { "gettransaction", 1, "include_watchonly" },
+    { "gettransaction", 2, "verbose" },
     { "getrawtransaction", 1, "verbose" },
+    { "gettxchainlocks", 0, "txids" },
     { "createrawtransaction", 0, "inputs" },
     { "createrawtransaction", 1, "outputs" },
     { "createrawtransaction", 2, "locktime" },
@@ -136,6 +138,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "gettxout", 1, "n" },
     { "gettxout", 2, "include_mempool" },
     { "gettxoutproof", 0, "txids" },
+    { "gettxoutsetinfo", 1, "hash_or_height" },
+    { "gettxoutsetinfo", 2, "use_index"},
     { "lockunspent", 0, "unlock" },
     { "lockunspent", 1, "transactions" },
     { "importprivkey", 2, "rescan" },
@@ -205,6 +209,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "unloadwallet", 1, "load_on_startup"},
     { "upgradetohd", 3, "rescan"},
     { "getnodeaddresses", 0, "count"},
+    { "addpeeraddress", 1, "port"},
     { "stop", 0, "wait" },
 };
 // clang-format on
@@ -249,7 +254,7 @@ UniValue ParseNonRFCJSONValue(const std::string& strVal)
     UniValue jVal;
     if (!jVal.read(std::string("[")+strVal+std::string("]")) ||
         !jVal.isArray() || jVal.size()!=1)
-        throw std::runtime_error(std::string("Error parsing JSON:")+strVal);
+        throw std::runtime_error(std::string("Error parsing JSON: ") + strVal);
     return jVal[0];
 }
 
@@ -275,11 +280,13 @@ UniValue RPCConvertValues(const std::string &strMethod, const std::vector<std::s
 UniValue RPCConvertNamedValues(const std::string &strMethod, const std::vector<std::string> &strParams)
 {
     UniValue params(UniValue::VOBJ);
+    UniValue positional_args{UniValue::VARR};
 
     for (const std::string &s: strParams) {
         size_t pos = s.find('=');
         if (pos == std::string::npos) {
-            throw(std::runtime_error("No '=' in named argument '"+s+"', this needs to be present for every argument (even if it is empty)"));
+            positional_args.push_back(rpcCvtTable.convert(strMethod, positional_args.size()) ? ParseNonRFCJSONValue(s) : s);
+            continue;
         }
 
         std::string name = s.substr(0, pos);
@@ -292,6 +299,10 @@ UniValue RPCConvertNamedValues(const std::string &strMethod, const std::vector<s
             // parse string as JSON, insert bool/number/object/etc. value
             params.pushKV(name, ParseNonRFCJSONValue(value));
         }
+    }
+
+    if (!positional_args.empty()) {
+        params.pushKV("args", positional_args);
     }
 
     return params;

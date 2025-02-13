@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Bitcoin Core developers
+// Copyright (c) 2019-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -60,7 +60,7 @@ FUZZ_TARGET_INIT(transaction, initialize_transaction)
         return;
     }
 
-    CValidationState state_with_dupe_check;
+    TxValidationState state_with_dupe_check;
     (void)CheckTransaction(tx, state_with_dupe_check);
 
     std::string reason;

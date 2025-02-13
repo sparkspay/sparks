@@ -23,18 +23,17 @@
 
 #include <univalue.h>
 
-std::unique_ptr<CCoinJoinServer> coinJoinServer;
 constexpr static CAmount DEFAULT_MAX_RAW_TX_FEE{COIN / 10};
 
-void CCoinJoinServer::ProcessMessage(CNode& peer, std::string_view msg_type, CDataStream& vRecv)
+void CCoinJoinServer::ProcessMessage(CNode& peer, PeerManager& peerman, std::string_view msg_type, CDataStream& vRecv)
 {
     if (!fMasternodeMode) return;
-    if (!m_mn_sync->IsBlockchainSynced()) return;
+    if (!m_mn_sync.IsBlockchainSynced()) return;
 
     if (msg_type == NetMsgType::DSACCEPT) {
         ProcessDSACCEPT(peer, vRecv);
     } else if (msg_type == NetMsgType::DSQUEUE) {
-        ProcessDSQUEUE(peer, vRecv);
+        ProcessDSQUEUE(peer, peerman, vRecv);
     } else if (msg_type == NetMsgType::DSVIN) {
         ProcessDSVIN(peer, vRecv);
     } else if (msg_type == NetMsgType::DSSIGNFINALTX) {
@@ -79,9 +78,9 @@ void CCoinJoinServer::ProcessDSACCEPT(CNode& peer, CDataStream& vRecv)
             }
         }
 
-        int64_t nLastDsq = mmetaman.GetMetaInfo(dmn->proTxHash)->GetLastDsq();
-        int64_t nDsqThreshold = mmetaman.GetDsqThreshold(dmn->proTxHash, mnList.GetValidMNsCount());
-        if (nLastDsq != 0 && nDsqThreshold > mmetaman.GetDsqCount()) {
+        int64_t nLastDsq = mmetaman->GetMetaInfo(dmn->proTxHash)->GetLastDsq();
+        int64_t nDsqThreshold = mmetaman->GetDsqThreshold(dmn->proTxHash, mnList.GetValidMNsCount());
+        if (nLastDsq != 0 && nDsqThreshold > mmetaman->GetDsqCount()) {
             if (fLogIPs) {
                 LogPrint(BCLog::COINJOIN, "DSACCEPT -- last dsq too recent, must wait: peer=%d, addr=%s\n", peer.GetId(), peer.addr.ToString());
             } else {
@@ -107,14 +106,13 @@ void CCoinJoinServer::ProcessDSACCEPT(CNode& peer, CDataStream& vRecv)
     }
 }
 
-void CCoinJoinServer::ProcessDSQUEUE(const CNode& peer, CDataStream& vRecv)
+void CCoinJoinServer::ProcessDSQUEUE(const CNode& peer, PeerManager& peerman, CDataStream& vRecv)
 {
     CCoinJoinQueue dsq;
     vRecv >> dsq;
 
     if (dsq.masternodeOutpoint.IsNull() && dsq.m_protxHash.IsNull()) {
-        LOCK(cs_main);
-        Misbehaving(peer.GetId(), 100);
+        peerman.Misbehaving(peer.GetId(), 100);
         return;
     }
 
@@ -123,8 +121,7 @@ void CCoinJoinServer::ProcessDSQUEUE(const CNode& peer, CDataStream& vRecv)
         if (auto dmn = mnList.GetValidMN(dsq.m_protxHash)) {
             dsq.masternodeOutpoint = dmn->collateralOutpoint;
         } else {
-            LOCK(cs_main);
-            Misbehaving(peer.GetId(), 10);
+            peerman.Misbehaving(peer.GetId(), 10);
             return;
         }
     }
@@ -159,21 +156,20 @@ void CCoinJoinServer::ProcessDSQUEUE(const CNode& peer, CDataStream& vRecv)
     }
 
     if (!dsq.CheckSignature(dmn->pdmnState->pubKeyOperator.Get())) {
-        LOCK(cs_main);
-        Misbehaving(peer.GetId(), 10);
+        peerman.Misbehaving(peer.GetId(), 10);
         return;
     }
 
     if (!dsq.fReady) {
-        int64_t nLastDsq = mmetaman.GetMetaInfo(dmn->proTxHash)->GetLastDsq();
-        int64_t nDsqThreshold = mmetaman.GetDsqThreshold(dmn->proTxHash, mnList.GetValidMNsCount());
-        LogPrint(BCLog::COINJOIN, "DSQUEUE -- nLastDsq: %d  nDsqThreshold: %d  nDsqCount: %d\n", nLastDsq, nDsqThreshold, mmetaman.GetDsqCount());
+        int64_t nLastDsq = mmetaman->GetMetaInfo(dmn->proTxHash)->GetLastDsq();
+        int64_t nDsqThreshold = mmetaman->GetDsqThreshold(dmn->proTxHash, mnList.GetValidMNsCount());
+        LogPrint(BCLog::COINJOIN, "DSQUEUE -- nLastDsq: %d  nDsqThreshold: %d  nDsqCount: %d\n", nLastDsq, nDsqThreshold, mmetaman->GetDsqCount());
         //don't allow a few nodes to dominate the queuing process
-        if (nLastDsq != 0 && nDsqThreshold > mmetaman.GetDsqCount()) {
+        if (nLastDsq != 0 && nDsqThreshold > mmetaman->GetDsqCount()) {
             LogPrint(BCLog::COINJOIN, "DSQUEUE -- Masternode %s is sending too many dsq messages\n", dmn->pdmnState->addr.ToString());
             return;
         }
-        mmetaman.AllowMixing(dmn->proTxHash);
+        mmetaman->AllowMixing(dmn->proTxHash);
 
         LogPrint(BCLog::COINJOIN, "DSQUEUE -- new CoinJoin queue (%s) from masternode %s\n", dsq.ToString(), dmn->pdmnState->addr.ToString());
 
@@ -323,9 +319,9 @@ void CCoinJoinServer::CommitFinalTransaction()
     {
         // See if the transaction is valid
         TRY_LOCK(cs_main, lockMain);
-        CValidationState validationState;
+        TxValidationState validationState;
         mempool.PrioritiseTransaction(hashTx, 0.1 * COIN);
-        if (!lockMain || !AcceptToMemoryPool(mempool, validationState, finalTransaction, nullptr /* pfMissingInputs */, false /* bypass_limits */, DEFAULT_MAX_RAW_TX_FEE /* nAbsurdFee */)) {
+        if (!lockMain || !AcceptToMemoryPool(m_chainstate, mempool, validationState, finalTransaction, false /* bypass_limits */, DEFAULT_MAX_RAW_TX_FEE /* nAbsurdFee */)) {
             LogPrint(BCLog::COINJOIN, "CCoinJoinServer::CommitFinalTransaction -- AcceptToMemoryPool() error: Transaction not valid\n");
             WITH_LOCK(cs_coinjoin, SetNull());
             // not much we can do in this case, just notify clients
@@ -457,8 +453,8 @@ void CCoinJoinServer::ChargeRandomFees() const
 void CCoinJoinServer::ConsumeCollateral(const CTransactionRef& txref) const
 {
     LOCK(cs_main);
-    CValidationState validationState;
-    if (!AcceptToMemoryPool(mempool, validationState, txref, nullptr /* pfMissingInputs */, false /* bypass_limits */, 0 /* nAbsurdFee */)) {
+    TxValidationState validationState;
+    if (!AcceptToMemoryPool(m_chainstate, mempool, validationState, txref, false /* bypass_limits */, 0 /* nAbsurdFee */)) {
         LogPrint(BCLog::COINJOIN, "%s -- AcceptToMemoryPool failed\n", __func__);
     } else {
         connman.RelayTransaction(*txref);
@@ -889,17 +885,15 @@ void CCoinJoinServer::SetState(PoolState nStateNew)
     nState = nStateNew;
 }
 
-void CCoinJoinServer::DoMaintenance() const
+void CCoinJoinServer::DoMaintenance()
 {
     if (!fMasternodeMode) return; // only run on masternodes
-    if (m_mn_sync == nullptr || !m_mn_sync->IsBlockchainSynced()) return;
+    if (!m_mn_sync.IsBlockchainSynced()) return;
     if (ShutdownRequested()) return;
 
-    if (!coinJoinServer) return;
-
-    coinJoinServer->CheckForCompleteQueue();
-    coinJoinServer->CheckPool();
-    coinJoinServer->CheckTimeout();
+    CheckForCompleteQueue();
+    CheckPool();
+    CheckTimeout();
 }
 
 void CCoinJoinServer::GetJsonInfo(UniValue& obj) const

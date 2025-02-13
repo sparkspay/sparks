@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -48,7 +48,8 @@ LEAVE_CRITICAL_SECTION(mutex); // no RAII
 ///////////////////////////////
 
 #ifdef DEBUG_LOCKORDER
-void EnterCritical(const char* pszName, const char* pszFile, int nLine, void* cs, bool fTry = false);
+template <typename MutexType>
+void EnterCritical(const char* pszName, const char* pszFile, int nLine, MutexType* cs, bool fTry = false);
 void LeaveCritical();
 void CheckLastCritical(void* cs, std::string& lockname, const char* guardname, const char* file, int line);
 std::string LocksHeld();
@@ -65,7 +66,8 @@ bool LockStackEmpty();
  */
 extern bool g_debug_lockorder_abort;
 #else
-inline void EnterCritical(const char* pszName, const char* pszFile, int nLine, void* cs, bool fTry = false) {}
+template <typename MutexType>
+inline void EnterCritical(const char* pszName, const char* pszFile, int nLine, MutexType* cs, bool fTry = false) {}
 inline void LeaveCritical() {}
 inline void CheckLastCritical(void* cs, std::string& lockname, const char* guardname, const char* file, int line) {}
 template <typename MutexType>
@@ -118,7 +120,6 @@ public:
  * TODO: We should move away from using the recursive lock by default.
  */
 using RecursiveMutex = AnnotatedMixin<std::recursive_mutex>;
-typedef AnnotatedMixin<std::recursive_mutex> CCriticalSection;
 
 /** Wrapped mutex: supports waiting but not recursive locking */
 typedef AnnotatedMixin<std::mutex> Mutex;
@@ -134,7 +135,7 @@ class SCOPED_LOCKABLE UniqueLock : public Base
 private:
     void Enter(const char* pszName, const char* pszFile, int nLine)
     {
-        EnterCritical(pszName, pszFile, nLine, (void*)(Base::mutex()));
+        EnterCritical(pszName, pszFile, nLine, Base::mutex());
 #ifdef DEBUG_LOCKCONTENTION
         if (!Base::try_lock()) {
             PrintLockContention(pszName, pszFile, nLine);
@@ -147,11 +148,12 @@ private:
 
     bool TryEnter(const char* pszName, const char* pszFile, int nLine)
     {
-        EnterCritical(pszName, pszFile, nLine, (void*)(Base::mutex()), true);
-        Base::try_lock();
-        if (!Base::owns_lock())
-            LeaveCritical();
-        return Base::owns_lock();
+        EnterCritical(pszName, pszFile, nLine, Base::mutex(), true);
+        if (Base::try_lock()) {
+            return true;
+        }
+        LeaveCritical();
+        return false;
     }
 
 public:
@@ -204,7 +206,7 @@ public:
 
         ~reverse_lock() {
             templock.swap(lock);
-            EnterCritical(lockname.c_str(), file.c_str(), line, (void*)lock.mutex());
+            EnterCritical(lockname.c_str(), file.c_str(), line, lock.mutex());
             lock.lock();
         }
 
@@ -221,7 +223,7 @@ public:
      friend class reverse_lock;
 };
 
-#define REVERSE_LOCK(g) decltype(g)::reverse_lock PASTE2(revlock, __COUNTER__)(g, #g, __FILE__, __LINE__)
+#define REVERSE_LOCK(g) typename std::decay<decltype(g)>::type::reverse_lock PASTE2(revlock, __COUNTER__)(g, #g, __FILE__, __LINE__)
 
 template<typename MutexArg>
 using DebugLock = UniqueLock<typename std::remove_reference<typename std::remove_pointer<MutexArg>::type>::type>;
@@ -235,14 +237,16 @@ using DebugLock = UniqueLock<typename std::remove_reference<typename std::remove
 
 #define ENTER_CRITICAL_SECTION(cs)                            \
     {                                                         \
-        EnterCritical(#cs, __FILE__, __LINE__, (void*)(&cs)); \
+        EnterCritical(#cs, __FILE__, __LINE__, &cs); \
         (cs).lock();                                          \
     }
 
-#define LEAVE_CRITICAL_SECTION(cs) \
-    {                              \
-        (cs).unlock();             \
-        LeaveCritical();           \
+#define LEAVE_CRITICAL_SECTION(cs)                                          \
+    {                                                                       \
+        std::string lockname;                                               \
+        CheckLastCritical((void*)(&cs), lockname, #cs, __FILE__, __LINE__); \
+        (cs).unlock();                                                      \
+        LeaveCritical();                                                    \
     }
 
 //! Run code while locking a mutex.

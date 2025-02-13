@@ -1,4 +1,4 @@
-// Copyright (c) 2015 The Bitcoin Core developers
+// Copyright (c) 2015-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -28,13 +28,6 @@
 #include <event2/keyvalq_struct.h>
 
 #include <support/events.h>
-
-#ifdef EVENT__HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#ifdef _XOPEN_SOURCE_EXTENDED
-#include <arpa/inet.h>
-#endif
-#endif
 
 #include <thread>
 #include <condition_variable>
@@ -267,7 +260,7 @@ static void http_request_cb(struct evhttp_request* req, void* arg)
             item.release(); /* if true, queue took ownership */
         } else {
             LogPrintf("WARNING: request rejected because http work queue depth exceeded, it can be increased with the -rpcworkqueue= setting\n");
-            item->req->WriteReply(HTTP_INTERNAL_SERVER_ERROR, "Work queue depth exceeded");
+            item->req->WriteReply(HTTP_SERVICE_UNAVAILABLE, "Work queue depth exceeded");
         }
     } else {
         hreq->WriteReply(HTTP_NOT_FOUND);
@@ -347,10 +340,6 @@ static void HTTPWorkQueueRun(WorkQueue<HTTPClosure>* queue, int worker_num)
 /** libevent event log callback */
 static void libevent_log_cb(int severity, const char *msg)
 {
-#ifndef EVENT_LOG_WARN
-// EVENT_LOG_WARN was added in 2.0.19; but before then _EVENT_LOG_WARN existed.
-# define EVENT_LOG_WARN _EVENT_LOG_WARN
-#endif
     if (severity >= EVENT_LOG_WARN) // Log warn messages and higher without debug category
         LogPrintf("libevent: %s\n", msg);
     // The below code causes log spam on Travis and the output of these logs has never been of any use so far

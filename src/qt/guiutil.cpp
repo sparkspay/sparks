@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Copyright (c) 2014-2022 The Dash Core developers
 // Copyright (c) 2016-2022 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
@@ -12,7 +12,7 @@
 #include <qt/bitcoinunits.h>
 #include <qt/optionsdialog.h>
 #include <qt/qvalidatedlineedit.h>
-#include <qt/walletmodel.h>
+#include <qt/sendcoinsrecipient.h>
 
 #include <base58.h>
 #include <chainparams.h>
@@ -60,6 +60,7 @@
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QList>
+#include <QLocale>
 #include <QMouseEvent>
 #include <QPointer>
 #include <QProgressDialog>
@@ -83,7 +84,7 @@ void ForceActivation();
 
 namespace GUIUtil {
 
-static CCriticalSection cs_css;
+static RecursiveMutex cs_css;
 // The default stylesheet directory
 static const QString defaultStylesheetDirectory = ":css";
 // The actual stylesheet directory
@@ -173,6 +174,7 @@ static const std::map<ThemedColor, QColor> themedDarkColors = {
 static const std::map<ThemedStyle, QString> themedStyles = {
     { ThemedStyle::TS_INVALID, "background:#a84832;" },
     { ThemedStyle::TS_ERROR, "color:#a84832;" },
+    { ThemedStyle::TS_WARNING, "color:#999900;" },
     { ThemedStyle::TS_SUCCESS, "color:#5e8c41;" },
     { ThemedStyle::TS_COMMAND, "color:#008de4;" },
     { ThemedStyle::TS_PRIMARY, "color:#333;" },
@@ -182,6 +184,7 @@ static const std::map<ThemedStyle, QString> themedStyles = {
 static const std::map<ThemedStyle, QString> themedDarkStyles = {
     { ThemedStyle::TS_INVALID, "background:#a84832;" },
     { ThemedStyle::TS_ERROR, "color:#a84832;" },
+    { ThemedStyle::TS_WARNING, "color:#999900;" },
     { ThemedStyle::TS_SUCCESS, "color:#5e8c41;" },
     { ThemedStyle::TS_COMMAND, "color:#00599a;" },
     { ThemedStyle::TS_PRIMARY, "color:#c7c7c7;" },
@@ -244,7 +247,7 @@ void setIcon(QAbstractButton* button, const QString& strIcon, const ThemedColor 
 
 QString dateTimeStr(const QDateTime &date)
 {
-    return date.date().toString(Qt::SystemLocaleShortDate) + QString(" ") + date.toString("hh:mm");
+    return QLocale::system().toString(date.date(), QLocale::ShortFormat) + QString(" ") + date.toString("hh:mm");
 }
 
 QString dateTimeStr(qint64 nTime)
@@ -261,7 +264,7 @@ static std::string DummyAddress(const CChainParams &params)
     std::vector<unsigned char> sourcedata = params.Base58Prefix(CChainParams::PUBKEY_ADDRESS);
     sourcedata.insert(sourcedata.end(), dummydata, dummydata + sizeof(dummydata));
     for(int i=0; i<256; ++i) { // Try every trailing byte
-        std::string s = EncodeBase58(sourcedata.data(), sourcedata.data() + sourcedata.size());
+        std::string s = EncodeBase58(sourcedata);
         if (!IsValidDestinationString(s)) {
             return s;
         }
@@ -837,7 +840,7 @@ bool SetStartOnSystemStartup(bool fAutoStart)
             // Start client minimized
             QString strArgs = "-min";
             // Set -testnet /-regtest options
-            strArgs += QString::fromStdString(strprintf(" -testnet=%d -regtest=%d", gArgs.GetBoolArg("-testnet", false), gArgs.GetBoolArg("-regtest", false)));
+            strArgs += QString::fromStdString(strprintf(" -chain=%s", gArgs.GetChainName()));
 
             // Set the path to the shortcut target
             psl->SetPath(pszExePath);
@@ -932,7 +935,7 @@ bool SetStartOnSystemStartup(bool fAutoStart)
             optionFile << "Name=Sparks Core\n";
         else
             optionFile << strprintf("Name=Sparks Core (%s)\n", chain);
-        optionFile << "Exec=" << pszExePath << strprintf(" -min -testnet=%d -regtest=%d\n", gArgs.GetBoolArg("-testnet", false), gArgs.GetBoolArg("-regtest", false));
+        optionFile << "Exec=" << pszExePath << strprintf(" -min -chain=%s\n", chain);
         optionFile << "Terminal=false\n";
         optionFile << "Hidden=false\n";
         optionFile.close();
@@ -1302,7 +1305,7 @@ bool loadFonts()
     auto supportedWeights = [](FontFamily family) -> std::vector<QFont::Weight> {
         auto getTestWidth = [&](QFont::Weight weight) -> int {
             QFont font = getFont(family, weight, false, defaultFontSize);
-            return QFontMetrics(font).width("Check the width of this text to see if the weight change has an impact!");
+            return TextWidth(QFontMetrics(font), ("Check the width of this text to see if the weight change has an impact!"));
         };
         std::vector<QFont::Weight> vecWeights{QFont::Thin, QFont::ExtraLight, QFont::Light,
                                               QFont::Normal, QFont::Medium, QFont::DemiBold,
@@ -1875,11 +1878,7 @@ void PolishProgressDialog(QProgressDialog* dialog)
 
 int TextWidth(const QFontMetrics& fm, const QString& text)
 {
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 11, 0))
     return fm.horizontalAdvance(text);
-#else
-    return fm.width(text);
-#endif
 }
 
 void LogQtInfo()
@@ -1899,6 +1898,37 @@ void LogQtInfo()
     for (const QScreen* s : QGuiApplication::screens()) {
         LogPrintf("Screen: %s %dx%d, pixel ratio=%.1f\n", s->name().toStdString(), s->size().width(), s->size().height(), s->devicePixelRatio());
     }
+}
+
+QDateTime StartOfDay(const QDate& date)
+{
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+    return date.startOfDay();
+#else
+    return QDateTime(date);
+#endif
+}
+
+bool HasPixmap(const QLabel* label)
+{
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+    return !label->pixmap(Qt::ReturnByValue).isNull();
+#else
+    return label->pixmap() != nullptr;
+#endif
+}
+
+QImage GetImage(const QLabel* label)
+{
+    if (!HasPixmap(label)) {
+        return QImage();
+    }
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+    return label->pixmap(Qt::ReturnByValue).toImage();
+#else
+    return label->pixmap()->toImage();
+#endif
 }
 
 } // namespace GUIUtil

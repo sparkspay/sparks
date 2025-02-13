@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2016 The Bitcoin Core developers
+# Copyright (c) 2015-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test block processing."""
@@ -123,7 +123,7 @@ class FullBlockTest(BitcoinTestFramework):
         # Allow the block to mature
         blocks = []
         for i in range(NUM_BUFFER_BLOCKS_TO_GENERATE):
-            blocks.append(self.next_block("maturitybuffer.{}".format(i)))
+            blocks.append(self.next_block(f"maturitybuffer.{i}"))
             self.save_spendable_output()
         self.send_blocks(blocks)
 
@@ -161,8 +161,8 @@ class FullBlockTest(BitcoinTestFramework):
             if template.valid_in_block:
                 continue
 
-            self.log.info("Reject block with invalid tx: %s", TxTemplate.__name__)
-            blockname = "for_invalid.%s" % TxTemplate.__name__
+            self.log.info(f"Reject block with invalid tx: {TxTemplate.__name__}")
+            blockname = f"for_invalid.{TxTemplate.__name__}"
             badblock = self.next_block(blockname)
             badtx = template.get_tx()
             self.sign_tx(badtx, attempt_spend_tx)
@@ -506,6 +506,14 @@ class FullBlockTest(BitcoinTestFramework):
             tx_last = tx_new
             b39_outputs += 1
 
+        # The accounting in the loop above can be off, because it misses the
+        # compact size encoding of the number of transactions in the block.
+        # Make sure we didn't accidentally make too big a block. Note that the
+        # size of the block has non-determinism due to the ECDSA signature in
+        # the first transaction.
+        while (len(b39.serialize()) >= MAX_BLOCK_SIZE):
+            del b39.vtx[-1]
+
         b39 = self.update_block(39, [])
         self.send_blocks([b39], True)
         self.save_spendable_output()
@@ -631,17 +639,19 @@ class FullBlockTest(BitcoinTestFramework):
 
         self.log.info("Reject a block with invalid work")
         self.move_tip(44)
-        b47 = self.next_block(47, solve=False)
+        b47 = self.next_block(47)
         target = uint256_from_compact(b47.nBits)
         while b47.sha256 <= target:
+            # Rehash nonces until an invalid too-high-hash block is found.
             b47.nNonce += 1
             b47.rehash()
         self.send_blocks([b47], False, force_send=True, reject_reason='high-hash', reconnect=True)
 
         self.log.info("Reject a block with a timestamp >2 hours in the future")
         self.move_tip(44)
-        b48 = self.next_block(48, solve=False)
+        b48 = self.next_block(48)
         b48.nTime = int(self.mocktime) + 60 * 60 * 3
+        # Header timestamp has changed. Re-solve the block.
         b48.solve()
         self.send_blocks([b48], False, force_send=True, reject_reason='time-too-new')
 
@@ -1262,7 +1272,7 @@ class FullBlockTest(BitcoinTestFramework):
             self.save_spendable_output()
             spend = self.get_spendable_output()
 
-        self.send_blocks(blocks, True, timeout=1920)
+        self.send_blocks(blocks, True, timeout=2440)
         chain1_tip = i
 
         # now create alt chain of same length
@@ -1274,14 +1284,14 @@ class FullBlockTest(BitcoinTestFramework):
 
         # extend alt chain to trigger re-org
         block = self.next_block("alt" + str(chain1_tip + 1), version=4)
-        self.send_blocks([block], True, timeout=1920)
+        self.send_blocks([block], True, timeout=2440)
 
         # ... and re-org back to the first chain
         self.move_tip(chain1_tip)
         block = self.next_block(chain1_tip + 1, version=4)
         self.send_blocks([block], False, force_send=True)
         block = self.next_block(chain1_tip + 2, version=4)
-        self.send_blocks([block], True, timeout=1920)
+        self.send_blocks([block], True, timeout=2440)
 
         self.log.info("Reject a block with an invalid block header version")
         b_v1 = self.next_block('b_v1', version=1)
@@ -1322,7 +1332,7 @@ class FullBlockTest(BitcoinTestFramework):
         tx.rehash()
         return tx
 
-    def next_block(self, number, spend=None, additional_coinbase_value=0, script=CScript([OP_TRUE]), solve=True, *, version=1):
+    def next_block(self, number, spend=None, additional_coinbase_value=0, script=CScript([OP_TRUE]), *, version=1):
         if self.tip is None:
             base_block_hash = self.genesis_hash
             block_time = self.mocktime + 1
@@ -1344,10 +1354,8 @@ class FullBlockTest(BitcoinTestFramework):
             self.sign_tx(tx, spend)
             self.add_transactions_to_block(block, [tx])
             block.hashMerkleRoot = block.calc_merkle_root()
-        if solve:
-            block.solve()
-        else:
-            block.rehash()
+        # Block is created. Find a valid nonce.
+        block.solve()
         self.tip = block
         self.block_heights[block.sha256] = height
         assert number not in self.blocks
@@ -1356,12 +1364,12 @@ class FullBlockTest(BitcoinTestFramework):
 
     # save the current tip so it can be spent by a later block
     def save_spendable_output(self):
-        self.log.debug("saving spendable output %s" % self.tip.vtx[0])
+        self.log.debug(f"saving spendable output {self.tip.vtx[0]}")
         self.spendable_outputs.append(self.tip)
 
     # get an output that we previously marked as spendable
     def get_spendable_output(self):
-        self.log.debug("getting spendable output %s" % self.spendable_outputs[0].vtx[0])
+        self.log.debug(f"getting spendable output {self.spendable_outputs[0].vtx[0]}")
         return self.spendable_outputs.pop(0).vtx[0]
 
     # move the tip back to a previous block

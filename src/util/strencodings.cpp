@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -91,7 +91,7 @@ std::vector<unsigned char> ParseHex(const char* psz)
         signed char c = HexDigit(*psz++);
         if (c == (signed char)-1)
             break;
-        unsigned char n = (c << 4);
+        auto n{uint8_t(c << 4)};
         c = HexDigit(*psz++);
         if (c == (signed char)-1)
             break;
@@ -112,7 +112,7 @@ void SplitHostPort(std::string in, uint16_t& portOut, std::string& hostOut)
     // if a : is found, and it either follows a [...], or no other : is in the string, treat it as port separator
     bool fHaveColon = colon != in.npos;
     bool fBracketed = fHaveColon && (in[0] == '[' && in[colon - 1] == ']'); // if there is a colon, and in[0]=='[', colon is not 0, so in[colon-1] is safe
-    bool fMultiColon = fHaveColon && (in.find_last_of(':', colon - 1) != in.npos);
+    bool fMultiColon{fHaveColon && colon != 0 && (in.find_last_of(':', colon - 1) != in.npos)};
     if (fHaveColon && (colon == 0 || fBracketed || !fMultiColon)) {
         uint16_t n;
         if (ParseUInt16(in.substr(colon + 1), &n)) {
@@ -138,15 +138,9 @@ std::string EncodeBase64(Span<const unsigned char> input)
     return str;
 }
 
-std::string EncodeBase64(const std::string& str)
-{
-    return EncodeBase64(MakeUCharSpan(str));
-}
-
 std::vector<unsigned char> DecodeBase64(const char* p, bool* pf_invalid)
 {
-    static const int decode64_table[256] =
-    {
+    static const int8_t decode64_table[256]{
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1,
@@ -168,7 +162,7 @@ std::vector<unsigned char> DecodeBase64(const char* p, bool* pf_invalid)
     while (*p != 0) {
         int x = decode64_table[(unsigned char)*p];
         if (x == -1) break;
-        val.push_back(x);
+        val.push_back(uint8_t(x));
         ++p;
     }
 
@@ -224,8 +218,7 @@ std::string EncodeBase32(const std::string& str, bool pad)
 
 std::vector<unsigned char> DecodeBase32(const char* p, bool* pf_invalid)
 {
-    static const int decode32_table[256] =
-    {
+    static const int8_t decode32_table[256]{
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, -1, -1, -1, -1,
@@ -247,7 +240,7 @@ std::vector<unsigned char> DecodeBase32(const char* p, bool* pf_invalid)
     while (*p != 0) {
         int x = decode32_table[(unsigned char)*p];
         if (x == -1) break;
-        val.push_back(x);
+        val.push_back(uint8_t(x));
         ++p;
     }
 
@@ -540,14 +533,14 @@ std::string HexStr(const Span<const uint8_t> s)
 std::string ToLower(const std::string& str)
 {
     std::string r;
-    for (auto ch : str) r += ToLower((unsigned char)ch);
+    for (auto ch : str) r += ToLower(ch);
     return r;
 }
 
 std::string ToUpper(const std::string& str)
 {
     std::string r;
-    for (auto ch : str) r += ToUpper((unsigned char)ch);
+    for (auto ch : str) r += ToUpper(ch);
     return r;
 }
 

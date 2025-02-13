@@ -13,6 +13,7 @@ GENERATED_BENCH_FILES = $(RAW_BENCH_FILES:.raw=.raw.h)
 
 bench_bench_sparks_SOURCES = \
   $(RAW_BENCH_FILES) \
+  bench/addrman.cpp \
   bench/bench_bitcoin.cpp \
   bench/bench.cpp \
   bench/bench.h \
@@ -38,6 +39,7 @@ bench_bench_sparks_SOURCES = \
   bench/mempool_stress.cpp \
   bench/nanobench.h \
   bench/nanobench.cpp \
+  bench/rpc_blockchain.cpp \
   bench/rpc_mempool.cpp \
   bench/util_time.cpp \
   bench/base58.cpp \
@@ -46,12 +48,11 @@ bench_bench_sparks_SOURCES = \
   bench/poly1305.cpp \
   bench/prevector.cpp \
   bench/string_cast.cpp \
-  test/util.cpp \
-  test/util.h
+  bench/verify_script.cpp
 
 nodist_bench_bench_sparks_SOURCES = $(GENERATED_BENCH_FILES)
 
-bench_bench_sparks_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(EVENT_CLFAGS) $(EVENT_PTHREADS_CFLAGS) -I$(builddir)/bench/
+bench_bench_sparks_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -I$(builddir)/bench/
 bench_bench_sparks_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 bench_bench_sparks_LDADD = \
   $(LIBBITCOIN_SERVER) \

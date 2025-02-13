@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2018 The Bitcoin Core developers
+# Copyright (c) 2018-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
@@ -11,21 +11,23 @@ export LC_ALL=C
 EXPECTED_CIRCULAR_DEPENDENCIES=(
     "chainparamsbase -> util/system -> chainparamsbase"
     "index/txindex -> validation -> index/txindex"
+    "node/blockstorage -> validation -> node/blockstorage"
+    "index/blockfilterindex -> node/blockstorage -> validation -> index/blockfilterindex"
+    "index/base -> validation -> index/blockfilterindex -> index/base"
+    "index/coinstatsindex -> node/coinstats -> index/coinstatsindex"
     "policy/fees -> txmempool -> policy/fees"
     "qt/addresstablemodel -> qt/walletmodel -> qt/addresstablemodel"
     "qt/bitcoingui -> qt/walletframe -> qt/bitcoingui"
-    "qt/paymentserver -> qt/walletmodel -> qt/paymentserver"
     "qt/recentrequeststablemodel -> qt/walletmodel -> qt/recentrequeststablemodel"
     "qt/transactiontablemodel -> qt/walletmodel -> qt/transactiontablemodel"
-    "qt/walletmodel -> qt/walletmodeltransaction -> qt/walletmodel"
     "txmempool -> validation -> txmempool"
     "wallet/fees -> wallet/wallet -> wallet/fees"
     "wallet/wallet -> wallet/walletdb -> wallet/wallet"
-    "wallet/scriptpubkeyman -> wallet/wallet -> wallet/scriptpubkeyman"
+    "node/coinstats -> validation -> node/coinstats"
     # Sparks
     "coinjoin/server -> net_processing -> coinjoin/server"
+    "dsnotificationinterface -> llmq/chainlocks -> node/blockstorage -> dsnotificationinterface"
     "evo/cbtx -> evo/simplifiedmns -> evo/cbtx"
-    "evo/deterministicmns -> evo/simplifiedmns -> evo/deterministicmns"
     "evo/deterministicmns -> llmq/commitment -> evo/deterministicmns"
     "evo/deterministicmns -> llmq/utils -> evo/deterministicmns"
     "evo/mnauth -> net_processing -> evo/mnauth"
@@ -56,7 +58,6 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     "qt/bitcoingui -> qt/guiutil -> qt/bitcoingui"
     "qt/guiutil -> qt/optionsdialog -> qt/guiutil"
     "qt/guiutil -> qt/qvalidatedlineedit -> qt/guiutil"
-    "core_io -> evo/cbtx -> evo/deterministicmns -> core_io"
     "core_io -> evo/cbtx -> evo/simplifiedmns -> core_io"
     "evo/simplifiedmns -> llmq/blockprocessor -> net_processing -> evo/simplifiedmns"
     "llmq/dkgsession -> llmq/dkgsessionmgr -> llmq/dkgsessionhandler -> llmq/dkgsession"
@@ -64,20 +65,27 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     "logging -> util/system -> stacktraces -> logging"
     "logging -> util/system -> util/getuniquepath -> random -> logging"
     "coinjoin/client -> coinjoin/util -> wallet/wallet -> coinjoin/client"
+    "coinjoin/client -> net_processing -> coinjoin/context -> coinjoin/client"
+    "coinjoin/context -> coinjoin/server -> net_processing -> coinjoin/context"
     "qt/appearancewidget -> qt/guiutil -> qt/optionsdialog -> qt/appearancewidget"
     "qt/guiutil -> qt/optionsdialog -> qt/optionsmodel -> qt/guiutil"
-    "evo/deterministicmns -> evo/simplifiedmns -> llmq/blockprocessor -> net_processing -> evo/deterministicmns"
+
+    "bloom -> evo/assetlocktx -> llmq/quorums -> net -> bloom"
+    "banman -> bloom -> evo/assetlocktx -> llmq/quorums -> net -> banman"
+    "banman -> bloom -> evo/assetlocktx -> llmq/quorums -> net_processing -> banman"
+    "bloom -> evo/assetlocktx -> llmq/quorums -> net_processing -> merkleblock -> bloom"
 
     "coinjoin/client -> net_processing -> coinjoin/client"
     "llmq/quorums -> net_processing -> llmq/quorums"
     "llmq/dkgsession -> llmq/dkgsessionmgr -> llmq/dkgsession"
-    "evo/deterministicmns -> evo/simplifiedmns -> llmq/blockprocessor -> net_processing -> txmempool -> evo/deterministicmns"
     "llmq/chainlocks -> validation -> llmq/chainlocks"
     "coinjoin/coinjoin -> llmq/chainlocks -> net -> coinjoin/coinjoin"
     "evo/deterministicmns -> llmq/utils -> net -> evo/deterministicmns"
-    "policy/fees -> txmempool -> validation -> policy/fees"
     "policy/policy -> policy/settings -> policy/policy"
     "evo/specialtxman -> validation -> evo/specialtxman"
+    "consensus/tx_verify -> evo/assetlocktx -> validation -> consensus/tx_verify"
+    "consensus/tx_verify -> evo/assetlocktx -> llmq/quorums -> net_processing -> txmempool -> consensus/tx_verify"
+    "evo/assetlocktx -> llmq/quorums -> net_processing -> txmempool -> evo/assetlocktx"
 
     "evo/simplifiedmns -> llmq/blockprocessor -> net_processing -> llmq/snapshot -> evo/simplifiedmns"
     "llmq/blockprocessor -> net_processing -> llmq/context -> llmq/blockprocessor"
@@ -89,8 +97,15 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     "llmq/snapshot -> llmq/utils -> llmq/snapshot"
     "spork -> validation -> spork"
     "governance/governance -> validation -> governance/governance"
+    "evo/deterministicmns -> validationinterface -> governance/vote -> evo/deterministicmns"
+    "governance/object -> validationinterface -> governance/object"
+    "governance/vote -> validation -> validationinterface -> governance/vote"
+    "llmq/signing -> masternode/node -> validationinterface -> llmq/signing"
     "llmq/debug -> llmq/dkgsessionhandler -> llmq/debug"
     "llmq/debug -> llmq/dkgsessionhandler -> llmq/dkgsession -> llmq/debug"
+    "llmq/utils -> validation -> llmq/utils"
+    "evo/mnhftx -> validation -> evo/mnhftx"
+    "evo/deterministicmns -> validation -> evo/deterministicmns"
 )
 
 EXIT_CODE=0

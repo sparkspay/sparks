@@ -74,8 +74,8 @@ def build():
 
     if args.macos:
         print('\nCompiling ' + args.version + ' MacOS')
-        subprocess.check_call(['wget', '-N', '-P', 'inputs', 'https://bitcoincore.org/depends-sources/sdks/Xcode-12.1-12A7403-extracted-SDK-with-libcxx-headers.tar.gz'])
-        subprocess.check_output(["echo 'be17f48fd0b08fb4dcd229f55a6ae48d9f781d210839b4ea313ef17dd12d6ea5 inputs/Xcode-12.1-12A7403-extracted-SDK-with-libcxx-headers.tar.gz' | sha256sum -c"], shell=True)
+        subprocess.check_call(['wget', '-N', '-P', 'inputs', 'https://bitcoincore.org/depends-sources/sdks/Xcode-12.2-12B45b-extracted-SDK-with-libcxx-headers.tar.gz'])
+        subprocess.check_output(["echo 'df75d30ecafc429e905134333aeae56ac65fac67cb4182622398fd717df77619 inputs/Xcode-12.2-12B45b-extracted-SDK-with-libcxx-headers.tar.gz' | sha256sum -c"], shell=True)
         subprocess.check_call(['bin/gbuild', '--fetch-tags',  '-j', args.jobs, '-m', args.memory, '--commit', 'sparks='+args.commit, '--url', 'sparks='+args.url, '../sparks/contrib/gitian-descriptors/gitian-osx.yml'])
         subprocess.check_call(['bin/gsign', '-p', args.sign_prog, '--signer', args.signer, '--release', args.version+'-osx-unsigned', '--destination', '../gitian.sigs/', '../sparks/contrib/gitian-descriptors/gitian-osx.yml'])
         subprocess.check_call('mv build/out/sparkscore-*-osx-unsigned.tar.gz inputs/', shell=True)
@@ -216,6 +216,11 @@ def main():
     args.linux = 'l' in args.os
     args.windows = 'w' in args.os
     args.macos = 'm' in args.os
+
+    # Disable for MacOS if no SDK found
+    if args.macos and not os.path.isfile('gitian-builder/inputs/Xcode-12.2-12B45b-extracted-SDK-with-libcxx-headers.tar.gz'):
+        print('Cannot build for MacOS, SDK does not exist. Will build for other OSes')
+        args.macos = False
 
     args.sign_prog = 'true' if args.detach_sign else 'gpg --detach-sign'
 

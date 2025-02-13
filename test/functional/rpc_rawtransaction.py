@@ -15,6 +15,8 @@ Test the following RPCs:
 from collections import OrderedDict
 from decimal import Decimal
 from io import BytesIO
+
+from test_framework.blocktools import COINBASE_MATURITY
 from test_framework.messages import CTransaction, ToHex
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import (
@@ -65,7 +67,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         self.log.info('prepare some coins for multiple *rawtransaction commands')
         self.nodes[2].generate(1)
         self.sync_all()
-        self.nodes[0].generate(101)
+        self.nodes[0].generate(COINBASE_MATURITY + 1)
         self.sync_all()
         self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(),1.5)
         self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(),1.0)
@@ -90,8 +92,9 @@ class RawTransactionsTest(BitcoinTestFramework):
         txid = '1d1d4e24ed99057e84c3f80fd8fbec79ed9e1acee37da269356ecea000000000'
         assert_raises_rpc_error(-3, "Expected type array", self.nodes[0].createrawtransaction, 'foo', {})
         assert_raises_rpc_error(-1, "JSON value is not an object as expected", self.nodes[0].createrawtransaction, ['foo'], {})
-        assert_raises_rpc_error(-8, "txid must be hexadecimal string", self.nodes[0].createrawtransaction, [{}], {})
-        assert_raises_rpc_error(-8, "txid must be hexadecimal string", self.nodes[0].createrawtransaction, [{'txid': 'foo'}], {})
+        assert_raises_rpc_error(-1, "JSON value is not a string as expected", self.nodes[0].createrawtransaction, [{}], {})
+        assert_raises_rpc_error(-8, "txid must be of length 64 (not 3, for 'foo')", self.nodes[0].createrawtransaction, [{'txid': 'foo'}], {})
+        assert_raises_rpc_error(-8, "txid must be hexadecimal string (not 'ZZZ7bb8b1697ea987f3b223ba7819250cae33efacb068d23dc24859824a77844')", self.nodes[0].createrawtransaction, [{'txid': 'ZZZ7bb8b1697ea987f3b223ba7819250cae33efacb068d23dc24859824a77844'}], {})
         assert_raises_rpc_error(-8, "Invalid parameter, missing vout key", self.nodes[0].createrawtransaction, [{'txid': txid}], {})
         assert_raises_rpc_error(-8, "Invalid parameter, missing vout key", self.nodes[0].createrawtransaction, [{'txid': txid, 'vout': 'foo'}], {})
         assert_raises_rpc_error(-8, "Invalid parameter, vout cannot be negative", self.nodes[0].createrawtransaction, [{'txid': txid, 'vout': -1}], {})
@@ -150,7 +153,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         rawtx   = self.nodes[2].signrawtransactionwithwallet(rawtx)
 
         # This will raise an exception since there are missing inputs
-        assert_raises_rpc_error(-25, "Missing inputs", self.nodes[2].sendrawtransaction, rawtx['hex'])
+        assert_raises_rpc_error(-25, "bad-txns-inputs-missingorspent", self.nodes[2].sendrawtransaction, rawtx['hex'])
 
         #####################################
         # getrawtransaction with block hash #
@@ -171,9 +174,10 @@ class RawTransactionsTest(BitcoinTestFramework):
         # We should not get the tx if we provide an unrelated block
         assert_raises_rpc_error(-5, "No such transaction found", self.nodes[0].getrawtransaction, tx, True, block2)
         # An invalid block hash should raise the correct errors
-        assert_raises_rpc_error(-8, "parameter 3 must be hexadecimal", self.nodes[0].getrawtransaction, tx, True, True)
-        assert_raises_rpc_error(-8, "parameter 3 must be hexadecimal", self.nodes[0].getrawtransaction, tx, True, "foobar")
-        assert_raises_rpc_error(-8, "parameter 3 must be of length 64", self.nodes[0].getrawtransaction, tx, True, "abcd1234")
+        assert_raises_rpc_error(-1, "JSON value is not a string as expected", self.nodes[0].getrawtransaction, tx, True, True)
+        assert_raises_rpc_error(-8, "parameter 3 must be of length 64 (not 6, for 'foobar')", self.nodes[0].getrawtransaction, tx, True, "foobar")
+        assert_raises_rpc_error(-8, "parameter 3 must be of length 64 (not 8, for 'abcd1234')", self.nodes[0].getrawtransaction, tx, True, "abcd1234")
+        assert_raises_rpc_error(-8, "parameter 3 must be hexadecimal string (not 'ZZZ0000000000000000000000000000000000000000000000000000000000000')", self.nodes[0].getrawtransaction, tx, True, "ZZZ0000000000000000000000000000000000000000000000000000000000000")
         assert_raises_rpc_error(-5, "Block hash not found", self.nodes[0].getrawtransaction, tx, True, "0000000000000000000000000000000000000000000000000000000000000000")
         # Undo the blocks and check in_active_chain
         self.nodes[0].invalidateblock(block1)
@@ -386,7 +390,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         # Thus, testmempoolaccept should reject
         testres = self.nodes[2].testmempoolaccept([rawTxSigned['hex']], 0.00001000)[0]
         assert_equal(testres['allowed'], False)
-        assert_equal(testres['reject-reason'], '256: absurdly-high-fee')
+        assert_equal(testres['reject-reason'], 'absurdly-high-fee')
         # and sendrawtransaction should throw
         assert_raises_rpc_error(-26, "absurdly-high-fee", self.nodes[2].sendrawtransaction, rawTxSigned['hex'], 0.00001000)
         # and the following calls should both succeed
@@ -410,7 +414,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         # Thus, testmempoolaccept should reject
         testres = self.nodes[2].testmempoolaccept([rawTxSigned['hex']])[0]
         assert_equal(testres['allowed'], False)
-        assert_equal(testres['reject-reason'], '256: absurdly-high-fee')
+        assert_equal(testres['reject-reason'], 'absurdly-high-fee')
         # and sendrawtransaction should throw
         assert_raises_rpc_error(-26, "absurdly-high-fee", self.nodes[2].sendrawtransaction, rawTxSigned['hex'])
         # and the following calls should both succeed

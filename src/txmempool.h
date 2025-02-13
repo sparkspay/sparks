@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -17,9 +17,7 @@
 #include <addressindex.h>
 #include <spentindex.h>
 #include <amount.h>
-#include <bls/bls.h>
 #include <coins.h>
-#include <crypto/siphash.h>
 #include <indirectmap.h>
 #include <policy/feerate.h>
 #include <primitives/transaction.h>
@@ -27,6 +25,7 @@
 #include <random.h>
 #include <netaddress.h>
 #include <pubkey.h>
+#include <util/hasher.h>
 
 #include <boost/optional.hpp>
 #include <boost/multi_index_container.hpp>
@@ -35,7 +34,13 @@
 #include <boost/multi_index/sequenced_index.hpp>
 
 class CBlockIndex;
-extern CCriticalSection cs_main;
+class CChainState;
+extern RecursiveMutex cs_main;
+
+// Forward declation for CBLSLazyPublicKey:
+template<typename T> class CBLSLazyWrapper;
+class CBLSPublicKey;
+using CBLSLazyPublicKey = CBLSLazyWrapper<CBLSPublicKey>;
 
 /** Fake height value used in Coin to signify they are only in the memory pool (since 0.8) */
 static const uint32_t MEMPOOL_HEIGHT = 0x7FFFFFFF;
@@ -341,8 +346,11 @@ struct TxMempoolInfo
     /** Time the transaction entered the mempool. */
     std::chrono::seconds m_time;
 
-    /** Feerate of the transaction. */
-    CFeeRate feeRate;
+    /** Fee of the transaction. */
+    CAmount fee;
+
+    /** Virtual size of the transaction. */
+    size_t vsize;
 
     /** The fee delta. */
     int64_t nFeeDelta;
@@ -358,20 +366,6 @@ enum class MemPoolRemovalReason {
     BLOCK,       //!< Removed for block
     CONFLICT,    //!< Removed for conflict with in-block transaction
     MANUAL       //!< Removed manually
-};
-
-class SaltedTxidHasher
-{
-private:
-    /** Salt */
-    const uint64_t k0, k1;
-
-public:
-    SaltedTxidHasher();
-
-    size_t operator()(const uint256& txid) const {
-        return SipHashUint256(k0, k1, txid);
-    }
 };
 
 /**
@@ -448,8 +442,8 @@ public:
 class CTxMemPool
 {
 private:
-    uint32_t nCheckFrequency GUARDED_BY(cs); //!< Value n means that n times in 2^32 we check.
-    std::atomic<unsigned int> nTransactionsUpdated; //!< Used by getblocktemplate to trigger CreateNewBlock() invocation
+    const int m_check_ratio; //!< Value n means that 1 times in n we check.
+    std::atomic<unsigned int> nTransactionsUpdated{0}; //!< Used by getblocktemplate to trigger CreateNewBlock() invocation
     CBlockPolicyEstimator* minerPolicyEstimator;
 
     uint64_t totalTxSize;      //!< sum of all mempool tx' byte sizes
@@ -458,8 +452,8 @@ private:
     mutable int64_t lastRollingFeeUpdate;
     mutable bool blockSinceLastRollingFeeBump;
     mutable double rollingMinimumFeeRate; //!< minimum fee to get into the pool, decreases exponentially
-    mutable uint64_t m_epoch;
-    mutable bool m_has_epoch_guard;
+    mutable uint64_t m_epoch{0};
+    mutable bool m_has_epoch_guard{false};
 
     void trackPackageRemoved(const CFeeRate& rate) EXCLUSIVE_LOCKS_REQUIRED(cs);
 
@@ -566,6 +560,7 @@ private:
     std::map<CKeyID, uint256> mapProTxPubKeyIDs;
     std::map<uint256, uint256> mapProTxBlsPubKeyHashes;
     std::map<COutPoint, uint256> mapProTxCollaterals;
+    std::map<uint256, int /* expiry height */> mapAssetUnlockExpiry; // tx hash -> height
 
     void UpdateParent(txiter entry, txiter parent, bool add) EXCLUSIVE_LOCKS_REQUIRED(cs);
     void UpdateChild(txiter entry, txiter child, bool add) EXCLUSIVE_LOCKS_REQUIRED(cs);
@@ -580,8 +575,14 @@ public:
     std::map<uint256, CAmount> mapDeltas;
 
     /** Create a new CTxMemPool.
+     * Sanity checks will be off by default for performance, because otherwise
+     * accepting transactions becomes O(N^2) where N is the number of transactions
+     * in the pool.
+     *
+     * @param[in] estimator is used to estimate appropriate transaction fees.
+     * @param[in] check_ratio is the ratio used to determine how often sanity checks will run.
      */
-    explicit CTxMemPool(CBlockPolicyEstimator* estimator = nullptr);
+    explicit CTxMemPool(CBlockPolicyEstimator* estimator = nullptr, int check_ratio = 0);
 
     /**
      * If sanity-checking is turned on, check makes sure the pool is
@@ -589,8 +590,7 @@ public:
      * all inputs are in the mapNextTx array). If sanity-checking is turned off,
      * check does nothing.
      */
-    void check(const CCoinsViewCache *pcoins) const;
-    void setSanityCheck(double dFrequency = 1.0) { LOCK(cs); nCheckFrequency = static_cast<uint32_t>(dFrequency * 4294967295.0); }
+    void check(CChainState& active_chainstate) const EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
 
     // addUnchecked must updated state for all ancestors of a given transaction,
     // to track size/count of descendant transactions.  First version of
@@ -603,7 +603,7 @@ public:
     void addUnchecked(const CTxMemPoolEntry& entry, setEntries& setAncestors, bool validFeeEstimate = true) EXCLUSIVE_LOCKS_REQUIRED(cs, cs_main);
 
     void addAddressIndex(const CTxMemPoolEntry &entry, const CCoinsViewCache &view);
-    bool getAddressIndex(std::vector<std::pair<uint160, int> > &addresses,
+    bool getAddressIndex(std::vector<std::pair<uint160, AddressType> > &addresses,
                          std::vector<std::pair<CMempoolAddressDeltaKey, CMempoolAddressDelta> > &results);
     bool removeAddressIndex(const uint256 txhash);
 
@@ -612,7 +612,7 @@ public:
     bool removeSpentIndex(const uint256 txhash);
 
     void removeRecursive(const CTransaction& tx, MemPoolRemovalReason reason) EXCLUSIVE_LOCKS_REQUIRED(cs);
-    void removeForReorg(const CCoinsViewCache* pcoins, unsigned int nMemPoolHeight, int flags) EXCLUSIVE_LOCKS_REQUIRED(cs, cs_main);
+    void removeForReorg(CChainState& active_chainstate, int flags) EXCLUSIVE_LOCKS_REQUIRED(cs, cs_main);
     void removeConflicts(const CTransaction& tx) EXCLUSIVE_LOCKS_REQUIRED(cs);
     void removeProTxPubKeyConflicts(const CTransaction &tx, const CKeyID &keyId) EXCLUSIVE_LOCKS_REQUIRED(cs);
     void removeProTxPubKeyConflicts(const CTransaction &tx, const CBLSLazyPublicKey &pubKey) EXCLUSIVE_LOCKS_REQUIRED(cs);
@@ -621,6 +621,7 @@ public:
     void removeProTxKeyChangedConflicts(const CTransaction &tx, const uint256& proTxHash, const uint256& newKeyHash) EXCLUSIVE_LOCKS_REQUIRED(cs);
     void removeProTxConflicts(const CTransaction &tx) EXCLUSIVE_LOCKS_REQUIRED(cs);
     void removeForBlock(const std::vector<CTransactionRef>& vtx, unsigned int nBlockHeight) EXCLUSIVE_LOCKS_REQUIRED(cs);
+    void removeExpiredAssetUnlock(unsigned int nBlockHeight) EXCLUSIVE_LOCKS_REQUIRED(cs);
 
     void clear();
     void _clear() EXCLUSIVE_LOCKS_REQUIRED(cs); //lock free
@@ -744,16 +745,25 @@ public:
     /** Adds a transaction to the unbroadcast set */
     void AddUnbroadcastTx(const uint256& txid) {
         LOCK(cs);
-        m_unbroadcast_txids.insert(txid);
+        // Sanity Check: the transaction should also be in the mempool
+        if (exists(txid)) {
+            m_unbroadcast_txids.insert(txid);
+        }
     }
 
     /** Removes a transaction from the unbroadcast set */
     void RemoveUnbroadcastTx(const uint256& txid, const bool unchecked = false);
 
     /** Returns transactions in unbroadcast set */
-    const std::set<uint256> GetUnbroadcastTxs() const {
+    std::set<uint256> GetUnbroadcastTxs() const {
         LOCK(cs);
         return m_unbroadcast_txids;
+    }
+
+    /** Returns whether a txid is in the unbroadcast set */
+    bool IsUnbroadcastTx(const uint256& txid) const {
+        LOCK(cs);
+        return (m_unbroadcast_txids.count(txid) != 0);
     }
 
 private:
@@ -816,7 +826,7 @@ public:
     class EpochGuard {
         const CTxMemPool& pool;
         public:
-        EpochGuard(const CTxMemPool& in);
+        explicit EpochGuard(const CTxMemPool& in);
         ~EpochGuard();
     };
     // N.B. GetFreshEpoch modifies mutable state via the EpochGuard construction

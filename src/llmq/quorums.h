@@ -16,14 +16,20 @@
 
 #include <evo/evodb.h>
 
-class CNode;
+#include <gsl/pointers.h>
 
-class CConnman;
+#include <atomic>
+#include <map>
+
 class CBlockIndex;
-
+class CChainState;
+class CConnman;
 class CDeterministicMN;
-using CDeterministicMNCPtr = std::shared_ptr<const CDeterministicMN>;
 class CMasternodeSync;
+class CNode;
+class PeerManager;
+
+using CDeterministicMNCPtr = std::shared_ptr<const CDeterministicMN>;
 
 namespace llmq
 {
@@ -177,7 +183,7 @@ private:
     mutable CBLSWorkerCache blsCache;
     mutable std::atomic<bool> fQuorumDataRecoveryThreadRunning{false};
 
-    mutable CCriticalSection cs;
+    mutable RecursiveMutex cs;
     // These are only valid when we either participated in the DKG or fully watched it
     BLSVerificationVectorPtr quorumVvec GUARDED_BY(cs);
     CBLSSecretKey skShare GUARDED_BY(cs);
@@ -185,9 +191,9 @@ private:
 public:
     CQuorum(const Consensus::LLMQParams& _params, CBLSWorker& _blsWorker);
     ~CQuorum() = default;
-    void Init(CFinalCommitmentPtr _qc, const CBlockIndex* _pQuorumBaseBlockIndex, const uint256& _minedBlockHash, const std::vector<CDeterministicMNCPtr>& _members);
+    void Init(CFinalCommitmentPtr _qc, const CBlockIndex* _pQuorumBaseBlockIndex, const uint256& _minedBlockHash, Span<CDeterministicMNCPtr> _members);
 
-    bool SetVerificationVector(const BLSVerificationVector& quorumVecIn);
+    bool SetVerificationVector(const std::vector<CBLSPublicKey>& quorumVecIn);
     bool SetSecretKeyShare(const CBLSSecretKey& secretKeyShare);
 
     bool HasVerificationVector() const;
@@ -212,24 +218,29 @@ private:
 class CQuorumManager
 {
 private:
-    CEvoDB& m_evoDb;
-    CConnman& connman;
     CBLSWorker& blsWorker;
+    CChainState& m_chainstate;
+    CConnman& connman;
     CDKGSessionManager& dkgManager;
+    CEvoDB& m_evoDb;
     CQuorumBlockProcessor& quorumBlockProcessor;
     const std::unique_ptr<CMasternodeSync>& m_mn_sync;
+    const std::unique_ptr<PeerManager>& m_peerman;
 
-    mutable CCriticalSection cs_map_quorums;
+    mutable RecursiveMutex cs_map_quorums;
     mutable std::map<Consensus::LLMQType, unordered_lru_cache<uint256, CQuorumPtr, StaticSaltedHasher>> mapQuorumsCache GUARDED_BY(cs_map_quorums);
-    mutable CCriticalSection cs_scan_quorums;
+    mutable RecursiveMutex cs_scan_quorums;
     mutable std::map<Consensus::LLMQType, unordered_lru_cache<uint256, std::vector<CQuorumCPtr>, StaticSaltedHasher>> scanQuorumsCache GUARDED_BY(cs_scan_quorums);
+    mutable Mutex cs_cleanup;
+    mutable std::map<Consensus::LLMQType, unordered_lru_cache<uint256, uint256, StaticSaltedHasher>> cleanupQuorumsCache GUARDED_BY(cs_cleanup);
 
     mutable ctpl::thread_pool workerPool;
     mutable CThreadInterrupt quorumThreadInterrupt;
 
 public:
-    CQuorumManager(CEvoDB& _evoDb, CConnman& _connman, CBLSWorker& _blsWorker, CQuorumBlockProcessor& _quorumBlockProcessor,
-                   CDKGSessionManager& _dkgManager, const std::unique_ptr<CMasternodeSync>& mnSync);
+    CQuorumManager(CBLSWorker& _blsWorker, CChainState& chainstate, CConnman& _connman, CDKGSessionManager& _dkgManager,
+                   CEvoDB& _evoDb, CQuorumBlockProcessor& _quorumBlockProcessor, const std::unique_ptr<CMasternodeSync>& mn_sync,
+                   const std::unique_ptr<PeerManager>& peerman);
     ~CQuorumManager() { Stop(); };
 
     void Start();
@@ -256,10 +267,10 @@ private:
     // all private methods here are cs_main-free
     void CheckQuorumConnections(const Consensus::LLMQParams& llmqParams, const CBlockIndex *pindexNew) const;
 
-    CQuorumPtr BuildQuorumFromCommitment(Consensus::LLMQType llmqType, const CBlockIndex* pQuorumBaseBlockIndex) const EXCLUSIVE_LOCKS_REQUIRED(cs_map_quorums);
+    CQuorumPtr BuildQuorumFromCommitment(Consensus::LLMQType llmqType, gsl::not_null<const CBlockIndex*> pQuorumBaseBlockIndex, bool populate_cache) const;
     bool BuildQuorumContributions(const CFinalCommitmentPtr& fqc, const std::shared_ptr<CQuorum>& quorum) const;
 
-    CQuorumCPtr GetQuorum(Consensus::LLMQType llmqType, const CBlockIndex* pindex) const;
+    CQuorumCPtr GetQuorum(Consensus::LLMQType llmqType, gsl::not_null<const CBlockIndex*> pindex, bool populate_cache = true) const;
     /// Returns the start offset for the masternode with the given proTxHash. This offset is applied when picking data recovery members of a quorum's
     /// memberlist and is calculated based on a list of all member of all active quorums for the given llmqType in a way that each member
     /// should receive the same number of request if all active llmqType members requests data from one llmqType quorum.
@@ -267,6 +278,8 @@ private:
 
     void StartCachePopulatorThread(const CQuorumCPtr pQuorum) const;
     void StartQuorumDataRecoveryThread(const CQuorumCPtr pQuorum, const CBlockIndex* pIndex, uint16_t nDataMask) const;
+
+    void StartCleanupOldQuorumDataThread(const CBlockIndex* pIndex) const;
 };
 
 extern std::unique_ptr<CQuorumManager> quorumManager;

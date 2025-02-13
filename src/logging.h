@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2018 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,6 +9,7 @@
 #include <fs.h>
 #include <tinyformat.h>
 #include <threadsafety.h>
+#include <util/string.h>
 
 #include <atomic>
 #include <cstdint>
@@ -26,8 +27,7 @@ extern const char * const DEFAULT_DEBUGLOGFILE;
 extern bool fLogThreadNames;
 extern bool fLogIPs;
 
-struct CLogCategoryActive
-{
+struct LogCategory {
     std::string category;
     bool active;
 };
@@ -56,6 +56,8 @@ namespace BCLog {
         COINDB      = (1 << 18),
         QT          = (1 << 19),
         LEVELDB     = (1 << 20),
+        VALIDATION  = (1 << 21),
+        I2P         = (1 << 22),
 
         //Start Sparks
         CHAINLOCKS  = ((uint64_t)1 << 32),
@@ -69,9 +71,12 @@ namespace BCLog {
         COINJOIN    = ((uint64_t)1 << 41),
         SPORK       = ((uint64_t)1 << 42),
         NETCONN     = ((uint64_t)1 << 43),
+        EHF         = ((uint64_t)1 << 44),
+        CREDITPOOL  = ((uint64_t)1 << 45),
 
         SPARKS        = CHAINLOCKS | GOBJECT | INSTANTSEND | LLMQ | LLMQ_DKG
-                    | LLMQ_SIGS | MNPAYMENTS | MNSYNC | COINJOIN | SPORK | NETCONN,
+                    | LLMQ_SIGS | MNPAYMENTS | MNSYNC | COINJOIN | SPORK | NETCONN
+                    | EHF | CREDITPOOL,
 
         NET_NETCONN = NET | NETCONN, // use this to have something logged in NET and NETCONN as well
         //End Sparks
@@ -155,6 +160,13 @@ namespace BCLog {
         bool DisableCategory(const std::string& str);
 
         bool WillLogCategory(LogFlags category) const;
+        /** Returns a vector of the log categories */
+        std::vector<LogCategory> LogCategoriesList(bool enabled_only = false) const;
+        /** Returns a string with the log categories */
+        std::string LogCategoriesString(bool enabled_only = false) const
+        {
+            return Join(LogCategoriesList(enabled_only), ", ", [&](const LogCategory& i) { return i.category; });
+        };
 
         bool DefaultShrinkDebugFile() const;
     };
@@ -168,15 +180,6 @@ static inline bool LogAcceptCategory(BCLog::LogFlags category)
 {
     return LogInstance().WillLogCategory(category);
 }
-
-/** Returns a string with the log categories. */
-std::string ListLogCategories();
-
-/** Returns a string with the list of active log categories */
-std::string ListActiveLogCategoriesString();
-
-/** Returns a vector of the active log categories. */
-std::vector<CLogCategoryActive> ListActiveLogCategories();
 
 /** Return true if str parses as a log category and set the flag */
 bool GetLogCategory(BCLog::LogFlags& flag, const std::string& str);

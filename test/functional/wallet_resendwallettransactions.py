@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2017 The Bitcoin Core developers
+# Copyright (c) 2017-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test that the wallet resends transactions periodically."""
@@ -52,10 +52,17 @@ class ResendWalletTransactionsTest(BitcoinTestFramework):
         block.solve()
         node.submitblock(ToHex(block))
 
-        # Transaction should not be rebroadcast
+        # Set correct m_best_block_time, which is used in ResendWalletTransactions
         node.syncwithvalidationinterfacequeue()
-        node.p2ps[1].sync_with_ping()
-        assert_equal(node.p2ps[1].tx_invs_received[txid], 0)
+
+        # Transaction should not be rebroadcast within first 12 hours
+        # Leave 2 mins for buffer
+        twelve_hrs = 12 * 60 * 60
+        two_min = 2 * 60
+        node.setmocktime(self.mocktime + twelve_hrs - two_min)
+        self.mocktime = self.mocktime + twelve_hrs - two_min
+        time.sleep(2) # ensure enough time has passed for rebroadcast attempt to occur
+        assert_equal(txid in node.p2ps[1].get_invs(), False)
 
         self.log.info("Bump time & check that transaction is rebroadcast")
         # Transaction should be rebroadcast approximately 2 hours in the future,

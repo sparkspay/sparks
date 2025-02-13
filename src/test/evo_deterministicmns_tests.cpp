@@ -18,9 +18,9 @@
 #include <txmempool.h>
 #include <validation.h>
 
-#include <evo/specialtx.h>
-#include <evo/providertx.h>
 #include <evo/deterministicmns.h>
+#include <evo/providertx.h>
+#include <evo/specialtx.h>
 #include <llmq/utils.h>
 
 #include <boost/test/unit_test.hpp>
@@ -376,7 +376,7 @@ void FuncV19Activation(TestChainSetup& setup)
     }
 
     // check mn list/diff
-    const CBlockIndex* v19_index = llmq::utils::V19ActivationIndex(::ChainActive().Tip());
+    const CBlockIndex* v19_index = ::ChainActive().Tip()->GetAncestor(Params().GetConsensus().V19Height);
     auto v19_list = deterministicMNManager->GetListForBlock(v19_index);
     dummy_diff = v19_list.BuildDiff(tip_list);
     dummmy_list = v19_list.ApplyDiff(::ChainActive().Tip(), dummy_diff);
@@ -425,12 +425,12 @@ void FuncDIP3Protx(TestChainSetup& setup)
         // payload itself. This means, we need to rely on script verification, which takes the hash of the extra payload
         // into account
         auto tx2 = MalleateProTxPayout<CProRegTx>(tx);
-        CValidationState dummyState;
+        TxValidationState dummy_state;
         // Technically, the payload is still valid...
         {
             LOCK(cs_main);
-            BOOST_ASSERT(CheckProRegTx(CTransaction(tx), ::ChainActive().Tip(), dummyState, ::ChainstateActive().CoinsTip(), true));
-            BOOST_ASSERT(CheckProRegTx(CTransaction(tx2), ::ChainActive().Tip(), dummyState, ::ChainstateActive().CoinsTip(), true));
+            BOOST_ASSERT(CheckProRegTx(CTransaction(tx), ::ChainActive().Tip(), dummy_state, ::ChainstateActive().CoinsTip(), true));
+            BOOST_ASSERT(CheckProRegTx(CTransaction(tx2), ::ChainActive().Tip(), dummy_state, ::ChainstateActive().CoinsTip(), true));
         }
         // But the signature should not verify anymore
         BOOST_ASSERT(CheckTransactionSignature(*(setup.m_node.mempool), tx));
@@ -532,11 +532,11 @@ void FuncDIP3Protx(TestChainSetup& setup)
     tx = CreateProUpRegTx(*(setup.m_node.mempool), utxos, dmnHashes[0], ownerKeys[dmnHashes[0]], newOperatorKey.GetPublicKey(), ownerKeys[dmnHashes[0]].GetPubKey().GetID(), dmn->pdmnState->scriptPayout, setup.coinbaseKey);
     // check malleability protection again, but this time by also relying on the signature inside the ProUpRegTx
     auto tx2 = MalleateProTxPayout<CProUpRegTx>(tx);
-    CValidationState dummyState;
+    TxValidationState dummy_state;
     {
         LOCK(cs_main);
-        BOOST_ASSERT(CheckProUpRegTx(CTransaction(tx), ::ChainActive().Tip(), dummyState, ::ChainstateActive().CoinsTip(), true));
-        BOOST_ASSERT(!CheckProUpRegTx(CTransaction(tx2), ::ChainActive().Tip(), dummyState, ::ChainstateActive().CoinsTip(), true));
+        BOOST_ASSERT(CheckProUpRegTx(CTransaction(tx), ::ChainActive().Tip(), dummy_state, ::ChainstateActive().CoinsTip(), true));
+        BOOST_ASSERT(!CheckProUpRegTx(CTransaction(tx2), ::ChainActive().Tip(), dummy_state, ::ChainstateActive().CoinsTip(), true));
     }
     BOOST_ASSERT(CheckTransactionSignature(*(setup.m_node.mempool), tx));
     BOOST_ASSERT(!CheckTransactionSignature(*(setup.m_node.mempool), tx2));
@@ -786,7 +786,7 @@ void FuncVerifyDB(TestChainSetup& setup)
 
     // Verify db consistency
     LOCK(cs_main);
-    BOOST_ASSERT(CVerifyDB().VerifyDB(Params(), &::ChainstateActive().CoinsTip(), *(setup.m_node.evodb), 4, 2));
+    BOOST_ASSERT(CVerifyDB().VerifyDB(::ChainstateActive(), Params(), ::ChainstateActive().CoinsTip(), *(setup.m_node.evodb), 4, 2));
 }
 
 BOOST_AUTO_TEST_SUITE(evo_dip3_activation_tests)
@@ -813,7 +813,7 @@ BOOST_AUTO_TEST_CASE(dip3_protx_legacy)
 
 BOOST_AUTO_TEST_CASE(dip3_protx_basic)
 {
-    TestChainDIP3V19Setup setup;
+    TestChainV19Setup setup;
     FuncDIP3Protx(setup);
 }
 
@@ -825,7 +825,7 @@ BOOST_AUTO_TEST_CASE(test_mempool_reorg_legacy)
 
 BOOST_AUTO_TEST_CASE(test_mempool_reorg_basic)
 {
-    TestChainDIP3V19Setup setup;
+    TestChainV19Setup setup;
     FuncTestMempoolReorg(setup);
 }
 
@@ -837,7 +837,7 @@ BOOST_AUTO_TEST_CASE(test_mempool_dual_proregtx_legacy)
 
 BOOST_AUTO_TEST_CASE(test_mempool_dual_proregtx_basic)
 {
-    TestChainDIP3V19Setup setup;
+    TestChainV19Setup setup;
     FuncTestMempoolDualProregtx(setup);
 }
 

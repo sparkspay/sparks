@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2017 The Bitcoin Core developers
+# Copyright (c) 2017-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Class for sparksd node under test"""
@@ -22,16 +22,17 @@ import sys
 import collections
 
 from .authproxy import JSONRPCException
+from .messages import MY_SUBVERSION
 from .util import (
     MAX_NODES,
     append_config,
     delete_cookie_file,
+    get_auth_cookie,
     get_rpc_proxy,
     rpc_url,
     wait_until,
     p2p_port,
     get_chain_folder,
-    Options,
     EncodeDecimal,
 )
 
@@ -62,7 +63,7 @@ class TestNode():
     To make things easier for the test writer, any unrecognised messages will
     be dispatched to the RPC connection."""
 
-    def __init__(self, i, datadir, extra_args_from_options, *, chain, rpchost, timewait, timeout_factor, bitcoind, bitcoin_cli, mocktime, coverage_dir, cwd, extra_conf=None, extra_args=None, use_cli=False, start_perf=False, use_valgrind=False):
+    def __init__(self, i, datadir, extra_args_from_options, *, chain, rpchost, timewait, timeout_factor, bitcoind, bitcoin_cli, mocktime, coverage_dir, cwd, extra_conf=None, extra_args=None, use_cli=False, start_perf=False, use_valgrind=False, version=None):
         """
         Kwargs:
             start_perf (bool): If True, begin profiling the node with `perf` as soon as
@@ -77,7 +78,6 @@ class TestNode():
         self.stderr_dir = os.path.join(self.datadir, "stderr")
         self.rpchost = rpchost
         self.rpc_timeout = timewait
-        self.rpc_timeout *= Options.timeout_scale
         self.binary = bitcoind
         self.coverage_dir = coverage_dir
         self.cwd = cwd
@@ -89,6 +89,7 @@ class TestNode():
         # Note that common args are set in the config file (see initialize_datadir)
         self.extra_args = extra_args
         self.extra_args_from_options = extra_args_from_options
+        self.version = version
         # Configuration for logging is set as command-line args rather than in the bitcoin.conf file.
         # This means that starting a bitcoind using the temp dir to debug a failed test won't
         # spam debug.log.
@@ -96,7 +97,6 @@ class TestNode():
             self.binary,
             "-datadir=" + self.datadir,
             "-logtimemicros",
-            "-logthreadnames",
             "-debug",
             "-debugexclude=libevent",
             "-debugexclude=leveldb",
@@ -112,6 +112,9 @@ class TestNode():
             self.args = ["valgrind", "--suppressions={}".format(suppressions_file),
                          "--gen-suppressions=all", "--exit-on-first-error=yes",
                          "--error-exitcode=1", "--quiet"] + self.args
+
+        if self.version_is_at_least(190000):
+            self.args.append("-logthreadnames")
 
         self.cli = TestNodeCLI(bitcoin_cli, self.datadir)
         self.use_cli = use_cli
@@ -242,24 +245,27 @@ class TestNode():
                 )
                 rpc.getblockcount()
                 # If the call to getblockcount() succeeds then the RPC connection is up
-                wait_until(lambda: rpc.getmempoolinfo()['loaded'])
-                # Wait for the node to finish reindex, block import, and
-                # loading the mempool. Usually importing happens fast or
-                # even "immediate" when the node is started. However, there
-                # is no guarantee and sometimes ThreadImport might finish
-                # later. This is going to cause intermittent test failures,
-                # because generally the tests assume the node is fully
-                # ready after being started.
-                #
-                # For example, the node will reject block messages from p2p
-                # when it is still importing with the error "Unexpected
-                # block message received"
-                #
-                # The wait is done here to make tests as robust as possible
-                # and prevent racy tests and intermittent failures as much
-                # as possible. Some tests might not need this, but the
-                # overhead is trivial, and the added guarantees are worth
-                # the minimal performance cost.
+                if self.version_is_at_least(180000):
+                    # getmempoolinfo.loaded is available since commit
+                    # 71e38b9ebcb78b3a264a4c25c7c4e373317f2a40 (version 0.18.0)
+                    wait_until(lambda: rpc.getmempoolinfo()['loaded'])
+                    # Wait for the node to finish reindex, block import, and
+                    # loading the mempool. Usually importing happens fast or
+                    # even "immediate" when the node is started. However, there
+                    # is no guarantee and sometimes ThreadImport might finish
+                    # later. This is going to cause intermittent test failures,
+                    # because generally the tests assume the node is fully
+                    # ready after being started.
+                    #
+                    # For example, the node will reject block messages from p2p
+                    # when it is still importing with the error "Unexpected
+                    # block message received"
+                    #
+                    # The wait is done here to make tests as robust as possible
+                    # and prevent racy tests and intermittent failures as much
+                    # as possible. Some tests might not need this, but the
+                    # overhead is trivial, and the added guarantees are worth
+                    # the minimal performance cost.
                 self.log.debug("RPC successfully started")
                 if self.use_cli:
                     return
@@ -272,6 +278,10 @@ class TestNode():
                 # -342 Service unavailable, RPC server started but is shutting down due to error
                 if e.error['code'] != -28 and e.error['code'] != -342:
                     raise  # unknown JSON RPC exception
+            except ConnectionResetError:
+                # This might happen when the RPC server is in warmup, but shut down before the call to getblockcount
+                # succeeds. Try again to properly raise the FailedToStartError
+                pass
             except OSError as e:
                 if e.errno == errno.ETIMEDOUT:
                     pass  # Treat identical to ConnectionResetError
@@ -279,11 +289,26 @@ class TestNode():
                     pass  # Port not yet open?
                 else:
                     raise  # unknown OS error
-            except ValueError as e:  # cookie file not found and no rpcuser or rpcassword. sparksd still starting
+            except ValueError as e:  # cookie file not found and no rpcuser or rpcpassword; sparksd is still starting
                 if "No RPC credentials" not in str(e):
                     raise
             time.sleep(1.0 / poll_per_s)
         self._raise_assertion_error("Unable to connect to sparksd after {}s".format(self.rpc_timeout))
+
+    def wait_for_cookie_credentials(self):
+        """Ensures auth cookie credentials can be read, e.g. for testing CLI with -rpcwait before RPC connection is up."""
+        self.log.debug("Waiting for cookie credentials")
+        # Poll at a rate of four times per second.
+        poll_per_s = 4
+        for _ in range(poll_per_s * self.rpc_timeout):
+            try:
+                get_auth_cookie(self.datadir, self.chain)
+                self.log.debug("Cookie credentials successfully retrieved")
+                return
+            except ValueError:  # cookie file not found and no rpcuser or rpcpassword; bitcoind is still starting
+                pass            # so we continue polling until RPC credentials are retrieved
+            time.sleep(1.0 / poll_per_s)
+        self._raise_assertion_error("Unable to retrieve cookie credentials after {}s".format(self.rpc_timeout))
 
     def generate(self, nblocks, maxtries=1000000):
         self.log.debug("TestNode.generate() dispatches `generate` call to `generatetoaddress`")
@@ -300,13 +325,17 @@ class TestNode():
     def version_is_at_least(self, ver):
         return self.version is None or self.version >= ver
 
-    def stop_node(self, expected_stderr='', wait=0):
+    def stop_node(self, expected_stderr='', *, wait=0, wait_until_stopped=True):
         """Stop the node."""
         if not self.running:
             return
         self.log.debug("Stopping node")
         try:
-            self.stop(wait=wait)
+            # Do not use wait argument when testing older nodes, e.g. in feature_backwards_compatibility.py
+            if self.version_is_at_least(180000):
+                self.stop(wait=wait)
+            else:
+                self.stop()
         except http.client.CannotSendRequest:
             self.log.exception("Unable to stop node.")
 
@@ -324,6 +353,9 @@ class TestNode():
         self.stderr.close()
 
         del self.p2ps[:]
+
+        if wait_until_stopped:
+            self.wait_until_stopped()
 
     def is_node_stopped(self):
         """Checks whether the node has stopped.
@@ -471,11 +503,8 @@ class TestNode():
              tempfile.NamedTemporaryFile(dir=self.stdout_dir, delete=False) as log_stdout:
             try:
                 self.start(extra_args, stdout=log_stdout, stderr=log_stderr, *args, **kwargs)
-                self.wait_for_rpc_connection()
-                self.stop_node()
-                self.wait_until_stopped()
-            except FailedToStartError as e:
-                self.log.debug('sparksd failed to start: %s', e)
+                ret = self.process.wait(timeout=self.rpc_timeout)
+                self.log.debug(self._node_msg(f'sparksd exited with status {ret} during initialization'))
                 self.running = False
                 self.process = None
                 # Check stderr for expected message
@@ -494,11 +523,15 @@ class TestNode():
                         if expected_msg != stderr:
                             self._raise_assertion_error(
                                 'Expected message "{}" does not fully match stderr:\n"{}"'.format(expected_msg, stderr))
-            else:
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                self.running = False
+                self.process = None
+                assert_msg = f'sparksd should have exited within {self.rpc_timeout}s '
                 if expected_msg is None:
-                    assert_msg = "sparksd should have exited with an error"
+                    assert_msg += "with an error"
                 else:
-                    assert_msg = "sparksd should have exited with expected error " + expected_msg
+                    assert_msg += "with expected error " + expected_msg
                 self._raise_assertion_error(assert_msg)
 
     def add_p2p_connection(self, p2p_conn, *, wait_for_verack=True, **kwargs):
@@ -539,6 +572,10 @@ class TestNode():
         assert self.p2ps, self._node_msg("No p2p connection")
         return self.p2ps[0]
 
+    def num_connected_mininodes(self):
+        """Return number of test framework p2p connections to the node."""
+        return len([peer for peer in self.getpeerinfo() if peer['subver'] == MY_SUBVERSION.decode("utf-8")])
+
     def disconnect_p2ps(self):
         """Close all p2p connections to the node."""
         for p in self.p2ps:
@@ -554,6 +591,7 @@ class TestNode():
         wait_until(check_peers, timeout=5)
 
         del self.p2ps[:]
+        wait_until(lambda: self.num_connected_mininodes() == 0)
 
 
 class TestNodeCLIAttr:
@@ -609,14 +647,13 @@ class TestNodeCLI():
         """Run sparks-cli command. Deserializes returned string as python object."""
         pos_args = [arg_to_cli(arg) for arg in args]
         named_args = [str(key) + "=" + arg_to_cli(value) for (key, value) in kwargs.items()]
-        assert not (pos_args and named_args), "Cannot use positional arguments and named arguments in the same sparks-cli call"
         p_args = [self.binary, "-datadir=" + self.datadir] + self.options
         if named_args:
             p_args += ["-named"]
         if command is not None:
             p_args += [command]
         p_args += pos_args + named_args
-        self.log.debug("Running sparks-cli command: %s" % command)
+        self.log.debug("Running sparks-cli {}".format(p_args[2:]))
         process = subprocess.Popen(p_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         cli_stdout, cli_stderr = process.communicate(input=self.input)
         returncode = process.poll()

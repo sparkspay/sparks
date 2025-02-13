@@ -13,26 +13,33 @@
 #include <consensus/validation.h>
 #include <masternode/sync.h>
 #include <net_processing.h>
+#include <node/blockstorage.h>
 #include <scheduler.h>
 #include <spork.h>
 #include <txmempool.h>
 #include <ui_interface.h>
-#include <util/validation.h>
+#include <util/thread.h>
+#include <util/time.h>
 #include <validation.h>
 
 namespace llmq
 {
 std::unique_ptr<CChainLocksHandler> chainLocksHandler;
 
-CChainLocksHandler::CChainLocksHandler(CTxMemPool& _mempool, CConnman& _connman, CSporkManager& sporkManager, CSigningManager& _sigman, CSigSharesManager& _shareman, const std::unique_ptr<CMasternodeSync>& mn_sync) :
+CChainLocksHandler::CChainLocksHandler(CChainState& chainstate, CConnman& _connman, CMasternodeSync& mn_sync, CQuorumManager& _qman,
+                                       CSigningManager& _sigman, CSigSharesManager& _shareman, CSporkManager& sporkManager,
+                                       CTxMemPool& _mempool, const std::unique_ptr<PeerManager>& peerman) :
+    m_chainstate(chainstate),
     connman(_connman),
-    mempool(_mempool),
-    spork_manager(sporkManager),
+    m_mn_sync(mn_sync),
+    qman(_qman),
     sigman(_sigman),
     shareman(_shareman),
-    m_mn_sync(mn_sync),
+    spork_manager(sporkManager),
+    mempool(_mempool),
+    m_peerman(peerman),
     scheduler(std::make_unique<CScheduler>()),
-    scheduler_thread(std::make_unique<std::thread>([&] { TraceThread("cl-schdlr", [&] { scheduler->serviceQueue(); }); }))
+    scheduler_thread(std::make_unique<std::thread>(std::thread(util::TraceThread, "cl-schdlr", [&] { scheduler->serviceQueue(); })))
 {
 }
 
@@ -121,17 +128,15 @@ void CChainLocksHandler::ProcessNewChainLock(const NodeId from, const llmq::CCha
         }
     }
 
-    const uint256 requestId = ::SerializeHash(std::make_pair(CLSIG_REQUESTID_PREFIX, clsig.getHeight()));
-    if (!llmq::CSigningManager::VerifyRecoveredSig(Params().GetConsensus().llmqTypeChainLocks, *llmq::quorumManager, clsig.getHeight(), requestId, clsig.getBlockHash(), clsig.getSig())) {
+    if (!VerifyChainLock(clsig)) {
         LogPrint(BCLog::CHAINLOCKS, "CChainLocksHandler::%s -- invalid CLSIG (%s), peer=%d\n", __func__, clsig.ToString(), from);
         if (from != -1) {
-            LOCK(cs_main);
-            Misbehaving(from, 10);
+            m_peerman->Misbehaving(from, 10);
         }
         return;
     }
 
-    CBlockIndex* pindex = WITH_LOCK(cs_main, return LookupBlockIndex(clsig.getBlockHash()));
+    CBlockIndex* pindex = WITH_LOCK(cs_main, return m_chainstate.m_blockman.LookupBlockIndex(clsig.getBlockHash()));
 
     {
         LOCK(cs);
@@ -174,7 +179,7 @@ void CChainLocksHandler::ProcessNewChainLock(const NodeId from, const llmq::CCha
               __func__, clsig.ToString(), from);
 }
 
-void CChainLocksHandler::AcceptedBlockHeader(const CBlockIndex* pindexNew)
+void CChainLocksHandler::AcceptedBlockHeader(gsl::not_null<const CBlockIndex*> pindexNew)
 {
     LOCK(cs);
 
@@ -214,7 +219,7 @@ void CChainLocksHandler::UpdatedBlockTip()
 
 void CChainLocksHandler::CheckActiveState()
 {
-    const bool fDIP0008Active = WITH_LOCK(cs_main, return (::ChainActive().Tip() != nullptr) && (::ChainActive().Tip()->pprev != nullptr) && ::ChainActive().Tip()->pprev->nHeight >= Params().GetConsensus().DIP0008Height);
+    const bool fDIP0008Active = WITH_LOCK(cs_main, return (m_chainstate.m_chain.Tip() != nullptr) && (m_chainstate.m_chain.Tip()->pprev != nullptr) && m_chainstate.m_chain.Tip()->pprev->nHeight >= Params().GetConsensus().DIP0008Height);
 
     bool oldIsEnforced = isEnforced;
     isEnabled = AreChainLocksEnabled(spork_manager);
@@ -239,7 +244,7 @@ void CChainLocksHandler::TrySignChainTip()
         return;
     }
 
-    if (!m_mn_sync->IsBlockchainSynced()) {
+    if (!m_mn_sync.IsBlockchainSynced()) {
         return;
     }
 
@@ -251,7 +256,7 @@ void CChainLocksHandler::TrySignChainTip()
         return;
     }
 
-    const CBlockIndex* pindex = WITH_LOCK(cs_main, return ::ChainActive().Tip());
+    const CBlockIndex* pindex = WITH_LOCK(cs_main, return m_chainstate.m_chain.Tip());
 
     if (pindex->pprev == nullptr) {
         return;
@@ -315,7 +320,7 @@ void CChainLocksHandler::TrySignChainTip()
                     LOCK(cs);
                     auto it = txFirstSeenTime.find(txid);
                     if (it != txFirstSeenTime.end()) {
-                        txAge = GetAdjustedTime() - it->second;
+                        txAge = GetTime<std::chrono::seconds>().count() - it->second;
                     }
                 }
 
@@ -357,9 +362,9 @@ void CChainLocksHandler::TransactionAddedToMempool(const CTransactionRef& tx, in
     txFirstSeenTime.emplace(tx->GetHash(), nAcceptTime);
 }
 
-void CChainLocksHandler::BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex)
+void CChainLocksHandler::BlockConnected(const std::shared_ptr<const CBlock>& pblock, gsl::not_null<const CBlockIndex*> pindex)
 {
-    if (!m_mn_sync->IsBlockchainSynced()) {
+    if (!m_mn_sync.IsBlockchainSynced()) {
         return;
     }
 
@@ -377,7 +382,7 @@ void CChainLocksHandler::BlockConnected(const std::shared_ptr<const CBlock>& pbl
     }
     auto& txids = *it->second;
 
-    int64_t curTime = GetAdjustedTime();
+    int64_t curTime = GetTime<std::chrono::seconds>().count();
 
     for (const auto& tx : pblock->vtx) {
         if (tx->IsCoinBase() || tx->vin.empty()) {
@@ -390,7 +395,7 @@ void CChainLocksHandler::BlockConnected(const std::shared_ptr<const CBlock>& pbl
 
 }
 
-void CChainLocksHandler::BlockDisconnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexDisconnected)
+void CChainLocksHandler::BlockDisconnected(const std::shared_ptr<const CBlock>& pblock, gsl::not_null<const CBlockIndex*> pindexDisconnected)
 {
     LOCK(cs);
     blockTxs.erase(pindexDisconnected->GetBlockHash());
@@ -419,7 +424,7 @@ CChainLocksHandler::BlockTxs::mapped_type CChainLocksHandler::GetBlockTxs(const 
         uint32_t blockTime;
         {
             LOCK(cs_main);
-            auto* pindex = LookupBlockIndex(blockHash);
+            auto* pindex = m_chainstate.m_blockman.LookupBlockIndex(blockHash);
             CBlock block;
             if (!ReadBlockFromDisk(block, pindex, Params().GetConsensus())) {
                 return nullptr;
@@ -445,28 +450,14 @@ CChainLocksHandler::BlockTxs::mapped_type CChainLocksHandler::GetBlockTxs(const 
     return ret;
 }
 
-bool CChainLocksHandler::IsTxSafeForMining(const CInstantSendManager& isman, const uint256& txid) const
+bool CChainLocksHandler::IsTxSafeForMining(const uint256& txid) const
 {
-    if (!isman.RejectConflictingBlocks()) {
-        return true;
-    }
-    if (!isEnabled || !isEnforced) {
-        return true;
-    }
-
-    if (!isman.IsInstantSendEnabled()) {
-        return true;
-    }
-    if (isman.IsLocked(txid)) {
-        return true;
-    }
-
     int64_t txAge = 0;
     {
         LOCK(cs);
         auto it = txFirstSeenTime.find(txid);
         if (it != txFirstSeenTime.end()) {
-            txAge = GetAdjustedTime() - it->second;
+            txAge = GetTime<std::chrono::seconds>().count() - it->second;
         }
     }
 
@@ -499,24 +490,23 @@ void CChainLocksHandler::EnforceBestChainLock()
         }
     }
 
-    CValidationState state;
-    const auto &params = Params();
+    BlockValidationState dummy_state;
 
     // Go backwards through the chain referenced by clsig until we find a block that is part of the main chain.
     // For each of these blocks, check if there are children that are NOT part of the chain referenced by clsig
     // and mark all of them as conflicting.
     LogPrint(BCLog::CHAINLOCKS, "CChainLocksHandler::%s -- enforcing block %s via CLSIG (%s)\n", __func__, pindex->GetBlockHash().ToString(), clsig->ToString());
-    EnforceBlock(state, params, pindex);
+    m_chainstate.EnforceBlock(dummy_state, pindex);
 
-    bool activateNeeded = WITH_LOCK(::cs_main, return ::ChainActive().Tip()->GetAncestor(currentBestChainLockBlockIndex->nHeight)) != currentBestChainLockBlockIndex;
+    bool activateNeeded = WITH_LOCK(::cs_main, return m_chainstate.m_chain.Tip()->GetAncestor(currentBestChainLockBlockIndex->nHeight)) != currentBestChainLockBlockIndex;
 
     if (activateNeeded) {
-        if(!ActivateBestChain(state, params)) {
-            LogPrintf("CChainLocksHandler::%s -- ActivateBestChain failed: %s\n", __func__, FormatStateMessage(state));
+        if (!m_chainstate.ActivateBestChain(dummy_state)) {
+            LogPrintf("CChainLocksHandler::%s -- ActivateBestChain failed: %s\n", __func__, dummy_state.ToString());
             return;
         }
         LOCK(cs_main);
-        if (::ChainActive().Tip()->GetAncestor(currentBestChainLockBlockIndex->nHeight) != currentBestChainLockBlockIndex) {
+        if (m_chainstate.m_chain.Tip()->GetAncestor(currentBestChainLockBlockIndex->nHeight) != currentBestChainLockBlockIndex) {
             return;
         }
     }
@@ -560,6 +550,13 @@ bool CChainLocksHandler::HasChainLock(int nHeight, const uint256& blockHash) con
 {
     LOCK(cs);
     return InternalHasChainLock(nHeight, blockHash);
+}
+
+bool CChainLocksHandler::VerifyChainLock(const CChainLockSig& clsig) const
+{
+    const auto llmqType = Params().GetConsensus().llmqTypeChainLocks;
+    const uint256 nRequestId = ::SerializeHash(std::make_pair(llmq::CLSIG_REQUESTID_PREFIX, clsig.getHeight()));
+    return llmq::CSigningManager::VerifyRecoveredSig(llmqType, qman, clsig.getHeight(), nRequestId, clsig.getBlockHash(), clsig.getSig());
 }
 
 bool CChainLocksHandler::InternalHasChainLock(int nHeight, const uint256& blockHash) const
@@ -619,7 +616,7 @@ bool CChainLocksHandler::InternalHasConflictingChainLock(int nHeight, const uint
 
 void CChainLocksHandler::Cleanup()
 {
-    if (!m_mn_sync->IsBlockchainSynced()) {
+    if (!m_mn_sync.IsBlockchainSynced()) {
         return;
     }
 
@@ -643,7 +640,7 @@ void CChainLocksHandler::Cleanup()
     }
 
     for (auto it = blockTxs.begin(); it != blockTxs.end(); ) {
-        auto* pindex = LookupBlockIndex(it->first);
+        auto* pindex = m_chainstate.m_blockman.LookupBlockIndex(it->first);
         if (InternalHasChainLock(pindex->nHeight, pindex->GetBlockHash())) {
             for (const auto& txid : *it->second) {
                 txFirstSeenTime.erase(txid);
@@ -662,8 +659,8 @@ void CChainLocksHandler::Cleanup()
             // tx has vanished, probably due to conflicts
             it = txFirstSeenTime.erase(it);
         } else if (!hashBlock.IsNull()) {
-            auto* pindex = LookupBlockIndex(hashBlock);
-            if (::ChainActive().Tip()->GetAncestor(pindex->nHeight) == pindex && ::ChainActive().Height() - pindex->nHeight >= 6) {
+            auto* pindex = m_chainstate.m_blockman.LookupBlockIndex(hashBlock);
+            if (m_chainstate.m_chain.Tip()->GetAncestor(pindex->nHeight) == pindex && m_chainstate.m_chain.Height() - pindex->nHeight >= 6) {
                 // tx got confirmed >= 6 times, so we can stop keeping track of it
                 it = txFirstSeenTime.erase(it);
             } else {

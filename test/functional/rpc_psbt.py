@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2018 The Bitcoin Core developers
+# Copyright (c) 2018-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test the Partially Signed Transaction RPCs.
@@ -21,14 +21,7 @@ import os
 class PSBTTest(BitcoinTestFramework):
 
     def set_test_params(self):
-        self.setup_clean_chain = False
         self.num_nodes = 3
-       # TODO: remove -txindex. Currently required for getrawtransaction call.
-        self.extra_args = [
-            ["-txindex"],
-            ["-txindex"],
-            ["-txindex"]
-        ]
         self.supports_cli = False
 
     def skip_test_if_missing_module(self):
@@ -157,6 +150,20 @@ class PSBTTest(BitcoinTestFramework):
         self.nodes[0].sendrawtransaction(finalized)
         self.nodes[0].generate(6)
         self.sync_all()
+
+        # Make sure change address wallet does not have P2SH innerscript access to results in success
+        # when attempting BnB coin selection
+        block_height = self.nodes[0].getblockcount()
+        self.nodes[0].walletcreatefundedpsbt([], [{self.nodes[2].getnewaddress():self.nodes[0].listunspent()[0]["amount"]+1}], block_height+2, {"changeAddress":self.nodes[1].getnewaddress()}, False)
+
+        # Regression test for 14473 (mishandling of already-signed witness transaction):
+        unspent = self.nodes[0].listunspent()[0]
+        psbtx_info = self.nodes[0].walletcreatefundedpsbt([{"txid":unspent["txid"], "vout":unspent["vout"]}], [{self.nodes[2].getnewaddress():unspent["amount"]+1}])
+        complete_psbt = self.nodes[0].walletprocesspsbt(psbtx_info["psbt"])
+        double_processed_psbt = self.nodes[0].walletprocesspsbt(complete_psbt["psbt"])
+        assert_equal(complete_psbt, double_processed_psbt)
+        # We don't care about the decode result, but decoding must succeed.
+        self.nodes[0].decodepsbt(double_processed_psbt["psbt"])
 
         # BIP 174 Test Vectors
 
@@ -314,6 +321,13 @@ class PSBTTest(BitcoinTestFramework):
         analysis = self.nodes[0].analyzepsbt('cHNidP8BAHECAAAAAQXbPuwX0yi0oRvSfIXqeruM5+ibuXvP92RCdIEsJR6jAAAAAAD/////AgD5ApUAAAAAFgAUKNw0x8HRctAgmvoevm4u1SbN7XL87QKVAAAAABYAFPck4gF7iL4NL4wtfRAKgQbghiTUAAAAAAABABMCAAAAAAEBQAda8HUHAAAAAAAAAQcCagABAR8AgIFq49AHABYAFJUDtxf2PHo641HEOBOAIvFMNTr2AAAA')
         assert_equal(analysis['next'], 'creator')
         assert_equal(analysis['error'], 'PSBT is not valid. Input 0 has invalid value')
+
+        self.log.info("PSBT with signed, but not finalized, inputs should have Finalizer as next")
+        analysis = self.nodes[0].analyzepsbt('cHNidP8BAHECAAAAAXfx5nfVEBDq0BbpUjqqfvNEWyX2dGCkx7RiW9E6DXPbAAAAAAD9////AlDDAAAAAAAAFgAUy/UxxZuzZswcmFnN/E9DGSiHLUsuGPUFAAAAABYAFLsH5o0R38wXx+X2cCosTMCZnQ4baAAAAAABACwCAAAAAAEA4fUFAAAAABl2qRTgSNoebYX9/i35W9ixgrFUmcLJbYisAAAAACICAv4uHbVQEQkVrUThtBx6BnGlZJcyVHMKOYaJoBpEjQJyRzBEAiBse8ynDCBq+3BBEvQUeCnbf6cz0yt3ylnBsgiV2+zFZwIgCzgYKpTB+BmwtRw4fx5spZjueH8hMuJSnXu/wU/z1scBAQMEAQAAACIGAv4uHbVQEQkVrUThtBx6BnGlZJcyVHMKOYaJoBpEjQJyGA8FaUNUAACAAQAAgAAAAIAAAAAAAAAAAAEBHwDh9QUAAAAAFgAU4EjaHm2F/f4t+VvYsYKxVJnCyW0AACICAv4IiIHn01IKyw4lEaIxhArVyFqGABpomkhcTjULKKv7GA8FaUNUAACAAQAAgAAAAIABAAAAAAAAAAA=')
+        # TODO update tx above.
+        # currently I can't figure out how to generate transaction, that would be valid and will show correct stage finalizer.
+        # currently it fails at `verify pubkey` for signer
+        # assert_equal(analysis['next'], 'finalizer')
 
         analysis = self.nodes[0].analyzepsbt('cHNidP8BAHECAAAAAbmNr2X0Nc+2AtaXYjPu3kIFc3Cmj1aYy5WQs5yaUfRvAAAAAAD/////AgCAgWrj0AcAFgAUKNw0x8HRctAgmvoevm4u1SbN7XL87QKVAAAAABYAFPck4gF7iL4NL4wtfRAKgQbghiTUAAAAAAABABQCAAAAAAGghgEAAAAAAAFRAAAAAAEBHwDyBSoBAAAAFgAUlQO3F/Y8ejrjUcQ4E4Ai8Uw1OvYAAAA=')
         assert_equal(analysis['next'], 'creator')

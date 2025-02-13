@@ -19,6 +19,7 @@
 #include <validation.h>
 
 #include <cxxtimer.hpp>
+#include <atomic>
 #include <memory>
 #include <util/irange.h>
 #include <util/underlying.h>
@@ -56,7 +57,7 @@ CDKGMember::CDKGMember(const CDeterministicMNCPtr& _dmn, size_t _idx) :
 
 }
 
-bool CDKGSession::Init(const CBlockIndex* _pQuorumBaseBlockIndex, const std::vector<CDeterministicMNCPtr>& mns, const uint256& _myProTxHash, int _quorumIndex)
+bool CDKGSession::Init(gsl::not_null<const CBlockIndex*> _pQuorumBaseBlockIndex, Span<CDeterministicMNCPtr> mns, const uint256& _myProTxHash, int _quorumIndex)
 {
     m_quorum_base_block_index = _pQuorumBaseBlockIndex;
     quorumIndex = _quorumIndex;
@@ -93,7 +94,7 @@ bool CDKGSession::Init(const CBlockIndex* _pQuorumBaseBlockIndex, const std::vec
         for (const auto& mn : members) {
             ss << mn->dmn->proTxHash.ToString().substr(0, 4) << " | ";
         }
-        logger.Batch("DKGComposition h[%d] i[%d] DKG:%s", pCycleQuorumBaseBlockIndex->nHeight, quorumIndex, ss.str());
+        logger.Batch("DKGComposition h[%d] i[%d] DKG:[%s]", pCycleQuorumBaseBlockIndex->nHeight, quorumIndex, ss.str());
     }
 
     if (mns.size() < size_t(params.minSize)) {
@@ -138,6 +139,7 @@ void CDKGSession::Contribute(CDKGPendingMessages& pendingMessages)
         return;
     }
     logger.Batch("generated contributions. time=%d", t1.count());
+    logger.Flush();
 
     SendContributions(pendingMessages);
 }
@@ -351,7 +353,7 @@ void CDKGSession::VerifyPendingContributions()
 
     std::vector<size_t> memberIndexes;
     std::vector<BLSVerificationVectorPtr> vvecs;
-    BLSSecretKeyVector skContributions;
+    std::vector<CBLSSecretKey> skContributions;
 
     for (const auto& idx : pend) {
         const auto& m = members[idx];
@@ -455,13 +457,15 @@ void CDKGSession::VerifyConnectionAndMinProtoVersions() const
         }
         if (auto it = protoMap.find(m->dmn->proTxHash); it == protoMap.end()) {
             m->badConnection = fShouldAllMembersBeConnected;
-            logger.Batch("%s is not connected to us, badConnection=%b", m->dmn->proTxHash.ToString(), m->badConnection);
+            if (m->badConnection) {
+                logger.Batch("%s is not connected to us, badConnection=1", m->dmn->proTxHash.ToString());
+            }
         } else if (it->second < MIN_MASTERNODE_PROTO_VERSION) {
             m->badConnection = true;
             logger.Batch("%s does not have min proto version %d (has %d)", m->dmn->proTxHash.ToString(), MIN_MASTERNODE_PROTO_VERSION, it->second);
         }
 
-        if (mmetaman.GetMetaInfo(m->dmn->proTxHash)->OutboundFailedTooManyTimes()) {
+        if (mmetaman->GetMetaInfo(m->dmn->proTxHash)->OutboundFailedTooManyTimes()) {
             m->badConnection = true;
             logger.Batch("%s failed to connect to it too many times", m->dmn->proTxHash.ToString());
         }
@@ -939,7 +943,7 @@ void CDKGSession::SendCommitment(CDKGPendingMessages& pendingMessages)
     cxxtimer::Timer t1(true);
     std::vector<uint16_t> memberIndexes;
     std::vector<BLSVerificationVectorPtr> vvecs;
-    BLSSecretKeyVector skContributions;
+    std::vector<CBLSSecretKey> skContributions;
     if (!dkgManager.GetVerifiedContributions(params.type, m_quorum_base_block_index, qc.validMembers, memberIndexes, vvecs, skContributions)) {
         logger.Batch("failed to get valid contributions");
         return;
@@ -990,13 +994,15 @@ void CDKGSession::SendCommitment(CDKGPendingMessages& pendingMessages)
     qc.quorumSig = skShare.Sign(commitmentHash);
 
     if (lieType == 3) {
-        std::vector<uint8_t> buf = qc.sig.ToByteVector();
+        const bool is_bls_legacy = bls::bls_legacy_scheme.load();
+        std::vector<uint8_t> buf = qc.sig.ToByteVector(is_bls_legacy);
         buf[5]++;
-        qc.sig.SetByteVector(buf);
+        qc.sig.SetByteVector(buf, is_bls_legacy);
     } else if (lieType == 4) {
-        std::vector<uint8_t> buf = qc.quorumSig.ToByteVector();
+        const bool is_bls_legacy = bls::bls_legacy_scheme.load();
+        std::vector<uint8_t> buf = qc.quorumSig.ToByteVector(is_bls_legacy);
         buf[5]++;
-        qc.quorumSig.SetByteVector(buf);
+        qc.quorumSig.SetByteVector(buf, is_bls_legacy);
     }
 
     t3.stop();
@@ -1102,7 +1108,7 @@ void CDKGSession::ReceiveMessage(const CDKGPrematureCommitment& qc, bool& retBan
 
     std::vector<uint16_t> memberIndexes;
     std::vector<BLSVerificationVectorPtr> vvecs;
-    BLSSecretKeyVector skContributions;
+    std::vector<CBLSSecretKey> skContributions;
     BLSVerificationVectorPtr quorumVvec;
     if (dkgManager.GetVerifiedContributions(params.type, m_quorum_base_block_index, qc.validMembers, memberIndexes, vvecs, skContributions)) {
         quorumVvec = cache.BuildQuorumVerificationVector(::SerializeHash(memberIndexes), vvecs);

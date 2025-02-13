@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2014-2016 The Bitcoin Core developers
+# Copyright (c) 2014-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Run regression test suite.
@@ -20,8 +20,8 @@ import os
 import time
 import shutil
 import signal
-import sys
 import subprocess
+import sys
 import tempfile
 import re
 import logging
@@ -68,6 +68,7 @@ TEST_EXIT_PASSED = 0
 TEST_EXIT_SKIPPED = 77
 
 TEST_FRAMEWORK_MODULES = [
+    "blocktools",
     "muhash",
     "script",
     "util",
@@ -85,7 +86,6 @@ BASE_SCRIPTS = [
     # Longest test should go first, to favor running tests in parallel
     'feature_dip3_deterministicmns.py', # NOTE: needs sparks_hash to pass
     'feature_llmq_data_recovery.py',
-    'feature_fee_estimation.py',
     'wallet_hd.py',
     'wallet_backup.py',
     # vv Tests less than 5m vv
@@ -93,7 +93,7 @@ BASE_SCRIPTS = [
     'feature_maxuploadtarget.py',
     'feature_block.py', # NOTE: needs sparks_hash to pass
     'rpc_fundrawtransaction.py',
-    'rpc_fundrawtransaction_hd.py',
+    'rpc_fundrawtransaction.py --usehd',
     'wallet_multiwallet.py --usecli',
     'p2p_quorum_data.py',
     # vv Tests less than 2m vv
@@ -103,6 +103,7 @@ BASE_SCRIPTS = [
     'p2p_timeouts.py',
     'feature_bip68_sequence.py',
     'mempool_updatefromblock.py',
+    'p2p_tx_download.py',
     'wallet_dump.py',
     'wallet_listtransactions.py',
     'feature_multikeysporks.py',
@@ -112,13 +113,15 @@ BASE_SCRIPTS = [
     'feature_llmq_chainlocks.py', # NOTE: needs sparks_hash to pass
     'feature_llmq_rotation.py', # NOTE: needs sparks_hash to pass
     'feature_llmq_connections.py', # NOTE: needs sparks_hash to pass
-    'feature_llmq_hpmn.py', # NOTE: needs sparks_hash to pass
+    'feature_llmq_evo.py', # NOTE: needs sparks_hash to pass
     'feature_llmq_simplepose.py', # NOTE: needs sparks_hash to pass
     'feature_llmq_is_cl_conflicts.py', # NOTE: needs sparks_hash to pass
     'feature_llmq_is_migration.py', # NOTE: needs sparks_hash to pass
     'feature_llmq_is_retroactive.py', # NOTE: needs sparks_hash to pass
     'feature_llmq_dkgerrors.py', # NOTE: needs sparks_hash to pass
     'feature_dip4_coinbasemerkleroots.py', # NOTE: needs sparks_hash to pass
+    'feature_asset_locks.py', # NOTE: needs sparks_hash to pass
+    'feature_mnehf.py', # NOTE: needs sparks_hash to pass
     # vv Tests less than 60s vv
     'p2p_sendheaders.py', # NOTE: needs sparks_hash to pass
     'p2p_sendheaders_compressed.py', # NOTE: needs sparks_hash to pass
@@ -134,6 +137,7 @@ BASE_SCRIPTS = [
     # vv Tests less than 30s vv
     'rpc_quorum.py',
     'wallet_keypool_topup.py',
+    'feature_fee_estimation.py',
     'interface_zmq_sparks.py',
     'interface_zmq.py',
     'interface_bitcoin_cli.py',
@@ -171,11 +175,14 @@ BASE_SCRIPTS = [
     'rpc_blockchain.py',
     'rpc_deprecated.py',
     'wallet_disable.py',
+    'p2p_addr_relay.py',
+    'p2p_getaddr_caching.py',
     'p2p_getdata.py',
     'rpc_net.py',
     'wallet_keypool.py',
     'wallet_keypool_hd.py',
     'p2p_mempool.py',
+    'p2p_filter.py',
     'p2p_blocksonly.py',
     'rpc_setban.py',
     'mining_prioritisetransaction.py',
@@ -186,6 +193,7 @@ BASE_SCRIPTS = [
     'feature_assumevalid.py',
     'example_test.py',
     'wallet_txn_doublespend.py',
+    'feature_backwards_compatibility.py',
     'wallet_txn_clone.py --mineblock',
     'feature_notifications.py',
     'rpc_getblockfilter.py',
@@ -194,10 +202,12 @@ BASE_SCRIPTS = [
     'feature_utxo_set_hash.py',
     'mempool_packages.py',
     'mempool_package_onemore.py',
+    'rpc_createmultisig.py',
     'feature_versionbits_warning.py',
     'rpc_preciousblock.py',
     'wallet_importprunedfunds.py',
     'p2p_leak_tx.py',
+    'p2p_eviction.py',
     'rpc_signmessage.py',
     'rpc_generateblock.py',
     'wallet_balance.py',
@@ -207,6 +217,7 @@ BASE_SCRIPTS = [
     'wallet_import_rescan.py',
     'wallet_import_with_label.py',
     'wallet_upgradewallet.py',
+    'wallet_mnemonicbits.py',
     'rpc_bind.py --ipv4',
     'rpc_bind.py --ipv6',
     'rpc_bind.py --nonloopback',
@@ -224,11 +235,13 @@ BASE_SCRIPTS = [
     'feature_cltv.py',
     'feature_new_quorum_type_activation.py',
     'feature_governance_objects.py',
+    'feature_governance.py',
     'rpc_uptime.py',
     'wallet_resendwallettransactions.py',
     'wallet_fallbackfee.py',
     'rpc_dumptxoutset.py',
     'feature_minchainwork.py',
+    'rpc_estimatefee.py',
     'p2p_unrequested_blocks.py', # NOTE: needs sparks_hash to pass
     'feature_shutdown.py',
     'rpc_coinjoin.py',
@@ -249,18 +262,25 @@ BASE_SCRIPTS = [
     'feature_asmap.py',
     'feature_includeconf.py',
     'mempool_unbroadcast.py',
+    'mempool_compatibility.py',
     'rpc_deriveaddresses.py',
     'rpc_deriveaddresses.py --usecli',
     'rpc_scantxoutset.py',
     'feature_logging.py',
+    'feature_coinstatsindex.py',
     'p2p_node_network_limited.py',
     'p2p_permissions.py',
     'feature_blocksdir.py',
     'wallet_startup.py',
+    'p2p_i2p_ports.py',
     'feature_config_args.py',
     'feature_settings.py',
+    'rpc_getdescriptorinfo.py',
+    'rpc_getaddressinfo_labels_purpose_deprecation.py',
+    'rpc_getaddressinfo_label_deprecation.py',
     'rpc_help.py',
     'feature_help.py',
+    'feature_blockfilterindex_prune.py'
     # Don't append tests at the end to avoid merge conflicts
     # Put them in a random line within the section that fits their approximate run-time
 ]
@@ -283,6 +303,8 @@ def main():
                                      epilog='''
     Help text and arguments for individual test script:''',
                                      formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('--ansi', action='store_true', default=sys.stdout.isatty(), help="Use ANSI colors and dots in output (enabled by default when standard output is a TTY)")
+    parser.add_argument('--attempts', '-a', type=int, default=1, help='how many attempts should be allowed for the non-deterministic test suite. Default=1.')
     parser.add_argument('--combinedlogslen', '-c', type=int, default=0, metavar='n', help='On failure, print a log (of length n lines) to the console, combined from the test framework and all test nodes.')
     parser.add_argument('--coverage', action='store_true', help='generate a basic coverage report for the RPC interface')
     parser.add_argument('--ci', action='store_true', help='Run checks and code that are usually only enabled in a continuous integration environment')
@@ -295,7 +317,14 @@ def main():
     parser.add_argument('--tmpdirprefix', '-t', default=tempfile.gettempdir(), help="Root directory for datadirs")
     parser.add_argument('--failfast', '-F', action='store_true', help='stop execution after the first test failure')
     parser.add_argument('--filter', help='filter scripts to run by regular expression')
+
     args, unknown_args = parser.parse_known_args()
+    if not args.ansi:
+        global BOLD, GREEN, RED, GREY
+        BOLD = ("", "")
+        GREEN = ("", "")
+        RED = ("", "")
+        GREY = ("", "")
 
     # args to be passed on always start with two sparkses; tests are the remaining unknown args
     tests = [arg for arg in unknown_args if arg[:2] != "--"]
@@ -393,14 +422,15 @@ def main():
         build_dir=config["environment"]["BUILDDIR"],
         tmpdir=tmpdir,
         jobs=args.jobs,
+        attempts=args.attempts,
         enable_coverage=args.coverage,
         args=passon_args,
         combined_logs_len=args.combinedlogslen,
         failfast=args.failfast,
-        runs_ci=args.ci,
+        use_term_control=args.ansi,
     )
 
-def run_tests(*, test_list, src_dir, build_dir, tmpdir, jobs=1, enable_coverage=False, args=None, combined_logs_len=0,failfast=False, runs_ci=False):
+def run_tests(*, test_list, src_dir, build_dir, tmpdir, jobs=1, attempts=1, enable_coverage=False, args=None, combined_logs_len=0,failfast=False, use_term_control):
     args = args or []
 
     # Warn if sparksd is already running
@@ -453,7 +483,8 @@ def run_tests(*, test_list, src_dir, build_dir, tmpdir, jobs=1, enable_coverage=
         tmpdir=tmpdir,
         test_list=test_list,
         flags=flags,
-        timeout_duration=30 * 60 if runs_ci else float('inf'),  # in seconds
+        use_term_control=use_term_control,
+        attempts=attempts,
     )
     start_time = time.time()
     test_results = []
@@ -504,9 +535,11 @@ def run_tests(*, test_list, src_dir, build_dir, tmpdir, jobs=1, enable_coverage=
 
     all_passed = all(map(lambda test_result: test_result.was_successful, test_results)) and coverage_passed
 
-    # This will be a no-op unless failfast is True in which case there may be dangling
-    # processes which need to be killed.
-    job_queue.kill_and_join()
+    # Clean up dangling processes if any. This may only happen with --failfast option.
+    # Killing the process group will also terminate the current process but that is
+    # not an issue
+    if len(job_queue.jobs):
+        os.killpg(os.getpgid(0), signal.SIGKILL)
 
     sys.exit(not all_passed)
 
@@ -537,16 +570,17 @@ class TestHandler:
     Trigger the test scripts passed in via the list.
     """
 
-    def __init__(self, *, num_tests_parallel, tests_dir, tmpdir, test_list, flags, timeout_duration):
+    def __init__(self, *, num_tests_parallel, tests_dir, tmpdir, test_list, flags, use_term_control, attempts):
         assert num_tests_parallel >= 1
         self.num_jobs = num_tests_parallel
         self.tests_dir = tests_dir
         self.tmpdir = tmpdir
-        self.timeout_duration = timeout_duration
         self.test_list = test_list
         self.flags = flags
         self.num_running = 0
         self.jobs = []
+        self.use_term_control = use_term_control
+        self.attempts = attempts
 
     def get_next(self):
         while self.num_running < self.num_jobs and self.test_list:
@@ -568,7 +602,9 @@ class TestHandler:
                                                stderr=log_stderr),
                               testdir,
                               log_stdout,
-                              log_stderr))
+                              log_stderr,
+                              portseed,
+                              1))  # attempt
         if not self.jobs:
             raise IndexError('pop from empty list')
 
@@ -581,11 +617,7 @@ class TestHandler:
             # Return first proc that finishes
             time.sleep(.5)
             for job in self.jobs:
-                (name, start_time, proc, testdir, log_out, log_err) = job
-                if int(time.time() - start_time) > self.timeout_duration:
-                    # Timeout individual tests if timeout is specified (to stop
-                    # tests hanging and not providing useful output).
-                    proc.send_signal(signal.SIGINT)
+                (name, start_time, proc, testdir, log_out, log_err, portseed, attempt) = job
                 if proc.poll() is not None:
                     log_out.seek(0), log_err.seek(0)
                     [stdout, stderr] = [log_file.read().decode('utf-8') for log_file in (log_out, log_err)]
@@ -594,26 +626,46 @@ class TestHandler:
                         status = "Passed"
                     elif proc.returncode == TEST_EXIT_SKIPPED:
                         status = "Skipped"
+                    elif attempt < self.attempts:
+                        # cleanup
+                        if self.use_term_control:
+                            clearline = '\r' + (' ' * dot_count) + '\r'
+                            print(clearline, end='', flush=True)
+                        dot_count = 0
+                        shutil.rmtree(testdir, ignore_errors=True)
+                        self.jobs.remove(job)
+                        print(f"{name} failed at attempt {attempt}/{self.attempts}, Duration: {int(time.time() - start_time)} s")
+                        # start over
+                        portseed_arg = ["--portseed={}".format(portseed)]
+                        log_stdout = tempfile.SpooledTemporaryFile(max_size=2**16)
+                        log_stderr = tempfile.SpooledTemporaryFile(max_size=2**16)
+                        test_argv = name.split()
+                        tmpdir_arg = ["--tmpdir={}".format(testdir)]
+                        self.jobs.append((name,
+                                          time.time(),
+                                          subprocess.Popen([sys.executable, self.tests_dir + test_argv[0]] + test_argv[1:] + self.flags + portseed_arg + tmpdir_arg,
+                                                           universal_newlines=True,
+                                                           stdout=log_stdout,
+                                                           stderr=log_stderr),
+                                          testdir,
+                                          log_stdout,
+                                          log_stderr,
+                                          portseed,
+                                          attempt + 1))  # attempt
+                        # no results for now, move to the next job
+                        continue
                     else:
                         status = "Failed"
                     self.num_running -= 1
                     self.jobs.remove(job)
-                    clearline = '\r' + (' ' * dot_count) + '\r'
-                    print(clearline, end='', flush=True)
+                    if self.use_term_control:
+                        clearline = '\r' + (' ' * dot_count) + '\r'
+                        print(clearline, end='', flush=True)
                     dot_count = 0
                     return TestResult(name, status, int(time.time() - start_time)), testdir, stdout, stderr
-            print('.', end='', flush=True)
+            if self.use_term_control:
+                print('.', end='', flush=True)
             dot_count += 1
-
-    def kill_and_join(self):
-        """Send SIGKILL to all jobs and block until all have ended."""
-        procs = [i[2] for i in self.jobs]
-
-        for proc in procs:
-            proc.kill()
-
-        for proc in procs:
-            proc.wait()
 
 
 class TestResult():

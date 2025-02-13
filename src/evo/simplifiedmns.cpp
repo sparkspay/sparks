@@ -9,6 +9,9 @@
 #include <evo/deterministicmns.h>
 #include <llmq/blockprocessor.h>
 #include <llmq/commitment.h>
+#include <llmq/quorums.h>
+#include <llmq/utils.h>
+#include <node/blockstorage.h>
 #include <evo/specialtx.h>
 
 #include <pubkey.h>
@@ -22,6 +25,7 @@
 #include <validation.h>
 #include <key_io.h>
 #include <util/underlying.h>
+#include <util/enumerate.h>
 
 CSimplifiedMNListEntry::CSimplifiedMNListEntry(const CDeterministicMN& dmn) :
     proRegTxHash(dmn.proTxHash),
@@ -30,12 +34,12 @@ CSimplifiedMNListEntry::CSimplifiedMNListEntry(const CDeterministicMN& dmn) :
     pubKeyOperator(dmn.pdmnState->pubKeyOperator),
     keyIDVoting(dmn.pdmnState->keyIDVoting),
     isValid(!dmn.pdmnState->IsBanned()),
+    platformHTTPPort(dmn.pdmnState->platformHTTPPort),
+    platformNodeID(dmn.pdmnState->platformNodeID),
     scriptPayout(dmn.pdmnState->scriptPayout),
     scriptOperatorPayout(dmn.pdmnState->scriptOperatorPayout),
     nVersion(dmn.pdmnState->nVersion == CProRegTx::LEGACY_BLS_VERSION ? LEGACY_BLS_VERSION : BASIC_BLS_VERSION),
-    nType(dmn.nType),
-    platformHTTPPort(dmn.pdmnState->platformHTTPPort),
-    platformNodeID(dmn.pdmnState->platformNodeID)
+    nType(dmn.nType)
 {
 }
 
@@ -62,9 +66,9 @@ std::string CSimplifiedMNListEntry::ToString() const
                      nVersion, ToUnderlying(nType), proRegTxHash.ToString(), confirmedHash.ToString(), service.ToString(false), pubKeyOperator.ToString(), EncodeDestination(PKHash(keyIDVoting)), isValid, payoutAddress, operatorPayoutAddress, platformHTTPPort, platformNodeID.ToString());
 }
 
-void CSimplifiedMNListEntry::ToJson(UniValue& obj, bool extended) const
+UniValue CSimplifiedMNListEntry::ToJson(bool extended) const
 {
-    obj.clear();
+    UniValue obj;
     obj.setObject();
     obj.pushKV("nVersion", nVersion);
     obj.pushKV("nType", ToUnderlying(nType));
@@ -74,20 +78,21 @@ void CSimplifiedMNListEntry::ToJson(UniValue& obj, bool extended) const
     obj.pushKV("pubKeyOperator", pubKeyOperator.ToString());
     obj.pushKV("votingAddress", EncodeDestination(PKHash(keyIDVoting)));
     obj.pushKV("isValid", isValid);
-    if (nType == MnType::HighPerformance) {
+    if (nType == MnType::Evo) {
         obj.pushKV("platformHTTPPort", platformHTTPPort);
         obj.pushKV("platformNodeID", platformNodeID.ToString());
     }
 
-    if (!extended) return;
-
-    CTxDestination dest;
-    if (ExtractDestination(scriptPayout, dest)) {
-        obj.pushKV("payoutAddress", EncodeDestination(dest));
+    if (extended) {
+        CTxDestination dest;
+        if (ExtractDestination(scriptPayout, dest)) {
+            obj.pushKV("payoutAddress", EncodeDestination(dest));
+        }
+        if (ExtractDestination(scriptOperatorPayout, dest)) {
+            obj.pushKV("operatorPayoutAddress", EncodeDestination(dest));
+        }
     }
-    if (ExtractDestination(scriptOperatorPayout, dest)) {
-        obj.pushKV("operatorPayoutAddress", EncodeDestination(dest));
-    }
+    return obj;
 }
 
 // TODO: Invistigate if we can delete this constructor
@@ -177,11 +182,54 @@ bool CSimplifiedMNListDiff::BuildQuorumsDiff(const CBlockIndex* baseBlockIndex, 
             newQuorums.emplace_back(*qc);
         }
     }
+
     return true;
 }
 
-void CSimplifiedMNListDiff::ToJson(UniValue& obj, bool extended) const
+bool CSimplifiedMNListDiff::BuildQuorumChainlockInfo(const CBlockIndex* blockIndex)
 {
+    // Group quorums (indexes corresponding to entries of newQuorums) per CBlockIndex containing the expected CL signature in CbTx.
+    // We want to avoid to load CbTx now, as more than one quorum will target the same block: hence we want to load CbTxs once per block (heavy operation).
+    std::multimap<const CBlockIndex*, uint16_t>  workBaseBlockIndexMap;
+
+    for (const auto [idx, e] : enumerate(newQuorums)) {
+        auto quorum = llmq::quorumManager->GetQuorum(e.llmqType, e.quorumHash);
+        // In case of rotation, all rotated quorums rely on the CL sig expected in the cycleBlock (the block of the first DKG) - 8
+        // In case of non-rotation, quorums rely on the CL sig expected in the block of the DKG - 8
+        const CBlockIndex* pWorkBaseBlockIndex =
+                blockIndex->GetAncestor(quorum->m_quorum_base_block_index->nHeight - quorum->qc->quorumIndex - 8);
+
+        workBaseBlockIndexMap.insert(std::make_pair(pWorkBaseBlockIndex, idx));
+    }
+
+    for(auto it = workBaseBlockIndexMap.begin(); it != workBaseBlockIndexMap.end(); ) {
+        // Process each key (CBlockIndex containing the expected CL signature in CbTx) of the std::multimap once
+        const CBlockIndex* pWorkBaseBlockIndex = it->first;
+        const auto cbcl = GetNonNullCoinbaseChainlock(pWorkBaseBlockIndex);
+        CBLSSignature sig;
+        if (cbcl.has_value()) {
+            sig = cbcl.value().first;
+        }
+        // Get the range of indexes (values) for the current key and merge them into a single std::set
+        const auto [it_begin, it_end] = workBaseBlockIndexMap.equal_range(it->first);
+        std::set<uint16_t> idx_set;
+        std::transform(it_begin, it_end, std::inserter(idx_set, idx_set.end()), [](const auto& pair) { return pair.second; });
+        // Advance the iterator to the next key
+        it = it_end;
+
+        // Different CBlockIndex can contain the same CL sig in CbTx (both non-null or null during the first blocks after v20 activation)
+        // Hence, we need to merge the std::set if another std::set already exists for the same sig.
+        if (auto [it_sig, inserted] = quorumsCLSigs.insert({sig, idx_set}); !inserted) {
+            it_sig->second.insert(idx_set.begin(), idx_set.end());
+        }
+    }
+
+    return true;
+}
+
+UniValue CSimplifiedMNListDiff::ToJson(bool extended) const
+{
+    UniValue obj;
     obj.setObject();
 
     obj.pushKV("nVersion", nVersion);
@@ -202,9 +250,7 @@ void CSimplifiedMNListDiff::ToJson(UniValue& obj, bool extended) const
 
     UniValue mnListArr(UniValue::VARR);
     for (const auto& e : mnList) {
-        UniValue eObj;
-        e.ToJson(eObj, extended);
-        mnListArr.push_back(eObj);
+        mnListArr.push_back(e.ToJson(extended));
     }
     obj.pushKV("mnList", mnListArr);
 
@@ -219,9 +265,7 @@ void CSimplifiedMNListDiff::ToJson(UniValue& obj, bool extended) const
 
     UniValue newQuorumsArr(UniValue::VARR);
     for (const auto& e : newQuorums) {
-        UniValue eObj;
-        e.ToJson(eObj);
-        newQuorumsArr.push_back(eObj);
+        newQuorumsArr.push_back(e.ToJson());
     }
     obj.pushKV("newQuorums", newQuorumsArr);
 
@@ -232,6 +276,50 @@ void CSimplifiedMNListDiff::ToJson(UniValue& obj, bool extended) const
             obj.pushKV("merkleRootQuorums", cbTxPayload.merkleRootQuorums.ToString());
         }
     }
+
+    UniValue quorumsCLSigsArr(UniValue::VARR);
+    for (const auto& [signature, quorumsIndexes] : quorumsCLSigs) {
+        UniValue j(UniValue::VOBJ);
+        UniValue idxArr(UniValue::VARR);
+        for (const auto& idx : quorumsIndexes) {
+            idxArr.push_back(idx);
+        }
+        j.pushKV(signature.ToString(),idxArr);
+        quorumsCLSigsArr.push_back(j);
+    }
+    obj.pushKV("quorumsCLSigs", quorumsCLSigsArr);
+    return obj;
+}
+
+CSimplifiedMNListDiff BuildSimplifiedDiff(const CDeterministicMNList& from, const CDeterministicMNList& to, bool extended)
+{
+    CSimplifiedMNListDiff diffRet;
+    diffRet.baseBlockHash = from.GetBlockHash();
+    diffRet.blockHash = to.GetBlockHash();
+
+    to.ForEachMN(false, [&](const auto& toPtr) {
+        auto fromPtr = from.GetMN(toPtr.proTxHash);
+        if (fromPtr == nullptr) {
+            CSimplifiedMNListEntry sme(toPtr);
+            diffRet.mnList.push_back(std::move(sme));
+        } else {
+            CSimplifiedMNListEntry sme1(toPtr);
+            CSimplifiedMNListEntry sme2(*fromPtr);
+            if ((sme1 != sme2) ||
+                (extended && (sme1.scriptPayout != sme2.scriptPayout || sme1.scriptOperatorPayout != sme2.scriptOperatorPayout))) {
+                    diffRet.mnList.push_back(std::move(sme1));
+            }
+        }
+    });
+
+    from.ForEachMN(false, [&](auto& fromPtr) {
+        auto toPtr = to.GetMN(fromPtr.proTxHash);
+        if (toPtr == nullptr) {
+            diffRet.deletedMNs.emplace_back(fromPtr.proTxHash);
+        }
+    });
+
+    return diffRet;
 }
 
 bool BuildSimplifiedMNListDiff(const uint256& baseBlockHash, const uint256& blockHash, CSimplifiedMNListDiff& mnListDiffRet,
@@ -242,14 +330,14 @@ bool BuildSimplifiedMNListDiff(const uint256& baseBlockHash, const uint256& bloc
 
     const CBlockIndex* baseBlockIndex = ::ChainActive().Genesis();
     if (!baseBlockHash.IsNull()) {
-        baseBlockIndex = LookupBlockIndex(baseBlockHash);
+        baseBlockIndex = g_chainman.m_blockman.LookupBlockIndex(baseBlockHash);
         if (!baseBlockIndex) {
             errorRet = strprintf("block %s not found", baseBlockHash.ToString());
             return false;
         }
     }
 
-    const CBlockIndex* blockIndex = LookupBlockIndex(blockHash);
+    const CBlockIndex* blockIndex = g_chainman.m_blockman.LookupBlockIndex(blockHash);
     if (!blockIndex) {
         errorRet = strprintf("block %s not found", blockHash.ToString());
         return false;
@@ -264,11 +352,9 @@ bool BuildSimplifiedMNListDiff(const uint256& baseBlockHash, const uint256& bloc
         return false;
     }
 
-    LOCK(deterministicMNManager->cs);
-
     auto baseDmnList = deterministicMNManager->GetListForBlock(baseBlockIndex);
     auto dmnList = deterministicMNManager->GetListForBlock(blockIndex);
-    mnListDiffRet = baseDmnList.BuildSimplifiedDiff(dmnList, extended);
+    mnListDiffRet = BuildSimplifiedDiff(baseDmnList, dmnList, extended);
 
     // We need to return the value that was provided by the other peer as it otherwise won't be able to recognize the
     // response. This will usually be identical to the block found in baseBlockIndex. The only difference is when a
@@ -278,6 +364,13 @@ bool BuildSimplifiedMNListDiff(const uint256& baseBlockHash, const uint256& bloc
     if (!mnListDiffRet.BuildQuorumsDiff(baseBlockIndex, blockIndex, quorum_block_processor)) {
         errorRet = strprintf("failed to build quorums diff");
         return false;
+    }
+
+    if (llmq::utils::IsV20Active(blockIndex)) {
+        if (!mnListDiffRet.BuildQuorumChainlockInfo(blockIndex)) {
+            errorRet = strprintf("failed to build quorums chainlocks info");
+            return false;
+        }
     }
 
     // TODO store coinbase TX in CBlockIndex

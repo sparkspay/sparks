@@ -96,6 +96,12 @@ Run all possible tests with
 test/functional/test_runner.py --extended
 ```
 
+In order to run backwards compatibility tests, download the previous node binaries:
+
+```
+test/get_previous_releases.py -b v19.3.0 v18.2.2 v0.17.0.3 v0.16.1.1 v0.15.0.0
+```
+
 By default, up to 4 tests will be run in parallel by test_runner. To specify
 how many jobs to run, append `--jobs=n`
 
@@ -157,7 +163,7 @@ levels using the logger included in the test_framework, e.g.
   `test_framework.log` and no logs are output to the console.
 - when run directly, *all* logs are written to `test_framework.log` and INFO
   level and above are output to the console.
-- when run on Travis, no logs are output to the console. However, if a test
+- when run by [our CI (Continuous Integration)](/ci/README.md), no logs are output to the console. However, if a test
   fails, the `test_framework.log` and sparksd `debug.log`s will all be dumped
   to the console to help troubleshooting.
 

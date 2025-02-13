@@ -9,26 +9,39 @@
 #include <uint256.h>
 #include <llmq/params.h>
 
-#include <map>
+#include <limits>
+#include <vector>
 
 namespace Consensus {
 
-enum DeploymentPos {
+enum BuriedDeployment : int16_t
+{
+    DEPLOYMENT_HEIGHTINCB = std::numeric_limits<int16_t>::min(),
+    DEPLOYMENT_DERSIG,
+    DEPLOYMENT_CLTV,
+    DEPLOYMENT_BIP147,
+    DEPLOYMENT_CSV,
+    DEPLOYMENT_DIP0001,
+    DEPLOYMENT_DIP0003,
+    DEPLOYMENT_DIP0008,
+    DEPLOYMENT_DIP0020,
+    DEPLOYMENT_IPV6_MN,
+    DEPLOYMENT_DATATX,
+    DEPLOYMENT_DIP0024,
+    DEPLOYMENT_BRR,
+    DEPLOYMENT_V19,
+};
+constexpr bool ValidDeployment(BuriedDeployment dep) { return DEPLOYMENT_HEIGHTINCB <= dep && dep <= DEPLOYMENT_V19; }
+
+enum DeploymentPos : uint16_t
+{
     DEPLOYMENT_TESTDUMMY,
-    DEPLOYMENT_CSV,     // Deployment of BIP68, BIP112, and BIP113.
-    DEPLOYMENT_DIP0001, // Deployment of DIP0001 and lower transaction fees.
-    DEPLOYMENT_BIP147,  // Deployment of BIP147 (NULLDUMMY)
-    DEPLOYMENT_DIP0003, // Deployment of DIP0002 and DIP0003 (txv3 and deterministic MN lists)
-    DEPLOYMENT_DIP0008, // Deployment of ChainLock enforcement
-    DEPLOYMENT_REALLOC, // Deployment of Block Reward Reallocation
-    DEPLOYMENT_DIP0020, // Deployment of DIP0020, DIP0021 and llmq_20_70 quorums
-    DEPLOYMENT_IPV6_MN, // Deployment of IPv6 Masternodes
-    DEPLOYMENT_DATATX, // Deployment of Data transactions
-    DEPLOYMENT_DIP0024, // Deployment of DIP0024 (Quorum Rotation) and decreased governance proposal fee
-    DEPLOYMENT_V19,     // Deployment of Basic BLS, AssetLocks, EHF
-    // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
+    DEPLOYMENT_V20,     // Deployment of EHF, LLMQ Randomness Beacon
+    DEPLOYMENT_MN_RR,   // Deployment of Masternode Reward Location Reallocation
+    // NOTE: Also add new deployments to VersionBitsDeploymentInfo in deploymentinfo.cpp
     MAX_VERSION_BITS_DEPLOYMENTS
 };
+constexpr bool ValidDeployment(DeploymentPos dep) { return DEPLOYMENT_TESTDUMMY <= dep && dep <= DEPLOYMENT_MN_RR; }
 
 /**
  * Struct for each individual consensus rule change using BIP9.
@@ -48,6 +61,20 @@ struct BIP9Deployment {
     int64_t nThresholdMin{0};
     /** A coefficient which adjusts the speed a required number of signaling blocks is decreasing from nThresholdStart to nThresholdMin at with each period. */
     int64_t nFalloffCoeff{0};
+    /** This value is used for forks activated by masternodes.
+      * false means it is a regular fork, no masternodes confirmation is needed.
+      * true means that a signalling of masternodes is expected first to determine a height when miners signals are matter.
+      */
+    bool useEHF{false};
+
+    /** Constant for nTimeout very far in the future. */
+    static constexpr int64_t NO_TIMEOUT = std::numeric_limits<int64_t>::max();
+
+    /** Special value for nStartTime indicating that the deployment is always active.
+     *  This is useful for testing, as it means tests don't need to deal with the activation
+     *  process (which takes at least 3 BIP9 intervals). Only tests that specifically test the
+     *  behaviour during activation cannot use this. */
+    static constexpr int64_t ALWAYS_ACTIVE = -1;
 };
 
 /**
@@ -57,6 +84,8 @@ struct Params {
     uint256 hashGenesisBlock;
     uint256 hashDevnetGenesisBlock;
     int nSubsidyHalvingInterval;
+    /** Block height at which BIP16 becomes active */
+    int BIP16Height;
     int nMasternodePaymentsStartBlock;
     int nMasternodePaymentsIncreaseBlock;
     int nMasternodePaymentsIncreasePeriod; // in blocks
@@ -79,6 +108,10 @@ struct Params {
     int BIP65Height;
     /** Block height at which BIP66 becomes active */
     int BIP66Height;
+    // Deployment of BIP147 (NULLDUMMY)
+    int BIP147Height;
+    /** Block height at which CSV (BIP68, BIP112 and BIP113) becomes active */
+    int CSVHeight;
     /** Block height at which DIP0001 becomes active */
     int DIP0001Height;
     /** Block height at which Guardian nodes become active */
@@ -94,15 +127,25 @@ struct Params {
     std::vector<std::string> vBannedAddresses;
     float fSPKRatioMN;
     float fReallocRatioMN;
-    /** Block height at which DIP0003 becomes active */
+    /** Block height at which DIP0002 and DIP0003 (txv3 and deterministic MN lists) becomes active */
     int DIP0003Height;
     /** Block height at which DIP0003 becomes enforced */
     int DIP0003EnforcementHeight;
     uint256 DIP0003EnforcementHash;
     /** Block height at which DIP0008 becomes active */
     int DIP0008Height;
-    /** Block height at which BRR becomes active */
+    /** Block height at which BRR (Block Reward Reallocation) becomes active */
     int BRRHeight;
+    /** Block height at which DIP0020, DIP0021 and LLMQ_100_67 quorums become active */
+    int DIP0020Height;
+    /** Block height at which IPV6_MN (IPv6 Masternodes) become active */
+    int IPV6MNHeight;
+    /** Block height at which DATATX (Data transactions) become active */
+    int DATATXHeight;
+    /** Block height at which DIP0024 (Quorum Rotation) and decreased governance proposal fee becomes active */
+    int DIP0024Height;
+    /** Block height at which V19 (Basic BLS and EvoNodes) becomes active */
+    int V19Height;
     /** Don't warn about unknown BIP 9 activations below this height.
      * This prevents us from warning about the CSV and DIP activations. */
     int MinBIP9WarningHeight;
@@ -140,7 +183,43 @@ struct Params {
     LLMQType llmqTypeDIP0024InstantSend{LLMQType::LLMQ_NONE};
     LLMQType llmqTypePlatform{LLMQType::LLMQ_NONE};
     LLMQType llmqTypeMnhf{LLMQType::LLMQ_NONE};
+
+    int DeploymentHeight(BuriedDeployment dep) const
+    {
+        switch (dep) {
+        case DEPLOYMENT_HEIGHTINCB:
+            return BIP34Height;
+        case DEPLOYMENT_DERSIG:
+            return BIP66Height;
+        case DEPLOYMENT_CLTV:
+            return BIP65Height;
+        case DEPLOYMENT_BIP147:
+            return BIP147Height;
+        case DEPLOYMENT_CSV:
+            return CSVHeight;
+        case DEPLOYMENT_DIP0001:
+            return DIP0001Height;
+        case DEPLOYMENT_DIP0003:
+            return DIP0003Height;
+        case DEPLOYMENT_DIP0008:
+            return DIP0008Height;
+        case DEPLOYMENT_DIP0020:
+            return DIP0020Height;
+        case DEPLOYMENT_IPV6_MN:
+            return IPV6MNHeight;
+        case DEPLOYMENT_DATATX:
+            return DATATXHeight;        
+        case DEPLOYMENT_DIP0024:
+            return DIP0024Height;
+        case DEPLOYMENT_BRR:
+            return BRRHeight;
+        case DEPLOYMENT_V19:
+            return V19Height;
+        } // no default case, so the compiler can warn about missing cases
+        return std::numeric_limits<int>::max();
+    }
 };
+
 } // namespace Consensus
 
 #endif // BITCOIN_CONSENSUS_PARAMS_H

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2014-2016 The Bitcoin Core developers
+# Copyright (c) 2014-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test logic for skipping signature validation on old blocks.
@@ -31,7 +31,7 @@ Start three nodes:
 """
 import time
 
-from test_framework.blocktools import (create_block, create_coinbase)
+from test_framework.blocktools import (COINBASE_MATURITY,create_block, create_coinbase)
 from test_framework.key import ECKey
 from test_framework.messages import (
     CBlockHeader,
@@ -47,17 +47,20 @@ from test_framework.script import (CScript, OP_TRUE)
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import (assert_equal, set_node_times)
 
+
 class BaseNode(P2PInterface):
     def send_header_for_blocks(self, new_blocks):
         headers_message = msg_headers()
         headers_message.headers = [CBlockHeader(b) for b in new_blocks]
         self.send_message(headers_message)
 
+
 class AssumeValidTest(BitcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 3
         self.extra_args = ["-dip3params=9000:9000", "-checkblockindex=0"]
+        self.rpc_timeout = 120
 
     def setup_network(self):
         self.add_nodes(3)
@@ -184,7 +187,7 @@ class AssumeValidTest(BitcoinTestFramework):
 
         # Send blocks to node0. Block 102 will be rejected.
         self.send_blocks_until_disconnected(p2p0)
-        self.assert_blockchain_height(self.nodes[0], 101)
+        self.assert_blockchain_height(self.nodes[0], COINBASE_MATURITY + 1)
 
         # Send 200 blocks to node1. All blocks, including block 102, will be accepted.
         for i in range(200):
@@ -195,7 +198,8 @@ class AssumeValidTest(BitcoinTestFramework):
 
         # Send blocks to node2. Block 102 will be rejected.
         self.send_blocks_until_disconnected(p2p2)
-        self.assert_blockchain_height(self.nodes[2], 101)
+        self.assert_blockchain_height(self.nodes[2], COINBASE_MATURITY + 1)
+
 
 if __name__ == '__main__':
     AssumeValidTest().main()

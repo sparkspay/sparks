@@ -21,6 +21,7 @@
 #include <vector>
 
 class BanMan;
+class CBlockIndex;
 class CCoinControl;
 class CDeterministicMNList;
 class CFeeRate;
@@ -37,14 +38,15 @@ struct NodeContext;
 
 namespace interfaces {
 class Handler;
-class WalletClient;
+class WalletLoader;
+struct BlockTip;
 
 //! Interface for the src/evo part of a sparks node (sparksd process).
 class EVO
 {
 public:
     virtual ~EVO() {}
-    virtual CDeterministicMNList getListAtChainTip() = 0;
+    virtual std::pair<CDeterministicMNList, const CBlockIndex*> getListAtChainTip() = 0;
 };
 
 //! Interface for the src/governance part of a sparks node (sparksd process).
@@ -81,13 +83,19 @@ namespace CoinJoin {
 class Options
 {
 public:
+    virtual int getSessions() = 0;
     virtual int getRounds() = 0;
     virtual int getAmount() = 0;
+    virtual int getDenomsGoal() = 0;
+    virtual int getDenomsHardCap() = 0;
 
     virtual void setEnabled(bool fEnabled) = 0;
     virtual void setMultiSessionEnabled(bool fEnabled) = 0;
+    virtual void setSessions(int sessions) = 0;
     virtual void setRounds(int nRounds) = 0;
     virtual void setAmount(CAmount amount) = 0;
+    virtual void setDenomsGoal(int denoms_goal) = 0;
+    virtual void setDenomsHardCap(int denoms_hardcap) = 0;
 
     virtual bool isMultiSessionEnabled() = 0;
     virtual bool isEnabled() = 0;
@@ -123,6 +131,9 @@ public:
 
     //! Set command line arguments.
     virtual bool parseParameters(int argc, const char* const argv[], std::string& error) = 0;
+
+    //! Set a command line argument
+    virtual void forceSetArg(const std::string& arg, const std::string& value) = 0;
 
     //! Set a command line argument if it doesn't already have a value
     virtual bool softSetArg(const std::string& arg, const std::string& value) = 0;
@@ -206,10 +217,10 @@ public:
     virtual bool unban(const CSubNet& ip) = 0;
 
     //! Disconnect node by address.
-    virtual bool disconnect(const CNetAddr& net_addr) = 0;
+    virtual bool disconnectByAddress(const CNetAddr& net_addr) = 0;
 
     //! Disconnect node by id.
-    virtual bool disconnect(NodeId id) = 0;
+    virtual bool disconnectById(NodeId id) = 0;
 
     //! Get total bytes recv.
     virtual int64_t getTotalBytesRecv() = 0;
@@ -228,6 +239,9 @@ public:
 
     //! Get num blocks.
     virtual int getNumBlocks() = 0;
+
+    //! Get best block hash.
+    virtual uint256 getBestBlockHash() = 0;
 
     //! Get last block time.
     virtual int64_t getLastBlockTime() = 0;
@@ -253,9 +267,6 @@ public:
     //! Get network active.
     virtual bool getNetworkActive() = 0;
 
-    //! Estimate smart fee.
-    virtual CFeeRate estimateSmartFee(int num_blocks, bool conservative, int* returned_target = nullptr) = 0;
-
     //! Get dust relay fee.
     virtual CFeeRate getDustRelayFee() = 0;
 
@@ -274,8 +285,8 @@ public:
     //! Get unspent outputs associated with a transaction.
     virtual bool getUnspentOutput(const COutPoint& output, Coin& coin) = 0;
 
-    //! Get wallet client.
-    virtual WalletClient& walletClient() = 0;
+    //! Get wallet loader.
+    virtual WalletLoader& walletLoader() = 0;
 
     //! Return interface for accessing evo related handler.
     virtual EVO& evo() = 0;
@@ -330,7 +341,7 @@ public:
 
     //! Register handler for block tip messages.
     using NotifyBlockTipFn =
-        std::function<void(bool initial_download, int height, int64_t block_time, const std::string& block_hash, double verification_progress)>;
+        std::function<void(bool initial_download, interfaces::BlockTip tip, double verification_progress)>;
     virtual std::unique_ptr<Handler> handleNotifyBlockTip(NotifyBlockTipFn fn) = 0;
 
     //! Register handler for chainlock messages.
@@ -340,12 +351,13 @@ public:
 
     //! Register handler for header tip messages.
     using NotifyHeaderTipFn =
-        std::function<void(bool initial_download, int height, int64_t block_time, const std::string& block_hash, double verification_progress)>;
+        std::function<void(bool initial_download, interfaces::BlockTip tip, double verification_progress)>;
     virtual std::unique_ptr<Handler> handleNotifyHeaderTip(NotifyHeaderTipFn fn) = 0;
 
     //! Register handler for masternode list update messages.
     using NotifyMasternodeListChangedFn =
-        std::function<void(const CDeterministicMNList& newList)>;
+        std::function<void(const CDeterministicMNList& newList,
+                const CBlockIndex* pindex)>;
     virtual std::unique_ptr<Handler> handleNotifyMasternodeListChanged(NotifyMasternodeListChangedFn fn) = 0;
 
     //! Register handler for additional data sync progress update messages.
@@ -362,6 +374,12 @@ public:
 //! Return implementation of Node interface.
 std::unique_ptr<Node> MakeNode(NodeContext* context = nullptr);
 
+//! Block tip (could be a header or not, depends on the subscribed signal).
+struct BlockTip {
+    int block_height;
+    int64_t block_time;
+    uint256 block_hash;
+};
 } // namespace interfaces
 
 #endif // BITCOIN_INTERFACES_NODE_H

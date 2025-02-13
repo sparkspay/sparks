@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2015 The Bitcoin Core developers
+// Copyright (c) 2013-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,8 +8,8 @@
 #include <key.h>
 #include <key_io.h>
 #include <streams.h>
-#include <util/strencodings.h>
 #include <test/util/setup_common.h>
+#include <util/strencodings.h>
 
 #include <string>
 #include <vector>
@@ -91,7 +91,7 @@ static void RunTest(const TestVector &test) {
     std::vector<unsigned char> seed = ParseHex(test.strHexMaster);
     CExtKey key;
     CExtPubKey pubkey;
-    key.SetSeed(seed.data(), seed.size());
+    key.SetSeed(seed);
     pubkey = key.Neuter();
     for (const TestDerivation &derive : test.vDerive) {
         unsigned char data[74];
@@ -118,22 +118,6 @@ static void RunTest(const TestVector &test) {
         }
         key = keyNew;
         pubkey = pubkeyNew;
-
-        CDataStream ssPub(SER_DISK, CLIENT_VERSION);
-        ssPub << pubkeyNew;
-        BOOST_CHECK(ssPub.size() == 75);
-
-        CDataStream ssPriv(SER_DISK, CLIENT_VERSION);
-        ssPriv << keyNew;
-        BOOST_CHECK(ssPriv.size() == 75);
-
-        CExtPubKey pubCheck;
-        CExtKey privCheck;
-        ssPub >> pubCheck;
-        ssPriv >> privCheck;
-
-        BOOST_CHECK(pubCheck == pubkeyNew);
-        BOOST_CHECK(privCheck == keyNew);
     }
 }
 

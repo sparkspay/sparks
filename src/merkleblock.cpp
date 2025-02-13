@@ -44,6 +44,8 @@ CMerkleBlock::CMerkleBlock(const CBlock& block, CBloomFilter* filter, const std:
             TRANSACTION_PROVIDER_UPDATE_REGISTRAR,
             TRANSACTION_PROVIDER_UPDATE_REVOKE,
             TRANSACTION_COINBASE,
+            TRANSACTION_ASSET_LOCK,
+            TRANSACTION_ASSET_UNLOCK,
     };
 
     for (unsigned int i = 0; i < block.vtx.size(); i++)
@@ -82,7 +84,7 @@ uint256 CPartialMerkleTree::CalcHash(int height, unsigned int pos, const std::ve
         else
             right = left;
         // combine subhashes
-        return Hash(left.begin(), left.end(), right.begin(), right.end());
+        return Hash(left, right);
     }
 }
 
@@ -138,7 +140,7 @@ uint256 CPartialMerkleTree::TraverseAndExtract(int height, unsigned int pos, uns
             right = left;
         }
         // and combine them before returning
-        return Hash(left.begin(), left.end(), right.begin(), right.end());
+        return Hash(left, right);
     }
 }
 

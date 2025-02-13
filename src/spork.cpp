@@ -7,6 +7,7 @@
 
 #include <chainparams.h>
 #include <consensus/params.h>
+#include <flat-database.h>
 #include <key_io.h>
 #include <logging.h>
 #include <messagesigner.h>
@@ -25,6 +26,8 @@
 #include <string>
 
 std::unique_ptr<CSporkManager> sporkManager;
+
+const std::string SporkStore::SERIALIZATION_VERSION_STRING = "CSporkManager-Version-2";
 
 std::optional<SporkValue> CSporkManager::SporkValueIfActive(SporkId nSporkID) const
 {
@@ -57,7 +60,7 @@ std::optional<SporkValue> CSporkManager::SporkValueIfActive(SporkId nSporkID) co
     return std::nullopt;
 }
 
-void CSporkManager::Clear()
+void SporkStore::Clear()
 {
     LOCK(cs);
     mapSporksActive.clear();
@@ -66,10 +69,32 @@ void CSporkManager::Clear()
     // we should not alter them here.
 }
 
+CSporkManager::CSporkManager() :
+    m_db{std::make_unique<db_type>("sporks.dat", "magicSporkCache")}
+{
+}
+
+CSporkManager::~CSporkManager()
+{
+    if (!is_valid) return;
+    m_db->Store(*this);
+}
+
+bool CSporkManager::LoadCache()
+{
+    assert(m_db != nullptr);
+    is_valid = m_db->Load(*this);
+    if (is_valid) {
+        CheckAndRemove();
+    }
+    return is_valid;
+}
+
 void CSporkManager::CheckAndRemove()
 {
     LOCK(cs);
-    assert(!setSporkPubKeyIDs.empty());
+
+    if (setSporkPubKeyIDs.empty()) return;
 
     for (auto itActive = mapSporksActive.begin(); itActive != mapSporksActive.end();) {
         auto itSignerPair = itActive->second.begin();
@@ -106,16 +131,16 @@ void CSporkManager::CheckAndRemove()
     }
 }
 
-void CSporkManager::ProcessMessage(CNode& peer, CConnman& connman, std::string_view msg_type, CDataStream& vRecv)
+void CSporkManager::ProcessMessage(CNode& peer, PeerManager& peerman, CConnman& connman, std::string_view msg_type, CDataStream& vRecv)
 {
     if (msg_type == NetMsgType::SPORK) {
-        ProcessSpork(peer, connman, vRecv);
+        ProcessSpork(peer, peerman, connman, vRecv);
     } else if (msg_type == NetMsgType::GETSPORKS) {
         ProcessGetSporks(peer, connman);
     }
 }
 
-void CSporkManager::ProcessSpork(const CNode& peer, CConnman& connman, CDataStream& vRecv)
+void CSporkManager::ProcessSpork(const CNode& peer, PeerManager& peerman, CConnman& connman, CDataStream& vRecv)
 {
     CSporkMessage spork;
     vRecv >> spork;
@@ -131,18 +156,16 @@ void CSporkManager::ProcessSpork(const CNode& peer, CConnman& connman, CDataStre
     }
 
     if (spork.nTimeSigned > GetAdjustedTime() + 2 * 60 * 60) {
-        LOCK(cs_main);
         LogPrint(BCLog::SPORK, "CSporkManager::ProcessSpork -- ERROR: too far into the future\n");
-        Misbehaving(peer.GetId(), 100);
+        peerman.Misbehaving(peer.GetId(), 100);
         return;
     }
 
     auto opt_keyIDSigner = spork.GetSignerKeyID();
 
     if (opt_keyIDSigner == std::nullopt || WITH_LOCK(cs, return !setSporkPubKeyIDs.count(*opt_keyIDSigner))) {
-        LOCK(cs_main);
         LogPrint(BCLog::SPORK, "CSporkManager::ProcessSpork -- ERROR: invalid signature\n");
-        Misbehaving(peer.GetId(), 100);
+        peerman.Misbehaving(peer.GetId(), 100);
         return;
     }
 
@@ -289,7 +312,7 @@ bool CSporkManager::SetSporkAddress(const std::string& strAddress)
         LogPrintf("CSporkManager::SetSporkAddress -- Failed to parse spork address\n");
         return false;
     }
-    setSporkPubKeyIDs.insert(CKeyID(*pkhash));
+    setSporkPubKeyIDs.insert(ToKeyID(*pkhash));
     return true;
 }
 
@@ -330,7 +353,7 @@ bool CSporkManager::SetPrivKey(const std::string& strPrivKey)
     return true;
 }
 
-std::string CSporkManager::ToString() const
+std::string SporkStore::ToString() const
 {
     LOCK(cs);
     return strprintf("Sporks: %llu", mapSporksActive.size());

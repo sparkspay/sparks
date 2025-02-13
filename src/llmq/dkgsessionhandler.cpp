@@ -16,20 +16,24 @@
 #include <chainparams.h>
 #include <net_processing.h>
 #include <validation.h>
+#include <util/thread.h>
 #include <util/underlying.h>
 
 namespace llmq
 {
 
-CDKGSessionHandler::CDKGSessionHandler(const Consensus::LLMQParams& _params, CBLSWorker& _blsWorker, CDKGSessionManager& _dkgManager,
-                       CDKGDebugManager& _dkgDebugManager, CQuorumBlockProcessor& _quorumBlockProcessor, CConnman& _connman, int _quorumIndex) :
-        params(_params),
-        connman(_connman),
-        quorumIndex(_quorumIndex),
+CDKGSessionHandler::CDKGSessionHandler(CBLSWorker& _blsWorker, CChainState& chainstate, CConnman& _connman, CDKGDebugManager& _dkgDebugManager,
+                                       CDKGSessionManager& _dkgManager, CQuorumBlockProcessor& _quorumBlockProcessor,
+                                       const Consensus::LLMQParams& _params, const std::unique_ptr<PeerManager>& peerman, int _quorumIndex) :
         blsWorker(_blsWorker),
-        dkgManager(_dkgManager),
+        m_chainstate(chainstate),
+        connman(_connman),
         dkgDebugManager(_dkgDebugManager),
+        dkgManager(_dkgManager),
         quorumBlockProcessor(_quorumBlockProcessor),
+        params(_params),
+        m_peerman(peerman),
+        quorumIndex(_quorumIndex),
         curSession(std::make_unique<CDKGSession>(_params, _blsWorker, _dkgManager, _dkgDebugManager, _connman)),
         pendingContributions((size_t)_params.size * 2, MSG_QUORUM_CONTRIB), // we allow size*2 messages as we need to make sure we see bad behavior (double messages)
         pendingComplaints((size_t)_params.size * 2, MSG_QUORUM_COMPLAINT),
@@ -47,7 +51,7 @@ void CDKGPendingMessages::PushPendingMessage(NodeId from, CDataStream& vRecv)
     auto pm = std::make_shared<CDataStream>(std::move(vRecv));
 
     CHashWriter hw(SER_GETHASH, 0);
-    hw.write(pm->data(), pm->size());
+    hw.write(reinterpret_cast<const char*>(pm->data()), pm->size());
     uint256 hash = hw.GetHash();
 
     if (from != -1) {
@@ -148,8 +152,8 @@ void CDKGSessionHandler::StartThread()
         throw std::runtime_error("Tried to start an already started CDKGSessionHandler thread.");
     }
 
-    std::string threadName = strprintf("llmq-%d-%d", ToUnderlying(params.type), quorumIndex);
-    phaseHandlerThread = std::thread(&TraceThread<std::function<void()> >, threadName, std::function<void()>(std::bind(&CDKGSessionHandler::PhaseHandlerThread, this)));
+    m_thread_name = strprintf("llmq-%d-%d", ToUnderlying(params.type), quorumIndex);
+    phaseHandlerThread = std::thread(util::TraceThread, m_thread_name.c_str(), [this] { PhaseHandlerThread(); });
 }
 
 void CDKGSessionHandler::StopThread()
@@ -414,7 +418,7 @@ std::set<NodeId> BatchVerifyMessageSigs(CDKGSession& session, const std::vector<
 }
 
 template<typename Message, int MessageType>
-bool ProcessPendingMessageBatch(CDKGSession& session, CDKGPendingMessages& pendingMessages, size_t maxCount)
+bool ProcessPendingMessageBatch(CDKGSession& session, PeerManager& peerman, CDKGPendingMessages& pendingMessages, size_t maxCount)
 {
     auto msgs = pendingMessages.PopAndDeserializeMessages<Message>(maxCount);
     if (msgs.empty()) {
@@ -429,8 +433,7 @@ bool ProcessPendingMessageBatch(CDKGSession& session, CDKGPendingMessages& pendi
         if (!p.second) {
             LogPrint(BCLog::LLMQ_DKG, "%s -- failed to deserialize message, peer=%d\n", __func__, nodeId);
             {
-                LOCK(cs_main);
-                Misbehaving(nodeId, 100);
+                peerman.Misbehaving(nodeId, 100);
             }
             continue;
         }
@@ -439,8 +442,7 @@ bool ProcessPendingMessageBatch(CDKGSession& session, CDKGPendingMessages& pendi
             if (ban) {
                 LogPrint(BCLog::LLMQ_DKG, "%s -- banning node due to failed preverification, peer=%d\n", __func__, nodeId);
                 {
-                    LOCK(cs_main);
-                    Misbehaving(nodeId, 100);
+                    peerman.Misbehaving(nodeId, 100);
                 }
             }
             LogPrint(BCLog::LLMQ_DKG, "%s -- skipping message due to failed preverification, peer=%d\n", __func__, nodeId);
@@ -457,7 +459,7 @@ bool ProcessPendingMessageBatch(CDKGSession& session, CDKGPendingMessages& pendi
         LOCK(cs_main);
         for (auto nodeId : badNodes) {
             LogPrint(BCLog::LLMQ_DKG, "%s -- failed to verify signature, peer=%d\n", __func__, nodeId);
-            Misbehaving(nodeId, 100);
+            peerman.Misbehaving(nodeId, 100);
         }
     }
 
@@ -470,8 +472,7 @@ bool ProcessPendingMessageBatch(CDKGSession& session, CDKGPendingMessages& pendi
         session.ReceiveMessage(*p.second, ban);
         if (ban) {
             LogPrint(BCLog::LLMQ_DKG, "%s -- banning node after ReceiveMessage failed, peer=%d\n", __func__, nodeId);
-            LOCK(cs_main);
-            Misbehaving(nodeId, 100);
+            peerman.Misbehaving(nodeId, 100);
             badNodes.emplace(nodeId);
         }
     }
@@ -494,7 +495,7 @@ void CDKGSessionHandler::HandleDKGRound()
         curQuorumHash = quorumHash;
     }
 
-    const CBlockIndex* pQuorumBaseBlockIndex = WITH_LOCK(cs_main, return LookupBlockIndex(curQuorumHash));
+    const CBlockIndex* pQuorumBaseBlockIndex = WITH_LOCK(cs_main, return m_chainstate.m_blockman.LookupBlockIndex(curQuorumHash));
 
     if (!InitNewQuorum(pQuorumBaseBlockIndex)) {
         // should actually never happen
@@ -520,7 +521,7 @@ void CDKGSessionHandler::HandleDKGRound()
         curSession->Contribute(pendingContributions);
     };
     auto fContributeWait = [this] {
-        return ProcessPendingMessageBatch<CDKGContribution, MSG_QUORUM_CONTRIB>(*curSession, pendingContributions, 8);
+        return ProcessPendingMessageBatch<CDKGContribution, MSG_QUORUM_CONTRIB>(*curSession, *m_peerman, pendingContributions, 8);
     };
     HandlePhase(QuorumPhase::Contribute, QuorumPhase::Complain, curQuorumHash, 0.05, fContributeStart, fContributeWait);
 
@@ -529,7 +530,7 @@ void CDKGSessionHandler::HandleDKGRound()
         curSession->VerifyAndComplain(pendingComplaints);
     };
     auto fComplainWait = [this] {
-        return ProcessPendingMessageBatch<CDKGComplaint, MSG_QUORUM_COMPLAINT>(*curSession, pendingComplaints, 8);
+        return ProcessPendingMessageBatch<CDKGComplaint, MSG_QUORUM_COMPLAINT>(*curSession, *m_peerman, pendingComplaints, 8);
     };
     HandlePhase(QuorumPhase::Complain, QuorumPhase::Justify, curQuorumHash, 0.05, fComplainStart, fComplainWait);
 
@@ -538,7 +539,7 @@ void CDKGSessionHandler::HandleDKGRound()
         curSession->VerifyAndJustify(pendingJustifications);
     };
     auto fJustifyWait = [this] {
-        return ProcessPendingMessageBatch<CDKGJustification, MSG_QUORUM_JUSTIFICATION>(*curSession, pendingJustifications, 8);
+        return ProcessPendingMessageBatch<CDKGJustification, MSG_QUORUM_JUSTIFICATION>(*curSession, *m_peerman, pendingJustifications, 8);
     };
     HandlePhase(QuorumPhase::Justify, QuorumPhase::Commit, curQuorumHash, 0.05, fJustifyStart, fJustifyWait);
 
@@ -547,7 +548,7 @@ void CDKGSessionHandler::HandleDKGRound()
         curSession->VerifyAndCommit(pendingPrematureCommitments);
     };
     auto fCommitWait = [this] {
-        return ProcessPendingMessageBatch<CDKGPrematureCommitment, MSG_QUORUM_PREMATURE_COMMITMENT>(*curSession, pendingPrematureCommitments, 8);
+        return ProcessPendingMessageBatch<CDKGPrematureCommitment, MSG_QUORUM_PREMATURE_COMMITMENT>(*curSession, *m_peerman, pendingPrematureCommitments, 8);
     };
     HandlePhase(QuorumPhase::Commit, QuorumPhase::Finalize, curQuorumHash, 0.1, fCommitStart, fCommitWait);
 

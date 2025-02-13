@@ -24,7 +24,7 @@ bool GetAuthCookie(std::string *cookie_out);
 /** Delete RPC authentication cookie from disk */
 void DeleteAuthCookie();
 /** Parse JSON-RPC batch reply into a vector */
-std::vector<UniValue> JSONRPCProcessBatchReply(const UniValue &in, size_t num);
+std::vector<UniValue> JSONRPCProcessBatchReply(const UniValue& in);
 
 class JSONRPCRequest
 {
@@ -38,7 +38,7 @@ public:
     std::string peerAddr;
     const CoreContext& context;
 
-    JSONRPCRequest(const CoreContext& context) : id(NullUniValue), params(NullUniValue), fHelp(false), context(context) {}
+    explicit JSONRPCRequest(const CoreContext& context) : id(NullUniValue), params(NullUniValue), fHelp(false), context(context) {}
 
     //! Initializes request information from another request object and the
     //! given context. The implementation should be updated if any members are

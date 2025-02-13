@@ -14,16 +14,18 @@
 #include <sync.h>
 #include <uint256.h>
 
+#include <atomic>
 #include <optional>
 #include <thread>
 #include <unordered_map>
 #include <utility>
 
+class CDeterministicMN;
 class CEvoDB;
 class CScheduler;
 class CSporkManager;
+class PeerManager;
 
-class CDeterministicMN;
 using CDeterministicMNCPtr = std::shared_ptr<const CDeterministicMN>;
 
 namespace llmq
@@ -369,7 +371,7 @@ private:
     static constexpr int64_t MAX_SEND_FOR_RECOVERY_TIMEOUT{10000};
     static constexpr size_t MAX_MSGS_SIG_SHARES{32};
 
-    CCriticalSection cs;
+    RecursiveMutex cs;
 
     std::thread workThread;
     CThreadInterrupt workInterrupt;
@@ -399,11 +401,15 @@ private:
     CConnman& connman;
     const CQuorumManager& qman;
     CSigningManager& sigman;
+
+    const std::unique_ptr<PeerManager>& m_peerman;
+
     int64_t lastCleanupTime{0};
     std::atomic<uint32_t> recoveredSigsCounter{0};
 
 public:
-    explicit CSigSharesManager(CConnman& _connman, CQuorumManager& _qman, CSigningManager& _sigman) : connman(_connman), qman(_qman), sigman(_sigman)
+    explicit CSigSharesManager(CConnman& _connman, CQuorumManager& _qman, CSigningManager& _sigman, const std::unique_ptr<PeerManager>& peerman) :
+        connman(_connman), qman(_qman), sigman(_sigman), m_peerman(peerman)
     {
         workInterrupt.reset();
     };

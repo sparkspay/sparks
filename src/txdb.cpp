@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2018 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -50,11 +50,15 @@ CCoinsViewDB::CCoinsViewDB(fs::path ldb_path, size_t nCacheSize, bool fMemory, b
 
 void CCoinsViewDB::ResizeCache(size_t new_cache_size)
 {
-    // Have to do a reset first to get the original `m_db` state to release its
-    // filesystem lock.
-    m_db.reset();
-    m_db = std::make_unique<CDBWrapper>(
-        m_ldb_path, new_cache_size, m_is_memory, /*fWipe*/ false, /*obfuscate*/ true);
+    // We can't do this operation with an in-memory DB since we'll lose all the coins upon
+    // reset.
+    if (!m_is_memory) {
+        // Have to do a reset first to get the original `m_db` state to release its
+        // filesystem lock.
+        m_db.reset();
+        m_db = std::make_unique<CDBWrapper>(
+            m_ldb_path, new_cache_size, m_is_memory, /*fWipe*/ false, /*obfuscate*/ true);
+    }
 }
 
 bool CCoinsViewDB::GetCoin(const COutPoint &outpoint, Coin &coin) const {
@@ -262,7 +266,7 @@ bool CBlockTreeDB::UpdateAddressUnspentIndex(const std::vector<std::pair<CAddres
     return WriteBatch(batch);
 }
 
-bool CBlockTreeDB::ReadAddressUnspentIndex(uint160 addressHash, int type,
+bool CBlockTreeDB::ReadAddressUnspentIndex(uint160 addressHash, AddressType type,
                                            std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> > &unspentOutputs) {
 
     std::unique_ptr<CDBIterator> pcursor(NewIterator());
@@ -271,7 +275,7 @@ bool CBlockTreeDB::ReadAddressUnspentIndex(uint160 addressHash, int type,
 
     while (pcursor->Valid()) {
         std::pair<char,CAddressUnspentKey> key;
-        if (pcursor->GetKey(key) && key.first == DB_ADDRESSUNSPENTINDEX && key.second.hashBytes == addressHash) {
+        if (pcursor->GetKey(key) && key.first == DB_ADDRESSUNSPENTINDEX && key.second.m_address_bytes == addressHash) {
             CAddressUnspentValue nValue;
             if (pcursor->GetValue(nValue)) {
                 unspentOutputs.push_back(std::make_pair(key.second, nValue));
@@ -301,7 +305,7 @@ bool CBlockTreeDB::EraseAddressIndex(const std::vector<std::pair<CAddressIndexKe
     return WriteBatch(batch);
 }
 
-bool CBlockTreeDB::ReadAddressIndex(uint160 addressHash, int type,
+bool CBlockTreeDB::ReadAddressIndex(uint160 addressHash, AddressType type,
                                     std::vector<std::pair<CAddressIndexKey, CAmount> > &addressIndex,
                                     int start, int end) {
 
@@ -315,8 +319,8 @@ bool CBlockTreeDB::ReadAddressIndex(uint160 addressHash, int type,
 
     while (pcursor->Valid()) {
         std::pair<char,CAddressIndexKey> key;
-        if (pcursor->GetKey(key) && key.first == DB_ADDRESSINDEX && key.second.hashBytes == addressHash) {
-            if (end > 0 && key.second.blockHeight > end) {
+        if (pcursor->GetKey(key) && key.first == DB_ADDRESSINDEX && key.second.m_address_bytes == addressHash) {
+            if (end > 0 && key.second.m_block_height > end) {
                 break;
             }
             CAmount nValue;
@@ -340,6 +344,13 @@ bool CBlockTreeDB::WriteTimestampIndex(const CTimestampIndexKey &timestampIndex)
     return WriteBatch(batch);
 }
 
+bool CBlockTreeDB::EraseTimestampIndex(const CTimestampIndexKey& timestampIndex)
+{
+    CDBBatch batch(*this);
+    batch.Erase(std::make_pair(DB_TIMESTAMPINDEX, timestampIndex));
+    return WriteBatch(batch);
+}
+
 bool CBlockTreeDB::ReadTimestampIndex(const unsigned int &high, const unsigned int &low, std::vector<uint256> &hashes) {
 
     std::unique_ptr<CDBIterator> pcursor(NewIterator());
@@ -348,8 +359,8 @@ bool CBlockTreeDB::ReadTimestampIndex(const unsigned int &high, const unsigned i
 
     while (pcursor->Valid()) {
         std::pair<char, CTimestampIndexKey> key;
-        if (pcursor->GetKey(key) && key.first == DB_TIMESTAMPINDEX && key.second.timestamp <= high) {
-            hashes.push_back(key.second.blockHash);
+        if (pcursor->GetKey(key) && key.first == DB_TIMESTAMPINDEX && key.second.m_block_time <= high) {
+            hashes.push_back(key.second.m_block_hash);
             pcursor->Next();
         } else {
             break;
@@ -463,7 +474,7 @@ public:
                 ::Unserialize(s, Using<TxOutCompression>(vout[i]));
         }
         // coinbase height
-        ::Unserialize(s, VARINT(nHeight, VarIntMode::NONNEGATIVE_SIGNED));
+        ::Unserialize(s, VARINT_MODE(nHeight, VarIntMode::NONNEGATIVE_SIGNED));
     }
 };
 

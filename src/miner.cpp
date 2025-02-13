@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Copyright (c) 2014-2022 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -13,6 +13,7 @@
 #include <consensus/merkle.h>
 #include <consensus/tx_verify.h>
 #include <consensus/validation.h>
+#include <deploymentstatus.h>
 #include <policy/feerate.h>
 #include <policy/policy.h>
 #include <pow.h>
@@ -20,14 +21,16 @@
 #include <timedata.h>
 #include <util/moneystr.h>
 #include <util/system.h>
-#include <util/validation.h>
 
 #include <evo/specialtx.h>
 #include <evo/cbtx.h>
+#include <evo/creditpool.h>
+#include <evo/mnhftx.h>
 #include <evo/simplifiedmns.h>
 #include <governance/governance.h>
 #include <llmq/blockprocessor.h>
 #include <llmq/chainlocks.h>
+#include <llmq/context.h>
 #include <llmq/instantsend.h>
 #include <llmq/utils.h>
 #include <masternode/payments.h>
@@ -57,15 +60,15 @@ BlockAssembler::Options::Options() {
 }
 
 BlockAssembler::BlockAssembler(const CSporkManager& sporkManager, CGovernanceManager& governanceManager,
-                               const llmq::CQuorumBlockProcessor& quorumBlockProcessor, llmq::CChainLocksHandler& clhandler,
-                               llmq::CInstantSendManager& isman, CEvoDB& evoDb, const CTxMemPool& mempool, const CChainParams& params, const Options& options) :
+                               LLMQContext& llmq_ctx, CEvoDB& evoDb, CChainState& chainstate, const CTxMemPool& mempool, const CChainParams& params, const Options& options) :
       chainparams(params),
       m_mempool(mempool),
+      m_chainstate(chainstate),
       spork_manager(sporkManager),
       governance_manager(governanceManager),
-      quorum_block_processor(quorumBlockProcessor),
-      m_clhandler(clhandler),
-      m_isman(isman),
+      quorum_block_processor(*llmq_ctx.quorum_block_processor),
+      m_clhandler(*llmq_ctx.clhandler),
+      m_isman(*llmq_ctx.isman),
       m_evoDb(evoDb)
 {
     blockMinFeeRate = options.blockMinFeeRate;
@@ -91,9 +94,8 @@ static BlockAssembler::Options DefaultOptions()
 }
 
 BlockAssembler::BlockAssembler(const CSporkManager& sporkManager, CGovernanceManager& governanceManager,
-                               const llmq::CQuorumBlockProcessor& quorumBlockProcessor, llmq::CChainLocksHandler& clhandler,
-                               llmq::CInstantSendManager& isman, CEvoDB& evoDb, const CTxMemPool& mempool, const CChainParams& params)
-    : BlockAssembler(sporkManager, governanceManager, quorumBlockProcessor, clhandler, isman, evoDb, mempool, params, DefaultOptions()) {}
+                               LLMQContext& llmq_ctx, CEvoDB& evoDb, CChainState& chainstate, const CTxMemPool& mempool, const CChainParams& params)
+    : BlockAssembler(sporkManager, governanceManager, llmq_ctx, evoDb, chainstate, mempool, params, DefaultOptions()) {}
 
 void BlockAssembler::resetBlock()
 {
@@ -126,15 +128,16 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblocktemplate->vTxSigOps.push_back(-1); // updated at end
 
     LOCK2(cs_main, m_mempool.cs);
-
-    CBlockIndex* pindexPrev = ::ChainActive().Tip();
+    assert(std::addressof(*::ChainActive().Tip()) == std::addressof(*m_chainstate.m_chain.Tip()));
+    CBlockIndex* pindexPrev = m_chainstate.m_chain.Tip();
     assert(pindexPrev != nullptr);
     nHeight = pindexPrev->nHeight + 1;
 
-    bool fDIP0003Active_context = nHeight >= chainparams.GetConsensus().DIP0003Height;
-    bool fDIP0008Active_context = nHeight >= chainparams.GetConsensus().DIP0008Height;
+    bool fDIP0003Active_context = DeploymentActiveAfter(pindexPrev, chainparams.GetConsensus(), Consensus::DEPLOYMENT_DIP0003);
+    bool fDIP0008Active_context = DeploymentActiveAfter(pindexPrev, chainparams.GetConsensus(), Consensus::DEPLOYMENT_DIP0008);
+    bool fV20Active_context = llmq::utils::IsV20Active(pindexPrev);
 
-    pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus(), chainparams.BIP9CheckMasternodesUpgraded());
+    pblock->nVersion = g_versionbitscache.ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
     // Non-mainnet only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
     if (Params().NetworkIDString() != CBaseChainParams::MAIN)
@@ -166,7 +169,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     int nPackagesSelected = 0;
     int nDescendantsUpdated = 0;
-    addPackageTxs(nPackagesSelected, nDescendantsUpdated);
+
+    addPackageTxs(nPackagesSelected, nDescendantsUpdated, pindexPrev);
 
     int64_t nTime1 = GetTimeMicros();
 
@@ -182,7 +186,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
 
     // NOTE: unlike in bitcoin, we need to pass PREVIOUS block height here
-    CAmount blockReward = nFees + GetBlockSubsidy(pindexPrev->nBits, pindexPrev->nHeight, Params().GetConsensus());
+    CAmount blockSubsidy = GetBlockSubsidyInner(pindexPrev->nBits, pindexPrev->nHeight, Params().GetConsensus(), fV20Active_context);
+    CAmount blockReward = blockSubsidy + nFees;
 
     // Compute regular coinbase transaction.
     coinbaseTx.vout[0].nValue = blockReward;
@@ -197,21 +202,38 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
         CCbTx cbTx;
 
-        if (fDIP0008Active_context) {
-            cbTx.nVersion = 2;
+        if (fV20Active_context) {
+            cbTx.nVersion = CCbTx::CB_V20_VERSION;
+        } else if (fDIP0008Active_context) {
+            cbTx.nVersion = CCbTx::CB_V19_VERSION;
         } else {
             cbTx.nVersion = 1;
         }
 
         cbTx.nHeight = nHeight;
 
-        CValidationState state;
+        BlockValidationState state;
         if (!CalcCbTxMerkleRootMNList(*pblock, pindexPrev, cbTx.merkleRootMNList, state, ::ChainstateActive().CoinsTip())) {
-            throw std::runtime_error(strprintf("%s: CalcCbTxMerkleRootMNList failed: %s", __func__, FormatStateMessage(state)));
+            throw std::runtime_error(strprintf("%s: CalcCbTxMerkleRootMNList failed: %s", __func__, state.ToString()));
         }
         if (fDIP0008Active_context) {
             if (!CalcCbTxMerkleRootQuorums(*pblock, pindexPrev, quorum_block_processor, cbTx.merkleRootQuorums, state)) {
-                throw std::runtime_error(strprintf("%s: CalcCbTxMerkleRootQuorums failed: %s", __func__, FormatStateMessage(state)));
+                throw std::runtime_error(strprintf("%s: CalcCbTxMerkleRootQuorums failed: %s", __func__, state.ToString()));
+            }
+            if (fV20Active_context) {
+                if (CalcCbTxBestChainlock(m_clhandler, pindexPrev, cbTx.bestCLHeightDiff, cbTx.bestCLSignature)) {
+                    LogPrintf("CreateNewBlock() h[%d] CbTx bestCLHeightDiff[%d] CLSig[%s]\n", nHeight, cbTx.bestCLHeightDiff, cbTx.bestCLSignature.ToString());
+                } else {
+                    // not an error
+                    LogPrintf("CreateNewBlock() h[%d] CbTx failed to find best CL. Inserting null CL\n", nHeight);
+                }
+                BlockValidationState state;
+                const auto creditPoolDiff = GetCreditPoolDiffForBlock(*pblock, pindexPrev, chainparams.GetConsensus(), blockSubsidy, state);
+                if (creditPoolDiff == std::nullopt) {
+                    throw std::runtime_error(strprintf("%s: GetCreditPoolDiffForBlock failed: %s", __func__, state.ToString()));
+                }
+
+                cbTx.creditPoolBalance = creditPoolDiff->GetTotalLocked();
             }
         }
 
@@ -220,7 +242,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     // Update coinbase transaction with additional info about masternode and governance payments,
     // get some info back to pass to getblocktemplate
-    FillBlockPayments(spork_manager, governance_manager, coinbaseTx, nHeight, blockReward, pblocktemplate->voutMasternodePayments, pblocktemplate->voutSuperblockPayments);
+    MasternodePayments::FillBlockPayments(spork_manager, governance_manager, coinbaseTx, pindexPrev, blockSubsidy, nFees, pblocktemplate->voutMasternodePayments, pblocktemplate->voutSuperblockPayments);
 
     pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
     pblocktemplate->vTxFees[0] = -nFees;
@@ -233,9 +255,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblocktemplate->nPrevBits = pindexPrev->nBits;
     pblocktemplate->vTxSigOps[0] = GetLegacySigOpCount(*pblock->vtx[0]);
 
-    CValidationState state;
-    if (!TestBlockValidity(state, m_clhandler, m_evoDb, chainparams, *pblock, pindexPrev, false, false)) {
-        throw std::runtime_error(strprintf("%s: TestBlockValidity failed: %s", __func__, FormatStateMessage(state)));
+    BlockValidationState state;
+    assert(std::addressof(::ChainstateActive()) == std::addressof(m_chainstate));
+    if (!TestBlockValidity(state, m_clhandler, m_evoDb, chainparams, m_chainstate, *pblock, pindexPrev, false, false)) {
+        throw std::runtime_error(strprintf("%s: TestBlockValidity failed: %s", __func__, state.ToString()));
     }
     int64_t nTime2 = GetTimeMicros();
 
@@ -269,12 +292,16 @@ bool BlockAssembler::TestPackage(uint64_t packageSize, unsigned int packageSigOp
 // Perform transaction-level checks before adding to block:
 // - transaction finality (locktime)
 // - safe TXs in regard to ChainLocks
-bool BlockAssembler::TestPackageTransactions(const CTxMemPool::setEntries& package)
+bool BlockAssembler::TestPackageTransactions(const CTxMemPool::setEntries& package) const
 {
     for (CTxMemPool::txiter it : package) {
         if (!IsFinalTx(it->GetTx(), nHeight, nLockTimeCutoff))
             return false;
-        if (!m_clhandler.IsTxSafeForMining(m_isman, it->GetTx().GetHash())) {
+
+        const auto& txid = it->GetTx().GetHash();
+        if (!m_isman.RejectConflictingBlocks() || !m_isman.IsInstantSendEnabled() || m_isman.IsLocked(txid)) continue;
+
+        if (!it->GetTx().vin.empty() && !m_clhandler.IsTxSafeForMining(txid)) {
             return false;
         }
     }
@@ -367,9 +394,21 @@ void BlockAssembler::SortForBlock(const CTxMemPool::setEntries& package, std::ve
 // Each time through the loop, we compare the best transaction in
 // mapModifiedTxs with the next transaction in the mempool to decide what
 // transaction package to work on next.
-void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated)
+void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated, const CBlockIndex* const pindexPrev)
 {
+    AssertLockHeld(cs_main); // for GetMNHFSignalsStage()
     AssertLockHeld(m_mempool.cs);
+
+    // This credit pool is used only to check withdrawal limits and to find
+    // duplicates of indexes. There's used `BlockSubsidy` equaled to 0
+    std::optional<CCreditPoolDiff> creditPoolDiff;
+    if (llmq::utils::IsV20Active(pindexPrev)) {
+        CCreditPool creditPool = creditPoolManager->GetCreditPool(pindexPrev, chainparams.GetConsensus());
+        creditPoolDiff.emplace(std::move(creditPool), pindexPrev, chainparams.GetConsensus(), 0);
+    }
+
+    // This map with signals is used only to find duplicates
+    std::unordered_map<uint8_t, int> signals = m_chainstate.GetMNHFSignalsStage(pindexPrev);
 
     // mapModifiedTx will store sorted packages after they are modified
     // because some of their txs are already in the block
@@ -422,6 +461,35 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
                 // Increment mi for the next loop iteration.
                 ++mi;
             }
+        }
+
+        if (creditPoolDiff != std::nullopt) {
+            // If one transaction is skipped due to limits, it is not a reason to interrupt
+            // whole process of adding transactions.
+            // `state` is local here because used only to log info about this specific tx
+            TxValidationState state;
+
+            if (!creditPoolDiff->ProcessLockUnlockTransaction(iter->GetTx(), state)) {
+                if (fUsingModified) {
+                    mapModifiedTx.get<ancestor_score>().erase(modit);
+                    failedTx.insert(iter);
+                }
+                LogPrintf("%s: asset-locks tx %s skipped due %s\n",
+                          __func__, iter->GetTx().GetHash().ToString(), state.ToString());
+                continue;
+            }
+        }
+        if (std::optional<uint8_t> signal = extractEHFSignal(iter->GetTx()); signal != std::nullopt) {
+            if (signals.find(*signal) != signals.end()) {
+                if (fUsingModified) {
+                    mapModifiedTx.get<ancestor_score>().erase(modit);
+                    failedTx.insert(iter);
+                }
+                LogPrintf("%s: ehf signal tx %s skipped due to duplicate %d\n",
+                          __func__, iter->GetTx().GetHash().ToString(), *signal);
+                continue;
+            }
+            signals.insert({*signal, 0});
         }
 
         // We skip mapTx entries that are inBlock, and mapModifiedTx shouldn't

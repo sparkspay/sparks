@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2019 The Bitcoin Core developers
+# Copyright (c) 2019-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -28,7 +28,8 @@ echo "Fallback to default values in env (if not yet set)"
 MAKEJOBS="-j$(nproc)"
 export MAKEJOBS
 # A folder for the ci system to put temporary files (ccache, datadirs for tests, ...)
-export BASE_SCRATCH_DIR=${BASE_SCRATCH_DIR:-$BASE_ROOT_DIR/ci/scratch/}
+# This folder only exists on the ci host.
+export BASE_SCRATCH_DIR=${BASE_SCRATCH_DIR:-$BASE_ROOT_DIR/ci/scratch}
 # What host to compile for. See also ./depends/README.md
 # Tests that need cross-compilation export the appropriate HOST.
 # Tests that run natively guess the host
@@ -37,8 +38,12 @@ export HOST=${HOST:-$("$BASE_ROOT_DIR/depends/config.guess")}
 export USE_BUSY_BOX=${USE_BUSY_BOX:-false}
 export RUN_UNIT_TESTS=${RUN_UNIT_TESTS:-true}
 export RUN_INTEGRATION_TESTS=${RUN_INTEGRATION_TESTS:-true}
+export RUN_SECURITY_TESTS=${RUN_SECURITY_TESTS:-false}
+export TEST_PREVIOUS_RELEASES=${TEST_PREVIOUS_RELEASES:-false}
 export RUN_FUZZ_TESTS=${RUN_FUZZ_TESTS:-false}
-export DOCKER_NAME_TAG=${DOCKER_NAME_TAG:-ubuntu:18.04}
+export RUN_SYMBOL_TESTS=${RUN_SYMBOL_TESTS:-true}
+export CONTAINER_NAME=${CONTAINER_NAME:-ci_unnamed}
+export DOCKER_NAME_TAG=${DOCKER_NAME_TAG:-ubuntu:focal}
 # Randomize test order.
 # See https://www.boost.org/doc/libs/1_71_0/libs/test/doc/html/boost_test/utf_reference/rt_param_reference/random.html
 export BOOST_TEST_RANDOM=${BOOST_TEST_RANDOM:-1}
@@ -47,16 +52,19 @@ export CACHE_DIR=${CACHE_DIR:-$HOST_CACHE_DIR}
 export CCACHE_SIZE=${CCACHE_SIZE:-100M}
 export CCACHE_TEMPDIR=${CCACHE_TEMPDIR:-/tmp/.ccache-temp}
 export CCACHE_COMPRESS=${CCACHE_COMPRESS:-1}
+# The cache dir.
+# This folder exists on the ci host and ci guest. Changes are propagated back and forth.
 export CCACHE_DIR=${CCACHE_DIR:-$CACHE_DIR/ccache}
-# Folder where the build is done (depends and dist). Can not be changed and is equal to the root of the git repo
-export BASE_BUILD_DIR=${BASE_BUILD_DIR:-$BASE_ROOT_DIR}
-# Folder where the build is done (bin and lib). Can not be changed.
-export BASE_OUTDIR=${BASE_OUTDIR:-$BASE_BUILD_DIR/out}
+# The depends dir.
+# This folder exists on the ci host and ci guest. Changes are propagated back and forth.
+export DEPENDS_DIR=${DEPENDS_DIR:-$BASE_ROOT_DIR/depends}
+# Folder where the build is done (bin and lib).
+export BASE_OUTDIR=${BASE_OUTDIR:-$BASE_SCRATCH_DIR/out/$HOST}
+export PREVIOUS_RELEASES_DIR=${PREVIOUS_RELEASES_DIR:-$BASE_ROOT_DIR/releases/$HOST}
 export SDK_URL=${SDK_URL:-https://bitcoincore.org/depends-sources/sdks}
-export WINEDEBUG=${WINEDEBUG:-fixme-all}
-export DOCKER_PACKAGES=${DOCKER_PACKAGES:-build-essential libtool autotools-dev automake pkg-config bsdmainutils curl ca-certificates ccache python3 rsync git}
+export DOCKER_PACKAGES=${DOCKER_PACKAGES:-build-essential libtool autotools-dev automake pkg-config bsdmainutils curl ca-certificates ccache python3 rsync git procps}
 export GOAL=${GOAL:-install}
-export DIR_QA_ASSETS=${DIR_QA_ASSETS:-${BASE_BUILD_DIR}/qa-assets}
+export DIR_QA_ASSETS=${DIR_QA_ASSETS:-${BASE_SCRATCH_DIR}/qa-assets}
 export PATH=${BASE_ROOT_DIR}/ci/retry:$PATH
 export CI_RETRY_EXE=${CI_RETRY_EXE:-"retry --"}
 # Sparks's Docker-specifics

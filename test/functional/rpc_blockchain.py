@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2014-2016 The Bitcoin Core developers
+# Copyright (c) 2014-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test RPCs related to blockchainstate.
@@ -83,7 +83,6 @@ class BlockchainTest(BitcoinTestFramework):
 
         keys = [
             'bestblockhash',
-            'bip9_softforks',
             'blocks',
             'chain',
             'chainwork',
@@ -128,6 +127,57 @@ class BlockchainTest(BitcoinTestFramework):
         assert res['automatic_pruning']
         assert_equal(res['prune_target_size'], 576716800)
         assert_greater_than(res['size_on_disk'], 0)
+        assert_equal(res['softforks'], {
+            'bip34': {'type': 'buried', 'active': False, 'height': 500},
+            'bip66': {'type': 'buried', 'active': False, 'height': 1251},
+            'bip65': {'type': 'buried', 'active': False, 'height': 1351},
+            'bip147': { 'type': 'buried', 'active': False, 'height': 432},
+            'csv': {'type': 'buried', 'active': False, 'height': 432},
+            'dip0001': { 'type': 'buried', 'active': False, 'height': 2000},
+            'dip0003': { 'type': 'buried', 'active': False, 'height': 432},
+            'dip0008': { 'type': 'buried', 'active': False, 'height': 432},
+            'dip0020': { 'type': 'buried', 'active': False, 'height': 300},
+            'dip0024': { 'type': 'buried', 'active': False, 'height': 900},
+            'realloc': { 'type': 'buried', 'active': False, 'height': 2500},
+            'v19': { 'type': 'buried', 'active': False, 'height': 900},
+            'v20': {
+                'type': 'bip9',
+                'bip9': {
+                    'status': 'defined',
+                    'start_time': 0,
+                    'timeout': 9223372036854775807,
+                    'since': 0,
+                    'ehf': False,
+                }, 'active': False},
+            'mn_rr': {
+                'type': 'bip9',
+                'bip9': {
+                    'status': 'defined',
+                    'start_time': 0,
+                    'timeout': 9223372036854775807,
+                    'since': 0,
+                    'ehf': True,
+                },
+                'active': False},
+            'testdummy': {
+                'type': 'bip9',
+                'bip9': {
+                    'status': 'started',
+                    'bit': 28,
+                    'start_time': 0,
+                    'timeout': 9223372036854775807,  # testdummy does not have a timeout so is set to the max int64 value
+                    'since': 144,
+                    'statistics': {
+                        'period': 144,
+                        'threshold': 108,
+                        'elapsed': 57,
+                        'count': 57,
+                        'possible': True,
+                    },
+                    'ehf': False,
+                },
+                'active': False},
+        })
 
     def _test_getchaintxstats(self):
         self.log.info("Test getchaintxstats")
@@ -142,7 +192,9 @@ class BlockchainTest(BitcoinTestFramework):
 
         # Test `getchaintxstats` invalid `blockhash`
         assert_raises_rpc_error(-1, "JSON value is not a string as expected", self.nodes[0].getchaintxstats, blockhash=0)
-        assert_raises_rpc_error(-5, "Block not found", self.nodes[0].getchaintxstats, blockhash='0')
+        assert_raises_rpc_error(-8, "blockhash must be of length 64 (not 1, for '0')", self.nodes[0].getchaintxstats, blockhash='0')
+        assert_raises_rpc_error(-8, "blockhash must be hexadecimal string (not 'ZZZ0000000000000000000000000000000000000000000000000000000000000')", self.nodes[0].getchaintxstats, blockhash='ZZZ0000000000000000000000000000000000000000000000000000000000000')
+        assert_raises_rpc_error(-5, "Block not found", self.nodes[0].getchaintxstats, blockhash='0000000000000000000000000000000000000000000000000000000000000000')
         blockhash = self.nodes[0].getblockhash(200)
         self.nodes[0].invalidateblock(blockhash)
         assert_raises_rpc_error(-8, "Block is not in main chain", self.nodes[0].getchaintxstats, blockhash=blockhash)
@@ -244,7 +296,9 @@ class BlockchainTest(BitcoinTestFramework):
     def _test_getblockheader(self):
         node = self.nodes[0]
 
-        assert_raises_rpc_error(-5, "Block not found", node.getblockheader, "nonsense")
+        assert_raises_rpc_error(-8, "hash must be of length 64 (not 8, for 'nonsense')", node.getblockheader, "nonsense")
+        assert_raises_rpc_error(-8, "hash must be hexadecimal string (not 'ZZZ7bb8b1697ea987f3b223ba7819250cae33efacb068d23dc24859824a77844')", node.getblockheader, "ZZZ7bb8b1697ea987f3b223ba7819250cae33efacb068d23dc24859824a77844")
+        assert_raises_rpc_error(-5, "Block not found", node.getblockheader, "0cf7bb8b1697ea987f3b223ba7819250cae33efacb068d23dc24859824a77844")
 
         besthash = node.getbestblockhash()
         secondbesthash = node.getblockhash(199)
@@ -274,6 +328,9 @@ class BlockchainTest(BitcoinTestFramework):
         header = FromHex(CBlockHeader(), header_hex)
         header.calc_sha256()
         assert_equal(header.hash, besthash)
+
+        assert 'previousblockhash' not in node.getblockheader(node.getblockhash(0))
+        assert 'nextblockhash' not in node.getblockheader(node.getbestblockhash())
 
     def _test_getdifficulty(self):
         difficulty = self.nodes[0].getdifficulty()
@@ -321,8 +378,7 @@ class BlockchainTest(BitcoinTestFramework):
         def solve_and_send_block(prevhash, height, time):
             b = create_block(prevhash, create_coinbase(height), time)
             b.solve()
-            node.p2p.send_message(msg_block(b))
-            node.p2p.sync_with_ping()
+            node.p2p.send_and_ping(msg_block(b))
             return b
 
         b21f = solve_and_send_block(int(b20hash, 16), 21, b20['time'] + 1)

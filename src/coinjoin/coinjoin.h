@@ -17,6 +17,8 @@
 #include <util/translation.h>
 #include <version.h>
 
+#include <atomic>
+#include <optional>
 #include <utility>
 
 class CCoinJoin;
@@ -107,11 +109,7 @@ public:
 
     SERIALIZE_METHODS(CCoinJoinStatusUpdate, obj)
     {
-        READWRITE(obj.nSessionID, obj.nState);
-        if (s.GetVersion() <= COINJOIN_SU_PROTO_VERSION) {
-            READWRITE(obj.nEntriesCount);
-        }
-        READWRITE(obj.nStatusUpdate, obj.nMessageID);
+        READWRITE(obj.nSessionID, obj.nState, obj.nStatusUpdate, obj.nMessageID);
     }
 };
 
@@ -217,20 +215,13 @@ public:
 
     SERIALIZE_METHODS(CCoinJoinQueue, obj)
     {
-        READWRITE(obj.nDenom);
-
-        if (s.GetVersion() < COINJOIN_PROTX_HASH_PROTO_VERSION) {
-            READWRITE(obj.masternodeOutpoint);
-        } else {
-            READWRITE(obj.m_protxHash);
-        }
-        READWRITE(obj.nTime, obj.fReady);
+        READWRITE(obj.nDenom, obj.m_protxHash, obj.nTime, obj.fReady);
         if (!(s.GetType() & SER_GETHASH)) {
             READWRITE(obj.vchSig);
         }
     }
 
-    [[nodiscard]] uint256 GetSignatureHash(bool legacy) const;
+    [[nodiscard]] uint256 GetSignatureHash() const;
     /** Sign this mixing transaction
      *  return true if all conditions are met:
      *     1) we have an active Masternode,
@@ -265,8 +256,8 @@ class CCoinJoinBroadcastTx
 {
 private:
     // memory only
-    // when corresponding tx is 0-confirmed or conflicted, nConfirmedHeight is -1
-    int nConfirmedHeight{-1};
+    // when corresponding tx is 0-confirmed or conflicted, nConfirmedHeight is std::nullopt
+    std::optional<int> nConfirmedHeight{std::nullopt};
 
 public:
     CTransactionRef tx;
@@ -290,13 +281,7 @@ public:
 
     SERIALIZE_METHODS(CCoinJoinBroadcastTx, obj)
     {
-        READWRITE(obj.tx);
-
-        if (s.GetVersion() < COINJOIN_PROTX_HASH_PROTO_VERSION) {
-            READWRITE(obj.masternodeOutpoint);
-        } else {
-            READWRITE(obj.m_protxHash);
-        }
+        READWRITE(obj.tx, obj.m_protxHash);
 
         if (!(s.GetType() & SER_GETHASH)) {
             READWRITE(obj.vchSig);
@@ -317,12 +302,12 @@ public:
         return *this != CCoinJoinBroadcastTx();
     }
 
-    [[nodiscard]] uint256 GetSignatureHash(bool legacy) const;
+    [[nodiscard]] uint256 GetSignatureHash() const;
 
     bool Sign();
     [[nodiscard]] bool CheckSignature(const CBLSPublicKey& blsPubKey) const;
 
-    void SetConfirmedHeight(int nConfirmedHeightIn) { nConfirmedHeight = nConfirmedHeightIn; }
+    void SetConfirmedHeight(std::optional<int> nConfirmedHeightIn) { assert(nConfirmedHeightIn == std::nullopt || *nConfirmedHeightIn > 0); nConfirmedHeight = nConfirmedHeightIn; }
     bool IsExpired(const CBlockIndex* pindex, const llmq::CChainLocksHandler& clhandler) const;
     [[nodiscard]] bool IsValidStructure() const;
 };
@@ -502,14 +487,14 @@ public:
     static void AddDSTX(const CCoinJoinBroadcastTx& dstx) LOCKS_EXCLUDED(cs_mapdstx);
     static CCoinJoinBroadcastTx GetDSTX(const uint256& hash) LOCKS_EXCLUDED(cs_mapdstx);
 
-    static void UpdatedBlockTip(const CBlockIndex* pindex, const llmq::CChainLocksHandler& clhandler, const std::unique_ptr<CMasternodeSync>& mn_sync);
-    static void NotifyChainLock(const CBlockIndex* pindex, const llmq::CChainLocksHandler& clhandler, const std::unique_ptr<CMasternodeSync>& mn_sync);
+    static void UpdatedBlockTip(const CBlockIndex* pindex, const llmq::CChainLocksHandler& clhandler, const CMasternodeSync& mn_sync);
+    static void NotifyChainLock(const CBlockIndex* pindex, const llmq::CChainLocksHandler& clhandler, const CMasternodeSync& mn_sync);
 
-    static void UpdateDSTXConfirmedHeight(const CTransactionRef& tx, int nHeight);
     static void TransactionAddedToMempool(const CTransactionRef& tx) LOCKS_EXCLUDED(cs_mapdstx);
     static void BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex) LOCKS_EXCLUDED(cs_mapdstx);
     static void BlockDisconnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex*) LOCKS_EXCLUDED(cs_mapdstx);
-
+private:
+    static void UpdateDSTXConfirmedHeight(const CTransactionRef& tx, std::optional<int> nHeight);
 };
 
 #endif // BITCOIN_COINJOIN_COINJOIN_H

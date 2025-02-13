@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -12,13 +12,13 @@
 #include <functional>
 #include <memory>
 
-extern CCriticalSection cs_main;
+extern RecursiveMutex cs_main;
+class BlockValidationState;
 class CBlock;
 class CBlockIndex;
 struct CBlockLocator;
 class CConnman;
 class CValidationInterface;
-class CValidationState;
 class CGovernanceVote;
 class CGovernanceObject;
 class CDeterministicMNList;
@@ -33,20 +33,20 @@ namespace llmq {
     class CRecoveredSig;
 } // namespace llmq
 
-// These functions dispatch to one or all registered wallets
-
-/** Register a wallet to receive updates from core */
-void RegisterValidationInterface(CValidationInterface* pwalletIn);
-/** Unregister a wallet from core */
-void UnregisterValidationInterface(CValidationInterface* pwalletIn);
-/** Unregister all wallets from core */
+/** Register subscriber */
+void RegisterValidationInterface(CValidationInterface* callbacks);
+/** Unregister subscriber. DEPRECATED. This is not safe to use when the RPC server or main message handler thread is running. */
+void UnregisterValidationInterface(CValidationInterface* callbacks);
+/** Unregister all subscribers */
 void UnregisterAllValidationInterfaces();
 
 // Alternate registration functions that release a shared_ptr after the last
 // notification is sent. These are useful for race-free cleanup, since
 // unregistration is nonblocking and can return before the last notification is
 // processed.
+/** Register subscriber */
 void RegisterSharedValidationInterface(std::shared_ptr<CValidationInterface> callbacks);
+/** Unregister subscriber */
 void UnregisterSharedValidationInterface(std::shared_ptr<CValidationInterface> callbacks);
 
 /**
@@ -165,7 +165,7 @@ protected:
     virtual void NotifyGovernanceObject(const std::shared_ptr<const CGovernanceObject>& object) {}
     virtual void NotifyInstantSendDoubleSpendAttempt(const CTransactionRef& currentTx, const CTransactionRef& previousTx) {}
     virtual void NotifyRecoveredSig(const std::shared_ptr<const llmq::CRecoveredSig>& sig) {}
-    virtual void NotifyMasternodeListChanged(bool undo, const CDeterministicMNList& oldMNList, const CDeterministicMNListDiff& diff, CConnman& connman) {}
+    virtual void NotifyMasternodeListChanged(bool undo, const CDeterministicMNList& oldMNList, const CDeterministicMNListDiff& diff) {}
     /**
      * Notifies listeners of the new active block chain on-disk.
      *
@@ -185,18 +185,16 @@ protected:
     virtual void ChainStateFlushed(const CBlockLocator &locator) {}
     /**
      * Notifies listeners of a block validation result.
-     * If the provided CValidationState IsValid, the provided block
+     * If the provided BlockValidationState IsValid, the provided block
      * is guaranteed to be the current best block at the time the
      * callback was generated (not necessarily now)
      */
-    virtual void BlockChecked(const CBlock&, const CValidationState&) {}
+    virtual void BlockChecked(const CBlock&, const BlockValidationState&) {}
     /**
      * Notifies listeners that a block which builds directly on our current tip
      * has been received and connected to the headers tree, though not validated yet */
     virtual void NewPoWValidBlock(const CBlockIndex *pindex, const std::shared_ptr<const CBlock>& block) {};
-    friend void ::RegisterSharedValidationInterface(std::shared_ptr<CValidationInterface>);
-    friend void ::UnregisterValidationInterface(CValidationInterface*);
-    friend void ::UnregisterAllValidationInterfaces();
+    friend class CMainSignals;
 };
 
 struct MainSignalsInstance;
@@ -234,9 +232,9 @@ public:
     void NotifyGovernanceObject(const std::shared_ptr<const CGovernanceObject>& object);
     void NotifyInstantSendDoubleSpendAttempt(const CTransactionRef &currentTx, const CTransactionRef &previousTx);
     void NotifyRecoveredSig(const std::shared_ptr<const llmq::CRecoveredSig> &sig);
-    void NotifyMasternodeListChanged(bool undo, const CDeterministicMNList& oldMNList, const CDeterministicMNListDiff& diff, CConnman& connman);
+    void NotifyMasternodeListChanged(bool undo, const CDeterministicMNList& oldMNList, const CDeterministicMNListDiff& diff);
     void ChainStateFlushed(const CBlockLocator &);
-    void BlockChecked(const CBlock&, const CValidationState&);
+    void BlockChecked(const CBlock&, const BlockValidationState&);
     void NewPoWValidBlock(const CBlockIndex *, const std::shared_ptr<const CBlock>&);
 };
 

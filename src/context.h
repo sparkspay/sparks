@@ -10,6 +10,7 @@
 
 class ChainstateManager;
 class CTxMemPool;
+class CBlockPolicyEstimator;
 struct LLMQContext;
 struct NodeContext;
 struct WalletContext;
@@ -19,13 +20,14 @@ using CoreContext = std::variant<std::nullopt_t,
                                  std::reference_wrapper<WalletContext>,
                                  std::reference_wrapper<CTxMemPool>,
                                  std::reference_wrapper<ChainstateManager>,
+                                 std::reference_wrapper<CBlockPolicyEstimator>,
                                  std::reference_wrapper<LLMQContext>>;
 
 template<typename T>
-T* GetContext(const CoreContext& ctx) noexcept
+T* GetContext(const CoreContext& context) noexcept
 {
-    return std::holds_alternative<std::reference_wrapper<T>>(ctx)
-                ? &std::get<std::reference_wrapper<T>>(ctx).get()
+    return std::holds_alternative<std::reference_wrapper<T>>(context)
+                ? &std::get<std::reference_wrapper<T>>(context).get()
                 : nullptr;
 }
 

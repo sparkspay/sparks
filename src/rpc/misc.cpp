@@ -1,14 +1,18 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Copyright (c) 2014-2023 The Dash Core developers
 // Copyright (c) 2016-2023 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <addressindex.h>
 #include <chainparams.h>
 #include <consensus/consensus.h>
 #include <evo/mnauth.h>
 #include <httpserver.h>
+#include <index/blockfilterindex.h>
+#include <index/coinstatsindex.h>
+#include <index/txindex.h>
 #include <init.h>
 #include <interfaces/chain.h>
 #include <key_io.h>
@@ -31,7 +35,6 @@
 #include <spork.h>
 
 #include <stdint.h>
-#include <tuple>
 #ifdef HAVE_MALLOC_INFO
 #include <malloc.h>
 #endif
@@ -42,7 +45,7 @@ static UniValue debug(const JSONRPCRequest& request)
 {
     RPCHelpMan{"debug",
         "Change debug category on the fly. Specify single category or use '+' to specify many.\n"
-        "The valid debug categories are: " + ListLogCategories() + ".\n"
+        "The valid logging categories are: " + LogInstance().LogCategoriesString() + ".\n"
         "libevent logging is configured on startup and cannot be modified by this RPC during runtime.\n"
         "There are also a few meta-categories:\n"
         " - \"all\", \"1\" and \"\" activate all categories at once;\n"
@@ -70,7 +73,7 @@ static UniValue debug(const JSONRPCRequest& request)
         }
     }
 
-    return "Debug mode: " + ListActiveLogCategoriesString();
+    return "Debug mode: " + LogInstance().LogCategoriesString(/*enabled_only=*/true);
 }
 
 static UniValue mnsync(const JSONRPCRequest& request)
@@ -195,7 +198,7 @@ static UniValue sporkupdate(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid spork name");
     }
 
-    NodeContext& node = EnsureNodeContext(request.context);
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
     if (!node.connman) {
         throw JSONRPCError(RPC_CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
     }
@@ -228,8 +231,8 @@ static UniValue validateaddress(const JSONRPCRequest& request)
                     }
                 },
                 RPCExamples{
-                    HelpExampleCli("validateaddress", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"") +
-                    HelpExampleRpc("validateaddress", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"")
+                    HelpExampleCli("validateaddress", "\"" + EXAMPLE_ADDRESS[0] + "\"") +
+                    HelpExampleRpc("validateaddress", "\"" + EXAMPLE_ADDRESS[0] + "\"")
                 },
             }.Check(request);
 
@@ -269,6 +272,7 @@ static UniValue createmultisig(const JSONRPCRequest& request)
                     {
                         {RPCResult::Type::STR, "address", "The value of the new multisig address."},
                         {RPCResult::Type::STR_HEX, "redeemScript", "The string value of the hex-encoded redemption script."},
+                        {RPCResult::Type::STR, "descriptor", "The descriptor for this multisig."},
                     }
                 },
                 RPCExamples{
@@ -293,12 +297,17 @@ static UniValue createmultisig(const JSONRPCRequest& request)
     }
 
     // Construct using pay-to-script-hash:
-    CScript inner = CreateMultisigRedeemscript(required, pubkeys);
-    CScriptID innerID(inner);
+    FillableSigningProvider keystore;
+    CScript inner;
+    const CTxDestination dest = AddAndGetMultisigDestination(required, pubkeys, keystore, inner);
+
+    // Make the descriptor
+    std::unique_ptr<Descriptor> descriptor = InferDescriptor(GetScriptForDestination(dest), keystore);
 
     UniValue result(UniValue::VOBJ);
-    result.pushKV("address", EncodeDestination(ScriptHash(innerID)));
+    result.pushKV("address", EncodeDestination(dest));
     result.pushKV("redeemScript", HexStr(inner));
+    result.pushKV("descriptor", descriptor->ToString());
 
     return result;
 }
@@ -439,11 +448,11 @@ static UniValue verifymessage(const JSONRPCRequest& request)
     "\nUnlock the wallet for 30 seconds\n"
     + HelpExampleCli("walletpassphrase", "\"mypassphrase\" 30") +
     "\nCreate the signature\n"
-    + HelpExampleCli("signmessage", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwG\" \"my message\"") +
+    + HelpExampleCli("signmessage", "\"" + EXAMPLE_ADDRESS[0] + "\" \"my message\"") +
     "\nVerify the signature\n"
-    + HelpExampleCli("verifymessage", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwG\" \"signature\" \"my message\"") +
+    + HelpExampleCli("verifymessage", "\"" + EXAMPLE_ADDRESS[0] + "\" \"signature\" \"my message\"") +
     "\nAs a JSON-RPC call\n"
-    + HelpExampleRpc("verifymessage", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwG\", \"signature\", \"my message\"")
+    + HelpExampleRpc("verifymessage", "\"" + EXAMPLE_ADDRESS[0] + "\", \"signature\", \"my message\"")
         },
     }.Check(request);
 
@@ -455,11 +464,11 @@ static UniValue verifymessage(const JSONRPCRequest& request)
 
     switch (MessageVerify(strAddress, strSign, strMessage)) {
     case MessageVerificationResult::ERR_INVALID_ADDRESS:
-        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
     case MessageVerificationResult::ERR_ADDRESS_NO_KEY:
         throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to key");
     case MessageVerificationResult::ERR_MALFORMED_SIGNATURE:
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Malformed base64 encoding");
+        throw JSONRPCError(RPC_TYPE_ERROR, "Malformed base64 encoding");
     case MessageVerificationResult::ERR_PUBKEY_NOT_RECOVERED:
     case MessageVerificationResult::ERR_NOT_SIGNED:
         return false;
@@ -485,7 +494,7 @@ static UniValue signmessagewithprivkey(const JSONRPCRequest& request)
     "\nCreate the signature\n"
     + HelpExampleCli("signmessagewithprivkey", "\"privkey\" \"my message\"") +
     "\nVerify the signature\n"
-    + HelpExampleCli("verifymessage", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwG\" \"signature\" \"my message\"") +
+    + HelpExampleCli("verifymessage", "\"" + EXAMPLE_ADDRESS[0] + "\" \"signature\" \"my message\"") +
     "\nAs a JSON-RPC call\n"
     + HelpExampleRpc("signmessagewithprivkey", "\"privkey\", \"my message\"")
         },
@@ -520,8 +529,9 @@ static UniValue setmocktime(const JSONRPCRequest& request)
         RPCExamples{""},
     }.Check(request);
 
-    if (!Params().MineBlocksOnDemand())
-        throw std::runtime_error("setmocktime for regression testing (-regtest mode) only");
+    if (!Params().IsMockableChain()) {
+        throw std::runtime_error("setmocktime is for regression testing (-regtest mode) only");
+    }
 
     // For now, don't change mocktime if we're in the middle of validation, as
     // this could have an effect on mempool time-based eviction, as well as
@@ -565,14 +575,17 @@ static UniValue mnauth(const JSONRPCRequest& request)
     if (proTxHash.IsNull()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "proTxHash invalid");
     }
+
+    ChainstateManager& chainman = EnsureAnyChainman(request.context);
+
     CBLSPublicKey publicKey;
-    bool bls_legacy_scheme = !llmq::utils::IsV19Active(::ChainActive().Tip());
+    bool bls_legacy_scheme = !llmq::utils::IsV19Active(chainman.ActiveChain().Tip());
     publicKey.SetHexStr(request.params[2].get_str(), bls_legacy_scheme);
     if (!publicKey.IsValid()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "publicKey invalid");
     }
 
-    NodeContext& node = EnsureNodeContext(request.context);
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
     bool fSuccess = node.connman->ForNode(nodeId, CConnman::AllNodes, [&](CNode* pNode){
         pNode->SetVerifiedProRegTxHash(proTxHash);
         pNode->SetVerifiedPubKeyHash(publicKey.GetHash());
@@ -582,11 +595,11 @@ static UniValue mnauth(const JSONRPCRequest& request)
     return fSuccess;
 }
 
-static bool getAddressFromIndex(const int &type, const uint160 &hash, std::string &address)
+static bool getAddressFromIndex(const AddressType& type, const uint160 &hash, std::string &address)
 {
-    if (type == 2) {
+    if (type == AddressType::P2SH) {
         address = EncodeDestination(ScriptHash(hash));
-    } else if (type == 1) {
+    } else if (type == AddressType::P2PK_OR_P2PKH) {
         address = EncodeDestination(PKHash(hash));
     } else {
         return false;
@@ -594,25 +607,25 @@ static bool getAddressFromIndex(const int &type, const uint160 &hash, std::strin
     return true;
 }
 
-static bool getIndexKey(const std::string& str, uint160& hashBytes, int& type)
+static bool getIndexKey(const std::string& str, uint160& hashBytes, AddressType& type)
 {
     CTxDestination dest = DecodeDestination(str);
     if (!IsValidDestination(dest)) {
-        type = 0;
+        type = AddressType::UNKNOWN;
         return false;
     }
     const PKHash *pkhash = std::get_if<PKHash>(&dest);
     const ScriptHash *scriptID = std::get_if<ScriptHash>(&dest);
-    type = pkhash ? 1 : 2;
+    type = pkhash ? AddressType::P2PK_OR_P2PKH : AddressType::P2SH;
     hashBytes = pkhash ? uint160(*pkhash) : uint160(*scriptID);
     return true;
 }
 
-static bool getAddressesFromParams(const UniValue& params, std::vector<std::pair<uint160, int> > &addresses)
+static bool getAddressesFromParams(const UniValue& params, std::vector<std::pair<uint160, AddressType> > &addresses)
 {
     if (params[0].isStr()) {
         uint160 hashBytes;
-        int type = 0;
+        AddressType type{AddressType::UNKNOWN};
         if (!getIndexKey(params[0].get_str(), hashBytes, type)) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
         }
@@ -624,13 +637,10 @@ static bool getAddressesFromParams(const UniValue& params, std::vector<std::pair
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Addresses is expected to be an array");
         }
 
-        std::vector<UniValue> values = addressValues.getValues();
-
-        for (std::vector<UniValue>::iterator it = values.begin(); it != values.end(); ++it) {
-
+        for (const auto& address : addressValues.getValues()) {
             uint160 hashBytes;
-            int type = 0;
-            if (!getIndexKey(it->get_str(), hashBytes, type)) {
+            AddressType type{AddressType::UNKNOWN};
+            if (!getIndexKey(address.get_str(), hashBytes, type)) {
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
             }
             addresses.push_back(std::make_pair(hashBytes, type));
@@ -644,12 +654,12 @@ static bool getAddressesFromParams(const UniValue& params, std::vector<std::pair
 
 static bool heightSort(std::pair<CAddressUnspentKey, CAddressUnspentValue> a,
                 std::pair<CAddressUnspentKey, CAddressUnspentValue> b) {
-    return a.second.blockHeight < b.second.blockHeight;
+    return a.second.m_block_height < b.second.m_block_height;
 }
 
 static bool timestampSort(std::pair<CMempoolAddressDeltaKey, CMempoolAddressDelta> a,
                    std::pair<CMempoolAddressDeltaKey, CMempoolAddressDelta> b) {
-    return a.second.time < b.second.time;
+    return a.second.m_time < b.second.m_time;
 }
 
 static UniValue getaddressmempool(const JSONRPCRequest& request)
@@ -678,12 +688,12 @@ static UniValue getaddressmempool(const JSONRPCRequest& request)
                 }},
             }},
         RPCExamples{
-            HelpExampleCli("getaddressmempool", "'{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}'")
-    + HelpExampleRpc("getaddressmempool", "{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}")
+            HelpExampleCli("getaddressmempool", "'{\"addresses\": [\"" + EXAMPLE_ADDRESS[0] + "\"]}'")
+    + HelpExampleRpc("getaddressmempool", "{\"addresses\": [\"" + EXAMPLE_ADDRESS[0] + "\"]}")
         },
     }.Check(request);
 
-    std::vector<std::pair<uint160, int> > addresses;
+    std::vector<std::pair<uint160, AddressType> > addresses;
 
     if (!getAddressesFromParams(request.params, addresses)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
@@ -691,7 +701,7 @@ static UniValue getaddressmempool(const JSONRPCRequest& request)
 
     std::vector<std::pair<CMempoolAddressDeltaKey, CMempoolAddressDelta> > indexes;
 
-    CTxMemPool& mempool = EnsureMemPool(request.context);
+    CTxMemPool& mempool = EnsureAnyMemPool(request.context);
     if (!mempool.getAddressIndex(addresses, indexes)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available for address");
     }
@@ -700,23 +710,21 @@ static UniValue getaddressmempool(const JSONRPCRequest& request)
 
     UniValue result(UniValue::VARR);
 
-    for (std::vector<std::pair<CMempoolAddressDeltaKey, CMempoolAddressDelta> >::iterator it = indexes.begin();
-         it != indexes.end(); it++) {
-
+    for (const auto& [mempoolAddressKey, mempoolAddressDelta] : indexes) {
         std::string address;
-        if (!getAddressFromIndex(it->first.type, it->first.addressBytes, address)) {
+        if (!getAddressFromIndex(mempoolAddressKey.m_address_type, mempoolAddressKey.m_address_bytes, address)) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Unknown address type");
         }
 
         UniValue delta(UniValue::VOBJ);
         delta.pushKV("address", address);
-        delta.pushKV("txid", it->first.txhash.GetHex());
-        delta.pushKV("index", (int)it->first.index);
-        delta.pushKV("satoshis", it->second.amount);
-        delta.pushKV("timestamp", count_seconds(it->second.time));
-        if (it->second.amount < 0) {
-            delta.pushKV("prevtxid", it->second.prevhash.GetHex());
-            delta.pushKV("prevout", (int)it->second.prevout);
+        delta.pushKV("txid", mempoolAddressKey.m_tx_hash.GetHex());
+        delta.pushKV("index", (int)mempoolAddressKey.m_tx_index);
+        delta.pushKV("satoshis", mempoolAddressDelta.m_amount);
+        delta.pushKV("timestamp", count_seconds(mempoolAddressDelta.m_time));
+        if (mempoolAddressDelta.m_amount < 0) {
+            delta.pushKV("prevtxid", mempoolAddressDelta.m_prev_hash.GetHex());
+            delta.pushKV("prevout", (int)mempoolAddressDelta.m_prev_out);
         }
         result.push_back(delta);
     }
@@ -749,12 +757,12 @@ static UniValue getaddressutxos(const JSONRPCRequest& request)
                 }},
             }},
         RPCExamples{
-            HelpExampleCli("getaddressutxos", "'{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}'")
-    + HelpExampleRpc("getaddressutxos", "{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}")
+            HelpExampleCli("getaddressutxos", "'{\"addresses\": [\"" + EXAMPLE_ADDRESS[0] + "\"]}'")
+    + HelpExampleRpc("getaddressutxos", "{\"addresses\": [\"" + EXAMPLE_ADDRESS[0] + "\"]}")
         },
     }.Check(request);
 
-    std::vector<std::pair<uint160, int> > addresses;
+    std::vector<std::pair<uint160, AddressType> > addresses;
 
     if (!getAddressesFromParams(request.params, addresses)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
@@ -762,8 +770,8 @@ static UniValue getaddressutxos(const JSONRPCRequest& request)
 
     std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> > unspentOutputs;
 
-    for (std::vector<std::pair<uint160, int> >::iterator it = addresses.begin(); it != addresses.end(); it++) {
-        if (!GetAddressUnspent((*it).first, (*it).second, unspentOutputs)) {
+    for (const auto& address : addresses) {
+        if (!GetAddressUnspent(address.first, address.second, unspentOutputs)) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available for address");
         }
     }
@@ -772,19 +780,19 @@ static UniValue getaddressutxos(const JSONRPCRequest& request)
 
     UniValue result(UniValue::VARR);
 
-    for (std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> >::const_iterator it=unspentOutputs.begin(); it!=unspentOutputs.end(); it++) {
+    for (const auto& [unspentKey, unspentValue] : unspentOutputs) {
         UniValue output(UniValue::VOBJ);
         std::string address;
-        if (!getAddressFromIndex(it->first.type, it->first.hashBytes, address)) {
+        if (!getAddressFromIndex(unspentKey.m_address_type, unspentKey.m_address_bytes, address)) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Unknown address type");
         }
 
         output.pushKV("address", address);
-        output.pushKV("txid", it->first.txhash.GetHex());
-        output.pushKV("outputIndex", (int)it->first.index);
-        output.pushKV("script", HexStr(it->second.script));
-        output.pushKV("satoshis", it->second.satoshis);
-        output.pushKV("height", it->second.blockHeight);
+        output.pushKV("txid", unspentKey.m_tx_hash.GetHex());
+        output.pushKV("outputIndex", (int)unspentKey.m_tx_index);
+        output.pushKV("script", HexStr(unspentValue.m_tx_script));
+        output.pushKV("satoshis", unspentValue.m_amount);
+        output.pushKV("height", unspentValue.m_block_height);
         result.push_back(output);
     }
 
@@ -816,8 +824,8 @@ static UniValue getaddressdeltas(const JSONRPCRequest& request)
                 }},
             }},
         RPCExamples{
-            HelpExampleCli("getaddressdeltas", "'{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}'")
-    + HelpExampleRpc("getaddressdeltas", "{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}")
+            HelpExampleCli("getaddressdeltas", "'{\"addresses\": [\"" + EXAMPLE_ADDRESS[0] + "\"]}'")
+    + HelpExampleRpc("getaddressdeltas", "{\"addresses\": [\"" + EXAMPLE_ADDRESS[0] + "\"]}")
         },
     }.Check(request);
 
@@ -836,7 +844,7 @@ static UniValue getaddressdeltas(const JSONRPCRequest& request)
         }
     }
 
-    std::vector<std::pair<uint160, int> > addresses;
+    std::vector<std::pair<uint160, AddressType> > addresses;
 
     if (!getAddressesFromParams(request.params, addresses)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
@@ -844,13 +852,13 @@ static UniValue getaddressdeltas(const JSONRPCRequest& request)
 
     std::vector<std::pair<CAddressIndexKey, CAmount> > addressIndex;
 
-    for (std::vector<std::pair<uint160, int> >::iterator it = addresses.begin(); it != addresses.end(); it++) {
+    for (const auto& address : addresses) {
         if (start > 0 && end > 0) {
-            if (!GetAddressIndex((*it).first, (*it).second, addressIndex, start, end)) {
+            if (!GetAddressIndex(address.first, address.second, addressIndex, start, end)) {
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available for address");
             }
         } else {
-            if (!GetAddressIndex((*it).first, (*it).second, addressIndex)) {
+            if (!GetAddressIndex(address.first, address.second, addressIndex)) {
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available for address");
             }
         }
@@ -858,18 +866,18 @@ static UniValue getaddressdeltas(const JSONRPCRequest& request)
 
     UniValue result(UniValue::VARR);
 
-    for (std::vector<std::pair<CAddressIndexKey, CAmount> >::const_iterator it=addressIndex.begin(); it!=addressIndex.end(); it++) {
+    for (const auto& [indexKey, indexDelta] : addressIndex) {
         std::string address;
-        if (!getAddressFromIndex(it->first.type, it->first.hashBytes, address)) {
+        if (!getAddressFromIndex(indexKey.m_address_type, indexKey.m_address_bytes, address)) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Unknown address type");
         }
 
         UniValue delta(UniValue::VOBJ);
-        delta.pushKV("satoshis", it->second);
-        delta.pushKV("txid", it->first.txhash.GetHex());
-        delta.pushKV("index", (int)it->first.index);
-        delta.pushKV("blockindex", (int)it->first.txindex);
-        delta.pushKV("height", it->first.blockHeight);
+        delta.pushKV("satoshis", indexDelta);
+        delta.pushKV("txid", indexKey.m_tx_hash.GetHex());
+        delta.pushKV("index", (int)indexKey.m_tx_index);
+        delta.pushKV("blockindex", (int)indexKey.m_block_tx_pos);
+        delta.pushKV("height", indexKey.m_block_height);
         delta.pushKV("address", address);
         result.push_back(delta);
     }
@@ -897,12 +905,12 @@ static UniValue getaddressbalance(const JSONRPCRequest& request)
                     {RPCResult::Type::NUM, "received", "The total number of duffs received (including change)"},
                 }},
         RPCExamples{
-            HelpExampleCli("getaddressbalance", "'{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}'")
-    + HelpExampleRpc("getaddressbalance", "{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}")
+            HelpExampleCli("getaddressbalance", "'{\"addresses\": [\"" + EXAMPLE_ADDRESS[0] + "\"]}'")
+    + HelpExampleRpc("getaddressbalance", "{\"addresses\": [\"" + EXAMPLE_ADDRESS[0] + "\"]}")
         },
     }.Check(request);
 
-    std::vector<std::pair<uint160, int> > addresses;
+    std::vector<std::pair<uint160, AddressType> > addresses;
 
     if (!getAddressesFromParams(request.params, addresses)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
@@ -910,29 +918,30 @@ static UniValue getaddressbalance(const JSONRPCRequest& request)
 
     std::vector<std::pair<CAddressIndexKey, CAmount> > addressIndex;
 
-    for (std::vector<std::pair<uint160, int> >::iterator it = addresses.begin(); it != addresses.end(); it++) {
-        if (!GetAddressIndex((*it).first, (*it).second, addressIndex)) {
+    for (const auto& address : addresses) {
+        if (!GetAddressIndex(address.first, address.second, addressIndex)) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available for address");
         }
     }
 
-    int nHeight = WITH_LOCK(cs_main, return ::ChainActive().Height());
+    ChainstateManager& chainman = EnsureAnyChainman(request.context);
+    int nHeight = WITH_LOCK(cs_main, return chainman.ActiveChain().Height());
 
     CAmount balance = 0;
     CAmount balance_spendable = 0;
     CAmount balance_immature = 0;
     CAmount received = 0;
 
-    for (std::vector<std::pair<CAddressIndexKey, CAmount> >::const_iterator it=addressIndex.begin(); it!=addressIndex.end(); it++) {
-        if (it->second > 0) {
-            received += it->second;
+    for (const auto& [indexKey, indexDelta] : addressIndex) {
+        if (indexDelta > 0) {
+            received += indexDelta;
         }
-        if (it->first.txindex == 0 && nHeight - it->first.blockHeight < COINBASE_MATURITY) {
-            balance_immature += it->second;
+        if (indexKey.m_block_tx_pos == 0 && nHeight - indexKey.m_block_height < COINBASE_MATURITY) {
+            balance_immature += indexDelta;
         } else {
-            balance_spendable += it->second;
+            balance_spendable += indexDelta;
         }
-        balance += it->second;
+        balance += indexDelta;
     }
 
     UniValue result(UniValue::VOBJ);
@@ -961,12 +970,12 @@ static UniValue getaddresstxids(const JSONRPCRequest& request)
             {{RPCResult::Type::STR_HEX, "transactionid", "The transaction id"}}
         },
         RPCExamples{
-            HelpExampleCli("getaddresstxids", "'{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}'")
-    + HelpExampleRpc("getaddresstxids", "{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}")
+            HelpExampleCli("getaddresstxids", "'{\"addresses\": [\"" + EXAMPLE_ADDRESS[0] + "\"]}'")
+    + HelpExampleRpc("getaddresstxids", "{\"addresses\": [\"" + EXAMPLE_ADDRESS[0] + "\"]}")
         },
     }.Check(request);
 
-    std::vector<std::pair<uint160, int> > addresses;
+    std::vector<std::pair<uint160, AddressType> > addresses;
 
     if (!getAddressesFromParams(request.params, addresses)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
@@ -985,13 +994,13 @@ static UniValue getaddresstxids(const JSONRPCRequest& request)
 
     std::vector<std::pair<CAddressIndexKey, CAmount> > addressIndex;
 
-    for (std::vector<std::pair<uint160, int> >::iterator it = addresses.begin(); it != addresses.end(); it++) {
+    for (const auto& address : addresses) {
         if (start > 0 && end > 0) {
-            if (!GetAddressIndex((*it).first, (*it).second, addressIndex, start, end)) {
+            if (!GetAddressIndex(address.first, address.second, addressIndex, start, end)) {
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available for address");
             }
         } else {
-            if (!GetAddressIndex((*it).first, (*it).second, addressIndex)) {
+            if (!GetAddressIndex(address.first, address.second, addressIndex)) {
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available for address");
             }
         }
@@ -1000,9 +1009,9 @@ static UniValue getaddresstxids(const JSONRPCRequest& request)
     std::set<std::pair<int, std::string> > txids;
     UniValue result(UniValue::VARR);
 
-    for (std::vector<std::pair<CAddressIndexKey, CAmount> >::const_iterator it=addressIndex.begin(); it!=addressIndex.end(); it++) {
-        int height = it->first.blockHeight;
-        std::string txid = it->first.txhash.GetHex();
+    for (const auto& [indexKey, _]: addressIndex) {
+        int height = indexKey.m_block_height;
+        std::string txid = indexKey.m_tx_hash.GetHex();
 
         if (addresses.size() > 1) {
             txids.insert(std::make_pair(height, txid));
@@ -1014,8 +1023,8 @@ static UniValue getaddresstxids(const JSONRPCRequest& request)
     }
 
     if (addresses.size() > 1) {
-        for (std::set<std::pair<int, std::string> >::const_iterator it=txids.begin(); it!=txids.end(); it++) {
-            result.push_back(it->second);
+        for (const auto& tx : txids) {
+            result.push_back(tx.second);
         }
     }
 
@@ -1060,15 +1069,15 @@ static UniValue getspentinfo(const JSONRPCRequest& request)
     CSpentIndexKey key(txid, outputIndex);
     CSpentIndexValue value;
 
-    CTxMemPool& mempool = EnsureMemPool(request.context);
+    CTxMemPool& mempool = EnsureAnyMemPool(request.context);
     if (!GetSpentIndex(mempool, key, value)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Unable to get spent info");
     }
 
     UniValue obj(UniValue::VOBJ);
-    obj.pushKV("txid", value.txid.GetHex());
-    obj.pushKV("index", (int)value.inputIndex);
-    obj.pushKV("height", value.blockHeight);
+    obj.pushKV("txid", value.m_tx_hash.GetHex());
+    obj.pushKV("index", (int)value.m_tx_index);
+    obj.pushKV("height", value.m_block_height);
 
     return obj;
 }
@@ -1091,7 +1100,7 @@ static UniValue mockscheduler(const JSONRPCRequest& request)
     // check params are valid values
     RPCTypeCheck(request.params, {UniValue::VNUM});
     int64_t delta_seconds = request.params[0].get_int64();
-    if ((delta_seconds <= 0) || (delta_seconds > 3600)) {
+    if (delta_seconds <= 0 || delta_seconds > 3600) {
         throw std::runtime_error("delta_time must be between 1 and 3600 seconds (1 hr)");
     }
 
@@ -1215,7 +1224,7 @@ static UniValue logging(const JSONRPCRequest& request)
     "When called with arguments, adds or removes categories from debug logging and return the lists above.\n"
     "The arguments are evaluated in order \"include\", \"exclude\".\n"
     "If an item is both included and excluded, it will thus end up being excluded.\n"
-    "The valid logging categories are: " + ListLogCategories() + "\n"
+    "The valid logging categories are: " + LogInstance().LogCategoriesString() + "\n"
     "In addition, the following are available as category names with special meanings:\n"
     "  - \"all\",  \"1\" : represent all logging categories.\n"
     "  - \"sparks\" activates all Sparks-specific categories at once.\n"
@@ -1269,8 +1278,7 @@ static UniValue logging(const JSONRPCRequest& request)
     }
 
     UniValue result(UniValue::VOBJ);
-    std::vector<CLogCategoryActive> vLogCatActive = ListActiveLogCategories();
-    for (const auto& logCatActive : vLogCatActive) {
+    for (const auto& logCatActive : LogInstance().LogCategoriesList()) {
         result.pushKV(logCatActive.category, logCatActive.active);
     }
 
@@ -1296,7 +1304,66 @@ static UniValue echo(const JSONRPCRequest& request)
     return request.params;
 }
 
-// clang-format off
+static UniValue SummaryToJSON(const IndexSummary&& summary, std::string index_name)
+{
+    UniValue ret_summary(UniValue::VOBJ);
+    if (!index_name.empty() && index_name != summary.name) return ret_summary;
+
+    UniValue entry(UniValue::VOBJ);
+    entry.pushKV("synced", summary.synced);
+    entry.pushKV("best_block_height", summary.best_block_height);
+    ret_summary.pushKV(summary.name, entry);
+    return ret_summary;
+}
+
+static RPCHelpMan getindexinfo()
+{
+    return RPCHelpMan{"getindexinfo",
+                "\nReturns the status of one or all available indices currently running in the node.\n",
+                {
+                    {"index_name", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Filter results for an index with a specific name."},
+                },
+                RPCResult{
+                    RPCResult::Type::OBJ, "", "", {
+                        {
+                            RPCResult::Type::OBJ, "name", "The name of the index",
+                            {
+                                {RPCResult::Type::BOOL, "synced", "Whether the index is synced or not"},
+                                {RPCResult::Type::NUM, "best_block_height", "The block height to which the index is synced"},
+                            }
+                        },
+                    },
+                },
+                RPCExamples{
+                    HelpExampleCli("getindexinfo", "")
+                  + HelpExampleRpc("getindexinfo", "")
+                  + HelpExampleCli("getindexinfo", "txindex")
+                  + HelpExampleRpc("getindexinfo", "txindex")
+                },
+                [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+{
+    UniValue result(UniValue::VOBJ);
+    const std::string index_name = request.params[0].isNull() ? "" : request.params[0].get_str();
+
+    if (g_txindex) {
+        result.pushKVs(SummaryToJSON(g_txindex->GetSummary(), index_name));
+    }
+
+    if (g_coin_stats_index) {
+        result.pushKVs(SummaryToJSON(g_coin_stats_index->GetSummary(), index_name));
+    }
+
+    ForEachBlockFilterIndex([&result, &index_name](const BlockFilterIndex& index) {
+        result.pushKVs(SummaryToJSON(index.GetSummary(), index_name));
+    });
+
+    return result;
+}
+    };
+}
+
+void RegisterMiscRPCCommands(CRPCTable &t)
+{
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
   //  --------------------- ------------------------  -----------------------  ----------
@@ -1309,6 +1376,7 @@ static const CRPCCommand commands[] =
     { "util",               "getdescriptorinfo",      &getdescriptorinfo,      {"descriptor"} },
     { "util",               "verifymessage",          &verifymessage,          {"address","signature","message"} },
     { "util",               "signmessagewithprivkey", &signmessagewithprivkey, {"privkey","message"} },
+    { "util",               "getindexinfo",           &getindexinfo,           {"index_name"} },
     { "blockchain",         "getspentinfo",           &getspentinfo,           {"json"} },
 
     /* Address index */
@@ -1332,8 +1400,6 @@ static const CRPCCommand commands[] =
 };
 // clang-format on
 
-void RegisterMiscRPCCommands(CRPCTable &t)
-{
     for (const auto& command : commands) {
         t.appendCommand(command.name, &command);
     }

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Copyright (c) 2014-2022 The Dash Core developers
 // Copyright (c) 2016-2023 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
@@ -398,6 +398,8 @@ void BitcoinGUI::createActions()
     signMessageAction->setStatusTip(tr("Sign messages with your Sparks addresses to prove you own them"));
     verifyMessageAction = new QAction(tr("&Verify message..."), this);
     verifyMessageAction->setStatusTip(tr("Verify messages to ensure they were signed with specified Sparks addresses"));
+    m_load_psbt_action = new QAction(tr("Load PSBT..."), this);
+    m_load_psbt_action->setStatusTip(tr("Load Partially Signed Dash Transaction"));
 
     openInfoAction = new QAction(tr("&Information"), this);
     openInfoAction->setStatusTip(tr("Show diagnostic information"));
@@ -486,6 +488,7 @@ void BitcoinGUI::createActions()
         connect(lockWalletAction, &QAction::triggered, walletFrame, &WalletFrame::lockWallet);
         connect(signMessageAction, &QAction::triggered, this, static_cast<void (BitcoinGUI::*)()>(&BitcoinGUI::showNormalIfMinimized));
         connect(signMessageAction, &QAction::triggered, [this]{ gotoSignMessageTab(); });
+        connect(m_load_psbt_action, &QAction::triggered, [this]{ gotoLoadPSBT(); });
         connect(verifyMessageAction, &QAction::triggered, this, static_cast<void (BitcoinGUI::*)()>(&BitcoinGUI::showNormalIfMinimized));
         connect(verifyMessageAction, &QAction::triggered, [this]{ gotoVerifyMessageTab(); });
         connect(usedSendingAddressesAction, &QAction::triggered, walletFrame, &WalletFrame::usedSendingAddresses);
@@ -555,6 +558,7 @@ void BitcoinGUI::createMenuBar()
         file->addAction(backupWalletAction);
         file->addAction(signMessageAction);
         file->addAction(verifyMessageAction);
+        file->addAction(m_load_psbt_action);
         file->addSeparator();
     }
     file->addAction(openConfEditorAction);
@@ -1180,6 +1184,10 @@ void BitcoinGUI::gotoVerifyMessageTab(QString addr)
 {
     if (walletFrame) walletFrame->gotoVerifyMessageTab(addr);
 }
+void BitcoinGUI::gotoLoadPSBT()
+{
+    if (walletFrame) walletFrame->gotoLoadPSBT();
+}
 #endif // ENABLE_WALLET
 
 void BitcoinGUI::updateNetworkState()
@@ -1350,7 +1358,7 @@ void BitcoinGUI::setNumBlocks(int count, const QDateTime& blockDate, const QStri
     bool disableAppNap = !m_node.masternodeSync().isSynced();
 #ifdef ENABLE_WALLET
     if (enableWallet) {
-        for (const auto& wallet : m_node.walletClient().getWallets()) {
+        for (const auto& wallet : m_node.walletLoader().getWallets()) {
             disableAppNap |= wallet->coinJoin().isMixing();
         }
     }
@@ -1718,7 +1726,7 @@ void BitcoinGUI::showIncomingTransactions()
             // On new transaction, make an info balloon
             QString msg = tr("Date: %1\n").arg(itx.date) +
                           tr("Amount: %1\n").arg(BitcoinUnits::formatWithUnit(itx.unit, itx.amount, true));
-            if (m_node.walletClient().getWallets().size() > 1 && !itx.walletName.isEmpty()) {
+            if (m_node.walletLoader().getWallets().size() > 1 && !itx.walletName.isEmpty()) {
                 msg += tr("Wallet: %1\n").arg(itx.walletName);
             }
             msg += tr("Type: %1\n").arg(itx.type);
@@ -1807,7 +1815,7 @@ void BitcoinGUI::setEncryptionStatus(int status)
         changePassphraseAction->setEnabled(true);
         unlockWalletAction->setVisible(false);
         lockWalletAction->setVisible(true);
-        encryptWalletAction->setEnabled(false); // TODO: decrypt currently not supported
+        encryptWalletAction->setEnabled(false);
         break;
     case WalletModel::UnlockedForMixingOnly:
         labelWalletEncryptionIcon->show();
@@ -1816,7 +1824,7 @@ void BitcoinGUI::setEncryptionStatus(int status)
         changePassphraseAction->setEnabled(true);
         unlockWalletAction->setVisible(true);
         lockWalletAction->setVisible(true);
-        encryptWalletAction->setEnabled(false); // TODO: decrypt currently not supported
+        encryptWalletAction->setEnabled(false);
         break;
     case WalletModel::Locked:
         labelWalletEncryptionIcon->show();
@@ -1825,7 +1833,7 @@ void BitcoinGUI::setEncryptionStatus(int status)
         changePassphraseAction->setEnabled(true);
         unlockWalletAction->setVisible(true);
         lockWalletAction->setVisible(false);
-        encryptWalletAction->setEnabled(false); // TODO: decrypt currently not supported
+        encryptWalletAction->setEnabled(false);
         break;
     }
 }
@@ -1851,7 +1859,7 @@ void BitcoinGUI::updateProxyIcon()
     bool proxy_enabled = clientModel->getProxyInfo(ip_port);
 
     if (proxy_enabled) {
-        if (labelProxyIcon->pixmap() == nullptr) {
+        if (!GUIUtil::HasPixmap(labelProxyIcon)) {
             QString ip_port_q = QString::fromStdString(ip_port);
             labelProxyIcon->setPixmap(GUIUtil::getIcon("proxy", GUIUtil::ThemedColor::GREEN).pixmap(STATUSBAR_ICONSIZE, STATUSBAR_ICONSIZE));
             labelProxyIcon->setToolTip(tr("Proxy is <b>enabled</b>: %1").arg(ip_port_q));

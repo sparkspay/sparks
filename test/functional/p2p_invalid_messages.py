@@ -1,19 +1,30 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2019 The Bitcoin Core developers
+# Copyright (c) 2015-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test node responses to invalid network messages."""
 import struct
 import sys
 
+
 from test_framework.messages import (
+    CBlockHeader,
+    CInv,
     msg_ping,
     ser_string,
+    msg_getdata,
+    msg_headers,
+    msg_inv,
+    MSG_TX,
 )
 from test_framework.mininode import (
-    P2PDataStore,
+    P2PDataStore, P2PInterface
 )
 from test_framework.test_framework import BitcoinTestFramework
+from test_framework.util import (
+    assert_equal,
+    wait_until,
+)
 
 
 class msg_unrecognized:
@@ -47,10 +58,12 @@ class InvalidMessagesTest(BitcoinTestFramework):
         2. Send a few messages with an incorrect data size in the header, ensure the
            messages are ignored.
         """
+        self.test_buffer()
         self.test_magic_bytes()
         self.test_checksum()
         self.test_size()
         self.test_command()
+        self.test_large_inv()
 
         node = self.nodes[0]
         self.node = node
@@ -145,6 +158,25 @@ class InvalidMessagesTest(BitcoinTestFramework):
         # Node is still up.
         conn = node.add_p2p_connection(P2PDataStore())
 
+    def test_buffer(self):
+        self.log.info("Test message with header split across two buffers, should be received")
+        conn = self.nodes[0].add_p2p_connection(P2PDataStore())
+        # Create valid message
+        msg = conn.build_message(msg_ping(nonce=12345))
+        cut_pos = 12    # Chosen at an arbitrary position within the header
+        # Send message in two pieces
+        before = int(self.nodes[0].getnettotals()['totalbytesrecv'])
+        conn.send_raw_message(msg[:cut_pos])
+        # Wait until node has processed the first half of the message
+        wait_until(lambda: int(self.nodes[0].getnettotals()['totalbytesrecv']) != before)
+        middle = int(self.nodes[0].getnettotals()['totalbytesrecv'])
+        # If this assert fails, we've hit an unlikely race
+        # where the test framework sent a message in between the two halves
+        assert_equal(middle, before + cut_pos)
+        conn.send_raw_message(msg[cut_pos:])
+        conn.sync_with_ping(timeout=1)
+        self.nodes[0].disconnect_p2ps()
+
     def test_magic_bytes(self):
         conn = self.nodes[0].add_p2p_connection(P2PDataStore())
         with self.nodes[0].assert_debug_log(['HEADER ERROR - MESSAGESTART (badmsg, 2 bytes), received ffffffff']):
@@ -191,6 +223,19 @@ class InvalidMessagesTest(BitcoinTestFramework):
             self.nodes[0].p2p.send_raw_message(msg)
             conn.sync_with_ping(timeout=1)
             self.nodes[0].disconnect_p2ps()
+
+    def test_large_inv(self):
+        conn = self.nodes[0].add_p2p_connection(P2PInterface())
+        with self.nodes[0].assert_debug_log(['Misbehaving', 'peer=5 (0 -> 20): message inv size() = 50001']):
+            msg = msg_inv([CInv(MSG_TX, 1)] * 50001)
+            conn.send_and_ping(msg)
+        with self.nodes[0].assert_debug_log(['Misbehaving', 'peer=5 (20 -> 40): message getdata size() = 50001']):
+            msg = msg_getdata([CInv(MSG_TX, 1)] * 50001)
+            conn.send_and_ping(msg)
+        with self.nodes[0].assert_debug_log(['Misbehaving', 'peer=5 (40 -> 60): headers message size = 2001']):
+            msg = msg_headers([CBlockHeader()] * 2001)
+            conn.send_and_ping(msg)
+        self.nodes[0].disconnect_p2ps()
 
     def _tweak_msg_data_size(self, message, wrong_size):
         """

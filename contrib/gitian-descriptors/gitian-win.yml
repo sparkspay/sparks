@@ -1,5 +1,5 @@
 ---
-name: "sparks-win-19"
+name: "sparks-win-20"
 enable_cache: true
 distro: "ubuntu"
 suites:
@@ -8,6 +8,7 @@ architectures:
 - "amd64"
 packages:
 - "curl"
+- "cmake"
 - "g++"
 - "git"
 - "pkg-config"
@@ -22,6 +23,8 @@ packages:
 - "zip"
 - "ca-certificates"
 - "python3"
+- "python3-pip"
+- "python3-setuptools"
 - "ccache"
 remotes:
 - "url": "https://github.com/sparkspay/sparks.git"
@@ -32,7 +35,7 @@ script: |
 
   WRAP_DIR=$HOME/wrapped
   HOSTS="x86_64-w64-mingw32"
-  CONFIGFLAGS="--enable-reduce-exports --disable-miner --disable-bench --disable-gui-tests --enable-crash-hooks"
+  CONFIGFLAGS="--enable-reduce-exports --disable-miner --disable-bench --disable-gui-tests --disable-fuzz-binary --enable-crash-hooks"
   FAKETIME_HOST_PROGS="ar ranlib nm windres strip objcopy"
   FAKETIME_PROGS="date makensis zip"
   HOST_CFLAGS="-O2 -g -fno-ident"
@@ -75,7 +78,7 @@ script: |
     echo "REAL=\`which -a ${prog} | grep -v ${WRAP_DIR}/${prog} | head -1\`" >> ${WRAP_DIR}/${prog}
     echo "export LD_PRELOAD='/usr/\$LIB/faketime/libfaketime.so.1'" >> ${WRAP_DIR}/${prog}
     echo "export FAKETIME=\"$1\"" >> ${WRAP_DIR}/${prog}
-    echo "\$REAL \$@" >> $WRAP_DIR/${prog}
+    echo "exec \"\$REAL\" \"\$@\"" >> $WRAP_DIR/${prog}
     chmod +x ${WRAP_DIR}/${prog}
     touch -d "${REFERENCE_DATETIME}" ${WRAP_DIR}/${prog}
   done
@@ -89,7 +92,7 @@ script: |
         echo "REAL=\`which -a ${i}-${prog} | grep -v ${WRAP_DIR}/${i}-${prog} | head -1\`" >> ${WRAP_DIR}/${i}-${prog}
         echo "export LD_PRELOAD='/usr/\$LIB/faketime/libfaketime.so.1'" >> ${WRAP_DIR}/${i}-${prog}
         echo "export FAKETIME=\"$1\"" >> ${WRAP_DIR}/${i}-${prog}
-        echo "\$REAL \$@" >> $WRAP_DIR/${i}-${prog}
+        echo "exec \"\$REAL\" \"\$@\"" >> $WRAP_DIR/${i}-${prog}
         chmod +x ${WRAP_DIR}/${i}-${prog}
         touch -d "${REFERENCE_DATETIME}" ${WRAP_DIR}/${i}-${prog}
     done
@@ -107,12 +110,15 @@ script: |
         echo "# $(${prog} --version | head -1)" >> ${WRAP_DIR}/${i}-${prog}
         echo "export LD_PRELOAD='/usr/\$LIB/faketime/libfaketime.so.1'" >> ${WRAP_DIR}/${i}-${prog}
         echo "export FAKETIME=\"$1\"" >> ${WRAP_DIR}/${i}-${prog}
-        echo "\$REAL \"\$@\"" >> $WRAP_DIR/${i}-${prog}
+        echo "exec \"\$REAL\" \"\$@\"" >> $WRAP_DIR/${i}-${prog}
         chmod +x ${WRAP_DIR}/${i}-${prog}
         touch -d "${REFERENCE_DATETIME}" ${WRAP_DIR}/${i}-${prog}
     done
   done
   }
+
+  pip3 install --upgrade pip setuptools wheel
+  pip3 install lief==0.12.1
 
   # Faketime for depends so intermediate results are comparable
   export PATH_orig=${PATH}
@@ -159,6 +165,7 @@ script: |
     CONFIG_SITE=${BASEPREFIX}/${i}/share/config.site ./configure --prefix=/ --disable-maintainer-mode --disable-dependency-tracking ${CONFIGFLAGS} CFLAGS="${HOST_CFLAGS}" CXXFLAGS="${HOST_CXXFLAGS}"
     make ${MAKEOPTS}
     make ${MAKEOPTS} -C src check-security
+    make ${MAKEOPTS} -C src check-symbols
     make deploy BITCOIN_WIN_INSTALLER="${OUTDIR}/${DISTNAME}-win64-setup-unsigned.exe"
     make install DESTDIR=${INSTALLPATH}
     cd installed

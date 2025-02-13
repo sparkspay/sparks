@@ -89,7 +89,7 @@ include:
 Examples:
 
     feat(consensus): add new opcode for BIP-XXXX OP_CHECKAWESOMESIG
-    feat(net): automatically create hidden service, listen on Tor
+    feat(net): automatically create onion service, listen on Tor
     feat(qt): add feed bump button
     fix(log): fix typo in log message
     feat(rpc)!: modify gettransaction parameter type
@@ -147,6 +147,12 @@ pull request to pull request.
 
 When a pull request conflicts with the target branch, you may be asked to rebase it on top of the current target branch.
 The `git rebase` command will take care of rebuilding your commits on top of the new base.
+
+Avoid rebasing a non-conflicting pull request on top of the updated target
+branch if you requested a review already. If you need to tweak some commit in
+the middle, please rebase your branch on top of the same commit it was
+originally based on. Non-conflicting pull requests should be rebased on top of
+the current target branch by maintainers only.
 
 This project aims to have a clean git history, where code changes are only made in non-merge commits. This simplifies
 auditability because merge commits can be assumed to not contain arbitrary code changes. Merge commits should be signed,
@@ -289,8 +295,8 @@ before and after commits must be present locally.
 
 ```
 function gfd() {
-        local fp1=$(git merge-base --fork-point develop $1)
-        local fp2=$(git merge-base --fork-point develop $2)
+        local fp1=$(git show-branch --merge-base develop $1)
+        local fp2=$(git show-branch --merge-base develop $2)
         echo fp1=$fp1
         echo fp2=$fp2
         diff --color=always -u -I'^[^-+]' <(git diff $fp1..$1) <(git diff $fp2..$2)

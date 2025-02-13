@@ -1,10 +1,10 @@
-// Copyright (c) 2012-2015 The Bitcoin Core developers
+// Copyright (c) 2012-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <compressor.h>
-#include <test/util/setup_common.h>
 #include <script/standard.h>
+#include <test/util/setup_common.h>
 
 #include <stdint.h>
 
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(compress_script_to_ckey_id)
     CScript script = CScript() << OP_DUP << OP_HASH160 << ToByteVector(pubkey.GetID()) << OP_EQUALVERIFY << OP_CHECKSIG;
     BOOST_CHECK_EQUAL(script.size(), 25);
 
-    std::vector<unsigned char> out;
+    CompressedScript out;
     bool done = CompressScript(script, out);
     BOOST_CHECK_EQUAL(done, true);
 
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(compress_script_to_cscript_id)
     script << OP_HASH160 << ToByteVector(CScriptID(redeemScript)) << OP_EQUAL;
     BOOST_CHECK_EQUAL(script.size(), 23);
 
-    std::vector<unsigned char> out;
+    CompressedScript out;
     bool done = CompressScript(script, out);
     BOOST_CHECK_EQUAL(done, true);
 
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(compress_script_to_compressed_pubkey_id)
     CScript script = CScript() << ToByteVector(key.GetPubKey()) << OP_CHECKSIG; // COMPRESSED_PUBLIC_KEY_SIZE (33)
     BOOST_CHECK_EQUAL(script.size(), 35);
 
-    std::vector<unsigned char> out;
+    CompressedScript out;
     bool done = CompressScript(script, out);
     BOOST_CHECK_EQUAL(done, true);
 
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(compress_script_to_uncompressed_pubkey_id)
     CScript script =  CScript() << ToByteVector(key.GetPubKey()) << OP_CHECKSIG; // PUBLIC_KEY_SIZE (65)
     BOOST_CHECK_EQUAL(script.size(), 67);                   // 1 char code + 65 char pubkey + OP_CHECKSIG
 
-    std::vector<unsigned char> out;
+    CompressedScript out;
     bool done = CompressScript(script, out);
     BOOST_CHECK_EQUAL(done, true);
 

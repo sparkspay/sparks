@@ -7,7 +7,6 @@
 #include <net.h>
 #include <net_processing.h>
 #include <txmempool.h>
-#include <util/validation.h>
 #include <validation.h>
 #include <validationinterface.h>
 #include <node/context.h>
@@ -17,6 +16,9 @@
 
 TransactionError BroadcastTransaction(NodeContext& node, const CTransactionRef tx, std::string& err_string, const CAmount& max_tx_fee, bool relay, bool wait_callback, bool bypass_limits)
 {
+    // BroadcastTransaction can be called by either sendrawtransaction RPC or wallet RPCs.
+    // g_connman is assigned both before chain clients and before RPC server is accepting calls,
+    // and reset after chain clients and RPC sever are stopped. g_connman should never be null here.
     assert(node.connman);
     assert(node.mempool);
     std::promise<void> promise;
@@ -24,10 +26,12 @@ TransactionError BroadcastTransaction(NodeContext& node, const CTransactionRef t
     bool callback_set = false;
 
     { // cs_main scope
+    assert(node.chainman);
     LOCK(cs_main);
+    assert(std::addressof(::ChainstateActive()) == std::addressof(node.chainman->ActiveChainstate()));
     // If the transaction is already confirmed in the chain, don't do anything
     // and return early.
-    CCoinsViewCache &view = ::ChainstateActive().CoinsTip();
+    CCoinsViewCache &view = node.chainman->ActiveChainstate().CoinsTip();
     for (size_t o = 0; o < tx->vout.size(); o++) {
         const Coin& existingCoin = view.AccessCoin(COutPoint(hashTx, o));
         // IsSpent does not mean the coin is spent, it means the output does not exist.
@@ -36,18 +40,16 @@ TransactionError BroadcastTransaction(NodeContext& node, const CTransactionRef t
     }
     if (!node.mempool->exists(hashTx)) {
         // Transaction is not already in the mempool. Submit it.
-        CValidationState state;
-        bool fMissingInputs;
-        if (!AcceptToMemoryPool(*node.mempool, state, std::move(tx), &fMissingInputs,
+        TxValidationState state;
+        if (!AcceptToMemoryPool(node.chainman->ActiveChainstate(), *node.mempool, state, std::move(tx),
                                 bypass_limits, max_tx_fee)) {
+            err_string = state.ToString();
             if (state.IsInvalid()) {
-                err_string = FormatStateMessage(state);
-                return TransactionError::MEMPOOL_REJECTED;
-            } else {
-                if (fMissingInputs) {
+                if (state.GetResult() == TxValidationResult::TX_MISSING_INPUTS) {
                     return TransactionError::MISSING_INPUTS;
                 }
-                err_string = FormatStateMessage(state);
+                return TransactionError::MEMPOOL_REJECTED;
+            } else {
                 return TransactionError::MEMPOOL_ERROR;
             }
         }

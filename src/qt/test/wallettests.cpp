@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2019 The Bitcoin Core developers
+// Copyright (c) 2015-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -114,17 +114,16 @@ void TestGUI(interfaces::Node& node)
     bool firstRun;
     wallet->LoadWallet(firstRun);
     {
-        auto spk_man = wallet->GetLegacyScriptPubKeyMan();
-        LOCK(wallet->cs_wallet);
-        AssertLockHeld(spk_man->cs_wallet);
+        auto spk_man = wallet->GetOrCreateLegacyScriptPubKeyMan();
+        LOCK2(wallet->cs_wallet, spk_man->cs_KeyStore);
         wallet->SetAddressBook(PKHash(test.coinbaseKey.GetPubKey()), "", "receive");
         spk_man->AddKeyPubKey(test.coinbaseKey, test.coinbaseKey.GetPubKey());
         wallet->SetLastBlockProcessed(105, ::ChainActive().Tip()->GetBlockHash());
     }
     {
-        WalletRescanReserver reserver(wallet.get());
+        WalletRescanReserver reserver(*wallet);
         reserver.reserve();
-        CWallet::ScanResult result = wallet->ScanForWalletTransactions(wallet->chain().getBlockHash(0), {} /* stop_block */, reserver, true /* fUpdate */);
+        CWallet::ScanResult result = wallet->ScanForWalletTransactions(Params().GetConsensus().hashGenesisBlock, 0 /* start_height */, {} /* max_height */, reserver, true /* fUpdate */);
         QCOMPARE(result.status, CWallet::ScanResult::SUCCESS);
         QCOMPARE(result.last_scanned_block, ::ChainActive().Tip()->GetBlockHash());
         QVERIFY(result.last_failed_block.IsNull());
@@ -136,9 +135,20 @@ void TestGUI(interfaces::Node& node)
     TransactionView transactionView;
     OptionsModel optionsModel(node);
     ClientModel clientModel(node, &optionsModel);
-    WalletModel walletModel(interfaces::MakeWallet(wallet), node, &optionsModel);;
+    // TODO: replace access of CoinJoin objects with access through interface
+    WalletModel walletModel(interfaces::MakeWallet(wallet, *::coinJoinClientManagers), clientModel);;
     sendCoinsDialog.setModel(&walletModel);
     transactionView.setModel(&walletModel);
+
+    {
+        // Check balance in send dialog
+        QLabel* balanceLabel = sendCoinsDialog.findChild<QLabel*>("labelBalance");
+        QString balanceText = balanceLabel->text();
+        int unit = walletModel.getOptionsModel()->getDisplayUnit();
+        CAmount balance = walletModel.wallet().getBalance();
+        QString balanceComparison = BitcoinUnits::formatWithUnit(unit, balance, false /*, BitcoinUnits::separatorAlways*/);
+        QCOMPARE(balanceText, balanceComparison);
+    }
 
     // Send two transactions, and verify they are added to transaction list.
     TransactionTableModel* transactionTableModel = walletModel.getTransactionTableModel();

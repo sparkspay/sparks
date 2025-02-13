@@ -7,7 +7,7 @@
 Tests correspond to code in rpc/net.cpp.
 """
 
-from test_framework.test_framework import DashTestFramework
+from test_framework.test_framework import SparksTestFramework
 from test_framework.util import (
     assert_equal,
     assert_greater_than_or_equal,
@@ -17,13 +17,9 @@ from test_framework.util import (
     wait_until,
 )
 from test_framework.mininode import P2PInterface
+import test_framework.messages
 from test_framework.messages import (
-    CAddress,
-    msg_addr,
     NODE_NETWORK,
-    NODE_GETUTXO,NODE_BLOOM,
-    NODE_NETWORK_LIMITED,
-    NODE_HEADERS_COMPRESSED,
 )
 
 
@@ -34,19 +30,13 @@ def assert_net_servicesnames(servicesflag, servicenames):
     :param servicesflag: The services as an integer.
     :param servicenames: The list of decoded services names, as strings.
     """
-    if servicesflag & NODE_NETWORK:
-        assert "NETWORK" in servicenames
-    if servicesflag & NODE_GETUTXO:
-        assert "GETUTXO" in servicenames
-    if servicesflag & NODE_BLOOM:
-        assert "BLOOM" in servicenames
-    if servicesflag & NODE_NETWORK_LIMITED:
-        assert "NETWORK_LIMITED" in servicenames
-    if servicesflag & NODE_HEADERS_COMPRESSED:
-        assert "HEADERS_COMPRESSED" in servicenames
+    servicesflag_generated = 0
+    for servicename in servicenames:
+        servicesflag_generated |= getattr(test_framework.messages, 'NODE_' + servicename)
+    assert servicesflag_generated == servicesflag
 
 
-class NetTest(DashTestFramework):
+class NetTest(SparksTestFramework):
     def set_test_params(self):
         self.set_sparks_test_params(3, 1, fast_dip3_enforcement=True)
         self.supports_cli = False
@@ -126,7 +116,10 @@ class NetTest(DashTestFramework):
         # check the `servicesnames` field
         network_info = [node.getnetworkinfo() for node in self.nodes]
         for info in network_info:
-            assert_net_servicesnames(int(info["localservices"], 16), info["localservicesnames"])
+            assert_net_servicesnames(int(info["localservices"], 0x10), info["localservicesnames"])
+
+        # Check dynamically generated networks list in getnetworkinfo help output.
+        assert "(ipv4, ipv6, onion, i2p)" in self.nodes[0].help("getnetworkinfo")
 
         self.log.info('Test extended connections info')
         self.connect_nodes(1, 2)
@@ -166,7 +159,10 @@ class NetTest(DashTestFramework):
         assert_equal(peer_info[1][0]['addrbind'], peer_info[0][0]['addr'])
         # check the `servicesnames` field
         for info in peer_info:
-            assert_net_servicesnames(int(info[0]["services"], 16), info[0]["servicesnames"])
+            assert_net_servicesnames(int(info[0]["services"], 0x10), info[0]["servicesnames"])
+
+        # Check dynamically generated networks list in getpeerinfo help output.
+        assert "(ipv4, ipv6, onion, i2p, not_publicly_routable)" in self.nodes[0].help("getpeerinfo")
 
     def test_service_flags(self):
         self.nodes[0].add_p2p_connection(P2PInterface(), services=(1 << 4) | (1 << 63))
@@ -176,30 +172,33 @@ class NetTest(DashTestFramework):
     def _test_getnodeaddresses(self):
         self.nodes[0].add_p2p_connection(P2PInterface())
 
-        # send some addresses to the node via the p2p message addr
-        msg = msg_addr()
+        # Add some addresses to the Address Manager over RPC. Due to the way
+        # bucket and bucket position are calculated, some of these addresses
+        # will collide.
         imported_addrs = []
-        for i in range(256):
-            a = "123.123.123.{}".format(i)
+        for i in range(10000):
+            first_octet = i >> 8
+            second_octet = i % 256
+            a = "{}.{}.1.1".format(first_octet, second_octet)
             imported_addrs.append(a)
-            addr = CAddress()
-            addr.time = 100000000
-            addr.nServices = NODE_NETWORK
-            addr.ip = a
-            addr.port = 8333
-            msg.addrs.append(addr)
-        self.nodes[0].p2p.send_and_ping(msg)
+            self.nodes[0].addpeeraddress(a, 8333)
 
-        # obtain addresses via rpc call and check they were ones sent in before
-        REQUEST_COUNT = 10
-        node_addresses = self.nodes[0].getnodeaddresses(REQUEST_COUNT)
-        assert_equal(len(node_addresses), REQUEST_COUNT)
+        # Obtain addresses via rpc call and check they were ones sent in before.
+        #
+        # Maximum possible addresses in addrman is 10000, although actual
+        # number will usually be less due to bucket and bucket position
+        # collisions.
+        node_addresses = self.nodes[0].getnodeaddresses(0)
+        assert_greater_than(len(node_addresses), 5000)
+        assert_greater_than(10000, len(node_addresses))
         for a in node_addresses:
-            # see penalty calculations for ADDRs with nTime <= 100000000 in net_processing.cpp
-            assert_equal(a["time"], self.mocktime - 5 * 24 * 60 * 60 - 2 * 60 * 60)
+            assert_equal(a["time"], self.mocktime)
             assert_equal(a["services"], NODE_NETWORK)
             assert a["address"] in imported_addrs
             assert_equal(a["port"], 8333)
+
+        node_addresses = self.nodes[0].getnodeaddresses(1)
+        assert_equal(len(node_addresses), 1)
 
         assert_raises_rpc_error(-8, "Address count out of range", self.nodes[0].getnodeaddresses, -1)
 

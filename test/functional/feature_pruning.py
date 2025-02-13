@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2014-2016 The Bitcoin Core developers
+# Copyright (c) 2014-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test the pruning code.
@@ -20,6 +20,9 @@ from test_framework.util import assert_equal, assert_greater_than, assert_raises
 # the manual prune RPC avoids pruning blocks in the same window to be
 # compatible with pruning based on key creation time.
 TIMESTAMP_WINDOW = 2 * 60 * 60
+
+EXPECTED_STDERR_NO_GOV = "Warning: You are starting with governance validation disabled."
+EXPECTED_STDERR_NO_GOV_PRUNE = EXPECTED_STDERR_NO_GOV + " This is expected because you are running a pruned node."
 
 def mine_large_blocks(node, n):
     # Make a large scriptPubKey for the coinbase transaction. This is OP_RETURN
@@ -88,9 +91,6 @@ class PruneTest(BitcoinTestFramework):
         ]
         self.rpc_timeout = 120
 
-    def skip_test_if_missing_module(self):
-        self.skip_if_no_wallet()
-
     def setup_network(self):
         self.setup_nodes()
 
@@ -106,7 +106,8 @@ class PruneTest(BitcoinTestFramework):
     def setup_nodes(self):
         self.add_nodes(self.num_nodes, self.extra_args)
         self.start_nodes()
-        self.import_deterministic_coinbase_privkeys()
+        if self.is_wallet_compiled():
+            self.import_deterministic_coinbase_privkeys()
 
     def create_big_chain(self):
         # Start by creating some coinbases we can spend later
@@ -118,6 +119,33 @@ class PruneTest(BitcoinTestFramework):
         mine_large_blocks(self.nodes[0], 645)
 
         self.sync_blocks(self.nodes[0:5])
+
+    def test_invalid_command_line_options(self):
+        self.stop_node(0)
+        self.nodes[0].assert_start_raises_init_error(
+            expected_msg='Error: Prune cannot be configured with a negative value.',
+            extra_args=['-prune=-1', '-txindex=0', '-disablegovernance'],
+        )
+        self.nodes[0].assert_start_raises_init_error(
+            expected_msg='Error: Prune configured below the minimum of 550 MiB.  Please use a higher number.',
+            extra_args=['-prune=549'],
+        )
+        self.nodes[0].assert_start_raises_init_error(
+            expected_msg='Error: Prune mode is incompatible with -txindex.',
+            extra_args=['-prune=550', '-txindex'],
+        )
+        # self.nodes[0].assert_start_raises_init_error(
+        #     expected_msg='Error: Prune mode is incompatible with -coinstatsindex.',
+        #     extra_args=['-prune=550', '-coinstatsindex'],
+        # )
+        self.nodes[0].assert_start_raises_init_error(
+            expected_msg='Error: Prune mode is incompatible with -blockfilterindex.',
+            extra_args=['-prune=550', '-blockfilterindex'],
+        )
+        self.nodes[0].assert_start_raises_init_error(
+            expected_msg='Error: Prune mode is incompatible with -disablegovernance=false.',
+            extra_args=['-prune=550', '-disablegovernance=false'],
+        )
 
     def test_height_min(self):
         assert os.path.isfile(os.path.join(self.prunedir, "blk00000.dat")), "blk00000.dat is missing, pruning too early"
@@ -257,8 +285,7 @@ class PruneTest(BitcoinTestFramework):
         assert_raises_rpc_error(-1, "Cannot prune blocks because node is not in prune mode", node.pruneblockchain, 500)
 
         # now re-start in manual pruning mode
-        self.stop_node(node_number, expected_stderr='Warning: You are starting with governance validation disabled.')
-        self.start_node(node_number, extra_args=["-dip3params=2000:2000", "-dip8params=2000", "-disablegovernance", "-txindex=0", "-prune=1"])
+        self.restart_node(node_number, extra_args=["-dip3params=2000:2000", "-dip8params=2000", "-disablegovernance", "-txindex=0", "-prune=1"], expected_stderr=EXPECTED_STDERR_NO_GOV)
         node = self.nodes[node_number]
         assert_equal(node.getblockcount(), 995)
 
@@ -327,16 +354,14 @@ class PruneTest(BitcoinTestFramework):
         assert not has_block(3), "blk00003.dat is still there, should be pruned by now"
 
         # stop node, start back up with auto-prune at 550 MiB, make sure still runs
-        self.stop_node(node_number, expected_stderr='Warning: You are starting with governance validation disabled. This is expected because you are running a pruned node.')
-        self.start_node(node_number, extra_args=["-dip3params=2000:2000", "-dip8params=2000", "-disablegovernance", "-txindex=0", "-prune=550"])
+        self.restart_node(node_number, extra_args=["-dip3params=2000:2000", "-dip8params=2000", "-disablegovernance", "-txindex=0", "-prune=550"], expected_stderr=EXPECTED_STDERR_NO_GOV_PRUNE)
 
         self.log.info("Success")
 
     def wallet_test(self):
         # check that the pruning node's wallet is still in good shape
         self.log.info("Stop and start pruning node to trigger wallet rescan")
-        self.stop_node(2, expected_stderr='Warning: You are starting with governance validation disabled. This is expected because you are running a pruned node.')
-        self.start_node(2, extra_args=["-dip3params=2000:2000", "-dip8params=2000", "-disablegovernance", "-txindex=0", "-prune=550"])
+        self.restart_node(2, extra_args=["-dip3params=2000:2000", "-dip8params=2000", "-disablegovernance", "-txindex=0", "-prune=550"], expected_stderr=EXPECTED_STDERR_NO_GOV_PRUNE)
         self.log.info("Success")
 
         # check that wallet loads successfully when restarting a pruned node after IBD.
@@ -345,8 +370,7 @@ class PruneTest(BitcoinTestFramework):
         self.connect_nodes(0, 5)
         nds = [self.nodes[0], self.nodes[5]]
         self.sync_blocks(nds, wait=5, timeout=300)
-        self.stop_node(5, expected_stderr='Warning: You are starting with governance validation disabled. This is expected because you are running a pruned node.') # stop and start to trigger rescan
-        self.start_node(5, extra_args=["-dip3params=2000:2000", "-dip8params=2000", "-disablegovernance", "-txindex=0", "-prune=550"])
+        self.restart_node(5, extra_args=["-dip3params=2000:2000", "-dip8params=2000", "-disablegovernance", "-txindex=0", "-prune=550"], expected_stderr=EXPECTED_STDERR_NO_GOV_PRUNE) # restart to trigger rescan
         self.log.info("Success")
 
     def run_test(self):
@@ -364,8 +388,8 @@ class PruneTest(BitcoinTestFramework):
         # N0=N1=N2 **...*(995)
 
         # stop manual-pruning node with 995 blocks
-        self.stop_node(3, expected_stderr='Warning: You are starting with governance validation disabled.')
-        self.stop_node(4, expected_stderr='Warning: You are starting with governance validation disabled.')
+        self.stop_node(3, expected_stderr=EXPECTED_STDERR_NO_GOV)
+        self.stop_node(4, expected_stderr=EXPECTED_STDERR_NO_GOV)
 
         self.log.info("Check that we haven't started pruning yet because we're below PruneAfterHeight")
         self.test_height_min()
@@ -455,13 +479,18 @@ class PruneTest(BitcoinTestFramework):
         self.log.info("Test manual pruning with timestamps")
         self.manual_test(4, use_timestamp=True)
 
-        self.log.info("Test wallet re-scan")
-        self.wallet_test()
+        if self.is_wallet_compiled():
+            self.log.info("Test wallet re-scan")
+            self.wallet_test()
 
+        self.log.info("Test invalid pruning command line options")
+        self.test_invalid_command_line_options()
+
+        # NOTE: this is a Sparks-specific part, it should be the very last one before "Done"
         self.log.info("Stopping pruned nodes manually")
         for i in range(2, 6):
             self.log.info("Stopping pruned node%d" % i)
-            self.stop_node(i, expected_stderr='Warning: You are starting with governance validation disabled. This is expected because you are running a pruned node.')
+            self.stop_node(i, expected_stderr=EXPECTED_STDERR_NO_GOV_PRUNE)
 
         self.log.info("Done")
 

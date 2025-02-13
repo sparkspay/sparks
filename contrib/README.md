@@ -27,8 +27,8 @@ for Debian-based Linux systems. If you compile sparksd/sparks-qt yourself, there
 ### [Gitian-descriptors](/contrib/gitian-descriptors) ###
 Notes on getting Gitian builds up and running using KVM.
 
-### [Gitian-keys](/contrib/gitian-keys)
-PGP keys used for signing Sparks Core [Gitian release](/doc/release-process.md) results.
+### [Builder keys](/contrib/builder-keys)
+PGP keys used for signing Sparks Core [release](/doc/release-process.md) results.
 
 ### [MacDeploy](/contrib/macdeploy) ###
 Scripts and notes for Mac builds.

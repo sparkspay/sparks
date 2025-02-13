@@ -15,11 +15,16 @@
 #include <threadinterrupt.h>
 #include <txmempool.h>
 
+#include <gsl/pointers.h>
+
+#include <atomic>
 #include <unordered_map>
 #include <unordered_set>
 
-class CSporkManager;
+class CChainState;
 class CMasternodeSync;
+class CSporkManager;
+class PeerManager;
 
 namespace llmq
 {
@@ -145,8 +150,8 @@ public:
      * @param nUntilHeight the height from which to base the remove of archive IS Locks
      */
     void RemoveArchivedInstantSendLocks(int nUntilHeight) LOCKS_EXCLUDED(cs_db);
-    void WriteBlockInstantSendLocks(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexConnected) LOCKS_EXCLUDED(cs_db);
-    void RemoveBlockInstantSendLocks(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexDisconnected) LOCKS_EXCLUDED(cs_db);
+    void WriteBlockInstantSendLocks(const gsl::not_null<std::shared_ptr<const CBlock>>& pblock, gsl::not_null<const CBlockIndex*> pindexConnected) LOCKS_EXCLUDED(cs_db);
+    void RemoveBlockInstantSendLocks(const gsl::not_null<std::shared_ptr<const CBlock>>& pblock, gsl::not_null<const CBlockIndex*> pindexDisconnected) LOCKS_EXCLUDED(cs_db);
     bool KnownInstantSendLock(const uint256& islockHash) const LOCKS_EXCLUDED(cs_db);
     /**
      * Gets the number of IS Locks which have not been confirmed by a block
@@ -195,21 +200,24 @@ public:
      */
     std::vector<uint256> RemoveChainedInstantSendLocks(const uint256& islockHash, const uint256& txid, int nHeight) LOCKS_EXCLUDED(cs_db);
 
-    void RemoveAndArchiveInstantSendLock(const CInstantSendLockPtr& islock, int nHeight) LOCKS_EXCLUDED(cs_db);
+    void RemoveAndArchiveInstantSendLock(const gsl::not_null<CInstantSendLockPtr>& islock, int nHeight) LOCKS_EXCLUDED(cs_db);
 };
 
 class CInstantSendManager : public CRecoveredSigsListener
 {
 private:
     CInstantSendDb db;
+
+    CChainLocksHandler& clhandler;
+    CChainState& m_chainstate;
     CConnman& connman;
-    CTxMemPool& mempool;
-    CSporkManager& spork_manager;
     CQuorumManager& qman;
     CSigningManager& sigman;
     CSigSharesManager& shareman;
-    CChainLocksHandler& clhandler;
-    const std::unique_ptr<CMasternodeSync>& m_mn_sync;
+    CSporkManager& spork_manager;
+    CTxMemPool& mempool;
+    const CMasternodeSync& m_mn_sync;
+    const std::unique_ptr<PeerManager>& m_peerman;
 
     std::atomic<bool> fUpgradedDB{false};
 
@@ -257,11 +265,13 @@ private:
     std::unordered_set<uint256, StaticSaltedHasher> pendingRetryTxs GUARDED_BY(cs_pendingRetry);
 
 public:
-    explicit CInstantSendManager(CTxMemPool& _mempool, CConnman& _connman, CSporkManager& sporkManager,
+    explicit CInstantSendManager(CChainLocksHandler& _clhandler, CChainState& chainstate, CConnman& _connman,
                                  CQuorumManager& _qman, CSigningManager& _sigman, CSigSharesManager& _shareman,
-                                 CChainLocksHandler& _clhandler, const std::unique_ptr<CMasternodeSync>& mn_sync, bool unitTests, bool fWipe) :
-        db(unitTests, fWipe), connman(_connman), mempool(_mempool), spork_manager(sporkManager), qman(_qman), sigman(_sigman), shareman(_shareman),
-        clhandler(_clhandler), m_mn_sync(mn_sync)
+                                 CSporkManager& sporkManager, CTxMemPool& _mempool, const CMasternodeSync& mn_sync,
+                                 const std::unique_ptr<PeerManager>& peerman, bool unitTests, bool fWipe) :
+        db(unitTests, fWipe),
+        clhandler(_clhandler), m_chainstate(chainstate), connman(_connman), qman(_qman), sigman(_sigman),
+        shareman(_shareman), spork_manager(sporkManager), mempool(_mempool), m_mn_sync(mn_sync), m_peerman(peerman)
     {
         workInterrupt.reset();
     }
@@ -275,7 +285,6 @@ private:
     void ProcessTx(const CTransaction& tx, bool fRetroactive, const Consensus::Params& params);
     bool CheckCanLock(const CTransaction& tx, bool printDebug, const Consensus::Params& params) const;
     bool CheckCanLock(const COutPoint& outpoint, bool printDebug, const uint256& txHash, const Consensus::Params& params) const;
-    bool IsConflicted(const CTransaction& tx) const { return GetConflictingLock(tx) != nullptr; };
 
     void HandleNewInputLockRecoveredSig(const CRecoveredSig& recoveredSig, const uint256& txid);
     void HandleNewInstantSendLockRecoveredSig(const CRecoveredSig& recoveredSig) LOCKS_EXCLUDED(cs_creating, cs_pendingLocks);

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Bitcoin Core developers
+// Copyright (c) 2019-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -12,17 +12,23 @@
 
 class ArgsManager;
 class BanMan;
+class CAddrMan;
+class CBlockPolicyEstimator;
 class CConnman;
+class CCreditPoolManager;
+class ChainstateManager;
+class CEvoDB;
 class CScheduler;
 class CTxMemPool;
-class ChainstateManager;
+class CMNHFManager;
+class PeerManager;
+struct CJContext;
 struct LLMQContext;
-class PeerLogicValidation;
-class CEvoDB;
+
 namespace interfaces {
 class Chain;
 class ChainClient;
-class WalletClient;
+class WalletLoader;
 } // namespace interfaces
 
 //! NodeContext struct containing references to chain state and connection
@@ -36,9 +42,11 @@ class WalletClient;
 //! any member functions. It should just be a collection of references that can
 //! be used without pulling in unwanted dependencies or functionality.
 struct NodeContext {
+    std::unique_ptr<CAddrMan> addrman;
     std::unique_ptr<CConnman> connman;
     std::unique_ptr<CTxMemPool> mempool;
-    std::unique_ptr<PeerLogicValidation> peer_logic;
+    std::unique_ptr<CBlockPolicyEstimator> fee_estimator;
+    std::unique_ptr<PeerManager> peerman;
     ChainstateManager* chainman{nullptr}; // Currently a raw pointer because the memory is not managed by this struct
     std::unique_ptr<BanMan> banman;
     ArgsManager* args{nullptr}; // Currently a raw pointer because the memory is not managed by this struct
@@ -47,11 +55,14 @@ struct NodeContext {
     std::vector<std::unique_ptr<interfaces::ChainClient>> chain_clients;
     //! Reference to chain client that should used to load or create wallets
     //! opened by the gui.
-    interfaces::WalletClient* wallet_client{nullptr};
+    interfaces::WalletLoader* wallet_loader{nullptr};
     std::unique_ptr<CScheduler> scheduler;
     std::function<void()> rpc_interruption_point = [] {};
     //! Sparks
     std::unique_ptr<LLMQContext> llmq_ctx;
+    std::unique_ptr<CCreditPoolManager> creditPoolManager;
+    std::unique_ptr<CMNHFManager> mnhf_manager;
+    std::unique_ptr<CJContext> cj_ctx;
 
     std::unique_ptr<CEvoDB> evodb;
 

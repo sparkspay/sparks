@@ -6,7 +6,14 @@ ENV DEBIAN_FRONTEND="noninteractive" TZ="Europe/London"
 # Build and base stuff
 # (zlib1g-dev is needed for the Qt host binary builds, but should not be used by target binaries)
 ENV APT_ARGS="-y --no-install-recommends --no-upgrade"
-RUN dpkg --add-architecture i386
+
+
+# Install packages for i386; disabled on aarch64 and arm64 hosts
+RUN (dpkg --print-architecture | grep -Eq 'aarch64|arm64' || dpkg --add-architecture i386)
+RUN (dpkg --print-architecture | grep -Eq 'aarch64|arm64' || (apt-get update && apt-get install $APT_ARGS \
+    g++-9-multilib \
+    wine32) && rm -rf /var/lib/apt/lists/*)
+
 RUN apt-get update && apt-get install $APT_ARGS \
     autotools-dev \
     automake \
@@ -21,22 +28,53 @@ RUN apt-get update && apt-get install $APT_ARGS \
     git \
     g++ \
     gettext \
+    libtool \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-randr0 \
+    libxcb-render-util0 \
+    libxcb-shape0 \
+    libxcb-sync1 \
+    libxcb-xfixes0 \
+    libxcb-xinerama0 \
+    libxcb-xkb1 \
+    libxkbcommon-x11-0 \
     wget \
     unzip \
-    libtool \
     m4 \
     pkg-config \
-    python3 \
-    python3-dev \
-    python3-pip \
-    python3-setuptools \
     zlib1g-dev
 
-# Python stuff
+# Python setup
+# PYTHON_VERSION should match the value in .python-version
+ARG PYTHON_VERSION=3.8.16
+RUN apt-get update && apt-get install $APT_ARGS \
+    ca-certificates \
+    libbz2-dev \
+    libffi-dev \
+    liblzma-dev \
+    libncurses5-dev \
+    libncursesw5-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    libssl-dev \
+    llvm \
+    make \
+    tk-dev \
+    xz-utils
+ENV PYENV_ROOT "/usr/local/pyenv"
+ENV PATH "${PYENV_ROOT}/shims:${PYENV_ROOT}/bin:${PATH}"
+RUN curl https://pyenv.run | bash \
+    && pyenv update \
+    && pyenv install $PYTHON_VERSION \
+    && pyenv global $PYTHON_VERSION \
+    && pyenv rehash
 RUN pip3 install \
     codespell==1.17.1 \
     flake8==3.8.3 \
     jinja2 \
+    lief==0.12.1 \
     pyzmq \
     vulture==2.3 \
     yq \
@@ -60,27 +98,22 @@ RUN useradd -u ${USER_ID} -g sparks -s /bin/bash -m -d /home/sparks sparks
 RUN apt-get update && apt-get install $APT_ARGS \
     bc \
     gawk \
-    g++-9-multilib \
     g++-arm-linux-gnueabihf \
     g++-mingw-w64-x86-64 \
-    imagemagick \
     jq \
     libcap-dev \
-    librsvg2-bin \
     libz-dev \
     libbz2-dev \
-    libtiff-tools \
     libncurses5 \
     nsis \
     python3-zmq \
     parallel \
+    valgrind \
     wine-stable \
-    wine32 \
     wine64 \
-    xorriso \
-    && rm -rf /var/lib/apt/lists/*
+    xorriso
 
-ARG CPPCHECK_VERSION=2.9
+ARG CPPCHECK_VERSION=2.10
 RUN curl -sL "https://github.com/danmar/cppcheck/archive/${CPPCHECK_VERSION}.tar.gz" | tar -xvzf - --directory /tmp/
 RUN cd /tmp/cppcheck-${CPPCHECK_VERSION} && mkdir build && cd build && cmake .. && cmake --build . -j 8
 ENV PATH "/tmp/cppcheck-${CPPCHECK_VERSION}/build/bin:${PATH}"
@@ -101,6 +134,20 @@ RUN \
   update-alternatives --set x86_64-w64-mingw32-gcc  /usr/bin/x86_64-w64-mingw32-gcc-posix; \
   update-alternatives --set x86_64-w64-mingw32-g++  /usr/bin/x86_64-w64-mingw32-g++-posix; \
   exit 0
+
+ARG LLVM_VERSION=15
+# Setup Clang+LLVM support
+RUN apt-get update && apt-get install $APT_ARGS \
+    lsb-release \
+    software-properties-common \
+    gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN cd /tmp && \
+    wget https://apt.llvm.org/llvm.sh && \
+    chmod +x llvm.sh && \
+    /tmp/llvm.sh ${LLVM_VERSION} && \
+    rm -rf /tmp/llvm.sh
 
 RUN \
   mkdir -p /src/sparks && \

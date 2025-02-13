@@ -7,6 +7,7 @@
 
 #include <batchedlogger.h>
 
+#include <bls/bls.h>
 #include <bls/bls_ies.h>
 #include <bls/bls_worker.h>
 
@@ -58,7 +59,7 @@ public:
     template<typename Stream>
     inline void Unserialize(Stream& s)
     {
-        BLSVerificationVector tmp1;
+        std::vector<CBLSPublicKey> tmp1;
         CBLSIESMultiRecipientObjects<CBLSSecretKey> tmp2;
 
         s >> llmqType;
@@ -68,7 +69,7 @@ public:
         s >> tmp2;
         s >> sig;
 
-        vvec = std::make_shared<BLSVerificationVector>(std::move(tmp1));
+        vvec = std::make_shared<std::vector<CBLSPublicKey>>(std::move(tmp1));
         contributions = std::make_shared<CBLSIESMultiRecipientObjects<CBLSSecretKey>>(std::move(tmp2));
     }
 
@@ -272,12 +273,12 @@ private:
     std::map<uint256, size_t> membersMap;
     std::set<uint256> relayMembers;
     BLSVerificationVectorPtr vvecContribution;
-    BLSSecretKeyVector m_sk_contributions;
+    std::vector<CBLSSecretKey> m_sk_contributions;
 
-    BLSIdVector memberIds;
+    std::vector<CBLSId> memberIds;
     std::vector<BLSVerificationVectorPtr> receivedVvecs;
     // these are not necessarily verified yet. Only trust in what was written to the DB
-    BLSSecretKeyVector receivedSkContributions;
+    std::vector<CBLSSecretKey> receivedSkContributions;
     /// Contains the received unverified/encrypted DKG contributions
     std::vector<std::shared_ptr<CBLSIESMultiRecipientObjects<CBLSSecretKey>>> vecEncryptedContributions;
 
@@ -290,13 +291,13 @@ private:
     // we expect to only receive a single vvec and contribution per member, but we must also be able to relay
     // conflicting messages as otherwise an attacker might be able to broadcast conflicting (valid+invalid) messages
     // and thus split the quorum. Such members are later removed from the quorum.
-    mutable CCriticalSection invCs;
+    mutable RecursiveMutex invCs;
     std::map<uint256, CDKGContribution> contributions GUARDED_BY(invCs);
     std::map<uint256, CDKGComplaint> complaints GUARDED_BY(invCs);
     std::map<uint256, CDKGJustification> justifications GUARDED_BY(invCs);
     std::map<uint256, CDKGPrematureCommitment> prematureCommitments GUARDED_BY(invCs);
 
-    mutable CCriticalSection cs_pending;
+    mutable RecursiveMutex cs_pending;
     std::vector<size_t> pendingContributionVerifications GUARDED_BY(cs_pending);
 
     // filled by ReceivePrematureCommitment and used by FinalizeCommitments
@@ -306,7 +307,7 @@ public:
     CDKGSession(const Consensus::LLMQParams& _params, CBLSWorker& _blsWorker, CDKGSessionManager& _dkgManager, CDKGDebugManager& _dkgDebugManager, CConnman& _connman) :
         params(_params), blsWorker(_blsWorker), cache(_blsWorker), dkgManager(_dkgManager), dkgDebugManager(_dkgDebugManager), connman(_connman) {}
 
-    bool Init(const CBlockIndex* pQuorumBaseBlockIndex, const std::vector<CDeterministicMNCPtr>& mns, const uint256& _myProTxHash, int _quorumIndex);
+    bool Init(gsl::not_null<const CBlockIndex*> pQuorumBaseBlockIndex, Span<CDeterministicMNCPtr> mns, const uint256& _myProTxHash, int _quorumIndex);
 
     [[nodiscard]] std::optional<size_t> GetMyMemberIndex() const { return myIdx; }
 

@@ -1,12 +1,10 @@
-Sparks Core version v19.3.0
-=========================
+# Sparks Core version v20.0.4
 
 Release is now available from:
 
   <https://www.sparkspay.io/downloads/#wallets>
 
-This is a new minor version release, bringing various bugfixes and other
-improvements.
+This is a new patch version release, bringing small bug fixes and build system enhancements.
 
 This release is optional for all nodes.
 
@@ -37,46 +35,37 @@ reindex or re-sync the whole chain.
 
 # Notable changes
 
-## CoinJoin improvements
+## Build changes
 
-This release fixes a couple of issues with mixing on nodes that start with no
-wallet loaded initially.
+The miner has been disabled for Windows binaries built via Guix. This resolves
+an issue that was preventing users from installing v20.0.3 due to false
+positive alerts from Microsoft Defender and other antivirus providers.
 
-## Wallet GUI improvements
+Use a self-signed Windows code signing certificate instead of expired one. The
+expired certificate being used previously caused most antivirus software to trigger.
+The new self-signed certificate results in a greatly improved installation experience.
 
-Wallets with 100k+ txes should now be able to rescan without hanging forever
-while processing notifications for every tx. Running `keypoolrefill` with a
-large number of keys will no longer lockup the GUI and can be interrupted.
-Running `upgradetohd` can also be interrupted now.
+Updated expired gpg keys for builders. Note that the actual keys themselves are the same.
+The updated keys changed their expiration dates and added additional information such as
+new email addresses.
 
-## Changes in RPCs, commands and config options
+## Governance
 
-- `wipewallettxes`: New RPC command which removes all wallet transactions
-- `wipetxes`: New command for `sparks-wallet` that removes all wallet transactions
-- `masternodelist`: New mode `hpmn` filters only HPMNs/EvoNodes
-- `protx list`: New type `hpmn` filters only HPMNs/EvoNodes
-- `-blockversion` config option is allowed on non-mainnet networks now
+Triggers from the past are now ignored when voting.
 
-## Other changes
+## Asset lock and unlock transactions
 
-There were a few other minor changes too, specifically:
-- Added Kittywhiskers Van Gogh (kittywhiskers) and Odysseas Gabrielides
-(ogabrielides) to contributors list in 19.2.0 release notes
-- There should be no false "unknown rules activated" warning in GUI and RPCs now
-- Empty `settings.json` file no longer results in node startup failure
-- Block processing was slightly optimized
-- BLS library was updated to version 1.3.0 to fix a couple tiny issues
-- Fixed a couple of small issues in tests
+Use the correct quorum for signing withdrawal (asset unlock) txes on RegTest.
 
-# v19.3.0 Change log
+# v20.0.4 Change log
 
-See detailed [set of changes](https://github.com/sparkspay/sparks/compare/v18.2.2...sparkspay:v19.3.0).
+See detailed [set of changes][set-of-changes].
 
 # Credits
 
 Thanks to everyone who directly contributed to this release:
 
-- Odysseas Gabrielides (ogabrielides)
+- Konstantin Akimov (knst)
 - PastaPastaPasta
 - UdjinM6
 
@@ -107,6 +96,11 @@ Sparks Core tree 0.12.3.x was a fork of Sparks Core tree 0.12.3.x.
 
 These release are considered obsolete. Old release notes can be found here:
 
+- [v20.0.3](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-20.0.3.md) released December/26/2023
+- [v20.0.2](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-20.0.2.md) released December/06/2023
+- [v20.0.1](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-20.0.1.md) released November/18/2023
+- [v20.0.0](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-20.0.0.md) released November/15/2023
+- [v19.3.0](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-19.3.0.md) released July/31/2023
 - [v18.2.1](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-18.2.2.md) released Jan/17/2023
 - [v18.2.0](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-18.2.0.md) released Jan/01/2023
 - [v18.1.1](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-18.1.1.md) released January/08/2023
@@ -143,3 +137,5 @@ These release are considered obsolete. Old release notes can be found here:
 - [v0.11.0](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-0.11.0.md) released Jan/15/2015
 - [v0.10.x](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-0.10.0.md) released Sep/25/2014
 - [v0.9.x](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-0.9.0.md) released Mar/13/2014
+
+[set-of-changes]: https://github.com/sparkspay/sparks/compare/v20.0.3...sparkspay:v20.0.4

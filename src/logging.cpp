@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2018 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -161,6 +161,8 @@ const CLogCategoryDesc LogCategories[] =
     {BCLog::COINDB, "coindb"},
     {BCLog::QT, "qt"},
     {BCLog::LEVELDB, "leveldb"},
+    {BCLog::VALIDATION, "validation"},
+    {BCLog::I2P, "i2p"},
     {BCLog::ALL, "1"},
     {BCLog::ALL, "all"},
 
@@ -176,6 +178,8 @@ const CLogCategoryDesc LogCategories[] =
     {BCLog::COINJOIN, "coinjoin"},
     {BCLog::SPORK, "spork"},
     {BCLog::NETCONN, "netconn"},
+    {BCLog::CREDITPOOL, "creditpool"},
+    {BCLog::EHF, "ehf"},
     {BCLog::SPARKS, "sparks"},
     //End Sparks
 };
@@ -195,51 +199,18 @@ bool GetLogCategory(BCLog::LogFlags& flag, const std::string& str)
     return false;
 }
 
-std::string ListLogCategories()
+std::vector<LogCategory> BCLog::Logger::LogCategoriesList(bool enabled_only) const
 {
-    std::string ret;
-    int outcount = 0;
+    std::vector<LogCategory> ret;
     for (const CLogCategoryDesc& category_desc : LogCategories) {
         // Omit the special cases.
         if (category_desc.flag != BCLog::NONE && category_desc.flag != BCLog::ALL && category_desc.flag != BCLog::SPARKS) {
-            if (outcount != 0) ret += ", ";
-            ret += category_desc.category;
-            outcount++;
-        }
-    }
-    return ret;
-}
-
-std::vector<CLogCategoryActive> ListActiveLogCategories()
-{
-    std::vector<CLogCategoryActive> ret;
-    for (const CLogCategoryDesc& category_desc : LogCategories) {
-        // Omit the special cases.
-        if (category_desc.flag != BCLog::NONE && category_desc.flag != BCLog::ALL && category_desc.flag != BCLog::SPARKS) {
-            CLogCategoryActive catActive;
+            LogCategory catActive;
             catActive.category = category_desc.category;
-            catActive.active = LogAcceptCategory(category_desc.flag);
-            ret.push_back(catActive);
-        }
-    }
-    return ret;
-}
-
-std::string ListActiveLogCategoriesString()
-{
-    if (LogInstance().GetCategoryMask() == BCLog::NONE)
-        return "0";
-    if (LogInstance().GetCategoryMask() == BCLog::ALL)
-        return "1";
-
-    std::string ret;
-    int outcount = 0;
-    for (const CLogCategoryDesc& category_desc : LogCategories) {
-        // Omit the special cases.
-        if (category_desc.flag != BCLog::NONE && category_desc.flag != BCLog::ALL && category_desc.flag != BCLog::SPARKS && LogAcceptCategory(category_desc.flag)) {
-            if (outcount != 0) ret += ", ";
-            ret += category_desc.category;
-            outcount++;
+            catActive.active = WillLogCategory(category_desc.flag);
+            if (!enabled_only || catActive.active) {
+                ret.push_back(catActive);
+            }
         }
     }
     return ret;

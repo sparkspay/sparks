@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -123,7 +123,7 @@ static bool SignStep(const SigningProvider& provider, const BaseSignatureCreator
     }
     case TxoutType::SCRIPTHASH:
         h160 = uint160(vSolutions[0]);
-        if (GetCScript(provider, sigdata, h160, scriptRet)) {
+        if (GetCScript(provider, sigdata, CScriptID{h160}, scriptRet)) {
             ret.push_back(std::vector<unsigned char>(scriptRet.begin(), scriptRet.end()));
             return true;
         }
@@ -136,8 +136,13 @@ static bool SignStep(const SigningProvider& provider, const BaseSignatureCreator
         ret.push_back(valtype()); // workaround CHECKMULTISIG bug
         for (size_t i = 1; i < vSolutions.size() - 1; ++i) {
             CPubKey pubkey = CPubKey(vSolutions[i]);
-            if (ret.size() < required + 1 && CreateSig(creator, sigdata, provider, sig, pubkey, scriptPubKey, sigversion)) {
-                ret.push_back(std::move(sig));
+            // We need to always call CreateSig in order to fill sigdata with all
+            // possible signatures that we can create. This will allow further PSBT
+            // processing to work as it needs all possible signature and pubkey pairs
+            if (CreateSig(creator, sigdata, provider, sig, pubkey, scriptPubKey, sigversion)) {
+                if (ret.size() < required + 1) {
+                    ret.push_back(std::move(sig));
+                }
             }
         }
         bool ok = ret.size() == required + 1;
@@ -322,7 +327,7 @@ bool SignSignature(const SigningProvider &provider, const CScript& fromPubKey, C
 bool SignSignature(const SigningProvider &provider, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn, int nHashType)
 {
     assert(nIn < txTo.vin.size());
-    CTxIn& txin = txTo.vin[nIn];
+    const CTxIn& txin = txTo.vin[nIn];
     assert(txin.prevout.n < txFrom.vout.size());
     const CTxOut& txout = txFrom.vout[txin.prevout.n];
 
@@ -420,6 +425,9 @@ bool SignTransaction(CMutableTransaction& mtx, const SigningProvider* keystore, 
             } else {
                 input_errors[i] = ScriptErrorString(serror);
             }
+        } else {
+            // If this input succeeds, make sure there is no error set for it
+            input_errors.erase(i);
         }
     }
     return input_errors.empty();

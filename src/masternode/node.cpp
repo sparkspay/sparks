@@ -14,7 +14,7 @@
 #include <warnings.h>
 
 // Keep track of the active Masternode
-CCriticalSection activeMasternodeInfoCs;
+RecursiveMutex activeMasternodeInfoCs;
 CActiveMasternodeInfo activeMasternodeInfo GUARDED_BY(activeMasternodeInfoCs);
 std::unique_ptr<CActiveMasternodeManager> activeMasternodeManager;
 
@@ -119,7 +119,7 @@ void CActiveMasternodeManager::Init(const CBlockIndex* pindex)
         LogPrintf("CActiveMasternodeManager::Init -- ERROR: %s\n", strError);
         return;
     }
-    bool fConnected = ConnectSocketDirectly(activeMasternodeInfo.service, sock->Get(), nConnectTimeout, true) && IsSelectableSocket(sock->Get());
+    bool fConnected = ConnectSocketDirectly(activeMasternodeInfo.service, *sock, nConnectTimeout, true) && IsSelectableSocket(sock->Get());
     sock->Reset();
 
     if (!fConnected && Params().RequireRoutableExternalIP()) {

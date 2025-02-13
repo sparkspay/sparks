@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2016 The Bitcoin Core developers
+# Copyright (c) 2015-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Functionality to build scripts, as well as SignatureHash().
@@ -96,7 +96,7 @@ class CScriptOp(int):
             return _opcode_instances[n]
         except IndexError:
             assert len(_opcode_instances) == n
-            _opcode_instances.append(super(CScriptOp, cls).__new__(cls, n))
+            _opcode_instances.append(super().__new__(cls, n))
             return _opcode_instances[n]
 
 # Populate opcode instance table
@@ -373,7 +373,7 @@ class CScriptTruncatedPushDataError(CScriptInvalidError):
     """Invalid pushdata due to truncation"""
     def __init__(self, msg, data):
         self.data = data
-        super(CScriptTruncatedPushDataError, self).__init__(msg)
+        super().__init__(msg)
 
 
 # This is used, eg, for blockchain heights in coinbase scripts (bip34)
@@ -450,15 +450,8 @@ class CScript(bytes):
         return other
 
     def __add__(self, other):
-        # Do the coercion outside of the try block so that errors in it are
-        # noticed.
-        other = self.__coerce_instance(other)
-
-        try:
-            # bytes.__add__ always returns bytes instances unfortunately
-            return CScript(super(CScript, self).__add__(other))
-        except TypeError:
-            raise TypeError('Can not add a %r instance to a CScript' % other.__class__)
+        # add makes no sense for a CScript()
+        raise NotImplementedError
 
     def join(self, iterable):
         # join makes no sense for a CScript()
@@ -466,14 +459,14 @@ class CScript(bytes):
 
     def __new__(cls, value=b''):
         if isinstance(value, bytes) or isinstance(value, bytearray):
-            return super(CScript, cls).__new__(cls, value)
+            return super().__new__(cls, value)
         else:
             def coerce_iterable(iterable):
                 for instance in iterable:
                     yield cls.__coerce_instance(instance)
             # Annoyingly on both python2 and python3 bytes.join() always
             # returns a bytes instance even when subclassed.
-            return super(CScript, cls).__new__(cls, b''.join(coerce_iterable(value)))
+            return super().__new__(cls, b''.join(coerce_iterable(value)))
 
     def raw_iter(self):
         """Raw iteration
@@ -693,3 +686,9 @@ class TestFrameworkScript(unittest.TestCase):
         self.assertEqual(bn2vch(0xFFFFFFFF), bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x00]))
         self.assertEqual(bn2vch(123456789), bytes([0x15, 0xCD, 0x5B, 0x07]))
         self.assertEqual(bn2vch(-54321), bytes([0x31, 0xD4, 0x80]))
+
+    def test_cscriptnum_encoding(self):
+        # round-trip negative and multi-byte CScriptNums
+        values = [0, 1, -1, -2, 127, 128, -255, 256, (1 << 15) - 1, -(1 << 16), (1 << 24) - 1, (1 << 31), 1 - (1 << 32), 1 << 40, 1500, -1500]
+        for value in values:
+            self.assertEqual(CScriptNum.decode(CScriptNum.encode(CScriptNum(value))), value)

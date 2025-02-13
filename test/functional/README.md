@@ -32,7 +32,7 @@ don't have test cases for.
 - When subclassing the BitcoinTestFramwork, place overrides for the
   `set_test_params()`, `add_options()` and `setup_xxxx()` methods at the top of
   the subclass, then locally-defined helper methods, then the `run_test()` method.
-- Use `'{}'.format(x)` for string formatting, not `'%s' % x`.
+- Use `f'{x}'` for string formatting in preference to `'{}'.format(x)` or `'%s' % x`.
 
 #### Naming guidelines
 
@@ -51,17 +51,23 @@ don't have test cases for.
 
 #### General test-writing advice
 
+- Instead of inline comments or no test documentation at all, log the comments to the test log, e.g.
+  `self.log.info('Create enough transactions to fill a block')`. Logs make the test code easier to read and the test
+  logic easier [to debug](/test/README.md#test-logging).
 - Set `self.num_nodes` to the minimum number of nodes necessary for the test.
   Having additional unrequired nodes adds to the execution time of the test as
   well as memory/CPU/disk requirements (which is important when running tests in
-  parallel or on Travis).
+  parallel).
 - Avoid stop-starting the nodes multiple times during the test if possible. A
   stop-start takes several seconds, so doing it several times blows up the
   runtime of the test.
-- Set the `self.setup_clean_chain` variable in `set_test_params()` to control whether
-  or not to use the cached data directories. The cached data directories
-  contain a 200-block pre-mined blockchain and wallets for four nodes. Each node
-  has 25 mature blocks (25x500=12500 SPARKS) in its wallet.
+- Set the `self.setup_clean_chain` variable in `set_test_params()` to `True` to
+  initialize an empty blockchain and start from the Genesis block, rather than
+  load a premined blockchain from cache with the default value of `False`. The
+  cached data directories contain a 200-block pre-mined blockchain with the
+  spendable mining rewards being split between four nodes. Each node has 25
+  mature block subsidies (25x500=12500 SPARKS) in its wallet. Using them is much more
+  efficient than mining blocks in your test.
 - When calling RPCs with lots of arguments, consider using named keyword
   arguments instead of positional arguments to make the intent of the call
   clear to readers.

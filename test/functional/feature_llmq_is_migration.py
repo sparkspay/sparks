@@ -5,7 +5,7 @@
 import time
 
 from test_framework.messages import CTransaction, FromHex, hash256, ser_compact_size, ser_string
-from test_framework.test_framework import DashTestFramework
+from test_framework.test_framework import SparksTestFramework
 from test_framework.util import wait_until
 
 '''
@@ -15,7 +15,7 @@ Test IS LLMQ migration with DIP0024
 
 '''
 
-class LLMQISMigrationTest(DashTestFramework):
+class LLMQISMigrationTest(SparksTestFramework):
     def set_test_params(self):
         # -whitelist is needed to avoid the trickling logic on node0
         self.set_sparks_test_params(16, 15, [["-whitelist=127.0.0.1"], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []], fast_dip3_enforcement=True)

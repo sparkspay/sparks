@@ -13,7 +13,9 @@
 #include <streams.h>
 #include <test/fuzz/FuzzedDataProvider.h>
 #include <test/fuzz/fuzz.h>
-#include <test/util.h>
+#include <test/fuzz/util.h>
+#include <test/util/mining.h>
+#include <test/util/net.h>
 #include <test/util/setup_common.h>
 #include <validationinterface.h>
 #include <version.h>
@@ -34,7 +36,6 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <vector>
 
 namespace {
 const TestingSetup* g_setup;
@@ -42,38 +43,43 @@ const TestingSetup* g_setup;
 
 void initialize_process_message()
 {
-    static TestingSetup setup{
-        CBaseChainParams::REGTEST,
-        {
-            "-nodebuglogfile",
-        },
-    };
-    g_setup = &setup;
-
+    static const auto testing_setup = MakeNoLogFileContext<const TestingSetup>();
+    g_setup = testing_setup.get();
     for (int i = 0; i < 2 * COINBASE_MATURITY; i++) {
         MineBlock(g_setup->m_node, CScript() << OP_TRUE);
     }
     SyncWithValidationInterfaceQueue();
 }
 
-void fuzz_target(const std::vector<uint8_t>& buffer, const std::string& LIMIT_TO_MESSAGE_TYPE)
+void fuzz_target(FuzzBufferType buffer, const std::string& LIMIT_TO_MESSAGE_TYPE)
 {
     FuzzedDataProvider fuzzed_data_provider(buffer.data(), buffer.size());
+    ConnmanTestMsg& connman = *(ConnmanTestMsg*)g_setup->m_node.connman.get();
     const std::string random_message_type{fuzzed_data_provider.ConsumeBytesAsString(CMessageHeader::COMMAND_SIZE).c_str()};
     if (!LIMIT_TO_MESSAGE_TYPE.empty() && random_message_type != LIMIT_TO_MESSAGE_TYPE) {
         return;
     }
+    CNode& p2p_node = *ConsumeNodeAsUniquePtr(fuzzed_data_provider).release();
+
+    const bool successfully_connected{fuzzed_data_provider.ConsumeBool()};
+    p2p_node.fSuccessfullyConnected = successfully_connected;
+    connman.AddTestNode(p2p_node);
+    g_setup->m_node.peerman->InitializeNode(&p2p_node);
+    FillNode(fuzzed_data_provider, p2p_node, /* init_version */ successfully_connected);
+
+    // fuzzed_data_provider is fully consumed after this call, don't use it
     CDataStream random_bytes_data_stream{fuzzed_data_provider.ConsumeRemainingBytes<unsigned char>(), SER_NETWORK, PROTOCOL_VERSION};
-    CNode p2p_node{0, ServiceFlags(NODE_NETWORK | NODE_BLOOM), 0, INVALID_SOCKET, CAddress{CService{in_addr{0x0100007f}, 7777}, NODE_NETWORK}, 0, 0, CAddress{}, std::string{}, false};
-    p2p_node.fSuccessfullyConnected = true;
-    p2p_node.nVersion = PROTOCOL_VERSION;
-    p2p_node.SetSendVersion(PROTOCOL_VERSION);
-    g_setup->m_node.peer_logic->InitializeNode(&p2p_node);
     try {
-        g_setup->m_node.peer_logic->ProcessMessage(p2p_node, random_message_type, random_bytes_data_stream, GetTimeMillis(), Params(), std::atomic<bool>{false});
+        g_setup->m_node.peerman->ProcessMessage(p2p_node, random_message_type, random_bytes_data_stream, GetTimeMillis(), std::atomic<bool>{false});
     } catch (const std::ios_base::failure& e) {
     }
+    {
+        LOCK(p2p_node.cs_sendProcessing);
+        g_setup->m_node.peerman->SendMessages(&p2p_node);
+    }
     SyncWithValidationInterfaceQueue();
+    LOCK2(::cs_main, g_cs_orphans); // See init.cpp for rationale for implicit locking order requirement
+    g_setup->m_node.connman->StopNodes();
 }
 
 FUZZ_TARGET_INIT(process_message, initialize_process_message) { fuzz_target(buffer, ""); }

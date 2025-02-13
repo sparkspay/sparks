@@ -1,5 +1,5 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2012-2015 The Bitcoin Core developers
+// Copyright (c) 2012-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -118,7 +118,7 @@ public:
     ADD_SIGNALS_DECL_WRAPPER(NotifyHeaderTip, void, bool, const CBlockIndex*);
 
     /** Masternode list has changed */
-    ADD_SIGNALS_DECL_WRAPPER(NotifyMasternodeListChanged, void, const CDeterministicMNList&);
+    ADD_SIGNALS_DECL_WRAPPER(NotifyMasternodeListChanged, void, const CDeterministicMNList&, const CBlockIndex*);
 
     /** Additional data sync progress changed */
     ADD_SIGNALS_DECL_WRAPPER(NotifyAdditionalDataSyncProgressChanged, void, double nSyncProgress);

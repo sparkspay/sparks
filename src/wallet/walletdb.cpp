@@ -1,13 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The sparks Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
+// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2025 The sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <wallet/walletdb.h>
 
-#include <consensus/tx_check.h>
-#include <consensus/validation.h>
 #include <key_io.h>
 #include <fs.h>
 #include <governance/object.h>
@@ -55,6 +54,7 @@ const std::string ORDERPOSNEXT{"orderposnext"};
 const std::string POOL{"pool"};
 const std::string PURPOSE{"purpose"};
 const std::string PRIVATESEND_SALT{"ps_salt"};
+const std::string SETTINGS{"settings"};
 const std::string TX{"tx"};
 const std::string VERSION{"version"};
 const std::string WATCHMETA{"watchmeta"};
@@ -114,7 +114,7 @@ bool WalletBatch::WriteKey(const CPubKey& vchPubKey, const CPrivKey& vchPrivKey,
     vchKey.insert(vchKey.end(), vchPubKey.begin(), vchPubKey.end());
     vchKey.insert(vchKey.end(), vchPrivKey.begin(), vchPrivKey.end());
 
-    return WriteIC(std::make_pair(DBKeys::KEY, vchPubKey), std::make_pair(vchPrivKey, Hash(vchKey.begin(), vchKey.end())), false);
+    return WriteIC(std::make_pair(DBKeys::KEY, vchPubKey), std::make_pair(vchPrivKey, Hash(vchKey)), false);
 }
 
 bool WalletBatch::WriteCryptedKey(const CPubKey& vchPubKey,
@@ -125,8 +125,19 @@ bool WalletBatch::WriteCryptedKey(const CPubKey& vchPubKey,
         return false;
     }
 
-    if (!WriteIC(std::make_pair(DBKeys::CRYPTED_KEY, vchPubKey), vchCryptedSecret, false)) {
-        return false;
+    // Compute a checksum of the encrypted key
+    uint256 checksum = Hash(vchCryptedSecret);
+
+    const auto key = std::make_pair(DBKeys::CRYPTED_KEY, vchPubKey);
+    if (!WriteIC(key, std::make_pair(vchCryptedSecret, checksum), false)) {
+        // It may already exist, so try writing just the checksum
+        std::vector<unsigned char> val;
+        if (!m_batch->Read(key, val)) {
+            return false;
+        }
+        if (!WriteIC(key, std::make_pair(val, checksum), true)) {
+            return false;
+        }
     }
     EraseIC(std::make_pair(DBKeys::KEY, vchPubKey));
     return true;
@@ -239,7 +250,7 @@ public:
 
 static bool
 ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
-             CWalletScanState &wss, std::string& strType, std::string& strErr, const KeyFilterFn& filter_fn = nullptr) EXCLUSIVE_LOCKS_REQUIRED(pwallet->cs_wallet, pwallet->GetLegacyScriptPubKeyMan()->cs_wallet)
+             CWalletScanState &wss, std::string& strType, std::string& strErr, const KeyFilterFn& filter_fn = nullptr) EXCLUSIVE_LOCKS_REQUIRED(pwallet->cs_wallet)
 {
     try {
         // Unserialize
@@ -253,18 +264,19 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         if (strType == DBKeys::NAME) {
             std::string strAddress;
             ssKey >> strAddress;
-            ssValue >> pwallet->mapAddressBook[DecodeDestination(strAddress)].name;
+            std::string label;
+            ssValue >> label;
+            pwallet->m_address_book[DecodeDestination(strAddress)].SetLabel(label);
         } else if (strType == DBKeys::PURPOSE) {
             std::string strAddress;
             ssKey >> strAddress;
-            ssValue >> pwallet->mapAddressBook[DecodeDestination(strAddress)].purpose;
+            ssValue >> pwallet->m_address_book[DecodeDestination(strAddress)].purpose;
         } else if (strType == DBKeys::TX) {
             uint256 hash;
             ssKey >> hash;
             CWalletTx wtx(nullptr /* pwallet */, MakeTransactionRef());
             ssValue >> wtx;
-            CValidationState state;
-            if (!(CheckTransaction(*wtx.tx, state) && (wtx.GetHash() == hash) && state.IsValid()))
+            if (wtx.GetHash() != hash)
                 return false;
 
             // Undo serialize changes in 31600
@@ -299,7 +311,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             char fYes;
             ssValue >> fYes;
             if (fYes == '1') {
-                pwallet->GetLegacyScriptPubKeyMan()->LoadWatchOnly(script);
+                pwallet->GetOrCreateLegacyScriptPubKeyMan()->LoadWatchOnly(script);
             }
         } else if (strType == DBKeys::KEY) {
             CPubKey vchPubKey;
@@ -337,7 +349,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 vchKey.insert(vchKey.end(), vchPubKey.begin(), vchPubKey.end());
                 vchKey.insert(vchKey.end(), pkey.begin(), pkey.end());
 
-                if (Hash(vchKey.begin(), vchKey.end()) != hash)
+                if (Hash(vchKey) != hash)
                 {
                     strErr = "Error reading wallet database: CPubKey/CPrivKey corrupt";
                     return false;
@@ -351,7 +363,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 strErr = "Error reading wallet database: CPrivKey corrupt";
                 return false;
             }
-            if (!pwallet->GetLegacyScriptPubKeyMan()->LoadKey(key, vchPubKey))
+            if (!pwallet->GetOrCreateLegacyScriptPubKeyMan()->LoadKey(key, vchPubKey))
             {
                 strErr = "Error reading wallet database: LegacyScriptPubKeyMan::LoadKey failed";
                 return false;
@@ -380,9 +392,21 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             }
             std::vector<unsigned char> vchPrivKey;
             ssValue >> vchPrivKey;
+
+            // Get the checksum and check it
+            bool checksum_valid = false;
+            if (!ssValue.eof()) {
+                uint256 checksum;
+                ssValue >> checksum;
+                if (!(checksum_valid = Hash(vchPrivKey) == checksum)) {
+                    strErr = "Error reading wallet database: Crypted key corrupt";
+                    return false;
+                }
+            }
+
             wss.nCKeys++;
 
-            if (!pwallet->GetLegacyScriptPubKeyMan()->LoadCryptedKey(vchPubKey, vchPrivKey))
+            if (!pwallet->GetOrCreateLegacyScriptPubKeyMan()->LoadCryptedKey(vchPubKey, vchPrivKey, checksum_valid))
             {
                 strErr = "Error reading wallet database: LegacyScriptPubKeyMan::LoadCryptedKey failed";
                 return false;
@@ -394,14 +418,14 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             CKeyMetadata keyMeta;
             ssValue >> keyMeta;
             wss.nKeyMeta++;
-            pwallet->GetLegacyScriptPubKeyMan()->LoadKeyMetadata(vchPubKey.GetID(), keyMeta);
+            pwallet->GetOrCreateLegacyScriptPubKeyMan()->LoadKeyMetadata(vchPubKey.GetID(), keyMeta);
         } else if (strType == DBKeys::WATCHMETA) {
             CScript script;
             ssKey >> script;
             CKeyMetadata keyMeta;
             ssValue >> keyMeta;
             wss.nKeyMeta++;
-            pwallet->GetLegacyScriptPubKeyMan()->LoadScriptMetadata(CScriptID(script), keyMeta);
+            pwallet->GetOrCreateLegacyScriptPubKeyMan()->LoadScriptMetadata(CScriptID(script), keyMeta);
         } else if (strType == DBKeys::DEFAULTKEY) {
             // We don't want or need the default key, but if there is one set,
             // we want to make sure that it is valid so that we can detect corruption
@@ -416,13 +440,14 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             ssKey >> nIndex;
             CKeyPool keypool;
             ssValue >> keypool;
-            pwallet->GetLegacyScriptPubKeyMan()->LoadKeyPool(nIndex, keypool);
+
+            pwallet->GetOrCreateLegacyScriptPubKeyMan()->LoadKeyPool(nIndex, keypool);
         } else if (strType == DBKeys::CSCRIPT) {
             uint160 hash;
             ssKey >> hash;
             CScript script;
             ssValue >> script;
-            if (!pwallet->GetLegacyScriptPubKeyMan()->LoadCScript(script))
+            if (!pwallet->GetOrCreateLegacyScriptPubKeyMan()->LoadCScript(script))
             {
                 strErr = "Error reading wallet database: LegacyScriptPubKeyMan::LoadCScript failed";
                 return false;
@@ -451,7 +476,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         } else if (strType == DBKeys::HDCHAIN) {
             CHDChain chain;
             ssValue >> chain;
-            if (!pwallet->GetLegacyScriptPubKeyMan()->SetHDChainSingle(chain, true))
+            if (!pwallet->GetOrCreateLegacyScriptPubKeyMan()->SetHDChainSingle(chain, true))
             {
                 strErr = "Error reading wallet database: SetHDChain failed";
                 return false;
@@ -459,7 +484,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         } else if (strType == DBKeys::CRYPTED_HDCHAIN) {
             CHDChain chain;
             ssValue >> chain;
-            if (!pwallet->GetLegacyScriptPubKeyMan()->SetCryptedHDChainSingle(chain, true))
+            if (!pwallet->GetOrCreateLegacyScriptPubKeyMan()->SetCryptedHDChainSingle(chain, true))
             {
                 strErr = "Error reading wallet database: SetHDCryptedChain failed";
                 return false;
@@ -477,7 +502,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 strErr = "Error reading wallet database: CHDPubKey corrupt";
                 return false;
             }
-            if (!pwallet->GetLegacyScriptPubKeyMan()->LoadHDPubKey(hdPubKey))
+            if (!pwallet->GetOrCreateLegacyScriptPubKeyMan()->LoadHDPubKey(hdPubKey))
             {
                 strErr = "Error reading wallet database: LoadHDPubKey failed";
                 return false;
@@ -509,7 +534,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             return false;
         } else if (strType != DBKeys::BESTBLOCK && strType != DBKeys::BESTBLOCK_NOMERKLE &&
                    strType != DBKeys::MINVERSION && strType != DBKeys::ACENTRY &&
-                   strType != DBKeys::VERSION &&
+                   strType != DBKeys::VERSION && strType != DBKeys::SETTINGS &&
                    strType != DBKeys::PRIVATESEND_SALT && strType != DBKeys::COINJOIN_SALT) {
             wss.m_unknown_records++;
         }
@@ -531,7 +556,6 @@ bool ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue, st
 {
     CWalletScanState dummy_wss;
     LOCK(pwallet->cs_wallet);
-    AssertLockHeld(pwallet->GetLegacyScriptPubKeyMan()->cs_wallet);
     return ReadKeyValue(pwallet, ssKey, ssValue, dummy_wss, strType, strErr, filter_fn);
 }
 
@@ -549,7 +573,6 @@ DBErrors WalletBatch::LoadWallet(CWallet* pwallet)
     DBErrors result = DBErrors::LOAD_OK;
 
     LOCK(pwallet->cs_wallet);
-    AssertLockHeld(pwallet->GetLegacyScriptPubKeyMan()->cs_wallet);
     try {
         int nMinVersion = 0;
         if (m_batch->Read(DBKeys::MINVERSION, nMinVersion)) {
@@ -634,9 +657,9 @@ DBErrors WalletBatch::LoadWallet(CWallet* pwallet)
 
     // nTimeFirstKey is only reliable if all keys have metadata
     if ((wss.nKeys + wss.nCKeys + wss.nWatchKeys + wss.nHDPubKeys) != wss.nKeyMeta) {
-        auto spk_man = pwallet->GetLegacyScriptPubKeyMan();
+        auto spk_man = pwallet->GetOrCreateLegacyScriptPubKeyMan();
         if (spk_man) {
-            AssertLockHeld(spk_man->cs_wallet);
+            LOCK(spk_man->cs_KeyStore);
             spk_man->UpdateTimeFirstKey(1);
         }
     }
@@ -657,11 +680,7 @@ DBErrors WalletBatch::LoadWallet(CWallet* pwallet)
     // Upgrade all of the wallet keymetadata to have the hd master key id
     // This operation is not atomic, but if it fails, updated entries are still backwards compatible with older software
     try {
-        auto spk_man = pwallet->GetLegacyScriptPubKeyMan();
-        if (spk_man) {
-            AssertLockHeld(spk_man->cs_wallet);
-            spk_man->UpgradeKeyMetadata();
-        }
+        pwallet->UpgradeKeyMetadata();
     } catch (...) {
         result = DBErrors::CORRUPT;
     }
@@ -769,7 +788,7 @@ void MaybeCompactWalletDB()
     }
 
     for (const std::shared_ptr<CWallet>& pwallet : GetWallets()) {
-        WalletDatabase& dbh = pwallet->GetDBHandle();
+        WalletDatabase& dbh = pwallet->GetDatabase();
 
         unsigned int nUpdateCounter = dbh.nUpdateCounter;
 

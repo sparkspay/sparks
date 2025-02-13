@@ -1,4 +1,4 @@
-// Copyright (c) 2015 The Bitcoin Core developers
+// Copyright (c) 2015-2020 The Bitcoin Core developers
 // Copyright (c) 2014-2022 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -17,6 +17,7 @@
 #include <util/check.h>
 #include <util/string.h>
 
+#include <stdexcept>
 #include <type_traits>
 #include <vector>
 
@@ -68,6 +69,10 @@ static inline bool InsecureRandBool() { return g_insecure_rand_ctx.randbool(); }
 
 static constexpr CAmount CENT{1000000};
 
+/* Initialize Sparks-specific components after chainstate initialization */
+void SparksTestSetup(NodeContext& node);
+void SparksTestSetupClose(NodeContext& node);
+
 /** Basic testing setup.
  * This just configures logging, data dir and chain parameters.
  */
@@ -78,7 +83,6 @@ struct BasicTestingSetup {
     explicit BasicTestingSetup(const std::string& chainName = CBaseChainParams::MAIN, const std::vector<const char*>& extra_args = {});
     ~BasicTestingSetup();
 
-private:
     std::unique_ptr<CConnman> connman;
     const fs::path m_path_root;
 };
@@ -88,7 +92,6 @@ private:
  * initialization behaviour.
  */
 struct ChainTestingSetup : public BasicTestingSetup {
-
     explicit ChainTestingSetup(const std::string& chainName = CBaseChainParams::MAIN, const std::vector<const char*>& extra_args = {});
     ~ChainTestingSetup();
 };
@@ -97,12 +100,13 @@ struct ChainTestingSetup : public BasicTestingSetup {
  */
 struct TestingSetup : public ChainTestingSetup {
     explicit TestingSetup(const std::string& chainName = CBaseChainParams::MAIN, const std::vector<const char*>& extra_args = {});
+    ~TestingSetup();
 };
 
 /** Identical to TestingSetup, but chain set to regtest */
 struct RegTestingSetup : public TestingSetup {
-    RegTestingSetup()
-        : TestingSetup{CBaseChainParams::REGTEST} {}
+    RegTestingSetup(const std::vector<const char*>& extra_args = {})
+        : TestingSetup{CBaseChainParams::REGTEST, extra_args} {}
 };
 
 class CBlock;
@@ -111,11 +115,13 @@ class CScript;
 
 struct TestChainSetup : public RegTestingSetup
 {
-    TestChainSetup(int blockCount);
+    TestChainSetup(int num_blocks, const std::vector<const char*>& extra_args = {});
     ~TestChainSetup();
 
-    // Create a new block with just given transactions, coinbase paying to
-    // scriptPubKey, and try to add it to the current chain.
+    /**
+     * Create a new block with just given transactions, coinbase paying to
+     * scriptPubKey, and try to add it to the current chain.
+     */
     CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns,
                                  const CScript& scriptPubKey);
     CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns,
@@ -125,14 +131,16 @@ struct TestChainSetup : public RegTestingSetup
     CBlock CreateBlock(const std::vector<CMutableTransaction>& txns,
                        const CKey& scriptKey);
 
+    //! Mine a series of new blocks on the active chain.
+    void mineBlocks(int num_blocks);
+
     std::vector<CTransactionRef> m_coinbase_txns; // For convenience, coinbase transactions
     CKey coinbaseKey; // private/public key needed to spend coinbase transactions
 };
 
-//
-// Testing fixture that pre-creates a
-// 100-block REGTEST-mode block chain
-//
+/**
+ * Testing fixture that pre-creates a 100-block REGTEST-mode block chain
+ */
 struct TestChain100Setup : public TestChainSetup {
     TestChain100Setup() : TestChainSetup(100) {}
 };
@@ -142,9 +150,9 @@ struct TestChainDIP3Setup : public TestChainSetup
     TestChainDIP3Setup() : TestChainSetup(431) {}
 };
 
-struct TestChainDIP3V19Setup : public TestChainSetup
+struct TestChainV19Setup : public TestChainSetup
 {
-    TestChainDIP3V19Setup() : TestChainSetup(1000) {}
+    TestChainV19Setup();
 };
 
 struct TestChainDIP3BeforeActivationSetup : public TestChainSetup
@@ -173,8 +181,8 @@ struct TestMemPoolEntryHelper
         nFee(0), nTime(0), nHeight(1),
         spendsCoinbase(false), sigOpCount(1) { }
 
-    CTxMemPoolEntry FromTx(const CMutableTransaction& tx);
-    CTxMemPoolEntry FromTx(const CTransactionRef& tx);
+    CTxMemPoolEntry FromTx(const CMutableTransaction& tx) const;
+    CTxMemPoolEntry FromTx(const CTransactionRef& tx) const;
 
     // Change the default value
     TestMemPoolEntryHelper &Fee(CAmount _fee) { nFee = _fee; return *this; }
@@ -186,13 +194,20 @@ struct TestMemPoolEntryHelper
 
 CBlock getBlock13b8a();
 
-// BOOST_CHECK_EXCEPTION predicates to check the specific validation error
-class HasReason {
+/**
+ * BOOST_CHECK_EXCEPTION predicates to check the specific validation error.
+ * Use as
+ * BOOST_CHECK_EXCEPTION(code that throws, exception type, HasReason("foo"));
+ */
+class HasReason
+{
 public:
     explicit HasReason(const std::string& reason) : m_reason(reason) {}
-    bool operator() (const std::runtime_error& e) const {
+    bool operator()(const std::exception& e) const
+    {
         return std::string(e.what()).find(m_reason) != std::string::npos;
     };
+
 private:
     const std::string m_reason;
 };

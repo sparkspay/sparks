@@ -24,18 +24,17 @@ Before every major release:
 * Update [`src/chainparams.cpp`](/src/chainparams.cpp) m_assumed_blockchain_size and m_assumed_chain_state_size with the current size plus some overhead (see [this](#how-to-calculate-m_assumed_blockchain_size-and-m_assumed_chain_state_size) for information on how to calculate them).
 * Update `src/chainparams.cpp` chainTxData with statistics about the transaction count and rate. Use the output of the RPC `getchaintxstats`, see
   [this pull request](https://github.com/bitcoin/bitcoin/pull/12270) for an example. Reviewers can verify the results by running `getchaintxstats <window_block_count> <window_last_block_hash>` with the `window_block_count` and `window_last_block_hash` from your output.
-* Update version of `contrib/gitian-descriptors/*.yml`: usually one'd want to do this on master after branching off the release - but be sure to at least do it before a new major release
 
 ### First time / New builders
 
-If you're using the automated script (found in [contrib/gitian-build.py](/contrib/gitian-build.py)), then at this point you should run it with the "--setup" command. Otherwise ignore this.
+Install Guix using one of the installation methods detailed in
+[contrib/guix/INSTALL.md](/contrib/guix/INSTALL.md).
 
 Check out the source code in the following directory hierarchy.
 
 	cd /path/to/your/toplevel/build
-	git clone https://github.com/sparkspay/gitian.sigs.git
+	git clone https://github.com/sparkspay/guix.sigs.git
 	git clone https://github.com/sparkspay/sparks-detached-sigs.git
-	git clone https://github.com/devrandom/gitian-builder.git
 	git clone https://github.com/sparkspay/sparks.git
 
 ### Sparks Core maintainers/release engineers, suggestion for writing release notes
@@ -52,114 +51,56 @@ Tag version (or release candidate) in git
 
     git tag -s v(new version, e.g. 0.12.3)
 
-### Setup and perform Gitian builds
+### Setup and perform Guix builds
 
-If you're using the automated script (found in [contrib/gitian-build.py](/contrib/gitian-build.py)), then at this point you should run it with the "--build" command. Otherwise ignore this.
+Checkout the Sparks Core version you'd like to build:
 
-Setup Gitian descriptors:
+```sh
+pushd ./sparks
+export SIGNER='(your builder key, ie UdjinM6, Pasta, etc)'
+export VERSION='(new version, e.g. 20.0.0)'
+git fetch "v${VERSION}"
+git checkout "v${VERSION}"
+popd
+```
 
-    pushd ./sparks
-    export SIGNER=(your Gitian key, ie bluematt, sipa, etc)
-    export VERSION=(new version, e.g. 0.12.3)
-    git fetch
-    git checkout v${VERSION}
-    popd
+Ensure your guix.sigs are up-to-date if you wish to `guix-verify` your builds
+against other `guix-attest` signatures.
 
-Ensure your gitian.sigs are up-to-date if you wish to gverify your builds against other Gitian signatures.
+```sh
+git -C ./guix.sigs pull
+```
 
-    pushd ./gitian.sigs
-    git pull
-    popd
+### Create the macOS SDK tarball: (first time, or when SDK version changes)
 
-Ensure gitian-builder is up-to-date:
+Create the macOS SDK tarball, see the [macOS build
+instructions](build-osx.md#deterministic-macos-dmg-notes) for
+details.
 
-    pushd ./gitian-builder
-    git pull
-    popd
+### Build and attest to build outputs:
 
+Follow the relevant Guix README.md sections:
+- [Building](/contrib/guix/README.md#building)
+- [Attesting to build outputs](/contrib/guix/README.md#attesting-to-build-outputs)
 
-### Fetch and create inputs: (first time, or when dependency versions change)
+### Verify other builders' signatures to your own. (Optional)
 
-    pushd ./gitian-builder
-    mkdir -p inputs
-    wget -O inputs/osslsigncode-2.0.tar.gz https://github.com/mtrojnar/osslsigncode/archive/2.0.tar.gz
-    echo '5a60e0a4b3e0b4d655317b2f12a810211c50242138322b16e7e01c6fbb89d92f inputs/osslsigncode-2.0.tar.gz' | sha256sum -c
-    popd
+Add other builders keys to your gpg keyring, and/or refresh keys: See `../sparks/contrib/builder-keys/README.md`.
 
-Create the macOS SDK tarball, see the [macOS build instructions](build-osx.md#deterministic-macos-dmg-notes) for details, and copy it into the inputs directory.
-
-### Optional: Seed the Gitian sources cache and offline git repositories
-
-NOTE: Gitian is sometimes unable to download files. If you have errors, try the step below.
-
-By default, Gitian will fetch source files as needed. To cache them ahead of time, make sure you have checked out the tag you want to build in sparks, then:
-
-    pushd ./gitian-builder
-    make -C ../sparks/depends download SOURCES_PATH=`pwd`/cache/common
-    popd
-
-Only missing files will be fetched, so this is safe to re-run for each build.
-
-NOTE: Offline builds must use the --url flag to ensure Gitian fetches only from local URLs. For example:
-
-    pushd ./gitian-builder
-    ./bin/gbuild --url sparks=/path/to/sparks,signature=/path/to/sigs {rest of arguments}
-    popd
-
-The gbuild invocations below <b>DO NOT DO THIS</b> by default.
-
-### Build and sign Sparks Core for Linux, Windows, and OS X:
-
-    pushd ./gitian-builder
-    ./bin/gbuild --num-make 2 --memory 3000 --commit sparks=v${VERSION} ../sparks/contrib/gitian-descriptors/gitian-linux.yml
-    ./bin/gsign --signer "$SIGNER" --release ${VERSION}-linux --destination ../gitian.sigs/ ../sparks/contrib/gitian-descriptors/gitian-linux.yml
-    mv build/out/sparks-*.tar.gz build/out/src/sparks-*.tar.gz ../
-
-    ./bin/gbuild --num-make 2 --memory 3000 --commit sparks=v${VERSION} ../sparks/contrib/gitian-descriptors/gitian-win.yml
-    ./bin/gsign --signer "$SIGNER" --release ${VERSION}-win-unsigned --destination ../gitian.sigs/ ../sparks/contrib/gitian-descriptors/gitian-win.yml
-    mv build/out/sparks-*-win-unsigned.tar.gz inputs/sparks-win-unsigned.tar.gz
-    mv build/out/sparks-*.zip build/out/sparks-*.exe ../
-
-    ./bin/gbuild --num-make 2 --memory 3000 --commit sparks=v${VERSION} ../sparks/contrib/gitian-descriptors/gitian-osx.yml
-    ./bin/gsign --signer "$SIGNER" --release ${VERSION}-osx-unsigned --destination ../gitian.sigs/ ../sparks/contrib/gitian-descriptors/gitian-osx.yml
-    mv build/out/sparks-*-osx-unsigned.tar.gz inputs/sparks-osx-unsigned.tar.gz
-    mv build/out/sparks-*.tar.gz build/out/sparks-*.dmg ../
-    popd
-
-Build output expected:
-
-  1. source tarball (`sparks-${VERSION}.tar.gz`)
-  2. linux 32-bit and 64-bit dist tarballs (`sparks-${VERSION}-linux[32|64].tar.gz`)
-  3. windows 32-bit and 64-bit unsigned installers and dist zips (`sparks-${VERSION}-win[32|64]-setup-unsigned.exe`, `sparks-${VERSION}-win[32|64].zip`)
-  4. macOS unsigned installer and dist tarball (`sparks-${VERSION}-osx-unsigned.dmg`, `sparks-${VERSION}-osx64.tar.gz`)
-  5. Gitian signatures (in `gitian.sigs/${VERSION}-<linux|{win,osx}-unsigned>/(your Gitian key)/`)
-
-### Verify other gitian builders signatures to your own. (Optional)
-
-Add other gitian builders keys to your gpg keyring, and/or refresh keys.
-
-    gpg --import sparks/contrib/gitian-keys/*.pgp
-    gpg --refresh-keys
-
-Verify the signatures
-
-    pushd ./gitian-builder
-    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-linux ../sparks/contrib/gitian-descriptors/gitian-linux.yml
-    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-win-unsigned ../sparks/contrib/gitian-descriptors/gitian-win.yml
-    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-osx-unsigned ../sparks/contrib/gitian-descriptors/gitian-osx.yml
-    popd
+Follow the relevant Guix README.md sections:
+- [Verifying build output attestations](/contrib/guix/README.md#verifying-build-output-attestations)
 
 ### Next steps:
 
-Commit your signature to gitian.sigs:
+Commit your signature to guix.sigs:
 
-    pushd gitian.sigs
-    git add ${VERSION}-linux/"${SIGNER}"
-    git add ${VERSION}-win-unsigned/"${SIGNER}"
-    git add ${VERSION}-osx-unsigned/"${SIGNER}"
-    git commit -a
-    git push  # Assuming you can push to the gitian.sigs tree
-    popd
+```sh
+pushd guix.sigs
+git add "${VERSION}/${SIGNER}/noncodesigned.SHA256SUMS{,.asc}"
+git commit -a
+git push  # Assuming you can push to the guix.sigs tree
+popd
+```
 
 Codesigner only: Create Windows/macOS detached signatures:
 - Only one person handles codesigning. Everyone else should skip to the next step.
@@ -171,7 +112,7 @@ Codesigner only: Sign the macOS binary:
     tar xf sparkscore-osx-unsigned.tar.gz
     ./detached-sig-create.sh -s "Key ID" -o runtime
     Enter the keychain password and authorize the signature
-    Move signature-osx.tar.gz back to the gitian host
+    Move signature-osx.tar.gz back to the guix-build host
 
 Codesigner only: Sign the windows binaries:
 
@@ -182,84 +123,67 @@ Codesigner only: Sign the windows binaries:
 
 Codesigner only: Commit the detached codesign payloads:
 
-    cd ~/sparkscore-detached-sigs
-    checkout the appropriate branch for this release series
-    rm -rf *
-    tar xf signature-osx.tar.gz
-    tar xf signature-win.tar.gz
-    git add -A
-    git commit -m "point to ${VERSION}"
-    git tag -s v${VERSION} HEAD
-    git push the current branch and new tag
+```sh
+pushd ~/sparkscore-detached-sigs
+# checkout the appropriate branch for this release series
+rm -rf *
+tar xf signature-osx.tar.gz
+tar xf signature-win.tar.gz
+git add -A
+git commit -m "point to ${VERSION}"
+git tag -s "v${VERSION}" HEAD
+git push the current branch and new tag
+popd
+```
 
 Non-codesigners: wait for Windows/macOS detached signatures:
 
 - Once the Windows/macOS builds each have 3 matching signatures, they will be signed with their respective release keys.
 - Detached signatures will then be committed to the [sparks-detached-sigs](https://github.com/sparkspay/sparks-detached-sigs) repository, which can be combined with the unsigned apps to create signed binaries.
 
-Create (and optionally verify) the signed macOS binary:
-
-    pushd ./gitian-builder
-    ./bin/gbuild -i --commit signature=v${VERSION} ../sparks/contrib/gitian-descriptors/gitian-osx-signer.yml
-    ./bin/gsign --signer "$SIGNER" --release ${VERSION}-osx-signed --destination ../gitian.sigs/ ../sparks/contrib/gitian-descriptors/gitian-osx-signer.yml
-    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-osx-signed ../sparks/contrib/gitian-descriptors/gitian-osx-signer.yml
-    mv build/out/sparks-osx-signed.dmg ../sparks-${VERSION}-osx.dmg
-    popd
-
-Create (and optionally verify) the signed Windows binaries:
-
-    pushd ./gitian-builder
-    ./bin/gbuild -i --commit signature=v${VERSION} ../sparks/contrib/gitian-descriptors/gitian-win-signer.yml
-    ./bin/gsign --signer "$SIGNER" --release ${VERSION}-win-signed --destination ../gitian.sigs/ ../sparks/contrib/gitian-descriptors/gitian-win-signer.yml
-    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-win-signed ../sparks/contrib/gitian-descriptors/gitian-win-signer.yml
-    mv build/out/sparks-*win64-setup.exe ../sparks-${VERSION}-win64-setup.exe
-    popd
+Create (and optionally verify) the codesigned outputs:
+- [Codesigning](/contrib/guix/README.md#codesigning)
 
 Commit your signature for the signed macOS/Windows binaries:
 
-    pushd gitian.sigs
-    git add ${VERSION}-osx-signed/"${SIGNER}"
-    git add ${VERSION}-win-signed/"${SIGNER}"
-    git commit -m "Add ${SIGNER} ${VERSION} signed binaries signatures"
-    git push  # Assuming you can push to the gitian.sigs tree
-    popd
+```sh
+pushd ./guix.sigs
+git add "${VERSION}/${SIGNER}"/all.SHA256SUMS{,.asc}
+git commit -m "Add ${SIGNER} ${VERSION} signed binaries signatures"
+git push  # Assuming you can push to the guix.sigs tree
+popd
+```
 
-### After 3 or more people have gitian-built and their results match:
+### After 3 or more people have guix-built and their results match:
 
-- Create `SHA256SUMS.asc` for the builds, and GPG-sign it:
+Combine the `all.SHA256SUMS.asc` file from all signers into `SHA256SUMS.asc`:
 
 ```bash
-sha256sum * > SHA256SUMS
+cat "$VERSION"/*/all.SHA256SUMS.asc > SHA256SUMS.asc
 ```
 
-The list of files should be:
-```
-sparks-${VERSION}-aarch64-linux-gnu.tar.gz
-sparks-${VERSION}-riscv64-linux-gnu.tar.gz
-sparks-${VERSION}-x86_64-linux-gnu.tar.gz
-sparks-${VERSION}-osx64.tar.gz
-sparks-${VERSION}-osx.dmg
-sparks-${VERSION}.tar.gz
-sparks-${VERSION}-win64-setup.exe
-sparks-${VERSION}-win64.zip
-```
-The `*-debug*` files generated by the Gitian build contain debug symbols
-for troubleshooting by developers. It is assumed that anyone that is interested
-in debugging can run Gitian to generate the files for themselves. To avoid
-end-user confusion about which file to pick, as well as save storage
-space *do not upload these to the sparkspay.io server*.
+- Upload to the sparks.org server:
+    1. The contents of each `./sparks/guix-build-${VERSION}/output/${HOST}/` directory, except for
+       `*-debug*` files.
 
-- GPG-sign it, delete the unsigned file:
-```
-gpg --digest-algo sha256 --clearsign SHA256SUMS # outputs SHA256SUMS.asc
-rm SHA256SUMS
-```
-(the digest algorithm is forced to sha256 to avoid confusion of the `Hash:` header that GPG adds with the SHA256 used for the files)
-Note: check that SHA256SUMS itself doesn't end up in SHA256SUMS, which is a spurious/nonsensical entry.
+       Guix will output all of the results into host subdirectories, but the SHA256SUMS
+       file does not include these subdirectories. In order for downloads via torrent
+       to verify without directory structure modification, all of the uploaded files
+       need to be in the same directory as the SHA256SUMS file.
 
-- Upload zips and installers, as well as `SHA256SUMS.asc` from last step, to the sparkspay.io server
+       The `*-debug*` files generated by the guix build contain debug symbols
+       for troubleshooting by developers. It is assumed that anyone that is
+       interested in debugging can run guix to generate the files for
+       themselves. To avoid end-user confusion about which file to pick, as well
+       as save storage space *do not upload these to the sparks.org server*.
 
-- Update sparkspay.io
+       ```sh
+       find guix-build-${VERSION}/output/ -maxdepth 2 -type f -not -name "SHA256SUMS.part" -and -not -name "*debug*" -exec scp {} user@sparks.org:/var/www/bin/sparks-core-${VERSION} \;
+       ```
+
+    2. The `SHA256SUMS` file
+
+    3. The `SHA256SUMS.asc` combined signature file you just created
 
 - Announce the release:
 
@@ -274,6 +198,41 @@ Note: check that SHA256SUMS itself doesn't end up in SHA256SUMS, which is a spur
   - Create a [new GitHub release](https://github.com/sparkspay/sparks/releases/new) with a link to the archived release notes.
 
   - Celebrate
+
+### MacOS Notarization
+
+#### Prerequisites
+Make sure you have the latest Xcode installed on your macOS device. You can download it from the Apple Developer website.
+You should have a valid Apple Developer ID under the team you are using which is necessary for the notarization process.
+To avoid including your password as cleartext in a notarization script, you can provide a reference to a keychain item. You can add a new keychain item named AC_PASSWORD from the command line using the notarytool utility:
+```
+xcrun notarytool store-credentials "AC_PASSWORD" --apple-id "AC_USERNAME" --team-id <WWDRTeamID> --password <secret_2FA_password>
+```
+
+#### Notarization
+Open Terminal, and navigate to the location of the .dmg file.
+
+Then, run the following command to notarize the .dmg file:
+
+```
+xcrun notarytool submit sparkscore-{version}-osx.dmg --keychain-profile "AC_PASSWORD" --wait
+```
+Replace "{version}" with the version you are notarizing. This command uploads the .dmg file to Apple's notary service.
+
+The --wait option makes the command wait to return until the notarization process is complete.
+
+If the notarization process is successful, the notary service generates a log file URL. Please save this URL, as it contains valuable information regarding the notarization process.
+
+#### Notarization Validation
+
+After successfully notarizing the .dmg file, extract "Sparks-Qt.app" from the .dmg.
+To verify that the notarization process was successful, run the following command:
+
+```
+spctl -a -vv -t install Sparks-Qt.app
+```
+Replace "Sparks-Qt.app" with the path to your .app file. This command checks whether your .app file passes Gatekeeper’s
+checks. If the app is successfully notarized, the command line will include a line stating source=Notarized Developer ID.
 
 ### Additional information
 

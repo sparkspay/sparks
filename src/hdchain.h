@@ -26,7 +26,7 @@ public:
 class CHDChain
 {
 private:
-    mutable CCriticalSection cs;
+    mutable RecursiveMutex cs;
 
     static const int CURRENT_VERSION = 1;
     int nVersion GUARDED_BY(cs) {CURRENT_VERSION};
@@ -42,6 +42,8 @@ private:
     std::map<uint32_t, CHDAccount> GUARDED_BY(cs) mapAccounts;
 
 public:
+    /** Default for -mnemonicbits */
+    static constexpr int DEFAULT_MNEMONIC_BITS = 128; // 128 bits == 12 words
 
     CHDChain() = default;
     CHDChain(const CHDChain& other) :

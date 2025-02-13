@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Copyright (c) 2014-2022 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -10,6 +10,7 @@
 #include <qt/walletmodel.h>
 
 #include <qt/addresstablemodel.h>
+#include <qt/clientmodel.h>
 #include <qt/guiconstants.h>
 #include <qt/optionsmodel.h>
 #include <qt/paymentserver.h>
@@ -24,7 +25,7 @@
 #include <util/system.h> // for GetBoolArg
 #include <util/translation.h>
 #include <wallet/coincontrol.h>
-#include <wallet/wallet.h>
+#include <wallet/wallet.h> // for CRecipient
 
 #include <spork.h>
 
@@ -35,12 +36,17 @@
 #include <QTimer>
 
 
-WalletModel::WalletModel(std::unique_ptr<interfaces::Wallet> wallet, interfaces::Node& node, OptionsModel *_optionsModel, QObject *parent) :
-    QObject(parent), m_wallet(std::move(wallet)), m_node(node), optionsModel(_optionsModel), addressTableModel(nullptr),
+WalletModel::WalletModel(std::unique_ptr<interfaces::Wallet> wallet, ClientModel& client_model, QObject *parent) :
+    QObject(parent),
+    m_wallet(std::move(wallet)),
+    m_client_model(&client_model),
+    m_node(client_model.node()),
+    optionsModel(client_model.getOptionsModel()),
+    addressTableModel(nullptr),
     transactionTableModel(nullptr),
     recentRequestsTableModel(nullptr),
     cachedEncryptionStatus(Unencrypted),
-    cachedNumBlocks(-1),
+    timer(new QTimer(this)),
     cachedNumISLocks(0),
     cachedCoinJoinRounds(0)
 {
@@ -60,9 +66,14 @@ WalletModel::~WalletModel()
 void WalletModel::startPollBalance()
 {
     // This timer will be fired repeatedly to update the balance
-    QTimer* timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &WalletModel::pollBalanceChanged);
     timer->start(MODEL_UPDATE_DELAY);
+}
+
+void WalletModel::setClientModel(ClientModel* client_model)
+{
+    m_client_model = client_model;
+    if (!m_client_model) timer->stop();
 }
 
 void WalletModel::updateStatus()
@@ -80,22 +91,26 @@ void WalletModel::pollBalanceChanged()
         return;
     }
 
+    // Avoid recomputing wallet balances unless a TransactionChanged or
+    // BlockTip notification was received.
+    if (!fForceCheckBalanceChanged && m_cached_last_update_tip == getLastBlockProcessed()) return;
+
     // Try to get balances and return early if locks can't be acquired. This
     // avoids the GUI from getting stuck on periodical polls if the core is
     // holding the locks for a longer time - for example, during a wallet
     // rescan.
     interfaces::WalletBalances new_balances;
-    int numBlocks = -1;
-    if (!m_wallet->tryGetBalances(new_balances, numBlocks)) {
+    uint256 block_hash;
+    if (!m_wallet->tryGetBalances(new_balances, block_hash)) {
         return;
     }
 
-    if(fForceCheckBalanceChanged || numBlocks != cachedNumBlocks || node().coinJoinOptions().getRounds() != cachedCoinJoinRounds)
+    if (fForceCheckBalanceChanged || block_hash != m_cached_last_update_tip || node().coinJoinOptions().getRounds() != cachedCoinJoinRounds)
     {
         fForceCheckBalanceChanged = false;
 
         // Balance and number of transactions might have changed
-        cachedNumBlocks = numBlocks;
+        m_cached_last_update_tip = block_hash;
         cachedCoinJoinRounds = node().coinJoinOptions().getRounds();
 
         checkBalanceChanged(new_balances);
@@ -129,11 +144,6 @@ void WalletModel::updateChainLockHeight(int chainLockHeight)
         transactionTableModel->updateChainLockHeight(chainLockHeight);
     // Number and status of confirmations might have changed (WalletModel::pollBalanceChanged handles this as well)
     fForceCheckBalanceChanged = true;
-}
-
-int WalletModel::getNumBlocks() const
-{
-    return cachedNumBlocks;
 }
 
 int WalletModel::getNumISLocks() const
@@ -230,7 +240,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
     int nChangePosRet = -1;
 
     auto& newTx = transaction.getWtx();
-    newTx = m_wallet->createTransaction(vecSend, coinControl, !privateKeysDisabled() /* sign */, nChangePosRet, nFeeRequired, error);
+    newTx = m_wallet->createTransaction(vecSend, coinControl, !wallet().privateKeysDisabled() /* sign */, nChangePosRet, nFeeRequired, error);
     transaction.setTransactionFee(nFeeRequired);
     if (fSubtractFeeFromAmount && newTx)
         transaction.reassignAmounts(nChangePosRet);
@@ -278,7 +288,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(WalletModelTransaction &tran
 
         CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
         ssTx << *newTx;
-        transaction_array.append(ssTx.data(), ssTx.size());
+        transaction_array.append((const char*)ssTx.data(), ssTx.size());
     }
 
     // Add addresses / update labels that we've sent to the address book,
@@ -353,16 +363,10 @@ WalletModel::EncryptionStatus WalletModel::getEncryptionStatus() const
 
 bool WalletModel::setWalletEncrypted(bool encrypted, const SecureString &passphrase)
 {
-    if(encrypted)
-    {
-        // Encrypt
+    if (encrypted) {
         return m_wallet->encryptWallet(passphrase);
     }
-    else
-    {
-        // Decrypt -- TODO; not supported yet
-        return false;
-    }
+    return false;
 }
 
 bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase, bool fMixing)
@@ -583,16 +587,6 @@ bool WalletModel::isWalletEnabled()
    return !gArgs.GetBoolArg("-disablewallet", DEFAULT_DISABLE_WALLET);
 }
 
-bool WalletModel::privateKeysDisabled() const
-{
-    return m_wallet->IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS);
-}
-
-bool WalletModel::canGetAddresses() const
-{
-    return m_wallet->canGetAddresses();
-}
-
 QString WalletModel::getWalletName() const
 {
     return QString::fromStdString(m_wallet->getWalletName());
@@ -606,5 +600,10 @@ QString WalletModel::getDisplayName() const
 
 bool WalletModel::isMultiwallet()
 {
-    return m_node.walletClient().getWallets().size() > 1;
+    return m_node.walletLoader().getWallets().size() > 1;
+}
+
+uint256 WalletModel::getLastBlockProcessed() const
+{
+    return m_client_model ? m_client_model->getBestBlockHash() : uint256{};
 }

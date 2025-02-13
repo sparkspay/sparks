@@ -52,7 +52,6 @@ The Sparks Core repo's [root README](/README.md) contains relevant information o
 - Source Code Documentation ***TODO***
 - [Translation Process](translation_process.md)
 - [Translation Strings Policy](translation_strings_policy.md)
-- [Travis CI](travis-ci.md)
 - [JSON-RPC Interface](JSON-RPC-interface.md)
 - [Unauthenticated REST Interface](REST-interface.md)
 - [Shared Libraries](shared-libraries.md)
@@ -69,12 +68,13 @@ The Sparks Core repo's [root README](/README.md) contains relevant information o
 - [sparks.conf Configuration File](sparks-conf.md)
 - [Files](files.md)
 - [Fuzz-testing](fuzzing.md)
+- [I2P Support](i2p.md)
+- [Init Scripts (systemd/upstart/openrc)](init.md)
+- [PSBT support](psbt.md)
 - [Reduce Memory](reduce-memory.md)
 - [Reduce Traffic](reduce-traffic.md)
 - [Tor Support](tor.md)
-- [Init Scripts (systemd/upstart/openrc)](init.md)
 - [ZMQ](zmq.md)
-- [PSBT support](psbt.md)
 
 License
 ---------------------

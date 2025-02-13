@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,15 +14,13 @@
 #include <wincrypt.h>
 #endif
 #include <logging.h>  // for LogPrintf()
+#include <randomenv.h>
+#include <support/allocators/secure.h>
 #include <sync.h>     // for Mutex
 #include <util/time.h> // for GetTimeMicros()
 
 #include <stdlib.h>
 #include <thread>
-
-#include <randomenv.h>
-
-#include <support/allocators/secure.h>
 
 #ifndef WIN32
 #include <fcntl.h>
@@ -580,16 +578,6 @@ static void ProcRand(unsigned char* out, int num, RNGLevel level) noexcept
         SeedStartup(startup_hasher, rng);
         rng.MixExtract(out, num, std::move(startup_hasher), true);
     }
-}
-
-std::chrono::microseconds GetRandMicros(std::chrono::microseconds duration_max) noexcept
-{
-    return std::chrono::microseconds{GetRand(duration_max.count())};
-}
-
-std::chrono::milliseconds GetRandMillis(std::chrono::milliseconds duration_max) noexcept
-{
-    return std::chrono::milliseconds{GetRand(duration_max.count())};
 }
 
 void GetRandBytes(unsigned char* buf, int num) noexcept { ProcRand(buf, num, RNGLevel::FAST); }

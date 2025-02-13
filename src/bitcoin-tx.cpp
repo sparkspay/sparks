@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2018 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -25,6 +25,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <stdio.h>
 
 #include <stacktraces.h>
@@ -39,6 +40,7 @@ static void SetupBitcoinTxArgs(ArgsManager &argsman)
 {
     SetupHelpOptions(argsman);
 
+    argsman.AddArg("-version", "Print version and exit", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-create", "Create new, empty TX.", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-json", "Select JSON output", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-txid", "Output only the hex-encoded transaction id of the resultant transaction.", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
@@ -88,7 +90,7 @@ static int AppInitRawTx(int argc, char* argv[])
         return true;
     }
 
-    // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
+    // Check for -chain, -testnet or -regtest parameter (Params() calls are only valid after this clause)
     try {
         SelectParams(gArgs.GetChainName());
     } catch (const std::exception& e) {
@@ -98,13 +100,16 @@ static int AppInitRawTx(int argc, char* argv[])
 
     fCreateBlank = gArgs.GetBoolArg("-create", false);
 
-    if (argc < 2 || HelpRequested(gArgs)) {
+    if (argc < 2 || HelpRequested(gArgs) || gArgs.IsArgSet("-version")) {
         // First part of help message is specific to this utility
-        std::string strUsage = PACKAGE_NAME " sparks-tx utility version " + FormatFullVersion() + "\n\n" +
-            "Usage:  sparks-tx [options] <hex-tx> [commands]  Update hex-encoded sparks transaction\n" +
-            "or:     sparks-tx [options] -create [commands]   Create hex-encoded sparks transaction\n" +
-            "\n";
-        strUsage += gArgs.GetHelpMessage();
+        std::string strUsage = PACKAGE_NAME " sparks-tx utility version " + FormatFullVersion() + "\n";
+        if (!gArgs.IsArgSet("-version")) {
+            strUsage += "\n"
+                "Usage:  sparks-tx [options] <hex-tx> [commands]  Update hex-encoded sparks transaction\n"
+                "or:     sparks-tx [options] -create [commands]   Create hex-encoded sparks transaction\n"
+                "\n";
+            strUsage += gArgs.GetHelpMessage();
+        }
 
         tfm::format(std::cout, "%s", strUsage);
 

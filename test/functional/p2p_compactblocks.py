@@ -7,7 +7,7 @@
 
 import random
 
-from test_framework.blocktools import create_block, create_coinbase
+from test_framework.blocktools import COINBASE_MATURITY, create_block, create_coinbase
 from test_framework.messages import BlockTransactions, BlockTransactionsRequest, calculate_shortid, CBlock, CBlockHeader, CInv, COutPoint, CTransaction, CTxIn, CTxOut, FromHex, HeaderAndShortIDs, msg_block, msg_blocktxn, msg_cmpctblock, msg_getblocktxn, msg_getdata, msg_getheaders, msg_headers, msg_inv, msg_sendcmpct, msg_sendheaders, msg_tx, MSG_BLOCK, MSG_CMPCT_BLOCK, NODE_NETWORK, P2PHeaderAndShortIDs, PrefilledTransaction, ToHex, NODE_HEADERS_COMPRESSED
 from test_framework.mininode import mininode_lock, P2PInterface
 from test_framework.script import CScript, OP_TRUE, OP_DROP
@@ -115,7 +115,7 @@ class CompactBlocksTest(BitcoinTestFramework):
         block = self.build_block_on_tip(self.nodes[0])
         self.test_node.send_and_ping(msg_block(block))
         assert int(self.nodes[0].getbestblockhash(), 16) == block.sha256
-        self.nodes[0].generatetoaddress(100, self.nodes[0].getnewaddress())
+        self.nodes[0].generatetoaddress(COINBASE_MATURITY, self.nodes[0].getnewaddress())
 
         total_value = block.vtx[0].vout[0].nValue
         out_value = total_value // 10
@@ -183,28 +183,21 @@ class CompactBlocksTest(BitcoinTestFramework):
         test_node.request_headers_and_sync(locator=[tip])
 
         # Now try a SENDCMPCT message with too-high version
-        sendcmpct = msg_sendcmpct()
-        sendcmpct.version = preferred_version + 1
-        sendcmpct.announce = True
-        test_node.send_and_ping(sendcmpct)
+        test_node.send_and_ping(msg_sendcmpct(announce=True, version=preferred_version+1))
         check_announcement_of_new_block(node, test_node, lambda p: "cmpctblock" not in p.last_message)
 
         # Headers sync before next test.
         test_node.request_headers_and_sync(locator=[tip])
 
         # Now try a SENDCMPCT message with valid version, but announce=False
-        sendcmpct.version = preferred_version
-        sendcmpct.announce = False
-        test_node.send_and_ping(sendcmpct)
+        test_node.send_and_ping(msg_sendcmpct(announce=False, version=preferred_version))
         check_announcement_of_new_block(node, test_node, lambda p: "cmpctblock" not in p.last_message)
 
         # Headers sync before next test.
         test_node.request_headers_and_sync(locator=[tip])
 
         # Finally, try a SENDCMPCT message with announce=True
-        sendcmpct.version = preferred_version
-        sendcmpct.announce = True
-        test_node.send_and_ping(sendcmpct)
+        test_node.send_and_ping(msg_sendcmpct(announce=True, version=preferred_version))
         check_announcement_of_new_block(node, test_node, lambda p: "cmpctblock" in p.last_message)
 
         # Try one more time (no headers sync should be needed!)
@@ -215,15 +208,11 @@ class CompactBlocksTest(BitcoinTestFramework):
         check_announcement_of_new_block(node, test_node, lambda p: "cmpctblock" in p.last_message)
 
         # Try one more time, after sending a version-1, announce=false message.
-        sendcmpct.version = preferred_version - 1
-        sendcmpct.announce = False
-        test_node.send_and_ping(sendcmpct)
+        test_node.send_and_ping(msg_sendcmpct(announce=False, version=preferred_version-1))
         check_announcement_of_new_block(node, test_node, lambda p: "cmpctblock" in p.last_message)
 
         # Now turn off announcements
-        sendcmpct.version = preferred_version
-        sendcmpct.announce = False
-        test_node.send_and_ping(sendcmpct)
+        test_node.send_and_ping(msg_sendcmpct(announce=False, version=preferred_version))
         check_announcement_of_new_block(node, test_node, lambda p: "cmpctblock" not in p.last_message and "headers" in p.last_message)
 
         # This code should be enabled after increasing cmctblk version
@@ -231,16 +220,14 @@ class CompactBlocksTest(BitcoinTestFramework):
         if to_validate and old_node is not None:
             # Verify that a peer using an older protocol version can receive
             # announcements from this node.
-            sendcmpct.version = preferred_version - 1
-            sendcmpct.announce = True
-            old_node.send_and_ping(sendcmpct)
+            old_node.send_and_ping(msg_sendcmpct(announce=True, version=preferred_version-1))
             # Header sync
             old_node.request_headers_and_sync(locator=[tip])
             check_announcement_of_new_block(node, old_node, lambda p: "cmpctblock" in p.last_message)
 
     # This test actually causes sparksd to (reasonably!) disconnect us, so do this last.
     def test_invalid_cmpctblock_message(self):
-        self.nodes[0].generate(101)
+        self.nodes[0].generate(COINBASE_MATURITY + 1)
         block = self.build_block_on_tip(self.nodes[0])
 
         cmpct_block = P2PHeaderAndShortIDs()
@@ -258,7 +245,7 @@ class CompactBlocksTest(BitcoinTestFramework):
         version = test_node.cmpct_version
         node = self.nodes[0]
         # Generate a bunch of transactions.
-        node.generate(101)
+        node.generate(COINBASE_MATURITY + 1)
         num_transactions = 25
         address = node.getnewaddress()
 
@@ -279,7 +266,7 @@ class CompactBlocksTest(BitcoinTestFramework):
         block_hash = int(node.generate(1)[0], 16)
 
         # Store the raw block in our internal format.
-        block = FromHex(CBlock(), node.getblock("%02x" % block_hash, False))
+        block = FromHex(CBlock(), node.getblock("%064x" % block_hash, False))
         for tx in block.vtx:
             tx.calc_sha256()
         block.rehash()
@@ -355,8 +342,6 @@ class CompactBlocksTest(BitcoinTestFramework):
         # request
         for announce in ["inv", "header"]:
             block = self.build_block_on_tip(node)
-            with mininode_lock:
-                test_node.last_message.pop("getdata", None)
 
             if announce == "inv":
                 test_node.send_message(msg_inv([CInv(MSG_BLOCK, block.sha256)]))
@@ -365,10 +350,8 @@ class CompactBlocksTest(BitcoinTestFramework):
                 test_node.send_header_for_blocks([block])
             else:
                 test_node.send_header_for_blocks([block])
-            wait_until(lambda: "getdata" in test_node.last_message, timeout=30, lock=mininode_lock)
-            assert_equal(len(test_node.last_message["getdata"].inv), 1)
+            test_node.wait_for_getdata([block.sha256], timeout=30)
             assert_equal(test_node.last_message["getdata"].inv[0].type, MSG_CMPCT_BLOCK)
-            assert_equal(test_node.last_message["getdata"].inv[0].hash, block.sha256)
 
             # Send back a compactblock message that omits the coinbase
             comp_block = HeaderAndShortIDs()
@@ -533,10 +516,8 @@ class CompactBlocksTest(BitcoinTestFramework):
         assert_equal(int(node.getbestblockhash(), 16), block.hashPrevBlock)
 
         # We should receive a getdata request
-        wait_until(lambda: "getdata" in test_node.last_message, timeout=10, lock=mininode_lock)
-        assert_equal(len(test_node.last_message["getdata"].inv), 1)
+        test_node.wait_for_getdata([block.sha256], timeout=10)
         assert test_node.last_message["getdata"].inv[0].type == MSG_BLOCK
-        assert_equal(test_node.last_message["getdata"].inv[0].hash, block.sha256)
 
         # Deliver the block
         test_node.send_and_ping(msg_block(block))
@@ -687,11 +668,7 @@ class CompactBlocksTest(BitcoinTestFramework):
         node = self.nodes[0]
         tip = node.getbestblockhash()
         peer.get_headers(locator=[int(tip, 16)], hashstop=0)
-
-        msg = msg_sendcmpct()
-        msg.version = peer.cmpct_version
-        msg.announce = True
-        peer.send_and_ping(msg)
+        peer.send_and_ping(msg_sendcmpct(announce=True, version=peer.cmpct_version))
 
     def test_compactblock_reconstruction_multiple_peers(self, stalling_peer, delivery_peer):
         node = self.nodes[0]

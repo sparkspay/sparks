@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2014-2016 The Bitcoin Core developers
+# Copyright (c) 2014-2020 The Bitcoin Core developers
 # Copyright (c) 2014-2022 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -8,7 +8,6 @@
 from base64 import b64encode
 from binascii import unhexlify
 from decimal import Decimal, ROUND_DOWN
-import hashlib
 from subprocess import CalledProcessError
 import inspect
 import json
@@ -25,15 +24,6 @@ from .authproxy import AuthServiceProxy, JSONRPCException
 from io import BytesIO
 
 logger = logging.getLogger("TestFramework.utils")
-
-# Util options
-##############
-
-class Options:
-    timeout_scale = 1
-
-def set_timeout_scale(_timeout_scale):
-    Options.timeout_scale = _timeout_scale
 
 # Assert functions
 ##################
@@ -211,12 +201,6 @@ def EncodeDecimal(o):
 def count_bytes(hex_string):
     return len(bytearray.fromhex(hex_string))
 
-def hash256(byte_str):
-    sha256 = hashlib.sha256()
-    sha256.update(byte_str)
-    sha256d = hashlib.sha256()
-    sha256d.update(sha256.digest())
-    return sha256d.digest()[::-1]
 
 def hex_str_to_bytes(hex_str):
     return unhexlify(hex_str.encode('ascii'))
@@ -232,7 +216,6 @@ def wait_until(predicate, *, attempts=float('inf'), timeout=float('inf'), sleep=
         timeout = 60
     timeout = timeout * timeout_factor
     attempt = 0
-    timeout *= Options.timeout_scale
     time_end = time.time() + timeout
 
     while attempt < attempts and time.time() < time_end:
@@ -347,6 +330,7 @@ def initialize_datadir(dirname, n, chain):
         f.write("[{}]\n".format(chain_name_conf_section))
         f.write("port=" + str(p2p_port(n)) + "\n")
         f.write("rpcport=" + str(rpc_port(n)) + "\n")
+        f.write("fallbackfee=0.00001\n")
         f.write("server=1\n")
         f.write("keypool=1\n")
         f.write("discover=0\n")
@@ -361,7 +345,7 @@ def initialize_datadir(dirname, n, chain):
         os.makedirs(os.path.join(datadir, 'stdout'), exist_ok=True)
     return datadir
 
-def adjust_bitcoin_conf_for_pre_17(conf_file):
+def adjust_bitcoin_conf_for_pre_16(conf_file):
     with open(conf_file,'r', encoding='utf8') as conf:
         conf_data = conf.read()
     with open(conf_file, 'w', encoding='utf8') as conf:
@@ -436,9 +420,13 @@ def get_chain_folder(datadir, chain):
         pass
     return chain
 
-def get_bip9_status(node, key):
-    info = node.getblockchaininfo()
-    return info['bip9_softforks'][key]
+def get_bip9_details(node, key):
+    """Return extra info about bip9 softfork"""
+    return node.getblockchaininfo()['softforks'][key]['bip9']
+
+def softfork_active(node, key):
+    """Return whether a softfork is active."""
+    return node.getblockchaininfo()['softforks'][key]['active']
 
 def set_node_times(nodes, t):
     for node in nodes:
@@ -625,18 +613,7 @@ def modinv(a, n):
     """Compute the modular inverse of a modulo n using the extended Euclidean
     Algorithm. See https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm#Modular_integers.
     """
-    # TODO: Change to pow(a, -1, n) available in Python 3.8
-    t1, t2 = 0, 1
-    r1, r2 = n, a
-    while r2 != 0:
-        q = r1 // r2
-        t1, t2 = t2, t1 - q * t2
-        r1, r2 = r2, r1 - q * r2
-    if r1 > 1:
-        return None
-    if t1 < 0:
-        t1 += n
-    return t1
+    return pow(a, -1, n)
 
 class TestFrameworkUtil(unittest.TestCase):
     def test_modinv(self):

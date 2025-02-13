@@ -11,6 +11,8 @@ export LC_ALL=C.UTF-8
 source ./ci/test/00_setup_env.sh
 
 # Configure sanitizers options
+export ASAN_OPTIONS=""
+export LSAN_OPTIONS="suppressions=${BASE_ROOT_DIR}/test/sanitizer_suppressions/lsan"
 export TSAN_OPTIONS="suppressions=${BASE_ROOT_DIR}/test/sanitizer_suppressions/tsan"
 export UBSAN_OPTIONS="suppressions=${BASE_ROOT_DIR}/test/sanitizer_suppressions/ubsan"
 
@@ -18,14 +20,14 @@ if [ "$BUILD_TARGET" = "arm-linux" ]; then
   source ./ci/test/00_setup_env_arm.sh
 elif [ "$BUILD_TARGET" = "win64" ]; then
   source ./ci/test/00_setup_env_win64.sh
-elif [ "$BUILD_TARGET" = "linux32" ]; then
-  source ./ci/test/00_setup_env_i686.sh
-elif [ "$BUILD_TARGET" = "linux32_ubsan" ]; then
-  source ./ci/test/00_setup_env_i686_ubsan.sh
 elif [ "$BUILD_TARGET" = "linux64" ]; then
   source ./ci/test/00_setup_env_native_qt5.sh
+elif [ "$BUILD_TARGET" = "linux64_asan" ]; then
+  source ./ci/test/00_setup_env_native_asan.sh
 elif [ "$BUILD_TARGET" = "linux64_tsan" ]; then
   source ./ci/test/00_setup_env_native_tsan.sh
+elif [ "$BUILD_TARGET" = "linux64_ubsan" ]; then
+  source ./ci/test/00_setup_env_native_ubsan.sh
 elif [ "$BUILD_TARGET" = "linux64_fuzz" ]; then
   source ./ci/test/00_setup_env_native_fuzz.sh
 elif [ "$BUILD_TARGET" = "linux64_cxx20" ]; then
@@ -34,6 +36,10 @@ elif [ "$BUILD_TARGET" = "linux64_sqlite" ]; then
   source ./ci/test/00_setup_env_native_sqlite.sh
 elif [ "$BUILD_TARGET" = "linux64_nowallet" ]; then
   source ./ci/test/00_setup_env_native_nowallet.sh
+elif [ "$BUILD_TARGET" = "linux64_valgrind" ]; then
+  source ./ci/test/00_setup_env_native_valgrind.sh
 elif [ "$BUILD_TARGET" = "mac" ]; then
   source ./ci/test/00_setup_env_mac.sh
+elif [ "$BUILD_TARGET" = "s390x" ]; then
+  source ./ci/test/00_setup_env_s390x.sh
 fi

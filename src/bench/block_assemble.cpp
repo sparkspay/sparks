@@ -6,8 +6,9 @@
 #include <consensus/consensus.h>
 #include <consensus/validation.h>
 #include <script/standard.h>
-#include <test/util.h>
+#include <test/util/mining.h>
 #include <test/util/setup_common.h>
+#include <test/util/wallet.h>
 #include <txmempool.h>
 #include <validation.h>
 
@@ -40,8 +41,8 @@ static void AssembleBlock(benchmark::Bench& bench)
         LOCK(::cs_main); // Required for ::AcceptToMemoryPool.
 
         for (const auto& txr : txs) {
-            CValidationState state;
-            bool ret{::AcceptToMemoryPool(*test_setup.m_node.mempool, state, txr, nullptr /* pfMissingInputs */, false /* bypass_limits */, /* nAbsurdFee */ 0)};
+            TxValidationState state;
+            bool ret{::AcceptToMemoryPool(test_setup.m_node.chainman->ActiveChainstate(), *test_setup.m_node.mempool, state, txr, false /* bypass_limits */, /* nAbsurdFee */ 0)};
             assert(ret);
         }
     }

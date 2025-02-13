@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2016 The Bitcoin Core developers
+# Copyright (c) 2016-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test NULLDUMMY softfork.
@@ -20,7 +20,7 @@ from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error
 
 
-NULLDUMMY_ERROR = "non-mandatory-script-verify-flag (Dummy CHECKMULTISIG argument must be zero) (code 64)"
+NULLDUMMY_ERROR = "non-mandatory-script-verify-flag (Dummy CHECKMULTISIG argument must be zero)"
 
 def trueDummy(tx):
     scriptSig = CScript(tx.vin[0].scriptSig)

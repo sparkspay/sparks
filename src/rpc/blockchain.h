@@ -7,6 +7,7 @@
 
 #include <amount.h>
 #include <context.h>
+#include <streams.h>
 #include <sync.h>
 
 #include <stdint.h>
@@ -16,6 +17,8 @@ extern RecursiveMutex cs_main;
 
 class CBlock;
 class CBlockIndex;
+class CBlockPolicyEstimator;
+class CChainState;
 class CTxMemPool;
 class ChainstateManager;
 class UniValue;
@@ -54,9 +57,20 @@ UniValue blockheaderToJSON(const CBlockIndex* tip, const CBlockIndex* blockindex
 /** Used by getblockstats to get feerates at different percentiles by weight  */
 void CalculatePercentilesBySize(CAmount result[NUM_GETBLOCKSTATS_PERCENTILES], std::vector<std::pair<CAmount, int64_t>>& scores, int64_t total_size);
 
-NodeContext& EnsureNodeContext(const CoreContext& context);
-LLMQContext& EnsureLLMQContext(const CoreContext& context);
-CTxMemPool& EnsureMemPool(const CoreContext& context);
-ChainstateManager& EnsureChainman(const CoreContext& context);
+NodeContext& EnsureAnyNodeContext(const CoreContext& context);
+CTxMemPool& EnsureMemPool(const NodeContext& node);
+CTxMemPool& EnsureAnyMemPool(const CoreContext& context);
+ChainstateManager& EnsureChainman(const NodeContext& node);
+ChainstateManager& EnsureAnyChainman(const CoreContext& context);
+CBlockPolicyEstimator& EnsureFeeEstimator(const NodeContext& node);
+CBlockPolicyEstimator& EnsureAnyFeeEstimator(const CoreContext& context);
+LLMQContext& EnsureLLMQContext(const NodeContext& node);
+LLMQContext& EnsureAnyLLMQContext(const CoreContext& context);
+
+/**
+ * Helper to create UTXO snapshots given a chainstate and a file handle.
+ * @return a UniValue map containing metadata about the snapshot.
+ */
+UniValue CreateUTXOSnapshot(NodeContext& node, CChainState& chainstate, CAutoFile& afile);
 
 #endif

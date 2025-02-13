@@ -4,11 +4,11 @@
 
 #include <test/data/bip39_vectors.json.h>
 
+#include <bip39.h>
 #include <key.h>
 #include <key_io.h>
-#include <util/strencodings.h>
 #include <test/util/setup_common.h>
-#include <bip39.h>
+#include <util/strencodings.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(bip39_vectors)
         CExtKey key;
         CExtPubKey pubkey;
 
-        key.SetSeed(seed.data(), 64);
+        key.SetSeed(seed);
         pubkey = key.Neuter();
 
         // printf("CBitcoinExtKey: %s\n", EncodeExtKey(key).c_str());

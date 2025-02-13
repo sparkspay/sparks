@@ -85,6 +85,7 @@ public:
 
     //! Simple read-only vector-like interface.
     unsigned int size() const { return (fValid ? keydata.size() : 0); }
+    const unsigned char* data() const { return keydata.data(); }
     const unsigned char* begin() const { return keydata.data(); }
     const unsigned char* end() const { return keydata.data() + size(); }
 
@@ -160,26 +161,7 @@ struct CExtKey {
     void Decode(const unsigned char code[BIP32_EXTKEY_SIZE]);
     bool Derive(CExtKey& out, unsigned int nChild) const;
     CExtPubKey Neuter() const;
-    void SetSeed(const unsigned char* seed, unsigned int nSeedLen);
-    template <typename Stream>
-    void Serialize(Stream& s) const
-    {
-        unsigned int len = BIP32_EXTKEY_SIZE;
-        ::WriteCompactSize(s, len);
-        unsigned char code[BIP32_EXTKEY_SIZE];
-        Encode(code);
-        s.write((const char *)&code[0], len);
-    }
-    template <typename Stream>
-    void Unserialize(Stream& s)
-    {
-        unsigned int len = ::ReadCompactSize(s);
-        unsigned char code[BIP32_EXTKEY_SIZE];
-        if (len != BIP32_EXTKEY_SIZE)
-            throw std::runtime_error("Invalid extended key size\n");
-        s.read((char *)&code[0], len);
-        Decode(code);
-    }
+    void SetSeed(Span<const uint8_t> seed);
 };
 
 /** Initialize the elliptic curve support. May not be called twice without calling ECC_Stop first. */

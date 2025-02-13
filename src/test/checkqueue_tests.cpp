@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2017 The Bitcoin Core developers
+// Copyright (c) 2012-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,7 +14,6 @@
 #include <condition_variable>
 #include <mutex>
 #include <thread>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -24,7 +23,7 @@ static const unsigned int QUEUE_BATCH_SIZE = 128;
 static const int SCRIPT_CHECK_THREADS = 3;
 
 struct FakeCheck {
-    bool operator()()
+    bool operator()() const
     {
         return true;
     }
@@ -45,7 +44,7 @@ struct FailingCheck {
     bool fails;
     FailingCheck(bool _fails) : fails(_fails){};
     FailingCheck() : fails(true){};
-    bool operator()()
+    bool operator()() const
     {
         return !fails;
     }
@@ -74,7 +73,7 @@ struct UniqueCheck {
 struct MemoryCheck {
     static std::atomic<size_t> fake_allocated_memory;
     bool b {false};
-    bool operator()()
+    bool operator()() const
     {
         return true;
     }
@@ -105,7 +104,7 @@ struct FrozenCleanupCheck {
     // Freezing can't be the default initialized behavior given how the queue
     // swaps in default initialized Checks.
     bool should_freeze {false};
-    bool operator()()
+    bool operator()() const
     {
         return true;
     }

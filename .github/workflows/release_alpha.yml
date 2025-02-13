@@ -13,23 +13,23 @@ jobs:
     runs-on: self-hosted
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: sparks
     - name: Checkout Gitian builder
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: devrandom/gitian-builder
         path: gitian-builder
 
     - name: Checkout detached sigs
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: sparkspay/sparks-detached-sigs
         path: sparks-detached-sigs
 
     - name: Checkout gitian sigs
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: sparkspay/gitian.sigs
         path: gitian.sigs

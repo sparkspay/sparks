@@ -314,22 +314,6 @@
 <context>
     <name>BitcoinGUI</name>
     <message>
-        <source>A fatal error occurred. Sparks Core can no longer continue safely and will quit.</source>
-        <translation>Произошла критическая ошибка. Дальнейшая безопасная работа Sparks Core невозможна, программа будет закрыта.</translation>
-    </message>
-    <message>
-        <source>Sparks Core</source>
-        <translation>Sparks Core</translation>
-    </message>
-    <message>
-        <source>Wallet</source>
-        <translation>Кошелёк</translation>
-    </message>
-    <message>
-        <source>Node</source>
-        <translation>Узел</translation>
-    </message>
-    <message>
         <source>&amp;Overview</source>
         <translation>&amp;Обзор</translation>
     </message>
@@ -572,6 +556,14 @@
         <translation>Показать информацию о %1</translation>
     </message>
     <message>
+        <source>Load PSBT...</source>
+        <translation>Загрузить PSBT...</translation>
+    </message>
+    <message>
+        <source>Load Partially Signed Sparks Transaction</source>
+        <translation>Загрузить частично подписанную транзакцию Sparks</translation>
+    </message>
+    <message>
         <source>Open debugging and diagnostic console</source>
         <translation>Открыть консоль отладки и диагностики</translation>
     </message>
@@ -760,6 +752,18 @@
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation>Кошелёк &lt;b&gt;зашифрован&lt;/b&gt; и в настоящее время &lt;b&gt;заблокирован&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>Proxy is &lt;b&gt;enabled&lt;/b&gt;: %1</source>
+        <translation>Прокси &lt;b&gt;включен&lt;/b&gt;: %1</translation>
+    </message>
+    <message>
+        <source>Original message:</source>
+        <translation>Изначальное сообщение:</translation>
+    </message>
+    <message>
+        <source>A fatal error occurred. %1 can no longer continue safely and will quit.</source>
+        <translation>Произошла критическая ошибка. Дальнейшая безопасная работа %1 невозможна, программа будет закрыта.</translation>
     </message>
 </context>
 <context>
@@ -958,6 +962,68 @@
     </message>
 </context>
 <context>
+    <name>CreateWalletActivity</name>
+    <message>
+        <source>Creating Wallet &lt;b&gt;%1&lt;/b&gt;...</source>
+        <translation>Создается кошелёк&lt;b&gt;%1&lt;/b&gt;...</translation>
+    </message>
+    <message>
+        <source>Create wallet failed</source>
+        <translation>Не удалось создать кошелёк</translation>
+    </message>
+    <message>
+        <source>Create wallet warning</source>
+        <translation>Предупреждение при создании кошелька</translation>
+    </message>
+</context>
+<context>
+    <name>CreateWalletDialog</name>
+    <message>
+        <source>Create Wallet</source>
+        <translation>Создать кошелёк</translation>
+    </message>
+    <message>
+        <source>Wallet Name</source>
+        <translation>Имя кошелька</translation>
+    </message>
+    <message>
+        <source>Wallet</source>
+        <translation>Кошелек</translation>
+    </message>
+    <message>
+        <source>Encrypt the wallet. The wallet will be encrypted with a passphrase of your choice.</source>
+        <translation>Зашифровать кошелёк. Кошелёк будет зашифрован паролем, который Вы укажете.</translation>
+    </message>
+    <message>
+        <source>Encrypt Wallet</source>
+        <translation>Зашифровать кошелёк</translation>
+    </message>
+    <message>
+        <source>Advanced Options</source>
+        <translation>Расширенные опции</translation>
+    </message>
+    <message>
+        <source>Disable private keys for this wallet. Wallets with private keys disabled will have no private keys and cannot have an HD seed or imported private keys. This is ideal for watch-only wallets.</source>
+        <translation>Запретить закрытые ключи для этого кошелька. Кошельки с запретом закрытых ключей не содержат изначальных закрытых ключей, а также не могут импортировать HD сиды и другие закрытые ключи. Это идеальный вариант для кошельков с доступом только для просмотра.</translation>
+    </message>
+    <message>
+        <source>Disable Private Keys</source>
+        <translation>Запретить закрытые ключи</translation>
+    </message>
+    <message>
+        <source>Make a blank wallet. Blank wallets do not initially have private keys or scripts. Private keys and addresses can be imported, or an HD seed can be set, at a later time.</source>
+        <translation>Создать пустой кошелёк. Пустые кошельки изначально не хранят закрытых ключей или скриптов. Можно импортировать закрытые ключи и адреса либо установить HD сид позже.</translation>
+    </message>
+    <message>
+        <source>Make Blank Wallet</source>
+        <translation>Создать пустой кошелёк</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Создать</translation>
+    </message>
+</context>
+<context>
     <name>EditAddressDialog</name>
     <message>
         <source>Edit Address</source>
@@ -1101,7 +1167,11 @@
     </message>
     <message>
         <source>When you click OK, %1 will begin to download and process the full %4 block chain (%2GB) starting with the earliest transactions in %3 when %4 initially launched.</source>
-        <translation>После нажатия OK, %1 начнет скачивать и проверять всю цепочку блоков %4 (%2GB), начиная с самых ранних транзакций %3, т.е. со времени запуска проекта %4.</translation>
+        <translation>После нажатия OK, %1 начнет скачивать и проверять всю цепочку блоков %4 (%2ГБ), начиная с самых ранних транзакций %3, т.е. со времени запуска проекта %4.</translation>
+    </message>
+    <message>
+        <source>Reverting this setting requires re-downloading the entire blockchain. It is faster to download the full chain first and prune it later. Disables some advanced features.</source>
+        <translation>Отмена этой настройки потребует скачивания всей цепочки блоков заново. Будет быстрее скачать всю цепочку блоков, а потом удалить лишнее. Отключает некоторые расширенные функции.</translation>
     </message>
     <message>
         <source>This initial synchronisation is very demanding, and may expose hardware problems with your computer that had previously gone unnoticed. Each time you run %1, it will continue downloading where it left off.</source>
@@ -1119,13 +1189,25 @@
         <source>Use a custom data directory:</source>
         <translation>Использовать другой каталог данных:</translation>
     </message>
+    <message numerus="yes">
+        <source>%n GB of free space available</source>
+        <translation><numerusform>доступно %n ГБ свободного места</numerusform><numerusform>доступно %n ГБ свободного места</numerusform><numerusform>доступно %n ГБ свободного места</numerusform><numerusform>доступно %n ГБ свободного места</numerusform></translation>
+    </message>
+    <message numerus="yes">
+        <source>(of %n GB needed)</source>
+        <translation><numerusform>(из требующихся %n ГБ)</numerusform><numerusform>(из требующихся %n ГБ)</numerusform><numerusform>(из требующихся %n ГБ)</numerusform><numerusform>(из требующихся %n ГБ)</numerusform></translation>
+    </message>
+    <message numerus="yes">
+        <source>(%n GB needed for full chain)</source>
+        <translation><numerusform>(из %n ГБ, требующегося для полной цепочки блоков)</numerusform><numerusform>(из %n ГБ, требующихся для полной цепочки блоков)</numerusform><numerusform>(из %n ГБ, требующихся для полной цепочки блоков)</numerusform><numerusform>(из %n ГБ, требующихся для полной цепочки блоков)</numerusform></translation>
+    </message>
     <message>
         <source>At least %1 GB of data will be stored in this directory, and it will grow over time.</source>
-        <translation>Как минимум %1 GB данных будет сохранено в этой папке, но со временем размер будет увеличиваться.</translation>
+        <translation>Как минимум %1 ГБ данных будет сохранено в этой папке, но со временем размер будет увеличиваться.</translation>
     </message>
     <message>
         <source>Approximately %1 GB of data will be stored in this directory.</source>
-        <translation>Приблизительно %1 GB данных будет сохранено в этой папке.</translation>
+        <translation>Приблизительно %1 ГБ данных будет сохранено в этой папке.</translation>
     </message>
     <message>
         <source>%1 will download and store a copy of the Sparks block chain.</source>
@@ -1140,16 +1222,12 @@
         <translation>Ошибка: не удалось создать указанный каталог данных "%1".</translation>
     </message>
     <message>
+        <source>Discard blocks after verification, except most recent %1 GB (prune)</source>
+        <translation>Отбросить блоки после верификации, исключая последние %1 ГБ (удалить)</translation>
+    </message>
+    <message>
         <source>Error</source>
         <translation>Ошибка</translation>
-    </message>
-    <message>
-        <source>%1 GB of free space available</source>
-        <translation>доступно %1 ГБ свободного места</translation>
-    </message>
-    <message>
-        <source>(of %1 GB needed)</source>
-        <translation>(из требующихся %1 ГБ)</translation>
     </message>
 </context>
 <context>
@@ -1330,8 +1408,8 @@
         <translation>Скрыть</translation>
     </message>
     <message>
-        <source>Sparks Core is currently syncing.  It will download headers and blocks from peers and validate them until reaching the tip of the block chain.</source>
-        <translation>Sparks Core синхронизируется.  Он будет скачивать заголовки и блоки и проверять их, пока не достигнет вершины цепочки блоков.</translation>
+        <source>%1 is currently syncing.  It will download headers and blocks from peers and validate them until reaching the tip of the block chain.</source>
+        <translation>%1 синхронизируется.  Он будет скачивать заголовки и блоки и проверять их, пока не достигнет вершины цепочки блоков.</translation>
     </message>
     <message>
         <source>Unknown. Syncing Headers (%1, %2%)...</source>
@@ -1420,7 +1498,7 @@
     </message>
     <message>
         <source>MiB</source>
-        <translation>MiB</translation>
+        <translation>МиБ</translation>
     </message>
     <message>
         <source>Whether to keep the specified custom change address or not.</source>
@@ -1479,6 +1557,14 @@
         <translation>Включить &amp;мульти-сессионное перемешивания</translation>
     </message>
     <message>
+        <source>Use this many separate masternodes in parallel to mix funds.&lt;br/&gt;Note: You must use this feature carefully.&lt;br/&gt;Make sure you always have recent wallet (auto)backup in a safe place!</source>
+        <translation>Использовать такое количество мастернод для параллельного перемешивания.&lt;br/&gt;Примечание: Используйте с осторожностью.&lt;br/&gt;Убедитесь, что у вас всегда есть (автоматический) бэкап в безопасном месте!</translation>
+    </message>
+    <message>
+        <source>Parallel sessions</source>
+        <translation>Параллельные сессии</translation>
+    </message>
+    <message>
         <source>Mixing rounds</source>
         <translation>Раунды перемешивания</translation>
     </message>
@@ -1489,6 +1575,18 @@
     <message>
         <source>Target balance</source>
         <translation>Целевой баланс</translation>
+    </message>
+    <message>
+        <source>Inputs per denomination</source>
+        <translation>Количество входов каждого номинала</translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation>Цель</translation>
+    </message>
+    <message>
+        <source>Maximum</source>
+        <translation>Максимум</translation>
     </message>
     <message>
         <source>Automatically open the Sparks Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
@@ -1519,8 +1617,8 @@
         <translation>Показывает, используется ли указанный по умолчанию SOCKS5 прокси для подключения к пирам этого типа сети.</translation>
     </message>
     <message>
-        <source>Use separate SOCKS&amp;5 proxy to reach peers via Tor hidden services:</source>
-        <translation>Использовать отдельный SOCKS&amp;5 прокси для подключения через Tor:</translation>
+        <source>Options set in this dialog are overridden by the command line or in the configuration file:</source>
+        <translation>Настройки, указанные в этом диалоге, перекрываются командной строкой либо файлом настроек:</translation>
     </message>
     <message>
         <source>Hide the icon from the system tray.</source>
@@ -1611,10 +1709,6 @@
         <translation>Tor</translation>
     </message>
     <message>
-        <source>Connect to the Sparks network through a separate SOCKS5 proxy for Tor hidden services.</source>
-        <translation>Подключаться к сети Sparks через отдельный прокси SOCKS5 для скрытых сервисов Tor.</translation>
-    </message>
-    <message>
         <source>Show only a tray icon after minimizing the window.</source>
         <translation>После сворачивания окна показывать только иконку в системном лотке.</translation>
     </message>
@@ -1629,6 +1723,14 @@
     <message>
         <source>&amp;Display</source>
         <translation>О&amp;тображение</translation>
+    </message>
+    <message>
+        <source>Connect to the Sparks network through a separate SOCKS5 proxy for Tor onion services.</source>
+        <translation>Подключаться к сети Sparks через отдельный прокси SOCKS5 для сервисов Tor.</translation>
+    </message>
+    <message>
+        <source>Use separate SOCKS&amp;5 proxy to reach peers via Tor onion services:</source>
+        <translation>Использовать отдельный SOCKS&amp;5 прокси для подключения через Tor:</translation>
     </message>
     <message>
         <source>User Interface &amp;language:</source>
@@ -1949,6 +2051,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Cannot process payment request as BIP70 is no longer supported.</source>
         <translation>Невозможно обработать запрос платежа так как BIP70 больше не поддерживается.</translation>
+    </message>
+    <message>
+        <source>Due to discontinued support, you should request the merchant to provide you with a BIP21 compatible URI or use a wallet that does continue to support BIP70.</source>
+        <translation>В связи с прекращением поддержки следует запросить у мерчанта URI, совместимый с BIP21, или использовать кошелек, который продолжает поддерживать BIP70.</translation>
     </message>
     <message>
         <source>Invalid payment address %1</source>
@@ -2282,10 +2388,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Цепочка блоков</translation>
     </message>
     <message>
-        <source>Number of Masternodes</source>
-        <translation>Количество Мастернод</translation>
-    </message>
-    <message>
         <source>Memory Pool</source>
         <translation>Пул памяти</translation>
     </message>
@@ -2382,6 +2484,30 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Папка с данными</translation>
     </message>
     <message>
+        <source>To specify a non-default location of the data directory use the '%1' option.</source>
+        <translation>Чтобы указать нестандартное расположение папки с данными, используйте опцию '%1'.</translation>
+    </message>
+    <message>
+        <source>Blocksdir</source>
+        <translation>Папка с блоками</translation>
+    </message>
+    <message>
+        <source>To specify a non-default location of the blocks directory use the '%1' option.</source>
+        <translation>Чтобы указать нестандартное расположение папки с блоками, используйте опцию '%1'.</translation>
+    </message>
+    <message>
+        <source>Number of regular Masternodes</source>
+        <translation>Количество обычных Мастернод</translation>
+    </message>
+    <message>
+        <source>Number of EvoNodes</source>
+        <translation>Количество нод Evo</translation>
+    </message>
+    <message>
+        <source>Current block height</source>
+        <translation>Текущее количество блоков</translation>
+    </message>
+    <message>
         <source>Last block hash</source>
         <translation>Хеш последнего блока</translation>
     </message>
@@ -2460,14 +2586,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>&amp;Wallet Repair</source>
         <translation>Ремонт &amp;кошелька</translation>
-    </message>
-    <message>
-        <source>Upgrade wallet format</source>
-        <translation>Обновить формат кошелька</translation>
-    </message>
-    <message>
-        <source>-upgradewallet: Upgrade wallet to latest format on startup. (Note: this is NOT an update of the wallet itself!)</source>
-        <translation>-upgradewallet: Обновить формат кошелька при следующем запуске. (Примечание: обновление непосредственно клиент кошелька НЕ выполняется!)</translation>
     </message>
     <message>
         <source>Wallet repair options.</source>
@@ -2578,6 +2696,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Исходящие</translation>
     </message>
     <message>
+        <source>Outbound block-relay</source>
+        <translation>Исходящая ретрансляция блоков</translation>
+    </message>
+    <message>
         <source>Yes</source>
         <translation>Да</translation>
     </message>
@@ -2619,6 +2741,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the Sparks network.</source>
         <translation>Необязательное сообщение для запроса платежа, которое будет показано при открытии запроса.&lt;br&gt;Обратите внимание: сообщение не будет отправлено вместе с платежом через сеть Sparks.</translation>
+    </message>
+    <message>
+        <source>An optional label to associate with the new receiving address (used by you to identify an invoice).  It is also attached to the payment request.</source>
+        <translation>Необязательный ярлык, который можно связать с новым адресом получения (для идентификации счета). Он также прикреплен к платежному запросу.</translation>
     </message>
     <message>
         <source>Use this form to request payments. All fields are &lt;b&gt;optional&lt;/b&gt;.</source>
@@ -2850,8 +2976,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Выбрать...</translation>
     </message>
     <message>
-        <source>collapse fee-settings</source>
-        <translation>свернуть настройки комиссии</translation>
+        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
+        <translation>Когда объем транзакций меньше, чем место в блоках, майнеры, а также узлы ретрансляции могут установить минимальную комиссию. Платить минимальную комиссию вполне нормально, но следует учитывать, что это может привести к тому, что транзакция никогда не будет подтверждена. В случае, если спрос на Sparks-транзакции будет превышать спрос, который может обработать сеть.</translation>
+    </message>
+    <message>
+        <source>A too low fee might result in a never confirming transaction (read the tooltip)</source>
+        <translation>Слишком низкая комиссия может привести к тому, что транзакция не будет подтверждена (читайте всплывающую подсказку)</translation>
     </message>
     <message>
         <source>Confirmation time target:</source>
@@ -2950,6 +3080,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>%1 (блоков: %2)</translation>
     </message>
     <message>
+        <source>This will produce a Partially Signed Transaction (PSBT) which you can save or copy and then sign with e.g. an offline %1 wallet, or a PSBT-compatible hardware wallet.</source>
+        <translation>В результате будет создана частично подписанная транзакция (PSBT), которую можно сохранить или скопировать и затем подписать, например, на офлайн-кошельке %1 или на аппаратном кошельке, совместимом с PSBT.</translation>
+    </message>
+    <message>
         <source>using</source>
         <translation>используя</translation>
     </message>
@@ -2982,12 +3116,24 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Подтвердить отправку с помощью %1</translation>
     </message>
     <message>
+        <source>Cr&amp;eate Unsigned</source>
+        <translation>Создать неподписанную</translation>
+    </message>
+    <message>
+        <source>Creates a Partially Signed Bitcoin Transaction (PSBT) for use with e.g. an offline %1 wallet, or a PSBT-compatible hardware wallet.</source>
+        <translation>Создает частично подписанную транзакцию Bitcoin (PSBT) для использования, например, с автономным кошельком %1 или аппаратным кошельком, совместимым с PSBT.</translation>
+    </message>
+    <message>
         <source> from wallet '%1'</source>
         <translation>из кошелька '%1'</translation>
     </message>
     <message>
         <source>%1 to '%2'</source>
         <translation>%1 на '%2'</translation>
+    </message>
+    <message>
+        <source>Do you want to draft this transaction?</source>
+        <translation>Вы хотите создать шаблон данной транзакции?</translation>
     </message>
     <message>
         <source>%1 funds only</source>
@@ -3018,8 +3164,44 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Внимание: Использование транзакции %1 с %2 и более входами может повредить вашей приватности и потому не рекомендуется</translation>
     </message>
     <message>
+        <source>Click to learn more</source>
+        <translation>Нажмите, чтобы узнать больше</translation>
+    </message>
+    <message>
+        <source>Total Amount</source>
+        <translation>Полная сумма</translation>
+    </message>
+    <message>
+        <source>or</source>
+        <translation>или</translation>
+    </message>
+    <message>
+        <source>To review recipient list click "Show Details..."</source>
+        <translation>Для просмотра списка получателей нажмите кнопку "Show Details...".</translation>
+    </message>
+    <message>
         <source>Confirm send coins</source>
         <translation>Подтвердите отправку монет</translation>
+    </message>
+    <message>
+        <source>Confirm transaction proposal</source>
+        <translation>Подтвердить предложение по сделке</translation>
+    </message>
+    <message>
+        <source>Create Unsigned</source>
+        <translation>Создать неподписанную</translation>
+    </message>
+    <message>
+        <source>Save Transaction Data</source>
+        <translation>Сохранить данные транзакции</translation>
+    </message>
+    <message>
+        <source>Partially Signed Transaction (Binary) (*.psbt)</source>
+        <translation>Частично подписанная транзакция (двоичная) (*.psbt)</translation>
+    </message>
+    <message>
+        <source>PSBT saved</source>
+        <translation>PSBT сохранен</translation>
     </message>
     <message>
         <source>Send</source>
@@ -3299,6 +3481,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Разблокировка кошелька была отменена.</translation>
     </message>
     <message>
+        <source>No error</source>
+        <translation>Нет ошибки</translation>
+    </message>
+    <message>
         <source>Private key for the entered address is not available.</source>
         <translation>Закрытый ключ для введённого адреса недоступен.</translation>
     </message>
@@ -3329,13 +3515,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Message verified.</source>
         <translation>Сообщение проверено.</translation>
-    </message>
-</context>
-<context>
-    <name>SplashScreen</name>
-    <message>
-        <source>[testnet]</source>
-        <translation>[тестовая сеть]</translation>
     </message>
 </context>
 <context>
@@ -3873,7 +4052,30 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
+    <name>WalletController</name>
+    <message>
+        <source>Close wallet</source>
+        <translation>Закрыть кошелёк</translation>
+    </message>
+    <message>
+        <source>Are you sure you wish to close the wallet &lt;i&gt;%1&lt;/i&gt;?</source>
+        <translation>Вы уверены, что хотите закрыть кошелёк &lt;i&gt;%1&lt;/i&gt;?</translation>
+    </message>
+    <message>
+        <source>Closing the wallet for too long can result in having to resync the entire chain if pruning is enabled.</source>
+        <translation>Закрытие кошелька на слишком долгое время может привести к необходимости скачивания всей цепочки с самого начала, если у вас включено удаление блоков.</translation>
+    </message>
+</context>
+<context>
     <name>WalletFrame</name>
+    <message>
+        <source>No wallet has been loaded.
+Go to File &gt; Open Wallet to load a wallet.
+- OR -</source>
+        <translation>Не загружен ни один кошелек.
+Перейдите в меню Файл &gt; Открыть кошелек.
+- ИЛИ -</translation>
+    </message>
     <message>
         <source>Create a new wallet</source>
         <translation>Создать новый кошелёк</translation>
@@ -3899,6 +4101,38 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Selected amount:</source>
         <translation>Сумма выбранных:</translation>
+    </message>
+    <message>
+        <source>Load Transaction Data</source>
+        <translation>Загрузить данные транзакции</translation>
+    </message>
+    <message>
+        <source>Partially Signed Transaction (*.psbt)</source>
+        <translation>Частично подписанная транзакция (*.psbt)</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>Ошибка</translation>
+    </message>
+    <message>
+        <source>PSBT file must be smaller than 100 MiB</source>
+        <translation>Файл PSBT должен быть меньше 100 МиБ</translation>
+    </message>
+    <message>
+        <source>Unable to decode PSBT file</source>
+        <translation>Невозможно декодировать файл PSBT</translation>
+    </message>
+    <message>
+        <source>Would you like to send this transaction?</source>
+        <translation>Вы хотите отправить данную транзакцию?</translation>
+    </message>
+    <message>
+        <source>Success</source>
+        <translation>Успешно</translation>
+    </message>
+    <message>
+        <source>PSBT copied</source>
+        <translation>PSBT скопирован</translation>
     </message>
     <message>
         <source>Backup Wallet</source>
@@ -3940,20 +4174,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Это пре-релизная тестовая сборка - используйте на свой страх и риск - не используйте для добычи или торговых приложений</translation>
     </message>
     <message>
-        <source>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</source>
-        <translation>Внимание: похоже, что в сети нет полного согласия! Некоторый майнеры, возможно, испытывают проблемы.</translation>
-    </message>
-    <message>
         <source>Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.</source>
         <translation>Внимание: обнаружено несогласие с подключенными участниками! Вам или другим участникам, возможно, следует обновиться.</translation>
     </message>
     <message>
         <source>Already have that input.</source>
         <translation>Уже есть этот вход.</translation>
-    </message>
-    <message>
-        <source>Cannot downgrade wallet</source>
-        <translation>Не удаётся понизить версию кошелька</translation>
     </message>
     <message>
         <source>Collateral not valid.</source>
@@ -4026,6 +4252,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s' (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
         <translation>Некорректная сумма для -maxtxfee=&lt;amount&gt;: '%s' (должна быть минимум как комиссия minrelay - %s, чтобы предотвратить застревание транзакций)</translation>
+    </message>
+    <message>
+        <source>SQLiteDatabase: Unknown sqlite wallet schema version %d. Only version %d is supported</source>
+        <translation>SQLiteDatabase: Неизвестная версия %d схемы кошелька sqlite. Поддерживается только версия %d</translation>
     </message>
     <message>
         <source>Transaction index can't be disabled with governance validation enabled. Either start with -disablegovernance command line switch or enable transaction index.</source>
@@ -4106,14 +4336,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Loading banlist...</source>
         <translation>Загрузка списка заблокированных...</translation>
-    </message>
-    <message>
-        <source>Loading fulfilled requests cache...</source>
-        <translation>Загрузка кэша выполненных запросов...</translation>
-    </message>
-    <message>
-        <source>Loading masternode cache...</source>
-        <translation>Загрузка кэша мастернод...</translation>
     </message>
     <message>
         <source>Lock is already in place.</source>
@@ -4229,7 +4451,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>Prune configured below the minimum of %d MiB.  Please use a higher number.</source>
-        <translation>Удаление блоков настроено ниже допустимого предела в %d MiB.  Пожалуйста, укажите большее число.</translation>
+        <translation>Удаление блоков настроено ниже допустимого предела в %d МиБ.  Пожалуйста, укажите большее число.</translation>
     </message>
     <message>
         <source>Prune: last wallet synchronisation goes beyond pruned data. You need to -reindex (download the whole blockchain again in case of pruned node)</source>
@@ -4285,7 +4507,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>-maxmempool must be at least %d MB</source>
-        <translation>-maxmempool должно быть минимум %d MB</translation>
+        <translation>-maxmempool должно быть минимум %d МБ</translation>
     </message>
     <message>
         <source>Automatic backups disabled</source>
@@ -4352,6 +4574,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Ошибка проверки базы данных</translation>
     </message>
     <message>
+        <source>Ignoring duplicate -wallet %s.</source>
+        <translation>Игнорирование дублирования -wallet %s.</translation>
+    </message>
+    <message>
         <source>Invalid P2P permission: '%s'</source>
         <translation>Некорректные разрешения P2P : '%s'</translation>
     </message>
@@ -4366,26 +4592,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>It has been replaced by -disablegovernance.</source>
         <translation>Опция заменена на -disablegovernance.</translation>
-    </message>
-    <message>
-        <source>Its replacement -disablegovernance has been forced instead.</source>
-        <translation>Взамен активирована опция -disablegovernance.</translation>
-    </message>
-    <message>
-        <source>Loading block index...</source>
-        <translation>Загрузка индекса блоков...</translation>
-    </message>
-    <message>
-        <source>Loading governance cache...</source>
-        <translation>Загрузка кэша управления...</translation>
-    </message>
-    <message>
-        <source>Loading sporks cache...</source>
-        <translation>Загрузка кэша спорков...</translation>
-    </message>
-    <message>
-        <source>Loading wallet... (%3.2f %%)</source>
-        <translation>Загрузка кошелька... (%3.2f %%)</translation>
     </message>
     <message>
         <source>Loading wallet...</source>
@@ -4434,6 +4640,26 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Pruning blockstore...</source>
         <translation>Удаление старых блоков...</translation>
+    </message>
+    <message>
+        <source>SQLiteDatabase: Failed to execute statement to verify database: %s</source>
+        <translation>SQLiteDatabase: Не удалось выполнить запрос для проверки базы данных: %s</translation>
+    </message>
+    <message>
+        <source>SQLiteDatabase: Failed to prepare statement to verify database: %s</source>
+        <translation>SQLiteDatabase: Не удалось подготовить запрос для проверки базы данных: %s</translation>
+    </message>
+    <message>
+        <source>SQLiteDatabase: Failed to read database verification error: %s</source>
+        <translation>SQLiteDatabase: Ошибка чтения базы данных при проверке: %s</translation>
+    </message>
+    <message>
+        <source>SQLiteDatabase: Unexpected application id. Expected %u, got %u</source>
+        <translation>SQLiteDatabase: Неожиданный id приложения. Ожидалось %u, получено %u</translation>
+    </message>
+    <message>
+        <source>Section [%s] is not recognized.</source>
+        <translation>Секция [%s] не распознана.</translation>
     </message>
     <message>
         <source>Specified -walletdir "%s" does not exist</source>
@@ -4596,14 +4822,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Внимание: кошелек повреждён, данные спасены! Оригинальный %s сохранён как %s в %s. Если Ваш баланс или транзакции некорректны, Вы должны восстановить файл из резервной копии.</translation>
     </message>
     <message>
-        <source>%d of last 100 blocks have unexpected version</source>
-        <translation>%d из последних 100 блоков имеют неожиданную версию</translation>
-    </message>
-    <message>
-        <source>%s corrupt, salvage failed</source>
-        <translation>%s повреждён, спасение данных не удалось</translation>
-    </message>
-    <message>
         <source>%s is not a valid backup folder!</source>
         <translation>%s не является корректной директорией для резервной копии!</translation>
     </message>
@@ -4684,6 +4902,14 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Несоответствие размера входов и выходов.</translation>
     </message>
     <message>
+        <source>Invalid '%s'. Allowed values: 128, 160, 192, 224, 256.</source>
+        <translation>'%s' недопустимо. Разрешённые значения: 128, 160, 192, 224, 256.</translation>
+    </message>
+    <message>
+        <source>Invalid -i2psam address or hostname: '%s'</source>
+        <translation>Неверный адрес или имя хоста -i2psam: '%s'</translation>
+    </message>
+    <message>
         <source>Invalid -onion address or hostname: '%s'</source>
         <translation>Неверный адрес или имя хоста -onion: '%s'</translation>
     </message>
@@ -4702,6 +4928,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Loading P2P addresses...</source>
         <translation>Загрузка P2P адресов...</translation>
+    </message>
+    <message>
+        <source>Prune mode is incompatible with -coinstatsindex.</source>
+        <translation>Режим удаления блоков несовместим с -coinstatsindex.</translation>
     </message>
     <message>
         <source>Reducing -maxconnections from %d to %d, because of system limitations.</source>
@@ -4752,12 +4982,20 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Исходный код доступен по адресу %s.</translation>
     </message>
     <message>
+        <source>The specified config file %s does not exist</source>
+        <translation>Указанный файл настроек %s не существует</translation>
+    </message>
+    <message>
         <source>The transaction amount is too small to pay the fee</source>
         <translation>Сумма транзакции слишком мала для оплаты комиссии</translation>
     </message>
     <message>
         <source>This is experimental software.</source>
         <translation>Это экспериментальное ПО.</translation>
+    </message>
+    <message>
+        <source>Topping up keypool...</source>
+        <translation>Пополняем пул ключей...</translation>
     </message>
     <message>
         <source>Transaction amount too small</source>
@@ -4834,6 +5072,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Warning: incorrect parameter %s, path must exist! Using default path.</source>
         <translation>Внимание: некорректный параметр %s, путь должен существовать! Будет использован путь по умолчанию.</translation>
+    </message>
+    <message>
+        <source>Wiping wallet transactions...</source>
+        <translation>Стираем транзакции из кошелька...</translation>
     </message>
     <message>
         <source>You are starting with governance validation disabled.</source>

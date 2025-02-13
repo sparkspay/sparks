@@ -9,10 +9,14 @@
 #include <ctpl_stl.h>
 #include <net.h>
 
+#include <atomic>
+#include <map>
 #include <optional>
 
-class CBLSWorker;
 class CBlockIndex;
+class CBLSWorker;
+class CChainState;
+class PeerManager;
 
 namespace llmq
 {
@@ -45,7 +49,7 @@ public:
     using BinaryMessage = std::pair<NodeId, std::shared_ptr<CDataStream>>;
 
 private:
-    mutable CCriticalSection cs;
+    mutable RecursiveMutex cs;
     const int invType;
     size_t maxMessagesPerNode GUARDED_BY(cs);
     std::list<BinaryMessage> pendingMessages GUARDED_BY(cs);
@@ -106,16 +110,18 @@ private:
     friend class CDKGSessionManager;
 
 private:
-    mutable CCriticalSection cs;
+    mutable RecursiveMutex cs;
     std::atomic<bool> stopRequested{false};
 
-    const Consensus::LLMQParams params;
-    CConnman& connman;
-    const int quorumIndex;
     CBLSWorker& blsWorker;
-    CDKGSessionManager& dkgManager;
+    CChainState& m_chainstate;
+    CConnman& connman;
     CDKGDebugManager& dkgDebugManager;
+    CDKGSessionManager& dkgManager;
     CQuorumBlockProcessor& quorumBlockProcessor;
+    const Consensus::LLMQParams params;
+    const std::unique_ptr<PeerManager>& m_peerman;
+    const int quorumIndex;
 
     QuorumPhase phase GUARDED_BY(cs) {QuorumPhase::Idle};
     int currentHeight GUARDED_BY(cs) {-1};
@@ -123,6 +129,7 @@ private:
 
     std::unique_ptr<CDKGSession> curSession;
     std::thread phaseHandlerThread;
+    std::string m_thread_name;
 
     // Do not guard these, they protect their internals themselves
     CDKGPendingMessages pendingContributions;
@@ -131,8 +138,9 @@ private:
     CDKGPendingMessages pendingPrematureCommitments;
 
 public:
-    CDKGSessionHandler(const Consensus::LLMQParams& _params, CBLSWorker& _blsWorker, CDKGSessionManager& _dkgManager,
-                       CDKGDebugManager& _dkgDebugManager, CQuorumBlockProcessor& _quorumBlockProcessor, CConnman& _connman, int _quorumIndex);
+    CDKGSessionHandler(CBLSWorker& _blsWorker, CChainState& chainstate, CConnman& _connman, CDKGDebugManager& _dkgDebugManager,
+                       CDKGSessionManager& _dkgManager, CQuorumBlockProcessor& _quorumBlockProcessor,
+                       const Consensus::LLMQParams& _params, const std::unique_ptr<PeerManager>& peerman, int _quorumIndex);
     ~CDKGSessionHandler() = default;
 
     void UpdatedBlockTip(const CBlockIndex *pindexNew);
