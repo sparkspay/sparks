@@ -4517,7 +4517,7 @@ void CWallet::AutoCombineDust()
     std::map<CTxDestination, std::vector<COutput> > mapCoinsByAddress =
             AvailableCoinsByAddress(true, nAutoCombineThreshold);
 
-    CAmount nAutoCombineThresholdMargin = nAutoCombineThreshold + ((nAutoCombineThreshold / 100) * ValueFromAmount(nAutoCombineSafemargin).get_real());
+    CAmount nAutoCombineThresholdMargin = nAutoCombineThreshold + (nAutoCombineThreshold * ValueFromAmount(nAutoCombineSafemargin).get_real());
     std::cout << "nAutoCombineThresholdMargin : " << nAutoCombineThresholdMargin << std::endl;
     //coins are sectioned by address. This combination code only wants to combine inputs that belong to the same address
     for (const auto& entry : mapCoinsByAddress) {
@@ -4580,8 +4580,8 @@ void CWallet::AutoCombineDust()
         CAmount nFeeRet = 0;
         int nChangePosInOut = -1;
 
-        // 10% safety margin to avoid "Insufficient funds" errors
-        vecSend[0].nAmount = nTotalRewardsValue - ((nTotalRewardsValue / 100) * ValueFromAmount(nAutoCombineSafemargin).get_real());
+        // Safety margin to avoid "Insufficient funds" errors
+        vecSend[0].nAmount = nTotalRewardsValue - (nTotalRewardsValue * ValueFromAmount(nAutoCombineSafemargin).get_real());
 
         {
             // For now, CreateTransaction requires cs_main lock.
@@ -4597,7 +4597,7 @@ void CWallet::AutoCombineDust()
         if (!maxSize && nTotalRewardsValue < nAutoCombineThresholdMargin && nFeeRet > 0)
             continue;
 
-        CValidationState state;
+        TxValidationState state;
         CommitTransaction(wtx, {}, {});
 
         LogPrintf("AutoCombineDust sent transaction\n");
