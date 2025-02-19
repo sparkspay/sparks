@@ -195,7 +195,7 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, TxValidationState& state, 
         
         // Check for banned inputs
         if (nSpendHeight >= consensusParams.nSPKHeight && IsInputBanned(consensusParams, tx.vin[i], coin.out))  {
-            return state.Invalid(ValidationInvalidReason::CONSENSUS, false, REJECT_INVALID, "bad-txns-in-banned");
+            return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-txns-in-banned");
         }
         
     }

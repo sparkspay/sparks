@@ -1684,7 +1684,7 @@ void datatx_publish_help(CWallet* const pwallet)
     );
 }
 
-UniValue datatx_publish(const JSONRPCRequest& request)
+UniValue datatx_publish(const JSONRPCRequest& request, const ChainstateManager& chainman)
 {
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
     CWallet* const pwallet = wallet.get();
@@ -1710,7 +1710,7 @@ UniValue datatx_publish(const JSONRPCRequest& request)
 
     FundSpecialTx(pwallet, tx, dtx, feeSourceDest);
     SetTxPayload(tx, dtx);
-    return SignAndSendSpecialTx(request, tx);
+    return SignAndSendSpecialTx(request, chainman, tx);
 }
 #endif
 
@@ -1786,6 +1786,8 @@ UniValue datatx_get(const JSONRPCRequest& request)
 
 UniValue datatx(const JSONRPCRequest& request)
 {
+    const ChainstateManager& chainman = EnsureAnyChainman(request.context);
+
     if (request.fHelp && request.params.empty()) {
         datatx_help();
     }
@@ -1797,7 +1799,7 @@ UniValue datatx(const JSONRPCRequest& request)
 
 #ifdef ENABLE_WALLET
     if (command == "publish") {
-        return datatx_publish(request);
+        return datatx_publish(request, chainman);
     }
 #endif
     if (command == "get") {

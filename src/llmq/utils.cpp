@@ -995,9 +995,8 @@ bool IsQuorumTypeEnabledInternal(Consensus::LLMQType llmqType, const CQuorumMana
             bool fHaveDIP0024Quorums = optHaveDIP0024Quorums.has_value() ? *optHaveDIP0024Quorums
                                                                          : !qman.ScanQuorums(
                             consensusParams.llmqTypeDIP0024InstantSend, pindex, 1).empty();
-            return !fHaveDIP0024Quorums
+            return !fHaveDIP0024Quorums;
         }
-        case Consensus::LLMQType::LLMQ_TEST:
         case Consensus::LLMQType::LLMQ_TEST_PLATFORM:
         case Consensus::LLMQType::LLMQ_400_60:
         case Consensus::LLMQType::LLMQ_400_85:
@@ -1013,7 +1012,7 @@ bool IsQuorumTypeEnabledInternal(Consensus::LLMQType llmqType, const CQuorumMana
             if (!f_dip0008_Active) {
                 return false;
             }
-            break;    
+            return true;    
         case Consensus::LLMQType::LLMQ_TEST_V17: {
             return llmq_versionbitscache.State(pindex, consensusParams, Consensus::DEPLOYMENT_TESTDUMMY) == ThresholdState::ACTIVE;
         }
@@ -1049,19 +1048,7 @@ std::vector<Consensus::LLMQType> GetEnabledQuorumTypes(gsl::not_null<const CBloc
 }
 
 // created for sparks
-std::vector<Consensus::LLMQParams> GetEnabledQuorums(const CBlockIndex* pindex)
-{
-    std::vector<Consensus::LLMQParams> ret;
-    for (const auto& p : Params().GetConsensus().llmqs) {
-        if (IsQuorumTypeEnabled(p.type, *llmq::quorumManager, pindex)) {
-            ret.push_back(p);
-        }
-    }
-    return ret;
-}
-
-// created for sparks
-std::vector<Consensus::LLMQParams> GetEnabledQuorums(const CBlockIndex* pindex)
+std::vector<Consensus::LLMQParams> GetEnabledQuorums(gsl::not_null<const CBlockIndex*> pindex)
 {
     std::vector<Consensus::LLMQParams> ret;
     for (const auto& p : Params().GetConsensus().llmqs) {

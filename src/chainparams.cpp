@@ -406,7 +406,7 @@ public:
         consensus.DIP0003EnforcementHeight = 31;
         consensus.DIP0003EnforcementHash = uint256();
         consensus.DIP0008Height = 30; // 000007bb435426f8e0b2b8bbec7d81f880233192ace7ad18e5bb5f32c467df4f
-        consensus.BRRHeight = 0; // 0000001537dbfd09dea69f61c1f8b2afa27c8dc91c934e144797761c9f10367b
+        consensus.BRRHeight = 140; // 0000001537dbfd09dea69f61c1f8b2afa27c8dc91c934e144797761c9f10367b
         consensus.DIP0020Height = 140; // 00000ccdb0f5e0cb489dd14698e09489c79d0dcd8412ae263d3b9da59f2fbcfc
         consensus.IPV6MNHeight = 30; // 000007bb435426f8e0b2b8bbec7d81f880233192ace7ad18e5bb5f32c467df4f
         consensus.DATATXHeight = 140; // 00000ccdb0f5e0cb489dd14698e09489c79d0dcd8412ae263d3b9da59f2fbcfc

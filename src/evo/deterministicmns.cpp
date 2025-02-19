@@ -769,7 +769,7 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, gsl::no
             bool isv19Active = llmq::utils::IsV19Active(pindexPrev);
             if (!isv19Active) {
                 expectedCollateral = 25000 * COIN; //Old regular masternode collateral
-            } else if (isv19Active && pindexPrev->nHeight < llmq::utils::V19ActivationHeight(pindexPrev) && proTx.nType == MnType::Regular){
+            } else if (isv19Active && pindexPrev->nHeight < Params().GetConsensus().V19Height && proTx.nType == MnType::Regular){
                 expectedCollateral = 25000 * COIN; //Old regular masternode collateral
             } else {
                 expectedCollateral = GetMnType(proTx.nType).collat_amount;
@@ -1122,7 +1122,7 @@ bool CDeterministicMNManager::IsProTxWithCollateral(const CTransactionRef& tx, u
     bool isv19Active = llmq::utils::IsV19Active(::ChainActive().Tip());
     if (!isv19Active) {
         expectedCollateral = 25000 * COIN; //Old regular masternode collateral
-    } else if (isv19Active && ::ChainActive().Height() < llmq::utils::V19ActivationHeight(::ChainActive().Tip()) && proTx.nType == MnType::Regular){
+    } else if (isv19Active && ::ChainActive().Height() < Params().GetConsensus().V19Height && proTx.nType == MnType::Regular){
         expectedCollateral = 25000 * COIN; //Old regular masternode collateral
     } else {
         expectedCollateral = GetMnType(proTx.nType).collat_amount;
@@ -1459,7 +1459,7 @@ static bool CheckService(const ProTx& proTx, TxValidationState& state, const CBl
     bool fIPV6_MNActive;
     {
         LOCK(cs_main);
-        fIPV6_MNActive = VersionBitsState(pindexPrev, Params().GetConsensus(), Consensus::DEPLOYMENT_IPV6_MN, versionbitscache) == ThresholdState::ACTIVE;
+        fIPV6_MNActive = pindexPrev->nHeight + 1 >= Params().GetConsensus().IPV6MNHeight;
     }
 
     if (!proTx.addr.IsIPv4() && !(fIPV6_MNActive && proTx.addr.IsIPv6())) {
@@ -1571,7 +1571,7 @@ bool CheckProRegTx(const CTransaction& tx, gsl::not_null<const CBlockIndex*> pin
     bool isv19Active = llmq::utils::IsV19Active(pindexPrev);
     if (!isv19Active) {
         expectedCollateral = 25000 * COIN; //Old regular masternode collateral
-    } else if (isv19Active && pindexPrev->nHeight < llmq::utils::V19ActivationHeight(pindexPrev) && ptx.nType == MnType::Regular){
+    } else if (isv19Active && pindexPrev->nHeight < Params().GetConsensus().V19Height && ptx.nType == MnType::Regular){
         expectedCollateral = 25000 * COIN; //Old regular masternode collateral
     } else {
         expectedCollateral = GetMnType(ptx.nType).collat_amount;

@@ -11,7 +11,7 @@
 class CBlock;
 class CBlockIndex;
 class CCoinsViewCache;
-class CValidationState;
+class TxValidationState;
 
 namespace llmq {
 class CQuorumBlockProcessor;
@@ -44,6 +44,6 @@ public:
 
 };
 
-bool CheckDataTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state);
+bool CheckDataTx(const CTransaction& tx, const CBlockIndex* pindexPrev, TxValidationState& state);
 
 #endif // BITCOIN_EVO_DATATX_H

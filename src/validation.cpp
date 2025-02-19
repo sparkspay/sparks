@@ -449,22 +449,6 @@ bool IsSPKHardForkEnabledForCurrentBlock(const Consensus::Params& params) {
     return IsSPKHardForkEnabled(params, ::ChainActive().Tip());
 }
 
-bool static IsSPKHardForkEnabled(const Consensus::Params& params, int nHeight) {
-    return nHeight >= params.nSPKHeight;
-}
-
-bool IsSPKHardForkEnabled(const Consensus::Params& params, const CBlockIndex *pindexPrev) {
-    if (pindexPrev == NULL) {
-        return false;
-    }
-    return IsSPKHardForkEnabled(params, pindexPrev->nHeight);
-}
-
-bool IsSPKHardForkEnabledForCurrentBlock(const Consensus::Params& params) {
-    AssertLockHeld(cs_main);
-    return IsSPKHardForkEnabled(params, ::ChainActive().Tip());
-}
-
 static bool IsCurrentForFeeEstimation(CChainState& active_chainstate) EXCLUSIVE_LOCKS_REQUIRED(cs_main)
 {
     AssertLockHeld(cs_main);
@@ -846,7 +830,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     // Checking of fee for MNHF_SIGNAL should be skipped: mnhf does not have
     // inputs, outputs, or fee
     if (tx.nVersion != 3 || tx.nType != TRANSACTION_MNHF_SIGNAL) {
-        if (!bypass_limits && !CheckFeeRate(nSize, nModifiedFees, state, ptx.nType)) return false;
+        if (!bypass_limits && !CheckFeeRate(nSize, nModifiedFees, state, tx.nType)) return false;
     }
 
     if (nAbsurdFee && nFees > nAbsurdFee)
@@ -1185,17 +1169,25 @@ static std::pair<CAmount, CAmount> GetBlockSubsidyHelper(int nPrevBits, int nPre
         nSubsidy = GetLegacySubsidy(nPrevHeight, consensusParams);
     }
 
-    // Hard fork to reduce the block reward by 10 extra percent (allowing budget/superblocks)
+    
+    
     if(sporkManager->IsSporkActive(SPORK_9_SUPERBLOCKS_ENABLED))
     {
-        // Once v20 is active, the treasury is 20% instead of 10%
-        CAmount nSuperblockPart = (nPrevHeight > consensusParams.nSuperblockStartBlock) ? nSubsidy/(fV20Active ? 5 : 10);
-        return fV20Active ? nSuperblockPart : nSubsidy - nSuperblockPart;
+        CAmount nSuperblockPart{};
+        // Hard fork to reduce the block reward by 10 extra percent (allowing budget/superblocks)
+        if (nPrevHeight > consensusParams.nSuperblockStartBlock) {
+            // Once v20 is active, the treasury is 20% instead of 10%
+            nSuperblockPart = nSubsidy/(fV20Active ? 5 : 10);
+        }
+        return {nSubsidy - nSuperblockPart, nSuperblockPart};
     }
     else
     {
-        return fV20Active ? 0 : nSubsidy;
+        CAmount nSuperblockPart{};
+        nSuperblockPart = fV20Active ? 0 : nSubsidy;
+        return {nSuperblockPart, nSuperblockPart};
     }
+    
 }
 
 CAmount GetLegacySubsidy(int nPrevHeight, const Consensus::Params& consensusParams)

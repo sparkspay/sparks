@@ -4032,7 +4032,7 @@ UniValue setautocombinethreshold(const JSONRPCRequest& request)
             throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("The threshold value cannot be less than %s", FormatMoney(COIN)));
     }
 
-    WalletBatch batch(pwallet->GetDBHandle());
+    WalletBatch batch(pwallet->GetDatabase());
 
     {
         LOCK(pwallet->cs_wallet);

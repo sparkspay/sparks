@@ -13,7 +13,7 @@ import re
 import os
 import os.path
 import sys
-import sparks_hash
+import hashlib
 import datetime
 import time
 import neoscrypt
@@ -307,24 +307,24 @@ if __name__ == '__main__':
         settings['rev_hash_bytes'] = 'false'
     settings['rev_hash_bytes'] = settings['rev_hash_bytes'].lower()
 
-	if 'netmagic' not in settings:
-		settings['netmagic'] = '1ab2c3d4'
-	if 'genesis' not in settings:
-		settings['genesis'] = '00000a5c6ddfaac5097218560d5b92d416931cfeba1abf10c81d1d6a232fc8ea'
-	if 'input' not in settings:
-		settings['input'] = 'input'
-	if 'hashlist' not in settings:
-		settings['hashlist'] = 'hashlist.txt'
-	if 'file_timestamp' not in settings:
-		settings['file_timestamp'] = 0
-	if 'split_timestamp' not in settings:
-		settings['split_timestamp'] = 0
-	if 'max_out_sz' not in settings:
-		settings['max_out_sz'] = 1000 * 1000 * 1000
-	if 'out_of_order_cache_sz' not in settings:
-		settings['out_of_order_cache_sz'] = 100 * 1000 * 1000
-	if 'debug_output' not in settings:
-		settings['debug_output'] = 'false'
+    if 'netmagic' not in settings:
+        settings['netmagic'] = '1ab2c3d4'
+    if 'genesis' not in settings:
+        settings['genesis'] = '00000a5c6ddfaac5097218560d5b92d416931cfeba1abf10c81d1d6a232fc8ea'
+    if 'input' not in settings:
+        settings['input'] = 'input'
+    if 'hashlist' not in settings:
+        settings['hashlist'] = 'hashlist.txt'
+    if 'file_timestamp' not in settings:
+        settings['file_timestamp'] = 0
+    if 'split_timestamp' not in settings:
+        settings['split_timestamp'] = 0
+    if 'max_out_sz' not in settings:
+        settings['max_out_sz'] = 1000 * 1000 * 1000
+    if 'out_of_order_cache_sz' not in settings:
+        settings['out_of_order_cache_sz'] = 100 * 1000 * 1000
+    if 'debug_output' not in settings:
+        settings['debug_output'] = 'false'
 
     settings['max_out_sz'] = int(settings['max_out_sz'])
     settings['split_timestamp'] = int(settings['split_timestamp'])
@@ -341,8 +341,8 @@ if __name__ == '__main__':
     blkmap = mkblockmap(blkindex)
 
 	# Block hash map won't be byte-reversed. Neither should the genesis hash.
-	if not settings['genesis'] in blkmap:
-		print("Genesis block not found in hashlist")
-	else:
-		BlockDataCopier(settings, blkindex, blkmap).run()
+    if not settings['genesis'] in blkmap:
+        print("Genesis block not found in hashlist")
+    else:
+        BlockDataCopier(settings, blkindex, blkmap).run()
 # vim: set noexpandtab sw=8 tw=80 ts=8 :

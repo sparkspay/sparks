@@ -124,7 +124,7 @@ static_assert(std::is_trivially_copyable_v<Consensus::LLMQParams>, "LLMQParams i
 static_assert(std::is_trivially_assignable_v<Consensus::LLMQParams, Consensus::LLMQParams>, "LLMQParams is not trivially assignable");
 
 
-static constexpr std::array<LLMQParams, 17> available_llmqs = {
+static constexpr std::array<LLMQParams, 18> available_llmqs = {
 
     /**
      * llmq_test
@@ -457,6 +457,7 @@ static constexpr std::array<LLMQParams, 17> available_llmqs = {
         .signingActiveQuorumCount = 5, // 5 hours worth of LLMQs
 
         .keepOldConnections = 25,
+        .keepOldKeys = 10,
         .recoveryMembers = 8,
     },
 
@@ -476,6 +477,7 @@ static constexpr std::array<LLMQParams, 17> available_llmqs = {
         .signingActiveQuorumCount = 4, // two days worth of LLMQs
 
         .keepOldConnections = 5,
+        .keepOldKeys = 8,
         .recoveryMembers = 7,
     },
 
@@ -496,6 +498,7 @@ static constexpr std::array<LLMQParams, 17> available_llmqs = {
         .signingActiveQuorumCount = 4, // two days worth of LLMQs
 
         .keepOldConnections = 5,
+        .keepOldKeys = 8,
         .recoveryMembers = 7,
     },
 
