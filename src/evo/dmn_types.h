@@ -7,6 +7,10 @@
 
 #include <amount.h>
 #include <serialize.h>
+#include <chain.h>
+#include <chainparams.h>
+#include <validation.h>
+#include <llmq/utils.h>
 
 #include <cassert>
 #include <string_view>
@@ -34,8 +38,24 @@ constexpr auto Regular = mntype_struct{
     .collat_amount = 5000 * COIN,
     .description = "Masternode",
 };
-constexpr auto Evo = mntype_struct{
+//First approach of Evonodes on Sparks
+//Started at when activating v19
+constexpr auto Evo4 = mntype_struct{
     .voting_weight = 4,
+    .collat_amount = 25000 * COIN,
+    .description = "Evonode",
+};
+//Second approach of Evonodes on Sparks while disable masternodes
+//Started at when activating v20
+constexpr auto Evo1 = mntype_struct{
+    .voting_weight = 1,
+    .collat_amount = 25000 * COIN,
+    .description = "Evonode",
+};
+//Third approach of Evonodes on Sparks when enabling masternodes again
+//Will start in future
+constexpr auto Evo5 = mntype_struct{
+    .voting_weight = 5,
     .collat_amount = 25000 * COIN,
     .description = "Evonode",
 };
@@ -45,19 +65,31 @@ constexpr auto Invalid = mntype_struct{
     .description = "Invalid",
 };
 
+[[nodiscard]] inline const dmn_types::mntype_struct GetEvoVersion(gsl::not_null<const CBlockIndex*> pindexPrev)
+{
+    if (pindexPrev->nHeight >= Params().GetConsensus().V19Height && !llmq::utils::IsV20Active(pindexPrev)) {
+        return dmn_types::Evo4;
+    } else if (llmq::utils::IsV20Active(pindexPrev)){
+        return dmn_types::Evo1;
+    } else {
+        //when enabling masternodes again, should add new condition here and should return Evo5
+        return dmn_types::Invalid;
+    }
+}
+
 [[nodiscard]] static constexpr bool IsCollateralAmount(CAmount amount)
 {
     return amount == Regular.collat_amount ||
-        amount == Evo.collat_amount;
+        amount == Evo4.collat_amount || amount == Evo1.collat_amount || amount == Evo5.collat_amount;
 }
 
 } // namespace dmn_types
 
-[[nodiscard]] constexpr const dmn_types::mntype_struct GetMnType(MnType type)
+[[nodiscard]] constexpr const dmn_types::mntype_struct GetMnType(MnType type, gsl::not_null<const CBlockIndex*> pindexPrev)
 {
     switch (type) {
         case MnType::Regular: return dmn_types::Regular;
-        case MnType::Evo: return dmn_types::Evo;
+        case MnType::Evo: return dmn_types::GetEvoVersion(pindexPrev);
         default: return dmn_types::Invalid;
     }
 }

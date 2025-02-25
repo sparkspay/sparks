@@ -995,8 +995,8 @@ class BitcoinTestFramework(metaclass=BitcoinTestMetaClass):
         """Checks whether the wallet module was compiled with BDB support."""
         return self.config["components"].getboolean("USE_BDB")
 
-MASTERNODE_COLLATERAL = 1000
-EVONODE_COLLATERAL = 4000
+MASTERNODE_COLLATERAL = 5000
+EVONODE_COLLATERAL = 25000
 
 class MasternodeInfo:
     def __init__(self, proTxHash, ownerAddr, votingAddr, rewards_address, operator_reward, pubKeyOperator, keyOperator, collateral_address, collateral_txid, collateral_vout, addr, evo=False):

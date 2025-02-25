@@ -47,7 +47,7 @@ UniValue CDeterministicMN::ToJson() const
     UniValue obj;
     obj.setObject();
 
-    obj.pushKV("type", std::string(GetMnType(nType).description));
+    obj.pushKV("type", std::string(GetMnType(nType, ::ChainActive()[pdmnState->nRegisteredHeight]).description));
     obj.pushKV("proTxHash", proTxHash.ToString());
     obj.pushKV("collateralHash", collateralOutpoint.hash.ToString());
     obj.pushKV("collateralIndex", (int)collateralOutpoint.n);
@@ -195,7 +195,7 @@ CDeterministicMNCPtr CDeterministicMNList::GetMNPayee(gsl::not_null<const CBlock
             if (dmn->pdmnState->nLastPaidHeight == nHeight) {
                 // We found the last MN Payee.
                 // If the last payee is an EvoNode, we need to check its consecutive payments and pay him again if needed
-                if (dmn->nType == MnType::Evo && dmn->pdmnState->nConsecutivePayments < dmn_types::Evo.voting_weight) {
+                if (dmn->nType == MnType::Evo && dmn->pdmnState->nConsecutivePayments < GetMnType(MnType::Evo, pIndex).voting_weight) {
                     best = dmn;
                 }
             }
@@ -232,11 +232,12 @@ std::vector<CDeterministicMNCPtr> CDeterministicMNList::GetProjectedMNPayees(gsl
     const bool isMNRewardReallocation = llmq::utils::IsMNRewardReallocationActive(pindex);
     if (!isMNRewardReallocation) {
         ForEachMNShared(true, [&](const CDeterministicMNCPtr& dmn) {
+            const dmn_types::mntype_struct masternodeType = GetMnType(dmn->nType, pindex);
             if (dmn->pdmnState->nLastPaidHeight == nHeight) {
                 // We found the last MN Payee.
                 // If the last payee is an EvoNode, we need to check its consecutive payments and pay him again if needed
-                if (dmn->nType == MnType::Evo && dmn->pdmnState->nConsecutivePayments < dmn_types::Evo.voting_weight) {
-                    remaining_evo_payments = dmn_types::Evo.voting_weight - dmn->pdmnState->nConsecutivePayments;
+                if (dmn->nType == MnType::Evo && dmn->pdmnState->nConsecutivePayments < masternodeType.voting_weight) {
+                    remaining_evo_payments = masternodeType.voting_weight - dmn->pdmnState->nConsecutivePayments;
                     for ([[maybe_unused]] auto _ : irange::range(remaining_evo_payments)) {
                         result.emplace_back(dmn);
                         evo_to_be_skipped = dmn;
@@ -248,7 +249,7 @@ std::vector<CDeterministicMNCPtr> CDeterministicMNList::GetProjectedMNPayees(gsl
 
     ForEachMNShared(true, [&](const CDeterministicMNCPtr& dmn) {
         if (dmn == evo_to_be_skipped) return;
-        for ([[maybe_unused]] auto _ : irange::range(GetMnType(dmn->nType).voting_weight)) {
+        for ([[maybe_unused]] auto _ : irange::range(GetMnType(dmn->nType, pindex).voting_weight)) {
             result.emplace_back(dmn);
         }
     });
@@ -772,7 +773,7 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, gsl::no
             } else if (isv19Active && pindexPrev->nHeight < Params().GetConsensus().V19Height && proTx.nType == MnType::Regular){
                 expectedCollateral = 25000 * COIN; //Old regular masternode collateral
             } else {
-                expectedCollateral = GetMnType(proTx.nType).collat_amount;
+                expectedCollateral = GetMnType(proTx.nType, pindexPrev).collat_amount;
             }
             if (!proTx.collateralOutpoint.hash.IsNull() && (!view.GetCoin(dmn->collateralOutpoint, coin) || coin.IsSpent() || coin.out.nValue != expectedCollateral)) {
                 // should actually never get to this point as CheckProRegTx should have handled this case.
@@ -1119,16 +1120,17 @@ bool CDeterministicMNManager::IsProTxWithCollateral(const CTransactionRef& tx, u
     }
 
     CAmount expectedCollateral;
-    bool isv19Active = llmq::utils::IsV19Active(::ChainActive().Tip());
+    CBlockIndex *pindexPrev = ::ChainActive().Tip();
+    bool isv19Active = llmq::utils::IsV19Active(pindexPrev);
     if (!isv19Active) {
         expectedCollateral = 25000 * COIN; //Old regular masternode collateral
     } else if (isv19Active && ::ChainActive().Height() < Params().GetConsensus().V19Height && proTx.nType == MnType::Regular){
         expectedCollateral = 25000 * COIN; //Old regular masternode collateral
     } else {
-        expectedCollateral = GetMnType(proTx.nType).collat_amount;
+        expectedCollateral = GetMnType(proTx.nType, pindexPrev).collat_amount;
     }
   
-    if (const CAmount expectedCollateral = GetMnType(proTx.nType).collat_amount; tx->vout[n].nValue != expectedCollateral) {
+    if (const CAmount expectedCollateral = GetMnType(proTx.nType, pindexPrev).collat_amount; tx->vout[n].nValue != expectedCollateral) {
         return false;
     }
     return true;
@@ -1574,7 +1576,7 @@ bool CheckProRegTx(const CTransaction& tx, gsl::not_null<const CBlockIndex*> pin
     } else if (isv19Active && pindexPrev->nHeight < Params().GetConsensus().V19Height && ptx.nType == MnType::Regular){
         expectedCollateral = 25000 * COIN; //Old regular masternode collateral
     } else {
-        expectedCollateral = GetMnType(ptx.nType).collat_amount;
+        expectedCollateral = GetMnType(ptx.nType, pindexPrev).collat_amount;
     }
 
     if (!ptx.collateralOutpoint.hash.IsNull()) {

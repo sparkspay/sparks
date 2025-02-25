@@ -228,7 +228,7 @@ void MasternodeList::updateDIP3List()
         auto addr_key = dmn.pdmnState->addr.GetKey();
         QByteArray addr_ba(reinterpret_cast<const char*>(addr_key.data()), addr_key.size());
         QTableWidgetItem* addressItem = new CMasternodeListWidgetItem<QByteArray>(QString::fromStdString(dmn.pdmnState->addr.ToString()), addr_ba);
-        QTableWidgetItem* typeItem = new QTableWidgetItem(QString::fromStdString(std::string(GetMnType(dmn.nType).description)));
+        QTableWidgetItem* typeItem = new QTableWidgetItem(QString::fromStdString(std::string(GetMnType(dmn.nType, ::ChainActive()[dmn.pdmnState->nRegisteredHeight]).description)));
         QTableWidgetItem* statusItem = new QTableWidgetItem(dmn.pdmnState->IsBanned() ? tr("POSE_BANNED") : tr("ENABLED"));
         QTableWidgetItem* PoSeScoreItem = new CMasternodeListWidgetItem<int>(QString::number(dmn.pdmnState->nPoSePenalty), dmn.pdmnState->nPoSePenalty);
         QTableWidgetItem* registeredItem = new CMasternodeListWidgetItem<int>(QString::number(dmn.pdmnState->nRegisteredHeight), dmn.pdmnState->nRegisteredHeight);

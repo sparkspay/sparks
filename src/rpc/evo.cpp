@@ -643,7 +643,7 @@ static UniValue protx_register_common_wrapper(const JSONRPCRequest& request,
         }
         CScript collateralScript = GetScriptForDestination(collateralDest);
 
-        CAmount fundCollateral = GetMnType(mnType).collat_amount;
+        CAmount fundCollateral = GetMnType(mnType, chainman.ActiveChain().Tip()).collat_amount;
         CTxOut collateralTxOut(fundCollateral, collateralScript);
         tx.vout.emplace_back(collateralTxOut);
 
@@ -739,7 +739,7 @@ static UniValue protx_register_common_wrapper(const JSONRPCRequest& request,
     }
 
     if (isFundRegister) {
-        CAmount fundCollateral = GetMnType(mnType).collat_amount;
+        CAmount fundCollateral = GetMnType(mnType, chainman.ActiveChain().Tip()).collat_amount;
         uint32_t collateralIndex = (uint32_t) -1;
         for (uint32_t i = 0; i < tx.vout.size(); i++) {
             if (tx.vout[i].nValue == fundCollateral) {
@@ -967,7 +967,8 @@ static UniValue protx_update_service_common_wrapper(const JSONRPCRequest& reques
         throw std::runtime_error(strprintf("masternode with proTxHash %s not found", ptx.proTxHash.ToString()));
     }
     if (dmn->nType != mnType) {
-        throw std::runtime_error(strprintf("masternode with proTxHash %s is not a %s", ptx.proTxHash.ToString(), GetMnType(mnType).description));
+
+        throw std::runtime_error(strprintf("masternode with proTxHash %s is not a %s", ptx.proTxHash.ToString(), GetMnType(mnType, chainman.ActiveChain()[dmn->pdmnState->nRegisteredHeight]).description));
     }
     ptx.nVersion = dmn->pdmnState->nVersion;
 

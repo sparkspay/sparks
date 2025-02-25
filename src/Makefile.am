@@ -707,6 +707,7 @@ libbitcoin_common_a_SOURCES = \
   deploymentinfo.cpp \
   key.cpp \
   key_io.cpp \
+  llmq/utils.cpp \
   merkleblock.cpp \
   netaddress.cpp \
   netbase.cpp \

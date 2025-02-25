@@ -638,7 +638,7 @@ int CGovernanceObject::CountMatchingVotes(vote_signal_enum_t eVoteSignalIn, vote
             // 4x times weight vote for EvoNode owners.
             // No need to check if v19 is active since no EvoNode are allowed to register before v19s
             auto dmn = mnList.GetMNByCollateral(votepair.first);
-            if (dmn != nullptr) nCount += GetMnType(dmn->nType).voting_weight;
+            if (dmn != nullptr) nCount += GetMnType(dmn->nType, ::ChainActive()[dmn->pdmnState->nRegisteredHeight]).voting_weight;
         }
     }
     return nCount;
