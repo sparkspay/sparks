@@ -4542,7 +4542,7 @@ void CWallet::AutoCombineDust()
             nTotalRewardsValue += out.Value();
             std::cout << "nTotalRewardsValue : " << nTotalRewardsValue << " Hash : " << out.tx->GetHash().ToString() << std::endl;
             // Combine to the threshold and not way above
-            if (nTotalRewardsValue > nAutoCombineThresholdMargin)
+            if (nTotalRewardsValue >= nAutoCombineThresholdMargin)
                 break;
 
             // Around 180 bytes per input. We use 190 to be certain
@@ -4561,6 +4561,12 @@ void CWallet::AutoCombineDust()
         if (vRewardCoins.size() <= 1)
             continue;
 
+        //we cannot combine lower to (threshold + margin)
+        if (nTotalRewardsValue < nAutoCombineThresholdMargin) {
+            LogPrintf("We cannot combine Rewards Value %d < (Threshold + Margin) %d\n",nTotalRewardsValue,nAutoCombineThresholdMargin);
+            continue;
+        }
+            
         std::vector<CRecipient> vecSend;
         const CScript& scriptPubKey = GetScriptForDestination(entry.first);
         CRecipient recipient = {scriptPubKey, nTotalRewardsValue, false};
