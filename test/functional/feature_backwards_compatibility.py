@@ -35,11 +35,10 @@ class BackwardsCompatibilityTest(BitcoinTestFramework):
         self.extra_args = [
             [], # Pre-release: use to mine blocks
             ["-nowallet"], # Pre-release: use to receive coins, swap wallets, etc
-            ["-nowallet"], # v20.0.1
             ["-nowallet"], # v19.3.0
-            ["-nowallet"], # v18.2.2
-            ["-nowallet"], # v0.17.0.3
-            ["-nowallet"], # v0.16.1.1
+            ["-nowallet"], # v18.2.3
+            ["-nowallet"], # v0.17.3.0
+            ["-nowallet"], # v0.16.0.0
         ]
         self.wallet_names = [self.default_wallet_name]
 
