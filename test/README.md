@@ -108,6 +108,34 @@ how many jobs to run, append `--jobs=n`
 The individual tests and the test_runner harness have many command-line
 options. Run `test/functional/test_runner.py -h` to see them all.
 
+#### Speed up test runs with a ramdisk
+
+If you have available RAM on your system you can create a ramdisk to use as the `cache` and `tmp` directories for the functional tests in order to speed them up.
+Speed-up amount varies on each system (and according to your ram speed and other variables), but a 2-3x speed-up is not uncommon.
+
+To create a 4GB ramdisk on Linux at `/mnt/tmp/`:
+
+```bash
+sudo mkdir -p /mnt/tmp
+sudo mount -t tmpfs -o size=4g tmpfs /mnt/tmp/
+```
+
+Configure the size of the ramdisk using the `size=` option.
+The size of the ramdisk needed is relative to the number of concurrent jobs the test suite runs.
+For example running the test suite with `--jobs=100` might need a 16GB ramdisk, but running with `--jobs=4` will only need a 4GB ramdisk.
+
+To use, run the test suite specifying the ramdisk as the `cachedir` and `tmpdir`:
+
+```bash
+test/functional/test_runner.py --cachedir=/mnt/tmp/cache --tmpdir=/mnt/tmp
+```
+
+Once finished with the tests and the disk, and to free the ram, simply unmount the disk:
+
+```bash
+sudo umount /mnt/tmp
+```
+
 #### Troubleshooting and debugging test failures
 
 ##### Resource contention
@@ -279,7 +307,9 @@ Use the `-v` option for verbose output.
 | Lint test | Dependency | Version [used by CI](../ci/lint/04_install.sh) | Installation
 |-----------|:----------:|:-------------------------------------------:|--------------
 | [`lint-python.sh`](lint/lint-python.sh) | [flake8](https://gitlab.com/pycqa/flake8) | [3.8.3](https://github.com/bitcoin/bitcoin/pull/19348) | `pip3 install flake8==3.8.3`
+| [`lint-python.sh`](lint/lint-python.sh) | [mypy](https://github.com/python/mypy) | [0.781](https://github.com/bitcoin/bitcoin/pull/19348) | `pip3 install mypy==0.781`
 | [`lint-shell.sh`](lint/lint-shell.sh) | [ShellCheck](https://github.com/koalaman/shellcheck) | [0.7.1](https://github.com/bitcoin/bitcoin/pull/19348) | [details...](https://github.com/koalaman/shellcheck#installing)
+| [`lint-shell.sh`](lint/lint-shell.sh) | [yq](https://github.com/kislyuk/yq) | default | `pip3 install yq`
 | [`lint-spelling.sh`](lint/lint-spelling.sh) | [codespell](https://github.com/codespell-project/codespell) | [1.17.1](https://github.com/bitcoin/bitcoin/pull/19348) | `pip3 install codespell==1.17.1`
 
 Please be aware that on Linux distributions all dependencies are usually available as packages, but could be outdated.

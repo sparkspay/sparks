@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 #ifndef BITCOIN_HDCHAIN_H
 #define BITCOIN_HDCHAIN_H
@@ -70,7 +70,7 @@ public:
                 );
     }
 
-    void swap(CHDChain& first, CHDChain& second) // nothrow
+    void swap(CHDChain& first, CHDChain& second) noexcept
     {
         // enable ADL (not necessary in our case, but good practice)
         using std::swap;

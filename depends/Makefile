@@ -34,10 +34,13 @@ BASE_CACHE ?= $(BASEDIR)/built
 SDK_PATH ?= $(BASEDIR)/SDKs
 NO_QT ?=
 NO_QR ?=
+NO_BDB ?=
+NO_SQLITE ?=
 NO_WALLET ?=
 NO_ZMQ ?=
 NO_UPNP ?=
 NO_NATPMP ?=
+MULTIPROCESS ?=
 FALLBACK_DOWNLOAD_PATH ?= https://bitcoincore.org/depends-sources
 
 BUILD = $(shell ./config.guess)
@@ -72,6 +75,7 @@ full_build_os:=$(subst $(build_arch)-$(build_vendor)-,,$(build))
 build_os:=$(findstring linux,$(full_build_os))
 build_os+=$(findstring darwin,$(full_build_os))
 build_os+=$(findstring freebsd,$(full_build_os))
+build_os+=$(findstring netbsd,$(full_build_os))
 build_os+=$(findstring openbsd,$(full_build_os))
 build_os:=$(strip $(build_os))
 ifeq ($(build_os),)
@@ -84,6 +88,7 @@ full_host_os:=$(subst $(host_arch)-$(host_vendor)-,,$(canonical_host))
 host_os:=$(findstring linux,$(full_host_os))
 host_os+=$(findstring darwin,$(full_host_os))
 host_os+=$(findstring freebsd,$(full_host_os))
+host_os+=$(findstring netbsd,$(full_host_os))
 host_os+=$(findstring openbsd,$(full_host_os))
 host_os+=$(findstring mingw32,$(full_host_os))
 
@@ -148,12 +153,18 @@ upnp_packages_$(NO_UPNP) = $(upnp_packages)
 natpmp_packages_$(NO_NATPMP) = $(natpmp_packages)
 
 zmq_packages_$(NO_ZMQ) = $(zmq_packages)
+multiprocess_packages_$(MULTIPROCESS) = $(multiprocess_packages)
 
 packages += $($(host_arch)_$(host_os)_packages) $($(host_os)_packages) $(qt_packages_) $(wallet_packages_) $(upnp_packages_) $(natpmp_packages_)
 native_packages += $($(host_arch)_$(host_os)_native_packages) $($(host_os)_native_packages)
 
 ifneq ($(zmq_packages_),)
 packages += $(zmq_packages)
+endif
+
+ifeq ($(multiprocess_packages_),)
+packages += $(multiprocess_packages)
+native_packages += $(multiprocess_native_packages)
 endif
 
 all_packages = $(packages) $(native_packages)
@@ -214,12 +225,16 @@ $(host_prefix)/share/config.site : config.site.in $(host_prefix)/.stamp_$(final_
             -e 's|@CXXFLAGS@|$(strip $(host_CXXFLAGS) $(host_$(release_type)_CXXFLAGS))|' \
             -e 's|@CPPFLAGS@|$(strip $(host_CPPFLAGS) $(host_$(release_type)_CPPFLAGS))|' \
             -e 's|@LDFLAGS@|$(strip $(host_LDFLAGS) $(host_$(release_type)_LDFLAGS))|' \
+            -e 's|@allow_host_packages@|$(ALLOW_HOST_PACKAGES)|' \
             -e 's|@no_qt@|$(NO_QT)|' \
             -e 's|@no_qr@|$(NO_QR)|' \
             -e 's|@no_zmq@|$(NO_ZMQ)|' \
             -e 's|@no_wallet@|$(NO_WALLET)|' \
+            -e 's|@no_bdb@|$(NO_BDB)|' \
+            -e 's|@no_sqlite@|$(NO_SQLITE)|' \
             -e 's|@no_upnp@|$(NO_UPNP)|' \
             -e 's|@no_natpmp@|$(NO_NATPMP)|' \
+            -e 's|@multiprocess@|$(MULTIPROCESS)|' \
             -e 's|@debug@|$(DEBUG)|' \
             $< > $@
 	touch $@

@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -19,7 +19,7 @@ UniValue CDKGDebugSessionStatus::ToJson(int quorumIndex, int detailLevel) const
 {
     UniValue ret(UniValue::VOBJ);
 
-    if (!GetLLMQParams(llmqType).has_value() || quorumHash.IsNull()) {
+    if (!Params().GetLLMQ(llmqType).has_value() || quorumHash.IsNull()) {
         return ret;
     }
 
@@ -36,11 +36,11 @@ UniValue CDKGDebugSessionStatus::ToJson(int quorumIndex, int detailLevel) const
     ret.pushKV("quorumHeight", (int)quorumHeight);
     ret.pushKV("phase", ToUnderlying(phase));
 
-    ret.pushKV("sentContributions", sentContributions);
-    ret.pushKV("sentComplaint", sentComplaint);
-    ret.pushKV("sentJustification", sentJustification);
-    ret.pushKV("sentPrematureCommitment", sentPrematureCommitment);
-    ret.pushKV("aborted", aborted);
+    ret.pushKV("sentContributions", statusBits.sentContributions);
+    ret.pushKV("sentComplaint", statusBits.sentComplaint);
+    ret.pushKV("sentJustification", statusBits.sentJustification);
+    ret.pushKV("sentPrematureCommitment", statusBits.sentPrematureCommitment);
+    ret.pushKV("aborted", statusBits.aborted);
 
     struct ArrOrCount {
         int count{0};
@@ -81,12 +81,12 @@ UniValue CDKGDebugSessionStatus::ToJson(int quorumIndex, int detailLevel) const
 
     for (const auto i : irange::range(members.size())) {
         const auto& m = members[i];
-        add(badMembers, i, m.bad);
-        add(weComplain, i, m.weComplain);
-        add(receivedContributions, i, m.receivedContribution);
-        add(receivedComplaints, i, m.receivedComplaint);
-        add(receivedJustifications, i, m.receivedJustification);
-        add(receivedPrematureCommitments, i, m.receivedPrematureCommitment);
+        add(badMembers, i, m.statusBits.bad);
+        add(weComplain, i, m.statusBits.weComplain);
+        add(receivedContributions, i, m.statusBits.receivedContribution);
+        add(receivedComplaints, i, m.statusBits.receivedComplaint);
+        add(receivedJustifications, i, m.statusBits.receivedJustification);
+        add(receivedPrematureCommitments, i, m.statusBits.receivedPrematureCommitment);
     }
     push(badMembers, "badMembers");
     push(weComplain, "weComplain");
@@ -118,7 +118,7 @@ UniValue CDKGDebugStatus::ToJson(int detailLevel) const
     // TODO Support array of sessions
     UniValue sessionsArrJson(UniValue::VARR);
     for (const auto& p : sessions) {
-        const auto& llmq_params_opt = GetLLMQParams(p.first.first);
+        const auto& llmq_params_opt = Params().GetLLMQ(p.first.first);
         if (!llmq_params_opt.has_value()) {
             continue;
         }

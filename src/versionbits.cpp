@@ -1,10 +1,9 @@
-// Copyright (c) 2016 The Bitcoin Core developers
+// Copyright (c) 2016-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <versionbits.h>
 #include <consensus/params.h>
-#include <gsl/pointers.h>
 
 #include <limits>
 
@@ -214,7 +213,7 @@ protected:
             return 0;
         }
         // ehfManager should be initialized before first usage of VersionBitsConditionChecker
-        const auto ehfManagerPtr = gsl::make_not_null(AbstractEHFManager::getInstance());
+        const auto ehfManagerPtr = AbstractEHFManager::getInstance();
         const auto signals = ehfManagerPtr->GetSignalsStage(pindexPrev);
         const auto it = signals.find(deployment.bit);
         if (it == signals.end()) {

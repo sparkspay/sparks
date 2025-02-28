@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2018-2020 The Dash Core developers
+# Copyright (c) 2018-2024 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Tests around sparks governance."""
@@ -76,6 +76,18 @@ class SparksGovernanceTest (SparksTestFramework):
                     assert False
 
         assert_equal(payments_found, 2)
+
+    def have_trigger_for_height(self, sb_block_height):
+        count = 0
+        for node in self.nodes:
+            valid_triggers = node.gobject("list", "valid", "triggers")
+            for trigger in list(valid_triggers.values()):
+                if json.loads(trigger["DataString"])["event_block_height"] != sb_block_height:
+                    continue
+                if trigger['AbsoluteYesCount'] > 0:
+                    count = count + 1
+                    break
+        return count == len(self.nodes)
 
     def run_test(self):
         map_vote_outcomes = {
@@ -214,9 +226,9 @@ class SparksGovernanceTest (SparksTestFramework):
         isolated.generate(1)
         self.bump_mocktime(1)
         # The isolated "winner" should submit new trigger and vote for it
-        wait_until(lambda: len(isolated.gobject("list", "valid", "triggers")) == 1, timeout=5)
+        self.wait_until(lambda: len(isolated.gobject("list", "valid", "triggers")) == 1, timeout=5)
         isolated_trigger_hash = list(isolated.gobject("list", "valid", "triggers").keys())[0]
-        wait_until(lambda: list(isolated.gobject("list", "valid", "triggers").values())[0]['YesCount'] == 1, timeout=5)
+        self.wait_until(lambda: list(isolated.gobject("list", "valid", "triggers").values())[0]['YesCount'] == 1, timeout=5)
         more_votes = wait_until(lambda: list(isolated.gobject("list", "valid", "triggers").values())[0]['YesCount'] > 1, timeout=5, do_assert=False)
         assert_equal(more_votes, False)
 
@@ -236,9 +248,9 @@ class SparksGovernanceTest (SparksTestFramework):
         self.bump_mocktime(1)
 
         # There is now new "winner" who should submit new trigger and vote for it
-        wait_until(lambda: len(self.nodes[0].gobject("list", "valid", "triggers")) == 1, timeout=5)
+        self.wait_until(lambda: len(self.nodes[0].gobject("list", "valid", "triggers")) == 1, timeout=5)
         winning_trigger_hash = list(self.nodes[0].gobject("list", "valid", "triggers").keys())[0]
-        wait_until(lambda: list(self.nodes[0].gobject("list", "valid", "triggers").values())[0]['YesCount'] == 1, timeout=5)
+        self.wait_until(lambda: list(self.nodes[0].gobject("list", "valid", "triggers").values())[0]['YesCount'] == 1, timeout=5)
         more_votes = wait_until(lambda: list(self.nodes[0].gobject("list", "valid", "triggers").values())[0]['YesCount'] > 1, timeout=5, do_assert=False)
         assert_equal(more_votes, False)
 
@@ -254,7 +266,7 @@ class SparksGovernanceTest (SparksTestFramework):
         self.bump_mocktime(1)
 
         # Every non-isolated MN should vote for the same trigger now, no new triggers should be created
-        wait_until(lambda: list(self.nodes[0].gobject("list", "valid", "triggers").values())[0]['YesCount'] == self.mn_count - 1, timeout=5)
+        self.wait_until(lambda: list(self.nodes[0].gobject("list", "valid", "triggers").values())[0]['YesCount'] == self.mn_count - 1, timeout=5)
         more_triggers = wait_until(lambda: len(self.nodes[0].gobject("list", "valid", "triggers")) > 1, timeout=5, do_assert=False)
         assert_equal(more_triggers, False)
 
@@ -267,16 +279,21 @@ class SparksGovernanceTest (SparksTestFramework):
             self.bump_mocktime(1)
             return node.mnsync("status")["IsSynced"]
 
+        # make sure isolated node is fully synced at this point
+        self.wait_until(lambda: sync_gov(isolated))
+        # let all fulfilled requests expire for re-sync to work correctly
+        self.bump_mocktime(5 * 60)
+
         for node in self.nodes:
             # Force sync
             node.mnsync("reset")
             # fast-forward to governance sync
             node.mnsync("next")
-            wait_until(lambda: sync_gov(node))
+            self.wait_until(lambda: sync_gov(node))
 
         # Should see two triggers now
-        wait_until(lambda: len(isolated.gobject("list", "valid", "triggers")) == 2, timeout=5)
-        wait_until(lambda: len(self.nodes[0].gobject("list", "valid", "triggers")) == 2, timeout=5)
+        self.wait_until(lambda: len(isolated.gobject("list", "valid", "triggers")) == 2, timeout=5)
+        self.wait_until(lambda: len(self.nodes[0].gobject("list", "valid", "triggers")) == 2, timeout=5)
         more_triggers = wait_until(lambda: len(self.nodes[0].gobject("list", "valid", "triggers")) > 2, timeout=5, do_assert=False)
         assert_equal(more_triggers, False)
 
@@ -286,8 +303,8 @@ class SparksGovernanceTest (SparksTestFramework):
         self.sync_blocks()
 
         # Should see NO votes on both triggers now
-        wait_until(lambda: self.nodes[0].gobject("list", "valid", "triggers")[winning_trigger_hash]['NoCount'] == 1, timeout=5)
-        wait_until(lambda: self.nodes[0].gobject("list", "valid", "triggers")[isolated_trigger_hash]['NoCount'] == self.mn_count - 1, timeout=5)
+        self.wait_until(lambda: self.nodes[0].gobject("list", "valid", "triggers")[winning_trigger_hash]['NoCount'] == 1, timeout=5)
+        self.wait_until(lambda: self.nodes[0].gobject("list", "valid", "triggers")[isolated_trigger_hash]['NoCount'] == self.mn_count - 1, timeout=5)
 
         block_count = self.nodes[0].getblockcount()
         n = sb_cycle - block_count % sb_cycle
@@ -317,20 +334,33 @@ class SparksGovernanceTest (SparksTestFramework):
         n = sb_cycle - block_count % sb_cycle
 
         # Move remaining n blocks until the next Superblock
-        for i in range(n):
+        for _ in range(n - 1):
             self.nodes[0].generate(1)
             self.bump_mocktime(1)
             self.sync_blocks()
+        # Wait for new trigger and votes
+        self.wait_until(lambda: self.have_trigger_for_height(260), timeout=5)
+        # Mine superblock
+        self.nodes[0].generate(1)
+        self.bump_mocktime(1)
+        self.sync_blocks()
         assert_equal(self.nodes[0].getblockcount(), 260)
         assert_equal(self.nodes[0].getblockchaininfo()["softforks"]["v20"]["bip9"]["status"], "active")
 
         # Mine and check a couple more superblocks
         for i in range(2):
-            for _ in range(20):
+            for _ in range(sb_cycle - 1):
                 self.nodes[0].generate(1)
                 self.bump_mocktime(1)
                 self.sync_blocks()
-            assert_equal(self.nodes[0].getblockcount(), 260 + (i + 1) * 20)
+            # Wait for new trigger and votes
+            sb_block_height = 260 + (i + 1) * sb_cycle
+            self.wait_until(lambda: self.have_trigger_for_height(sb_block_height), timeout=5)
+            # Mine superblock
+            self.nodes[0].generate(1)
+            self.bump_mocktime(1)
+            self.sync_blocks()
+            assert_equal(self.nodes[0].getblockcount(), sb_block_height)
             assert_equal(self.nodes[0].getblockchaininfo()["softforks"]["v20"]["bip9"]["status"], "active")
             self.check_superblockbudget(True)
             self.check_superblock()

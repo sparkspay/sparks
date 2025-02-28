@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,7 +14,6 @@
 #include <key_io.h>
 #include <netaddress.h>
 #include <pubkey.h>
-#include <tinyformat.h>
 #include <univalue.h>
 #include <util/underlying.h>
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2015 The Bitcoin Core developers
+// Copyright (c) 2015-2019 The Bitcoin Core developers
 // Copyright (c) 2017 The Zcash developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -18,10 +18,11 @@
 #include <util/thread.h>
 #include <util/time.h>
 
-#include <vector>
 #include <deque>
+#include <functional>
 #include <set>
 #include <stdlib.h>
+#include <vector>
 
 #include <boost/signals2/signal.hpp>
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,6 +6,7 @@
 #include <qt/forms/ui_receivecoinsdialog.h>
 
 #include <qt/addresstablemodel.h>
+#include <qt/guiutil.h>
 #include <qt/optionsmodel.h>
 #include <qt/receiverequestdialog.h>
 #include <qt/recentrequeststablemodel.h>
@@ -18,9 +19,8 @@
 #include <QTextDocument>
 
 ReceiveCoinsDialog::ReceiveCoinsDialog(QWidget* parent) :
-    QDialog(parent),
+    QDialog(parent, GUIUtil::dialog_flags),
     ui(new Ui::ReceiveCoinsDialog),
-    columnResizingFixer(nullptr),
     model(nullptr)
 {
     ui->setupUi(this);
@@ -70,7 +70,6 @@ void ReceiveCoinsDialog::setModel(WalletModel *_model)
         QTableView* tableView = ui->recentRequestsView;
 
         tableView->verticalHeader()->hide();
-        tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         tableView->setModel(_model->getRecentRequestsTableModel());
         tableView->setAlternatingRowColors(true);
         tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -78,12 +77,15 @@ void ReceiveCoinsDialog::setModel(WalletModel *_model)
         tableView->setColumnWidth(RecentRequestsTableModel::Date, DATE_COLUMN_WIDTH);
         tableView->setColumnWidth(RecentRequestsTableModel::Label, LABEL_COLUMN_WIDTH);
         tableView->setColumnWidth(RecentRequestsTableModel::Amount, AMOUNT_MINIMUM_COLUMN_WIDTH);
+        tableView->horizontalHeader()->setMinimumSectionSize(MINIMUM_COLUMN_WIDTH);
+        tableView->horizontalHeader()->setSectionResizeMode(RecentRequestsTableModel::Date, QHeaderView::Interactive);
+        tableView->horizontalHeader()->setSectionResizeMode(RecentRequestsTableModel::Label, QHeaderView::Stretch);
+        tableView->horizontalHeader()->setSectionResizeMode(RecentRequestsTableModel::Message, QHeaderView::Stretch);
+        tableView->horizontalHeader()->setSectionResizeMode(RecentRequestsTableModel::Amount, QHeaderView::Fixed);
 
         connect(tableView->selectionModel(),
             &QItemSelectionModel::selectionChanged, this,
             &ReceiveCoinsDialog::recentRequestsView_selectionChanged);
-        // Last 2 columns are set by the columnResizingFixer, when the table geometry is ready.
-        columnResizingFixer = new GUIUtil::TableViewLastColumnResizingFixer(tableView, AMOUNT_MINIMUM_COLUMN_WIDTH, DATE_COLUMN_WIDTH, this);
 
         // Set the button to be enabled or disabled based on whether the wallet can give out new addresses.
         ui->receiveButton->setEnabled(model->wallet().canGetAddresses());
@@ -187,14 +189,6 @@ void ReceiveCoinsDialog::on_removeRequestButton_clicked()
     // correct for selection mode ContiguousSelection
     QModelIndex firstIndex = selection.at(0);
     model->getRecentRequestsTableModel()->removeRows(firstIndex.row(), selection.length(), firstIndex.parent());
-}
-
-// We override the virtual resizeEvent of the QWidget to adjust tables column
-// sizes as the tables width is proportional to the dialogs width.
-void ReceiveCoinsDialog::resizeEvent(QResizeEvent *event)
-{
-    QWidget::resizeEvent(event);
-    columnResizingFixer->stretchColumnWidth(RecentRequestsTableModel::Message);
 }
 
 QModelIndex ReceiveCoinsDialog::selectedRow()

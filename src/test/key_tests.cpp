@@ -172,20 +172,30 @@ BOOST_AUTO_TEST_CASE(key_signature_tests)
     }
     BOOST_CHECK(found);
 
-    // When entropy is not specified, we should always see low R signatures that are less than 70 bytes in 256 tries
+    // When entropy is not specified, we should always see low R signatures that are less than or equal to 70 bytes in 256 tries
+    // The low R signatures should always have the value of their "length of R" byte less than or equal to 32
     // We should see at least one signature that is less than 70 bytes.
-    found = true;
     bool found_small = false;
+    bool found_big = false;
+    bool bad_sign = false;
     for (int i = 0; i < 256; ++i) {
         sig.clear();
         std::string msg = "A message to be signed" + ToString(i);
         msg_hash = Hash(msg);
-        BOOST_CHECK(key.Sign(msg_hash, sig));
-        found = sig[3] == 0x20;
-        BOOST_CHECK(sig.size() <= 70);
+        if (!key.Sign(msg_hash, sig)) {
+            bad_sign = true;
+            break;
+        }
+        // sig.size() > 70 implies sig[3] > 32, because S is always low.
+        // But check both conditions anyway, just in case this implication is broken for some reason
+        if (sig[3] > 32 || sig.size() > 70) {
+            found_big = true;
+            break;
+        }
         found_small |= sig.size() < 70;
     }
-    BOOST_CHECK(found);
+    BOOST_CHECK(!bad_sign);
+    BOOST_CHECK(!found_big);
     BOOST_CHECK(found_small);
 }
 
@@ -261,6 +271,26 @@ BOOST_AUTO_TEST_CASE(pubkey_unserialize)
         } else {
             BOOST_CHECK(key.IsValid());
         }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(key_ellswift)
+{
+    for (const auto& secret : {strSecret1, strSecret2, strSecret1C, strSecret2C}) {
+        CKey key = DecodeSecret(secret);
+        BOOST_CHECK(key.IsValid());
+
+        uint256 ent32 = InsecureRand256();
+        auto ellswift = key.EllSwiftCreate(AsBytes(Span{ent32}));
+
+        CPubKey decoded_pubkey = ellswift.Decode();
+        if (!key.IsCompressed()) {
+            // The decoding constructor returns a compressed pubkey. If the
+            // original was uncompressed, we must decompress the decoded one
+            // to compare.
+            decoded_pubkey.Decompress();
+        }
+        BOOST_CHECK(key.GetPubKey() == decoded_pubkey);
     }
 }
 

@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
-// Copyright (c) 2014-2022 The Sparks Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
+// Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -15,10 +15,12 @@
 #include <amount.h>
 #include <attributes.h>
 #include <coins.h>
+#include <consensus/validation.h>
 #include <crypto/common.h> // for ReadLE64
 #include <fs.h>
 #include <node/utxo_snapshot.h>
 #include <policy/feerate.h>
+#include <policy/packages.h>
 #include <protocol.h> // For CMessageHeader::MessageStartChars
 #include <script/script_error.h>
 #include <sync.h>
@@ -26,6 +28,7 @@
 #include <txmempool.h> // For CTxMemPool::cs
 #include <serialize.h>
 #include <spentindex.h>
+#include <util/check.h>
 #include <util/hasher.h>
 
 #include <atomic>
@@ -134,6 +137,20 @@ static const unsigned int DEFAULT_CHECKLEVEL = 3;
 // Setting the target to > than 945 MiB will make it likely we can respect the target.
 static const uint64_t MIN_DISK_SPACE_FOR_BLOCK_FILES = 945 * 1024 * 1024;
 
+/** Current sync state passed to tip changed callbacks. */
+enum class SynchronizationState {
+    INIT_REINDEX,
+    INIT_DOWNLOAD,
+    POST_INIT
+};
+
+/** Current sync state passed to tip changed callbacks. */
+enum class SynchronizationState {
+    INIT_REINDEX,
+    INIT_DOWNLOAD,
+    POST_INIT
+};
+
 //! -mindatatxfee default
 static const CAmount DEFAULT_DATA_TRANSACTION_MINFEE = 1000000;
 extern RecursiveMutex cs_main;
@@ -195,18 +212,7 @@ void UnloadBlockIndex(CTxMemPool* mempool, ChainstateManager& chainman);
 void StartScriptCheckWorkerThreads(int threads_num);
 /** Stop all of the script checking worker threads */
 void StopScriptCheckWorkerThreads();
-/**
- * Return transaction from the block at block_index.
- * If block_index is not provided, fall back to mempool.
- * If mempool is not provided or the tx couldn't be found in mempool, fall back to g_txindex.
- *
- * @param[in]  block_index     The block to read from disk, or nullptr
- * @param[in]  mempool         If block_index is not provided, look in the mempool, if provided
- * @param[in]  hash            The txid
- * @param[in]  consensusParams The params
- * @param[out] hashBlock       The hash of block_index, if the tx was found via block_index
- * @returns                    The tx if found, otherwise nullptr
- */
+
 CTransactionRef GetTransaction(const CBlockIndex* const block_index, const CTxMemPool* const mempool, const uint256& hash, const Consensus::Params& consensusParams, uint256& hashBlock);
 
 double ConvertBitsToDouble(unsigned int nBits);
@@ -241,10 +247,85 @@ void UnlinkPrunedFiles(const std::set<int>& setFilesToPrune);
 /** Prune block files up to a given height */
 void PruneBlockFilesManual(CChainState& active_chainstate, int nManualPruneHeight);
 
-/** (try to) add transaction to memory pool */
-bool AcceptToMemoryPool(CChainState& active_chainstate, CTxMemPool& pool, TxValidationState &state, const CTransactionRef &tx,
-                        bool bypass_limits,
-                        const CAmount nAbsurdFee, bool test_accept=false) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+/**
+* Validation result for a single transaction mempool acceptance.
+*/
+struct MempoolAcceptResult {
+    /** Used to indicate the results of mempool validation. */
+    enum class ResultType {
+        VALID, //!> Fully validated, valid.
+        INVALID, //!> Invalid.
+    };
+    const ResultType m_result_type;
+    const TxValidationState m_state;
+
+    // The following fields are only present when m_result_type = ResultType::VALID
+    /** Raw base fees in satoshis. */
+    const std::optional<CAmount> m_base_fees;
+    static MempoolAcceptResult Failure(TxValidationState state) {
+        return MempoolAcceptResult(state);
+    }
+
+    static MempoolAcceptResult Success(CAmount fees) {
+        return MempoolAcceptResult(fees);
+    }
+
+// Private constructors. Use static methods MempoolAcceptResult::Success, etc. to construct.
+private:
+    /** Constructor for failure case */
+    explicit MempoolAcceptResult(TxValidationState state)
+        : m_result_type(ResultType::INVALID), m_state(state), m_base_fees(std::nullopt) {
+            Assume(!state.IsValid()); // Can be invalid or error
+        }
+
+    /** Constructor for success case */
+    explicit MempoolAcceptResult(CAmount fees)
+        : m_result_type(ResultType::VALID), m_base_fees(fees) {}
+};
+
+/**
+* Validation result for package mempool acceptance.
+*/
+struct PackageMempoolAcceptResult
+{
+    const PackageValidationState m_state;
+    /**
+    * Map from txid to finished MempoolAcceptResults. The client is responsible
+    * for keeping track of the transaction objects themselves. If a result is not
+    * present, it means validation was unfinished for that transaction.
+    */
+    std::map<const uint256, const MempoolAcceptResult> m_tx_results;
+
+    explicit PackageMempoolAcceptResult(PackageValidationState state,
+                                        std::map<const uint256, const MempoolAcceptResult>&& results)
+        : m_state{state}, m_tx_results(std::move(results)) {}
+
+    /** Constructor to create a PackageMempoolAcceptResult from a single MempoolAcceptResult */
+    explicit PackageMempoolAcceptResult(const uint256 &txid, const MempoolAcceptResult& result)
+        : m_tx_results{ {txid, result} } {}
+};
+
+/**
+ * (Try to) add a transaction to the memory pool.
+ * @param[in]  bypass_limits   When true, don't enforce mempool fee limits.
+ * @param[in]  test_accept     When true, run validation checks but don't submit to mempool.
+ */
+MempoolAcceptResult AcceptToMemoryPool(CChainState& active_chainstate, CTxMemPool& pool, const CTransactionRef& tx,
+                                       bool bypass_limits, bool test_accept=false) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+
+/**
+* Atomically test acceptance of a package. If the package only contains one tx, package rules still
+* apply. The transaction(s) cannot spend the same inputs as any transaction in the mempool.
+* @param[in]    txns                Group of transactions which may be independent or contain
+*                                   parent-child dependencies. The transactions must not conflict
+*                                   with each other, i.e., must not spend the same inputs. If any
+*                                   dependencies exist, parents must appear before children.
+* @returns a PackageMempoolAcceptResult which includes a MempoolAcceptResult for each transaction.
+* If a transaction fails, validation will exit early and some results may be missing.
+*/
+PackageMempoolAcceptResult ProcessNewPackage(CChainState& active_chainstate, CTxMemPool& pool,
+                                             const Package& txns, bool test_accept)
+                                             EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 bool GetUTXOCoin(const COutPoint& outpoint, Coin& coin);
 int GetUTXOHeight(const COutPoint& outpoint);
@@ -270,9 +351,17 @@ bool CheckFinalTx(const CBlockIndex* active_chain_tip, const CTransaction &tx, i
 bool TestLockPointValidity(CChain& active_chain, const LockPoints* lp) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 /**
- * Check if transaction will be BIP 68 final in the next block to be created.
- *
- * Simulates calling SequenceLocks() with data from the tip of the current active chain.
+ * Check if transaction will be BIP68 final in the next block to be created on top of tip.
+ * @param[in]   tip             Chain tip to check tx sequence locks against. For example,
+ *                              the tip of the current active chain.
+ * @param[in]   coins_view      Any CCoinsView that provides access to the relevant coins for
+ *                              checking sequence locks. For example, it can be a CCoinsViewCache
+ *                              that isn't connected to anything but contains all the relevant
+ *                              coins, or a CCoinsViewMemPool that is connected to the
+ *                              mempool and chainstate UTXO set. In the latter case, the caller is
+ *                              responsible for holding the appropriate locks to ensure that
+ *                              calls to GetCoin() return correct coins.
+ * Simulates calling SequenceLocks() with data from the tip passed in.
  * Optionally stores in LockPoints the resulting height and time calculated and the hash
  * of the block needed for calculation or skips the calculation and uses the LockPoints
  * passed in for evaluation.
@@ -280,12 +369,12 @@ bool TestLockPointValidity(CChain& active_chain, const LockPoints* lp) EXCLUSIVE
  *
  * See consensus/consensus.h for flag definitions.
  */
-bool CheckSequenceLocks(CChainState& active_chainstate,
-                        const CTxMemPool& pool,
+bool CheckSequenceLocks(CBlockIndex* tip,
+                        const CCoinsView& coins_view,
                         const CTransaction& tx,
                         int flags,
                         LockPoints* lp = nullptr,
-                        bool useExistingLockPoints = false) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+                        bool useExistingLockPoints = false);
 
 /**
  * Closure representing one script verification
@@ -309,7 +398,8 @@ public:
 
     bool operator()();
 
-    void swap(CScriptCheck &check) {
+    void swap(CScriptCheck& check) noexcept
+    {
         std::swap(ptxTo, check.ptxTo);
         std::swap(m_tx_out, check.m_tx_out);
         std::swap(nIn, check.nIn);
@@ -558,8 +648,7 @@ enum class CoinsCacheSizeState
  */
 class CChainState
 {
-private:
-
+protected:
     /**
      * Every received block is assigned a unique and increasing identifier, so we
      * know which one to give priority in case of a fork.
@@ -793,7 +882,7 @@ public:
         size_t max_mempool_size_bytes) EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
 
     /** Return list of MN EHF signals for current Tip() */
-    std::unordered_map<uint8_t, int> GetMNHFSignalsStage(const CBlockIndex* pindex) EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
+    std::unordered_map<uint8_t, int> GetMNHFSignalsStage(const CBlockIndex* pindex);
 
     std::string ToString() EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
 private:

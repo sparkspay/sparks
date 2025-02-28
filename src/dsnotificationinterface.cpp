@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -67,9 +67,9 @@ void CDSNotificationInterface::UpdatedBlockTip(const CBlockIndex *pindexNew, con
     if (fInitialDownload)
         return;
 
-    CCoinJoin::UpdatedBlockTip(pindexNew, *llmq_ctx->clhandler, m_mn_sync);
+    ::dstxManager->UpdatedBlockTip(pindexNew, *llmq_ctx->clhandler, m_mn_sync);
 #ifdef ENABLE_WALLET
-    for (auto& pair : cj_ctx->clientman->raw()) {
+    for (auto& pair : cj_ctx->walletman->raw()) {
         pair.second->UpdatedBlockTip(pindexNew);
     }
 #endif // ENABLE_WALLET
@@ -88,7 +88,7 @@ void CDSNotificationInterface::TransactionAddedToMempool(const CTransactionRef& 
 {
     llmq_ctx->isman->TransactionAddedToMempool(ptx);
     llmq_ctx->clhandler->TransactionAddedToMempool(ptx, nAcceptTime);
-    CCoinJoin::TransactionAddedToMempool(ptx);
+    ::dstxManager->TransactionAddedToMempool(ptx);
 }
 
 void CDSNotificationInterface::TransactionRemovedFromMempool(const CTransactionRef& ptx, MemPoolRemovalReason reason)
@@ -98,24 +98,16 @@ void CDSNotificationInterface::TransactionRemovedFromMempool(const CTransactionR
 
 void CDSNotificationInterface::BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex)
 {
-    // TODO: Temporarily ensure that mempool removals are notified before
-    // connected transactions.  This shouldn't matter, but the abandoned
-    // state of transactions in our wallet is currently cleared when we
-    // receive another notification and there is a race condition where
-    // notification of a connected conflict might cause an outside process
-    // to abandon a transaction and then have it inadvertently cleared by
-    // the notification that the conflicted transaction was evicted.
-
     llmq_ctx->isman->BlockConnected(pblock, pindex);
     llmq_ctx->clhandler->BlockConnected(pblock, pindex);
-    CCoinJoin::BlockConnected(pblock, pindex);
+    ::dstxManager->BlockConnected(pblock, pindex);
 }
 
 void CDSNotificationInterface::BlockDisconnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexDisconnected)
 {
     llmq_ctx->isman->BlockDisconnected(pblock, pindexDisconnected);
     llmq_ctx->clhandler->BlockDisconnected(pblock, pindexDisconnected);
-    CCoinJoin::BlockDisconnected(pblock, pindexDisconnected);
+    ::dstxManager->BlockDisconnected(pblock, pindexDisconnected);
 }
 
 void CDSNotificationInterface::NotifyMasternodeListChanged(bool undo, const CDeterministicMNList& oldMNList, const CDeterministicMNListDiff& diff)
@@ -127,5 +119,5 @@ void CDSNotificationInterface::NotifyMasternodeListChanged(bool undo, const CDet
 void CDSNotificationInterface::NotifyChainLock(const CBlockIndex* pindex, const std::shared_ptr<const llmq::CChainLockSig>& clsig)
 {
     llmq_ctx->isman->NotifyChainLock(pindex);
-    CCoinJoin::NotifyChainLock(pindex, *llmq_ctx->clhandler, m_mn_sync);
+    ::dstxManager->NotifyChainLock(pindex, *llmq_ctx->clhandler, m_mn_sync);
 }

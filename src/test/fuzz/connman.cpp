@@ -10,6 +10,7 @@
 #include <test/fuzz/FuzzedDataProvider.h>
 #include <test/fuzz/fuzz.h>
 #include <test/fuzz/util.h>
+#include <test/util/setup_common.h>
 #include <util/translation.h>
 
 #include <cstdint>
@@ -117,7 +118,7 @@ FUZZ_TARGET_INIT(connman, initialize_connman)
             });
     }
     (void)connman.GetAddedNodeInfo();
-    (void)connman.GetExtraOutboundCount();
+    (void)connman.GetExtraFullOutboundCount();
     (void)connman.GetLocalServices();
     (void)connman.GetMaxOutboundTarget();
     (void)connman.GetMaxOutboundTimeframe();

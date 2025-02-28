@@ -108,7 +108,9 @@ static UniValue masternode_count(const JSONRPCRequest& request)
 {
     masternode_count_help(request);
 
-    auto mnList = deterministicMNManager->GetListAtChainTip();
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
+
+    auto mnList = node.dmnman->GetListAtChainTip();
     int total = mnList.GetAllMNsCount();
     int enabled = mnList.GetValidMNsCount();
     int ipv4 = mnList.GetIPv4Count();
@@ -139,10 +141,10 @@ static UniValue masternode_count(const JSONRPCRequest& request)
     return obj;
 }
 
-static UniValue GetNextMasternodeForPayment(int heightShift)
+static UniValue GetNextMasternodeForPayment(CDeterministicMNManager& dmnman, int heightShift)
 {
     const CBlockIndex *tip = WITH_LOCK(::cs_main, return ::ChainActive().Tip());
-    auto mnList = deterministicMNManager->GetListForBlock(tip);
+    auto mnList = dmnman.GetListForBlock(tip);
     auto payees = mnList.GetProjectedMNPayees(tip, heightShift);
     if (payees.empty())
         return "unknown";
@@ -179,7 +181,9 @@ static void masternode_winner_help(const JSONRPCRequest& request)
 static UniValue masternode_winner(const JSONRPCRequest& request)
 {
     masternode_winner_help(request);
-    return GetNextMasternodeForPayment(10);
+
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
+    return GetNextMasternodeForPayment(*node.dmnman, 10);
 }
 
 static void masternode_current_help(const JSONRPCRequest& request)
@@ -199,7 +203,9 @@ static void masternode_current_help(const JSONRPCRequest& request)
 static UniValue masternode_current(const JSONRPCRequest& request)
 {
     masternode_current_help(request);
-    return GetNextMasternodeForPayment(1);
+
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
+    return GetNextMasternodeForPayment(*node.dmnman, 1);
 }
 
 #ifdef ENABLE_WALLET
@@ -259,8 +265,9 @@ static UniValue masternode_status(const JSONRPCRequest& request)
     if (!fMasternodeMode)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "This is not a masternode");
 
-    UniValue mnObj(UniValue::VOBJ);
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
 
+    UniValue mnObj(UniValue::VOBJ);
     CDeterministicMNCPtr dmn;
     {
         LOCK(activeMasternodeInfoCs);
@@ -268,7 +275,7 @@ static UniValue masternode_status(const JSONRPCRequest& request)
         // keep compatibility with legacy status for now (might get deprecated/removed later)
         mnObj.pushKV("outpoint", activeMasternodeInfo.outpoint.ToStringShort());
         mnObj.pushKV("service", activeMasternodeInfo.service.ToString());
-        dmn = deterministicMNManager->GetListAtChainTip().GetMN(activeMasternodeInfo.proTxHash);
+        dmn = node.dmnman->GetListAtChainTip().GetMN(activeMasternodeInfo.proTxHash);
     }
     if (dmn) {
         mnObj.pushKV("proTxHash", dmn->proTxHash.ToString());
@@ -283,7 +290,7 @@ static UniValue masternode_status(const JSONRPCRequest& request)
     return mnObj;
 }
 
-static std::string GetRequiredPaymentsString(int nBlockHeight, const CDeterministicMNCPtr &payee)
+static std::string GetRequiredPaymentsString(CGovernanceManager& govman, int nBlockHeight, const CDeterministicMNCPtr &payee)
 {
     std::string strPayments = "Unknown";
     if (payee) {
@@ -299,9 +306,9 @@ static std::string GetRequiredPaymentsString(int nBlockHeight, const CDeterminis
             strPayments += ", " + EncodeDestination(dest);
         }
     }
-    if (CSuperblockManager::IsSuperblockTriggered(*governance, nBlockHeight)) {
+    if (CSuperblockManager::IsSuperblockTriggered(govman, nBlockHeight)) {
         std::vector<CTxOut> voutSuperblock;
-        if (!CSuperblockManager::GetSuperblockPayments(*governance, nBlockHeight, voutSuperblock)) {
+        if (!CSuperblockManager::GetSuperblockPayments(govman, nBlockHeight, voutSuperblock)) {
             return strPayments + ", error";
         }
         std::string strSBPayees = "Unknown";
@@ -359,24 +366,26 @@ static UniValue masternode_winners(const JSONRPCRequest& request, const Chainsta
     int nChainTipHeight = pindexTip->nHeight;
     int nStartHeight = std::max(nChainTipHeight - nCount, 1);
 
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
     for (int h = nStartHeight; h <= nChainTipHeight; h++) {
         const CBlockIndex* pIndex = pindexTip->GetAncestor(h - 1);
-        auto payee = deterministicMNManager->GetListForBlock(pIndex).GetMNPayee(pIndex);
-        std::string strPayments = GetRequiredPaymentsString(h, payee);
+        auto payee = node.dmnman->GetListForBlock(pIndex).GetMNPayee(pIndex);
+        std::string strPayments = GetRequiredPaymentsString(*node.govman, h, payee);
         if (strFilter != "" && strPayments.find(strFilter) == std::string::npos) continue;
         obj.pushKV(strprintf("%d", h), strPayments);
     }
 
-    auto projection = deterministicMNManager->GetListForBlock(pindexTip).GetProjectedMNPayees(pindexTip, 20);
+    auto projection = node.dmnman->GetListForBlock(pindexTip).GetProjectedMNPayees(pindexTip, 20);
     for (size_t i = 0; i < projection.size(); i++) {
         int h = nChainTipHeight + 1 + i;
-        std::string strPayments = GetRequiredPaymentsString(h, projection[i]);
+        std::string strPayments = GetRequiredPaymentsString(*node.govman, h, projection[i]);
         if (strFilter != "" && strPayments.find(strFilter) == std::string::npos) continue;
         obj.pushKV(strprintf("%d", h), strPayments);
     }
 
     return obj;
 }
+
 static void masternode_payments_help(const JSONRPCRequest& request)
 {
     RPCHelpMan{"masternode payments",
@@ -438,8 +447,8 @@ static UniValue masternode_payments(const JSONRPCRequest& request, const Chainst
     // A temporary vector which is used to sort results properly (there is no "reverse" in/for UniValue)
     std::vector<UniValue> vecPayments;
 
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
     while (vecPayments.size() < uint64_t(std::abs(nCount)) && pindex != nullptr) {
-
         CBlock block;
         if (!ReadBlockFromDisk(block, pindex, Params().GetConsensus())) {
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Can't read block from disk");
@@ -465,7 +474,7 @@ static UniValue masternode_payments(const JSONRPCRequest& request, const Chainst
         std::vector<CTxOut> voutMasternodePayments, voutDummy;
         CMutableTransaction dummyTx;
         CAmount blockSubsidy = GetBlockSubsidy(pindex, Params().GetConsensus());
-        MasternodePayments::FillBlockPayments(*sporkManager, *governance, dummyTx, pindex->pprev, blockSubsidy, nBlockFees, voutMasternodePayments, voutDummy);
+        MasternodePayments::FillBlockPayments(*node.sporkman, *node.govman, dummyTx, pindex->pprev, blockSubsidy, nBlockFees, voutMasternodePayments, voutDummy);
 
         UniValue blockObj(UniValue::VOBJ);
         CAmount payedPerBlock{0};
@@ -487,7 +496,7 @@ static UniValue masternode_payments(const JSONRPCRequest& request, const Chainst
         }
 
         // NOTE: we use _previous_ block to find a payee for the current one
-        const auto dmnPayee = deterministicMNManager->GetListForBlock(pindex->pprev).GetMNPayee(pindex->pprev);
+        const auto dmnPayee = node.dmnman->GetListForBlock(pindex->pprev).GetMNPayee(pindex->pprev);
         protxObj.pushKV("proTxHash", dmnPayee == nullptr ? "" : dmnPayee->proTxHash.ToString());
         protxObj.pushKV("amount", payedPerMasternode);
         protxObj.pushKV("payees", payeesArr);
@@ -596,9 +605,11 @@ static UniValue masternodelist(const JSONRPCRequest& request, ChainstateManager&
         masternode_list_help(request);
     }
 
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
+
     UniValue obj(UniValue::VOBJ);
 
-    auto mnList = deterministicMNManager->GetListAtChainTip();
+    auto mnList = node.dmnman->GetListAtChainTip();
     auto dmnToStatus = [&](auto& dmn) {
         if (mnList.IsMNValid(dmn)) {
             return "ENABLED";

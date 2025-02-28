@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,6 +9,8 @@
 
 #include <chainparams.h>
 #include <consensus/validation.h>
+#include <deploymentstatus.h>
+#include <llmq/options.h>
 #include <llmq/utils.h>
 #include <logging.h>
 #include <validation.h>
@@ -34,20 +36,15 @@ void LogPrintfFinalCommitment(Types... out) {
 
 bool CFinalCommitment::Verify(gsl::not_null<const CBlockIndex*> pQuorumBaseBlockIndex, bool checkSigs) const
 {
-    const auto& llmq_params_opt = GetLLMQParams(llmqType);
+    const auto& llmq_params_opt = Params().GetLLMQ(llmqType);
     if (!llmq_params_opt.has_value()) {
         LogPrintfFinalCommitment("q[%s] invalid llmqType=%d\n", quorumHash.ToString(), ToUnderlying(llmqType));
         return false;
     }
     const auto& llmq_params = llmq_params_opt.value();
 
-    uint16_t expected_nversion{CFinalCommitment::LEGACY_BLS_NON_INDEXED_QUORUM_VERSION};
-    if (utils::IsQuorumRotationEnabled(llmq_params, pQuorumBaseBlockIndex)) {
-        expected_nversion = utils::IsV19Active(pQuorumBaseBlockIndex) ? CFinalCommitment::BASIC_BLS_INDEXED_QUORUM_VERSION : CFinalCommitment::LEGACY_BLS_INDEXED_QUORUM_VERSION;
-    }
-    else {
-        expected_nversion = utils::IsV19Active(pQuorumBaseBlockIndex) ? CFinalCommitment::BASIC_BLS_NON_INDEXED_QUORUM_VERSION : CFinalCommitment::LEGACY_BLS_NON_INDEXED_QUORUM_VERSION;
-    }
+    const uint16_t expected_nversion{CFinalCommitment::GetVersion(IsQuorumRotationEnabled(llmq_params, pQuorumBaseBlockIndex),
+            DeploymentActiveAfter(pQuorumBaseBlockIndex, Params().GetConsensus(), Consensus::DEPLOYMENT_V19))};
     if (nVersion == 0 || nVersion != expected_nversion) {
         LogPrintfFinalCommitment("q[%s] invalid nVersion=%d expectednVersion\n", quorumHash.ToString(), nVersion, expected_nversion);
         return false;
@@ -115,7 +112,7 @@ bool CFinalCommitment::Verify(gsl::not_null<const CBlockIndex*> pQuorumBaseBlock
 
     // sigs are only checked when the block is processed
     if (checkSigs) {
-        uint256 commitmentHash = utils::BuildCommitmentHash(llmq_params.type, quorumHash, validMembers, quorumPublicKey, quorumVvecHash);
+        uint256 commitmentHash = BuildCommitmentHash(llmq_params.type, quorumHash, validMembers, quorumPublicKey, quorumVvecHash);
         if (LogAcceptCategory(BCLog::LLMQ)) {
             std::stringstream ss3;
             for (const auto &mn: members) {
@@ -150,7 +147,7 @@ bool CFinalCommitment::Verify(gsl::not_null<const CBlockIndex*> pQuorumBaseBlock
 
 bool CFinalCommitment::VerifyNull() const
 {
-    const auto& llmq_params_opt = GetLLMQParams(llmqType);
+    const auto& llmq_params_opt = Params().GetLLMQ(llmqType);
     if (!llmq_params_opt.has_value()) {
         LogPrintfFinalCommitment("q[%s]invalid llmqType=%d\n", quorumHash.ToString(), ToUnderlying(llmqType));
         return false;
@@ -178,15 +175,16 @@ bool CFinalCommitment::VerifySizes(const Consensus::LLMQParams& params) const
 
 bool CheckLLMQCommitment(const CTransaction& tx, gsl::not_null<const CBlockIndex*> pindexPrev, TxValidationState& state)
 {
-    CFinalCommitmentTxPayload qcTx;
-    if (!GetTxPayload(tx, qcTx)) {
+    const auto opt_qcTx = GetTxPayload<CFinalCommitmentTxPayload>(tx);
+    if (!opt_qcTx) {
         LogPrintfFinalCommitment("h[%d] GetTxPayload failed\n", pindexPrev->nHeight);
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-qc-payload");
     }
+    auto& qcTx = *opt_qcTx;
 
-    const auto& llmq_params_opt = GetLLMQParams(qcTx.commitment.llmqType);
+    const auto& llmq_params_opt = Params().GetLLMQ(qcTx.commitment.llmqType);
     if (!llmq_params_opt.has_value()) {
-        LogPrintfFinalCommitment("h[%d] GetLLMQParams failed for llmqType[%d]\n", pindexPrev->nHeight, ToUnderlying(qcTx.commitment.llmqType));
+        LogPrintfFinalCommitment("h[%d] GetLLMQ failed for llmqType[%d]\n", pindexPrev->nHeight, ToUnderlying(qcTx.commitment.llmqType));
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-qc-commitment-type");
     }
 
@@ -236,6 +234,19 @@ bool CheckLLMQCommitment(const CTransaction& tx, gsl::not_null<const CBlockIndex
     LogPrintfFinalCommitment("h[%d] CheckLLMQCommitment VALID\n", pindexPrev->nHeight);
 
     return true;
+}
+
+uint256 BuildCommitmentHash(Consensus::LLMQType llmqType, const uint256& blockHash,
+                                        const std::vector<bool>& validMembers, const CBLSPublicKey& pubKey,
+                                        const uint256& vvecHash)
+{
+    CHashWriter hw(SER_GETHASH, 0);
+    hw << llmqType;
+    hw << blockHash;
+    hw << DYNBITSET(validMembers);
+    hw << pubKey;
+    hw << vvecHash;
+    return hw.GetHash();
 }
 
 } // namespace llmq

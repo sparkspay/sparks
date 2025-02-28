@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2023 The Dash Core developers
-// Copyright (c) 2016-2023 The Sparks Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
+// Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -303,7 +303,6 @@ UniValue importprunedfunds(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed. Make sure the tx has at least one input.");
     }
     uint256 hashTx = tx.GetHash();
-    CWalletTx wtx(pwallet, MakeTransactionRef(std::move(tx)));
 
     CDataStream ssMB(ParseHexV(request.params[1], "proof"), SER_NETWORK, PROTOCOL_VERSION);
     CMerkleBlock merkleBlock;
@@ -330,10 +329,10 @@ UniValue importprunedfunds(const JSONRPCRequest& request)
     unsigned int txnIndex = vIndex[it - vMatch.begin()];
 
     CWalletTx::Confirmation confirm(CWalletTx::Status::CONFIRMED, height, merkleBlock.header.GetHash(), txnIndex);
-    wtx.m_confirm = confirm;
 
-    if (pwallet->IsMine(*wtx.tx)) {
-        pwallet->AddToWallet(wtx, false);
+    CTransactionRef tx_ref = MakeTransactionRef(tx);
+    if (pwallet->IsMine(*tx_ref)) {
+        pwallet->AddToWallet(std::move(tx_ref), confirm);
         return NullUniValue;
     }
 
@@ -429,7 +428,7 @@ UniValue importpubkey(const JSONRPCRequest& request)
     if (!IsHex(request.params[0].get_str()))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Pubkey must be a hex string");
     std::vector<unsigned char> data(ParseHex(request.params[0].get_str()));
-    CPubKey pubKey(data.begin(), data.end());
+    CPubKey pubKey(data);
     if (!pubKey.IsFullyValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Pubkey is not a valid public key");
 
@@ -640,7 +639,7 @@ UniValue importelectrumwallet(const JSONRPCRequest& request)
     if (!wallet) return NullUniValue;
     CWallet* const pwallet = wallet.get();
 
-    if (fPruneMode)
+    if (pwallet->chain().havePruned())
         throw JSONRPCError(RPC_WALLET_ERROR, "Importing wallets is disabled in pruned mode");
 
     if (pwallet->IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS)) {
@@ -800,7 +799,7 @@ UniValue dumpprivkey(const JSONRPCRequest& request)
         "\nReveals the private key corresponding to 'address'.\n"
         "Then the importprivkey can be used with this output\n",
         {
-            {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The sparks address for the private key"},
+            {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The Sparks address for the private key"},
         },
         RPCResult{
             RPCResult::Type::STR, "key", "The private key"
@@ -909,15 +908,19 @@ UniValue dumpwallet(const JSONRPCRequest& request)
         },
     }.Check(request);
 
-    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
-    if (!wallet) return NullUniValue;
-    const CWallet* const pwallet = wallet.get();
+    std::shared_ptr<CWallet> const pwallet = GetWalletForJSONRPCRequest(request);
+    if (!pwallet) return NullUniValue;
 
-    LegacyScriptPubKeyMan& spk_man = EnsureLegacyScriptPubKeyMan(*wallet);
+    CWallet& wallet = *pwallet;
+    LegacyScriptPubKeyMan& spk_man = EnsureLegacyScriptPubKeyMan(wallet);
 
-    LOCK2(pwallet->cs_wallet, spk_man.cs_KeyStore);
+    // Make sure the results are valid at least up to the most recent block
+    // the user could have gotten from another RPC command prior to now
+    wallet.BlockUntilSyncedToCurrentChain();
 
-    EnsureWalletIsUnlocked(pwallet);
+    LOCK(wallet.cs_wallet);
+
+    EnsureWalletIsUnlocked(&wallet);
 
     fs::path filepath = request.params[0].get_str();
     filepath = fs::absolute(filepath);
@@ -937,9 +940,16 @@ UniValue dumpwallet(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Cannot open wallet dump file");
 
     std::map<CKeyID, int64_t> mapKeyBirth;
-    const std::map<CKeyID, int64_t>& mapKeyPool = spk_man.GetAllReserveKeys();
-    pwallet->GetKeyBirthTimes(mapKeyBirth);
+    wallet.GetKeyBirthTimes(mapKeyBirth);
 
+    int64_t block_time = 0;
+    CHECK_NONFATAL(wallet.chain().findBlock(wallet.GetLastBlockHash(), FoundBlock().time(block_time)));
+
+    // Note: To avoid a lock order issue, access to cs_main must be locked before cs_KeyStore.
+    // So we do the two things in this function that lock cs_main first: GetKeyBirthTimes, and findBlock.
+    LOCK(spk_man.cs_KeyStore);
+
+    const std::map<CKeyID, int64_t>& mapKeyPool = spk_man.GetAllReserveKeys();
     std::set<CScriptID> scripts = spk_man.GetCScripts();
 
     // sort time/key pairs
@@ -953,16 +963,14 @@ UniValue dumpwallet(const JSONRPCRequest& request)
     // produce output
     file << strprintf("# Wallet dump created by Sparks Core %s\n", CLIENT_BUILD);
     file << strprintf("# * Created on %s\n", FormatISO8601DateTime(GetTime()));
-    file << strprintf("# * Best block at time of backup was %i (%s),\n", pwallet->GetLastBlockHeight(), pwallet->GetLastBlockHash().ToString());
-    int64_t block_time = 0;
-    CHECK_NONFATAL(pwallet->chain().findBlock(pwallet->GetLastBlockHash(), FoundBlock().time(block_time)));
+    file << strprintf("# * Best block at time of backup was %i (%s),\n", wallet.GetLastBlockHeight(), wallet.GetLastBlockHash().ToString());
     file << strprintf("#   mined on %s\n", FormatISO8601DateTime(block_time));
     file << "\n";
 
     UniValue obj(UniValue::VOBJ);
     obj.pushKV("sparkscoreversion", CLIENT_BUILD);
-    obj.pushKV("lastblockheight", pwallet->GetLastBlockHeight());
-    obj.pushKV("lastblockhash", pwallet->GetLastBlockHash().ToString());
+    obj.pushKV("lastblockheight", wallet.GetLastBlockHeight());
+    obj.pushKV("lastblockhash", wallet.GetLastBlockHash().ToString());
     obj.pushKV("lastblocktime", block_time);
 
     // add the base58check encoded extended master if the wallet uses HD
@@ -1013,7 +1021,7 @@ UniValue dumpwallet(const JSONRPCRequest& request)
         CKey key;
         if (spk_man.GetKey(keyid, key)) {
             file << strprintf("%s %s ", EncodeSecret(key), strTime);
-            const auto* address_book_entry = pwallet->FindAddressBookEntry(pkhash);
+            const auto* address_book_entry = wallet.FindAddressBookEntry(pkhash);
             if (address_book_entry) {
                 file << strprintf("label=%s", EncodeDumpString(address_book_entry->GetLabel()));
             } else if (mapKeyPool.count(keyid)) {
@@ -1078,7 +1086,7 @@ static std::string RecurseImportData(const CScript& script, ImportData& import_d
 
     switch (script_type) {
     case TxoutType::PUBKEY: {
-        CPubKey pubkey(solverdata[0].begin(), solverdata[0].end());
+        CPubKey pubkey(solverdata[0]);
         import_data.used_keys.emplace(pubkey.GetID(), false);
         return "";
     }
@@ -1099,7 +1107,7 @@ static std::string RecurseImportData(const CScript& script, ImportData& import_d
     }
     case TxoutType::MULTISIG: {
         for (size_t i = 1; i + 1< solverdata.size(); ++i) {
-            CPubKey pubkey(solverdata[i].begin(), solverdata[i].end());
+            CPubKey pubkey(solverdata[i]);
             import_data.used_keys.emplace(pubkey.GetID(), false);
         }
         return "";
@@ -1107,9 +1115,9 @@ static std::string RecurseImportData(const CScript& script, ImportData& import_d
     case TxoutType::NULL_DATA:
         return "unspendable script";
     case TxoutType::NONSTANDARD:
-    default:
         return "unrecognized script";
-    }
+    } // no default case, so the compiler can warn about missing cases
+    CHECK_NONFATAL(false);
 }
 
 static UniValue ProcessImportLegacy(ImportData& import_data, std::map<CKeyID, CPubKey>& pubkey_map, std::map<CKeyID, CKey>& privkey_map, std::set<CScript>& script_pub_keys, bool& have_solving_data, const UniValue& data, std::vector<CKeyID>& ordered_pubkeys)
@@ -1170,7 +1178,7 @@ static UniValue ProcessImportLegacy(ImportData& import_data, std::map<CKeyID, CP
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Pubkey \"" + str + "\" must be a hex string");
         }
         auto parsed_pubkey = ParseHex(str);
-        CPubKey pubkey(parsed_pubkey.begin(), parsed_pubkey.end());
+        CPubKey pubkey(parsed_pubkey);
         if (!pubkey.IsFullyValid()) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Pubkey \"" + str + "\" is not a valid public key");
         }

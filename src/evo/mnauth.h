@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2022 The Dash Core developers
+// Copyright (c) 2019-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,6 +6,7 @@
 #define BITCOIN_EVO_MNAUTH_H
 
 #include <bls/bls.h>
+#include <net_types.h>
 #include <serialize.h>
 
 class CBlockIndex;
@@ -15,7 +16,6 @@ class CDeterministicMN;
 class CDeterministicMNList;
 class CDeterministicMNListDiff;
 class CNode;
-class PeerManager;
 
 class UniValue;
 
@@ -48,7 +48,7 @@ public:
     }
 
     static void PushMNAUTH(CNode& peer, CConnman& connman, const CBlockIndex* tip);
-    static void ProcessMessage(CNode& peer, PeerManager& peerman, CConnman& connman, std::string_view msg_type, CDataStream& vRecv);
+    static PeerMsgRet ProcessMessage(CNode& peer, CConnman& connman, std::string_view msg_type, CDataStream& vRecv);
     static void NotifyMasternodeListChanged(bool undo, const CDeterministicMNList& oldMNList, const CDeterministicMNListDiff& diff, CConnman& connman);
 };
 

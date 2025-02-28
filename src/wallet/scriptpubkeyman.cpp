@@ -8,7 +8,6 @@
 #include <script/descriptor.h>
 #include <script/sign.h>
 #include <shutdown.h>
-#include <ui_interface.h>
 #include <util/bip32.h>
 #include <util/strencodings.h>
 #include <util/system.h>
@@ -23,7 +22,7 @@ bool LegacyScriptPubKeyMan::GetNewDestination(CTxDestination& dest, std::string&
     // Generate a new key that is added to wallet
     CPubKey new_key;
     if (!GetKeyFromPool(new_key, false)) {
-        error = "Error: Keypool ran out, please call keypoolrefill first";
+        error = _("Error: Keypool ran out, please call keypoolrefill first").translated;
         return false;
     }
     //LearnRelatedScripts(new_key);
@@ -90,8 +89,7 @@ IsMineResult IsMineInner(const LegacyScriptPubKeyMan& keystore, const CScript& s
     TxoutType whichType = Solver(scriptPubKey, vSolutions);
 
     CKeyID keyID;
-    switch (whichType)
-    {
+    switch (whichType) {
     case TxoutType::NONSTANDARD:
     case TxoutType::NULL_DATA:
         break;
@@ -154,7 +152,7 @@ IsMineResult IsMineInner(const LegacyScriptPubKeyMan& keystore, const CScript& s
         }
         break;
     }
-    }
+    } // no default case, so the compiler can warn about missing cases
 
     if (ret == IsMineResult::NO && keystore.HaveWatchOnly(scriptPubKey)) {
         ret = std::max(ret, IsMineResult::WATCH_ONLY);
@@ -691,9 +689,8 @@ bool LegacyScriptPubKeyMan::SignTransaction(CMutableTransaction& tx, const std::
 
 SigningResult LegacyScriptPubKeyMan::SignMessage(const std::string& message, const PKHash& pkhash, std::string& str_sig) const
 {
-    CKeyID key_id(ToKeyID(pkhash));
     CKey key;
-    if (!GetKey(key_id, key)) {
+    if (!GetKey(ToKeyID(pkhash), key)) {
         return SigningResult::PRIVATE_KEY_NOT_AVAILABLE;
     }
 
@@ -703,19 +700,17 @@ SigningResult LegacyScriptPubKeyMan::SignMessage(const std::string& message, con
     return SigningResult::SIGNING_FAILED;
 }
 
-TransactionError LegacyScriptPubKeyMan::FillPSBT(PartiallySignedTransaction& psbtx, int sighash_type, bool sign, bool bip32derivs) const
+TransactionError LegacyScriptPubKeyMan::FillPSBT(PartiallySignedTransaction& psbtx, int sighash_type, bool sign, bool bip32derivs, int* n_signed) const
 {
+    if (n_signed) {
+        *n_signed = 0;
+    }
     for (unsigned int i = 0; i < psbtx.tx->vin.size(); ++i) {
         const CTxIn& txin = psbtx.tx->vin[i];
         PSBTInput& input = psbtx.inputs.at(i);
 
         if (PSBTInputSigned(input)) {
             continue;
-        }
-
-        // Verify input looks sane. This will check that we have at most one uxto.
-        if (!input.IsSane()) {
-            return TransactionError::INVALID_PSBT;
         }
 
         // Get the Sighash type
@@ -735,6 +730,14 @@ TransactionError LegacyScriptPubKeyMan::FillPSBT(PartiallySignedTransaction& psb
         SignatureData sigdata;
         input.FillSignatureData(sigdata);
         SignPSBTInput(HidingSigningProvider(this, !sign, !bip32derivs), psbtx, i, sighash_type);
+
+        bool signed_one = PSBTInputSigned(input);
+        if (n_signed && (signed_one || !sign)) {
+            // If sign is false, we assume that we _could_ sign if we get here. This
+            // will never have false negatives; it is hard to tell under what i
+            // circumstances it could have false positives.
+            (*n_signed)++;
+        }
     }
 
     // Fill in the bip32 keypaths and redeemscripts for the outputs so that hardware wallets can identify change
@@ -749,9 +752,9 @@ const CKeyMetadata* LegacyScriptPubKeyMan::GetMetadata(const CTxDestination& des
 {
     LOCK(cs_KeyStore);
 
-    const PKHash *pkhash = std::get_if<PKHash>(&dest);
-    if (pkhash != nullptr && !ToKeyID(*pkhash).IsNull()) {
-        auto it = mapKeyMetadata.find(ToKeyID(*pkhash));
+    CKeyID key_id = GetKeyForDestination(*this, dest);
+    if (!key_id.IsNull()) {
+        auto it = mapKeyMetadata.find(key_id);
         if (it != mapKeyMetadata.end()) {
             return &it->second;
         }
@@ -1437,7 +1440,7 @@ bool LegacyScriptPubKeyMan::TopUpInner(unsigned int kpSize)
         int64_t progress_report_time = GetTime();
         WalletLogPrintf("%s\n", strMsg);
         if (should_show_progress) {
-            uiInterface.ShowProgress(strMsg, 0, false);
+            m_storage.UpdateProgress(strMsg, 0);
         }
 
         bool fInternal = false;
@@ -1455,18 +1458,18 @@ bool LegacyScriptPubKeyMan::TopUpInner(unsigned int kpSize)
 
             if (GetTime() >= progress_report_time + PROGRESS_REPORT_INTERVAL) {
                 const double dProgress = 100.f * current_index / total_missing;
+                const int iProgress = static_cast<int>(dProgress);
                 progress_report_time = GetTime();
                 WalletLogPrintf("Still topping up. At key %lld. Progress=%f\n", current_index, dProgress);
-                if (should_show_progress) {
-                    uiInterface.ShowProgress(strMsg, static_cast<int>(dProgress), false);
+                if (should_show_progress && iProgress > 0) {
+                    m_storage.UpdateProgress(strMsg, iProgress);
                 }
             }
-            if (ShutdownRequested()) break;
         }
         WalletLogPrintf("Keypool added %d keys, size=%u (%u internal)\n",
                   current_index + 1, setInternalKeyPool.size() + setExternalKeyPool.size(), setInternalKeyPool.size());
         if (should_show_progress) {
-            uiInterface.ShowProgress("", 100, false);
+            m_storage.UpdateProgress("", 100);
         }
     }
     NotifyCanGetAddressesChanged();

@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Copyright (c) 2014-2025 The sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -9,7 +9,7 @@
 
 #include <key_io.h>
 #include <fs.h>
-#include <governance/object.h>
+#include <governance/common.h>
 #include <hdchain.h>
 #include <protocol.h>
 #include <serialize.h>
@@ -158,7 +158,7 @@ bool WalletBatch::WriteWatchOnly(const CScript &dest, const CKeyMetadata& keyMet
     if (!WriteIC(std::make_pair(DBKeys::WATCHMETA, dest), keyMeta)) {
         return false;
     }
-    return WriteIC(std::make_pair(DBKeys::WATCHS, dest), '1');
+    return WriteIC(std::make_pair(DBKeys::WATCHS, dest), uint8_t{'1'});
 }
 
 bool WalletBatch::EraseWatchOnly(const CScript &dest)
@@ -226,7 +226,7 @@ bool WalletBatch::WriteCoinJoinSalt(const uint256& salt)
     return WriteIC(DBKeys::COINJOIN_SALT, salt);
 }
 
-bool WalletBatch::WriteGovernanceObject(const CGovernanceObject& obj)
+bool WalletBatch::WriteGovernanceObject(const Governance::Object& obj)
 {
     return WriteIC(std::make_pair(DBKeys::G_OBJECT, obj.GetHash()), obj, false);
 }
@@ -274,41 +274,48 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         } else if (strType == DBKeys::TX) {
             uint256 hash;
             ssKey >> hash;
-            CWalletTx wtx(nullptr /* pwallet */, MakeTransactionRef());
-            ssValue >> wtx;
-            if (wtx.GetHash() != hash)
+            // LoadToWallet call below creates a new CWalletTx that fill_wtx
+            // callback fills with transaction metadata.
+            auto fill_wtx = [&](CWalletTx& wtx, bool new_tx) {
+                assert(new_tx);
+                ssValue >> wtx;
+                if (wtx.GetHash() != hash)
+                    return false;
+
+                // Undo serialize changes in 31600
+                if (31404 <= wtx.fTimeReceivedIsTxTime && wtx.fTimeReceivedIsTxTime <= 31703)
+                {
+                    if (!ssValue.empty())
+                    {
+                        uint8_t fTmp;
+                        uint8_t fUnused;
+                        std::string unused_string;
+                        ssValue >> fTmp >> fUnused >> unused_string;
+                        strErr = strprintf("LoadWallet() upgrading tx ver=%d %d %s",
+                                           wtx.fTimeReceivedIsTxTime, fTmp, hash.ToString());
+                        wtx.fTimeReceivedIsTxTime = fTmp;
+                    }
+                    else
+                    {
+                        strErr = strprintf("LoadWallet() repairing tx ver=%d %s", wtx.fTimeReceivedIsTxTime, hash.ToString());
+                        wtx.fTimeReceivedIsTxTime = 0;
+                    }
+                    wss.vWalletUpgrade.push_back(hash);
+                }
+
+                if (wtx.nOrderPos == -1)
+                    wss.fAnyUnordered = true;
+
+                return true;
+            };
+            if (!pwallet->LoadToWallet(hash, fill_wtx)) {
                 return false;
-
-            // Undo serialize changes in 31600
-            if (31404 <= wtx.fTimeReceivedIsTxTime && wtx.fTimeReceivedIsTxTime <= 31703)
-            {
-                if (!ssValue.empty())
-                {
-                    char fTmp;
-                    char fUnused;
-                    std::string unused_string;
-                    ssValue >> fTmp >> fUnused >> unused_string;
-                    strErr = strprintf("LoadWallet() upgrading tx ver=%d %d %s",
-                                       wtx.fTimeReceivedIsTxTime, fTmp, hash.ToString());
-                    wtx.fTimeReceivedIsTxTime = fTmp;
-                }
-                else
-                {
-                    strErr = strprintf("LoadWallet() repairing tx ver=%d %s", wtx.fTimeReceivedIsTxTime, hash.ToString());
-                    wtx.fTimeReceivedIsTxTime = 0;
-                }
-                wss.vWalletUpgrade.push_back(hash);
             }
-
-            if (wtx.nOrderPos == -1)
-                wss.fAnyUnordered = true;
-
-            pwallet->LoadToWallet(wtx);
         } else if (strType == DBKeys::WATCHS) {
             wss.nWatchKeys++;
             CScript script;
             ssKey >> script;
-            char fYes;
+            uint8_t fYes;
             ssValue >> fYes;
             if (fYes == '1') {
                 pwallet->GetOrCreateLegacyScriptPubKeyMan()->LoadWatchOnly(script);
@@ -337,7 +344,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             {
                 ssValue >> hash;
             }
-            catch (...) {}
+            catch (const std::ios_base::failure&) {}
 
             bool fSkipCheck = false;
 
@@ -509,7 +516,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             }
         } else if (strType == DBKeys::G_OBJECT) {
             uint256 nObjectHash;
-            CGovernanceObject obj;
+            Governance::Object obj;
             ssKey >> nObjectHash;
             ssValue >> obj;
 
@@ -688,7 +695,7 @@ DBErrors WalletBatch::LoadWallet(CWallet* pwallet)
     return result;
 }
 
-DBErrors WalletBatch::FindWalletTx(std::vector<uint256>& vTxHash, std::vector<CWalletTx>& vWtx)
+DBErrors WalletBatch::FindWalletTx(std::vector<uint256>& vTxHash, std::list<CWalletTx>& vWtx)
 {
     DBErrors result = DBErrors::LOAD_OK;
 
@@ -726,12 +733,9 @@ DBErrors WalletBatch::FindWalletTx(std::vector<uint256>& vTxHash, std::vector<CW
             if (strType == DBKeys::TX) {
                 uint256 hash;
                 ssKey >> hash;
-
-                CWalletTx wtx(nullptr /* pwallet */, MakeTransactionRef());
-                ssValue >> wtx;
-
                 vTxHash.push_back(hash);
-                vWtx.push_back(wtx);
+                vWtx.emplace_back(nullptr /* wallet */, nullptr /* tx */);
+                ssValue >> vWtx.back();
             }
         }
     } catch (...) {
@@ -746,7 +750,7 @@ DBErrors WalletBatch::ZapSelectTx(std::vector<uint256>& vTxHashIn, std::vector<u
 {
     // build list of wallet TXs and hashes
     std::vector<uint256> vTxHash;
-    std::vector<CWalletTx> vWtx;
+    std::list<CWalletTx> vWtx;
     DBErrors err = FindWalletTx(vTxHash, vWtx);
     if (err != DBErrors::LOAD_OK) {
         return err;

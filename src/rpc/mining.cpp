@@ -1,6 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -40,6 +40,7 @@
 #include <util/strencodings.h>
 #include <util/string.h>
 #include <util/system.h>
+#include <util/translation.h>
 #include <validation.h>
 #include <validationinterface.h>
 #include <warnings.h>
@@ -150,8 +151,9 @@ static bool GenerateBlock(ChainstateManager& chainman, CBlock& block, uint64_t& 
     return true;
 }
 
-static UniValue generateBlocks(ChainstateManager& chainman, const CTxMemPool& mempool, CEvoDB& evodb,
-                        LLMQContext& llmq_ctx, const CScript& coinbase_script, int nGenerate, uint64_t nMaxTries)
+static UniValue generateBlocks(ChainstateManager& chainman, CEvoDB& evodb, CGovernanceManager& govman, CSporkManager& sporkman,
+                               LLMQContext& llmq_ctx, const CTxMemPool& mempool, const CScript& coinbase_script, int nGenerate,
+                               uint64_t nMaxTries)
 {
     int nHeightEnd = 0;
     int nHeight = 0;
@@ -166,7 +168,7 @@ static UniValue generateBlocks(ChainstateManager& chainman, const CTxMemPool& me
     UniValue blockHashes(UniValue::VARR);
     while (nHeight < nHeightEnd && !ShutdownRequested())
     {
-        std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(*sporkManager, *governance, llmq_ctx, evodb, chainman.ActiveChainstate(), mempool, Params()).CreateNewBlock(coinbase_script));
+        std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(sporkman, govman, llmq_ctx, evodb, chainman.ActiveChainstate(), mempool, Params()).CreateNewBlock(coinbase_script));
         if (!pblocktemplate.get())
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
         CBlock *pblock = &pblocktemplate->block;
@@ -253,7 +255,7 @@ static UniValue generatetodescriptor(const JSONRPCRequest& request)
     ChainstateManager& chainman = EnsureChainman(node);
     LLMQContext& llmq_ctx = EnsureLLMQContext(node);
 
-    return generateBlocks(chainman, mempool, *node.evodb, llmq_ctx, coinbase_script, num_blocks, max_tries);
+    return generateBlocks(chainman, *node.evodb, *node.govman, *node.sporkman, llmq_ctx, mempool, coinbase_script, num_blocks, max_tries);
 }
 
 static UniValue generatetoaddress(const JSONRPCRequest& request)
@@ -273,7 +275,7 @@ static UniValue generatetoaddress(const JSONRPCRequest& request)
         RPCExamples{
     "\nGenerate 11 blocks to myaddress\n"
     + HelpExampleCli("generatetoaddress", "11 \"myaddress\"")
-        + "If you are running the Sparks Core wallet, you can get a new address to send the newly generated coins to with:\n"
+        + "If you are using the " PACKAGE_NAME " wallet, you can get a new address to send the newly generated coins to with:\n"
             + HelpExampleCli("getnewaddress", "")},
     }.Check(request);
 
@@ -292,7 +294,7 @@ static UniValue generatetoaddress(const JSONRPCRequest& request)
 
     CScript coinbase_script = GetScriptForDestination(destination);
 
-    return generateBlocks(chainman, mempool, *node.evodb, llmq_ctx, coinbase_script, num_blocks, max_tries);
+    return generateBlocks(chainman, *node.evodb, *node.govman, *node.sporkman, llmq_ctx, mempool, coinbase_script, num_blocks, max_tries);
 }
 
 static UniValue generateblock(const JSONRPCRequest& request)
@@ -372,7 +374,7 @@ static UniValue generateblock(const JSONRPCRequest& request)
         LOCK(cs_main);
 
         CTxMemPool empty_mempool;
-        std::unique_ptr<CBlockTemplate> blocktemplate(BlockAssembler(*sporkManager, *governance, llmq_ctx, *node.evodb, active_chainstate, empty_mempool, chainparams).CreateNewBlock(coinbase_script));
+        std::unique_ptr<CBlockTemplate> blocktemplate(BlockAssembler(*node.sporkman, *node.govman, llmq_ctx, *node.evodb, active_chainstate, empty_mempool, chainparams).CreateNewBlock(coinbase_script));
         if (!blocktemplate) {
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
         }
@@ -460,7 +462,7 @@ static UniValue getmininginfo(const JSONRPCRequest& request)
     obj.pushKV("networkhashps",    getnetworkhashps(request));
     obj.pushKV("pooledtx",         (uint64_t)mempool.size());
     obj.pushKV("chain",            Params().NetworkIDString());
-    obj.pushKV("warnings",         GetWarnings(false));
+    obj.pushKV("warnings",         GetWarnings(false).original);
     return obj;
 }
 
@@ -573,12 +575,12 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
                             {
                                 {RPCResult::Type::STR_HEX, "data", "transaction data encoded in hexadecimal (byte-for-byte)"},
                                 {RPCResult::Type::STR_HEX, "txid", "transaction id encoded in little-endian hexadecimal"},
-                                {RPCResult::Type::STR_HEX, "hash", "hash encoded in little-endian hexadecimal (including witness data)"},
+                                {RPCResult::Type::STR_HEX, "hash", "hash encoded in little-endian hexadecimal"},
                                 {RPCResult::Type::ARR, "depends", "array of numbers",
                                     {
                                         {RPCResult::Type::NUM, "", "transactions before this one (by 1-based index in 'transactions' list) that must be present in the final block if this one is"},
                                     }},
-                                {RPCResult::Type::NUM, "fee", "difference in value between transaction inputs and outputs (in satoshis); for coinbase transactions, this is a negative Number of the total collected block fees (ie, not including the block subsidy); if key is not present, fee is unknown and clients MUST NOT assume there isn't one"},
+                                {RPCResult::Type::NUM, "fee", "difference in value between transaction inputs and outputs (in duffs); for coinbase transactions, this is a negative Number of the total collected block fees (ie, not including the block subsidy); if key is not present, fee is unknown and clients MUST NOT assume there isn't one"},
                                 {RPCResult::Type::NUM, "sigops", "total number of SigOps, as counted for purposes of block limits; if key is not present, sigop count is unknown and clients MUST NOT assume there aren't any"},
                             }},
                     }},
@@ -586,7 +588,7 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
                 {
                     {RPCResult::Type::STR_HEX, "key", "values must be in the coinbase (keys may be ignored)"},
                 }},
-                {RPCResult::Type::NUM, "coinbasevalue", "maximum allowable input to coinbase transaction, including the generation award and transaction fees (in satoshis)"},
+                {RPCResult::Type::NUM, "coinbasevalue", "maximum allowable input to coinbase transaction, including the generation award and transaction fees (in duffs)"},
                 {RPCResult::Type::STR, "longpollid", "an id to include with a request to longpoll on an update to this template"},
                 {RPCResult::Type::STR, "target", "The hash target"},
                 {RPCResult::Type::NUM_TIME, "mintime", "The minimum timestamp appropriate for the next block time, expressed in " + UNIX_EPOCH_TIME},
@@ -715,8 +717,8 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, PACKAGE_NAME " is in initial sync and waiting for blocks...");
 
     // next bock is a superblock and we need governance info to correctly construct it
-    if (AreSuperblocksEnabled(*sporkManager)
-        && !::masternodeSync->IsSynced()
+    if (AreSuperblocksEnabled(*node.sporkman)
+        && !node.mn_sync->IsSynced()
         && CSuperblock::IsValidBlockHeight(active_chain.Height() + 1))
             throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, PACKAGE_NAME " is syncing with network...");
 
@@ -788,7 +790,7 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
         // Create new block
         CScript scriptDummy = CScript() << OP_TRUE;
         LLMQContext& llmq_ctx = EnsureAnyLLMQContext(request.context);
-        pblocktemplate = BlockAssembler(*sporkManager, *governance, llmq_ctx, *node.evodb, active_chainstate, mempool, Params()).CreateNewBlock(scriptDummy);
+        pblocktemplate = BlockAssembler(*node.sporkman, *node.govman, llmq_ctx, *node.evodb, active_chainstate, mempool, Params()).CreateNewBlock(scriptDummy);
         if (!pblocktemplate)
             throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
 
@@ -850,6 +852,7 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
     result.pushKV("capabilities", aCaps);
 
     UniValue aRules(UniValue::VARR);
+    aRules.push_back("csv");
     UniValue vbavailable(UniValue::VOBJ);
     for (int j = 0; j < (int)Consensus::MAX_VERSION_BITS_DEPLOYMENTS; ++j) {
         Consensus::DeploymentPos pos = Consensus::DeploymentPos(j);
@@ -904,6 +907,7 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
         aMutable.push_back("version/force");
     }
 
+    const bool fDIP0001Active_context{DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_DIP0001)};
     result.pushKV("previousblockhash", pblock->hashPrevBlock.GetHex());
     result.pushKV("transactions", transactions);
     result.pushKV("coinbaseaux", aux);
@@ -913,8 +917,8 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
     result.pushKV("mintime", (int64_t)pindexPrev->GetMedianTimePast()+1);
     result.pushKV("mutable", aMutable);
     result.pushKV("noncerange", "00000000ffffffff");
-    result.pushKV("sigoplimit", (int64_t)MaxBlockSigOps(fDIP0001ActiveAtTip));
-    result.pushKV("sizelimit", (int64_t)MaxBlockSize(fDIP0001ActiveAtTip));
+    result.pushKV("sigoplimit", (int64_t)MaxBlockSigOps(fDIP0001Active_context));
+    result.pushKV("sizelimit", (int64_t)MaxBlockSize(fDIP0001Active_context));
     result.pushKV("curtime", pblock->GetBlockTime());
     result.pushKV("bits", strprintf("%08x", pblock->nBits));
     result.pushKV("previousbits", strprintf("%08x", pblocktemplate->nPrevBits));
@@ -950,7 +954,7 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
     }
     result.pushKV("superblock", superblockObjArray);
     result.pushKV("superblocks_started", pindexPrev->nHeight + 1 > consensusParams.nSuperblockStartBlock);
-    result.pushKV("superblocks_enabled", AreSuperblocksEnabled(*sporkManager));
+    result.pushKV("superblocks_enabled", AreSuperblocksEnabled(*node.sporkman));
 
     result.pushKV("coinbase_payload", HexStr(pblock->vtx[0]->vExtraPayload));
 
@@ -1205,7 +1209,7 @@ static UniValue estimaterawfee(const JSONRPCRequest& request)
 
     UniValue result(UniValue::VOBJ);
 
-    for (const FeeEstimateHorizon horizon : {FeeEstimateHorizon::SHORT_HALFLIFE, FeeEstimateHorizon::MED_HALFLIFE, FeeEstimateHorizon::LONG_HALFLIFE}) {
+    for (const FeeEstimateHorizon horizon : ALL_FEE_ESTIMATE_HORIZONS) {
         CFeeRate feeRate;
         EstimationResult buckets;
 

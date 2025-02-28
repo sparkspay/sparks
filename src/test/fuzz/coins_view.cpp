@@ -6,6 +6,7 @@
 #include <chainparams.h>
 #include <chainparamsbase.h>
 #include <coins.h>
+#include <consensus/tx_check.h>
 #include <consensus/tx_verify.h>
 #include <consensus/validation.h>
 #include <key.h>
@@ -17,6 +18,7 @@
 #include <test/fuzz/FuzzedDataProvider.h>
 #include <test/fuzz/fuzz.h>
 #include <test/fuzz/util.h>
+#include <test/util/setup_common.h>
 #include <validation.h>
 
 #include <cstdint>
@@ -180,8 +182,8 @@ FUZZ_TARGET_INIT(coins_view, initialize_coins_view)
     }
 
     {
-        const CCoinsViewCursor* coins_view_cursor = backend_coins_view.Cursor();
-        assert(coins_view_cursor == nullptr);
+        std::unique_ptr<CCoinsViewCursor> coins_view_cursor = backend_coins_view.Cursor();
+        assert(!coins_view_cursor);
         (void)backend_coins_view.EstimateSize();
         (void)backend_coins_view.GetBestBlock();
         (void)backend_coins_view.GetHeadBlocks();
@@ -229,10 +231,13 @@ FUZZ_TARGET_INIT(coins_view, initialize_coins_view)
                     // consensus/tx_verify.cpp:171: bool Consensus::CheckTxInputs(const CTransaction &, TxValidationState&, const CCoinsViewCache &, int, CAmount &): Assertion `!coin.IsSpent()' failed.
                     return;
                 }
-                try {
-                    (void)Consensus::CheckTxInputs(transaction, state, coins_view_cache, fuzzed_data_provider.ConsumeIntegralInRange<int>(0, std::numeric_limits<int>::max()), tx_fee_out);
+                TxValidationState dummy;
+                if (!CheckTransaction(transaction, dummy)) {
+                    // It is not allowed to call CheckTxInputs if CheckTransaction failed
+                    return;
+                }
+                if (Consensus::CheckTxInputs(transaction, state, coins_view_cache, fuzzed_data_provider.ConsumeIntegralInRange<int>(0, std::numeric_limits<int>::max()), tx_fee_out)) {
                     assert(MoneyRange(tx_fee_out));
-                } catch (const std::runtime_error&) {
                 }
             },
             [&] {
@@ -251,7 +256,7 @@ FUZZ_TARGET_INIT(coins_view, initialize_coins_view)
                     // consensus/tx_verify.cpp:130: unsigned int GetP2SHSigOpCount(const CTransaction &, const CCoinsViewCache &): Assertion `!coin.IsSpent()' failed.
                     return;
                 }
-                const int flags = fuzzed_data_provider.ConsumeIntegral<int>();
+                const auto flags{fuzzed_data_provider.ConsumeIntegral<uint32_t>()};
                 if (!transaction.vin.empty() && (flags & SCRIPT_VERIFY_P2SH) == 0) {
                     // Avoid:
                     // script/interpreter.cpp:1705: size_t CountWitnessSigOps(const CScript &, const CScript &, const CScriptWitness *, unsigned int): Assertion `(flags & SCRIPT_VERIFY_P2SH) != 0' failed.

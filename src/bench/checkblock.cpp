@@ -17,8 +17,8 @@
 static void DeserializeBlockTest(benchmark::Bench& bench)
 {
     CDataStream stream(benchmark::data::block813851, SER_NETWORK, PROTOCOL_VERSION);
-    char a = '\0';
-    stream.write(&a, 1); // Prevent compaction
+    std::byte a{0};
+    stream.write({&a, 1}); // Prevent compaction
 
     bench.unit("block").run([&] {
         CBlock block;
@@ -31,10 +31,11 @@ static void DeserializeBlockTest(benchmark::Bench& bench)
 static void DeserializeAndCheckBlockTest(benchmark::Bench& bench)
 {
     CDataStream stream(benchmark::data::block813851, SER_NETWORK, PROTOCOL_VERSION);
-    char a = '\0';
-    stream.write(&a, 1); // Prevent compaction
+    std::byte a{0};
+    stream.write({&a, 1}); // Prevent compaction
 
-    const auto chainParams = CreateChainParams(CBaseChainParams::MAIN);
+    ArgsManager bench_args;
+    const auto chainParams = CreateChainParams(bench_args, CBaseChainParams::MAIN);
 
     bench.unit("block").run([&] {
         CBlock block; // Note that CBlock caches its checked state, so we need to recreate it here

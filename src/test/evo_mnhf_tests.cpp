@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2023 The Dash Core developers
+// Copyright (c) 2021-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -20,12 +20,10 @@
 
 bool VerifyMNHFTx(const CTransaction& tx, TxValidationState& state)
 {
-    MNHFTxPayload mnhfTx;
-    if (!GetTxPayload(tx, mnhfTx)) {
+    if (const auto opt_mnhfTx_payload = GetTxPayload<MNHFTxPayload>(tx); !opt_mnhfTx_payload) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-mnhf-payload");
-    }
-
-    if (mnhfTx.nVersion == 0 || mnhfTx.nVersion > MNHFTxPayload::CURRENT_VERSION) {
+    } else if (opt_mnhfTx_payload->nVersion == 0 ||
+               opt_mnhfTx_payload->nVersion > MNHFTxPayload::CURRENT_VERSION) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-mnhf-version");
     }
 

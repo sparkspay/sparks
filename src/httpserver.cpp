@@ -2,14 +2,18 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#if defined(HAVE_CONFIG_H)
+#include <config/bitcoin-config.h>
+#endif
+
 #include <httpserver.h>
 
 #include <chainparamsbase.h>
 #include <netbase.h>
+#include <node/ui_interface.h>
 #include <rpc/protocol.h> // For HTTP status codes
 #include <shutdown.h>
 #include <sync.h>
-#include <ui_interface.h>
 #include <util/strencodings.h>
 #include <util/system.h>
 #include <util/threadnames.h>
@@ -315,7 +319,7 @@ static bool HTTPBindAddresses(struct evhttp* http)
 
     // Bind addresses
     for (std::vector<std::pair<std::string, uint16_t> >::iterator i = endpoints.begin(); i != endpoints.end(); ++i) {
-        LogPrint(BCLog::HTTP, "Binding RPC on address %s port %i\n", i->first, i->second);
+        LogPrintf("Binding RPC on address %s port %i\n", i->first, i->second);
         evhttp_bound_socket *bind_handle = evhttp_bind_socket_with_handle(http, i->first.empty() ? nullptr : i->first.c_str(), i->second);
         if (bind_handle) {
             CNetAddr addr;
@@ -597,7 +601,13 @@ CService HTTPRequest::GetPeer() const
         // evhttp retains ownership over returned address string
         const char* address = "";
         uint16_t port = 0;
+
+#ifdef HAVE_EVHTTP_CONNECTION_GET_PEER_CONST_CHAR
+        evhttp_connection_get_peer(con, &address, &port);
+#else
         evhttp_connection_get_peer(con, (char**)&address, &port);
+#endif // HAVE_EVHTTP_CONNECTION_GET_PEER_CONST_CHAR
+
         peer = LookupNumeric(address, port);
     }
     return peer;

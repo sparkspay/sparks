@@ -20,12 +20,16 @@ struct CBlockLocator;
 class CConnman;
 class CValidationInterface;
 class CGovernanceVote;
-class CGovernanceObject;
 class CDeterministicMNList;
 class CDeterministicMNListDiff;
 class uint256;
 class CScheduler;
 enum class MemPoolRemovalReason;
+
+namespace Governance
+{
+    class Object;
+}
 
 namespace llmq {
     class CChainLockSig;
@@ -113,7 +117,7 @@ protected:
      *
      * Called on a background thread.
      */
-    virtual void TransactionAddedToMempool(const CTransactionRef &ptxn, int64_t nAcceptTime) {}
+    virtual void TransactionAddedToMempool(const CTransactionRef &xn, int64_t nAcceptTime) {}
     /**
      * Notifies listeners of a transaction leaving mempool.
      *
@@ -145,7 +149,7 @@ protected:
      *
      * Called on a background thread.
      */
-    virtual void TransactionRemovedFromMempool(const CTransactionRef &ptx, MemPoolRemovalReason reason) {}
+    virtual void TransactionRemovedFromMempool(const CTransactionRef& tx, MemPoolRemovalReason reason) {}
     /**
      * Notifies listeners of a block being connected.
      * Provides a vector of transactions evicted from the mempool as a result.
@@ -162,7 +166,7 @@ protected:
     virtual void NotifyTransactionLock(const CTransactionRef &tx, const std::shared_ptr<const llmq::CInstantSendLock>& islock) {}
     virtual void NotifyChainLock(const CBlockIndex* pindex, const std::shared_ptr<const llmq::CChainLockSig>& clsig) {}
     virtual void NotifyGovernanceVote(const std::shared_ptr<const CGovernanceVote>& vote) {}
-    virtual void NotifyGovernanceObject(const std::shared_ptr<const CGovernanceObject>& object) {}
+    virtual void NotifyGovernanceObject(const std::shared_ptr<const Governance::Object>& object) {}
     virtual void NotifyInstantSendDoubleSpendAttempt(const CTransactionRef& currentTx, const CTransactionRef& previousTx) {}
     virtual void NotifyRecoveredSig(const std::shared_ptr<const llmq::CRecoveredSig>& sig) {}
     virtual void NotifyMasternodeListChanged(bool undo, const CDeterministicMNList& oldMNList, const CDeterministicMNListDiff& diff) {}
@@ -222,14 +226,14 @@ public:
     void NotifyHeaderTip(const CBlockIndex *pindexNew, bool fInitialDownload);
     void UpdatedBlockTip(const CBlockIndex *, const CBlockIndex *, bool fInitialDownload);
     void SynchronousUpdatedBlockTip(const CBlockIndex *, const CBlockIndex *, bool fInitialDownload);
-    void TransactionAddedToMempool(const CTransactionRef &, int64_t);
-    void TransactionRemovedFromMempool(const CTransactionRef &, MemPoolRemovalReason);
+    void TransactionAddedToMempool(const CTransactionRef&, int64_t);
+    void TransactionRemovedFromMempool(const CTransactionRef&, MemPoolRemovalReason);
     void BlockConnected(const std::shared_ptr<const CBlock> &, const CBlockIndex *pindex);
     void BlockDisconnected(const std::shared_ptr<const CBlock> &, const CBlockIndex* pindex);
     void NotifyTransactionLock(const CTransactionRef &tx, const std::shared_ptr<const llmq::CInstantSendLock>& islock);
     void NotifyChainLock(const CBlockIndex* pindex, const std::shared_ptr<const llmq::CChainLockSig>& clsig);
     void NotifyGovernanceVote(const std::shared_ptr<const CGovernanceVote>& vote);
-    void NotifyGovernanceObject(const std::shared_ptr<const CGovernanceObject>& object);
+    void NotifyGovernanceObject(const std::shared_ptr<const Governance::Object>& object);
     void NotifyInstantSendDoubleSpendAttempt(const CTransactionRef &currentTx, const CTransactionRef &previousTx);
     void NotifyRecoveredSig(const std::shared_ptr<const llmq::CRecoveredSig> &sig);
     void NotifyMasternodeListChanged(bool undo, const CDeterministicMNList& oldMNList, const CDeterministicMNListDiff& diff);

@@ -1,8 +1,9 @@
-// Copyright (c) 2017-2022 The Dash Core developers
+// Copyright (c) 2017-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <chainparams.h>
+#include <deploymentstatus.h>
 #include <index/txindex.h>
 #include <node/context.h>
 #include <rpc/blockchain.h>
@@ -19,10 +20,12 @@
 #include <llmq/context.h>
 #include <llmq/debug.h>
 #include <llmq/dkgsession.h>
+#include <llmq/options.h>
 #include <llmq/quorums.h>
 #include <llmq/signing.h>
 #include <llmq/signing_shares.h>
 #include <llmq/snapshot.h>
+#include <llmq/utils.h>
 
 #include <iomanip>
 #include <optional>
@@ -73,8 +76,8 @@ static UniValue quorum_list(const JSONRPCRequest& request, const ChainstateManag
 
     CBlockIndex* pindexTip = WITH_LOCK(cs_main, return chainman.ActiveChain().Tip());
 
-    for (const auto& type : llmq::utils::GetEnabledQuorumTypes(pindexTip)) {
-        const auto& llmq_params_opt = llmq::GetLLMQParams(type);
+    for (const auto& type : llmq::GetEnabledQuorumTypes(pindexTip)) {
+        const auto& llmq_params_opt = Params().GetLLMQ(type);
         CHECK_NONFATAL(llmq_params_opt.has_value());
         UniValue v(UniValue::VARR);
 
@@ -138,8 +141,8 @@ static UniValue quorum_list_extended(const JSONRPCRequest& request, const Chains
 
     CBlockIndex* pblockindex = nHeight != -1 ? WITH_LOCK(cs_main, return chainman.ActiveChain()[nHeight]) : WITH_LOCK(cs_main, return chainman.ActiveChain().Tip());
 
-    for (const auto& type : llmq::utils::GetEnabledQuorumTypes(pblockindex)) {
-        const auto& llmq_params_opt = llmq::GetLLMQParams(type);
+    for (const auto& type : llmq::GetEnabledQuorumTypes(pblockindex)) {
+        const auto& llmq_params_opt = Params().GetLLMQ(type);
         CHECK_NONFATAL(llmq_params_opt.has_value());
         const auto& llmq_params = llmq_params_opt.value();
         UniValue v(UniValue::VARR);
@@ -185,7 +188,7 @@ static void quorum_info_help(const JSONRPCRequest& request)
     }.Check(request);
 }
 
-static UniValue BuildQuorumInfo(const llmq::CQuorumCPtr& quorum, bool includeMembers, bool includeSkShare)
+static UniValue BuildQuorumInfo(const llmq::CQuorumBlockProcessor& quorum_block_processor, const llmq::CQuorumCPtr& quorum, bool includeMembers, bool includeSkShare)
 {
     UniValue ret(UniValue::VOBJ);
 
@@ -196,7 +199,7 @@ static UniValue BuildQuorumInfo(const llmq::CQuorumCPtr& quorum, bool includeMem
     ret.pushKV("minedBlock", quorum->minedBlockHash.ToString());
 
     if (quorum->params.useRotation) {
-        auto previousActiveCommitment = llmq::quorumBlockProcessor->GetLastMinedCommitmentsByQuorumIndexUntilBlock(quorum->params.type, quorum->m_quorum_base_block_index, quorum->qc->quorumIndex, 0);
+        auto previousActiveCommitment = quorum_block_processor.GetLastMinedCommitmentsByQuorumIndexUntilBlock(quorum->params.type, quorum->m_quorum_base_block_index, quorum->qc->quorumIndex, 0);
         if (previousActiveCommitment.has_value()) {
             int previousConsecutiveDKGFailures = (quorum->m_quorum_base_block_index->nHeight - previousActiveCommitment.value()->nHeight) /  quorum->params.dkgInterval - 1;
             ret.pushKV("previousConsecutiveDKGFailures", previousConsecutiveDKGFailures);
@@ -239,7 +242,7 @@ static UniValue quorum_info(const JSONRPCRequest& request, const LLMQContext& ll
     quorum_info_help(request);
 
     Consensus::LLMQType llmqType = (Consensus::LLMQType)ParseInt32V(request.params[0], "llmqType");
-    if (!llmq::GetLLMQParams(llmqType).has_value()) {
+    if (!Params().GetLLMQ(llmqType).has_value()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid LLMQ type");
     }
 
@@ -254,7 +257,7 @@ static UniValue quorum_info(const JSONRPCRequest& request, const LLMQContext& ll
         throw JSONRPCError(RPC_INVALID_PARAMETER, "quorum not found");
     }
 
-    return BuildQuorumInfo(quorum, true, includeSkShare);
+    return BuildQuorumInfo(*llmq_ctx.quorum_block_processor, quorum, true, includeSkShare);
 }
 
 static void quorum_dkgstatus_help(const JSONRPCRequest& request)
@@ -296,11 +299,11 @@ static UniValue quorum_dkgstatus(const JSONRPCRequest& request, const Chainstate
 
     UniValue minableCommitments(UniValue::VARR);
     UniValue quorumArrConnections(UniValue::VARR);
-    for (const auto& type : llmq::utils::GetEnabledQuorumTypes(pindexTip)) {
-        const auto& llmq_params_opt = llmq::GetLLMQParams(type);
+    for (const auto& type : llmq::GetEnabledQuorumTypes(pindexTip)) {
+        const auto& llmq_params_opt = Params().GetLLMQ(type);
         CHECK_NONFATAL(llmq_params_opt.has_value());
         const auto& llmq_params = llmq_params_opt.value();
-        bool rotation_enabled = llmq::utils::IsQuorumRotationEnabled(llmq_params, pindexTip);
+        bool rotation_enabled = llmq::IsQuorumRotationEnabled(llmq_params, pindexTip);
         int quorums_num = rotation_enabled ? llmq_params.signingActiveQuorumCount : 1;
 
         for (const int quorumIndex : irange::range(quorums_num)) {
@@ -378,7 +381,7 @@ static void quorum_memberof_help(const JSONRPCRequest& request)
     }.Check(request);
 }
 
-static UniValue quorum_memberof(const JSONRPCRequest& request, const ChainstateManager& chainman, const LLMQContext& llmq_ctx)
+static UniValue quorum_memberof(const JSONRPCRequest& request, const ChainstateManager& chainman, const NodeContext& node, const LLMQContext& llmq_ctx)
 {
     quorum_memberof_help(request);
 
@@ -392,16 +395,15 @@ static UniValue quorum_memberof(const JSONRPCRequest& request, const ChainstateM
     }
 
     const CBlockIndex* pindexTip = WITH_LOCK(cs_main, return chainman.ActiveChain().Tip());
-
-    auto mnList = deterministicMNManager->GetListForBlock(pindexTip);
+    auto mnList = node.dmnman->GetListForBlock(pindexTip);
     auto dmn = mnList.GetMN(protxHash);
     if (!dmn) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "masternode not found");
     }
 
     UniValue result(UniValue::VARR);
-    for (const auto& type : llmq::utils::GetEnabledQuorumTypes(pindexTip)) {
-        const auto& llmq_params_opt = llmq::GetLLMQParams(type);
+    for (const auto& type : llmq::GetEnabledQuorumTypes(pindexTip)) {
+        const auto& llmq_params_opt = Params().GetLLMQ(type);
         CHECK_NONFATAL(llmq_params_opt.has_value());
         size_t count = llmq_params_opt->signingActiveQuorumCount;
         if (scanQuorumsCount != -1) {
@@ -410,7 +412,7 @@ static UniValue quorum_memberof(const JSONRPCRequest& request, const ChainstateM
         auto quorums = llmq_ctx.qman->ScanQuorums(llmq_params_opt->type, count);
         for (auto& quorum : quorums) {
             if (quorum->IsMember(dmn->proTxHash)) {
-                auto json = BuildQuorumInfo(quorum, false, false);
+                auto json = BuildQuorumInfo(*llmq_ctx.quorum_block_processor, quorum, false, false);
                 json.pushKV("isValidMember", quorum->IsValidMember(dmn->proTxHash));
                 json.pushKV("memberIndex", quorum->GetMemberIndex(dmn->proTxHash));
                 result.push_back(json);
@@ -523,7 +525,7 @@ static UniValue quorum_sigs_cmd(const JSONRPCRequest& request, const LLMQContext
 
     Consensus::LLMQType llmqType = (Consensus::LLMQType)ParseInt32V(request.params[0], "llmqType");
 
-    const auto& llmq_params_opt = llmq::GetLLMQParams(llmqType);
+    const auto& llmq_params_opt = Params().GetLLMQ(llmqType);
     if (!llmq_params_opt.has_value()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid LLMQ type");
     }
@@ -546,7 +548,7 @@ static UniValue quorum_sigs_cmd(const JSONRPCRequest& request, const LLMQContext
             llmq::CQuorumCPtr pQuorum;
 
             if (quorumHash.IsNull()) {
-                pQuorum = llmq_ctx.sigman->SelectQuorumForSigning(llmq_params_opt.value(), *llmq_ctx.qman, id);
+                pQuorum = llmq::SelectQuorumForSigning(llmq_params_opt.value(), *llmq_ctx.qman, id);
             } else {
                 pQuorum = llmq_ctx.qman->GetQuorum(llmqType, quorumHash);
             }
@@ -586,8 +588,8 @@ static UniValue quorum_sigs_cmd(const JSONRPCRequest& request, const LLMQContext
             }
             // First check against the current active set, if it fails check against the last active set
             int signOffset{llmq_params_opt->dkgInterval};
-            return llmq_ctx.sigman->VerifyRecoveredSig(llmqType, *llmq_ctx.qman, signHeight, id, msgHash, sig, 0) ||
-                   llmq_ctx.sigman->VerifyRecoveredSig(llmqType, *llmq_ctx.qman, signHeight, id, msgHash, sig, signOffset);
+            return llmq::VerifyRecoveredSig(llmqType, *llmq_ctx.qman, signHeight, id, msgHash, sig, 0) ||
+                   llmq::VerifyRecoveredSig(llmqType, *llmq_ctx.qman, signHeight, id, msgHash, sig, signOffset);
         } else {
             uint256 quorumHash(ParseHashV(request.params[4], "quorumHash"));
             llmq::CQuorumCPtr quorum = llmq_ctx.qman->GetQuorum(llmqType, quorumHash);
@@ -596,7 +598,7 @@ static UniValue quorum_sigs_cmd(const JSONRPCRequest& request, const LLMQContext
                 throw JSONRPCError(RPC_INVALID_PARAMETER, "quorum not found");
             }
 
-            uint256 signHash = llmq::utils::BuildSignHash(llmqType, quorum->qc->quorumHash, id, msgHash);
+            uint256 signHash = llmq::BuildSignHash(llmqType, quorum->qc->quorumHash, id, msgHash);
             return sig.VerifyInsecure(quorum->qc->quorumPublicKey, signHash);
         }
     } else if (cmd == "quorumhasrecsig") {
@@ -636,7 +638,7 @@ static UniValue quorum_selectquorum(const JSONRPCRequest& request, const LLMQCon
     quorum_selectquorum_help(request);
 
     Consensus::LLMQType llmqType = (Consensus::LLMQType)ParseInt32V(request.params[0], "llmqType");
-    const auto& llmq_params_opt = llmq::GetLLMQParams(llmqType);
+    const auto& llmq_params_opt = Params().GetLLMQ(llmqType);
     if (!llmq_params_opt.has_value()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid LLMQ type");
     }
@@ -645,7 +647,7 @@ static UniValue quorum_selectquorum(const JSONRPCRequest& request, const LLMQCon
 
     UniValue ret(UniValue::VOBJ);
 
-    auto quorum = llmq_ctx.sigman->SelectQuorumForSigning(llmq_params_opt.value(), *llmq_ctx.qman, id);
+    auto quorum = llmq::SelectQuorumForSigning(llmq_params_opt.value(), *llmq_ctx.qman, id);
     if (!quorum) {
         throw JSONRPCError(RPC_MISC_ERROR, "no quorums active");
     }
@@ -786,6 +788,49 @@ static UniValue quorum_rotationinfo(const JSONRPCRequest& request, const LLMQCon
     return quorumRotationInfoRet.ToJson();
 }
 
+static void quorum_dkginfo_help(const JSONRPCRequest& request)
+{
+    RPCHelpMan{
+        "quorum dkginfo",
+        "Return information regarding DKGs.\n",
+        {
+            {},
+        },
+        RPCResult{
+            RPCResult::Type::OBJ, "", "",
+            {
+                {RPCResult::Type::NUM, "active_dkgs", "Total number of active DKG sessions this node is participating in right now"},
+                {RPCResult::Type::NUM, "next_dkg", "The number of blocks until the next potential DKG session"},
+            }
+        },
+        RPCExamples{""},
+    }.Check(request);
+}
+
+static UniValue quorum_dkginfo(const JSONRPCRequest& request, const LLMQContext& llmq_ctx, const ChainstateManager& chainman)
+{
+    quorum_dkginfo_help(request);
+
+    llmq::CDKGDebugStatus status;
+    llmq_ctx.dkg_debugman->GetLocalDebugStatus(status);
+    UniValue ret(UniValue::VOBJ);
+    ret.pushKV("active_dkgs", int(status.sessions.size()));
+
+    const int nTipHeight{WITH_LOCK(cs_main, return chainman.ActiveChain().Height())};
+    auto minNextDKG = [](const Consensus::Params& consensusParams, int nTipHeight) {
+        int minDkgWindow{std::numeric_limits<int>::max()};
+        for (const auto& params: consensusParams.llmqs) {
+            if (params.useRotation && (nTipHeight % params.dkgInterval <= params.signingActiveQuorumCount)) {
+                return 1;
+            }
+            minDkgWindow = std::min(minDkgWindow, params.dkgInterval - (nTipHeight % params.dkgInterval));
+        }
+        return minDkgWindow;
+    };
+    ret.pushKV("next_dkg", minNextDKG(Params().GetConsensus(), nTipHeight));
+
+    return ret;
+}
 
 [[ noreturn ]] static void quorum_help()
 {
@@ -798,6 +843,7 @@ static UniValue quorum_rotationinfo(const JSONRPCRequest& request, const LLMQCon
             "  list              - List of on-chain quorums\n"
             "  listextended      - Extended list of on-chain quorums\n"
             "  info              - Return information about a quorum\n"
+            "  dkginfo           - Return information about DKGs\n"
             "  dkgsimerror       - Simulates DKG errors and malicious behavior\n"
             "  dkgstatus         - Return the status of the current DKG process\n"
             "  memberof          - Checks which quorums the given masternode is a member of\n"
@@ -833,10 +879,12 @@ static UniValue _quorum(const JSONRPCRequest& request)
         return quorum_list_extended(new_request, chainman, llmq_ctx);
     } else if (command == "quoruminfo") {
         return quorum_info(new_request, llmq_ctx);
+    } else if (command == "quorumdkginfo") {
+        return quorum_dkginfo(new_request, llmq_ctx, chainman);
     } else if (command == "quorumdkgstatus") {
         return quorum_dkgstatus(new_request, chainman, llmq_ctx);
     } else if (command == "quorummemberof") {
-        return quorum_memberof(new_request, chainman, llmq_ctx);
+        return quorum_memberof(new_request, chainman, node, llmq_ctx);
     } else if (command == "quorumsign" || command == "quorumverify" || command == "quorumhasrecsig" || command == "quorumgetrecsig" || command == "quorumisconflicting") {
         return quorum_sigs_cmd(new_request, llmq_ctx);
     } else if (command == "quorumselectquorum") {
@@ -896,7 +944,7 @@ static UniValue verifychainlock(const JSONRPCRequest& request)
 
     CBLSSignature sig;
     if (pIndex) {
-        bool use_legacy_signature = !llmq::utils::IsV19Active(pIndex);
+        const bool use_legacy_signature{!DeploymentActiveAfter(pIndex, Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
         if (!sig.SetHexStr(request.params[1].get_str(), use_legacy_signature)) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid signature format");
         }
@@ -976,21 +1024,67 @@ static UniValue verifyislock(const JSONRPCRequest& request)
     CHECK_NONFATAL(pBlockIndex != nullptr);
 
     CBLSSignature sig;
-    const bool use_bls_legacy = !llmq::utils::IsV19Active(pBlockIndex);
+    const bool use_bls_legacy{!DeploymentActiveAfter(pBlockIndex, Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
     if (!sig.SetHexStr(request.params[2].get_str(), use_bls_legacy)) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid signature format");
     }
 
     const LLMQContext& llmq_ctx = EnsureLLMQContext(node);
 
-    auto llmqType = llmq::utils::GetInstantSendLLMQType(*llmq_ctx.qman, pBlockIndex);
+    auto llmqType = Params().GetConsensus().llmqTypeDIP0024InstantSend;
     // First check against the current active set, if it fails check against the last active set
-    const auto& llmq_params_opt = llmq::GetLLMQParams(llmqType);
+    const auto& llmq_params_opt = Params().GetLLMQ(llmqType);
     CHECK_NONFATAL(llmq_params_opt.has_value());
     int signOffset{llmq_params_opt->dkgInterval};
-    return llmq_ctx.sigman->VerifyRecoveredSig(llmqType, *llmq_ctx.qman, signHeight, id, txid, sig, 0) ||
-           llmq_ctx.sigman->VerifyRecoveredSig(llmqType, *llmq_ctx.qman, signHeight, id, txid, sig, signOffset);
+    return llmq::VerifyRecoveredSig(llmqType, *llmq_ctx.qman, signHeight, id, txid, sig, 0) ||
+           llmq::VerifyRecoveredSig(llmqType, *llmq_ctx.qman, signHeight, id, txid, sig, signOffset);
 }
+
+static void submitchainlock_help(const JSONRPCRequest& request)
+{
+    RPCHelpMan{"submitchainlock",
+               "Submit a ChainLock signature if needed\n",
+               {
+                       {"blockHash", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The block hash of the ChainLock."},
+                       {"signature", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The signature of the ChainLock."},
+                       {"blockHeight", RPCArg::Type::NUM, RPCArg::Optional::NO, "The height of the ChainLock."},
+               },
+               RPCResult{
+                    RPCResult::Type::NUM, "", "The height of the current best ChainLock"},
+               RPCExamples{""},
+    }.Check(request);
+}
+
+static UniValue submitchainlock(const JSONRPCRequest& request)
+{
+    submitchainlock_help(request);
+
+    const uint256 nBlockHash(ParseHashV(request.params[0], "blockHash"));
+
+    const int nBlockHeight = ParseInt32V(request.params[2], "blockHeight");
+    if (nBlockHeight <= 0) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid block height");
+    }
+    const LLMQContext& llmq_ctx = EnsureLLMQContext(EnsureAnyNodeContext(request.context));
+    const int32_t bestCLHeight = llmq_ctx.clhandler->GetBestChainLock().getHeight();
+    if (nBlockHeight <= bestCLHeight) return bestCLHeight;
+
+    CBLSSignature sig;
+    if (!sig.SetHexStr(request.params[1].get_str(), false) && !sig.SetHexStr(request.params[1].get_str(), true)) {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid signature format");
+    }
+
+
+    auto clsig = llmq::CChainLockSig(nBlockHeight, nBlockHash, sig);
+    if (!llmq_ctx.clhandler->VerifyChainLock(clsig)) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid signature");
+    }
+
+    llmq_ctx.clhandler->ProcessNewChainLock(-1, clsig, ::SerializeHash(clsig));
+    return llmq_ctx.clhandler->GetBestChainLock().getHeight();
+}
+
+
 void RegisterQuorumsRPCCommands(CRPCTable &tableRPC)
 {
 // clang-format off
@@ -998,6 +1092,7 @@ static const CRPCCommand commands[] =
 { //  category              name                      actor (function)
   //  --------------------- ------------------------  -----------------------
     { "evo",                "quorum",                 &_quorum,                 {}  },
+    { "evo",                "submitchainlock",        &submitchainlock,        {"blockHash", "signature", "blockHeight"}  },
     { "evo",                "verifychainlock",        &verifychainlock,        {"blockHash", "signature", "blockHeight"} },
     { "evo",                "verifyislock",           &verifyislock,           {"id", "txid", "signature", "maxHeight"}  },
 };

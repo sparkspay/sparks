@@ -2,12 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <test/util/setup_common.h>
 #include <util/string.h>
 #include <util/threadnames.h>
 
 #include <mutex>
 #include <set>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -17,7 +17,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-BOOST_FIXTURE_TEST_SUITE(util_threadnames_tests, BasicTestingSetup)
+BOOST_AUTO_TEST_SUITE(util_threadnames_tests)
 
 const std::string TEST_THREAD_NAME_BASE = "test_thread.";
 
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(util_threadnames_test_rename_threaded)
 
     std::set<std::string> names = RenameEnMasse(100);
 
-    BOOST_CHECK_EQUAL(names.size(), 100);
+    BOOST_CHECK_EQUAL(names.size(), 100U);
 
     // Names "test_thread.[n]" should exist for n = [0, 99]
     for (int i = 0; i < 100; ++i) {

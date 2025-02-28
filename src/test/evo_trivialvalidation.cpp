@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2022 The Dash Core developers
+// Copyright (c) 2021-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -20,16 +20,15 @@ BOOST_FIXTURE_TEST_SUITE(evo_trivialvalidation, BasicTestingSetup)
 template<class T>
 void TestTxHelper(const CMutableTransaction& tx, bool is_basic_bls, bool expected_failure, const std::string& expected_error)
 {
-    T payload;
-
     const bool payload_to_fail = expected_failure && expected_error == "gettxpayload-fail";
-    BOOST_CHECK_EQUAL(GetTxPayload(tx, payload, false), !payload_to_fail);
+    const auto opt_payload = GetTxPayload<T>(tx, false);
+    BOOST_CHECK_EQUAL(opt_payload.has_value(), !payload_to_fail);
 
     // No need to check anything else if GetTxPayload() expected to fail
     if (payload_to_fail) return;
 
     TxValidationState dummy_state;
-    BOOST_CHECK_EQUAL(payload.IsTriviallyValid(is_basic_bls, dummy_state), !expected_failure);
+    BOOST_CHECK_EQUAL(opt_payload->IsTriviallyValid(is_basic_bls, dummy_state), !expected_failure);
     if (expected_failure) {
         BOOST_CHECK_EQUAL(dummy_state.GetRejectReason(), expected_error);
     }

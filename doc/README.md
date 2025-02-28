@@ -39,7 +39,7 @@ The following are developer notes on how to build Sparks Core on your native pla
 - [Windows Build Notes](build-windows.md)
 - [OpenBSD Build Notes](build-openbsd.md)
 - [NetBSD Build Notes](build-netbsd.md)
-- [Gitian Building Guide](gitian-building.md)
+- [Android Build Notes](build-android.md)
 
 Development
 ---------------------
@@ -70,6 +70,7 @@ The Sparks Core repo's [root README](/README.md) contains relevant information o
 - [Fuzz-testing](fuzzing.md)
 - [I2P Support](i2p.md)
 - [Init Scripts (systemd/upstart/openrc)](init.md)
+- [Managing Wallets](managing-wallets.md)
 - [PSBT support](psbt.md)
 - [Reduce Memory](reduce-memory.md)
 - [Reduce Traffic](reduce-traffic.md)

@@ -40,6 +40,15 @@ class PSBTTest(BitcoinTestFramework):
         final_tx = self.nodes[0].finalizepsbt(signed_tx)['hex']
         self.nodes[0].sendrawtransaction(final_tx)
 
+        # Manually selected inputs can be locked:
+        assert_equal(len(self.nodes[0].listlockunspent()), 0)
+        utxo1 = self.nodes[0].listunspent()[0]
+        psbtx1 = self.nodes[0].walletcreatefundedpsbt([{"txid": utxo1['txid'], "vout": utxo1['vout']}], {self.nodes[2].getnewaddress():1}, 0,{"lockUnspents": True})["psbt"]
+        assert_equal(len(self.nodes[0].listlockunspent()), 1)
+
+        # Locks are ignored for manually selected inputs
+        self.nodes[0].walletcreatefundedpsbt([{"txid": utxo1['txid'], "vout": utxo1['vout']}], {self.nodes[2].getnewaddress():1}, 0)
+
         # Create p2sh and p2pkh addresses
         pubkey0 = self.nodes[0].getaddressinfo(self.nodes[0].getnewaddress())['pubkey']
         pubkey1 = self.nodes[1].getaddressinfo(self.nodes[1].getnewaddress())['pubkey']
@@ -66,8 +75,13 @@ class PSBTTest(BitcoinTestFramework):
                 p2pkh_pos = out['n']
 
         # spend single key from node 1
-        rawtx = self.nodes[1].walletcreatefundedpsbt([{"txid":txid,"vout":p2pkh_pos}], {self.nodes[1].getnewaddress():9.99})['psbt']
-        walletprocesspsbt_out = self.nodes[1].walletprocesspsbt(rawtx)
+        created_psbt = self.nodes[1].walletcreatefundedpsbt([{"txid":txid,"vout":p2pkh_pos}], {self.nodes[1].getnewaddress():9.99})
+        walletprocesspsbt_out = self.nodes[1].walletprocesspsbt(created_psbt['psbt'])
+        # Make sure it has both types of UTXOs
+        decoded = self.nodes[1].decodepsbt(walletprocesspsbt_out['psbt'])
+        assert 'non_witness_utxo' in decoded['inputs'][0]
+        # Check decodepsbt fee calculation (input values shall only be counted once per UTXO)
+        assert_equal(decoded['fee'], created_psbt['fee'])
         assert_equal(walletprocesspsbt_out['complete'], True)
         self.nodes[1].sendrawtransaction(self.nodes[1].finalizepsbt(walletprocesspsbt_out['psbt'])['hex'])
 
@@ -81,7 +95,7 @@ class PSBTTest(BitcoinTestFramework):
 
         # feeRate of 10 SPARKS / KB produces a total fee well above -maxtxfee
         # previously this was silently capped at -maxtxfee
-        assert_raises_rpc_error(-4, "Fee exceeds maximum configured by -maxtxfee", self.nodes[1].walletcreatefundedpsbt, [{"txid":txid,"vout":p2pkh_pos},{"txid":txid,"vout":p2sh_pos},{"txid":txid,"vout":p2pkh_pos}], {self.nodes[1].getnewaddress():29.99}, 0, {"feeRate": 10})
+        assert_raises_rpc_error(-4, "Fee exceeds maximum configured by user (e.g. -maxtxfee, maxfeerate)", self.nodes[1].walletcreatefundedpsbt, [{"txid":txid,"vout":p2pkh_pos},{"txid":txid,"vout":p2sh_pos},{"txid":txid,"vout":p2pkh_pos}], {self.nodes[1].getnewaddress():29.99}, 0, {"feeRate": 10})
 
         # partially sign multisig things with node 1
         psbtx = self.nodes[1].walletcreatefundedpsbt([{"txid":txid,"vout":p2sh_pos}], {self.nodes[1].getnewaddress():9.99})['psbt']
@@ -337,7 +351,7 @@ class PSBTTest(BitcoinTestFramework):
         assert_equal(analysis['next'], 'creator')
         assert_equal(analysis['error'], 'PSBT is not valid. Input 0 specifies invalid prevout')
 
-        assert_raises_rpc_error(-25, 'Missing inputs', self.nodes[0].walletprocesspsbt, 'cHNidP8BAJoCAAAAAkvEW8NnDtdNtDpsmze+Ht2LH35IJcKv00jKAlUs21RrAwAAAAD/////S8Rbw2cO1020OmybN74e3Ysffkglwq/TSMoCVSzbVGsBAAAAAP7///8CwLYClQAAAAAWABSNJKzjaUb3uOxixsvh1GGE3fW7zQD5ApUAAAAAFgAUKNw0x8HRctAgmvoevm4u1SbN7XIAAAAAAAEAnQIAAAACczMa321tVHuN4GKWKRncycI22aX3uXgwSFUKM2orjRsBAAAAAP7///9zMxrfbW1Ue43gYpYpGdzJwjbZpfe5eDBIVQozaiuNGwAAAAAA/v///wIA+QKVAAAAABl2qRT9zXUVA8Ls5iVqynLHe5/vSe1XyYisQM0ClQAAAAAWABRmWQUcjSjghQ8/uH4Bn/zkakwLtAAAAAAAAQEfQM0ClQAAAAAWABRmWQUcjSjghQ8/uH4Bn/zkakwLtAAAAA==')
+        assert_raises_rpc_error(-25, 'Inputs missing or spent', self.nodes[0].walletprocesspsbt, 'cHNidP8BAJoCAAAAAkvEW8NnDtdNtDpsmze+Ht2LH35IJcKv00jKAlUs21RrAwAAAAD/////S8Rbw2cO1020OmybN74e3Ysffkglwq/TSMoCVSzbVGsBAAAAAP7///8CwLYClQAAAAAWABSNJKzjaUb3uOxixsvh1GGE3fW7zQD5ApUAAAAAFgAUKNw0x8HRctAgmvoevm4u1SbN7XIAAAAAAAEAnQIAAAACczMa321tVHuN4GKWKRncycI22aX3uXgwSFUKM2orjRsBAAAAAP7///9zMxrfbW1Ue43gYpYpGdzJwjbZpfe5eDBIVQozaiuNGwAAAAAA/v///wIA+QKVAAAAABl2qRT9zXUVA8Ls5iVqynLHe5/vSe1XyYisQM0ClQAAAAAWABRmWQUcjSjghQ8/uH4Bn/zkakwLtAAAAAAAAQEfQM0ClQAAAAAWABRmWQUcjSjghQ8/uH4Bn/zkakwLtAAAAA==')
 
 if __name__ == '__main__':
     PSBTTest().main()

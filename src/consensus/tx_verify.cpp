@@ -1,20 +1,20 @@
-// Copyright (c) 2017-2017 The Bitcoin Core developers
+// Copyright (c) 2017-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <consensus/tx_verify.h>
 
-#include <consensus/consensus.h>
-#include <chainparams.h>
-#include <primitives/transaction.h>
-#include <script/interpreter.h>
-#include <consensus/validation.h>
-#include <evo/assetlocktx.h>
-
-// TODO remove the following dependencies
 #include <chain.h>
 #include <coins.h>
+#include <consensus/consensus.h>
+#include <chainparams.h>
+#include <consensus/validation.h>
+#include <evo/assetlocktx.h>
+#include <primitives/transaction.h>
+#include <script/interpreter.h>
+#include <tinyformat.h>
 #include <util/moneystr.h>
+
 
 bool IsFinalTx(const CTransaction &tx, int nBlockHeight, int64_t nBlockTime)
 {
@@ -146,7 +146,7 @@ unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& in
     return nSigOps;
 }
 
-unsigned int GetTransactionSigOpCount(const CTransaction& tx, const CCoinsViewCache& inputs, int flags)
+unsigned int GetTransactionSigOpCount(const CTransaction& tx, const CCoinsViewCache& inputs, uint32_t flags)
 {
     unsigned int nSigOps = GetLegacySigOpCount(tx);
 

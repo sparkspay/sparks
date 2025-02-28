@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2022 The Dash Core developers
+# Copyright (c) 2015-2024 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 import time
@@ -21,7 +21,7 @@ import struct
 
 from test_framework.blocktools import create_block_with_mnpayments
 from test_framework.messages import CInv, CTransaction, FromHex, hash256, msg_clsig, msg_inv, ser_string, ToHex, uint256_from_str
-from test_framework.mininode import P2PInterface
+from test_framework.p2p import P2PInterface
 from test_framework.test_framework import SparksTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error, hex_str_to_bytes, wait_until
 
@@ -39,11 +39,11 @@ class TestP2PConn(P2PInterface):
         inv = msg_inv([CInv(29, hash)])
         self.send_message(inv)
 
-    def send_islock(self, islock, deterministic=False):
-        hash = uint256_from_str(hash256(islock.serialize()))
-        self.islocks[hash] = islock
+    def send_isdlock(self, isdlock):
+        hash = uint256_from_str(hash256(isdlock.serialize()))
+        self.islocks[hash] = isdlock
 
-        inv = msg_inv([CInv(31 if deterministic else 30, hash)])
+        inv = msg_inv([CInv(31, hash)])
         self.send_message(inv)
 
     def on_getdata(self, message):
@@ -68,7 +68,16 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
 
-        self.mine_quorum()
+        self.activate_v19(expected_activation_height=900)
+        self.log.info("Activated v19 at height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H+C height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H+2C height:" + str(self.nodes[0].getblockcount()))
+
+        self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
 
         # mine single block, wait for chainlock
         self.nodes[0].generate(1)
@@ -77,16 +86,7 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         self.test_chainlock_overrides_islock(False)
         self.test_chainlock_overrides_islock(True, False)
         self.test_chainlock_overrides_islock(True, True)
-        self.test_chainlock_overrides_islock_overrides_nonchainlock(False)
-        self.activate_dip0024()
-        self.log.info("Activated DIP0024 at height:" + str(self.nodes[0].getblockcount()))
-        self.test_chainlock_overrides_islock_overrides_nonchainlock(False)
-        # At this point, we need to move forward 3 cycles (3 x 24 blocks) so the first 3 quarters can be created (without DKG sessions)
-        self.move_to_next_cycle()
-        self.move_to_next_cycle()
-        self.move_to_next_cycle()
-        self.mine_cycle_quorum()
-        self.test_chainlock_overrides_islock_overrides_nonchainlock(True)
+        self.test_chainlock_overrides_islock_overrides_nonchainlock()
 
     def test_chainlock_overrides_islock(self, test_block_conflict, mine_confllicting=False):
         if not test_block_conflict:
@@ -207,7 +207,7 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
                 assert rawtx['instantlock']
                 assert not rawtx['instantlock_internal']
 
-    def test_chainlock_overrides_islock_overrides_nonchainlock(self, deterministic):
+    def test_chainlock_overrides_islock_overrides_nonchainlock(self):
         # create two raw TXs, they will conflict with each other
         rawtx1 = self.create_raw_tx(self.nodes[0], self.nodes[0], 1, 1, 100)['hex']
         rawtx2 = self.create_raw_tx(self.nodes[0], self.nodes[0], 1, 1, 100)['hex']
@@ -216,7 +216,7 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         rawtx2_txid = hash256(hex_str_to_bytes(rawtx2))[::-1].hex()
 
         # Create an ISLOCK but don't broadcast it yet
-        islock = self.create_islock(rawtx2, deterministic)
+        isdlock = self.create_isdlock(rawtx2)
 
         # Ensure spork uniqueness in multiple function runs
         self.bump_mocktime(1)
@@ -248,13 +248,13 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
 
         # Send the ISLOCK, which should result in the last 2 blocks to be disconnected,
         # even though the nodes don't know the locked transaction yet
-        self.test_node.send_islock(islock, deterministic)
+        self.test_node.send_isdlock(isdlock)
         for node in self.nodes:
             wait_until(lambda: node.getbestblockhash() == good_tip, timeout=10, sleep=0.5)
             # islock for tx2 is incomplete, tx1 should return in mempool now that blocks are disconnected
             assert rawtx1_txid in set(node.getrawmempool())
 
-        # Should drop tx1 and accept tx2 because there is an islock waiting for it
+        # Should drop tx1 and accept tx2 because there is an isdlock waiting for it
         self.nodes[0].sendrawtransaction(rawtx2)
         # bump mocktime to force tx relay
         self.bump_mocktime(60)

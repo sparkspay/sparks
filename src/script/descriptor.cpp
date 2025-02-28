@@ -819,12 +819,12 @@ std::unique_ptr<DescriptorImpl> ParseScript(uint32_t key_exp_index, Span<const c
     auto expr = Expr(sp);
     bool sorted_multi = false;
     if (Func("pk", expr)) {
-        auto pubkey = ParsePubkey(key_exp_index, expr, ctx != ParseScriptContext::P2SH, out, error);
+        auto pubkey = ParsePubkey(key_exp_index, expr, true, out, error);
         if (!pubkey) return nullptr;
         return std::make_unique<PKDescriptor>(std::move(pubkey));
     }
     if (Func("pkh", expr)) {
-        auto pubkey = ParsePubkey(key_exp_index, expr, ctx != ParseScriptContext::P2SH, out, error);
+        auto pubkey = ParsePubkey(key_exp_index, expr, true, out, error);
         if (!pubkey) return nullptr;
         return std::make_unique<PKHDescriptor>(std::move(pubkey));
     }
@@ -851,7 +851,7 @@ std::unique_ptr<DescriptorImpl> ParseScript(uint32_t key_exp_index, Span<const c
                 return nullptr;
             }
             auto arg = Expr(expr);
-            auto pk = ParsePubkey(key_exp_index, arg, ctx != ParseScriptContext::P2SH, out, error);
+            auto pk = ParsePubkey(key_exp_index, arg, true, out, error);
             if (!pk) return nullptr;
             script_size += pk->GetSize() + 1;
             providers.emplace_back(std::move(pk));
@@ -930,7 +930,7 @@ std::unique_ptr<DescriptorImpl> InferScript(const CScript& script, ParseScriptCo
     TxoutType txntype = Solver(script, data);
 
     if (txntype == TxoutType::PUBKEY) {
-        CPubKey pubkey(data[0].begin(), data[0].end());
+        CPubKey pubkey(data[0]);
         if (pubkey.IsValid()) {
             return std::make_unique<PKDescriptor>(InferPubkey(pubkey, ctx, provider));
         }
@@ -946,7 +946,7 @@ std::unique_ptr<DescriptorImpl> InferScript(const CScript& script, ParseScriptCo
     if (txntype == TxoutType::MULTISIG) {
         std::vector<std::unique_ptr<PubkeyProvider>> providers;
         for (size_t i = 1; i + 1 < data.size(); ++i) {
-            CPubKey pubkey(data[i].begin(), data[i].end());
+            CPubKey pubkey(data[i]);
             providers.push_back(InferPubkey(pubkey, ctx, provider));
         }
         return std::make_unique<MultisigDescriptor>((int)data[0][0], std::move(providers));

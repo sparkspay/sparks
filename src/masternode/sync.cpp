@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,8 +8,8 @@
 #include <governance/governance.h>
 #include <netfulfilledman.h>
 #include <netmessagemaker.h>
+#include <node/ui_interface.h>
 #include <shutdown.h>
-#include <ui_interface.h>
 #include <validation.h>
 #include <util/time.h>
 #include <util/translation.h>
@@ -152,15 +152,15 @@ void CMasternodeSync::ProcessTick()
 
     for (auto& pnode : vNodesCopy)
     {
-        CNetMsgMaker msgMaker(pnode->GetSendVersion());
+        CNetMsgMaker msgMaker(pnode->GetCommonVersion());
 
         // Don't try to sync any data from outbound non-relay "masternode" connections.
         // Inbound connection this early is most likely a "masternode" connection
         // initiated from another node, so skip it too.
-        if (!pnode->CanRelay() || (fMasternodeMode && pnode->fInbound)) continue;
+        if (!pnode->CanRelay() || (fMasternodeMode && pnode->IsInboundConn())) continue;
 
         {
-            if ((pnode->HasPermission(PF_NOBAN) || pnode->m_manual_connection) && !netfulfilledman->HasFulfilledRequest(pnode->addr, strAllow)) {
+            if ((pnode->HasPermission(PF_NOBAN) || pnode->IsManualConn()) && !netfulfilledman->HasFulfilledRequest(pnode->addr, strAllow)) {
                 netfulfilledman->RemoveAllFulfilledRequests(pnode->addr);
                 netfulfilledman->AddFulfilledRequest(pnode->addr, strAllow);
                 LogPrintf("CMasternodeSync::ProcessTick -- skipping mnsync restrictions for peer=%d\n", pnode->GetId());
@@ -203,7 +203,7 @@ void CMasternodeSync::ProcessTick()
                         // Now that the blockchain is synced request the mempool from the connected outbound nodes if possible
                         for (auto pNodeTmp : vNodesCopy) {
                             bool fRequestedEarlier = netfulfilledman->HasFulfilledRequest(pNodeTmp->addr, "mempool-sync");
-                            if (pNodeTmp->nVersion >= 70216 && !pNodeTmp->fInbound && !fRequestedEarlier && !pNodeTmp->IsBlockRelayOnly()) {
+                            if (pNodeTmp->nVersion >= 70216 && !pNodeTmp->IsInboundConn() && !fRequestedEarlier && !pNodeTmp->IsBlockRelayOnly()) {
                                 netfulfilledman->AddFulfilledRequest(pNodeTmp->addr, "mempool-sync");
                                 connman.PushMessage(pNodeTmp, msgMaker.Make(NetMsgType::MEMPOOL));
                                 LogPrint(BCLog::MNSYNC, "CMasternodeSync::ProcessTick -- nTick %d nCurrentAsset %d -- syncing mempool from peer=%d\n", nTick, nCurrentAsset, pNodeTmp->GetId());
@@ -301,7 +301,7 @@ void CMasternodeSync::ProcessTick()
 
 void CMasternodeSync::SendGovernanceSyncRequest(CNode* pnode) const
 {
-    CNetMsgMaker msgMaker(pnode->GetSendVersion());
+    CNetMsgMaker msgMaker(pnode->GetCommonVersion());
 
     CBloomFilter filter;
 
@@ -338,9 +338,7 @@ void CMasternodeSync::UpdatedBlockTip(const CBlockIndex *pindexNew, bool fInitia
     LogPrint(BCLog::MNSYNC, "CMasternodeSync::UpdatedBlockTip -- pindexNew->nHeight: %d fInitialDownload=%d\n", pindexNew->nHeight, fInitialDownload);
     nTimeLastUpdateBlockTip = GetTime<std::chrono::seconds>().count();
 
-    CBlockIndex* pindexTip = WITH_LOCK(cs_main, return pindexBestHeader);
-
-    if (IsSynced() || !pindexTip)
+    if (IsSynced())
         return;
 
     if (!IsBlockchainSynced()) {
@@ -359,6 +357,8 @@ void CMasternodeSync::UpdatedBlockTip(const CBlockIndex *pindexNew, bool fInitia
     }
 
     // Note: since we sync headers first, it should be ok to use this
+    CBlockIndex* pindexTip = WITH_LOCK(cs_main, return pindexBestHeader);
+    if (pindexTip == nullptr) return;
     bool fReachedBestHeaderNew = pindexNew->GetBlockHash() == pindexTip->GetBlockHash();
 
     if (fReachedBestHeader && !fReachedBestHeaderNew) {

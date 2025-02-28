@@ -9,11 +9,11 @@ export LC_ALL=C.UTF-8
 export CONTAINER_NAME=ci_macos
 export HOST=x86_64-apple-darwin
 export PIP_PACKAGES="zmq lief"
-export RUN_UNIT_TESTS=true
-export RUN_INTEGRATION_TESTS=false
-export RUN_SECURITY_TESTS="true"
 export GOAL="install"
-export BITCOIN_CONFIG="--enable-gui --enable-reduce-exports --disable-miner --enable-werror"
-# Run without depends
+export BITCOIN_CONFIG="--with-gui --enable-reduce-exports --disable-miner --enable-werror --with-boost-process"
+export CI_OS_NAME="macos"
 export NO_DEPENDS=1
 export OSX_SDK=""
+export CCACHE_SIZE=300M
+
+export RUN_SECURITY_TESTS="true"

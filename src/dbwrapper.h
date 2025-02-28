@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2015 The Bitcoin Core developers
+// Copyright (c) 2012-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -169,7 +169,7 @@ public:
 
     CDataStream GetKey() {
         leveldb::Slice slKey = piter->key();
-        return CDataStream(MakeUCharSpan(slKey), SER_DISK, CLIENT_VERSION);
+        return CDataStream{MakeByteSpan(slKey), SER_DISK, CLIENT_VERSION};
     }
 
     unsigned int GetKeySize() {
@@ -179,7 +179,7 @@ public:
     template<typename V> bool GetValue(V& value) {
         leveldb::Slice slValue = piter->value();
         try {
-            CDataStream ssValue(MakeUCharSpan(slValue), SER_DISK, CLIENT_VERSION);
+            CDataStream ssValue{MakeByteSpan(slValue), SER_DISK, CLIENT_VERSION};
             ssValue.Xor(dbwrapper_private::GetObfuscateKey(parent));
             ssValue >> value;
         } catch (const std::exception&) {
@@ -269,7 +269,7 @@ public:
             LogPrintf("LevelDB read failure: %s\n", status.ToString());
             dbwrapper_private::HandleError(status);
         }
-        CDataStream ssValueTmp(MakeUCharSpan(strValue), SER_DISK, CLIENT_VERSION);
+        CDataStream ssValueTmp{MakeByteSpan(strValue), SER_DISK, CLIENT_VERSION};
         ssValueTmp.Xor(obfuscate_key);
         ssValue = std::move(ssValueTmp);
         return true;
@@ -464,25 +464,13 @@ public:
             return false;
         }
 
-        if (curIsParent) {
-            try {
-                // TODO try to avoid this copy (we need a stream that allows reading from external buffers)
-                CDataStream ssKey = parentKey;
-                ssKey >> key;
-            } catch (const std::exception&) {
-                return false;
-            }
-            return true;
-        } else {
-            try {
-                // TODO try to avoid this copy (we need a stream that allows reading from external buffers)
-                CDataStream ssKey = transactionIt->first;
-                ssKey >> key;
-            } catch (const std::exception&) {
-                return false;
-            }
-            return true;
+        try {
+            // TODO try to avoid copy transactionIt->first (we need a stream that allows reading from external buffers)
+            (curIsParent ? parentKey : CDataStream{transactionIt->first}) >> key;
+        } catch (const std::exception&) {
+            return false;
         }
+        return true;
     }
 
     CDataStream GetKey() {

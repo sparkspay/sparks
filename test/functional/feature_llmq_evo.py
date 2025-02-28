@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2022 The Dash Core developers
+# Copyright (c) 2015-2024 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -12,12 +12,12 @@ Checks EvoNodes
 from _decimal import Decimal
 from io import BytesIO
 
-from test_framework.mininode import P2PInterface
+from test_framework.p2p import P2PInterface
 from test_framework.messages import CBlock, CBlockHeader, CCbTx, CMerkleBlock, FromHex, hash256, msg_getmnlistd, \
     QuorumId, ser_uint256
 from test_framework.test_framework import SparksTestFramework
 from test_framework.util import (
-    assert_equal, p2p_port, wait_until
+    assert_equal, p2p_port
 )
 
 
@@ -35,7 +35,7 @@ class TestP2PConn(P2PInterface):
     def wait_for_mnlistdiff(self, timeout=30):
         def received_mnlistdiff():
             return self.last_mnlistdiff is not None
-        return wait_until(received_mnlistdiff, timeout=timeout)
+        return self.wait_until(received_mnlistdiff, timeout=timeout)
 
     def getmnlistdiff(self, baseBlockHash, blockHash):
         msg = msg_getmnlistd(baseBlockHash, blockHash)
@@ -64,13 +64,12 @@ class LLMQEvoNodesTest(SparksTestFramework):
         self.activate_dip8()
 
         self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
+        self.nodes[0].sporkupdate("SPORK_2_INSTANTSEND_ENABLED", 1)
         self.wait_for_sporks_same()
 
         expectedUpdated = [mn.proTxHash for mn in self.mninfo]
         b_0 = self.nodes[0].getbestblockhash()
         self.test_getmnlistdiff(null_hash, b_0, {}, [], expectedUpdated)
-
-        self.mine_quorum(llmq_type_name='llmq_test', llmq_type=100)
 
         self.log.info("Test that EvoNodes registration is rejected before v19")
         self.test_evo_is_rejected_before_v19()
@@ -80,6 +79,9 @@ class LLMQEvoNodesTest(SparksTestFramework):
         self.activate_v19(expected_activation_height=900)
         self.log.info("Activated v19 at height:" + str(self.nodes[0].getblockcount()))
 
+        self.nodes[0].sporkupdate("SPORK_2_INSTANTSEND_ENABLED", 0)
+        self.wait_for_sporks_same()
+
         self.move_to_next_cycle()
         self.log.info("Cycle H height:" + str(self.nodes[0].getblockcount()))
         self.move_to_next_cycle()
@@ -87,7 +89,7 @@ class LLMQEvoNodesTest(SparksTestFramework):
         self.move_to_next_cycle()
         self.log.info("Cycle H+2C height:" + str(self.nodes[0].getblockcount()))
 
-        (quorum_info_i_0, quorum_info_i_1) = self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
+        self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
 
         evo_protxhash_list = list()
         for i in range(5):
@@ -104,7 +106,7 @@ class LLMQEvoNodesTest(SparksTestFramework):
             self.dynamically_evo_update_service(evo_info)
 
         self.log.info("Test llmq_platform are formed only with EvoNodes")
-        for i in range(3):
+        for _ in range(3):
             quorum_i_hash = self.mine_quorum(llmq_type_name='llmq_test_platform', llmq_type=106, expected_connections=2, expected_members=3, expected_contributions=3, expected_complaints=0, expected_justifications=0, expected_commitments=3 )
             self.test_quorum_members_are_evo_nodes(quorum_i_hash, llmq_type=106)
 
@@ -218,12 +220,10 @@ class LLMQEvoNodesTest(SparksTestFramework):
         collateral_amount = 4000
         outputs = {collateral_address: collateral_amount, funds_address: 1}
         collateral_txid = self.nodes[0].sendmany("", outputs)
-        self.wait_for_instantlock(collateral_txid, self.nodes[0])
-        tip = self.nodes[0].generate(1)[0]
+        self.nodes[0].generate(8)
         self.sync_all(self.nodes)
 
-        rawtx = self.nodes[0].getrawtransaction(collateral_txid, 1, tip)
-        assert_equal(rawtx['confirmations'], 1)
+        rawtx = self.nodes[0].getrawtransaction(collateral_txid, 1)
         collateral_vout = 0
         for txout in rawtx['vout']:
             if txout['value'] == Decimal(collateral_amount):

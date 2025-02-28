@@ -1,14 +1,17 @@
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_GOVERNANCE_GOVERNANCE_H
 #define BITCOIN_GOVERNANCE_GOVERNANCE_H
 
-#include <cachemap.h>
-#include <cachemultimap.h>
 #include <governance/classes.h>
 #include <governance/object.h>
+
+#include <cachemap.h>
+#include <cachemultimap.h>
+#include <net_types.h>
+
 #include <optional>
 
 class CBloomFilter;
@@ -22,7 +25,6 @@ class CGovernanceTriggerManager;
 class CGovernanceObject;
 class CGovernanceVote;
 class CSporkManager;
-class PeerManager;
 
 extern std::unique_ptr<CGovernanceManager> governance;
 
@@ -208,18 +210,7 @@ public:
             >> *lastMNListForVotingKeys;
     }
 
-    void Clear()
-    {
-        LOCK(cs);
-
-        LogPrint(BCLog::GOBJECT, "Governance object manager was cleared\n");
-        mapObjects.clear();
-        mapErasedGovernanceObjects.clear();
-        cmapVoteToObject.Clear();
-        cmapInvalidVotes.Clear();
-        cmmapOrphanVotes.Clear();
-        mapLastMasternodeObject.clear();
-    }
+    void Clear();
 
     std::string ToString() const;
 };
@@ -289,9 +280,9 @@ public:
     bool ConfirmInventoryRequest(const CInv& inv);
 
     void SyncSingleObjVotes(CNode& peer, const uint256& nProp, const CBloomFilter& filter, CConnman& connman);
-    void SyncObjects(CNode& peer, PeerManager& peerman, CConnman& connman) const;
+    PeerMsgRet SyncObjects(CNode& peer, CConnman& connman) const;
 
-    void ProcessMessage(CNode& peer, PeerManager& peerman, CConnman& connman, std::string_view msg_type, CDataStream& vRecv);
+    PeerMsgRet ProcessMessage(CNode& peer, CConnman& connman, std::string_view msg_type, CDataStream& vRecv);
 
     void ResetVotedFundingTrigger();
 

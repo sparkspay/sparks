@@ -8,6 +8,9 @@
 #include <util/threadnames.h>
 #include <util/time.h>
 
+#include <algorithm>
+#include <array>
+
 const char * const DEFAULT_DEBUGLOGFILE = "debug.log";
 
 BCLog::Logger& LogInstance()
@@ -130,8 +133,7 @@ bool BCLog::Logger::DefaultShrinkDebugFile() const
     return m_categories == BCLog::NONE;
 }
 
-struct CLogCategoryDesc
-{
+struct CLogCategoryDesc {
     BCLog::LogFlags flag;
     std::string category;
 };
@@ -201,16 +203,19 @@ bool GetLogCategory(BCLog::LogFlags& flag, const std::string& str)
 
 std::vector<LogCategory> BCLog::Logger::LogCategoriesList(bool enabled_only) const
 {
+    // Sort log categories by alphabetical order.
+    std::array<CLogCategoryDesc, std::size(LogCategories)> categories;
+    std::copy(std::begin(LogCategories), std::end(LogCategories), categories.begin());
+    std::sort(categories.begin(), categories.end(), [](auto a, auto b) { return a.category < b.category; });
+
     std::vector<LogCategory> ret;
-    for (const CLogCategoryDesc& category_desc : LogCategories) {
-        // Omit the special cases.
-        if (category_desc.flag != BCLog::NONE && category_desc.flag != BCLog::ALL && category_desc.flag != BCLog::SPARKS) {
-            LogCategory catActive;
-            catActive.category = category_desc.category;
-            catActive.active = WillLogCategory(category_desc.flag);
-            if (!enabled_only || catActive.active) {
-                ret.push_back(catActive);
-            }
+    for (const CLogCategoryDesc& category_desc : categories) {
+        if (category_desc.flag == BCLog::NONE || category_desc.flag == BCLog::ALL || category_desc.flag == BCLog::SPARKS) continue;
+        LogCategory catActive;
+        catActive.category = category_desc.category;
+        catActive.active = WillLogCategory(category_desc.flag);
+        if (!enabled_only || catActive.active) {
+            ret.push_back(catActive);
         }
     }
     return ret;
@@ -230,9 +235,9 @@ std::string BCLog::Logger::LogTimestampStr(const std::string& str)
             strStamped.pop_back();
             strStamped += strprintf(".%06dZ", nTimeMicros%1000000);
         }
-        int64_t mocktime = GetMockTime();
-        if (mocktime) {
-            strStamped += " (mocktime: " + FormatISO8601DateTime(mocktime) + ")";
+        std::chrono::seconds mocktime = GetMockTime();
+        if (mocktime > 0s) {
+            strStamped += " (mocktime: " + FormatISO8601DateTime(count_seconds(mocktime)) + ")";
         }
         strStamped += ' ' + str;
     } else
@@ -261,7 +266,7 @@ namespace BCLog {
         }
         return ret;
     }
-}
+} // namespace BCLog
 
 void BCLog::Logger::LogPrintStr(const std::string& str)
 {

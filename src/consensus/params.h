@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -144,6 +144,8 @@ struct Params {
     int DATATXHeight;
     /** Block height at which DIP0024 (Quorum Rotation) and decreased governance proposal fee becomes active */
     int DIP0024Height;
+    /** Block height at which the first DIP0024 quorum was mined */
+    int DIP0024QuorumsHeight;
     /** Block height at which V19 (Basic BLS and EvoNodes) becomes active */
     int V19Height;
     /** Don't warn about unknown BIP 9 activations below this height.
@@ -179,7 +181,6 @@ struct Params {
     std::vector<LLMQParams> llmqs;
     std::vector<LLMQParams> llmqs_old;
     LLMQType llmqTypeChainLocks;
-    LLMQType llmqTypeInstantSend{LLMQType::LLMQ_NONE};
     LLMQType llmqTypeDIP0024InstantSend{LLMQType::LLMQ_NONE};
     LLMQType llmqTypePlatform{LLMQType::LLMQ_NONE};
     LLMQType llmqTypeMnhf{LLMQType::LLMQ_NONE};

@@ -1,13 +1,14 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2023 The Dash Core developers
-// Copyright (c) 2016-2023 The Sparks Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
+// Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <addressindex.h>
 #include <chainparams.h>
 #include <consensus/consensus.h>
+#include <deploymentstatus.h>
 #include <evo/mnauth.h>
 #include <httpserver.h>
 #include <index/blockfilterindex.h>
@@ -16,7 +17,6 @@
 #include <init.h>
 #include <interfaces/chain.h>
 #include <key_io.h>
-#include <llmq/utils.h>
 #include <net.h>
 #include <node/context.h>
 #include <rpc/blockchain.h>
@@ -102,26 +102,29 @@ static UniValue mnsync(const JSONRPCRequest& request)
 
     std::string strMode = request.params[0].get_str();
 
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
+    auto& mn_sync = *node.mn_sync;
+
     if(strMode == "status") {
         UniValue objStatus(UniValue::VOBJ);
-        objStatus.pushKV("AssetID", ::masternodeSync->GetAssetID());
-        objStatus.pushKV("AssetName", ::masternodeSync->GetAssetName());
-        objStatus.pushKV("AssetStartTime", ::masternodeSync->GetAssetStartTime());
-        objStatus.pushKV("Attempt", ::masternodeSync->GetAttempt());
-        objStatus.pushKV("IsBlockchainSynced", ::masternodeSync->IsBlockchainSynced());
-        objStatus.pushKV("IsSynced", ::masternodeSync->IsSynced());
+        objStatus.pushKV("AssetID", mn_sync.GetAssetID());
+        objStatus.pushKV("AssetName", mn_sync.GetAssetName());
+        objStatus.pushKV("AssetStartTime", mn_sync.GetAssetStartTime());
+        objStatus.pushKV("Attempt", mn_sync.GetAttempt());
+        objStatus.pushKV("IsBlockchainSynced", mn_sync.IsBlockchainSynced());
+        objStatus.pushKV("IsSynced", mn_sync.IsSynced());
         return objStatus;
     }
 
     if(strMode == "next")
     {
-        ::masternodeSync->SwitchToNextAsset();
-        return "sync updated to " + ::masternodeSync->GetAssetName();
+        mn_sync.SwitchToNextAsset();
+        return "sync updated to " + mn_sync.GetAssetName();
     }
 
     if(strMode == "reset")
     {
-        ::masternodeSync->Reset(true);
+        mn_sync.Reset(true);
         return "success";
     }
     return "failure";
@@ -158,16 +161,17 @@ static UniValue spork(const JSONRPCRequest& request)
 
     // basic mode, show info
     std:: string strCommand = request.params[0].get_str();
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
     if (strCommand == "show") {
         UniValue ret(UniValue::VOBJ);
         for (const auto& sporkDef : sporkDefs) {
-            ret.pushKV(std::string(sporkDef.name), sporkManager->GetSporkValue(sporkDef.sporkId));
+            ret.pushKV(std::string(sporkDef.name), node.sporkman->GetSporkValue(sporkDef.sporkId));
         }
         return ret;
     } else if(strCommand == "active"){
         UniValue ret(UniValue::VOBJ);
         for (const auto& sporkDef : sporkDefs) {
-            ret.pushKV(std::string(sporkDef.name), sporkManager->IsSporkActive(sporkDef.sporkId));
+            ret.pushKV(std::string(sporkDef.name), node.sporkman->IsSporkActive(sporkDef.sporkId));
         }
         return ret;
     }
@@ -207,7 +211,7 @@ static UniValue sporkupdate(const JSONRPCRequest& request)
     int64_t nValue = request.params[1].get_int64();
 
     // broadcast new spork
-    if (sporkManager->UpdateSpork(nSporkID, nValue, *node.connman)) {
+    if (node.sporkman->UpdateSpork(nSporkID, nValue, *node.connman)) {
         return "success";
     }
 
@@ -217,17 +221,18 @@ static UniValue sporkupdate(const JSONRPCRequest& request)
 static UniValue validateaddress(const JSONRPCRequest& request)
 {
             RPCHelpMan{"validateaddress",
-                "\nReturn information about the given sparks address.\n",
+                "\nReturn information about the given Sparks address.\n",
                 {
-                    {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The sparks address to validate"},
+                    {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The Sparks address to validate"},
                 },
                 RPCResult{
                     RPCResult::Type::OBJ, "", "",
                     {
-                        {RPCResult::Type::BOOL, "isvalid", "If the address is valid or not. If not, this is the only property returned."},
-                        {RPCResult::Type::STR, "address", "The sparks address validated"},
+                        {RPCResult::Type::BOOL, "isvalid", "If the address is valid or not"},
+                        {RPCResult::Type::STR, "address", "The Sparks address validated"},
                         {RPCResult::Type::STR_HEX, "scriptPubKey", "The hex-encoded scriptPubKey generated by the address"},
                         {RPCResult::Type::BOOL, "isscript", "If the key is a script"},
+                        {RPCResult::Type::STR, "error", /* optional */ true, "Error message, if any"},
                     }
                 },
                 RPCExamples{
@@ -236,13 +241,14 @@ static UniValue validateaddress(const JSONRPCRequest& request)
                 },
             }.Check(request);
 
-    CTxDestination dest = DecodeDestination(request.params[0].get_str());
-    bool isValid = IsValidDestination(dest);
+    std::string error_msg;
+    CTxDestination dest = DecodeDestination(request.params[0].get_str(), error_msg);
+    const bool isValid = IsValidDestination(dest);
+    CHECK_NONFATAL(isValid == error_msg.empty());
 
     UniValue ret(UniValue::VOBJ);
     ret.pushKV("isvalid", isValid);
-    if (isValid)
-    {
+    if (isValid) {
         std::string currentAddress = EncodeDestination(dest);
         ret.pushKV("address", currentAddress);
 
@@ -251,7 +257,10 @@ static UniValue validateaddress(const JSONRPCRequest& request)
 
         UniValue detail = DescribeAddress(dest);
         ret.pushKVs(detail);
+    } else {
+        ret.pushKV("error", error_msg);
     }
+
     return ret;
 }
 
@@ -437,7 +446,7 @@ static UniValue verifymessage(const JSONRPCRequest& request)
     RPCHelpMan{"verifymessage",
         "\nVerify a signed message\n",
         {
-            {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The sparks address to use for the signature."},
+            {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The Sparks address to use for the signature."},
             {"signature", RPCArg::Type::STR, RPCArg::Optional::NO, "The signature provided by the signer in base 64 encoding (see signmessage)."},
             {"message", RPCArg::Type::STR, RPCArg::Optional::NO, "The message that was signed."},
         },
@@ -523,7 +532,7 @@ static UniValue setmocktime(const JSONRPCRequest& request)
         "\nSet the local time to given timestamp (-regtest only)\n",
         {
             {"timestamp", RPCArg::Type::NUM, RPCArg::Optional::NO, UNIX_EPOCH_TIME + "\n"
-    "   Pass 0 to go back to using the system time."},
+             "Pass 0 to go back to using the system time."},
         },
         RPCResult{RPCResult::Type::NONE, "", ""},
         RPCExamples{""},
@@ -541,7 +550,10 @@ static UniValue setmocktime(const JSONRPCRequest& request)
     LOCK(cs_main);
 
     RPCTypeCheck(request.params, {UniValue::VNUM});
-    int64_t time = request.params[0].get_int64();
+    const int64_t time{request.params[0].get_int64()};
+    if (time < 0) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Mocktime can not be negative: %s.", time));
+    }
     SetMockTime(time);
     if (auto* node_context = GetContext<NodeContext>(request.context)) {
         for (const auto& chain_client : node_context->chain_clients) {
@@ -579,7 +591,7 @@ static UniValue mnauth(const JSONRPCRequest& request)
     ChainstateManager& chainman = EnsureAnyChainman(request.context);
 
     CBLSPublicKey publicKey;
-    bool bls_legacy_scheme = !llmq::utils::IsV19Active(chainman.ActiveChain().Tip());
+    const bool bls_legacy_scheme{!DeploymentActiveAfter(chainman.ActiveChain().Tip(), Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
     publicKey.SetHexStr(request.params[2].get_str(), bls_legacy_scheme);
     if (!publicKey.IsValid()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "publicKey invalid");

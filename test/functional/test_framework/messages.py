@@ -32,8 +32,8 @@ from test_framework.util import hex_str_to_bytes, assert_equal
 import sparks_hash
 
 MIN_VERSION_SUPPORTED = 60001
-MY_VERSION = 70230  # MNLISTDIFF_CHAINLOCKS_PROTO_VERSION
-MY_SUBVERSION = b"/python-mininode-tester:0.0.3%s/"
+MY_VERSION = 70231  # NO_LEGACY_ISLOCK_PROTO_VERSION
+MY_SUBVERSION = b"/python-p2p-tester:0.0.3%s/"
 MY_RELAY = 1 # from version 70001 onwards, fRelay should be appended to version messages (BIP37)
 
 MAX_LOCATOR_SZ = 101
@@ -45,6 +45,10 @@ COIN = 100000000  # 1 btc in satoshis
 MAX_MONEY = 21000000 * COIN
 
 BIP125_SEQUENCE_NUMBER = 0xfffffffd  # Sequence number that is BIP 125 opt-in and BIP 68-opt-out
+
+MAX_PROTOCOL_MESSAGE_LENGTH = 3 * 1024 * 1024  # Maximum length of incoming protocol messages
+MAX_HEADERS_RESULTS = 2000  # Number of headers sent in one getheaders result
+MAX_INV_SIZE = 50000  # Maximum number of entries in an 'inv' protocol message
 
 NODE_NETWORK = (1 << 0)
 NODE_BLOOM = (1 << 2)
@@ -110,7 +114,7 @@ def deser_uint256(f):
 
 def ser_uint256(u):
     rs = b""
-    for i in range(8):
+    for _ in range(8):
         rs += struct.pack("<I", u & 0xFFFFFFFF)
         u >>= 32
     return rs
@@ -139,7 +143,7 @@ def uint256_from_compact(c):
 def deser_vector(f, c, deser_function_name=None):
     nit = deser_compact_size(f)
     r = []
-    for i in range(nit):
+    for _ in range(nit):
         t = c()
         if deser_function_name:
             getattr(t, deser_function_name)(f)
@@ -164,7 +168,7 @@ def ser_vector(l, ser_function_name=None):
 def deser_uint256_vector(f):
     nit = deser_compact_size(f)
     r = []
-    for i in range(nit):
+    for _ in range(nit):
         t = deser_uint256(f)
         r.append(t)
     return r
@@ -323,7 +327,7 @@ class CInv:
         MSG_TX: "TX",
         MSG_BLOCK: "Block",
         MSG_FILTERED_BLOCK: "filtered Block",
-        20: "CompactBlock"
+        MSG_CMPCT_BLOCK: "CompactBlock",
     }
 
     def __init__(self, t=0, h=0):
@@ -331,18 +335,21 @@ class CInv:
         self.hash = h
 
     def deserialize(self, f):
-        self.type = struct.unpack("<i", f.read(4))[0]
+        self.type = struct.unpack("<I", f.read(4))[0]
         self.hash = deser_uint256(f)
 
     def serialize(self):
         r = b""
-        r += struct.pack("<i", self.type)
+        r += struct.pack("<I", self.type)
         r += ser_uint256(self.hash)
         return r
 
     def __repr__(self):
         return "CInv(type=%s hash=%064x)" \
                % (self.typemap.get(self.type, "%d" % self.type), self.hash)
+
+    def __eq__(self, other):
+        return isinstance(other, CInv) and self.hash == other.hash and self.type == other.type
 
 
 class CBlockLocator:
@@ -504,6 +511,11 @@ class CTransaction:
             if tout.nValue < 0 or tout.nValue > 21000000 * COIN:
                 return False
         return True
+
+    # Calculate the virtual transaction size using
+    # serialization size (does NOT use sigops).
+    def get_vsize(self):
+        return len(self.serialize())
 
     def __repr__(self):
         return "CTransaction(nVersion=%i vin=%s vout=%s nLockTime=%i)" \
@@ -852,7 +864,7 @@ class P2PHeaderAndShortIDs:
         self.header.deserialize(f)
         self.nonce = struct.unpack("<Q", f.read(8))[0]
         self.shortids_length = deser_compact_size(f)
-        for i in range(self.shortids_length):
+        for _ in range(self.shortids_length):
             # shortids are defined to be 6 bytes in the spec, so append
             # two zero bytes and read it in as an 8-byte number
             self.shortids.append(struct.unpack("<Q", f.read(6) + b'\x00\x00')[0])
@@ -949,7 +961,7 @@ class BlockTransactionsRequest:
     def deserialize(self, f):
         self.blockhash = deser_uint256(f)
         indexes_length = deser_compact_size(f)
-        for i in range(indexes_length):
+        for _ in range(indexes_length):
             self.indexes.append(deser_compact_size(f))
 
     def serialize(self):
@@ -1494,7 +1506,7 @@ class CBLSIESEncryptedSecretKey:
 class msg_version:
     __slots__ = ("addrFrom", "addrTo", "nNonce", "nRelay", "nServices",
                  "nStartingHeight", "nTime", "nVersion", "strSubVer")
-    command = b"version"
+    msgtype = b"version"
 
     def __init__(self):
         self.nVersion = MY_VERSION
@@ -1521,13 +1533,11 @@ class msg_version:
 
         self.nStartingHeight = struct.unpack("<i", f.read(4))[0]
 
-        if self.nVersion >= 70001:
-            # Relay field is optional for version 70001 onwards
-            try:
-                self.nRelay = struct.unpack("<b", f.read(1))[0]
-            except:
-                self.nRelay = 0
-        else:
+        # Relay field is optional for version 70001 onwards
+        # But, unconditionally check it to match behaviour in bitcoind
+        try:
+            self.nRelay = struct.unpack("<b", f.read(1))[0]
+        except struct.error:
             self.nRelay = 0
 
     def serialize(self):
@@ -1552,7 +1562,7 @@ class msg_version:
 
 class msg_verack:
     __slots__ = ()
-    command = b"verack"
+    msgtype = b"verack"
 
     def __init__(self):
         pass
@@ -1569,7 +1579,7 @@ class msg_verack:
 
 class msg_addr:
     __slots__ = ("addrs",)
-    command = b"addr"
+    msgtype = b"addr"
 
     def __init__(self):
         self.addrs = []
@@ -1587,7 +1597,7 @@ class msg_addr:
 class msg_addrv2:
     __slots__ = ("addrs",)
     # msgtype = b"addrv2"
-    command = b"addrv2"
+    msgtype = b"addrv2"
 
     def __init__(self):
         self.addrs = []
@@ -1605,7 +1615,7 @@ class msg_addrv2:
 class msg_sendaddrv2:
     __slots__ = ()
     # msgtype = b"sendaddrv2"
-    command = b"sendaddrv2"
+    msgtype = b"sendaddrv2"
 
     def __init__(self):
         pass
@@ -1622,7 +1632,7 @@ class msg_sendaddrv2:
 
 class msg_inv:
     __slots__ = ("inv",)
-    command = b"inv"
+    msgtype = b"inv"
 
     def __init__(self, inv=None):
         if inv is None:
@@ -1642,7 +1652,7 @@ class msg_inv:
 
 class msg_getdata:
     __slots__ = ("inv",)
-    command = b"getdata"
+    msgtype = b"getdata"
 
     def __init__(self, inv=None):
         self.inv = inv if inv is not None else []
@@ -1659,7 +1669,7 @@ class msg_getdata:
 
 class msg_getblocks:
     __slots__ = ("locator", "hashstop")
-    command = b"getblocks"
+    msgtype = b"getblocks"
 
     def __init__(self):
         self.locator = CBlockLocator()
@@ -1683,7 +1693,7 @@ class msg_getblocks:
 
 class msg_tx:
     __slots__ = ("tx",)
-    command = b"tx"
+    msgtype = b"tx"
 
     def __init__(self, tx=CTransaction()):
         self.tx = tx
@@ -1700,7 +1710,7 @@ class msg_tx:
 
 class msg_block:
     __slots__ = ("block",)
-    command = b"block"
+    msgtype = b"block"
 
     def __init__(self, block=None):
         if block is None:
@@ -1718,12 +1728,12 @@ class msg_block:
         return "msg_block(block=%s)" % (repr(self.block))
 
 # for cases where a user needs tighter control over what is sent over the wire
-# note that the user must supply the name of the command, and the data
+# note that the user must supply the name of the msgtype, and the data
 class msg_generic:
-    __slots__ = ("command", "data")
+    __slots__ = ("data")
 
-    def __init__(self, command, data=None):
-        self.command = command
+    def __init__(self, msgtype, data=None):
+        self.msgtype = msgtype
         self.data = data
 
     def serialize(self):
@@ -1735,7 +1745,7 @@ class msg_generic:
 
 class msg_getaddr:
     __slots__ = ()
-    command = b"getaddr"
+    msgtype = b"getaddr"
 
     def __init__(self):
         pass
@@ -1752,7 +1762,7 @@ class msg_getaddr:
 
 class msg_ping:
     __slots__ = ("nonce",)
-    command = b"ping"
+    msgtype = b"ping"
 
     def __init__(self, nonce=0):
         self.nonce = nonce
@@ -1771,7 +1781,7 @@ class msg_ping:
 
 class msg_pong:
     __slots__ = ("nonce",)
-    command = b"pong"
+    msgtype = b"pong"
 
     def __init__(self, nonce=0):
         self.nonce = nonce
@@ -1790,7 +1800,7 @@ class msg_pong:
 
 class msg_mempool:
     __slots__ = ()
-    command = b"mempool"
+    msgtype = b"mempool"
 
     def __init__(self):
         pass
@@ -1806,7 +1816,7 @@ class msg_mempool:
 
 class msg_notfound:
     __slots__ = ("vec", )
-    command = b"notfound"
+    msgtype = b"notfound"
 
     def __init__(self, vec=None):
         self.vec = vec or []
@@ -1823,7 +1833,7 @@ class msg_notfound:
 
 class msg_sendheaders:
     __slots__ = ()
-    command = b"sendheaders"
+    msgtype = b"sendheaders"
 
     def __init__(self):
         pass
@@ -1840,7 +1850,7 @@ class msg_sendheaders:
 
 class msg_sendheaders2:
     __slots__ = ()
-    command = b"sendheaders2"
+    msgtype = b"sendheaders2"
 
     def __init__(self):
         pass
@@ -1861,7 +1871,7 @@ class msg_sendheaders2:
 # hash_stop (hash of last desired block header, 0 to get as many as possible)
 class msg_getheaders:
     __slots__ = ("hashstop", "locator",)
-    command = b"getheaders"
+    msgtype = b"getheaders"
 
     def __init__(self):
         self.locator = CBlockLocator()
@@ -1886,7 +1896,7 @@ class msg_getheaders:
 # same as msg_getheaders, but to request the headers compressed
 class msg_getheaders2:
     __slots__ = ("hashstop", "locator",)
-    command = b"getheaders2"
+    msgtype = b"getheaders2"
 
     def __init__(self):
         self.locator = CBlockLocator()
@@ -1912,7 +1922,7 @@ class msg_getheaders2:
 # <count> <vector of block headers>
 class msg_headers:
     __slots__ = ("headers",)
-    command = b"headers"
+    msgtype = b"headers"
 
     def __init__(self, headers=None):
         self.headers = headers if headers is not None else []
@@ -1935,7 +1945,7 @@ class msg_headers:
 # <count> <vector of compressed block headers>
 class msg_headers2:
     __slots__ = ("headers",)
-    command = b"headers2"
+    msgtype = b"headers2"
 
     def __init__(self, headers=None):
         self.headers = headers if headers is not None else []
@@ -1957,7 +1967,7 @@ class msg_headers2:
 
 class msg_merkleblock:
     __slots__ = ("merkleblock",)
-    command = b"merkleblock"
+    msgtype = b"merkleblock"
 
     def __init__(self, merkleblock=None):
         if merkleblock is None:
@@ -1977,7 +1987,7 @@ class msg_merkleblock:
 
 class msg_filterload:
     __slots__ = ("data", "nHashFuncs", "nTweak", "nFlags")
-    command = b"filterload"
+    msgtype = b"filterload"
 
     def __init__(self, data=b'00', nHashFuncs=0, nTweak=0, nFlags=0):
         self.data = data
@@ -2006,7 +2016,7 @@ class msg_filterload:
 
 class msg_filteradd:
     __slots__ = ("data")
-    command = b"filteradd"
+    msgtype = b"filteradd"
 
     def __init__(self, data):
         self.data = data
@@ -2025,7 +2035,7 @@ class msg_filteradd:
 
 class msg_filterclear:
     __slots__ = ()
-    command = b"filterclear"
+    msgtype = b"filterclear"
 
     def __init__(self):
         pass
@@ -2042,7 +2052,7 @@ class msg_filterclear:
 
 class msg_sendcmpct:
     __slots__ = ("announce", "version")
-    command = b"sendcmpct"
+    msgtype = b"sendcmpct"
 
     def __init__(self, announce=False, version=1):
         self.announce = announce
@@ -2064,7 +2074,7 @@ class msg_sendcmpct:
 
 class msg_cmpctblock:
     __slots__ = ("header_and_shortids",)
-    command = b"cmpctblock"
+    msgtype = b"cmpctblock"
 
     def __init__(self, header_and_shortids = None):
         self.header_and_shortids = header_and_shortids
@@ -2084,7 +2094,7 @@ class msg_cmpctblock:
 
 class msg_getblocktxn:
     __slots__ = ("block_txn_request",)
-    command = b"getblocktxn"
+    msgtype = b"getblocktxn"
 
     def __init__(self):
         self.block_txn_request = None
@@ -2104,7 +2114,7 @@ class msg_getblocktxn:
 
 class msg_blocktxn:
     __slots__ = ("block_transactions",)
-    command = b"blocktxn"
+    msgtype = b"blocktxn"
 
     def __init__(self):
         self.block_transactions = BlockTransactions()
@@ -2123,7 +2133,7 @@ class msg_blocktxn:
 
 class msg_getmnlistd:
     __slots__ = ("baseBlockHash", "blockHash",)
-    command = b"getmnlistd"
+    msgtype = b"getmnlistd"
 
     def __init__(self, baseBlockHash=0, blockHash=0):
         self.baseBlockHash = baseBlockHash
@@ -2146,7 +2156,7 @@ QuorumId = namedtuple('QuorumId', ['llmqType', 'quorumHash'])
 
 class msg_mnlistdiff:
     __slots__ = ("baseBlockHash", "blockHash", "merkleProof", "cbTx", "nVersion", "deletedMNs", "mnList", "deletedQuorums", "newQuorums", "quorumsCLSigs")
-    command = b"mnlistdiff"
+    msgtype = b"mnlistdiff"
 
     def __init__(self):
         self.baseBlockHash = 0
@@ -2171,26 +2181,26 @@ class msg_mnlistdiff:
         self.cbTx.rehash()
         self.deletedMNs = deser_uint256_vector(f)
         self.mnList = []
-        for i in range(deser_compact_size(f)):
+        for _ in range(deser_compact_size(f)):
             e = CSimplifiedMNListEntry()
             e.deserialize(f)
             self.mnList.append(e)
 
         self.deletedQuorums = []
-        for i in range(deser_compact_size(f)):
+        for _ in range(deser_compact_size(f)):
             llmqType = struct.unpack("<B", f.read(1))[0]
             quorumHash = deser_uint256(f)
             self.deletedQuorums.append(QuorumId(llmqType, quorumHash))
         self.newQuorums = []
-        for i in range(deser_compact_size(f)):
+        for _ in range(deser_compact_size(f)):
             qc = CFinalCommitment()
             qc.deserialize(f)
             self.newQuorums.append(qc)
         self.quorumsCLSigs = {}
-        for i in range(deser_compact_size(f)):
+        for _ in range(deser_compact_size(f)):
             signature = f.read(96)
             idx_set = set()
-            for j in range(deser_compact_size(f)):
+            for _ in range(deser_compact_size(f)):
                 set_element = struct.unpack('H', f.read(2))[0]
                 idx_set.add(set_element)
             self.quorumsCLSigs[signature] = idx_set
@@ -2201,7 +2211,7 @@ class msg_mnlistdiff:
 
 class msg_clsig:
     __slots__ = ("height", "blockHash", "sig",)
-    command = b"clsig"
+    msgtype = b"clsig"
 
     def __init__(self, height=0, blockHash=0, sig=b'\x00' * 96):
         self.height = height
@@ -2224,34 +2234,9 @@ class msg_clsig:
         return "msg_clsig(height=%d, blockHash=%064x)" % (self.height, self.blockHash)
 
 
-class msg_islock:
-    __slots__ = ("inputs", "txid", "sig",)
-    command = b"islock"
-
-    def __init__(self, inputs=None, txid=0, sig=b'\x00' * 96):
-        self.inputs = inputs if inputs is not None else []
-        self.txid = txid
-        self.sig = sig
-
-    def deserialize(self, f):
-        self.inputs = deser_vector(f, COutPoint)
-        self.txid = deser_uint256(f)
-        self.sig = f.read(96)
-
-    def serialize(self):
-        r = b""
-        r += ser_vector(self.inputs)
-        r += ser_uint256(self.txid)
-        r += self.sig
-        return r
-
-    def __repr__(self):
-        return "msg_islock(inputs=%s, txid=%064x)" % (repr(self.inputs), self.txid)
-
-
 class msg_isdlock:
     __slots__ = ("nVersion", "inputs", "txid", "cycleHash", "sig")
-    command = b"isdlock"
+    msgtype = b"isdlock"
 
     def __init__(self, nVersion=1, inputs=None, txid=0, cycleHash=0, sig=b'\x00' * 96):
         self.nVersion = nVersion
@@ -2283,7 +2268,7 @@ class msg_isdlock:
 
 class msg_qsigshare:
     __slots__ = ("sig_shares",)
-    command = b"qsigshare"
+    msgtype = b"qsigshare"
 
     def __init__(self, sig_shares=None):
         self.sig_shares = sig_shares if sig_shares is not None else []
@@ -2302,7 +2287,7 @@ class msg_qsigshare:
 
 class msg_qwatch:
     __slots__ = ()
-    command = b"qwatch"
+    msgtype = b"qwatch"
 
     def __init__(self):
         pass
@@ -2319,7 +2304,7 @@ class msg_qwatch:
 
 class msg_qgetdata:
     __slots__ = ("quorum_hash", "quorum_type", "data_mask", "protx_hash")
-    command = b"qgetdata"
+    msgtype = b"qgetdata"
 
     def __init__(self, quorum_hash=0, quorum_type=-1, data_mask=0, protx_hash=0):
         self.quorum_hash = quorum_hash
@@ -2351,7 +2336,7 @@ class msg_qgetdata:
 
 class msg_qdata:
     __slots__ = ("quorum_hash", "quorum_type", "data_mask", "protx_hash", "error", "quorum_vvec", "enc_contributions",)
-    command = b"qdata"
+    msgtype = b"qdata"
 
     def __init__(self):
         self.quorum_type = 0
@@ -2394,9 +2379,9 @@ class msg_qdata:
 
 class msg_getcfilters:
     __slots__ = ("filter_type", "start_height", "stop_hash")
-    command =  b"getcfilters"
+    msgtype =  b"getcfilters"
 
-    def __init__(self, filter_type, start_height, stop_hash):
+    def __init__(self, filter_type=None, start_height=None, stop_hash=None):
         self.filter_type = filter_type
         self.start_height = start_height
         self.stop_hash = stop_hash
@@ -2419,7 +2404,7 @@ class msg_getcfilters:
 
 class msg_cfilter:
     __slots__ = ("filter_type", "block_hash", "filter_data")
-    command =  b"cfilter"
+    msgtype =  b"cfilter"
 
     def __init__(self, filter_type=None, block_hash=None, filter_data=None):
         self.filter_type = filter_type
@@ -2444,9 +2429,9 @@ class msg_cfilter:
 
 class msg_getcfheaders:
     __slots__ = ("filter_type", "start_height", "stop_hash")
-    command =  b"getcfheaders"
+    msgtype =  b"getcfheaders"
 
-    def __init__(self, filter_type, start_height, stop_hash):
+    def __init__(self, filter_type=None, start_height=None, stop_hash=None):
         self.filter_type = filter_type
         self.start_height = start_height
         self.stop_hash = stop_hash
@@ -2469,7 +2454,7 @@ class msg_getcfheaders:
 
 class msg_cfheaders:
     __slots__ = ("filter_type", "stop_hash", "prev_header", "hashes")
-    command =  b"cfheaders"
+    msgtype =  b"cfheaders"
 
     def __init__(self, filter_type=None, stop_hash=None, prev_header=None, hashes=None):
         self.filter_type = filter_type
@@ -2497,9 +2482,9 @@ class msg_cfheaders:
 
 class msg_getcfcheckpt:
     __slots__ = ("filter_type", "stop_hash")
-    command =  b"getcfcheckpt"
+    msgtype =  b"getcfcheckpt"
 
-    def __init__(self, filter_type, stop_hash):
+    def __init__(self, filter_type=None, stop_hash=None):
         self.filter_type = filter_type
         self.stop_hash = stop_hash
 
@@ -2519,7 +2504,7 @@ class msg_getcfcheckpt:
 
 class msg_cfcheckpt:
     __slots__ = ("filter_type", "stop_hash", "headers")
-    command =  b"cfcheckpt"
+    msgtype =  b"cfcheckpt"
 
     def __init__(self, filter_type=None, stop_hash=None, headers=None):
         self.filter_type = filter_type

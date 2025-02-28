@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -21,7 +21,6 @@
 #include <fs.h>
 #include <logging.h>
 #include <sync.h>
-#include <tinyformat.h>
 #include <util/settings.h>
 #include <util/time.h>
 #include <amount.h>
@@ -52,6 +51,8 @@ extern bool fMasternodeMode;
 extern bool fDisableGovernance;
 extern int nWalletBackups;
 extern const std::string gCoinJoinName;
+
+class UniValue;
 
 // Application startup time (used for uptime calculation)
 int64_t GetStartupTime();
@@ -125,6 +126,16 @@ std::string ShellEscape(const std::string& arg);
 #if HAVE_SYSTEM
 void runCommand(const std::string& strCommand);
 #endif
+#ifdef HAVE_BOOST_PROCESS
+/**
+ * Execute a command which returns JSON, and parse the result.
+ *
+ * @param str_command The command to execute, including any arguments
+ * @param str_std_in string to pass to stdin
+ * @return parsed JSON
+ */
+UniValue RunCommandParseJSON(const std::string& str_command, const std::string& str_std_in="");
+#endif // HAVE_BOOST_PROCESS
 
 /**
  * Most paths passed as configuration arguments are treated as relative to

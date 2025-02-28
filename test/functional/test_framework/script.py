@@ -8,6 +8,7 @@ This file is modified from python-bitcoinlib.
 """
 import struct
 import unittest
+from typing import List, Dict
 
 from .messages import (
     CTransaction,
@@ -19,8 +20,6 @@ from .messages import (
 from .ripemd160 import ripemd160
 
 MAX_SCRIPT_ELEMENT_SIZE = 520
-OPCODE_NAMES = {}
-
 def hash160(s):
     return ripemd160(sha256(s))
 
@@ -35,7 +34,6 @@ def bn2vch(v):
     # Serialize to bytes
     return encoded_v.to_bytes(n_bytes, 'little')
 
-_opcode_instances = []
 class CScriptOp(int):
     """A single script opcode"""
     __slots__ = ()
@@ -98,6 +96,9 @@ class CScriptOp(int):
             assert len(_opcode_instances) == n
             _opcode_instances.append(super().__new__(cls, n))
             return _opcode_instances[n]
+
+OPCODE_NAMES: Dict[CScriptOp, str] = {}
+_opcode_instances: List[CScriptOp] = []
 
 # Populate opcode instance table
 for n in range(0xff + 1):
@@ -645,7 +646,7 @@ def SignatureHash(script, txTo, inIdx, hashtype):
 
         tmp = txtmp.vout[outIdx]
         txtmp.vout = []
-        for i in range(outIdx):
+        for _ in range(outIdx):
             txtmp.vout.append(CTxOut(-1))
         txtmp.vout.append(tmp)
 

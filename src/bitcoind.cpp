@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,9 +14,9 @@
 #include <init.h>
 #include <interfaces/chain.h>
 #include <node/context.h>
+#include <node/ui_interface.h>
 #include <noui.h>
 #include <shutdown.h>
-#include <ui_interface.h>
 #include <util/check.h>
 #include <util/system.h>
 #include <util/strencodings.h>
@@ -156,7 +156,7 @@ static bool AppInit(int argc, char* argv[])
     return fRet;
 }
 
-int main(int argc, char* argv[])
+MAIN_FUNCTION
 {
     RegisterPrettyTerminateHander();
     RegisterPrettySignalHandlers();

@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2022 The Dash Core developers
+// Copyright (c) 2021-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -81,7 +81,7 @@ struct TestChainDATSetup : public TestChainSetup
             BOOST_CHECK_EQUAL(g_versionbitscache.State(::ChainActive().Tip(), consensus_params, deployment_id), ThresholdState::STARTED);
             BOOST_CHECK_EQUAL(g_versionbitscache.Statistics(::ChainActive().Tip(), consensus_params, deployment_id).threshold, threshold(0));
             // Next block should be signaling by default
-            const auto pblocktemplate = BlockAssembler(*sporkManager, *governance, *m_node.llmq_ctx, *m_node.evodb, ::ChainstateActive(), *m_node.mempool, Params()).CreateNewBlock(coinbasePubKey);
+            const auto pblocktemplate = BlockAssembler(*m_node.sporkman, *m_node.govman, *m_node.llmq_ctx, *m_node.evodb, ::ChainstateActive(), *m_node.mempool, Params()).CreateNewBlock(coinbasePubKey);
             const uint32_t bitmask = ((uint32_t)1) << consensus_params.vDeployments[deployment_id].bit;
             BOOST_CHECK_EQUAL(::ChainActive().Tip()->nVersion & bitmask, 0);
             BOOST_CHECK_EQUAL(pblocktemplate->block.nVersion & bitmask, bitmask);

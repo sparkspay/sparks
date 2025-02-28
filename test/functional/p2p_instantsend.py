@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2018-2022 The Dash Core developers
+# Copyright (c) 2018-2024 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -18,7 +18,7 @@ Tests InstantSend functionality (prevent doublespend for unconfirmed transaction
 
 class InstantSendTest(SparksTestFramework):
     def set_test_params(self):
-        self.set_sparks_test_params(7, 3, fast_dip3_enforcement=True)
+        self.set_sparks_test_params(8, 4, fast_dip3_enforcement=True)
         # set sender,  receiver,  isolated nodes
         self.isolated_idx = 1
         self.receiver_idx = 2
@@ -27,10 +27,15 @@ class InstantSendTest(SparksTestFramework):
     def run_test(self):
         self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
-        self.mine_quorum()
-        self.nodes[self.isolated_idx].createwallet(self.default_wallet_name)
-        self.nodes[self.receiver_idx].createwallet(self.default_wallet_name)
-        self.nodes[self.sender_idx].createwallet(self.default_wallet_name)
+        self.activate_v19(expected_activation_height=900)
+        self.log.info("Activated v19 at height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H+C height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H+2C height:" + str(self.nodes[0].getblockcount()))
+        (quorum_info_i_0, quorum_info_i_1) = self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
 
         self.test_mempool_doublespend()
         self.test_block_doublespend()

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2018-2022 The Dash Core developers
+# Copyright (c) 2018-2024 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
@@ -13,7 +13,7 @@ PASS_ARGS="$*"
 
 source ./ci/sparks/matrix.sh
 
-if [ "$RUN_INTEGRATION_TESTS" != "true" ]; then
+if [ "$RUN_FUNCTIONAL_TESTS" != "true" ]; then
   echo "Skipping integration tests"
   exit 0
 fi
@@ -42,7 +42,7 @@ echo "Using socketevents mode: $SOCKETEVENTS"
 EXTRA_ARGS="--sparksd-arg=-socketevents=$SOCKETEVENTS"
 
 set +e
-./test/functional/test_runner.py --ci --attempts=3 --ansi --combinedlogslen=4000 ${TEST_RUNNER_EXTRA} --failfast --nocleanup --tmpdir=$(pwd)/testdatadirs $PASS_ARGS $EXTRA_ARGS
+LD_LIBRARY_PATH=$DEPENDS_DIR/$HOST/lib ${TEST_RUNNER_ENV} ./test/functional/test_runner.py --ci --attempts=3 --ansi --combinedlogslen=4000 --timeout-factor=${TEST_RUNNER_TIMEOUT_FACTOR} ${TEST_RUNNER_EXTRA} --failfast --nocleanup --tmpdir=$(pwd)/testdatadirs $PASS_ARGS $EXTRA_ARGS
 RESULT=$?
 set -e
 

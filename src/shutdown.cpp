@@ -6,7 +6,7 @@
 #include <shutdown.h>
 
 #include <logging.h>
-#include <ui_interface.h>
+#include <node/ui_interface.h>
 #include <warnings.h>
 
 #include <config/bitcoin-config.h>
@@ -23,7 +23,7 @@
 
 bool AbortNode(const std::string& strMessage, bilingual_str user_message)
 {
-    SetMiscWarning(strMessage);
+    SetMiscWarning(Untranslated(strMessage));
     LogPrintf("*** %s\n", strMessage);
     if (user_message.empty()) {
         user_message = _("A fatal internal error occurred, see debug.log for details");
@@ -50,7 +50,7 @@ static int g_shutdown_pipe[2] = {-1, -1};
 bool InitShutdownState()
 {
 #ifndef WIN32
-#if HAVE_O_CLOEXEC
+#if HAVE_O_CLOEXEC && HAVE_DECL_PIPE2
     // If we can, make sure that the file descriptors are closed on exec()
     // to prevent interference.
     if (pipe2(g_shutdown_pipe, O_CLOEXEC) != 0) {

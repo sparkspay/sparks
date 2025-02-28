@@ -1,4 +1,4 @@
-// Copyright (c) 2017 The Bitcoin Core developers
+// Copyright (c) 2017-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -40,7 +40,7 @@ static constexpr int NUM_GETBLOCKSTATS_PERCENTILES = 5;
 double GetDifficulty(const CBlockIndex* blockindex);
 
 /** Callback for when block tip changed. */
-void RPCNotifyBlockChange(bool ibd, const CBlockIndex *);
+void RPCNotifyBlockChange(const CBlockIndex*);
 
 /** Block description to JSON */
 UniValue blockToJSON(const CBlock& block, const CBlockIndex* tip, const CBlockIndex* blockindex, llmq::CChainLocksHandler& clhandler, llmq::CInstantSendManager& isman, bool txDetails = false) LOCKS_EXCLUDED(cs_main);

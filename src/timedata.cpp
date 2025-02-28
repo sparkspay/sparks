@@ -9,8 +9,9 @@
 #include <timedata.h>
 
 #include <netaddress.h>
+#include <node/ui_interface.h>
 #include <sync.h>
-#include <ui_interface.h>
+#include <tinyformat.h>
 #include <util/system.h>
 #include <util/translation.h>
 #include <warnings.h>
@@ -91,18 +92,19 @@ void AddTimeData(const CNetAddr& ip, int64_t nOffsetSample)
                 if (!fMatch) {
                     fDone = true;
                     bilingual_str strMessage = strprintf(_("Please check that your computer's date and time are correct! If your clock is wrong, %s will not work properly."), PACKAGE_NAME);
-                    SetMiscWarning(strMessage.translated);
+                    SetMiscWarning(strMessage);
                     uiInterface.ThreadSafeMessageBox(strMessage, "", CClientUIInterface::MSG_WARNING);
                 }
             }
         }
 
         if (LogAcceptCategory(BCLog::NET)) {
+            std::string log_message{"time data samples: "};
             for (const int64_t n : vSorted) {
-                LogPrint(BCLog::NET, "%+d  ", n); /* Continued */
+                log_message += strprintf("%+d  ", n);
             }
-            LogPrint(BCLog::NET, "|  "); /* Continued */
-            LogPrint(BCLog::NET, "nTimeOffset = %+d  (%+d minutes)\n", nTimeOffset, nTimeOffset / 60);
+            log_message += strprintf("|  median offset = %+d  (%+d minutes)", nTimeOffset, nTimeOffset / 60);
+            LogPrint(BCLog::NET, "%s\n", log_message);
         }
     }
 }

@@ -93,7 +93,7 @@ uint32_t Interpret(const std::vector<bool> &asmap, const std::vector<bool> &ip)
             jump = DecodeJump(pos, endpos);
             if (jump == INVALID) break; // Jump offset straddles EOF
             if (bits == 0) break; // No input bits left
-            if (jump >= endpos - pos) break; // Jumping past EOF
+            if (int64_t{jump} >= int64_t{endpos - pos}) break; // Jumping past EOF
             if (ip[ip.size() - bits]) {
                 pos += jump;
             }
@@ -155,7 +155,7 @@ bool SanityCheckASMap(const std::vector<bool>& asmap, int bits)
         } else if (opcode == Instruction::JUMP) {
             uint32_t jump = DecodeJump(pos, endpos);
             if (jump == INVALID) return false; // Jump offset straddles EOF
-            if (jump > endpos - pos) return false; // Jump out of range
+            if (int64_t{jump} > int64_t{endpos - pos}) return false; // Jump out of range
             if (bits == 0) return false; // Consuming bits past the end of the input
             --bits;
             uint32_t jump_offset = pos - begin + jump;

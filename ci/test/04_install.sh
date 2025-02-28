@@ -13,23 +13,21 @@ if [[ $QEMU_USER_CMD == qemu-s390* ]]; then
   export LC_ALL=C
 fi
 
-if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-  export PATH="/usr/local/opt/ccache/libexec:$PATH"
-  ${CI_RETRY_EXE} pip3 install $PIP_PACKAGES
+if [ "$CI_OS_NAME" == "macos" ]; then
+  sudo -H pip3 install --upgrade pip
+  IN_GETOPT_BIN="/usr/local/opt/gnu-getopt/bin/getopt" ${CI_RETRY_EXE} pip3 install --user $PIP_PACKAGES
 fi
 
-mkdir -p "${BASE_SCRATCH_DIR}"
+# Create folders that are mounted into the docker
 mkdir -p "${CCACHE_DIR}"
 mkdir -p "${PREVIOUS_RELEASES_DIR}"
 
 export ASAN_OPTIONS="detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
 export LSAN_OPTIONS="suppressions=${BASE_BUILD_DIR}/test/sanitizer_suppressions/lsan"
-export TSAN_OPTIONS="suppressions=${BASE_BUILD_DIR}/test/sanitizer_suppressions/tsan"
+export TSAN_OPTIONS="suppressions=${BASE_BUILD_DIR}/test/sanitizer_suppressions/tsan:halt_on_error=1"
 export UBSAN_OPTIONS="suppressions=${BASE_BUILD_DIR}/test/sanitizer_suppressions/ubsan:print_stacktrace=1:halt_on_error=1:report_error_type=1"
-env | grep -E '^(BASE_|QEMU_|CCACHE_|LC_ALL|BOOST_TEST_RANDOM|CONFIG_SHELL|(ASAN|LSAN|TSAN|UBSAN)_OPTIONS|TEST_PREVIOUS_RELEASES|PREVIOUS_RELEASES_DIR))' | tee /tmp/env
-if [[ $HOST = *-mingw32 ]]; then
-  DOCKER_ADMIN="--cap-add SYS_ADMIN"
-elif [[ $BITCOIN_CONFIG = *--with-sanitizers=*address* ]]; then # If ran with (ASan + LSan), Docker needs access to ptrace (https://github.com/google/sanitizers/issues/764)
+env | grep -E '^(BASE_|QEMU_|CCACHE_|LC_ALL|BOOST_TEST_RANDOM|DEBIAN_FRONTEND|CONFIG_SHELL|(ASAN|LSAN|TSAN|UBSAN)_OPTIONS|PREVIOUS_RELEASES_DIR))' | tee /tmp/env
+if [[ $BITCOIN_CONFIG = *--with-sanitizers=*address* ]]; then # If ran with (ASan + LSan), Docker needs access to ptrace (https://github.com/google/sanitizers/issues/764)
   DOCKER_ADMIN="--cap-add SYS_PTRACE"
 fi
 
@@ -48,16 +46,14 @@ if [ -z "$DANGER_RUN_CI_ON_HOST" ]; then
                   --env-file /tmp/env \
                   --name $CONTAINER_NAME \
                   $DOCKER_NAME_TAG)
-
-  DOCKER_EXEC () {
-    docker exec $DOCKER_ID bash -c "export PATH=$BASE_SCRATCH_DIR/bins/:\$PATH && cd $P_CI_DIR && $*"
-  }
+  export DOCKER_CI_CMD_PREFIX="docker exec $DOCKER_ID"
 else
   echo "Running on host system without docker wrapper"
-  DOCKER_EXEC () {
-    bash -c "export PATH=$BASE_SCRATCH_DIR/bins/:\$PATH && cd $P_CI_DIR && $*"
-  }
 fi
+
+DOCKER_EXEC () {
+  $DOCKER_CI_CMD_PREFIX bash -c "export PATH=$BASE_SCRATCH_DIR/bins/:\$PATH && cd $P_CI_DIR && $*"
+}
 export -f DOCKER_EXEC
 
 if [ -n "$DPKG_ADD_ARCH" ]; then
@@ -75,16 +71,16 @@ elif [ "$CI_USE_APT_INSTALL" != "no" ]; then
   fi
 fi
 
-if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+if [ "$CI_OS_NAME" == "macos" ]; then
   top -l 1 -s 0 | awk ' /PhysMem/ {print}'
   echo "Number of CPUs: $(sysctl -n hw.logicalcpu)"
 else
   DOCKER_EXEC free -m -h
   DOCKER_EXEC echo "Number of CPUs \(nproc\):" \$\(nproc\)
   DOCKER_EXEC echo $(lscpu | grep Endian)
-  DOCKER_EXEC echo "Free disk space:"
-  DOCKER_EXEC df -h
 fi
+DOCKER_EXEC echo "Free disk space:"
+DOCKER_EXEC df -h
 
 if [ ! -d ${DIR_QA_ASSETS} ]; then
  if [ "$RUN_FUZZ_TESTS" = "true" ]; then

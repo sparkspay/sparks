@@ -2,24 +2,9 @@
 # - sudo/dist/group are set so as to get Blue Box VMs, necessary for [loopback]
 #   IPv6 support
 
-# The test build matrix (stage: test) is constructed to test a wide range of
-# configurations, rather than a single pass/fail. This helps to catch build
-# failures and logic errors that present on platforms other than the ones the
-# author has tested.
-#
-# Some builders use the dependency-generator in `./depends`, rather than using
-# apt-get to install build dependencies. This guarantees that the tester is
-# using the same versions as Gitian, so the build results are nearly identical
-# to what would be found in a final release.
-#
-# In order to avoid rebuilding all dependencies for each build, the binaries
-# are cached and re-used when possible. Changes in the dependency-generator
-# will trigger cache-invalidation and rebuilds as necessary.
-#
-
 version: ~> 1.0
 
-dist: xenial
+dist: bionic
 
 os: linux
 language: minimal
@@ -29,11 +14,8 @@ services:
   - docker
 
 cache:
-  ccache: true
   directories:
     - $BASE_BUILD_DIR/releases/$HOST
-before_cache:
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then brew cleanup; fi
 env:
   global:
     # DOCKER_HUB_USER
@@ -74,7 +56,6 @@ builddocker: &builddocker
     # no need to run tests again here
     - if [ "$DOCKER_BUILD" = "true" ]; then $DOCKER_RUN_IN_BUILDER ./ci/sparks/build_depends.sh && $DOCKER_RUN_IN_BUILDER ./ci/sparks/build_src.sh && BUILD_DIR=build-ci/sparkscore-$BUILD_TARGET ./ci/sparks/build-docker.sh; fi
     - CI_RETRY_EXE="travis_retry"
-    - CI_WAIT="while sleep 500; do echo .; done"
     - CACHE_ERR_MSG="Error! Initial build successful, but not enough time remains to run later build stages and tests. See https://docs.travis-ci.com/user/customizing-the-build#build-timeouts . Please manually re-run this job by using the travis restart button. The next run should not time out because the build cache has been saved."
 before_install:
   - set -o errexit; source ./ci/test/00_setup_env.sh
@@ -82,9 +63,11 @@ before_install:
 install:
   - set -o errexit; source ./ci/test/04_install.sh
 before_script:
-  - set -o errexit; source ./ci/test/05_before_script.sh
+  # Temporary workaround for https://github.com/bitcoin/bitcoin/issues/16368
+  - for i in {1..4}; do echo "$(sleep 500)" ; done &
+  - set -o errexit; source ./ci/test/05_before_script.sh &> "/dev/null"
 script:
-  - if [ $SECONDS -gt 1200 ]; then set +o errexit; echo "Travis early exit to cache current state"; false; else set -o errexit; source .travis/test_06_script.sh; fi
+  - if [[ $SECONDS -gt 1200 ]]; then set +o errexit; echo "Travis early exit to cache current state"; false; else set -o errexit; source .travis/test_06_script.sh; fi
 after_script:
   - echo $TRAVIS_COMMIT_RANGE
 jobs:
@@ -204,108 +187,6 @@ after_success:
         - set -o errexit; source ./ci/lint/06_script.sh
 
     - stage: test
-      name: 'ARM  [GOAL: install]  [focal]  [unit tests, functional tests]'
-      arch: arm64  # Can disable QEMU_USER_CMD and run the tests natively without qemu
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_arm.sh"
-        QEMU_USER_CMD=""
-
-    - stage: test
-      name: 's390x native BE [GOAL: install] [bionic] [no depends, no GUI]'
-      arch: s390x
-      dist: bionic
-      addons:
-        apt:
-          packages:
-            - bsdmainutils
-            - libboost-filesystem-dev
-            - libboost-system-dev
-            - libboost-test-dev
-            - libboost-thread-dev
-            - libdb++-dev
-            - libdb-dev
-            - libevent-dev
-      env: >-
-        DANGER_RUN_CI_ON_HOST=true
-        CI_USE_APT_INSTALL=no
-        FILE_ENV="./ci/test/00_setup_env_s390x_host.sh"
-
-# s390 build was disabled temporarily because of disk space issues on the Travis VM
-#
-#    - stage: test
-#      name: 'S390x  [GOAL: install]  [focal]  [unit tests, functional tests]'
-#      arch: s390x  # Can disable QEMU_USER_CMD and run the tests natively without qemu
-#      env: >-
-#        FILE_ENV="./ci/test/00_setup_env_s390x.sh"
-#        QEMU_USER_CMD=""
-
-    - stage: test
-      name: 'Win64  [GOAL: deploy]  [unit tests, no gui, no functional tests]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_win64.sh"
-
-    - stage: test
-      name: 'x86_64 Linux  [GOAL: install]  [focal]  [previous releases, uses qt5 dev package and some depends packages] [unsigned char]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_native_qt5.sh"
-# x86_64 Linux (xenial, no depends, only system libs, sanitizers: thread (TSan))
-    - stage: test
-      name: 'x86_64 Linux  [GOAL: install]  [xenial]  [no depends, only system libs, sanitizers: thread (TSan), no wallet]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_native_tsan.sh"
-        TEST_RUNNER_EXTRA="--exclude feature_block"  # Not enough memory on travis machines
-# x86_64 Linux (no depends, only system libs, sanitizers: address/leak (ASan + LSan) + undefined (UBSan) + integer)
-    - stage: test
-      name: 'x86_64 Linux  [GOAL: install]  [focal]  [no depends, only system libs, sanitizers: address/leak (ASan + LSan) + undefined (UBSan) + integer]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_native_asan.sh"
-
-    - stage: test
-      name: 'x86_64 Linux  [GOAL: install]  [focal]  [no wallet]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_native_fuzz.sh"
-
-    - stage: test
-      name: 'x86_64 Linux  [GOAL: install]  [focal]  [no depends, only system libs, fuzzers under valgrind]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_native_fuzz_with_valgrind.sh"
-
-    - stage: test
       name: 'x86_64 Linux  [GOAL: install]  [focal]  [no wallet]'
       env: >-
         FILE_ENV="./ci/test/00_setup_env_native_nowallet.sh"
-
-    - stage: test
-      name: 'macOS 10.12  [GOAL: deploy] [no functional tests]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_mac.sh"
-
-    - stage: test
-      name: 'macOS 10.14 native [GOAL: install] [GUI] [no depends]'
-      os: osx
-      # Use the most recent version:
-      # Xcode 11.3.1, macOS 10.14, SDK 10.15
-      # https://docs.travis-ci.com/user/reference/osx/#macos-version
-      osx_image: xcode11.3
-      cache:
-        directories:
-          - $TRAVIS_BUILD_DIR/ci/scratch/.ccache
-          - $TRAVIS_BUILD_DIR/releases/$HOST
-          - $HOME/Library/Caches/Homebrew
-          - /usr/local/Homebrew
-      addons:
-        homebrew:
-          packages:
-          - libtool
-          - berkeley-db4
-          - boost
-          - miniupnpc
-          - qt
-          - qrencode
-          - python3
-          - ccache
-          - zeromq
-      env: >-
-        DANGER_RUN_CI_ON_HOST=true
-        CI_USE_APT_INSTALL=no
-        FILE_ENV="./ci/test/00_setup_env_mac_host.sh"

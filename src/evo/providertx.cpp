@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,6 +9,7 @@
 #include <consensus/validation.h>
 #include <hash.h>
 #include <script/standard.h>
+#include <tinyformat.h>
 #include <util/underlying.h>
 
 bool CProRegTx::IsTriviallyValid(bool is_basic_scheme_active, TxValidationState& state) const

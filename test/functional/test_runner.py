@@ -28,7 +28,7 @@ import logging
 import unittest
 
 # Formatting. Default colors to empty strings.
-BOLD, GREEN, RED, GREY = ("", ""), ("", ""), ("", ""), ("", "")
+DEFAULT, BOLD, GREEN, RED = ("", ""), ("", ""), ("", ""), ("", "")
 try:
     # Make sure python thinks it can write unicode to its stdout
     "\u2713".encode("utf_8").decode(sys.stdout.encoding)
@@ -43,7 +43,7 @@ except UnicodeDecodeError:
 if os.name != 'nt' or sys.getwindowsversion() >= (10, 0, 14393):
     if os.name == 'nt':
         import ctypes
-        kernel32 = ctypes.windll.kernel32
+        kernel32 = ctypes.windll.kernel32  # type: ignore
         ENABLE_VIRTUAL_TERMINAL_PROCESSING = 4
         STD_OUTPUT_HANDLE = -11
         STD_ERROR_HANDLE = -12
@@ -59,19 +59,24 @@ if os.name != 'nt' or sys.getwindowsversion() >= (10, 0, 14393):
         kernel32.SetConsoleMode(stderr, stderr_mode.value | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
     # primitive formatting on supported
     # terminal via ANSI escape sequences:
+    DEFAULT = ('\033[0m', '\033[0m')
     BOLD = ('\033[0m', '\033[1m')
     GREEN = ('\033[0m', '\033[0;32m')
     RED = ('\033[0m', '\033[0;31m')
-    GREY = ('\033[0m', '\033[1;30m')
 
 TEST_EXIT_PASSED = 0
 TEST_EXIT_SKIPPED = 77
 
+# List of framework modules containing unit tests. Should be kept in sync with
+# the output of `git grep unittest.TestCase ./test/functional/test_framework`
 TEST_FRAMEWORK_MODULES = [
+    "address",
     "blocktools",
+    "ellswift",
+    "key",
     "muhash",
+    "ripemd160",
     "script",
-    "util",
 ]
 
 EXTENDED_SCRIPTS = [
@@ -93,7 +98,7 @@ BASE_SCRIPTS = [
     'feature_maxuploadtarget.py',
     'feature_block.py', # NOTE: needs sparks_hash to pass
     'rpc_fundrawtransaction.py',
-    'rpc_fundrawtransaction.py --usehd',
+    'rpc_fundrawtransaction.py --nohd',
     'wallet_multiwallet.py --usecli',
     'p2p_quorum_data.py',
     # vv Tests less than 2m vv
@@ -116,7 +121,6 @@ BASE_SCRIPTS = [
     'feature_llmq_evo.py', # NOTE: needs sparks_hash to pass
     'feature_llmq_simplepose.py', # NOTE: needs sparks_hash to pass
     'feature_llmq_is_cl_conflicts.py', # NOTE: needs sparks_hash to pass
-    'feature_llmq_is_migration.py', # NOTE: needs sparks_hash to pass
     'feature_llmq_is_retroactive.py', # NOTE: needs sparks_hash to pass
     'feature_llmq_dkgerrors.py', # NOTE: needs sparks_hash to pass
     'feature_dip4_coinbasemerkleroots.py', # NOTE: needs sparks_hash to pass
@@ -140,6 +144,7 @@ BASE_SCRIPTS = [
     'feature_fee_estimation.py',
     'interface_zmq_sparks.py',
     'interface_zmq.py',
+    'rpc_invalid_address_message.py',
     'interface_bitcoin_cli.py',
     'mempool_resurrect.py',
     'wallet_txn_doublespend.py --mineblock',
@@ -181,7 +186,7 @@ BASE_SCRIPTS = [
     'rpc_net.py',
     'wallet_keypool.py',
     'wallet_keypool_hd.py',
-    'p2p_mempool.py',
+    'p2p_nobloomfilter_messages.py',
     'p2p_filter.py',
     'p2p_blocksonly.py',
     'rpc_setban.py',
@@ -203,6 +208,7 @@ BASE_SCRIPTS = [
     'mempool_packages.py',
     'mempool_package_onemore.py',
     'rpc_createmultisig.py',
+    'rpc_packages.py',
     'feature_versionbits_warning.py',
     'rpc_preciousblock.py',
     'wallet_importprunedfunds.py',
@@ -259,6 +265,7 @@ BASE_SCRIPTS = [
     'feature_filelock.py',
     'feature_loadblock.py',
     'p2p_blockfilters.py',
+    'p2p_message_capture.py',
     'feature_asmap.py',
     'feature_includeconf.py',
     'mempool_unbroadcast.py',
@@ -268,6 +275,7 @@ BASE_SCRIPTS = [
     'rpc_scantxoutset.py',
     'feature_logging.py',
     'feature_coinstatsindex.py',
+    'wallet_orphanedreward.py',
     'p2p_node_network_limited.py',
     'p2p_permissions.py',
     'feature_blocksdir.py',
@@ -320,11 +328,11 @@ def main():
 
     args, unknown_args = parser.parse_known_args()
     if not args.ansi:
-        global BOLD, GREEN, RED, GREY
+        global DEFAULT, BOLD, GREEN, RED
+        DEFAULT = ("", "")
         BOLD = ("", "")
         GREEN = ("", "")
         RED = ("", "")
-        GREY = ("", "")
 
     # args to be passed on always start with two sparkses; tests are the remaining unknown args
     tests = [arg for arg in unknown_args if arg[:2] != "--"]
@@ -434,12 +442,12 @@ def run_tests(*, test_list, src_dir, build_dir, tmpdir, jobs=1, attempts=1, enab
     args = args or []
 
     # Warn if sparksd is already running
-    # pidof might fail or return an empty string if bitcoind is not running
     try:
-        pidof_output = subprocess.check_output(["pidof", "sparksd"])
-        if not (pidof_output is None or pidof_output == b''):
+        # pgrep exits with code zero when one or more matching processes found
+        if subprocess.run(["pgrep", "-x", "sparksd"], stdout=subprocess.DEVNULL).returncode == 0:
             print("%sWARNING!%s There is already a sparksd process running on this system. Tests may fail unexpectedly due to resource contention!" % (BOLD[1], BOLD[0]))
-    except (OSError, subprocess.SubprocessError):
+    except OSError:
+        # pgrep not supported
         pass
 
     # Warn if there is a cache directory
@@ -538,10 +546,11 @@ def run_tests(*, test_list, src_dir, build_dir, tmpdir, jobs=1, attempts=1, enab
     # Clean up dangling processes if any. This may only happen with --failfast option.
     # Killing the process group will also terminate the current process but that is
     # not an issue
-    if len(job_queue.jobs):
+    if not os.getenv("CI_FAILFAST_TEST_LEAVE_DANGLING") and len(job_queue.jobs):
         os.killpg(os.getpgid(0), signal.SIGKILL)
 
     sys.exit(not all_passed)
+
 
 def print_results(test_results, max_len_name, runtime):
     results = "\n" + BOLD[1] + "%s | %s | %s\n\n" % ("TEST".ljust(max_len_name), "STATUS   ", "DURATION") + BOLD[0]
@@ -691,7 +700,7 @@ class TestResult():
             color = RED
             glyph = CROSS
         elif self.status == "Skipped":
-            color = GREY
+            color = DEFAULT
             glyph = CIRCLE
 
         return color[1] + "%s | %s%s | %s s\n" % (self.name.ljust(self.padding), glyph, self.status.ljust(7), self.time) + color[0]

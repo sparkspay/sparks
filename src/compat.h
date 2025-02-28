@@ -21,9 +21,6 @@
 #endif
 
 #ifdef WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN 1
-#endif
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -102,6 +99,17 @@ size_t strnlen( const char *start, size_t max_len);
 typedef void* sockopt_arg_type;
 #else
 typedef char* sockopt_arg_type;
+#endif
+
+#ifdef WIN32
+// Export main() and ensure working ASLR when using mingw-w64.
+// Exporting a symbol will prevent the linker from stripping
+// the .reloc section from the binary, which is a requirement
+// for ASLR. While release builds are not affected, anyone
+// building with a binutils < 2.36 is subject to this ld bug.
+#define MAIN_FUNCTION __declspec(dllexport) int main(int argc, char* argv[])
+#else
+#define MAIN_FUNCTION int main(int argc, char* argv[])
 #endif
 
 // Note these both should work with the current usage of poll, but best to be safe

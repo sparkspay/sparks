@@ -10,6 +10,7 @@
 #endif
 
 #include <QApplication>
+#include <assert.h>
 #include <memory>
 
 #include <interfaces/node.h>
@@ -19,6 +20,7 @@ class ClientModel;
 class NetworkStyle;
 class OptionsModel;
 class PaymentServer;
+class SplashScreen;
 class WalletController;
 class WalletModel;
 
@@ -54,7 +56,7 @@ class BitcoinApplication: public QApplication
 {
     Q_OBJECT
 public:
-    explicit BitcoinApplication(interfaces::Node& node);
+    explicit BitcoinApplication();
     ~BitcoinApplication();
 
 #ifdef ENABLE_WALLET
@@ -66,7 +68,7 @@ public:
     /// Create options model
     void createOptionsModel(bool resetSettings);
     /// Initialize prune setting
-    void InitializePruneSetting(bool prune);
+    void InitPruneSetting(int64_t prune_MiB);
     /// Create main window
     void createWindow(const NetworkStyle *networkStyle);
     /// Create splash screen
@@ -85,6 +87,9 @@ public:
     /// Get window identifier of QMainWindow (BitcoinGUI)
     WId getMainWinId() const;
 
+    interfaces::Node& node() const { assert(m_node); return *m_node; }
+    void setNode(interfaces::Node& node);
+
 public Q_SLOTS:
     void initializeResult(bool success, interfaces::BlockAndHeaderTipInfo tip_info);
     void shutdownResult();
@@ -98,9 +103,11 @@ Q_SIGNALS:
     void splashFinished();
     void windowShown(BitcoinGUI* window);
 
+protected:
+    bool event(QEvent* e) override;
+
 private:
     QThread *coreThread;
-    interfaces::Node& m_node;
     OptionsModel *optionsModel;
     ClientModel *clientModel;
     BitcoinGUI *window;
@@ -111,6 +118,8 @@ private:
 #endif
     int returnValue;
     std::unique_ptr<QWidget> shutdownWindow;
+    SplashScreen* m_splash = nullptr;
+    interfaces::Node* m_node = nullptr;
 
     void startThread();
 };

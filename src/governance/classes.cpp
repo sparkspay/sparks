@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,9 +7,9 @@
 #include <chainparams.h>
 #include <consensus/validation.h>
 #include <core_io.h>
+#include <deploymentstatus.h>
 #include <governance/governance.h>
 #include <key_io.h>
-#include <llmq/utils.h>
 #include <primitives/transaction.h>
 #include <script/standard.h>
 #include <util/moneystr.h>
@@ -355,10 +355,8 @@ bool CSuperblockManager::GetSuperblockPayments(CGovernanceManager& governanceMan
             CTxDestination dest;
             ExtractDestination(payment.script, dest);
 
-            // TODO: PRINT NICE N.N SPARKS OUTPUT
-
-            LogPrint(BCLog::GOBJECT, "CSuperblockManager::GetSuperblockPayments -- NEW Superblock: output %d (addr %s, amount %lld)\n",
-                        i, EncodeDestination(dest), payment.nAmount);
+            LogPrint(BCLog::GOBJECT, "CSuperblockManager::GetSuperblockPayments -- NEW Superblock: output %d (addr %s, amount %d.%08d)\n",
+                        i, EncodeDestination(dest), payment.nAmount / COIN, payment.nAmount % COIN);
         } else {
             LogPrint(BCLog::GOBJECT, "CSuperblockManager::GetSuperblockPayments -- Payment not found\n");
         }
@@ -409,7 +407,7 @@ CSuperblock::
     nStatus(SeenObjectStatus::Unknown),
     vecPayments()
 {
-    CGovernanceObject* pGovObj = GetGovernanceObject(*governance);
+    const CGovernanceObject* pGovObj = GetGovernanceObject(*governance);
 
     if (!pGovObj) {
         throw std::runtime_error("CSuperblock: Failed to find Governance Object");
@@ -498,13 +496,13 @@ CAmount CSuperblock::GetPaymentsLimit(int nBlockHeight)
     const CBlockIndex* pindex = ::ChainActive().Tip();
     if (pindex->nHeight > nBlockHeight) pindex = pindex->GetAncestor(nBlockHeight);
 
-    const auto v20_state = llmq::utils::GetV20State(pindex);
+    const auto v20_state = g_versionbitscache.State(pindex, consensusParams, Consensus::DEPLOYMENT_V20);
     bool fV20Active{v20_state == ThresholdState::ACTIVE};
     if (!fV20Active && nBlockHeight > pindex->nHeight) {
         // If fV20Active isn't active yet and nBlockHeight refers to a future SuperBlock
         // then we need to check if the fork is locked_in and see if it will be active by the time of the future SuperBlock
         if (v20_state == ThresholdState::LOCKED_IN) {
-            int activation_height = llmq::utils::GetV20Since(pindex) + static_cast<int>(Params().GetConsensus().vDeployments[Consensus::DEPLOYMENT_V20].nWindowSize);
+            int activation_height = g_versionbitscache.StateSinceHeight(pindex, consensusParams, Consensus::DEPLOYMENT_V20) + static_cast<int>(Params().GetConsensus().vDeployments[Consensus::DEPLOYMENT_V20].nWindowSize);
             if (nBlockHeight >= activation_height) {
                 fV20Active = true;
             }

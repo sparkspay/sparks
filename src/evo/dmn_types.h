@@ -6,13 +6,12 @@
 #define BITCOIN_EVO_DMN_TYPES_H
 
 #include <amount.h>
-#include <serialize.h>
 #include <chain.h>
 #include <chainparams.h>
 #include <validation.h>
 #include <llmq/utils.h>
 
-#include <cassert>
+#include <limits>
 #include <string_view>
 
 enum class MnType : uint16_t {
@@ -22,6 +21,7 @@ enum class MnType : uint16_t {
     Invalid = std::numeric_limits<uint16_t>::max(),
 };
 
+template<typename T> struct is_serializable_enum;
 template<> struct is_serializable_enum<MnType> : std::true_type {};
 
 namespace dmn_types {

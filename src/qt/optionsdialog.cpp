@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -15,6 +15,7 @@
 #include <qt/guiutil.h>
 #include <qt/optionsmodel.h>
 
+#include <interfaces/coinjoin.h>
 #include <interfaces/node.h>
 #include <interfaces/wallet.h>
 #include <validation.h> // for DEFAULT_SCRIPTCHECK_THREADS and MAX_SCRIPTCHECK_THREADS
@@ -34,7 +35,7 @@
 #include <QTimer>
 
 OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
-    QDialog(parent),
+    QDialog(parent, GUIUtil::dialog_flags),
     ui(new Ui::OptionsDialog),
     model(nullptr),
     mapper(nullptr),
@@ -201,6 +202,8 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
         ui->minimizeToTray->setChecked(false);
         ui->minimizeToTray->setEnabled(false);
     }
+
+    GUIUtil::handleCloseWindowShortcut(this);
 }
 
 OptionsDialog::~OptionsDialog()
@@ -408,7 +411,7 @@ void OptionsDialog::on_okButton_clicked()
 #ifdef ENABLE_WALLET
     if (m_enable_wallet) {
         for (auto& wallet : model->node().walletLoader().getWallets()) {
-            wallet->coinJoin().resetCachedBlocks();
+            model->node().coinJoinLoader()->GetClient(wallet->getWalletName())->resetCachedBlocks();
             wallet->markDirty();
         }
     }

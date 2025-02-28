@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2022 The Dash Core developers
+// Copyright (c) 2021-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -59,7 +59,9 @@ class Proposal : public QObject
 private:
     Q_OBJECT
 
+    ClientModel* clientModel;
     const CGovernanceObject govObj;
+
     QString m_title;
     QDateTime m_startDate;
     QDateTime m_endDate;
@@ -67,7 +69,7 @@ private:
     QString m_url;
 
 public:
-    explicit Proposal(const CGovernanceObject& _govObj, QObject* parent = nullptr);
+    explicit Proposal(ClientModel* _clientModel, const CGovernanceObject& _govObj, QObject* parent = nullptr);
     QString title() const;
     QString hash() const;
     QDateTime startDate() const;

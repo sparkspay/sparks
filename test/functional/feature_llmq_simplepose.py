@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2022 The Dash Core developers
+# Copyright (c) 2015-2024 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,7 +13,7 @@ Checks simple PoSe system based on LLMQ commitments
 import time
 
 from test_framework.test_framework import SparksTestFramework
-from test_framework.util import assert_equal, force_finish_mnsync, p2p_port, wait_until
+from test_framework.util import assert_equal, force_finish_mnsync, p2p_port
 
 
 class LLMQSimplePoSeTest(SparksTestFramework):
@@ -65,7 +65,7 @@ class LLMQSimplePoSeTest(SparksTestFramework):
 
     def isolate_mn(self, mn):
         mn.node.setnetworkactive(False)
-        wait_until(lambda: mn.node.getconnectioncount() == 0)
+        self.wait_until(lambda: mn.node.getconnectioncount() == 0)
         return True, True
 
     def close_mn_port(self, mn):
@@ -87,14 +87,14 @@ class LLMQSimplePoSeTest(SparksTestFramework):
         return False, True
 
     def test_no_banning(self, expected_connections=None):
-        for i in range(3):
+        for _ in range(3):
             self.mine_quorum(expected_connections=expected_connections)
         for mn in self.mninfo:
             assert not self.check_punished(mn) and not self.check_banned(mn)
 
     def mine_quorum_no_check(self, expected_good_nodes, mninfos_online):
         # Unlike in mine_quorum we skip most of the checks and only care about
-        # nodes moving forward from phase to phase and the fact that the quorum is actualy mined.
+        # nodes moving forward from phase to phase and the fact that the quorum is actually mined.
         self.log.info("Mining a quorum with no checks")
         nodes = [self.nodes[0]] + [mn.node for mn in mninfos_online]
 
@@ -157,7 +157,7 @@ class LLMQSimplePoSeTest(SparksTestFramework):
         mninfos_online = self.mninfo.copy()
         mninfos_valid = self.mninfo.copy()
         expected_contributors = len(mninfos_online)
-        for i in range(2):
+        for _ in range(2):
             mn = mninfos_valid.pop()
             went_offline, instant_ban = invalidate_proc(mn)
             if went_offline:
@@ -172,7 +172,7 @@ class LLMQSimplePoSeTest(SparksTestFramework):
             else:
                 # It's ok to miss probes/quorum connections up to 5 times.
                 # 6th time is when it should be banned for sure.
-                for i in range(6):
+                for _ in range(6):
                     self.reset_probe_timeouts()
                     self.mine_quorum_no_check(expected_contributors - 1, mninfos_online)
 
@@ -189,23 +189,26 @@ class LLMQSimplePoSeTest(SparksTestFramework):
                 addr = self.nodes[0].getnewaddress()
                 self.nodes[0].sendtoaddress(addr, 0.1)
                 self.nodes[0].protx('update_service', mn.proTxHash, '127.0.0.1:%d' % p2p_port(mn.node.index), mn.keyOperator, "", addr)
-                # Make sure this tx "safe" to mine even when InstantSend and ChainLocks are no longer functional
-                self.bump_mocktime(60 * 10 + 1)
-                self.nodes[0].generate(1)
-                assert not self.check_banned(mn)
-
                 if restart:
                     self.stop_node(mn.node.index)
                     self.start_masternode(mn)
                 else:
                     mn.node.setnetworkactive(True)
             self.connect_nodes(mn.node.index, 0)
+
+        # syncing blocks only since node 0 has txes waiting to be mined
+        self.sync_blocks()
+
+        # Make sure protxes are "safe" to mine even when InstantSend and ChainLocks are no longer functional
+        self.bump_mocktime(60 * 10 + 1)
+        self.nodes[0].generate(1)
         self.sync_all()
 
         # Isolate and re-connect all MNs (otherwise there might be open connections with no MNAUTH for MNs which were banned before)
         for mn in self.mninfo:
+            assert not self.check_banned(mn)
             mn.node.setnetworkactive(False)
-            wait_until(lambda: mn.node.getconnectioncount() == 0)
+            self.wait_until(lambda: mn.node.getconnectioncount() == 0)
             mn.node.setnetworkactive(True)
             force_finish_mnsync(mn.node)
             self.connect_nodes(mn.node.index, 0)

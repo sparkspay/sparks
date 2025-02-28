@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021-2022 The Dash Core developers
+# Copyright (c) 2021-2024 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 import time
-from test_framework.mininode import logger
+from test_framework.p2p import logger
 from test_framework.test_framework import SparksTestFramework
-from test_framework.util import force_finish_mnsync, wait_until
+from test_framework.util import force_finish_mnsync
 
 '''
 feature_llmq_data_recovery.py
@@ -39,7 +39,7 @@ class QuorumDataRecoveryTest(SparksTestFramework):
             args.append('-reindex')
             bb_hash = mn.node.getbestblockhash()
             self.restart_node(mn.node.index, args)
-            wait_until(lambda: mn.node.getbestblockhash() == bb_hash)
+            self.wait_until(lambda: mn.node.getbestblockhash() == bb_hash)
         else:
             self.restart_node(mn.node.index, args)
         force_finish_mnsync(mn.node)

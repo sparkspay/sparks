@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,6 +7,7 @@
 #include <chainparams.h>
 #include <consensus/validation.h>
 #include <core_io.h>
+#include <deploymentstatus.h>
 #include <evo/deterministicmns.h>
 #include <evo/dmn_types.h>
 #include <evo/providertx.h>
@@ -16,10 +17,10 @@
 #include <index/txindex.h>
 #include <llmq/blockprocessor.h>
 #include <llmq/context.h>
-#include <llmq/utils.h>
 #include <masternode/meta.h>
 #include <messagesigner.h>
 #include <netbase.h>
+#include <node/context.h>
 #include <rpc/blockchain.h>
 #include <rpc/server.h>
 #include <rpc/util.h>
@@ -48,7 +49,7 @@ static RPCArg GetRpcArg(const std::string& strParamName)
     static const std::map<std::string, RPCArg> mapParamHelp = {
         {"collateralAddress",
             {"collateralAddress", RPCArg::Type::STR, RPCArg::Optional::NO,
-                "The sparks address to send the collateral to."}
+                "The Sparks address to send the collateral to."}
         },
         {"collateralHash",
             {"collateralHash", RPCArg::Type::STR, RPCArg::Optional::NO,
@@ -119,17 +120,17 @@ static RPCArg GetRpcArg(const std::string& strParamName)
         },
         {"ownerAddress",
             {"ownerAddress", RPCArg::Type::STR, RPCArg::Optional::NO,
-                "The sparks address to use for payee updates and proposal voting.\n"
+                "The Sparks address to use for payee updates and proposal voting.\n"
                 "The corresponding private key does not have to be known by your wallet.\n"
                 "The address must be unused and must differ from the collateralAddress."}
         },
         {"payoutAddress_register",
             {"payoutAddress", RPCArg::Type::STR, RPCArg::Optional::NO,
-                "The sparks address to use for masternode reward payments."}
+                "The Sparks address to use for masternode reward payments."}
         },
         {"payoutAddress_update",
             {"payoutAddress", RPCArg::Type::STR, RPCArg::Optional::NO,
-                "The sparks address to use for masternode reward payments.\n"
+                "The Sparks address to use for masternode reward payments.\n"
                 "If set to an empty string, the currently active payout address is reused."}
         },
         {"proTxHash",
@@ -231,7 +232,7 @@ static void FundSpecialTx(CWallet* pwallet, CMutableTransaction& tx, const Speci
 
     CDataStream ds(SER_NETWORK, PROTOCOL_VERSION);
     ds << payload;
-    tx.vExtraPayload.assign(ds.begin(), ds.end());
+    tx.vExtraPayload.assign(UCharCast(ds.data()), UCharCast(ds.data() + ds.size()));
 
     static const CTxOut dummyTxOut(0, CScript() << OP_RETURN);
     std::vector<CRecipient> vecSend;
@@ -620,7 +621,7 @@ static UniValue protx_register_common_wrapper(const JSONRPCRequest& request,
         EnsureWalletIsUnlocked(wallet.get());
     }
 
-    bool isV19active = llmq::utils::IsV19Active(WITH_LOCK(cs_main, return chainman.ActiveChain().Tip();));
+    const bool isV19active{DeploymentActiveAfter(WITH_LOCK(cs_main, return chainman.ActiveChain().Tip();), Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
     if (isEvoRequested && !isV19active) {
         throw JSONRPCError(RPC_INVALID_REQUEST, "EvoNodes aren't allowed yet");
     }
@@ -657,10 +658,6 @@ static UniValue protx_register_common_wrapper(const JSONRPCRequest& request,
 
         ptx.collateralOutpoint = COutPoint(collateralHash, (uint32_t)collateralIndex);
         paramIdx += 2;
-
-        // TODO unlock on failure
-        LOCK(wallet->cs_wallet);
-        wallet->LockCoin(ptx.collateralOutpoint);
     }
 
     if (request.params[paramIdx].get_str() != "") {
@@ -730,15 +727,14 @@ static UniValue protx_register_common_wrapper(const JSONRPCRequest& request,
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Sparks address: ") + request.params[paramIdx + 6].get_str());
     }
 
-    FundSpecialTx(wallet.get(), tx, ptx, fundDest);
-    UpdateSpecialTxInputsHash(tx, ptx);
-
     bool fSubmit{true};
     if ((isExternalRegister || isFundRegister) && !request.params[paramIdx + 7].isNull()) {
         fSubmit = ParseBoolV(request.params[paramIdx + 7], "submit");
     }
 
     if (isFundRegister) {
+        FundSpecialTx(wallet.get(), tx, ptx, fundDest);
+        UpdateSpecialTxInputsHash(tx, ptx);
         CAmount fundCollateral = GetMnType(mnType, chainman.ActiveChain().Tip()).collat_amount;
         uint32_t collateralIndex = (uint32_t) -1;
         for (uint32_t i = 0; i < tx.vout.size(); i++) {
@@ -755,41 +751,57 @@ static UniValue protx_register_common_wrapper(const JSONRPCRequest& request,
     } else {
         // referencing external collateral
 
-        Coin coin;
-        if (!GetUTXOCoin(ptx.collateralOutpoint, coin)) {
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("collateral not found: %s", ptx.collateralOutpoint.ToStringShort()));
-        }
-        CTxDestination txDest;
-        ExtractDestination(coin.out.scriptPubKey, txDest);
-        const PKHash *pkhash = std::get_if<PKHash>(&txDest);
-        if (!pkhash) {
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("collateral type not supported: %s", ptx.collateralOutpoint.ToStringShort()));
-        }
-
-        if (isPrepareRegister) {
-            // external signing with collateral key
-            ptx.vchSig.clear();
-            SetTxPayload(tx, ptx);
-
-            UniValue ret(UniValue::VOBJ);
-            ret.pushKV("tx", EncodeHexTx(CTransaction(tx)));
-            ret.pushKV("collateralAddress", EncodeDestination(txDest));
-            ret.pushKV("signMessage", ptx.MakeSignString());
-            return ret;
-        } else {
-            // lets prove we own the collateral
-            LegacyScriptPubKeyMan* spk_man = wallet->GetLegacyScriptPubKeyMan();
-            if (!spk_man) {
-                throw JSONRPCError(RPC_WALLET_ERROR, "This type of wallet does not support this command");
+        const bool unlockOnError = [&]() {
+            if (LOCK(wallet->cs_wallet); !wallet->IsLockedCoin(ptx.collateralOutpoint.hash, ptx.collateralOutpoint.n)) {
+                wallet->LockCoin(ptx.collateralOutpoint);
+                return true;
+            }
+            return false;
+        }();
+        try {
+            FundSpecialTx(wallet.get(), tx, ptx, fundDest);
+            UpdateSpecialTxInputsHash(tx, ptx);
+            Coin coin;
+            if (!GetUTXOCoin(ptx.collateralOutpoint, coin)) {
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("collateral not found: %s", ptx.collateralOutpoint.ToStringShort()));
+            }
+            CTxDestination txDest;
+            ExtractDestination(coin.out.scriptPubKey, txDest);
+            const PKHash* pkhash = std::get_if<PKHash>(&txDest);
+            if (!pkhash) {
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("collateral type not supported: %s", ptx.collateralOutpoint.ToStringShort()));
             }
 
-            CKey key;
-            if (!spk_man->GetKey(ToKeyID(*pkhash), key)) {
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("collateral key not in wallet: %s", EncodeDestination(txDest)));
+            if (isPrepareRegister) {
+                // external signing with collateral key
+                ptx.vchSig.clear();
+                SetTxPayload(tx, ptx);
+
+                UniValue ret(UniValue::VOBJ);
+                ret.pushKV("tx", EncodeHexTx(CTransaction(tx)));
+                ret.pushKV("collateralAddress", EncodeDestination(txDest));
+                ret.pushKV("signMessage", ptx.MakeSignString());
+                return ret;
+            } else {
+                // lets prove we own the collateral
+                LegacyScriptPubKeyMan* spk_man = wallet->GetLegacyScriptPubKeyMan();
+                if (!spk_man) {
+                    throw JSONRPCError(RPC_WALLET_ERROR, "This type of wallet does not support this command");
+                }
+
+                CKey key;
+                if (!spk_man->GetKey(ToKeyID(*pkhash), key)) {
+                    throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("collateral key not in wallet: %s", EncodeDestination(txDest)));
+                }
+                SignSpecialTxPayloadByString(tx, ptx, key);
+                SetTxPayload(tx, ptx);
+                return SignAndSendSpecialTx(request, chainman, tx, fSubmit);
             }
-            SignSpecialTxPayloadByString(tx, ptx, key);
-            SetTxPayload(tx, ptx);
-            return SignAndSendSpecialTx(request, chainman, tx, fSubmit);
+        } catch (...) {
+            if (unlockOnError) {
+                WITH_LOCK(wallet->cs_wallet, wallet->UnlockCoin(ptx.collateralOutpoint));
+            }
+            throw;
         }
     }
 }
@@ -842,15 +854,21 @@ static UniValue protx_register_submit(const JSONRPCRequest& request, const Chain
     if (tx.nType != TRANSACTION_PROVIDER_REGISTER) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "transaction not a ProRegTx");
     }
-    CProRegTx ptx;
-    if (!GetTxPayload(tx, ptx)) {
+    auto ptx = [&tx]() {
+        if (const auto opt_ptx = GetTxPayload<CProRegTx>(tx); opt_ptx.has_value()) {
+            return *opt_ptx;
+        }
         throw JSONRPCError(RPC_INVALID_PARAMETER, "transaction payload not deserializable");
-    }
+    }();
     if (!ptx.vchSig.empty()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "payload signature not empty");
     }
 
-    ptx.vchSig = DecodeBase64(request.params[1].get_str().c_str());
+    bool decode_fail{false};
+    ptx.vchSig = DecodeBase64(request.params[1].get_str().c_str(), &decode_fail);
+    if (decode_fail) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "malformed base64 encoding");
+    }
 
     SetTxPayload(tx, ptx);
     return SignAndSendSpecialTx(request, chainman, tx);
@@ -924,7 +942,9 @@ static UniValue protx_update_service_common_wrapper(const JSONRPCRequest& reques
 
     EnsureWalletIsUnlocked(wallet.get());
 
-    const bool isV19active = llmq::utils::IsV19Active(WITH_LOCK(cs_main, return chainman.ActiveChain().Tip();));
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
+
+    const bool isV19active{DeploymentActiveAfter(WITH_LOCK(cs_main, return chainman.ActiveChain().Tip();), Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
     const bool is_bls_legacy = !isV19active;
     if (isEvoRequested && !isV19active) {
         throw JSONRPCError(RPC_INVALID_REQUEST, "EvoNodes aren't allowed yet");
@@ -962,7 +982,7 @@ static UniValue protx_update_service_common_wrapper(const JSONRPCRequest& reques
         paramIdx += 3;
     }
 
-    auto dmn = deterministicMNManager->GetListAtChainTip().GetMN(ptx.proTxHash);
+    auto dmn = node.dmnman->GetListAtChainTip().GetMN(ptx.proTxHash);
     if (!dmn) {
         throw std::runtime_error(strprintf("masternode with proTxHash %s not found", ptx.proTxHash.ToString()));
     }
@@ -1056,17 +1076,20 @@ static UniValue protx_update_registrar_wrapper(const JSONRPCRequest& request, co
 
     EnsureWalletIsUnlocked(wallet.get());
 
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
+
     CProUpRegTx ptx;
     ptx.proTxHash = ParseHashV(request.params[0], "proTxHash");
 
-    auto dmn = deterministicMNManager->GetListAtChainTip().GetMN(ptx.proTxHash);
+    auto dmn = node.dmnman->GetListAtChainTip().GetMN(ptx.proTxHash);
     if (!dmn) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("masternode %s not found", ptx.proTxHash.ToString()));
     }
     ptx.keyIDVoting = dmn->pdmnState->keyIDVoting;
     ptx.scriptPayout = dmn->pdmnState->scriptPayout;
 
-    const bool use_legacy = llmq::utils::IsV19Active(chainman.ActiveChain().Tip()) ? specific_legacy_bls_scheme : true;
+    const bool isV19Active{DeploymentActiveAfter(WITH_LOCK(cs_main, return chainman.ActiveChain().Tip();), Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
+    const bool use_legacy = isV19Active ? specific_legacy_bls_scheme : true;
 
     if (request.params[1].get_str() != "") {
         // new pubkey
@@ -1166,7 +1189,9 @@ static UniValue protx_revoke(const JSONRPCRequest& request, const ChainstateMana
 
     EnsureWalletIsUnlocked(wallet.get());
 
-    const bool isV19active = llmq::utils::IsV19Active(WITH_LOCK(cs_main, return chainman.ActiveChain().Tip();));
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
+
+    const bool isV19active{DeploymentActiveAfter(WITH_LOCK(cs_main, return chainman.ActiveChain().Tip();), Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
     const bool is_bls_legacy = !isV19active;
     CProUpRevTx ptx;
     ptx.nVersion = CProUpRevTx::GetVersion(isV19active);
@@ -1182,7 +1207,7 @@ static UniValue protx_revoke(const JSONRPCRequest& request, const ChainstateMana
         ptx.nReason = (uint16_t)nReason;
     }
 
-    auto dmn = deterministicMNManager->GetListAtChainTip().GetMN(ptx.proTxHash);
+    auto dmn = node.dmnman->GetListAtChainTip().GetMN(ptx.proTxHash);
     if (!dmn) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("masternode %s not found", ptx.proTxHash.ToString()));
     }
@@ -1278,7 +1303,7 @@ static bool CheckWalletOwnsScript(CWallet* pwallet, const CScript& script) {
 }
 #endif
 
-static UniValue BuildDMNListEntry(CWallet* pwallet, const CDeterministicMN& dmn, bool detailed)
+static UniValue BuildDMNListEntry(CWallet* pwallet, const CDeterministicMN& dmn, CMasternodeMetaMan& mn_metaman, bool detailed, const ChainstateManager& chainman, const CBlockIndex* pindex = nullptr)
 {
     if (!detailed) {
         return dmn.proTxHash.ToString();
@@ -1286,7 +1311,21 @@ static UniValue BuildDMNListEntry(CWallet* pwallet, const CDeterministicMN& dmn,
 
     UniValue o = dmn.ToJson();
 
+    CTransactionRef collateralTx{nullptr};
     int confirmations = GetUTXOConfirmations(dmn.collateralOutpoint);
+
+    if (pindex != nullptr) {
+        if (confirmations > -1) {
+            confirmations -= WITH_LOCK(cs_main, return chainman.ActiveChain().Height()) - pindex->nHeight;
+        } else {
+            uint256 minedBlockHash;
+            collateralTx = GetTransaction(/* pindex */ nullptr, /* mempool */ nullptr, dmn.collateralOutpoint.hash, Params().GetConsensus(), minedBlockHash);
+            const CBlockIndex* const pindexMined = WITH_LOCK(cs_main, return chainman.m_blockman.LookupBlockIndex(minedBlockHash));
+            CHECK_NONFATAL(pindexMined != nullptr);
+            CHECK_NONFATAL(pindex->GetAncestor(pindexMined->nHeight) == pindexMined);
+            confirmations = pindex->nHeight - pindexMined->nHeight + 1;
+        }
+    }
     o.pushKV("confirmations", confirmations);
 
 #ifdef ENABLE_WALLET
@@ -1294,9 +1333,9 @@ static UniValue BuildDMNListEntry(CWallet* pwallet, const CDeterministicMN& dmn,
     bool hasVotingKey = CheckWalletOwnsKey(pwallet, dmn.pdmnState->keyIDVoting);
 
     bool ownsCollateral = false;
-    uint256 tmpHashBlock;
-    CTransactionRef collateralTx = GetTransaction(/* block_index */ nullptr,  /* mempool */ nullptr, dmn.collateralOutpoint.hash, Params().GetConsensus(), tmpHashBlock);
-    if (collateralTx) {
+    if (Coin coin; GetUTXOCoin(dmn.collateralOutpoint, coin)) {
+        ownsCollateral = CheckWalletOwnsScript(pwallet, coin.out.scriptPubKey);
+    } else if (collateralTx != nullptr) {
         ownsCollateral = CheckWalletOwnsScript(pwallet, collateralTx->vout[dmn.collateralOutpoint.n].scriptPubKey);
     }
 
@@ -1312,8 +1351,7 @@ static UniValue BuildDMNListEntry(CWallet* pwallet, const CDeterministicMN& dmn,
     }
 #endif
 
-    CHECK_NONFATAL(mmetaman != nullptr);
-    auto metaInfo = mmetaman->GetMetaInfo(dmn.proTxHash);
+    const auto metaInfo = mn_metaman.GetMetaInfo(dmn.proTxHash);
     o.pushKV("metaInfo", metaInfo->ToJson());
 
     return o;
@@ -1330,6 +1368,8 @@ static UniValue protx_list(const JSONRPCRequest& request, const ChainstateManage
     } catch (...) {
     }
 #endif
+
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
 
     std::string type = "registered";
     if (!request.params[0].isNull()) {
@@ -1367,14 +1407,14 @@ static UniValue protx_list(const JSONRPCRequest& request, const ChainstateManage
             setOutpts.emplace(outpt);
         }
 
-        CDeterministicMNList mnList = deterministicMNManager->GetListForBlock(chainman.ActiveChain()[height]);
+        CDeterministicMNList mnList = node.dmnman->GetListForBlock(chainman.ActiveChain()[height]);
         mnList.ForEachMN(false, [&](const auto& dmn) {
             if (setOutpts.count(dmn.collateralOutpoint) ||
                 CheckWalletOwnsKey(wallet.get(), dmn.pdmnState->keyIDOwner) ||
                 CheckWalletOwnsKey(wallet.get(), dmn.pdmnState->keyIDVoting) ||
                 CheckWalletOwnsScript(wallet.get(), dmn.pdmnState->scriptPayout) ||
                 CheckWalletOwnsScript(wallet.get(), dmn.pdmnState->scriptOperatorPayout)) {
-                ret.push_back(BuildDMNListEntry(wallet.get(), dmn, detailed));
+                ret.push_back(BuildDMNListEntry(wallet.get(), dmn, *node.mn_metaman, detailed, chainman));
             }
         });
 #endif
@@ -1392,14 +1432,14 @@ static UniValue protx_list(const JSONRPCRequest& request, const ChainstateManage
             throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid height specified");
         }
 
-        CDeterministicMNList mnList = deterministicMNManager->GetListForBlock(chainman.ActiveChain()[height]);
+        CDeterministicMNList mnList = node.dmnman->GetListForBlock(chainman.ActiveChain()[height]);
         bool onlyValid = type == "valid";
         bool onlyEvoNodes = type == "evo";
         bool onlyRGMN = type == "rgmn"; //Only regular masternodes
         mnList.ForEachMN(onlyValid, [&](const auto& dmn) {
             if (onlyEvoNodes && dmn.nType != MnType::Evo) return;
             else if (onlyRGMN && dmn.nType != MnType::Regular) return;
-            ret.push_back(BuildDMNListEntry(wallet.get(), dmn, detailed));
+            ret.push_back(BuildDMNListEntry(wallet.get(), dmn, *node.mn_metaman, detailed, chainman));
         });
     } else {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid type specified");
@@ -1414,6 +1454,7 @@ static void protx_info_help(const JSONRPCRequest& request)
         "\nReturns detailed information about a deterministic masternode.\n",
         {
             GetRpcArg("proTxHash"),
+            {"blockHash", RPCArg::Type::STR_HEX, /* default*/ "(chain tip)", "The hash of the block to get deterministic masternode state at"},
         },
         RPCResult{
             RPCResult::Type::OBJ, "", "Details about a specific deterministic masternode",
@@ -1427,7 +1468,7 @@ static void protx_info_help(const JSONRPCRequest& request)
     }.Check(request);
 }
 
-static UniValue protx_info(const JSONRPCRequest& request)
+static UniValue protx_info(const JSONRPCRequest& request, const ChainstateManager& chainman)
 {
     protx_info_help(request);
 
@@ -1439,17 +1480,34 @@ static UniValue protx_info(const JSONRPCRequest& request)
     }
 #endif
 
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
+
     if (g_txindex) {
         g_txindex->BlockUntilSyncedToCurrentChain();
     }
 
+    CBlockIndex* pindex{nullptr};
+
     uint256 proTxHash(ParseHashV(request.params[0], "proTxHash"));
-    auto mnList = deterministicMNManager->GetListAtChainTip();
+
+    if (request.params[1].isNull()) {
+        LOCK(cs_main);
+        pindex = chainman.ActiveChain().Tip();
+    } else {
+        LOCK(cs_main);
+        uint256 blockHash(ParseHashV(request.params[1], "blockHash"));
+        pindex = chainman.m_blockman.LookupBlockIndex(blockHash);
+        if (pindex == nullptr) {
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+        }
+    }
+
+    auto mnList = node.dmnman->GetListForBlock(pindex);
     auto dmn = mnList.GetMN(proTxHash);
     if (!dmn) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("%s not found", proTxHash.ToString()));
     }
-    return BuildDMNListEntry(wallet.get(), *dmn, true);
+    return BuildDMNListEntry(wallet.get(), *dmn, *node.mn_metaman, true, chainman, pindex);
 }
 
 static void protx_diff_help(const JSONRPCRequest& request)
@@ -1538,6 +1596,8 @@ static UniValue protx_listdiff(const JSONRPCRequest& request, const ChainstateMa
 {
     protx_listdiff_help(request);
 
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
+
     LOCK(cs_main);
     UniValue ret(UniValue::VOBJ);
 
@@ -1555,8 +1615,8 @@ static UniValue protx_listdiff(const JSONRPCRequest& request, const ChainstateMa
     ret.pushKV("baseHeight", pBaseBlockIndex->nHeight);
     ret.pushKV("blockHeight", pTargetBlockIndex->nHeight);
 
-    auto baseBlockMNList = deterministicMNManager->GetListForBlock(pBaseBlockIndex);
-    auto blockMNList = deterministicMNManager->GetListForBlock(pTargetBlockIndex);
+    auto baseBlockMNList = node.dmnman->GetListForBlock(pBaseBlockIndex);
+    auto blockMNList = node.dmnman->GetListForBlock(pTargetBlockIndex);
 
     auto mnDiff = baseBlockMNList.BuildDiff(blockMNList);
 
@@ -1657,7 +1717,7 @@ static UniValue protx(const JSONRPCRequest& request)
     if (command == "protxlist") {
         return protx_list(new_request, chainman);
     } else if (command == "protxinfo") {
-        return protx_info(new_request);
+        return protx_info(new_request, chainman);
     } else if (command == "protxdiff") {
         return protx_diff(new_request, chainman);
     } else if (command == "protxlistdiff") {
@@ -1835,7 +1895,7 @@ static UniValue bls_generate(const JSONRPCRequest& request, const ChainstateMana
 
     CBLSSecretKey sk;
     sk.MakeNewKey();
-    bool bls_legacy_scheme = !llmq::utils::IsV19Active(chainman.ActiveChain().Tip());
+    bool bls_legacy_scheme{!DeploymentActiveAfter(WITH_LOCK(cs_main, return chainman.ActiveChain().Tip();), Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
     if (!request.params[0].isNull()) {
         bls_legacy_scheme = ParseBoolV(request.params[0], "bls_legacy_scheme");
     }
@@ -1872,7 +1932,7 @@ static UniValue bls_fromsecret(const JSONRPCRequest& request, const ChainstateMa
 {
     bls_fromsecret_help(request);
 
-    bool bls_legacy_scheme = !llmq::utils::IsV19Active(chainman.ActiveChain().Tip());
+    bool bls_legacy_scheme{!DeploymentActiveAfter(WITH_LOCK(cs_main, return chainman.ActiveChain().Tip();), Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
     if (!request.params[1].isNull()) {
         bls_legacy_scheme = ParseBoolV(request.params[1], "bls_legacy_scheme");
     }

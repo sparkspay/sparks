@@ -66,8 +66,8 @@ private:
     SendCoinsDialog* coinJoinCoinsPage;
     AddressBookPage *usedSendingAddressesPage;
     AddressBookPage *usedReceivingAddressesPage;
-    MasternodeList *masternodeListPage;
-    GovernanceList* governanceListPage;
+    MasternodeList* masternodeListPage{nullptr};
+    GovernanceList* governanceListPage{nullptr};
 
     TransactionView *transactionView;
 
@@ -95,7 +95,7 @@ public Q_SLOTS:
     /** Show Sign/Verify Message dialog and switch to verify message tab */
     void gotoVerifyMessageTab(QString addr = "");
     /** Load Partially Signed Bitcoin Transaction */
-    void gotoLoadPSBT();
+    void gotoLoadPSBT(bool from_clipboard = false);
 
     /** Show incoming transaction notification for new transactions.
 
@@ -131,6 +131,7 @@ public Q_SLOTS:
     /** Update selected SPARKS amount from transactionview */
     void trxAmount(QString amount);
 Q_SIGNALS:
+    void setPrivacy(bool privacy);
     void transactionClicked();
     void coinsSent();
     /**  Fired when a message should be reported to the user */

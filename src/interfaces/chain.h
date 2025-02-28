@@ -27,6 +27,7 @@ class CFeeRate;
 class CBlockIndex;
 class Coin;
 class uint256;
+enum class MemPoolRemovalReason;
 struct bilingual_str;
 struct CBlockLocator;
 struct FeeCalculation;
@@ -135,6 +136,14 @@ public:
     //! Check if transaction will be final given chain height current time.
     virtual bool checkFinalTx(const CTransaction& tx) = 0;
 
+    //! Check if transaction is locked by InstantSendManager
+    virtual bool isInstantSendLockedTx(const uint256& hash) = 0;
+
+    //! Check if block is chainlocked.
+    virtual bool hasChainLock(int height, const uint256& hash) = 0;
+
+    //! Return list of MN Collateral from outputs
+    virtual std::vector<COutPoint> listMNCollaterials(const std::vector<std::pair<const CTransactionRef&, unsigned int>>& outputs) = 0;
     //! Return whether node has the block and optionally return block metadata
     //! or contents.
     virtual bool findBlock(const uint256& hash, const FoundBlock& block={}) = 0;
@@ -176,6 +185,9 @@ public:
     //! of blocks. This checks all blocks that are ancestors of block_hash in
     //! the height range from min_height to max_height, inclusive.
     virtual bool hasBlocks(const uint256& block_hash, int min_height = 0, std::optional<int> max_height = {}) = 0;
+
+    //! Check if transaction is in mempool.
+    virtual bool isInMempool(const uint256& txid) = 0;
 
     //! Check if transaction has descendants in mempool.
     virtual bool hasDescendantsInMempool(const uint256& txid) = 0;
@@ -247,7 +259,7 @@ public:
     public:
         virtual ~Notifications() {}
         virtual void transactionAddedToMempool(const CTransactionRef& tx, int64_t nAcceptTime) {}
-        virtual void transactionRemovedFromMempool(const CTransactionRef& ptx, MemPoolRemovalReason reason) {}
+        virtual void transactionRemovedFromMempool(const CTransactionRef& tx, MemPoolRemovalReason reason) {}
         virtual void blockConnected(const CBlock& block, int height) {}
         virtual void blockDisconnected(const CBlock& block, int height) {}
         virtual void updatedBlockTip() {}

@@ -1,25 +1,25 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_LLMQ_DKGSESSION_H
 #define BITCOIN_LLMQ_DKGSESSION_H
 
-#include <batchedlogger.h>
-
 #include <bls/bls.h>
 #include <bls/bls_ies.h>
 #include <bls/bls_worker.h>
 
 #include <llmq/commitment.h>
-#include <llmq/utils.h>
 #include <util/underlying.h>
+#include <sync.h>
 
 #include <optional>
 
 class UniValue;
 class CInv;
 class CConnman;
+class CDeterministicMN;
+using CDeterministicMNCPtr = std::shared_ptr<const CDeterministicMN>;
 
 namespace llmq
 {
@@ -123,8 +123,15 @@ public:
     Consensus::LLMQType llmqType;
     uint256 quorumHash;
     uint256 proTxHash;
-    // TODO make this pair a struct with named fields
-    std::vector<std::pair<uint32_t, CBLSSecretKey>> contributions;
+    struct Contribution {
+        uint32_t index;
+        CBLSSecretKey key;
+        SERIALIZE_METHODS(Contribution, obj)
+        {
+            READWRITE(obj.index, obj.key);
+        }
+    };
+    std::vector<Contribution> contributions;
     CBLSSignature sig;
 
 public:
@@ -186,7 +193,7 @@ public:
 
     [[nodiscard]] uint256 GetSignHash() const
     {
-        return utils::BuildCommitmentHash(llmqType, quorumHash, validMembers, quorumPublicKey, quorumVvecHash);
+        return BuildCommitmentHash(llmqType, quorumHash, validMembers, quorumPublicKey, quorumVvecHash);
     }
 };
 
@@ -363,15 +370,6 @@ public:
 
 private:
     [[nodiscard]] bool ShouldSimulateError(DKGError::type type) const;
-};
-
-class CDKGLogger : public CBatchedLogger
-{
-public:
-    CDKGLogger(const CDKGSession& _quorumDkg, std::string_view _func) :
-        CDKGLogger(_quorumDkg.params.name, _quorumDkg.quorumIndex, _quorumDkg.m_quorum_base_block_index->GetBlockHash(), _quorumDkg.m_quorum_base_block_index->nHeight, _quorumDkg.AreWeMember(), _func){};
-    CDKGLogger(std::string_view _llmqTypeName, int _quorumIndex, const uint256& _quorumHash, int _height, bool _areWeMember, std::string_view _func) :
-        CBatchedLogger(BCLog::LLMQ_DKG, strprintf("QuorumDKG(type=%s, quorumIndex=%d, height=%d, member=%d, func=%s)", _llmqTypeName, _quorumIndex, _height, _areWeMember, _func)){};
 };
 
 void SetSimulatedDKGErrorRate(DKGError::type type, double rate);

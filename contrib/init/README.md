@@ -1,6 +1,6 @@
 Sample configuration files for:
 ```
-SystemD: sparksd.service
+systemd: sparksd.service
 Upstart: sparksd.conf
 OpenRC:  sparksd.openrc
          sparksd.openrcconf
@@ -9,4 +9,4 @@ macOS:   org.sparks.sparksd.plist
 ```
 have been made available to assist packagers in creating node packages here.
 
-See doc/init.md for more information.
+See [doc/init.md](../../doc/init.md) for more information.

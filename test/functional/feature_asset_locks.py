@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2022 The Dash Core developers
+# Copyright (c) 2022-2024 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -51,7 +51,7 @@ blocks_in_one_day = 576
 
 class AssetLocksTest(SparksTestFramework):
     def set_test_params(self):
-        self.set_sparks_test_params(6, 4, evo_count=3)
+        self.set_sparks_test_params(5, 3, [["-whitelist=127.0.0.1", "-llmqtestinstantsenddip0024=llmq_test_instantsend"]] * 5, evo_count=3)
 
     def skip_test_if_missing_module(self):
         self.skip_if_no_wallet()
@@ -152,6 +152,8 @@ class AssetLocksTest(SparksTestFramework):
     def check_mempool_result(self, result_expected, tx):
         """Wrapper to check result of testmempoolaccept on node_0's mempool"""
         result_expected['txid'] = tx.rehash()
+        if result_expected['allowed']:
+            result_expected['vsize'] = tx.get_vsize()
 
         result_test = self.nodes[0].testmempoolaccept([tx.serialize().hex()])
 
@@ -190,7 +192,6 @@ class AssetLocksTest(SparksTestFramework):
 
         self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", spork_enabled)
         self.nodes[0].sporkupdate("SPORK_19_CHAINLOCKS_ENABLED", spork_disabled)
-        self.nodes[0].sporkupdate("SPORK_3_INSTANTSEND_BLOCK_FILTERING", spork_disabled)
         self.nodes[0].sporkupdate("SPORK_2_INSTANTSEND_ENABLED", spork_disabled)
         self.wait_for_sporks_same()
 
@@ -241,23 +242,12 @@ class AssetLocksTest(SparksTestFramework):
         self.activate_v19(expected_activation_height=900)
         self.log.info("Activated v19 at height:" + str(node.getblockcount()))
 
-        # TODO: need to refactor this part to common code
-        # enabling instantsend -> 3 rotating quorums -> new 103 quorum
-        # with following dynamically adding evo nodes one-by-one seems
-        # as little too much complex for functional test (each which use Evo nodes)
         self.nodes[0].sporkupdate("SPORK_2_INSTANTSEND_ENABLED", 0)
         self.wait_for_sporks_same()
 
-        self.move_to_next_cycle()
-        self.log.info("Cycle H height:" + str(self.nodes[0].getblockcount()))
-        self.move_to_next_cycle()
-        self.log.info("Cycle H+C height:" + str(self.nodes[0].getblockcount()))
-        self.move_to_next_cycle()
-        self.log.info("Cycle H+2C height:" + str(self.nodes[0].getblockcount()))
+        self.mine_quorum(llmq_type_name='llmq_test_instantsend', llmq_type=104)
 
-        self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
-
-        for i in range(3):
+        for _ in range(3):
             self.dynamically_add_masternode(evo=True)
             node.generate(8)
             self.sync_blocks()
@@ -272,18 +262,23 @@ class AssetLocksTest(SparksTestFramework):
         key.generate()
         pubkey = key.get_pubkey().get_bytes()
 
+        self.test_asset_locks(node_wallet, node, pubkey)
+        self.test_asset_unlocks(node_wallet, node, pubkey)
+        self.test_withdrawal_limits(node_wallet, node, pubkey)
+        self.test_mn_rr(node_wallet, node, pubkey)
+
+
+    def test_asset_locks(self, node_wallet, node, pubkey):
         self.log.info("Testing asset lock...")
         locked_1 = 10 * COIN + 141421
         locked_2 = 10 * COIN + 314159
 
-        coins = node_wallet.listunspent()
-        coin = None
-        while coin is None or COIN * coin['amount'] < locked_2:
-            coin = coins.pop()
+        coins = node_wallet.listunspent(query_options={'minimumAmount': Decimal(str(locked_2 / COIN))})
+        coin = coins.pop()
         asset_lock_tx = self.create_assetlock(coin, locked_1, pubkey)
 
 
-        self.check_mempool_result(tx=asset_lock_tx, result_expected={'allowed': True})
+        self.check_mempool_result(tx=asset_lock_tx, result_expected={'allowed': True, 'fees': {'base': Decimal(str(tiny_amount / COIN))}})
         self.validate_credit_pool_balance(0)
         txid_in_block = self.send_tx(asset_lock_tx)
         assert "assetLockTx" in node.getrawtransaction(txid_in_block, 1)
@@ -298,9 +293,9 @@ class AssetLocksTest(SparksTestFramework):
 
         # tx is mined, let's get blockhash
         self.log.info("Invalidate block with asset lock tx...")
-        block_hash_1 = node_wallet.gettransaction(txid_in_block)['blockhash']
+        self.block_hash_1 = node_wallet.gettransaction(txid_in_block)['blockhash']
         for inode in self.nodes:
-            inode.invalidateblock(block_hash_1)
+            inode.invalidateblock(self.block_hash_1)
             assert_equal(self.get_credit_pool_balance(node=inode), 0)
         node.generate(3)
         self.sync_all()
@@ -314,7 +309,7 @@ class AssetLocksTest(SparksTestFramework):
         self.validate_credit_pool_balance(locked_2)
         self.log.info("Reconsider old blocks...")
         for inode in self.nodes:
-            inode.reconsiderblock(block_hash_1)
+            inode.reconsiderblock(self.block_hash_1)
         self.validate_credit_pool_balance(locked_1)
         self.sync_all()
 
@@ -328,10 +323,14 @@ class AssetLocksTest(SparksTestFramework):
 
         self.validate_credit_pool_balance(locked_1)
 
+
+    def test_asset_unlocks(self, node_wallet, node, pubkey):
         self.log.info("Testing asset unlock...")
 
         self.log.info("Generating several txes by same quorum....")
-        self.validate_credit_pool_balance(locked_1)
+        locked = self.get_credit_pool_balance()
+
+        self.validate_credit_pool_balance(locked)
         asset_unlock_tx = self.create_assetunlock(101, COIN, pubkey)
         asset_unlock_tx_late = self.create_assetunlock(102, COIN, pubkey)
         asset_unlock_tx_too_late = self.create_assetunlock(103, COIN, pubkey)
@@ -342,9 +341,9 @@ class AssetLocksTest(SparksTestFramework):
         asset_unlock_tx_duplicate_index.vout[0].nValue += COIN
         too_late_height = node.getblockcount() + 48
 
-        self.check_mempool_result(tx=asset_unlock_tx, result_expected={'allowed': True})
+        self.check_mempool_result(tx=asset_unlock_tx, result_expected={'allowed': True, 'fees': {'base': Decimal(str(tiny_amount / COIN))}})
         self.check_mempool_result(tx=asset_unlock_tx_too_big_fee,
-                result_expected={'allowed': False, 'reject-reason' : 'absurdly-high-fee'})
+                result_expected={'allowed': False, 'reject-reason' : 'max-fee-exceeded'})
         self.check_mempool_result(tx=asset_unlock_tx_zero_fee,
                 result_expected={'allowed': False, 'reject-reason' : 'bad-txns-assetunlock-fee-outofrange'})
         # not-verified is a correct faiure from mempool. Mempool knows nothing about CreditPool indexes and he just report that signature is not validated
@@ -357,15 +356,47 @@ class AssetLocksTest(SparksTestFramework):
 
         assert_equal(asset_unlock_tx_payload.quorumHash, int(self.mninfo[0].node.quorum("selectquorum", llmq_type_test, 'e6c7a809d79f78ea85b72d5df7e9bd592aecf151e679d6e976b74f053a7f9056')["quorumHash"], 16))
 
+        self.log.info("Test no IS for asset unlock...")
+        self.nodes[0].sporkupdate("SPORK_2_INSTANTSEND_ENABLED", 0)
+        self.wait_for_sporks_same()
+
         txid = self.send_tx(asset_unlock_tx)
+        is_id = node_wallet.sendtoaddress(node_wallet.getnewaddress(), 1)
+        for node in self.nodes:
+            self.wait_for_instantlock(is_id, node)
+
+
+        tip = self.nodes[0].getblockcount()
+        indexes_statuses_no_height = self.nodes[0].getassetunlockstatuses(["101", "102", "300"])
+        assert_equal([{'index': 101, 'status': 'mempooled'}, {'index': 102, 'status': 'unknown'}, {'index': 300, 'status': 'unknown'}], indexes_statuses_no_height)
+        indexes_statuses_height = self.nodes[0].getassetunlockstatuses(["101", "102", "300"], tip)
+        assert_equal([{'index': 101, 'status': 'unknown'}, {'index': 102, 'status': 'unknown'}, {'index': 300, 'status': 'unknown'}], indexes_statuses_height)
+
+
+        rawtx = node.getrawtransaction(txid, 1)
+        rawtx_is = node.getrawtransaction(is_id, 1)
+        assert_equal(rawtx["instantlock"], False)
+        assert_equal(rawtx_is["instantlock"], True)
+        assert_equal(rawtx["chainlock"], False)
+        assert_equal(rawtx_is["chainlock"], False)
+        assert not "confirmations" in rawtx
+        assert not "confirmations" in rawtx_is
+        # disable back IS
+        self.set_sporks()
+
         assert "assetUnlockTx" in node.getrawtransaction(txid, 1)
-        self.mempool_size += 1
+
+        self.mempool_size += 2
         self.check_mempool_size()
-        self.validate_credit_pool_balance(locked_1)
+        self.validate_credit_pool_balance(locked)
         node.generate(1)
         self.sync_all()
-        self.validate_credit_pool_balance(locked_1 - COIN)
-        self.mempool_size -= 1
+        assert_equal(rawtx["instantlock"], False)
+        assert_equal(rawtx["chainlock"], False)
+        rawtx = node.getrawtransaction(txid, 1)
+        assert_equal(rawtx["confirmations"], 1)
+        self.validate_credit_pool_balance(locked - COIN)
+        self.mempool_size -= 2
         self.check_mempool_size()
         block_asset_unlock = node.getrawtransaction(asset_unlock_tx.rehash(), 1)['blockhash']
 
@@ -376,18 +407,18 @@ class AssetLocksTest(SparksTestFramework):
         self.log.info("Mining next quorum to check tx 'asset_unlock_tx_late' is still valid...")
         self.mine_quorum(llmq_type_name="llmq_test_platform", llmq_type=106)
         self.log.info("Checking credit pool amount is same...")
-        self.validate_credit_pool_balance(locked_1 - 1 * COIN)
-        self.check_mempool_result(tx=asset_unlock_tx_late, result_expected={'allowed': True})
+        self.validate_credit_pool_balance(locked - 1 * COIN)
+        self.check_mempool_result(tx=asset_unlock_tx_late, result_expected={'allowed': True, 'fees': {'base': Decimal(str(tiny_amount / COIN))}})
         self.log.info("Checking credit pool amount still is same...")
-        self.validate_credit_pool_balance(locked_1 - 1 * COIN)
+        self.validate_credit_pool_balance(locked - 1 * COIN)
         self.send_tx(asset_unlock_tx_late)
         node.generate(1)
         self.sync_all()
-        self.validate_credit_pool_balance(locked_1 - 2 * COIN)
+        self.validate_credit_pool_balance(locked - 2 * COIN)
 
         self.log.info("Generating many blocks to make quorum far behind (even still active)...")
         self.slowly_generate_batch(too_late_height - node.getblockcount() - 1)
-        self.check_mempool_result(tx=asset_unlock_tx_too_late, result_expected={'allowed': True})
+        self.check_mempool_result(tx=asset_unlock_tx_too_late, result_expected={'allowed': True, 'fees': {'base': Decimal(str(tiny_amount / COIN))}})
         node.generate(1)
         self.sync_all()
         self.check_mempool_result(tx=asset_unlock_tx_too_late,
@@ -403,12 +434,12 @@ class AssetLocksTest(SparksTestFramework):
         self.log.info("Test block invalidation with asset unlock tx...")
         for inode in self.nodes:
             inode.invalidateblock(block_asset_unlock)
-        self.validate_credit_pool_balance(locked_1)
+        self.validate_credit_pool_balance(locked)
         self.slowly_generate_batch(50)
-        self.validate_credit_pool_balance(locked_1)
+        self.validate_credit_pool_balance(locked)
         for inode in self.nodes:
             inode.reconsiderblock(block_to_reconsider)
-        self.validate_credit_pool_balance(locked_1 - 2 * COIN)
+        self.validate_credit_pool_balance(locked - 2 * COIN)
 
         self.log.info("Forcibly mining asset_unlock_tx_too_late and ensure block is invalid...")
         self.create_and_check_block([asset_unlock_tx_too_late], expected_error = "bad-assetunlock-not-active-quorum")
@@ -416,15 +447,21 @@ class AssetLocksTest(SparksTestFramework):
         node.generate(1)
         self.sync_all()
 
-        self.validate_credit_pool_balance(locked_1 - 2 * COIN)
-        self.validate_credit_pool_balance(block_hash=block_hash_1, expected=locked_1)
+        self.validate_credit_pool_balance(locked - 2 * COIN)
+        self.validate_credit_pool_balance(block_hash=self.block_hash_1, expected=locked)
 
-        self.log.info("Checking too big withdrawal... expected to not be mined")
+        self.log.info("Forcibly mine asset_unlock_tx_full and ensure block is invalid...")
+        self.create_and_check_block([asset_unlock_tx_duplicate_index], expected_error = "bad-assetunlock-duplicated-index")
+
+
+    def test_withdrawal_limits(self, node_wallet, node, pubkey):
+        self.log.info("Testing withdrawal limits...")
+        self.log.info("Too big withdrawal is expected to not be mined")
         asset_unlock_tx_full = self.create_assetunlock(201, 1 + self.get_credit_pool_balance(), pubkey)
 
         self.log.info("Checking that transaction with exceeding amount accepted by mempool...")
         # Mempool doesn't know about the size of the credit pool
-        self.check_mempool_result(tx=asset_unlock_tx_full, result_expected={'allowed': True })
+        self.check_mempool_result(tx=asset_unlock_tx_full, result_expected={'allowed': True, 'fees': {'base': Decimal(str(tiny_amount / COIN))}})
 
         txid_in_block = self.send_tx(asset_unlock_tx_full)
         node.generate(1)
@@ -437,7 +474,7 @@ class AssetLocksTest(SparksTestFramework):
 
         self.mempool_size += 1
         asset_unlock_tx_full = self.create_assetunlock(301, self.get_credit_pool_balance(), pubkey)
-        self.check_mempool_result(tx=asset_unlock_tx_full, result_expected={'allowed': True })
+        self.check_mempool_result(tx=asset_unlock_tx_full, result_expected={'allowed': True, 'fees': {'base': Decimal(str(tiny_amount / COIN))}})
 
         txid_in_block = self.send_tx(asset_unlock_tx_full)
         node.generate(1)
@@ -447,14 +484,12 @@ class AssetLocksTest(SparksTestFramework):
         assert txid_in_block in block['tx']
         self.validate_credit_pool_balance(0)
 
-        self.log.info("Forcibly mine asset_unlock_tx_full and ensure block is invalid...")
-        self.create_and_check_block([asset_unlock_tx_duplicate_index], expected_error = "bad-assetunlock-duplicated-index")
-
         self.log.info("Fast forward to the next day to reset all current unlock limits...")
         self.slowly_generate_batch(blocks_in_one_day  + 1)
         self.mine_quorum(llmq_type_name="llmq_test_platform", llmq_type=106)
 
         total = self.get_credit_pool_balance()
+        coins = node_wallet.listunspent()
         while total <= 10_900 * COIN:
             self.log.info(f"Collecting coins in pool... Collected {total}/{10_900 * COIN}")
             coin = coins.pop()
@@ -531,17 +566,26 @@ class AssetLocksTest(SparksTestFramework):
         node.generate(1)
         self.sync_all()
 
+        tip = self.nodes[0].getblockcount()
+        indexes_statuses_no_height = self.nodes[0].getassetunlockstatuses(["101", "102", "103"])
+        assert_equal([{'index': 101, 'status': 'mined'}, {'index': 102, 'status': 'mined'}, {'index': 103, 'status': 'unknown'}], indexes_statuses_no_height)
+        indexes_statuses_height = self.nodes[0].getassetunlockstatuses(["101", "102", "103"], tip)
+        assert_equal([{'index': 101, 'status': 'chainlocked'}, {'index': 102, 'status': 'chainlocked'}, {'index': 103, 'status': 'unknown'}], indexes_statuses_height)
+
+
         self.log.info("generate many blocks to be sure that mempool is empty after expiring txes...")
         self.slowly_generate_batch(60)
         self.log.info("Checking that credit pool is not changed...")
         assert_equal(new_total, self.get_credit_pool_balance())
         self.check_mempool_size()
 
-        # activate MN_RR reallocation
+
+    def test_mn_rr(self, node_wallet, node, pubkey):
         self.log.info("Activate mn_rr...")
+        locked = self.get_credit_pool_balance()
         self.activate_mn_rr(expected_activation_height=node.getblockcount() + 12 * 3)
         self.log.info(f'height: {node.getblockcount()} credit: {self.get_credit_pool_balance()}')
-        assert_equal(new_total, self.get_credit_pool_balance())
+        assert_equal(locked, self.get_credit_pool_balance())
 
         bt = node.getblocktemplate()
         platform_reward = bt['masternode'][0]['amount']
@@ -552,18 +596,19 @@ class AssetLocksTest(SparksTestFramework):
         assert_equal(all_mn_rewards, bt['coinbasevalue'] * 3 // 4)  # 75/25 mn/miner reward split
         assert_equal(platform_reward, all_mn_rewards * 375 // 1000)  # 0.375 platform share
         assert_equal(platform_reward, 31916328)
-        assert_equal(new_total, self.get_credit_pool_balance())
+        assert_equal(locked, self.get_credit_pool_balance())
         node.generate(1)
         self.sync_all()
-        new_total += platform_reward
-        assert_equal(new_total, self.get_credit_pool_balance())
+        locked += platform_reward
+        assert_equal(locked, self.get_credit_pool_balance())
 
+        coins = node_wallet.listunspent(query_options={'minimumAmount': 1})
         coin = coins.pop()
         self.send_tx(self.create_assetlock(coin, COIN, pubkey))
-        new_total += platform_reward + COIN
+        locked += platform_reward + COIN
         node.generate(1)
         self.sync_all()
-        assert_equal(new_total, self.get_credit_pool_balance())
+        assert_equal(locked, self.get_credit_pool_balance())
 
 
 if __name__ == '__main__':

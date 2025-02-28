@@ -4,7 +4,9 @@
 
 #include <test/fuzz/util.h>
 
+#include <test/util/script.h>
 #include <util/overflow.h>
+#include <util/time.h>
 #include <version.h>
 
 FuzzedSock::FuzzedSock(FuzzedDataProvider& fuzzed_data_provider)
@@ -208,10 +210,65 @@ void FillNode(FuzzedDataProvider& fuzzed_data_provider, CNode& node, bool init_v
     node.m_permissionFlags = permission_flags;
     if (init_version) {
         node.nVersion = version;
-        node.SetSendVersion(std::min(version, PROTOCOL_VERSION));
+        node.SetCommonVersion(std::min(version, PROTOCOL_VERSION));
     }
     if (node.m_tx_relay != nullptr) {
         LOCK(node.m_tx_relay->cs_filter);
         node.m_tx_relay->fRelayTxes = filter_txs;
     }
+}
+
+int64_t ConsumeTime(FuzzedDataProvider& fuzzed_data_provider, const std::optional<int64_t>& min, const std::optional<int64_t>& max) noexcept
+{
+    // Avoid t=0 (1970-01-01T00:00:00Z) since SetMockTime(0) disables mocktime.
+    static const int64_t time_min{ParseISO8601DateTime("2000-01-01T00:00:01Z")};
+    static const int64_t time_max{ParseISO8601DateTime("2100-12-31T23:59:59Z")};
+    return fuzzed_data_provider.ConsumeIntegralInRange<int64_t>(min.value_or(time_min), max.value_or(time_max));
+}
+
+CMutableTransaction ConsumeTransaction(FuzzedDataProvider& fuzzed_data_provider, const std::optional<std::vector<uint256>>& prevout_txids, const int max_num_in, const int max_num_out) noexcept
+{
+    CMutableTransaction tx_mut;
+    tx_mut.nVersion = fuzzed_data_provider.ConsumeBool() ?
+                          CTransaction::CURRENT_VERSION :
+                          fuzzed_data_provider.ConsumeIntegral<int32_t>();
+    tx_mut.nLockTime = fuzzed_data_provider.ConsumeIntegral<uint32_t>();
+    const auto num_in = fuzzed_data_provider.ConsumeIntegralInRange<int>(0, max_num_in);
+    const auto num_out = fuzzed_data_provider.ConsumeIntegralInRange<int>(0, max_num_out);
+    for (int i = 0; i < num_in; ++i) {
+        const auto& txid_prev = prevout_txids ?
+                                    PickValue(fuzzed_data_provider, *prevout_txids) :
+                                    ConsumeUInt256(fuzzed_data_provider);
+        const auto index_out = fuzzed_data_provider.ConsumeIntegralInRange<uint32_t>(0, max_num_out);
+        const auto sequence = ConsumeSequence(fuzzed_data_provider);
+        const auto script_sig = ConsumeScript(fuzzed_data_provider);
+        CTxIn in;
+        in.prevout = COutPoint{txid_prev, index_out};
+        in.nSequence = sequence;
+        in.scriptSig = script_sig;
+
+        tx_mut.vin.push_back(in);
+    }
+    for (int i = 0; i < num_out; ++i) {
+        const auto amount = fuzzed_data_provider.ConsumeIntegralInRange<CAmount>(-10, 50 * COIN + 10);
+        const auto script_pk = ConsumeScript(fuzzed_data_provider, /* max_length */ 128);
+        tx_mut.vout.emplace_back(amount, script_pk);
+    }
+    return tx_mut;
+}
+
+CScript ConsumeScript(FuzzedDataProvider& fuzzed_data_provider, const std::optional<size_t>& max_length) noexcept
+{
+    const std::vector<uint8_t> b = ConsumeRandomLengthByteVector(fuzzed_data_provider, max_length);
+    return {b.begin(), b.end()};
+}
+
+uint32_t ConsumeSequence(FuzzedDataProvider& fuzzed_data_provider) noexcept
+{
+    return fuzzed_data_provider.ConsumeBool() ?
+               fuzzed_data_provider.PickValueInArray({
+                   CTxIn::SEQUENCE_FINAL,
+                   CTxIn::SEQUENCE_FINAL - 1
+               }) :
+               fuzzed_data_provider.ConsumeIntegral<uint32_t>();
 }

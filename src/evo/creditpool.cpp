@@ -1,4 +1,4 @@
-// Copyright (c) 2023 The Dash Core developers
+// Copyright (c) 2023-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,12 +6,15 @@
 
 #include <evo/assetlocktx.h>
 #include <evo/cbtx.h>
+#include <evo/specialtx.h>
 
 #include <chain.h>
-#include <llmq/utils.h>
+#include <chainparams.h>
+#include <consensus/validation.h>
+#include <deploymentstatus.h>
 #include <logging.h>
-#include <validation.h>
 #include <node/blockstorage.h>
+#include <validation.h>
 
 #include <algorithm>
 #include <exception>
@@ -29,13 +32,13 @@ std::unique_ptr<CCreditPoolManager> creditPoolManager;
 
 static bool GetDataFromUnlockTx(const CTransaction& tx, CAmount& toUnlock, uint64_t& index, TxValidationState& state)
 {
-    CAssetUnlockPayload assetUnlockTx;
-    if (!GetTxPayload(tx, assetUnlockTx)) {
+    const auto opt_assetUnlockTx = GetTxPayload<CAssetUnlockPayload>(tx);
+    if (!opt_assetUnlockTx.has_value()) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "failed-creditpool-unlock-payload");
     }
 
-    index = assetUnlockTx.getIndex();
-    toUnlock = assetUnlockTx.getFee();
+    index = opt_assetUnlockTx->getIndex();
+    toUnlock = opt_assetUnlockTx->getFee();
     for (const CTxOut& txout : tx.vout) {
         if (!MoneyRange(txout.nValue)) {
             return state.Invalid(TxValidationResult::TX_CONSENSUS, "failed-creditpool-unlock-txout-outofrange");
@@ -78,11 +81,11 @@ std::string CCreditPool::ToString() const
             locked, currentLimit);
 }
 
-std::optional<CCreditPool> CCreditPoolManager::GetFromCache(const CBlockIndex* const block_index)
+std::optional<CCreditPool> CCreditPoolManager::GetFromCache(const CBlockIndex& block_index)
 {
-    if (!llmq::utils::IsV20Active(block_index)) return CCreditPool{};
+    if (!DeploymentActiveAt(block_index, Params().GetConsensus(), Consensus::DEPLOYMENT_V20)) return CCreditPool{};
 
-    const uint256 block_hash = block_index->GetBlockHash();
+    const uint256 block_hash = block_index.GetBlockHash();
     CCreditPool pool;
     {
         LOCK(cache_mutex);
@@ -90,7 +93,7 @@ std::optional<CCreditPool> CCreditPoolManager::GetFromCache(const CBlockIndex* c
             return pool;
         }
     }
-    if (block_index->nHeight % DISK_SNAPSHOT_PERIOD == 0) {
+    if (block_index.nHeight % DISK_SNAPSHOT_PERIOD == 0) {
         if (evoDb.Read(std::make_pair(DB_CREDITPOOL_SNAPSHOT, block_hash), pool)) {
             LOCK(cache_mutex);
             creditPoolCache.insert(block_hash, pool);
@@ -140,14 +143,13 @@ CCreditPool CCreditPoolManager::ConstructCreditPool(const CBlockIndex* const blo
         AddToCache(block_index->GetBlockHash(), block_index->nHeight, emptyPool);
         return emptyPool;
     }
-    CAmount locked{0};
-    {
-        CCbTx cbTx;
-        if (!GetTxPayload(block->vtx[0]->vExtraPayload, cbTx)) {
-            throw std::runtime_error(strprintf("%s: failed-getcreditpool-cbtx-payload", __func__));
+    CAmount locked = [&, func=__func__]() {
+        const auto opt_cbTx = GetTxPayload<CCbTx>(block->vtx[0]->vExtraPayload);
+        if (!opt_cbTx) {
+            throw std::runtime_error(strprintf("%s: failed-getcreditpool-cbtx-payload", func));
         }
-        locked = cbTx.creditPoolBalance;
-    }
+        return opt_cbTx->creditPoolBalance;
+    }();
 
     // We use here sliding window with LimitBlocksToTrace to determine
     // current limits for asset unlock transactions.
@@ -200,10 +202,11 @@ CCreditPool CCreditPoolManager::GetCreditPool(const CBlockIndex* block_index, co
     std::stack<const CBlockIndex *> to_calculate;
 
     std::optional<CCreditPool> poolTmp;
-    while (!(poolTmp = GetFromCache(block_index)).has_value()) {
+    while (block_index != nullptr && !(poolTmp = GetFromCache(*block_index)).has_value()) {
         to_calculate.push(block_index);
         block_index = block_index->pprev;
     }
+    if (block_index == nullptr) poolTmp = CCreditPool{};
     while (!to_calculate.empty()) {
         poolTmp = ConstructCreditPool(to_calculate.top(), *poolTmp, consensusParams);
         to_calculate.pop();
@@ -216,22 +219,22 @@ CCreditPoolManager::CCreditPoolManager(CEvoDB& _evoDb)
 {
 }
 
-CCreditPoolDiff::CCreditPoolDiff(CCreditPool starter, const CBlockIndex *pindex, const Consensus::Params& consensusParams, const CAmount blockSubsidy) :
+CCreditPoolDiff::CCreditPoolDiff(CCreditPool starter, const CBlockIndex *pindexPrev, const Consensus::Params& consensusParams, const CAmount blockSubsidy) :
     pool(std::move(starter)),
-    pindex(pindex),
+    pindexPrev(pindexPrev),
     params(consensusParams)
 {
-    assert(pindex);
+    assert(pindexPrev);
 
-    if (llmq::utils::IsMNRewardReallocationActive(pindex)) {
+    if (DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_MN_RR)) {
         // We consider V20 active if mn_rr is active
-        platformReward = MasternodePayments::PlatformShare(GetMasternodePayment(pindex->nHeight, blockSubsidy, /*fV20Active=*/ true));
+        platformReward = MasternodePayments::PlatformShare(GetMasternodePayment(pindexPrev->nHeight + 1, blockSubsidy, /*fV20Active=*/ true));
     }
 }
 
 bool CCreditPoolDiff::Lock(const CTransaction& tx, TxValidationState& state)
 {
-    if (CAssetLockPayload assetLockTx; !GetTxPayload(tx, assetLockTx)) {
+    if (const auto opt_assetLockTx = GetTxPayload<CAssetLockPayload>(tx); !opt_assetLockTx) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "failed-creditpool-lock-payload");
     }
 
@@ -272,7 +275,7 @@ bool CCreditPoolDiff::ProcessLockUnlockTransaction(const CTransaction& tx, TxVal
     if (tx.nVersion != 3) return true;
     if (tx.nType != TRANSACTION_ASSET_LOCK && tx.nType != TRANSACTION_ASSET_UNLOCK) return true;
 
-    if (!CheckAssetLockUnlockTx(tx, pindex, pool.indexes, state)) {
+    if (!CheckAssetLockUnlockTx(tx, pindexPrev, pool.indexes, state)) {
         // pass the state returned by the function above
         return false;
     }

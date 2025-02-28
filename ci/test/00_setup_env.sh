@@ -8,7 +8,7 @@ export LC_ALL=C.UTF-8
 
 # The root dir.
 # The ci system copies this folder.
-# This is where the build is done (depends and dist).
+# This is where the depends build is done.
 BASE_ROOT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../../ >/dev/null 2>&1 && pwd )
 export BASE_ROOT_DIR
 
@@ -36,17 +36,26 @@ export BASE_SCRATCH_DIR=${BASE_SCRATCH_DIR:-$BASE_ROOT_DIR/ci/scratch}
 export HOST=${HOST:-$("$BASE_ROOT_DIR/depends/config.guess")}
 # Whether to prefer BusyBox over GNU utilities
 export USE_BUSY_BOX=${USE_BUSY_BOX:-false}
+
 export RUN_UNIT_TESTS=${RUN_UNIT_TESTS:-true}
-export RUN_INTEGRATION_TESTS=${RUN_INTEGRATION_TESTS:-true}
+export RUN_FUNCTIONAL_TESTS=${RUN_FUNCTIONAL_TESTS:-true}
 export RUN_SECURITY_TESTS=${RUN_SECURITY_TESTS:-false}
-export TEST_PREVIOUS_RELEASES=${TEST_PREVIOUS_RELEASES:-false}
+# By how much to scale the test_runner timeouts (option --timeout-factor).
+# This is needed because some ci machines have slow CPU or disk, so sanitizers
+# might be slow or a reindex might be waiting on disk IO.
+export TEST_RUNNER_TIMEOUT_FACTOR=${TEST_RUNNER_TIMEOUT_FACTOR:-4}
+export TEST_RUNNER_ENV=${TEST_RUNNER_ENV:-}
 export RUN_FUZZ_TESTS=${RUN_FUZZ_TESTS:-false}
 export RUN_SYMBOL_TESTS=${RUN_SYMBOL_TESTS:-true}
+export EXPECTED_TESTS_DURATION_IN_SECONDS=${EXPECTED_TESTS_DURATION_IN_SECONDS:-1000}
+
 export CONTAINER_NAME=${CONTAINER_NAME:-ci_unnamed}
 export DOCKER_NAME_TAG=${DOCKER_NAME_TAG:-ubuntu:focal}
 # Randomize test order.
 # See https://www.boost.org/doc/libs/1_71_0/libs/test/doc/html/boost_test/utf_reference/rt_param_reference/random.html
 export BOOST_TEST_RANDOM=${BOOST_TEST_RANDOM:-1}
+# See man 7 debconf
+export DEBIAN_FRONTEND=noninteractive
 export HOST_CACHE_DIR=${HOST_CACHE_DIR:-$BASE_ROOT_DIR/ci-cache-$BUILD_TARGET}
 export CACHE_DIR=${CACHE_DIR:-$HOST_CACHE_DIR}
 export CCACHE_SIZE=${CCACHE_SIZE:-100M}
@@ -58,8 +67,10 @@ export CCACHE_DIR=${CCACHE_DIR:-$CACHE_DIR/ccache}
 # The depends dir.
 # This folder exists on the ci host and ci guest. Changes are propagated back and forth.
 export DEPENDS_DIR=${DEPENDS_DIR:-$BASE_ROOT_DIR/depends}
-# Folder where the build is done (bin and lib).
+# Folder where the build result is put (bin and lib).
 export BASE_OUTDIR=${BASE_OUTDIR:-$BASE_SCRATCH_DIR/out/$HOST}
+# Folder where the build is done (dist and out-of-tree build).
+export BASE_BUILD_DIR=${BASE_BUILD_DIR:-$BASE_SCRATCH_DIR/build-ci}
 export PREVIOUS_RELEASES_DIR=${PREVIOUS_RELEASES_DIR:-$BASE_ROOT_DIR/releases/$HOST}
 export SDK_URL=${SDK_URL:-https://bitcoincore.org/depends-sources/sdks}
 export DOCKER_PACKAGES=${DOCKER_PACKAGES:-build-essential libtool autotools-dev automake pkg-config bsdmainutils curl ca-certificates ccache python3 rsync git procps}

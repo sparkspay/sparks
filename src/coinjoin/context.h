@@ -1,4 +1,4 @@
-// Copyright (c) 2023 The Dash Core developers
+// Copyright (c) 2023-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -20,7 +20,7 @@ class CTxMemPool;
 
 #ifdef ENABLE_WALLET
 class CCoinJoinClientQueueManager;
-class CJClientManager;
+class CoinJoinWalletManager;
 #endif // ENABLE_WALLET
 
 struct CJContext {
@@ -30,7 +30,8 @@ struct CJContext {
     ~CJContext();
 
 #ifdef ENABLE_WALLET
-    CJClientManager* const clientman;
+    // The main object for accessing mixing
+    const std::unique_ptr<CoinJoinWalletManager> walletman;
     const std::unique_ptr<CCoinJoinClientQueueManager> queueman;
 #endif // ENABLE_WALLET
     const std::unique_ptr<CCoinJoinServer> server;

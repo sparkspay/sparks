@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2022 The Dash Core developers
+# Copyright (c) 2015-2023 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,7 +13,7 @@ Checks intra quorum connections
 import time
 
 from test_framework.test_framework import SparksTestFramework
-from test_framework.util import assert_greater_than_or_equal, wait_until
+from test_framework.util import assert_greater_than_or_equal
 
 class LLMQConnections(SparksTestFramework):
     def set_test_params(self):
@@ -53,17 +53,17 @@ class LLMQConnections(SparksTestFramework):
 
         self.log.info("checking that all MNs got probed")
         for mn in self.get_quorum_masternodes(q):
-            wait_until(lambda: self.get_mn_probe_count(mn.node, q, False) == 4)
+            self.wait_until(lambda: self.get_mn_probe_count(mn.node, q, False) == 4)
 
         self.log.info("checking that probes age")
         self.bump_mocktime(self.MAX_AGE)
         for mn in self.get_quorum_masternodes(q):
-            wait_until(lambda: self.get_mn_probe_count(mn.node, q, False) == 0)
+            self.wait_until(lambda: self.get_mn_probe_count(mn.node, q, False) == 0)
 
         self.log.info("mine a new quorum and re-check probes")
         q = self.mine_quorum()
         for mn in self.get_quorum_masternodes(q):
-            wait_until(lambda: self.get_mn_probe_count(mn.node, q, True) == 4)
+            self.wait_until(lambda: self.get_mn_probe_count(mn.node, q, True) == 4)
 
         self.log.info("Activating SPORK_21_QUORUM_ALL_CONNECTED")
         self.nodes[0].sporkupdate("SPORK_21_QUORUM_ALL_CONNECTED", 0)
@@ -71,14 +71,29 @@ class LLMQConnections(SparksTestFramework):
 
         self.check_reconnects(4)
 
-        self.log.info("check that old masternode conections are dropped")
+        self.nodes[0].sporkupdate("SPORK_23_QUORUM_POSE", 4070908800)
+        self.wait_for_sporks_same()
+
+        self.activate_v19(expected_activation_height=900)
+        self.log.info("Activated v19 at height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H+C height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H+2C height:" + str(self.nodes[0].getblockcount()))
+        self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
+
+        # Since we IS quorums are mined only using dip24 (rotation) we need to enable rotation, and continue tests on llmq_test_dip0024 for connections.
+
+        self.log.info("check that old masternode connections are dropped")
         removed = False
         for mn in self.mninfo:
             if len(mn.node.quorum("memberof", mn.proTxHash)) > 0:
                 try:
                     with mn.node.assert_debug_log(['removing masternodes quorum connections']):
                         with mn.node.assert_debug_log(['keeping mn quorum connections']):
-                            self.mine_quorum()
+                            self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
                             mn.node.mockscheduler(60) # we check for old connections via the scheduler every 60 seconds
                     removed = True
                 except:
@@ -87,13 +102,13 @@ class LLMQConnections(SparksTestFramework):
                 break
         assert removed # no way we removed none
 
-        self.log.info("check that inter-quorum masternode conections are added")
+        self.log.info("check that inter-quorum masternode connections are added")
         added = False
         for mn in self.mninfo:
             if len(mn.node.quorum("memberof", mn.proTxHash)) > 0:
                 try:
                     with mn.node.assert_debug_log(['adding mn inter-quorum connections']):
-                        self.mine_quorum()
+                        self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
                     added = True
                 except:
                     pass # it's ok to not add connections sometimes
@@ -106,7 +121,7 @@ class LLMQConnections(SparksTestFramework):
         for mn in self.mninfo:
             mn.node.setnetworkactive(False)
         for mn in self.mninfo:
-            wait_until(lambda: len(mn.node.getpeerinfo()) == 0)
+            self.wait_until(lambda: len(mn.node.getpeerinfo()) == 0)
         for mn in self.mninfo:
             mn.node.setnetworkactive(True)
         self.bump_mocktime(60)
@@ -123,7 +138,7 @@ class LLMQConnections(SparksTestFramework):
         # wait for ping/pong so that we can be sure that spork propagation works
         time.sleep(1) # needed to make sure we don't check before the ping is actually sent (fPingQueued might be true but SendMessages still not called)
         for i in range(1, len(self.nodes)):
-            wait_until(lambda: all('pingwait' not in peer for peer in self.nodes[i].getpeerinfo()))
+            self.wait_until(lambda: all('pingwait' not in peer for peer in self.nodes[i].getpeerinfo()))
 
     def get_mn_connection_count(self, node):
         peers = node.getpeerinfo()

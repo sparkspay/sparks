@@ -56,6 +56,9 @@ static const int MNLISTDIFF_VERSION_ORDER = 70223;
 //! Masternode type was introduced in this version
 static const int MNLISTDIFF_CHAINLOCKS_PROTO_VERSION = 70223;
 
+//! Legacy ISLOCK messages and a corresponding INV were dropped in this version
+static const int NO_LEGACY_ISLOCK_PROTO_VERSION = 70223;
+
 // Make sure that none of the values above collide with `ADDRV2_FORMAT`.
 
 #endif // BITCOIN_VERSION_H

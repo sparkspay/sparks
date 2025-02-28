@@ -25,9 +25,11 @@ RUN apt-get update && apt-get install $APT_ARGS \
     ccache \
     clang \
     cmake \
-    git \
     g++ \
     gettext \
+    git \
+    libc++-dev \
+    libc++abi-dev \
     libtool \
     libxcb-icccm4 \
     libxcb-image0 \
@@ -77,6 +79,7 @@ RUN pip3 install \
     lief==0.12.1 \
     pyzmq \
     vulture==2.3 \
+    mypy==0.781 \
     yq \
     multiprocess
 
@@ -135,7 +138,7 @@ RUN \
   update-alternatives --set x86_64-w64-mingw32-g++  /usr/bin/x86_64-w64-mingw32-g++-posix; \
   exit 0
 
-ARG LLVM_VERSION=15
+ARG LLVM_VERSION=16
 # Setup Clang+LLVM support
 RUN apt-get update && apt-get install $APT_ARGS \
     lsb-release \

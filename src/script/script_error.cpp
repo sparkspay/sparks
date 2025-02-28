@@ -5,7 +5,9 @@
 
 #include <script/script_error.h>
 
-const char* ScriptErrorString(const ScriptError serror)
+#include <string>
+
+std::string ScriptErrorString(const ScriptError serror)
 {
     switch (serror)
     {
@@ -85,7 +87,7 @@ const char* ScriptErrorString(const ScriptError serror)
         case SCRIPT_ERR_PUBKEYTYPE:
             return "Public key is neither compressed or uncompressed";
         case SCRIPT_ERR_CLEANSTACK:
-            return "Extra items left on stack after execution";
+            return "Stack size must be exactly one after execution";
         case SCRIPT_ERR_OP_CODESEPARATOR:
             return "Using OP_CODESEPARATOR";
         case SCRIPT_ERR_SIG_FINDANDDELETE:

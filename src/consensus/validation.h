@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -19,7 +19,8 @@ enum class TxValidationResult {
      */
     // Only loose txn:
     TX_RECENT_CONSENSUS_CHANGE,
-    TX_NOT_STANDARD,          //!< didn't meet our local policy rules
+    TX_INPUTS_NOT_STANDARD,   //!< inputs (covered by txid) failed policy rules
+    TX_NOT_STANDARD,          //!< otherwise didn't meet our local policy rules
     TX_MISSING_INPUTS,        //!< transaction was missing some of its inputs
     TX_PREMATURE_SPEND,       //!< transaction spends a coinbase too early, or violates locktime/sequence locks
     TX_BAD_SPECIAL,           //!< special transaction violates some rules that are not enough for insta-ban

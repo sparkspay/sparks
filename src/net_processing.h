@@ -52,6 +52,10 @@ public:
     /** Whether this node ignores txs received over p2p. */
     virtual bool IgnoresIncomingTxs() = 0;
 
+    /** Relay transaction to all peers. */
+    virtual void RelayTransaction(const uint256& txid)
+        EXCLUSIVE_LOCKS_REQUIRED(cs_main) = 0;
+
     /** Set the best height */
     virtual void SetBestHeight(int height) = 0;
 
@@ -64,20 +68,18 @@ public:
      * Evict extra outbound peers. If we think our tip may be stale, connect to an extra outbound.
      * Public for unit testing.
      */
-    virtual void CheckForStaleTipAndEvictPeers(const Consensus::Params &consensusParams) = 0;
+    virtual void CheckForStaleTipAndEvictPeers() = 0;
 
     /** Process a single message from a peer. Public for fuzz testing */
     virtual void ProcessMessage(CNode& pfrom, const std::string& msg_type, CDataStream& vRecv,
                                 int64_t nTimeReceived, const std::atomic<bool>& interruptMsgProc) = 0;
 
     virtual bool IsBanned(NodeId pnode) = 0;
+
+    /** Whether we've completed initial sync yet, for determining when to turn
+      * on extra block-relay-only peers. */
+    bool m_initial_sync_finished{false};
+
 };
-
-void EraseObjectRequest(NodeId nodeId, const CInv& inv) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
-void RequestObject(NodeId nodeId, const CInv& inv, std::chrono::microseconds current_time, bool fForce=false) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
-size_t GetRequestedObjectCount(NodeId nodeId) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
-
-/** Relay transaction to every node */
-void RelayTransaction(const uint256&, const CConnman& connman);
 
 #endif // BITCOIN_NET_PROCESSING_H

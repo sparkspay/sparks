@@ -8,22 +8,22 @@
 
 #include <clientversion.h>
 #include <config/bitcoin-config.h>
+#include <fs.h>
+#include <hash.h>
 #include <netaddress.h>
 #include <protocol.h>
 #include <random.h>
+#include <streams.h>
 #include <sync.h>
 #include <timedata.h>
 #include <tinyformat.h>
 #include <util/system.h>
 
-#include <fs.h>
-#include <hash.h>
-#include <iostream>
-#include <map>
+#include <ios>
 #include <optional>
 #include <set>
 #include <stdint.h>
-#include <streams.h>
+#include <unordered_map>
 #include <vector>
 
 /**
@@ -55,9 +55,10 @@ private:
     bool fInTried{false};
 
     //! position in vRandom
-    int nRandomPos{-1};
+    mutable int nRandomPos{-1};
 
     friend class CAddrMan;
+    friend class CAddrManDeterministic;
 
 public:
 
@@ -257,7 +258,7 @@ public:
 
         int nUBuckets = ADDRMAN_NEW_BUCKET_COUNT ^ (1 << 30);
         s << nUBuckets;
-        std::map<int, int> mapUnkIds;
+        std::unordered_map<int, int> mapUnkIds;
         int nIds = 0;
         for (const auto& entry : mapInfo) {
             mapUnkIds[entry.first] = nIds;
@@ -448,13 +449,13 @@ public:
 
         // Prune new entries with refcount 0 (as a result of collisions).
         int nLostUnk = 0;
-        for (std::map<int, CAddrInfo>::const_iterator it = mapInfo.begin(); it != mapInfo.end(); ) {
+        for (auto it = mapInfo.cbegin(); it != mapInfo.cend(); ) {
             if (it->second.fInTried == false && it->second.nRefCount == 0) {
-                std::map<int, CAddrInfo>::const_iterator itCopy = it++;
+                const auto itCopy = it++;
                 Delete(itCopy->first);
-                nLostUnk++;
+                ++nLostUnk;
             } else {
-                it++;
+                ++it;
             }
         }
         if (nLost + nLostUnk > 0) {
@@ -544,12 +545,12 @@ public:
     }
 
     //! Mark an entry as accessible.
-    void Good(const CService &addr, bool test_before_evict = true, int64_t nTime = GetAdjustedTime())
+    void Good(const CService &addr, int64_t nTime = GetAdjustedTime())
         EXCLUSIVE_LOCKS_REQUIRED(!cs)
     {
         LOCK(cs);
         Check();
-        Good_(addr, test_before_evict, nTime);
+        Good_(addr, /* test_before_evict */ true, nTime);
         Check();
     }
 
@@ -587,7 +588,7 @@ public:
     /**
      * Choose an address to connect to.
      */
-    CAddrInfo Select(bool newOnly = false)
+    CAddrInfo Select(bool newOnly = false) const
         EXCLUSIVE_LOCKS_REQUIRED(!cs)
     {
         LOCK(cs);
@@ -604,7 +605,7 @@ public:
      * @param[in] max_pct        Maximum percentage of addresses to return (0 = all).
      * @param[in] network        Select only addresses of this network (nullopt = all).
      */
-    std::vector<CAddress> GetAddr(size_t max_addresses, size_t max_pct, std::optional<Network> network)
+    std::vector<CAddress> GetAddr(size_t max_addresses, size_t max_pct, std::optional<Network> network) const
         EXCLUSIVE_LOCKS_REQUIRED(!cs)
     {
         LOCK(cs);
@@ -650,12 +651,12 @@ protected:
     uint256 nKey;
 
     //! Source of random numbers for randomization in inner loops
-    FastRandomContext insecure_rand;
+    mutable FastRandomContext insecure_rand GUARDED_BY(cs);
 
-private:
     //! A mutex to protect the inner data structures.
     mutable Mutex cs;
 
+private:
     //! Serialization versions.
     enum Format : uint8_t {
         V0_HISTORICAL = 0,    //!< historic format, before commit e6b343d88
@@ -682,13 +683,15 @@ private:
     int nIdCount GUARDED_BY(cs);
 
     //! table with information about all nIds
-    std::map<int, CAddrInfo> mapInfo GUARDED_BY(cs);
+    std::unordered_map<int, CAddrInfo> mapInfo GUARDED_BY(cs);
 
     //! find an nId based on its network address
-    std::map<CService, int> mapAddr GUARDED_BY(cs);
+    std::unordered_map<CNetAddr, int, CNetAddrHash> mapAddr GUARDED_BY(cs);
 
     //! randomly-ordered vector of all nIds
-    std::vector<int> vRandom GUARDED_BY(cs);
+    //! This is mutable because it is unobservable outside the class, so any
+    //! changes to it (even in const methods) are also unobservable.
+    mutable std::vector<int> vRandom GUARDED_BY(cs);
 
     // number of "tried" entries
     int nTried GUARDED_BY(cs);
@@ -718,7 +721,7 @@ private:
     CAddrInfo* Create(const CAddress &addr, const CNetAddr &addrSource, int *pnId = nullptr) EXCLUSIVE_LOCKS_REQUIRED(cs);
 
     //! Swap two elements in vRandom.
-    void SwapRandom(unsigned int nRandomPos1, unsigned int nRandomPos2) EXCLUSIVE_LOCKS_REQUIRED(cs);
+    void SwapRandom(unsigned int nRandomPos1, unsigned int nRandomPos2) const EXCLUSIVE_LOCKS_REQUIRED(cs);
 
     //! Move an entry from the "new" table(s) to the "tried" table
     void MakeTried(CAddrInfo& info, int nId) EXCLUSIVE_LOCKS_REQUIRED(cs);
@@ -739,7 +742,7 @@ private:
     void Attempt_(const CService &addr, bool fCountFailure, int64_t nTime) EXCLUSIVE_LOCKS_REQUIRED(cs);
 
     //! Select an address to connect to, if newOnly is set to true, only the new table is selected from.
-    CAddrInfo Select_(bool newOnly) EXCLUSIVE_LOCKS_REQUIRED(cs);
+    CAddrInfo Select_(bool newOnly) const EXCLUSIVE_LOCKS_REQUIRED(cs);
 
     //! See if any to-be-evicted tried table entries have been tested and if so resolve the collisions.
     void ResolveCollisions_() EXCLUSIVE_LOCKS_REQUIRED(cs);
@@ -748,7 +751,7 @@ private:
     CAddrInfo SelectTriedCollision_() EXCLUSIVE_LOCKS_REQUIRED(cs);
 
     //! Consistency check
-    void Check()
+    void Check() const
         EXCLUSIVE_LOCKS_REQUIRED(cs)
     {
 #ifdef DEBUG_ADDRMAN
@@ -762,7 +765,7 @@ private:
 
 #ifdef DEBUG_ADDRMAN
     //! Perform consistency check. Returns an error code or zero.
-    int Check_() EXCLUSIVE_LOCKS_REQUIRED(cs);
+    int Check_() const EXCLUSIVE_LOCKS_REQUIRED(cs);
 #endif
 
     /**
@@ -773,7 +776,7 @@ private:
      * @param[in] max_pct        Maximum percentage of addresses to return (0 = all).
      * @param[in] network        Select only addresses of this network (nullopt = all).
      */
-    void GetAddr_(std::vector<CAddress>& vAddr, size_t max_addresses, size_t max_pct, std::optional<Network> network) EXCLUSIVE_LOCKS_REQUIRED(cs);
+    void GetAddr_(std::vector<CAddress>& vAddr, size_t max_addresses, size_t max_pct, std::optional<Network> network) const EXCLUSIVE_LOCKS_REQUIRED(cs);
 
     /** We have successfully connected to this peer. Calling this function
      *  updates the CAddress's nTime, which is used in our IsTerrible()
@@ -806,6 +809,7 @@ private:
     void ResetI2PPorts() EXCLUSIVE_LOCKS_REQUIRED(cs);
 
     friend class CAddrManTest;
+    friend class CAddrManDeterministic;
 };
 
 #endif // BITCOIN_ADDRMAN_H

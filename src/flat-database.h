@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -97,7 +97,7 @@ private:
 
         // read data and checksum from file
         try {
-            filein.read((char *)vchData.data(), dataSize);
+            filein.read(MakeWritableByteSpan(vchData));
             filein >> hashIn;
         }
         catch (std::exception &e) {

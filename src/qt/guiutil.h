@@ -8,6 +8,7 @@
 #include <amount.h>
 #include <fs.h>
 #include <qt/guiconstants.h>
+#include <netaddress.h>
 
 #include <QEvent>
 #include <QHeaderView>
@@ -31,10 +32,13 @@ class Node;
 QT_BEGIN_NAMESPACE
 class QAbstractButton;
 class QAbstractItemView;
+class QAction;
 class QButtonGroup;
 class QDateTime;
 class QFont;
 class QLineEdit;
+class QMenu;
+class QPoint;
 class QProgressDialog;
 class QUrl;
 class QWidget;
@@ -107,6 +111,9 @@ namespace GUIUtil
     void setIcon(QAbstractButton* button, const QString& strIcon, ThemedColor color, ThemedColor colorAlternative, const QSize& size);
     void setIcon(QAbstractButton* button, const QString& strIcon, ThemedColor color = ThemedColor::BLUE, const QSize& size = QSize(BUTTON_ICONSIZE, BUTTON_ICONSIZE));
 
+    // Use this flags to prevent a "What's This" button in the title bar of the dialog on Windows.
+    constexpr auto dialog_flags = Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint;
+
     // Create human-readable string from date
     QString dateTimeStr(const QDateTime &datetime);
     QString dateTimeStr(qint64 nTime);
@@ -136,14 +143,21 @@ namespace GUIUtil
        @param[in] role    Data role to extract from the model
        @see  TransactionView::copyLabel, TransactionView::copyAmount, TransactionView::copyAddress
      */
-    void copyEntryData(QAbstractItemView *view, int column, int role=Qt::EditRole);
+    void copyEntryData(const QAbstractItemView *view, int column, int role=Qt::EditRole);
 
     /** Return a field of the currently selected entry as a QString. Does nothing if nothing
         is selected.
        @param[in] column  Data column to extract from the model
        @see  TransactionView::copyLabel, TransactionView::copyAmount, TransactionView::copyAddress
      */
-    QList<QModelIndex> getEntryData(QAbstractItemView *view, int column);
+    QList<QModelIndex> getEntryData(const QAbstractItemView *view, int column);
+
+    /** Returns true if the specified field of the currently selected view entry is not empty.
+       @param[in] column  Data column to extract from the model
+       @param[in] role    Data role to extract from the model
+       @see  TransactionView::contextualMenu
+     */
+    bool hasEntryData(const QAbstractItemView *view, int column, int role);
 
     void setClipboard(const QString& str);
 
@@ -192,6 +206,9 @@ namespace GUIUtil
     // Activate, show and raise the widget
     void bringToFront(QWidget* w);
 
+    // Set shortcut to close window
+    void handleCloseWindowShortcut(QWidget* w);
+
     // Open debug.log
     void openDebugLogfile();
 
@@ -232,45 +249,6 @@ namespace GUIUtil
     public:
         explicit LabelOutOfFocusEventFilter(QObject* parent);
         bool eventFilter(QObject* watched, QEvent* event) override;
-    };
-
-    /**
-     * Makes a QTableView last column feel as if it was being resized from its left border.
-     * Also makes sure the column widths are never larger than the table's viewport.
-     * In Qt, all columns are resizable from the right, but it's not intuitive resizing the last column from the right.
-     * Usually our second to last columns behave as if stretched, and when on stretch mode, columns aren't resizable
-     * interactively or programmatically.
-     *
-     * This helper object takes care of this issue.
-     *
-     */
-    class TableViewLastColumnResizingFixer: public QObject
-    {
-        Q_OBJECT
-
-        public:
-            TableViewLastColumnResizingFixer(QTableView* table, int lastColMinimumWidth, int allColsMinimumWidth, QObject *parent);
-            void stretchColumnWidth(int column);
-
-        private:
-            QTableView* tableView;
-            int lastColumnMinimumWidth;
-            int allColumnsMinimumWidth;
-            int lastColumnIndex;
-            int columnCount;
-            int secondToLastColumnIndex;
-
-            void adjustTableColumnsWidth();
-            int getAvailableWidthForColumn(int column);
-            int getColumnsWidth();
-            void connectViewHeadersSignals();
-            void disconnectViewHeadersSignals();
-            void setViewHeaderResizeMode(int logicalIndex, QHeaderView::ResizeMode resizeMode);
-            void resizeColumn(int nColumnIndex, int width);
-
-        private Q_SLOTS:
-            void on_sectionResized(int logicalIndex, int oldSize, int newSize);
-            void on_geometriesChanged();
     };
 
     bool GetStartOnSystemStartup();
@@ -402,22 +380,25 @@ namespace GUIUtil
     /** Update shortcuts for individual buttons in QButtonGroup based on their visibility. */
     void updateButtonGroupShortcuts(QButtonGroup* buttonGroup);
 
-    /* Convert QString to OS specific boost path through UTF-8 */
+    /** Convert QString to OS specific boost path through UTF-8 */
     fs::path qstringToBoostPath(const QString &path);
 
-    /* Convert OS specific boost path to QString through UTF-8 */
+    /** Convert OS specific boost path to QString through UTF-8 */
     QString boostPathToQString(const fs::path &path);
 
-    /* Convert seconds into a QString with days, hours, mins, secs */
+    /** Convert enum Network to QString */
+    QString NetworkToQString(Network net);
+
+    /** Convert seconds into a QString with days, hours, mins, secs */
     QString formatDurationStr(int secs);
 
-    /* Format CNodeStats.nServices bitmask into a user-readable string */
+    /** Format CNodeStats.nServices bitmask into a user-readable string */
     QString formatServicesStr(quint64 mask);
 
-    /* Format a CNodeStats.m_ping_usec into a user-readable string or display N/A, if 0*/
+    /** Format a CNodeStats.m_ping_usec into a user-readable string or display N/A, if 0 */
     QString formatPingTime(int64_t ping_usec);
 
-    /* Format a CNodeCombinedStats.nTimeOffset into a user-readable string. */
+    /** Format a CNodeCombinedStats.nTimeOffset into a user-readable string */
     QString formatTimeOffset(int64_t nTimeOffset);
 
     QString formatNiceTimeOffset(qint64 secs);
@@ -484,6 +465,11 @@ namespace GUIUtil
     void LogQtInfo();
 
     /**
+     * Call QMenu::popup() only on supported QT_QPA_PLATFORM.
+     */
+    void PopupMenu(QMenu* menu, const QPoint& point, QAction* at_action = nullptr);
+
+    /**
      * Returns the start-moment of the day in local time.
      *
      * QDateTime::QDateTime(const QDate& date) is deprecated since Qt 5.15.
@@ -519,6 +505,18 @@ namespace GUIUtil
     #endif
     }
 
+    /**
+     * Queue a function to run in an object's event loop. This can be
+     * replaced by a call to the QMetaObject::invokeMethod functor overload after Qt 5.10, but
+     * for now use a QObject::connect for compatibility with older Qt versions, based on
+     * https://stackoverflow.com/questions/21646467/how-to-execute-a-functor-or-a-lambda-in-a-given-thread-in-qt-gcd-style
+     */
+    template <typename Fn>
+    void ObjectInvoke(QObject* object, Fn&& function, Qt::ConnectionType connection = Qt::QueuedConnection)
+    {
+        QObject source;
+        QObject::connect(&source, &QObject::destroyed, object, std::forward<Fn>(function), connection);
+    }
 
 } // namespace GUIUtil
 

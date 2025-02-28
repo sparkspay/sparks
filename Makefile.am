@@ -28,6 +28,8 @@ BITCOIN_QT_BIN=$(top_builddir)/src/qt/$(BITCOIN_GUI_NAME)$(EXEEXT)
 BITCOIN_CLI_BIN=$(top_builddir)/src/$(BITCOIN_CLI_NAME)$(EXEEXT)
 BITCOIN_TX_BIN=$(top_builddir)/src/$(BITCOIN_TX_NAME)$(EXEEXT)
 BITCOIN_WALLET_BIN=$(top_builddir)/src/$(BITCOIN_WALLET_TOOL_NAME)$(EXEEXT)
+BITCOIN_NODE_BIN=$(top_builddir)/src/$(BITCOIN_MP_NODE_NAME)$(EXEEXT)
+BITCOIN_GUI_BIN=$(top_builddir)/src/$(BITCOIN_MP_GUI_NAME)$(EXEEXT)
 BITCOIN_WIN_INSTALLER=$(PACKAGE)-$(PACKAGE_VERSION)-win64-setup$(EXEEXT)
 
 empty :=
@@ -67,10 +69,10 @@ WINDOWS_PACKAGING = $(top_srcdir)/share/pixmaps/sparks.ico \
 OSX_PACKAGING = $(OSX_DEPLOY_SCRIPT) $(OSX_INSTALLER_ICONS) \
   $(top_srcdir)/contrib/macdeploy/detached-sig-create.sh
 
-COVERAGE_INFO = baseline.info \
+COVERAGE_INFO = $(COV_TOOL_WRAPPER) baseline.info \
   test_sparks_filtered.info total_coverage.info \
   baseline_filtered.info functional_test.info functional_test_filtered.info \
-  test_sparks_coverage.info test_sparks.info fuzz.info fuzz_coverage.info
+  test_sparks_coverage.info test_sparks.info fuzz.info fuzz_filtered.info fuzz_coverage.info
 
 dist-hook:
 	-$(GIT) archive --format=tar HEAD -- src/clientversion.cpp | $(AMTAR) -C $(top_distdir) -xf -
@@ -161,6 +163,12 @@ $(BITCOIN_TX_BIN): FORCE
 $(BITCOIN_WALLET_BIN): FORCE
 	$(MAKE) -C src $(@F)
 
+$(BITCOIN_NODE_BIN): FORCE
+	$(MAKE) -C src $(@F)
+
+$(BITCOIN_GUI_BIN): FORCE
+	$(MAKE) -C src $(@F)
+
 if USE_LCOV
 LCOV_FILTER_PATTERN = \
 	-p "/usr/local/" \
@@ -177,7 +185,13 @@ LCOV_FILTER_PATTERN = \
 	-p "src/secp256k1" \
 	-p "depends"
 
-baseline.info:
+DIR_FUZZ_SEED_CORPUS ?= qa-assets/fuzz_seed_corpus
+
+$(COV_TOOL_WRAPPER):
+	@echo 'exec $(COV_TOOL) "$$@"' > $(COV_TOOL_WRAPPER)
+	@chmod +x $(COV_TOOL_WRAPPER)
+
+baseline.info: $(COV_TOOL_WRAPPER)
 	$(LCOV) -c -i -d $(abs_builddir)/src -o $@
 
 baseline_filtered.info: baseline.info
@@ -185,7 +199,7 @@ baseline_filtered.info: baseline.info
 	$(LCOV) -a $@ $(LCOV_OPTS) -o $@
 
 fuzz.info: baseline_filtered.info
-	@TIMEOUT=15 test/fuzz/test_runner.py qa-assets/fuzz_seed_corpus -l DEBUG
+	@TIMEOUT=15 test/fuzz/test_runner.py $(DIR_FUZZ_SEED_CORPUS) -l DEBUG
 	$(LCOV) -c $(LCOV_OPTS) -d $(abs_builddir)/src --t fuzz-tests -o $@
 	$(LCOV) -z $(LCOV_OPTS) -d $(abs_builddir)/src
 

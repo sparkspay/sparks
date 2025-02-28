@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2023 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,9 +9,9 @@
 
 #include <chain.h>
 #include <consensus/params.h>
+#include <net_types.h>
 #include <primitives/block.h>
 #include <saltedhasher.h>
-#include <streams.h>
 #include <sync.h>
 
 #include <gsl/pointers.h>
@@ -21,9 +21,9 @@
 class BlockValidationState;
 class CChainState;
 class CConnman;
+class CDataStream;
 class CEvoDB;
 class CNode;
-class PeerManager;
 
 extern RecursiveMutex cs_main;
 
@@ -39,9 +39,7 @@ private:
     CChainState& m_chainstate;
     CConnman& connman;
     CEvoDB& m_evoDb;
-    const std::unique_ptr<PeerManager>& m_peerman;
 
-    // TODO cleanup
     mutable RecursiveMutex minableCommitmentsCs;
     std::map<std::pair<Consensus::LLMQType, uint256>, uint256> minableCommitmentsByQuorum GUARDED_BY(minableCommitmentsCs);
     std::map<uint256, CFinalCommitment> minableCommitments GUARDED_BY(minableCommitmentsCs);
@@ -49,11 +47,9 @@ private:
     mutable std::map<Consensus::LLMQType, unordered_lru_cache<uint256, bool, StaticSaltedHasher>> mapHasMinedCommitmentCache GUARDED_BY(minableCommitmentsCs);
 
 public:
-    explicit CQuorumBlockProcessor(CChainState& chainstate, CConnman& _connman, CEvoDB& evoDb, const std::unique_ptr<PeerManager>& peerman);
+    explicit CQuorumBlockProcessor(CChainState& chainstate, CConnman& _connman, CEvoDB& evoDb);
 
-    bool UpgradeDB();
-
-    void ProcessMessage(const CNode& peer, std::string_view msg_type, CDataStream& vRecv);
+    PeerMsgRet ProcessMessage(const CNode& peer, std::string_view msg_type, CDataStream& vRecv);
 
     bool ProcessBlock(const CBlock& block, gsl::not_null<const CBlockIndex*> pindex, BlockValidationState& state, bool fJustCheck, bool fBLSChecks) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
     bool UndoBlock(const CBlock& block, gsl::not_null<const CBlockIndex*> pindex) EXCLUSIVE_LOCKS_REQUIRED(cs_main);

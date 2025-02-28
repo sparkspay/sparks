@@ -28,17 +28,16 @@ class RawTransactionsTest(BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 4
         self.setup_clean_chain = True
-        self.extra_args = [[f'-usehd={self.options.usehd}']] * self.num_nodes
         # This test isn't testing tx relay. Set whitelist on the peers for
         # instant tx relay.
-        self.extra_args = [['-whitelist=noban@127.0.0.1']] * self.num_nodes
+        self.extra_args = [[f'-usehd={not self.options.nohd}',  '-whitelist=noban@127.0.0.1']] * self.num_nodes
 
     def skip_test_if_missing_module(self):
         self.skip_if_no_wallet()
 
     def add_options(self, parser):
-        parser.add_argument("--usehd", dest="usehd", default=False, action="store_true",
-                            help="Test with -usehd enabled")
+        parser.add_argument("--nohd", dest="nohd", default=False, action="store_true",
+                            help="Test with -nohd enabled")
 
     def setup_network(self):
         self.setup_nodes()
@@ -231,7 +230,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         dec_tx  = self.nodes[2].decoderawtransaction(rawtx)
         assert_equal(utx['txid'], dec_tx['vin'][0]['txid'])
 
-        assert_raises_rpc_error(-5, "changeAddress must be a valid sparks address", self.nodes[2].fundrawtransaction, rawtx, {'changeAddress':'foobar'})
+        assert_raises_rpc_error(-5, "changeAddress must be a valid Sparks address", self.nodes[2].fundrawtransaction, rawtx, {'changeAddress':'foobar'})
 
     def test_valid_change_address(self):
         self.log.info("Test fundrawtxn with a provided change address")
@@ -492,12 +491,20 @@ class RawTransactionsTest(BitcoinTestFramework):
 
         # Drain the keypool.
         self.nodes[1].getnewaddress()
-        inputs = []
-        outputs = {self.nodes[0].getnewaddress():1.1}
+        inputs = self.nodes[1].listunspent()
+        # Deduce fee to produce a changeless transaction
+        # bnb doesn't work same way as in bitcoin, so, `value` is also calculated by different way
+        value = sum(input_it["amount"] for input_it in inputs) - Decimal("0.00002200")
+        outputs = {self.nodes[0].getnewaddress():value}
         rawtx = self.nodes[1].createrawtransaction(inputs, outputs)
+        # fund a transaction that does not require a new key for the change output
+        self.nodes[1].fundrawtransaction(rawtx)
+
         # fund a transaction that requires a new key for the change output
         # creating the key must be impossible because the wallet is locked
-        assert_raises_rpc_error(-4, "Keypool ran out, please call keypoolrefill first", self.nodes[1].fundrawtransaction, rawtx)
+        outputs = {self.nodes[0].getnewaddress():1.1}
+        rawtx = self.nodes[1].createrawtransaction(inputs, outputs)
+        assert_raises_rpc_error(-4, "Transaction needs a change address, but we can't generate it. Please call keypoolrefill first.", self.nodes[1].fundrawtransaction, rawtx)
 
         # Refill the keypool.
         self.nodes[1].walletpassphrase("test", 100)
@@ -531,7 +538,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         self.nodes[1].generate(1)
         self.sync_all()
 
-        for i in range(0,20):
+        for _ in range(20):
             self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 0.01)
         self.nodes[0].generate(1)
         self.sync_all()
@@ -559,7 +566,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         self.nodes[1].generate(1)
         self.sync_all()
 
-        for i in range(0,20):
+        for _ in range(20):
             self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 0.01)
         self.nodes[0].generate(1)
         self.sync_all()
@@ -644,7 +651,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         result = self.nodes[3].fundrawtransaction(rawtx)  # uses self.min_relay_tx_fee (set by settxfee)
         result2 = self.nodes[3].fundrawtransaction(rawtx, {"feeRate": 2 * self.min_relay_tx_fee})
         result3 = self.nodes[3].fundrawtransaction(rawtx, {"feeRate": 10 * self.min_relay_tx_fee})
-        assert_raises_rpc_error(-4, "Fee exceeds maximum configured by -maxtxfee", self.nodes[3].fundrawtransaction, rawtx, {"feeRate": 1})
+        assert_raises_rpc_error(-4, "Fee exceeds maximum configured by user (e.g. -maxtxfee, maxfeerate)", self.nodes[3].fundrawtransaction, rawtx, {"feeRate": 1})
         result_fee_rate = result['fee'] * 1000 / count_bytes(result['hex'])
         assert_fee_amount(result2['fee'], count_bytes(result2['hex']), 2 * result_fee_rate)
         assert_fee_amount(result3['fee'], count_bytes(result3['hex']), 10 * result_fee_rate)

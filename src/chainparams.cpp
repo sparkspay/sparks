@@ -1,7 +1,7 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2023 The Dash Core developers
-// Copyright (c) 2016-2023 The Sparks Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
+// Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -263,7 +263,7 @@ public:
 
         // Note that of those which support the service bits prefix, most only support a subset of
         // possible options.
-        // This is fine at runtime as we'll fall back to using them as a oneshot if they don't support the
+        // This is fine at runtime as we'll fall back to using them as an addrfetch if they don't support the
         // service bits we want, but we should get them updated to support all service bits wanted by any
         // release ASAP to avoid it where possible.
         vSeeds.emplace_back("seed1.sparkspay.io");
@@ -540,6 +540,10 @@ public:
             }
         };
 
+        m_assumeutxo_data = MapAssumeutxo{
+            // TODO to be specified in a future patch.
+        };
+
         // getchaintxstats 33000 00000615aae61e30e5fc677250ae233af7986ace3bca5c3b27c149932f4743d3
         chainTxData = ChainTxData{
                 1738812481, // * UNIX timestamp of last known number of transactions (Block 34000)
@@ -589,6 +593,7 @@ public:
         consensus.IPV6MNHeight = 300;
         consensus.DATATXHeight = 300;
         consensus.DIP0024Height = 300;
+        consensus.DIP0024QuorumsHeight = 300;
         consensus.V19Height = 300;
         consensus.MinBIP9WarningHeight = 300 + 2016; // v19 activation height + miner confirmation window
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 1
@@ -677,13 +682,11 @@ public:
         AddLLMQ(Consensus::LLMQType::LLMQ_DEVNET_DIP0024);
         AddLLMQ(Consensus::LLMQType::LLMQ_DEVNET_PLATFORM);
         consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_DEVNET;
-        consensus.llmqTypeInstantSend = Consensus::LLMQType::LLMQ_DEVNET;
         consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_DEVNET_DIP0024;
         consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_DEVNET_PLATFORM;
         consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_DEVNET;
 
         UpdateDevnetLLMQChainLocksFromArgs(args);
-        UpdateDevnetLLMQInstantSendFromArgs(args);
         UpdateDevnetLLMQInstantSendDIP0024FromArgs(args);
         UpdateDevnetLLMQPlatformFromArgs(args);
         UpdateDevnetLLMQMnhfFromArgs(args);
@@ -739,14 +742,6 @@ public:
         consensus.llmqTypeChainLocks = llmqType;
     }
     void UpdateDevnetLLMQChainLocksFromArgs(const ArgsManager& args);
-
-    /**
-     * Allows modifying the LLMQ type for InstantSend.
-     */
-    void UpdateDevnetLLMQInstantSend(Consensus::LLMQType llmqType)
-    {
-        consensus.llmqTypeInstantSend = llmqType;
-    }
 
     /**
      * Allows modifying the LLMQ type for InstantSend (DIP0024).
@@ -844,6 +839,7 @@ public:
         consensus.IPV6MNHeight = 300;
         consensus.DATATXHeight = 300;
         consensus.DIP0024Height = 900;
+        consensus.DIP0024QuorumsHeight = 900;
         consensus.V19Height = 900;
         consensus.MinBIP9WarningHeight = 0;
         consensus.fPowAllowMinDifficultyBlocks = true;
@@ -972,14 +968,12 @@ public:
         AddLLMQ(Consensus::LLMQType::LLMQ_TEST_DIP0024);
         AddLLMQ(Consensus::LLMQType::LLMQ_TEST_PLATFORM);
         consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_TEST;
-        consensus.llmqTypeInstantSend = Consensus::LLMQType::LLMQ_TEST_INSTANTSEND;
         consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_TEST_DIP0024;
         consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_TEST_PLATFORM;
         consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_TEST;
 
         UpdateLLMQTestParametersFromArgs(args, Consensus::LLMQType::LLMQ_TEST);
         UpdateLLMQTestParametersFromArgs(args, Consensus::LLMQType::LLMQ_TEST_INSTANTSEND);
-        UpdateLLMQInstantSendFromArgs(args);
         UpdateLLMQInstantSendDIP0024FromArgs(args);
     }
 
@@ -1052,14 +1046,6 @@ public:
     }
 
     /**
-     * Allows modifying the LLMQ type for InstantSend.
-     */
-    void UpdateLLMQInstantSend(Consensus::LLMQType llmqType)
-    {
-        consensus.llmqTypeInstantSend = llmqType;
-    }
-
-    /**
      * Allows modifying the LLMQ type for InstantSend (DIP0024).
      */
     void UpdateLLMQDIP0024InstantSend(Consensus::LLMQType llmqType)
@@ -1068,7 +1054,6 @@ public:
     }
 
     void UpdateLLMQTestParametersFromArgs(const ArgsManager& args, const Consensus::LLMQType llmqType);
-    void UpdateLLMQInstantSendFromArgs(const ArgsManager& args);
     void UpdateLLMQInstantSendDIP0024FromArgs(const ArgsManager& args);
 };
 
@@ -1214,28 +1199,6 @@ void CRegTestParams::UpdateLLMQTestParametersFromArgs(const ArgsManager& args, c
     UpdateLLMQTestParameters(size, threshold, llmqType);
 }
 
-void CRegTestParams::UpdateLLMQInstantSendFromArgs(const ArgsManager& args)
-{
-    if (!args.IsArgSet("-llmqtestinstantsend")) return;
-
-    const auto& llmq_params_opt = GetLLMQ(consensus.llmqTypeInstantSend);
-    assert(llmq_params_opt.has_value());
-
-    std::string strLLMQType = gArgs.GetArg("-llmqtestinstantsend", std::string(llmq_params_opt->name));
-
-    Consensus::LLMQType llmqType = Consensus::LLMQType::LLMQ_NONE;
-    for (const auto& params : consensus.llmqs) {
-        if (params.name == strLLMQType) {
-            llmqType = params.type;
-        }
-    }
-    if (llmqType == Consensus::LLMQType::LLMQ_NONE) {
-        throw std::runtime_error("Invalid LLMQ type specified for -llmqtestinstantsend.");
-    }
-    LogPrintf("Setting llmqtestinstantsend to %ld\n", ToUnderlying(llmqType));
-    UpdateLLMQInstantSend(llmqType);
-}
-
 void CRegTestParams::UpdateLLMQInstantSendDIP0024FromArgs(const ArgsManager& args)
 {
     if (!args.IsArgSet("-llmqtestinstantsenddip0024")) return;
@@ -1292,31 +1255,6 @@ void CDevNetParams::UpdateDevnetLLMQChainLocksFromArgs(const ArgsManager& args)
     }
     LogPrintf("Setting llmqchainlocks to size=%ld\n", static_cast<uint8_t>(llmqType));
     UpdateDevnetLLMQChainLocks(llmqType);
-}
-
-void CDevNetParams::UpdateDevnetLLMQInstantSendFromArgs(const ArgsManager& args)
-{
-    if (!args.IsArgSet("-llmqinstantsend")) return;
-
-    const auto& llmq_params_opt = GetLLMQ(consensus.llmqTypeInstantSend);
-    assert(llmq_params_opt.has_value());
-
-    std::string strLLMQType = gArgs.GetArg("-llmqinstantsend", std::string(llmq_params_opt->name));
-
-    Consensus::LLMQType llmqType = Consensus::LLMQType::LLMQ_NONE;
-    for (const auto& params : consensus.llmqs) {
-        if (params.name == strLLMQType) {
-            if (params.useRotation) {
-                throw std::runtime_error("LLMQ type specified for -llmqinstantsend must NOT use rotation");
-            }
-            llmqType = params.type;
-        }
-    }
-    if (llmqType == Consensus::LLMQType::LLMQ_NONE) {
-        throw std::runtime_error("Invalid LLMQ type specified for -llmqinstantsend.");
-    }
-    LogPrintf("Setting llmqinstantsend to size=%ld\n", static_cast<uint8_t>(llmqType));
-    UpdateDevnetLLMQInstantSend(llmqType);
 }
 
 void CDevNetParams::UpdateDevnetLLMQInstantSendDIP0024FromArgs(const ArgsManager& args)
@@ -1434,22 +1372,22 @@ const CChainParams &Params() {
     return *globalChainParams;
 }
 
-std::unique_ptr<const CChainParams> CreateChainParams(const std::string& chain)
+std::unique_ptr<const CChainParams> CreateChainParams(const ArgsManager& args, const std::string& chain)
 {
-    if (chain == CBaseChainParams::MAIN)
-        return std::make_unique<CMainParams>();
-    else if (chain == CBaseChainParams::TESTNET)
-        return std::make_unique<CTestNetParams>();
-    else if (chain == CBaseChainParams::DEVNET)
-        return std::make_unique<CDevNetParams>(gArgs);
-    else if (chain == CBaseChainParams::REGTEST)
-        return std::make_unique<CRegTestParams>(gArgs);
-
+    if (chain == CBaseChainParams::MAIN) {
+        return std::unique_ptr<CChainParams>(new CMainParams());
+    } else if (chain == CBaseChainParams::TESTNET) {
+        return std::unique_ptr<CChainParams>(new CTestNetParams());
+    } else if (chain == CBaseChainParams::DEVNET) {
+        return std::unique_ptr<CChainParams>(new CDevNetParams(args));
+    } else if (chain == CBaseChainParams::REGTEST) {
+        return std::unique_ptr<CChainParams>(new CRegTestParams(args));
+    }
     throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
 }
 
 void SelectParams(const std::string& network)
 {
     SelectBaseParams(network);
-    globalChainParams = CreateChainParams(network);
+    globalChainParams = CreateChainParams(gArgs, network);
 }

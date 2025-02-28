@@ -22,17 +22,17 @@ void CMasternodeUtils::DoMaintenance(CConnman& connman, const CMasternodeSync& m
 
     std::vector<CDeterministicMNCPtr> vecDmns; // will be empty when no wallet
 #ifdef ENABLE_WALLET
-    for (auto& pair : cj_ctx.clientman->raw()) {
+    for (auto& pair : cj_ctx.walletman->raw()) {
         pair.second->GetMixingMasternodesInfo(vecDmns);
     }
 #endif // ENABLE_WALLET
 
     // Don't disconnect masternode connections when we have less then the desired amount of outbound nodes
     int nonMasternodeCount = 0;
-    connman.ForEachNode(CConnman::AllNodes, [&](CNode* pnode) {
-        if ((!pnode->fInbound &&
-            !pnode->fFeeler &&
-            !pnode->m_manual_connection &&
+    connman.ForEachNode(CConnman::AllNodes, [&](const CNode* pnode) {
+        if ((!pnode->IsInboundConn() &&
+            !pnode->IsFeelerConn() &&
+            !pnode->IsManualConn() &&
             !pnode->m_masternode_connection &&
             !pnode->m_masternode_probe_connection)
             ||
@@ -62,7 +62,7 @@ void CMasternodeUtils::DoMaintenance(CConnman& connman, const CMasternodeSync& m
                     return;
                 }
                 // keep _verified_ inbound connections
-                if (pnode->fInbound) {
+                if (pnode->IsInboundConn()) {
                     return;
                 }
             } else if (GetSystemTimeInSeconds() - pnode->nTimeConnected < 5) {

@@ -1,5 +1,5 @@
-// Copyright (c) 2021-2022 The Dash Core developers
-// Copyright (c) 2021-2023 The Sparks Core developers
+// Copyright (c) 2021-2024 The Dash Core developers
+// Copyright (c) 2021-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -116,6 +116,18 @@ struct LLMQParams {
 
     // How many members should we try to send all sigShares to before we give up.
     int recoveryMembers;
+public:
+
+    [[ nodiscard ]] constexpr int max_cycles(int quorums_count) const
+    {
+        return useRotation ? quorums_count / signingActiveQuorumCount : quorums_count;
+    }
+
+    // For how many blocks recent DKG info should be kept
+    [[ nodiscard ]] constexpr int max_store_depth() const
+    {
+        return max_cycles(keepOldKeys) * dkgInterval;
+    }
 };
 
 //static_assert(std::is_trivial_v<Consensus::LLMQParams>, "LLMQParams is not a trivial type");

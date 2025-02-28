@@ -96,7 +96,7 @@ static void ReportHardwareRand()
     // This must be done in a separate function, as InitHardwareRand() may be indirectly called
     // from global constructors, before logging is initialized.
     if (g_rdseed_supported) {
-        LogPrintf("Using RdSeed as additional entropy source\n");
+        LogPrintf("Using RdSeed as an additional entropy source\n");
     }
     if (g_rdrand_supported) {
         LogPrintf("Using RdRand as an additional entropy source\n");
@@ -618,34 +618,40 @@ bool GetRandBool(double rate)
 void FastRandomContext::RandomSeed()
 {
     uint256 seed = GetRandHash();
-    rng.SetKey(seed.begin(), 32);
+    rng.SetKey32(seed.begin());
     requires_seed = false;
 }
 
 uint256 FastRandomContext::rand256() noexcept
 {
-    if (bytebuf_size < 32) {
-        FillByteBuffer();
-    }
+    if (requires_seed) RandomSeed();
     uint256 ret;
-    memcpy(ret.begin(), bytebuf + 64 - bytebuf_size, 32);
-    bytebuf_size -= 32;
+    rng.Keystream(ret.data(), ret.size());
     return ret;
 }
 
-std::vector<unsigned char> FastRandomContext::randbytes(size_t len)
+template <typename B>
+std::vector<B> FastRandomContext::randbytes(size_t len)
 {
     if (requires_seed) RandomSeed();
-    std::vector<unsigned char> ret(len);
+    std::vector<B> ret(len);
     if (len > 0) {
-        rng.Keystream(&ret[0], len);
+        rng.Keystream(UCharCast(ret.data()), len);
     }
     return ret;
 }
+template std::vector<unsigned char> FastRandomContext::randbytes(size_t);
+template std::vector<std::byte> FastRandomContext::randbytes(size_t);
 
-FastRandomContext::FastRandomContext(const uint256& seed) noexcept : requires_seed(false), bytebuf_size(0), bitbuf_size(0)
+void FastRandomContext::fillrand(Span<std::byte> output)
 {
-    rng.SetKey(seed.begin(), 32);
+    if (requires_seed) RandomSeed();
+    rng.Keystream(UCharCast(output.data()), output.size());
+}
+
+FastRandomContext::FastRandomContext(const uint256& seed) noexcept : requires_seed(false), bitbuf_size(0)
+{
+    rng.SetKey32(seed.begin());
 }
 
 bool Random_SanityCheck()
@@ -694,25 +700,22 @@ bool Random_SanityCheck()
     return true;
 }
 
-FastRandomContext::FastRandomContext(bool fDeterministic) noexcept : requires_seed(!fDeterministic), bytebuf_size(0), bitbuf_size(0)
+FastRandomContext::FastRandomContext(bool fDeterministic) noexcept : requires_seed(!fDeterministic), bitbuf_size(0)
 {
     if (!fDeterministic) {
         return;
     }
     uint256 seed;
-    rng.SetKey(seed.begin(), 32);
+    rng.SetKey32(seed.begin());
 }
 
 FastRandomContext& FastRandomContext::operator=(FastRandomContext&& from) noexcept
 {
     requires_seed = from.requires_seed;
     rng = from.rng;
-    std::copy(std::begin(from.bytebuf), std::end(from.bytebuf), std::begin(bytebuf));
-    bytebuf_size = from.bytebuf_size;
     bitbuf = from.bitbuf;
     bitbuf_size = from.bitbuf_size;
     from.requires_seed = true;
-    from.bytebuf_size = 0;
     from.bitbuf_size = 0;
     return *this;
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,6 +11,7 @@
 #include <random.h>
 #include <saltedhasher.h>
 #include <serialize.h>
+#include <threadinterrupt.h>
 #include <sync.h>
 #include <uint256.h>
 

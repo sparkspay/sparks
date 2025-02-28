@@ -106,6 +106,28 @@ code.
   - `static_assert` is preferred over `assert` where possible. Generally; compile-time checking is preferred over run-time checking.
   - Align pointers and references to the left i.e. use `type& var` and not `type &var`.
 
+For function calls a namespace should be specified explicitly, unless such functions have been declared within it.
+Otherwise, [argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl), also known as ADL, could be
+triggered that makes code harder to maintain and reason about:
+```c++
+#include <filesystem>
+
+namespace fs {
+class path : public std::filesystem::path
+{
+};
+// The intention is to disallow this function.
+bool exists(const fs::path& p) = delete;
+} // namespace fs
+
+int main()
+{
+    //fs::path p; // error
+    std::filesystem::path p; // compiled
+    exists(p); // ADL being used for unqualified name lookup
+}
+```
+
 Block style example:
 ```c++
 int g_count = 0;
@@ -146,7 +168,7 @@ Refer to [/test/functional/README.md#style-guidelines](/test/functional/README.m
 Coding Style (Doxygen-compatible comments)
 ------------------------------------------
 
-Sparks Core uses [Doxygen](http://www.doxygen.nl/) to generate its official documentation.
+Sparks Core uses [Doxygen](https://www.doxygen.nl/) to generate its official documentation.
 
 Use Doxygen-compatible comment blocks for functions, methods, and fields.
 
@@ -167,7 +189,7 @@ For example, to describe a function use:
 bool function(int arg1, const char *arg2, std::string& arg3)
 ```
 
-A complete list of `@xxx` commands can be found at http://www.stack.nl/~dimitri/doxygen/manual/commands.html.
+A complete list of `@xxx` commands can be found at https://www.doxygen.nl/manual/commands.html.
 As Doxygen recognizes the comments by the delimiters (`/**` and `*/` in this case), you don't
 *need* to provide any commands for a comment to be valid; just a description text is fine.
 
@@ -207,7 +229,14 @@ Not picked up by Doxygen:
 //
 ```
 
-A full list of comment syntaxes picked up by Doxygen can be found at https://www.stack.nl/~dimitri/doxygen/manual/docblocks.html,
+Also not picked up by Doxygen:
+```c++
+/*
+ * ... Description ...
+ */
+```
+
+A full list of comment syntaxes picked up by Doxygen can be found at https://www.doxygen.nl/manual/docblocks.html,
 but the above styles are favored.
 
 Recommendations:
@@ -220,7 +249,7 @@ Recommendations:
 
 - Backticks aren't required when referring to functions Doxygen already knows
   about; it will build hyperlinks for these automatically. See
-  http://www.doxygen.nl/manual/autolink.html for complete info.
+  https://www.doxygen.nl/manual/autolink.html for complete info.
 
 - Avoid linking to external documentation; links can break.
 
@@ -964,7 +993,7 @@ Others are external projects without a tight relationship with our project. Chan
 be sent upstream, but bugfixes may also be prudent to PR against Sparks Core so that they can be integrated
 quickly. Cosmetic changes should be purely taken upstream.
 
-There is a tool in `test/lint/git-subtree-check.sh` to check a subtree directory for consistency with
+There is a tool in `test/lint/git-subtree-check.sh` ([instructions](../test/lint#git-subtree-checksh)) to check a subtree directory for consistency with
 its upstream repository.
 
 Current subtrees include:
@@ -1131,7 +1160,10 @@ A few guidelines for introducing and reviewing new RPC interfaces:
 
   - *Rationale*: Consistency with the existing interface.
 
-- Argument naming: use snake case `fee_delta` (and not, e.g. camel case `feeDelta`)
+- Argument and field naming: please consider whether there is already a naming
+  style or spelling convention in the API for the type of object in question
+  (`blockhash`, for example), and if so, try to use that. If not, use snake case
+  `fee_delta` (and not, e.g. `feedelta` or camel case `feeDelta`).
 
   - *Rationale*: Consistency with the existing interface.
 

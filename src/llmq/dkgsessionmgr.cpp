@@ -1,17 +1,19 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <llmq/debug.h>
 #include <llmq/dkgsessionmgr.h>
-#include <llmq/quorums.h>
+#include <llmq/options.h>
+#include <llmq/params.h>
 #include <llmq/utils.h>
 
-#include <evo/deterministicmns.h>
-
 #include <chainparams.h>
-#include <net_processing.h>
+#include <dbwrapper.h>
+#include <deploymentstatus.h>
+#include <evo/deterministicmns.h>
 #include <spork.h>
+#include <unordered_lru_cache.h>
 #include <util/irange.h>
 #include <util/underlying.h>
 #include <validation.h>
@@ -24,17 +26,16 @@ static const std::string DB_ENC_CONTRIB = "qdkg_E";
 
 CDKGSessionManager::CDKGSessionManager(CBLSWorker& _blsWorker, CChainState& chainstate, CConnman& _connman, CDKGDebugManager& _dkgDebugManager,
                                        CQuorumBlockProcessor& _quorumBlockProcessor, CSporkManager& sporkManager,
-                                       const std::unique_ptr<PeerManager>& peerman, bool unitTests, bool fWipe) :
+                                       bool unitTests, bool fWipe) :
     db(std::make_unique<CDBWrapper>(unitTests ? "" : (GetDataDir() / "llmq/dkgdb"), 1 << 20, unitTests, fWipe)),
     blsWorker(_blsWorker),
     m_chainstate(chainstate),
     connman(_connman),
     dkgDebugManager(_dkgDebugManager),
     quorumBlockProcessor(_quorumBlockProcessor),
-    spork_manager(sporkManager),
-    m_peerman(peerman)
+    spork_manager(sporkManager)
 {
-    if (!fMasternodeMode && !utils::IsWatchQuorumsEnabled()) {
+    if (!fMasternodeMode && !IsWatchQuorumsEnabled()) {
         // Regular nodes do not care about any DKG internals, bail out
         return;
     }
@@ -47,7 +48,7 @@ CDKGSessionManager::CDKGSessionManager(CBLSWorker& _blsWorker, CChainState& chai
         for (const auto i : irange::range(session_count)) {
             dkgSessionHandlers.emplace(std::piecewise_construct,
                                        std::forward_as_tuple(params.type, i),
-                                       std::forward_as_tuple(blsWorker, m_chainstate, connman, dkgDebugManager, *this, quorumBlockProcessor, params, peerman, i));
+                                       std::forward_as_tuple(blsWorker, m_chainstate, connman, dkgDebugManager, *this, quorumBlockProcessor, params, i));
         }
     }
 }
@@ -161,7 +162,7 @@ void CDKGSessionManager::UpdatedBlockTip(const CBlockIndex* pindexNew, bool fIni
 
     if (fInitialDownload)
         return;
-    if (!deterministicMNManager->IsDIP3Enforced(pindexNew->nHeight))
+    if (!DeploymentDIP0003Enforced(pindexNew->nHeight, Params().GetConsensus()))
         return;
     if (!IsQuorumDKGEnabled(spork_manager))
         return;
@@ -171,30 +172,38 @@ void CDKGSessionManager::UpdatedBlockTip(const CBlockIndex* pindexNew, bool fIni
     }
 }
 
-void CDKGSessionManager::ProcessMessage(CNode& pfrom, const CQuorumManager& quorum_manager, const std::string& msg_type, CDataStream& vRecv)
+PeerMsgRet CDKGSessionManager::ProcessMessage(CNode& pfrom, PeerManager* peerman, const std::string& msg_type, CDataStream& vRecv)
 {
     static Mutex cs_indexedQuorumsCache;
     static std::map<Consensus::LLMQType, unordered_lru_cache<uint256, int, StaticSaltedHasher>> indexedQuorumsCache GUARDED_BY(cs_indexedQuorumsCache);
 
     if (!IsQuorumDKGEnabled(spork_manager))
-        return;
+        return {};
 
     if (msg_type != NetMsgType::QCONTRIB
         && msg_type != NetMsgType::QCOMPLAINT
         && msg_type != NetMsgType::QJUSTIFICATION
         && msg_type != NetMsgType::QPCOMMITMENT
         && msg_type != NetMsgType::QWATCH) {
-        return;
+        return {};
     }
 
     if (msg_type == NetMsgType::QWATCH) {
+        if (!fMasternodeMode) {
+            // non-masternodes should never receive this
+            return tl::unexpected{10};
+        }
         pfrom.qwatch = true;
-        return;
+        return {};
+    }
+
+    if ((!fMasternodeMode && !IsWatchQuorumsEnabled())) {
+        // regular non-watching nodes should never receive any of these
+        return tl::unexpected{10};
     }
 
     if (vRecv.empty()) {
-        m_peerman->Misbehaving(pfrom.GetId(), 100);
-        return;
+        return tl::unexpected{100};
     }
 
     Consensus::LLMQType llmqType;
@@ -204,11 +213,10 @@ void CDKGSessionManager::ProcessMessage(CNode& pfrom, const CQuorumManager& quor
     vRecv.Rewind(sizeof(uint256));
     vRecv.Rewind(sizeof(uint8_t));
 
-    const auto& llmq_params_opt = GetLLMQParams(llmqType);
+    const auto& llmq_params_opt = Params().GetLLMQ(llmqType);
     if (!llmq_params_opt.has_value()) {
         LogPrintf("CDKGSessionManager -- invalid llmqType [%d]\n", ToUnderlying(llmqType));
-        m_peerman->Misbehaving(pfrom.GetId(), 100);
-        return;
+        return tl::unexpected{100};
     }
     const auto& llmq_params = llmq_params_opt.value();
 
@@ -229,36 +237,33 @@ void CDKGSessionManager::ProcessMessage(CNode& pfrom, const CQuorumManager& quor
         if (pQuorumBaseBlockIndex == nullptr) {
             LogPrintf("CDKGSessionManager -- unknown quorumHash %s\n", quorumHash.ToString());
             // NOTE: do not insta-ban for this, we might be lagging behind
-            m_peerman->Misbehaving(pfrom.GetId(), 10);
-            return;
+            return tl::unexpected{10};
         }
 
-        if (!utils::IsQuorumTypeEnabled(llmqType, quorum_manager, pQuorumBaseBlockIndex->pprev)) {
+        if (!IsQuorumTypeEnabled(llmqType, pQuorumBaseBlockIndex->pprev)) {
             LogPrintf("CDKGSessionManager -- llmqType [%d] quorums aren't active\n", ToUnderlying(llmqType));
-            m_peerman->Misbehaving(pfrom.GetId(), 100);
-            return;
+            return tl::unexpected{100};
         }
 
         quorumIndex = pQuorumBaseBlockIndex->nHeight % llmq_params.dkgInterval;
-        int quorumIndexMax = utils::IsQuorumRotationEnabled(llmq_params, pQuorumBaseBlockIndex) ?
+        int quorumIndexMax = IsQuorumRotationEnabled(llmq_params, pQuorumBaseBlockIndex) ?
                 llmq_params.signingActiveQuorumCount - 1 : 0;
 
         if (quorumIndex > quorumIndexMax) {
             LogPrintf("CDKGSessionManager -- invalid quorumHash %s\n", quorumHash.ToString());
-            m_peerman->Misbehaving(pfrom.GetId(), 100);
-            return;
+            return tl::unexpected{100};
         }
 
         if (!dkgSessionHandlers.count(std::make_pair(llmqType, quorumIndex))) {
             LogPrintf("CDKGSessionManager -- no session handlers for quorumIndex [%d]\n", quorumIndex);
-            m_peerman->Misbehaving(pfrom.GetId(), 100);
-            return;
+            return tl::unexpected{100};
         }
     }
 
     assert(quorumIndex != -1);
     WITH_LOCK(cs_indexedQuorumsCache, indexedQuorumsCache[llmqType].insert(quorumHash, quorumIndex));
-    dkgSessionHandlers.at(std::make_pair(llmqType, quorumIndex)).ProcessMessage(pfrom, msg_type, vRecv);
+    dkgSessionHandlers.at(std::make_pair(llmqType, quorumIndex)).ProcessMessage(pfrom, peerman, msg_type, vRecv);
+    return {};
 }
 
 bool CDKGSessionManager::AlreadyHave(const CInv& inv) const
@@ -364,7 +369,12 @@ bool CDKGSessionManager::GetPrematureCommitment(const uint256& hash, CDKGPrematu
 
 void CDKGSessionManager::WriteVerifiedVvecContribution(Consensus::LLMQType llmqType, const CBlockIndex* pQuorumBaseBlockIndex, const uint256& proTxHash, const BLSVerificationVectorPtr& vvec)
 {
-    db->Write(std::make_tuple(DB_VVEC, llmqType, pQuorumBaseBlockIndex->GetBlockHash(), proTxHash), *vvec);
+    CDataStream s(SER_DISK, CLIENT_VERSION);
+    WriteCompactSize(s, vvec->size());
+    for (auto& pubkey : *vvec) {
+        s << CBLSPublicKeyVersionWrapper(pubkey, false);
+    }
+    db->Write(std::make_tuple(DB_VVEC, llmqType, pQuorumBaseBlockIndex->GetBlockHash(), proTxHash), s);
 }
 
 void CDKGSessionManager::WriteVerifiedSkContribution(Consensus::LLMQType llmqType, const CBlockIndex* pQuorumBaseBlockIndex, const uint256& proTxHash, const CBLSSecretKey& skContribution)
@@ -379,7 +389,6 @@ void CDKGSessionManager::WriteEncryptedContributions(Consensus::LLMQType llmqTyp
 
 bool CDKGSessionManager::GetVerifiedContributions(Consensus::LLMQType llmqType, const CBlockIndex* pQuorumBaseBlockIndex, const std::vector<bool>& validMembers, std::vector<uint16_t>& memberIndexesRet, std::vector<BLSVerificationVectorPtr>& vvecsRet, std::vector<CBLSSecretKey>& skContributionsRet) const
 {
-    LOCK(contributionsCacheCs);
     auto members = utils::GetAllQuorumMembers(llmqType, pQuorumBaseBlockIndex);
 
     memberIndexesRet.clear();
@@ -388,17 +397,29 @@ bool CDKGSessionManager::GetVerifiedContributions(Consensus::LLMQType llmqType, 
     memberIndexesRet.reserve(members.size());
     vvecsRet.reserve(members.size());
     skContributionsRet.reserve(members.size());
+
+    // NOTE: the `cs_main` should not be locked under scope of `contributionsCacheCs`
+    LOCK(contributionsCacheCs);
     for (const auto i : irange::range(members.size())) {
         if (validMembers[i]) {
             const uint256& proTxHash = members[i]->proTxHash;
             ContributionsCacheKey cacheKey = {llmqType, pQuorumBaseBlockIndex->GetBlockHash(), proTxHash};
             auto it = contributionsCache.find(cacheKey);
             if (it == contributionsCache.end()) {
-                auto vvecPtr = std::make_shared<std::vector<CBLSPublicKey>>();
-                CBLSSecretKey skContribution;
-                if (!db->Read(std::make_tuple(DB_VVEC, llmqType, pQuorumBaseBlockIndex->GetBlockHash(), proTxHash), *vvecPtr)) {
+                CDataStream s(SER_DISK, CLIENT_VERSION);
+                if (!db->ReadDataStream(std::make_tuple(DB_VVEC, llmqType, pQuorumBaseBlockIndex->GetBlockHash(), proTxHash), s)) {
                     return false;
                 }
+                size_t vvec_size = ReadCompactSize(s);
+                CBLSPublicKey pubkey;
+                std::vector<CBLSPublicKey> qv;
+                for ([[maybe_unused]] size_t _ : irange::range(vvec_size)) {
+                    s >> CBLSPublicKeyVersionWrapper(pubkey, false);
+                    qv.emplace_back(pubkey);
+                }
+                auto vvecPtr = std::make_shared<std::vector<CBLSPublicKey>>(std::move(qv));
+
+                CBLSSecretKey skContribution;
                 db->Read(std::make_tuple(DB_SKCONTRIB, llmqType, pQuorumBaseBlockIndex->GetBlockHash(), proTxHash), skContribution);
 
                 it = contributionsCache.emplace(cacheKey, ContributionsCacheEntry{GetTimeMillis(), vvecPtr, skContribution}).first;
@@ -428,6 +449,7 @@ bool CDKGSessionManager::GetEncryptedContributions(Consensus::LLMQType llmqType,
         }
     }
     if (nRequestedMemberIdx == std::numeric_limits<size_t>::max()) {
+        LogPrint(BCLog::LLMQ, "CDKGSessionManager::%s -- not a member, nProTxHash=%s\n", __func__, nProTxHash.ToString());
         return false;
     }
 
@@ -435,6 +457,7 @@ bool CDKGSessionManager::GetEncryptedContributions(Consensus::LLMQType llmqType,
         if (validMembers[i]) {
             CBLSIESMultiRecipientObjects<CBLSSecretKey> encryptedContributions;
             if (!db->Read(std::make_tuple(DB_ENC_CONTRIB, llmqType, pQuorumBaseBlockIndex->GetBlockHash(), members[i]->proTxHash), encryptedContributions)) {
+                LogPrint(BCLog::LLMQ, "CDKGSessionManager::%s -- can't read from db, nProTxHash=%s\n", __func__, nProTxHash.ToString());
                 return false;
             }
             vecRet.emplace_back(encryptedContributions.Get(nRequestedMemberIdx));
@@ -482,7 +505,7 @@ void CDKGSessionManager::CleanupOldContributions() const
                 }
                 cnt_all++;
                 const CBlockIndex* pindexQuorum = m_chainstate.m_blockman.LookupBlockIndex(std::get<2>(k));
-                if (pindexQuorum == nullptr || m_chainstate.m_chain.Tip()->nHeight - pindexQuorum->nHeight > utils::max_store_depth(params)) {
+                if (pindexQuorum == nullptr || m_chainstate.m_chain.Tip()->nHeight - pindexQuorum->nHeight > params.max_store_depth()) {
                     // not found or too old
                     batch.Erase(k);
                     cnt_old++;

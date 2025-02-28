@@ -1,5 +1,5 @@
 // Copyright (c) 2011-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -21,7 +21,7 @@
 #include <QClipboard>
 
 SignVerifyMessageDialog::SignVerifyMessageDialog(QWidget* parent) :
-    QDialog(parent),
+    QDialog(parent, GUIUtil::dialog_flags),
     ui(new Ui::SignVerifyMessageDialog),
     model(nullptr),
     pageButtons(nullptr)
@@ -60,6 +60,8 @@ SignVerifyMessageDialog::SignVerifyMessageDialog(QWidget* parent) :
     GUIUtil::updateFonts();
 
     GUIUtil::disableMacFocusRect(this);
+
+    GUIUtil::handleCloseWindowShortcut(this);
 }
 
 SignVerifyMessageDialog::~SignVerifyMessageDialog()

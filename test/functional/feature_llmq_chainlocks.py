@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2022 The Dash Core developers
+# Copyright (c) 2015-2024 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -18,7 +18,7 @@ from test_framework.util import force_finish_mnsync, assert_equal, assert_raises
 
 class LLMQChainLocksTest(SparksTestFramework):
     def set_test_params(self):
-        self.set_sparks_test_params(4, 3, fast_dip3_enforcement=True)
+        self.set_sparks_test_params(5, 4, fast_dip3_enforcement=True)
 
     def run_test(self):
 
@@ -51,9 +51,14 @@ class LLMQChainLocksTest(SparksTestFramework):
         self.nodes[0].sporkupdate("SPORK_18_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
 
-        self.log.info("Mining 4 quorums")
-        for i in range(4):
-            self.mine_quorum()
+        self.move_to_next_cycle()
+        self.log.info("Cycle H height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H+C height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H+2C height:" + str(self.nodes[0].getblockcount()))
+        self.mine_cycle_quorum(llmq_type_name="llmq_test_dip0024", llmq_type=103)
+
 
         self.log.info("Mine single block, wait for chainlock")
         self.nodes[0].generate(1)
@@ -103,6 +108,28 @@ class LLMQChainLocksTest(SparksTestFramework):
         self.nodes[1].generatetoaddress(1, node0_mining_addr)
         self.wait_for_chainlocked_block_all_nodes(self.nodes[1].getbestblockhash())
         self.test_coinbase_best_cl(self.nodes[0])
+
+        self.log.info("Isolate node, mine on another, reconnect and submit CL via RPC")
+        self.isolate_node(0)
+        self.nodes[1].generate(1)
+        self.wait_for_chainlocked_block(self.nodes[1], self.nodes[1].getbestblockhash())
+        best_0 = self.nodes[0].getbestchainlock()
+        best_1 = self.nodes[1].getbestchainlock()
+        assert best_0['blockhash'] != best_1['blockhash']
+        assert best_0['height'] != best_1['height']
+        assert best_0['signature'] != best_1['signature']
+        assert_equal(best_0['known_block'], True)
+        node_height = self.nodes[1].submitchainlock(best_0['blockhash'], best_0['signature'], best_0['height'])
+        rpc_height = self.nodes[0].submitchainlock(best_1['blockhash'], best_1['signature'], best_1['height'])
+        assert_equal(best_1['height'], node_height)
+        assert_equal(best_1['height'], rpc_height)
+        best_0 = self.nodes[0].getbestchainlock()
+        assert_equal(best_0['blockhash'], best_1['blockhash'])
+        assert_equal(best_0['height'], best_1['height'])
+        assert_equal(best_0['signature'], best_1['signature'])
+        assert_equal(best_0['known_block'], False)
+        self.reconnect_isolated_node(0, 1)
+        self.sync_all()
 
         self.log.info("Isolate node, mine on both parts of the network, and reconnect")
         self.isolate_node(0)
@@ -171,7 +198,7 @@ class LLMQChainLocksTest(SparksTestFramework):
         force_finish_mnsync(self.nodes[0])
         self.isolate_node(0)
         txs = []
-        for i in range(3):
+        for _ in range(3):
             txs.append(self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), 1))
         txs += self.create_chained_txs(self.nodes[0], 1)
         self.log.info("Assert that after block generation these TXs are NOT included (as they are \"unsafe\")")
@@ -206,7 +233,7 @@ class LLMQChainLocksTest(SparksTestFramework):
             self.log.info("Add a new node and let it sync")
             self.dynamically_add_masternode(evo=False)
             added_idx = len(self.nodes) - 1
-            assert_raises_rpc_error(-32603, "Unable to find any chainlock", self.nodes[added_idx].getbestchainlock)
+            assert_raises_rpc_error(-32603, "Unable to find any ChainLock", self.nodes[added_idx].getbestchainlock)
 
             self.log.info("Test that new node can mine without Chainlock info")
             tip_0 = self.nodes[0].getblock(self.nodes[0].getbestblockhash(), 2)

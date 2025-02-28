@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2022 The Dash Core developers
+// Copyright (c) 2021-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,7 +9,6 @@
 
 #include <llmq/blockprocessor.h>
 #include <llmq/commitment.h>
-#include <llmq/utils.h>
 
 #include <base58.h>
 #include <chainparams.h>
@@ -134,10 +133,10 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
     }
 
     //Quorum rotation is enabled only for InstantSend atm.
-    Consensus::LLMQType llmqType = utils::GetInstantSendLLMQType(qman, blockIndex);
+    Consensus::LLMQType llmqType = Params().GetConsensus().llmqTypeDIP0024InstantSend;
 
     // Since the returned quorums are in reversed order, the most recent one is at index 0
-    const auto& llmq_params_opt = GetLLMQParams(llmqType);
+    const auto& llmq_params_opt = Params().GetLLMQ(llmqType);
     assert(llmq_params_opt.has_value());
 
     const int cycleLength = llmq_params_opt->dkgInterval;

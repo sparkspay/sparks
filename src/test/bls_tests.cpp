@@ -1,15 +1,17 @@
-// Copyright (c) 2019-2022 The Dash Core developers
+// Copyright (c) 2019-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <bls/bls.h>
 #include <bls/bls_batchverifier.h>
-#include <boost/test/unit_test.hpp>
+#include <clientversion.h>
 #include <random.h>
-#include <test/util/setup_common.h>
+#include <streams.h>
 #include <util/irange.h>
 
-BOOST_FIXTURE_TEST_SUITE(bls_tests, BasicTestingSetup)
+#include <boost/test/unit_test.hpp>
+
+BOOST_AUTO_TEST_SUITE(bls_tests)
 
 void FuncSign(const bool legacy_scheme)
 {

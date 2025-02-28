@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2022 The Dash Core developers
+# Copyright (c) 2015-2024 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 from test_framework.mininode import *
@@ -16,11 +16,12 @@ Checks DIP4 merkle roots in coinbases
 from io import BytesIO
 
 from test_framework.messages import CBlock, CBlockHeader, CCbTx, CMerkleBlock, FromHex, hash256, msg_getmnlistd, QuorumId, ser_uint256
-from test_framework.mininode import P2PInterface
+from test_framework.p2p import P2PInterface
 from test_framework.test_framework import SparksTestFramework
-from test_framework.util import assert_equal, wait_until
+from test_framework.util import assert_equal
 
 
+# TODO: this helper used in many tests, find a new home for it
 class TestP2PConn(P2PInterface):
     def __init__(self):
         super().__init__()
@@ -32,7 +33,7 @@ class TestP2PConn(P2PInterface):
     def wait_for_mnlistdiff(self, timeout=30):
         def received_mnlistdiff():
             return self.last_mnlistdiff is not None
-        return wait_until(received_mnlistdiff, timeout=timeout)
+        self.wait_until(received_mnlistdiff, timeout=timeout)
 
     def getmnlistdiff(self, baseBlockHash, blockHash):
         msg = msg_getmnlistd(baseBlockHash, blockHash)

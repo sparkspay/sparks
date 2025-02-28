@@ -75,7 +75,7 @@ std::shared_ptr<CBlock> MinerTestingSetup::Block(const uint256& prev_hash)
     CScript pubKey;
     pubKey << i++ << OP_TRUE;
 
-    auto ptemplate = BlockAssembler(*sporkManager, *governance, *m_node.llmq_ctx, *m_node.evodb, ::ChainstateActive(), *m_node.mempool, Params()).CreateNewBlock(pubKey);
+    auto ptemplate = BlockAssembler(*m_node.sporkman, *m_node.govman, *m_node.llmq_ctx, *m_node.evodb, ::ChainstateActive(), *m_node.mempool, Params()).CreateNewBlock(pubKey);
     auto pblock = std::make_shared<CBlock>(ptemplate->block);
     pblock->hashPrevBlock = prev_hash;
     pblock->nTime = ++time;
@@ -294,15 +294,9 @@ BOOST_AUTO_TEST_CASE(mempool_locks_reorg)
         // Add the txs to the tx pool
         {
             LOCK(cs_main);
-            TxValidationState state;
             for (const auto& tx : txs) {
-                BOOST_REQUIRE(AcceptToMemoryPool(
-                    ::ChainstateActive(),
-                    *m_node.mempool,
-                    state,
-                    tx,
-                    /* bypass_limits */ false,
-                    /* nAbsurdFee */ 0));
+                const MempoolAcceptResult result = AcceptToMemoryPool(::ChainstateActive(), *m_node.mempool, tx, false /* bypass_limits */);
+                BOOST_REQUIRE(result.m_result_type == MempoolAcceptResult::ResultType::VALID);
             }
         }
 

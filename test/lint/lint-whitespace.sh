@@ -26,19 +26,21 @@ if [ -z "${COMMIT_RANGE}" ]; then
   if [ -n "$1" ]; then
     COMMIT_RANGE="HEAD~$1...HEAD"
   else
-    COMMIT_RANGE="HEAD"
+    # This assumes that the target branch of the pull request will be develop.
+    MERGE_BASE=$(git merge-base HEAD develop)
+    COMMIT_RANGE="$MERGE_BASE..HEAD"
   fi
 fi
 
 showdiff() {
-  if ! git diff -U0 "${COMMIT_RANGE}" -- "." ":(exclude)depends/patches/" ":(exclude)contrib/guix/patches/" ":(exclude)src/dashbls/" ":(exclude)src/immer/" ":(exclude)src/leveldb/" ":(exclude)src/crc32c/" ":(exclude)src/secp256k1/" ":(exclude)src/univalue/" ":(exclude)doc/release-notes/"; then
+  if ! git diff -U0 "${COMMIT_RANGE}" -- "." ":(exclude)depends/patches/" ":(exclude)contrib/guix/patches/" ":(exclude)src/dashbls/" ":(exclude)src/util/expected.h" ":(exclude)src/immer/" ":(exclude)src/leveldb/" ":(exclude)src/crc32c/" ":(exclude)src/secp256k1/" ":(exclude)src/univalue/" ":(exclude)doc/release-notes/"; then
     echo "Failed to get a diff"
     exit 1
   fi
 }
 
 showcodediff() {
-  if ! git diff -U0 "${COMMIT_RANGE}" -- *.cpp *.h *.md *.py *.sh ":(exclude)src/dashbls/" ":(exclude)src/immer/" ":(exclude)src/leveldb/" ":(exclude)src/crc32c/" ":(exclude)src/secp256k1/" ":(exclude)src/univalue/" ":(exclude)doc/release-notes/"; then
+  if ! git diff -U0 "${COMMIT_RANGE}" -- *.cpp *.h *.md *.py *.sh ":(exclude)src/dashbls/" ":(exclude)src/util/expected.h" ":(exclude)src/immer/" ":(exclude)src/leveldb/" ":(exclude)src/crc32c/" ":(exclude)src/secp256k1/" ":(exclude)src/univalue/" ":(exclude)doc/release-notes/"; then
     echo "Failed to get a diff"
     exit 1
   fi

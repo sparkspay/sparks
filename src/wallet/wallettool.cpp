@@ -28,9 +28,11 @@ static void WalletCreate(CWallet* wallet_instance)
 
     // generate a new HD seed
     wallet_instance->SetupLegacyScriptPubKeyMan();
-    // NOTE: we do not yet create HD wallets by default
-    // auto spk_man = wallet_instance->GetLegacyScriptPubKeyMan();
-    // spk_man->GenerateNewHDChain("", "");
+    auto spk_man = wallet_instance->GetLegacyScriptPubKeyMan();
+    // NOTE: drop this condition after removing option to create non-HD wallets
+    if (spk_man->IsHDEnabled()) {
+        spk_man->GenerateNewHDChain(/*secureMnemonic=*/"", /*secureMnemonicPassphrase=*/"");
+    }
 
     tfm::format(std::cout, "Topping up keypool...\n");
     wallet_instance->TopUpKeyPool();
@@ -53,7 +55,7 @@ static std::shared_ptr<CWallet> MakeWallet(const std::string& name, const fs::pa
     }
 
     // dummy chain interface
-    std::shared_ptr<CWallet> wallet_instance{new CWallet(nullptr /* chain */, name, std::move(database)), WalletToolReleaseWallet};
+    std::shared_ptr<CWallet> wallet_instance{new CWallet(/*chain=*/ nullptr, /*coinjoin_loader=*/ nullptr, name, std::move(database)), WalletToolReleaseWallet};
     DBErrors load_wallet_ret;
     try {
         bool first_run;
@@ -106,7 +108,7 @@ static void WalletShowInfo(CWallet* wallet_instance)
 
 bool ExecuteWalletToolFunc(const std::string& command, const std::string& name)
 {
-    fs::path path = fs::absolute(name, GetWalletDir());
+    const fs::path path = fsbridge::AbsPathJoin(GetWalletDir(), name);
 
     if (command == "create") {
         std::shared_ptr<CWallet> wallet_instance = MakeWallet(name, path, /* create= */ true);

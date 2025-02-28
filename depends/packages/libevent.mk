@@ -13,6 +13,7 @@ define $(package)_set_vars
   $(package)_config_opts_release=--disable-debug-mode
   $(package)_config_opts_linux=--with-pic
   $(package)_config_opts_freebsd=--with-pic
+  $(package)_config_opts_netbsd=--with-pic
   $(package)_config_opts_openbsd=--with-pic
   $(package)_config_opts_android=--with-pic
   $(package)_cppflags_mingw32=-D_WIN32_WINNT=0x0601
@@ -35,5 +36,7 @@ define $(package)_stage_cmds
 endef
 
 define $(package)_postprocess_cmds
-  rm lib/*.la
+  rm lib/*.la && \
+  rm include/ev*.h && \
+  rm include/event2/*_compat.h
 endef

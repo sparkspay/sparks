@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 The Dash Core developers
+// Copyright (c) 2017-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,11 +6,11 @@
 
 #include <evo/cbtx.h>
 #include <core_io.h>
+#include <deploymentstatus.h>
 #include <evo/deterministicmns.h>
 #include <llmq/blockprocessor.h>
 #include <llmq/commitment.h>
 #include <llmq/quorums.h>
-#include <llmq/utils.h>
 #include <node/blockstorage.h>
 #include <evo/specialtx.h>
 
@@ -95,12 +95,11 @@ UniValue CSimplifiedMNListEntry::ToJson(bool extended) const
     return obj;
 }
 
-// TODO: Invistigate if we can delete this constructor
 CSimplifiedMNList::CSimplifiedMNList(const std::vector<CSimplifiedMNListEntry>& smlEntries)
 {
-    mnList.resize(smlEntries.size());
-    for (size_t i = 0; i < smlEntries.size(); i++) {
-        mnList[i] = std::make_unique<CSimplifiedMNListEntry>(smlEntries[i]);
+    mnList.reserve(smlEntries.size());
+    for (const auto& entry : smlEntries) {
+        mnList.emplace_back(std::make_unique<CSimplifiedMNListEntry>(entry));
     }
 
     std::sort(mnList.begin(), mnList.end(), [&](const std::unique_ptr<CSimplifiedMNListEntry>& a, const std::unique_ptr<CSimplifiedMNListEntry>& b) {
@@ -110,11 +109,9 @@ CSimplifiedMNList::CSimplifiedMNList(const std::vector<CSimplifiedMNListEntry>& 
 
 CSimplifiedMNList::CSimplifiedMNList(const CDeterministicMNList& dmnList)
 {
-    mnList.resize(dmnList.GetAllMNsCount());
-
-    size_t i = 0;
-    dmnList.ForEachMN(false, [this, &i](auto& dmn) {
-        mnList[i++] = std::make_unique<CSimplifiedMNListEntry>(dmn);
+    mnList.reserve(dmnList.GetAllMNsCount());
+    dmnList.ForEachMN(false, [this](auto& dmn) {
+        mnList.emplace_back(std::make_unique<CSimplifiedMNListEntry>(dmn));
     });
 
     std::sort(mnList.begin(), mnList.end(), [&](const std::unique_ptr<CSimplifiedMNListEntry>& a, const std::unique_ptr<CSimplifiedMNListEntry>& b) {
@@ -186,7 +183,7 @@ bool CSimplifiedMNListDiff::BuildQuorumsDiff(const CBlockIndex* baseBlockIndex, 
     return true;
 }
 
-bool CSimplifiedMNListDiff::BuildQuorumChainlockInfo(const CBlockIndex* blockIndex)
+void CSimplifiedMNListDiff::BuildQuorumChainlockInfo(const CBlockIndex* blockIndex)
 {
     // Group quorums (indexes corresponding to entries of newQuorums) per CBlockIndex containing the expected CL signature in CbTx.
     // We want to avoid to load CbTx now, as more than one quorum will target the same block: hence we want to load CbTxs once per block (heavy operation).
@@ -223,8 +220,6 @@ bool CSimplifiedMNListDiff::BuildQuorumChainlockInfo(const CBlockIndex* blockInd
             it_sig->second.insert(idx_set.begin(), idx_set.end());
         }
     }
-
-    return true;
 }
 
 UniValue CSimplifiedMNListDiff::ToJson(bool extended) const
@@ -269,11 +264,10 @@ UniValue CSimplifiedMNListDiff::ToJson(bool extended) const
     }
     obj.pushKV("newQuorums", newQuorumsArr);
 
-    CCbTx cbTxPayload;
-    if (GetTxPayload(*cbTx, cbTxPayload)) {
-        obj.pushKV("merkleRootMNList", cbTxPayload.merkleRootMNList.ToString());
-        if (cbTxPayload.nVersion >= 2) {
-            obj.pushKV("merkleRootQuorums", cbTxPayload.merkleRootQuorums.ToString());
+    if (const auto opt_cbTxPayload = GetTxPayload<CCbTx>(*cbTx)) {
+        obj.pushKV("merkleRootMNList", opt_cbTxPayload->merkleRootMNList.ToString());
+        if (opt_cbTxPayload->nVersion >= CCbTx::Version::MERKLE_ROOT_QUORUMS) {
+            obj.pushKV("merkleRootQuorums", opt_cbTxPayload->merkleRootQuorums.ToString());
         }
     }
 
@@ -366,11 +360,8 @@ bool BuildSimplifiedMNListDiff(const uint256& baseBlockHash, const uint256& bloc
         return false;
     }
 
-    if (llmq::utils::IsV20Active(blockIndex)) {
-        if (!mnListDiffRet.BuildQuorumChainlockInfo(blockIndex)) {
-            errorRet = strprintf("failed to build quorums chainlocks info");
-            return false;
-        }
+    if (DeploymentActiveAfter(blockIndex, Params().GetConsensus(), Consensus::DEPLOYMENT_V20)) {
+        mnListDiffRet.BuildQuorumChainlockInfo(blockIndex);
     }
 
     // TODO store coinbase TX in CBlockIndex

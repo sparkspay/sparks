@@ -10,10 +10,10 @@
 #include <crypto/common.h>
 #include <llmq/signing.h>
 #include <net.h>
+#include <net_types.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
 #include <saltedhasher.h>
-#include <streams.h>
 #include <sync.h>
 
 #include <gsl/pointers.h>
@@ -30,7 +30,6 @@ class CMasternodeSync;
 class CScheduler;
 class CSporkManager;
 class CTxMemPool;
-class PeerManager;
 
 namespace llmq
 {
@@ -54,14 +53,12 @@ private:
     CSigSharesManager& shareman;
     CSporkManager& spork_manager;
     CTxMemPool& mempool;
-    const std::unique_ptr<PeerManager>& m_peerman;
 
     std::unique_ptr<CScheduler> scheduler;
     std::unique_ptr<std::thread> scheduler_thread;
     mutable Mutex cs;
     std::atomic<bool> tryLockChainTipScheduled{false};
     std::atomic<bool> isEnabled{false};
-    std::atomic<bool> isEnforced{false};
 
     uint256 bestChainLockHash GUARDED_BY(cs);
     CChainLockSig bestChainLock GUARDED_BY(cs);
@@ -85,12 +82,12 @@ private:
 
     std::map<uint256, int64_t> seenChainLocks GUARDED_BY(cs);
 
-    int64_t lastCleanupTime GUARDED_BY(cs) {0};
+    std::atomic<int64_t> lastCleanupTime{0};
 
 public:
     explicit CChainLocksHandler(CChainState& chainstate, CConnman& _connman, CMasternodeSync& mn_sync, CQuorumManager& _qman,
                                 CSigningManager& _sigman, CSigSharesManager& _shareman, CSporkManager& sporkManager,
-                                CTxMemPool& _mempool, const std::unique_ptr<PeerManager>& peerman);
+                                CTxMemPool& _mempool);
     ~CChainLocksHandler();
 
     void Start();
@@ -100,8 +97,9 @@ public:
     bool GetChainLockByHash(const uint256& hash, CChainLockSig& ret) const LOCKS_EXCLUDED(cs);
     CChainLockSig GetBestChainLock() const LOCKS_EXCLUDED(cs);
 
-    void ProcessMessage(const CNode& pfrom, const std::string& msg_type, CDataStream& vRecv);
-    void ProcessNewChainLock(NodeId from, const CChainLockSig& clsig, const uint256& hash) LOCKS_EXCLUDED(cs);
+    PeerMsgRet ProcessMessage(const CNode& pfrom, const std::string& msg_type, CDataStream& vRecv);
+    PeerMsgRet ProcessNewChainLock(NodeId from, const CChainLockSig& clsig, const uint256& hash) LOCKS_EXCLUDED(cs);
+
     void AcceptedBlockHeader(gsl::not_null<const CBlockIndex*> pindexNew) LOCKS_EXCLUDED(cs);
     void UpdatedBlockTip();
     void TransactionAddedToMempool(const CTransactionRef& tx, int64_t nAcceptTime) LOCKS_EXCLUDED(cs);

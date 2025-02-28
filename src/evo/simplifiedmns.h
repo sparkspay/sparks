@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 The Dash Core developers
+// Copyright (c) 2017-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -100,8 +100,10 @@ public:
     std::vector<std::unique_ptr<CSimplifiedMNListEntry>> mnList;
 
     CSimplifiedMNList() = default;
-    explicit CSimplifiedMNList(const std::vector<CSimplifiedMNListEntry>& smlEntries);
     explicit CSimplifiedMNList(const CDeterministicMNList& dmnList);
+
+    // This constructor from std::vector is used in unit-tests
+    explicit CSimplifiedMNList(const std::vector<CSimplifiedMNListEntry>& smlEntries);
 
     uint256 CalcMerkleRoot(bool* pmutated = nullptr) const;
     bool operator==(const CSimplifiedMNList& rhs) const;
@@ -162,7 +164,7 @@ public:
 
     bool BuildQuorumsDiff(const CBlockIndex* baseBlockIndex, const CBlockIndex* blockIndex,
                           const llmq::CQuorumBlockProcessor& quorum_block_processor);
-    bool BuildQuorumChainlockInfo(const CBlockIndex* blockIndex);
+    void BuildQuorumChainlockInfo(const CBlockIndex* blockIndex);
 
     [[nodiscard]] UniValue ToJson(bool extended = false) const;
 };

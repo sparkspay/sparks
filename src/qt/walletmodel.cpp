@@ -1,5 +1,5 @@
 // Copyright (c) 2011-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -17,11 +17,12 @@
 #include <qt/recentrequeststablemodel.h>
 #include <qt/transactiontablemodel.h>
 
+#include <interfaces/coinjoin.h>
 #include <interfaces/handler.h>
 #include <interfaces/node.h>
 #include <key_io.h>
+#include <node/ui_interface.h>
 #include <psbt.h>
-#include <ui_interface.h>
 #include <util/system.h> // for GetBoolArg
 #include <util/translation.h>
 #include <wallet/coincontrol.h>
@@ -30,6 +31,7 @@
 #include <spork.h>
 
 #include <stdint.h>
+#include <functional>
 
 #include <QDebug>
 #include <QSet>
@@ -74,6 +76,11 @@ void WalletModel::setClientModel(ClientModel* client_model)
 {
     m_client_model = client_model;
     if (!m_client_model) timer->stop();
+}
+
+std::unique_ptr<interfaces::CoinJoin::Client> WalletModel::coinJoin() const
+{
+    return m_node.coinJoinLoader()->GetClient(m_wallet->getWalletName());
 }
 
 void WalletModel::updateStatus()
@@ -361,12 +368,9 @@ WalletModel::EncryptionStatus WalletModel::getEncryptionStatus() const
     }
 }
 
-bool WalletModel::setWalletEncrypted(bool encrypted, const SecureString &passphrase)
+bool WalletModel::setWalletEncrypted(const SecureString& passphrase)
 {
-    if (encrypted) {
-        return m_wallet->encryptWallet(passphrase);
-    }
-    return false;
+    return m_wallet->encryptWallet(passphrase);
 }
 
 bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase, bool fMixing)

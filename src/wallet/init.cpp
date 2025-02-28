@@ -9,8 +9,8 @@
 #include <interfaces/wallet.h>
 #include <net.h>
 #include <node/context.h>
+#include <node/ui_interface.h>
 #include <univalue.h>
-#include <ui_interface.h>
 #include <util/check.h>
 #include <util/error.h>
 #include <util/system.h>
@@ -46,7 +46,7 @@ public:
 
     // Sparks Specific Wallet Init
     void AutoLockMasternodeCollaterals() const override;
-    void InitCoinJoinSettings(const CJClientManager& clientman) const override;
+    void InitCoinJoinSettings(const CoinJoinWalletManager& cjwalletman) const override;
     bool InitAutoBackup() const override;
 };
 
@@ -79,9 +79,9 @@ void WalletInit::AddWalletOptions(ArgsManager& argsman) const
                                                                CURRENCY_UNIT, FormatMoney(DEFAULT_FALLBACK_FEE)), ArgsManager::ALLOW_ANY, OptionsCategory::WALLET_FEE);
     argsman.AddArg("-maxtxfee=<amt>", strprintf("Maximum total fees (in %s) to use in a single wallet transaction; setting this too low may abort large transactions (default: %s)",
                                                             CURRENCY_UNIT, FormatMoney(DEFAULT_TRANSACTION_MAXFEE)), ArgsManager::ALLOW_ANY, OptionsCategory::DEBUG_TEST);
-    argsman.AddArg("-mintxfee=<amt>", strprintf("Fees (in %s/kB) smaller than this are considered zero fee for transaction creation (default: %s)",
+    argsman.AddArg("-mintxfee=<amt>", strprintf("Fee rates (in %s/kB) smaller than this are considered zero fee for transaction creation (default: %s)",
                                                             CURRENCY_UNIT, FormatMoney(DEFAULT_TRANSACTION_MINFEE)), ArgsManager::ALLOW_ANY, OptionsCategory::WALLET_FEE);
-    argsman.AddArg("-paytxfee=<amt>", strprintf("Fee (in %s/kB) to add to transactions you send (default: %s)",
+    argsman.AddArg("-paytxfee=<amt>", strprintf("Fee rate (in %s/kB) to add to transactions you send (default: %s)",
                                                             CURRENCY_UNIT, FormatMoney(CFeeRate{DEFAULT_PAY_TX_FEE}.GetFeePerK())), ArgsManager::ALLOW_ANY, OptionsCategory::WALLET_FEE);
     argsman.AddArg("-txconfirmtarget=<n>", strprintf("If paytxfee is not set, include enough fee so transactions begin confirmation on average within n blocks (default: %u)", DEFAULT_TX_CONFIRM_TARGET), ArgsManager::ALLOW_ANY, OptionsCategory::WALLET_FEE);
 
@@ -185,7 +185,7 @@ void WalletInit::Construct(NodeContext& node) const
         LogPrintf("Wallet disabled!\n");
         return;
     }
-    auto wallet_loader = interfaces::MakeWalletLoader(*node.chain, args);
+    auto wallet_loader = interfaces::MakeWalletLoader(*node.chain, node.coinjoin_loader, args);
     node.wallet_loader = wallet_loader.get();
     node.chain_clients.emplace_back(std::move(wallet_loader));
 }
@@ -199,7 +199,7 @@ void WalletInit::AutoLockMasternodeCollaterals() const
     }
 }
 
-void WalletInit::InitCoinJoinSettings(const CJClientManager& clientman) const
+void WalletInit::InitCoinJoinSettings(const CoinJoinWalletManager& cjwalletman) const
 {
     CCoinJoinClientOptions::SetEnabled(!GetWallets().empty() ? gArgs.GetBoolArg("-enablecoinjoin", true) : false);
     if (!CCoinJoinClientOptions::IsEnabled()) {
@@ -207,7 +207,7 @@ void WalletInit::InitCoinJoinSettings(const CJClientManager& clientman) const
     }
     bool fAutoStart = gArgs.GetBoolArg("-coinjoinautostart", DEFAULT_COINJOIN_AUTOSTART);
     for (auto& pwallet : GetWallets()) {
-        auto manager = clientman.Get(*pwallet);
+        auto manager = cjwalletman.Get(pwallet->GetName());
         assert(manager != nullptr);
         if (pwallet->IsLocked()) {
             manager->StopMixing();

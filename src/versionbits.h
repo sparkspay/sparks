@@ -1,4 +1,4 @@
-// Copyright (c) 2016 The Bitcoin Core developers
+// Copyright (c) 2016-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,7 +6,9 @@
 #define BITCOIN_VERSIONBITS_H
 
 #include <chain.h>
+#include <gsl/pointers.h>
 #include <sync.h>
+
 #include <map>
 
 /** What block version to use for new blocks (pre versionbits) */
@@ -111,7 +113,7 @@ public:
      * to get access to EHF data
      */
 public:
-    [[nodiscard]] static AbstractEHFManager* getInstance() {
+    [[nodiscard]] static gsl::not_null<AbstractEHFManager*> getInstance() {
         return globalInstance;
     };
 
@@ -127,7 +129,6 @@ public:
 
 protected:
     static AbstractEHFManager* globalInstance;
-
 };
 
 #endif // BITCOIN_VERSIONBITS_H

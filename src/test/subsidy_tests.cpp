@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,7 +13,7 @@ BOOST_FIXTURE_TEST_SUITE(subsidy_tests, TestingSetup)
 
 BOOST_AUTO_TEST_CASE(block_subsidy_test)
 {
-    const auto chainParams = CreateChainParams(CBaseChainParams::MAIN);
+    const auto chainParams = CreateChainParams(*m_node.args, CBaseChainParams::MAIN);
 
     uint32_t nPrevBits;
     int32_t nPrevHeight;

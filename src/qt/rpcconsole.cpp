@@ -1,5 +1,5 @@
 // Copyright (c) 2011-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -22,6 +22,7 @@
 #include <rpc/client.h>
 #include <util/strencodings.h>
 #include <util/system.h>
+#include <util/threadnames.h>
 #include <util/underlying.h>
 
 #include <univalue.h>
@@ -36,6 +37,7 @@
 
 #include <QButtonGroup>
 #include <QDir>
+#include <QFont>
 #include <QFontDatabase>
 #include <QDateTime>
 #include <QKeyEvent>
@@ -225,10 +227,11 @@ bool RPCConsole::RPCParseCommandLine(interfaces::Node* node, std::string &strRes
                                 UniValue subelement;
                                 if (lastResult.isArray())
                                 {
-                                    for(char argch: curarg)
-                                        if (!IsDigit(argch))
-                                            throw std::runtime_error("Invalid result query");
-                                    subelement = lastResult[LocaleIndependentAtoi<int>(curarg)];
+                                    const auto parsed{ToIntegral<size_t>(curarg)};
+                                    if (!parsed) {
+                                        throw std::runtime_error("Invalid result query");
+                                    }
+                                    subelement = lastResult[parsed.value()];
                                 }
                                 else if (lastResult.isObject())
                                     subelement = find_value(lastResult, curarg);
@@ -469,6 +472,8 @@ RPCConsole::RPCConsole(interfaces::Node& node, QWidget* parent, Qt::WindowFlags 
         move(QGuiApplication::primaryScreen()->availableGeometry().center() - frameGeometry().center());
     }
 
+    ui->splitter->restoreState(settings.value("PeersTabSplitterSizes").toByteArray());
+
     QChar nonbreaking_hyphen(8209);
     ui->dataDir->setToolTip(ui->dataDir->toolTip().arg(QString(nonbreaking_hyphen) + "datadir"));
     ui->blocksDir->setToolTip(ui->blocksDir->toolTip().arg(QString(nonbreaking_hyphen) + "blocksdir"));
@@ -525,12 +530,15 @@ RPCConsole::RPCConsole(interfaces::Node& node, QWidget* parent, Qt::WindowFlags 
     showPage(ToUnderlying(TabTypes::INFO));
 
     reloadThemedWidgets();
+
+    GUIUtil::handleCloseWindowShortcut(this);
 }
 
 RPCConsole::~RPCConsole()
 {
     QSettings settings;
     settings.setValue("RPCConsoleWindowGeometry", saveGeometry());
+    settings.setValue("PeersTabSplitterSizes", ui->splitter->saveState());
     m_node.rpcUnsetTimerInterface(rpcTimerInterface);
     delete rpcTimerInterface;
     delete pageButtons;
@@ -550,17 +558,16 @@ bool RPCConsole::eventFilter(QObject* obj, QEvent *event)
         case Qt::Key_Down: if(obj == ui->lineEdit) { browseHistory(1); return true; } break;
         case Qt::Key_PageUp: /* pass paging keys to messages widget */
         case Qt::Key_PageDown:
-            if(obj == ui->lineEdit)
-            {
-                QApplication::postEvent(ui->messagesWidget, new QKeyEvent(*keyevt));
+            if (obj == ui->lineEdit) {
+                QApplication::sendEvent(ui->messagesWidget, keyevt);
                 return true;
             }
             break;
         case Qt::Key_Return:
         case Qt::Key_Enter:
             // forward these events to lineEdit
-            if(obj == autoCompleter->popup()) {
-                QApplication::postEvent(ui->lineEdit, new QKeyEvent(*keyevt));
+            if (obj == autoCompleter->popup()) {
+                QApplication::sendEvent(ui->lineEdit, keyevt);
                 autoCompleter->popup()->hide();
                 return true;
             }
@@ -574,7 +581,7 @@ bool RPCConsole::eventFilter(QObject* obj, QEvent *event)
                   ((mod & Qt::ShiftModifier) && key == Qt::Key_Insert)))
             {
                 ui->lineEdit->setFocus();
-                QApplication::postEvent(ui->lineEdit, new QKeyEvent(*keyevt));
+                QApplication::sendEvent(ui->lineEdit, keyevt);
                 return true;
             }
         }
@@ -1113,6 +1120,9 @@ void RPCConsole::startExecutor()
     // Default implementation of QThread::run() simply spins up an event loop in the thread,
     // which is what we want.
     thread.start();
+    QTimer::singleShot(0, executor, []() {
+        util::ThreadRename("qt-rpcconsole");
+    });
 }
 
 void RPCConsole::on_stackedWidgetRPC_currentChanged(int index)
@@ -1228,7 +1238,7 @@ void RPCConsole::updateNodeDetail(const CNodeCombinedStats *stats)
 {
     // update the detail ui with latest node information
     QString peerAddrDetails(QString::fromStdString(stats->nodeStats.addrName) + " ");
-    peerAddrDetails += tr("(node id: %1)").arg(QString::number(stats->nodeStats.nodeid));
+    peerAddrDetails += tr("(peer id: %1)").arg(QString::number(stats->nodeStats.nodeid));
     if (!stats->nodeStats.addrLocal.empty())
         peerAddrDetails += "<br />" + tr("via %1").arg(QString::fromStdString(stats->nodeStats.addrLocal));
     ui->peerHeading->setText(peerAddrDetails);
@@ -1250,7 +1260,16 @@ void RPCConsole::updateNodeDetail(const CNodeCombinedStats *stats)
                 ? tr("Outbound")
                 : tr("Outbound block-relay"));
     ui->peerHeight->setText(QString::number(stats->nodeStats.nStartingHeight));
-    ui->peerWhitelisted->setText(stats->nodeStats.m_legacyWhitelisted ? tr("Yes") : tr("No"));
+    ui->peerNetwork->setText(GUIUtil::NetworkToQString(stats->nodeStats.m_network));
+    if (stats->nodeStats.m_permissionFlags == PF_NONE) {
+        ui->peerPermissions->setText(tr("N/A"));
+    } else {
+        QStringList permissions;
+        for (const auto& permission : NetPermissions::ToStrings(stats->nodeStats.m_permissionFlags)) {
+            permissions.append(QString::fromStdString(permission));
+        }
+        ui->peerPermissions->setText(permissions.join(" & "));
+    }
     ui->peerMappedAS->setText(stats->nodeStats.m_mapped_as != 0 ? QString::number(stats->nodeStats.m_mapped_as) : tr("N/A"));
     auto dmn = clientModel->getMasternodeList().first.GetMNByService(stats->nodeStats.addr);
     if (dmn == nullptr) {

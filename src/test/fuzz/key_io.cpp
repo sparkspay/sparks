@@ -15,7 +15,6 @@
 
 void initialize_key_io()
 {
-    static const ECCVerifyHandle verify_handle;
     ECC_Start();
     SelectParams(CBaseChainParams::MAIN);
 }
@@ -41,7 +40,7 @@ FUZZ_TARGET_INIT(key_io, initialize_key_io)
 
     const CTxDestination tx_destination = DecodeDestination(random_string);
     (void)DescribeAddress(tx_destination);
-    // (void)GetKeyForDestination(/* store */ {}, tx_destination);
+    (void)GetKeyForDestination(/* store */ {}, tx_destination);
     (void)GetScriptForDestination(tx_destination);
     (void)IsValidDestination(tx_destination);
 

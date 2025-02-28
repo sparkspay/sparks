@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2022 The Dash Core developers
+// Copyright (c) 2021-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,7 +8,6 @@
 #include <evo/specialtx.h>
 #include <llmq/commitment.h>
 #include <llmq/signing.h>
-#include <llmq/utils.h>
 #include <llmq/quorums.h>
 #include <node/blockstorage.h>
 
@@ -93,7 +92,7 @@ bool MNHFTx::Verify(const uint256& quorumHash, const uint256& requestId, const u
     const Consensus::LLMQType& llmqType = Params().GetConsensus().llmqTypeMnhf;
     const auto quorum = llmq::quorumManager->GetQuorum(llmqType, quorumHash);
 
-    const uint256 signHash = llmq::utils::BuildSignHash(llmqType, quorum->qc->quorumHash, requestId, msgHash);
+    const uint256 signHash = llmq::BuildSignHash(llmqType, quorum->qc->quorumHash, requestId, msgHash);
     if (!sig.VerifyInsecure(quorum->qc->quorumPublicKey, signHash)) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-mnhf-invalid");
     }
@@ -107,11 +106,11 @@ bool CheckMNHFTx(const CTransaction& tx, const CBlockIndex* pindexPrev, TxValida
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-mnhf-type");
     }
 
-    MNHFTxPayload mnhfTx;
-    if (!GetTxPayload(tx, mnhfTx)) {
+    const auto opt_mnhfTx = GetTxPayload<MNHFTxPayload>(tx);
+    if (!opt_mnhfTx) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-mnhf-payload");
     }
-
+    auto& mnhfTx = *opt_mnhfTx;
     if (mnhfTx.nVersion == 0 || mnhfTx.nVersion > MNHFTxPayload::CURRENT_VERSION) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-mnhf-version");
     }
@@ -153,11 +152,11 @@ std::optional<uint8_t> extractEHFSignal(const CTransaction& tx)
         return std::nullopt;
     }
 
-    MNHFTxPayload mnhfTx;
-    if (!GetTxPayload(tx, mnhfTx)) {
+    const auto opt_mnhfTx = GetTxPayload<MNHFTxPayload>(tx);
+    if (!opt_mnhfTx) {
         return std::nullopt;
     }
-    return mnhfTx.signal.versionBit;
+    return opt_mnhfTx->signal.versionBit;
 }
 
 static bool extractSignals(const CBlock& block, const CBlockIndex* const pindex, std::vector<uint8_t>& new_signals, BlockValidationState& state)
@@ -176,11 +175,11 @@ static bool extractSignals(const CBlock& block, const CBlockIndex* const pindex,
             return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, tx_state.GetRejectReason(), tx_state.GetDebugMessage());
         }
 
-        MNHFTxPayload mnhfTx;
-        if (!GetTxPayload(tx, mnhfTx)) {
+        const auto opt_mnhfTx = GetTxPayload<MNHFTxPayload>(tx);
+        if (!opt_mnhfTx) {
             return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-mnhf-tx-payload");
         }
-        const uint8_t bit = mnhfTx.signal.versionBit;
+        const uint8_t bit = opt_mnhfTx->signal.versionBit;
         if (std::find(new_signals.begin(), new_signals.end(), bit) != new_signals.end()) {
             return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-mnhf-duplicates-in-block");
         }
@@ -330,12 +329,12 @@ std::optional<CMNHFManager::Signals> CMNHFManager::GetFromCache(const CBlockInde
 
 void CMNHFManager::AddToCache(const Signals& signals, const CBlockIndex* const pindex)
 {
+    assert(pindex != nullptr);
     const uint256& blockHash = pindex->GetBlockHash();
     {
         LOCK(cs_cache);
         mnhfCache.insert(blockHash, signals);
     }
-    assert(pindex != nullptr);
     {
         LOCK(cs_cache);
         if (ThresholdState::ACTIVE != v20_activation.State(pindex->pprev, Params().GetConsensus(), Consensus::DEPLOYMENT_V20)) return;

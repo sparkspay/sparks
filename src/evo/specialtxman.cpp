@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,6 +10,7 @@
 #include <primitives/block.h>
 #include <validation.h>
 #include <evo/specialtx.h>
+#include <deploymentstatus.h>
 #include <evo/cbtx.h>
 #include <evo/datatx.h>
 #include <evo/creditpool.h>
@@ -20,7 +21,6 @@
 #include <hash.h>
 #include <llmq/blockprocessor.h>
 #include <llmq/commitment.h>
-#include <llmq/utils.h>
 #include <primitives/block.h>
 #include <validation.h>
 
@@ -31,7 +31,8 @@ static bool CheckSpecialTxInner(const CTransaction& tx, const CBlockIndex* pinde
     if (tx.nVersion != 3 || tx.nType == TRANSACTION_NORMAL)
         return true;
 
-    if (pindexPrev && pindexPrev->nHeight + 1 < Params().GetConsensus().DIP0003Height) {
+    const auto& consensusParams = Params().GetConsensus();
+    if (!DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_DIP0003)) {
         return state.Invalid(TxValidationResult::TX_BAD_SPECIAL, "bad-tx-type");
     }
 
@@ -50,23 +51,23 @@ static bool CheckSpecialTxInner(const CTransaction& tx, const CBlockIndex* pinde
         case TRANSACTION_QUORUM_COMMITMENT:
             return llmq::CheckLLMQCommitment(tx, pindexPrev, state);
         case TRANSACTION_MNHF_SIGNAL:
-            if (!llmq::utils::IsV20Active(pindexPrev)) {
+            if (!DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_V20)) {
                 return state.Invalid(TxValidationResult::TX_CONSENSUS, "mnhf-before-v20");
             }
             return CheckMNHFTx(tx, pindexPrev, state);
         case TRANSACTION_DATA:
             return CheckDataTx(tx, pindexPrev, state);    
         case TRANSACTION_ASSET_LOCK:
-            if (!llmq::utils::IsV20Active(pindexPrev)) {
+            if (!DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_V20)) {
                 return state.Invalid(TxValidationResult::TX_CONSENSUS, "assetlocks-before-v20");
             }
             return CheckAssetLockUnlockTx(tx, pindexPrev, indexes, state);
         case TRANSACTION_ASSET_UNLOCK:
-            if (Params().NetworkIDString() == CBaseChainParams::REGTEST && !llmq::utils::IsV20Active(pindexPrev)) {
+            if (Params().NetworkIDString() == CBaseChainParams::REGTEST && !DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_V20)) {
                 // TODO:  adjust functional tests to make it activated by MN_RR on regtest too
                 return state.Invalid(TxValidationResult::TX_CONSENSUS, "assetunlocks-before-v20");
             }
-            if (Params().NetworkIDString() != CBaseChainParams::REGTEST && !llmq::utils::IsMNRewardReallocationActive(pindexPrev)) {
+            if (Params().NetworkIDString() != CBaseChainParams::REGTEST && !DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_MN_RR)) {
                 return state.Invalid(TxValidationResult::TX_CONSENSUS, "assetunlocks-before-mn_rr");
             }
             return CheckAssetLockUnlockTx(tx, pindexPrev, indexes, state);
@@ -159,7 +160,7 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CM
         int64_t nTime1 = GetTimeMicros();
 
         const CCreditPool creditPool = creditPoolManager->GetCreditPool(pindex->pprev, consensusParams);
-        if (llmq::utils::IsV20Active(pindex->pprev)) {
+        if (DeploymentActiveAt(*pindex, consensusParams, Consensus::DEPLOYMENT_V20)) {
             LogPrint(BCLog::CREDITPOOL, "%s: CCreditPool is %s\n", __func__, creditPool.ToString());
         }
 
@@ -287,7 +288,7 @@ bool CheckCreditPoolDiffForBlock(const CBlock& block, const CBlockIndex* pindex,
                                 const CAmount blockSubsidy, BlockValidationState& state)
 {
     try {
-        if (!llmq::utils::IsV20Active(pindex)) return true;
+        if (!DeploymentActiveAt(*pindex, consensusParams, Consensus::DEPLOYMENT_V20)) return true;
 
         auto creditPoolDiff = GetCreditPoolDiffForBlock(block, pindex->pprev, consensusParams, blockSubsidy, state);
         if (!creditPoolDiff.has_value()) return false;
@@ -298,11 +299,11 @@ bool CheckCreditPoolDiffForBlock(const CBlock& block, const CBlockIndex* pindex,
         assert(tx.nVersion == 3);
         assert(tx.nType == TRANSACTION_COINBASE);
 
-        CCbTx cbTx;
-        if (!GetTxPayload(tx, cbTx)) {
+        const auto opt_cbTx = GetTxPayload<CCbTx>(tx);
+        if (!opt_cbTx) {
             return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-cbtx-payload");
         }
-        CAmount target_balance{cbTx.creditPoolBalance};
+        CAmount target_balance{opt_cbTx->creditPoolBalance};
         // But it maybe not included yet in previous block yet; in this case value must be 0
         CAmount locked_calculated{creditPoolDiff->GetTotalLocked()};
         if (target_balance != locked_calculated) {

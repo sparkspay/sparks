@@ -1,5 +1,5 @@
 // Copyright (c) 2011-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -26,8 +26,6 @@ static const bool DEFAULT_SPLASHSCREEN = true;
 #define RGB_HALF 0x7f7f7f
 /** Path to the icon resource folder */
 #define ICONS_PATH ":icons/"
-/** Path to the movies resource folder */
-#define MOVIES_PATH ":movies/"
 
 /* Tooltips longer than this (in characters) are converted into rich text,
    so that they can be word-wrapped.

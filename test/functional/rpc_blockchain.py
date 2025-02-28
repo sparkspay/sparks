@@ -22,17 +22,6 @@ from decimal import Decimal
 import http.client
 import subprocess
 
-from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import (
-    assert_equal,
-    assert_greater_than,
-    assert_greater_than_or_equal,
-    assert_raises,
-    assert_raises_rpc_error,
-    assert_is_hex_string,
-    assert_is_hash_string,
-    set_node_times,
-)
 from test_framework.blocktools import (
     create_block,
     create_coinbase,
@@ -43,8 +32,17 @@ from test_framework.messages import (
     FromHex,
     msg_block,
 )
-from test_framework.mininode import (
-    P2PInterface,
+from test_framework.p2p import P2PInterface
+from test_framework.test_framework import BitcoinTestFramework
+from test_framework.util import (
+    assert_equal,
+    assert_greater_than,
+    assert_greater_than_or_equal,
+    assert_raises,
+    assert_raises_rpc_error,
+    assert_is_hex_string,
+    assert_is_hash_string,
+    set_node_times,
 )
 
 
@@ -93,10 +91,13 @@ class BlockchainTest(BitcoinTestFramework):
             'pruned',
             'size_on_disk',
             'softforks',
+            'time',
             'verificationprogress',
             'warnings',
         ]
         res = self.nodes[0].getblockchaininfo()
+
+        assert isinstance(res['time'], int)
 
         # result should have these additional pruning keys if manual pruning is enabled
         assert_equal(sorted(res.keys()), sorted(['pruneheight', 'automatic_pruning'] + keys))
@@ -286,7 +287,7 @@ class BlockchainTest(BitcoinTestFramework):
         assert 'muhash' in res6
         assert(res['hash_serialized_2'] != res6['muhash'])
 
-        # muhash should not be included in gettxoutset unless requested.
+        # muhash should not be returned unless requested.
         for r in [res, res2, res3, res4, res5]:
             assert 'muhash' not in r
 
@@ -361,7 +362,7 @@ class BlockchainTest(BitcoinTestFramework):
     def _test_waitforblockheight(self):
         self.log.info("Test waitforblockheight")
         node = self.nodes[0]
-        node.add_p2p_connection(P2PInterface())
+        peer = node.add_p2p_connection(P2PInterface())
 
         current_height = node.getblock(node.getbestblockhash())['height']
 
@@ -378,7 +379,7 @@ class BlockchainTest(BitcoinTestFramework):
         def solve_and_send_block(prevhash, height, time):
             b = create_block(prevhash, create_coinbase(height), time)
             b.solve()
-            node.p2p.send_and_ping(msg_block(b))
+            peer.send_and_ping(msg_block(b))
             return b
 
         b21f = solve_and_send_block(int(b20hash, 16), 21, b20['time'] + 1)

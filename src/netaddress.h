@@ -12,7 +12,9 @@
 
 #include <attributes.h>
 #include <compat.h>
+#include <crypto/siphash.h>
 #include <prevector.h>
+#include <random.h>
 #include <serialize.h>
 #include <tinyformat.h>
 #include <util/strencodings.h>
@@ -227,6 +229,14 @@ public:
     friend bool operator<(const CNetAddr& a, const CNetAddr& b);
 
     /**
+     * Whether this address should be relayed to other peers even if we can't reach it ourselves.
+     */
+    bool IsRelayable() const
+    {
+        return IsIPv4() || IsIPv6() || IsTor();
+    }
+
+    /**
      * Serialize to a stream.
      */
     template <typename Stream>
@@ -252,6 +262,7 @@ public:
         }
     }
 
+    friend class CNetAddrHash;
     friend class CSubNet;
 
 private:
@@ -385,6 +396,12 @@ public:
 
     /**
      * Unserialize from a pre-ADDRv2/BIP155 format from an array.
+     *
+     * This function is only called from UnserializeV1Stream() and is a wrapper
+     * for SetLegacyIPv6(); however, we keep it for symmetry with
+     * SerializeV1Array() to have pairs of ser/unser functions and to make clear
+     * that if one is altered, a corresponding reverse modification should be
+     * applied to the other.
      */
     void UnserializeV1Array(uint8_t (&arr)[V1_SERIALIZATION_SIZE])
     {
@@ -464,6 +481,22 @@ public:
         m_net = NET_IPV6;
         m_addr.assign(ADDR_IPV6_SIZE, 0x0);
     }
+};
+
+class CNetAddrHash
+{
+public:
+    size_t operator()(const CNetAddr& a) const noexcept
+    {
+        CSipHasher hasher(m_salt_k0, m_salt_k1);
+        hasher.Write(a.m_net);
+        hasher.Write(a.m_addr.data(), a.m_addr.size());
+        return static_cast<size_t>(hasher.Finalize());
+    }
+
+private:
+    const uint64_t m_salt_k0 = GetRand(std::numeric_limits<uint64_t>::max());
+    const uint64_t m_salt_k1 = GetRand(std::numeric_limits<uint64_t>::max());
 };
 
 class CSubNet

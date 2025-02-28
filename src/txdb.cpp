@@ -5,37 +5,37 @@
 
 #include <txdb.h>
 
+#include <node/ui_interface.h>
 #include <pow.h>
 #include <random.h>
 #include <shutdown.h>
 #include <uint256.h>
 #include <util/system.h>
-#include <ui_interface.h>
 #include <util/translation.h>
 #include <util/vector.h>
 
 #include <stdint.h>
 
-static const char DB_COIN = 'C';
-static const char DB_COINS = 'c';
-static const char DB_BLOCK_FILES = 'f';
-static const char DB_ADDRESSINDEX = 'a';
-static const char DB_ADDRESSUNSPENTINDEX = 'u';
-static const char DB_TIMESTAMPINDEX = 's';
-static const char DB_SPENTINDEX = 'p';
-static const char DB_BLOCK_INDEX = 'b';
+static constexpr uint8_t DB_COIN{'C'};
+static constexpr uint8_t DB_COINS{'c'};
+static constexpr uint8_t DB_BLOCK_FILES{'f'};
+static constexpr uint8_t DB_ADDRESSINDEX{'a'};
+static constexpr uint8_t DB_ADDRESSUNSPENTINDEX{'u'};
+static constexpr uint8_t DB_TIMESTAMPINDEX{'s'};
+static constexpr uint8_t DB_SPENTINDEX{'p'};
+static constexpr uint8_t DB_BLOCK_INDEX{'b'};
 
-static const char DB_BEST_BLOCK = 'B';
-static const char DB_HEAD_BLOCKS = 'H';
-static const char DB_FLAG = 'F';
-static const char DB_REINDEX_FLAG = 'R';
-static const char DB_LAST_BLOCK = 'l';
+static constexpr uint8_t DB_BEST_BLOCK{'B'};
+static constexpr uint8_t DB_HEAD_BLOCKS{'H'};
+static constexpr uint8_t DB_FLAG{'F'};
+static constexpr uint8_t DB_REINDEX_FLAG{'R'};
+static constexpr uint8_t DB_LAST_BLOCK{'l'};
 
 namespace {
 
 struct CoinEntry {
     COutPoint* outpoint;
-    char key;
+    uint8_t key;
     explicit CoinEntry(const COutPoint* ptr) : outpoint(const_cast<COutPoint*>(ptr)), key(DB_COIN)  {}
 
     SERIALIZE_METHODS(CoinEntry, obj) { READWRITE(obj.key, obj.outpoint->hash, VARINT(obj.outpoint->n)); }
@@ -147,7 +147,7 @@ bool CCoinsViewDB::BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock) {
 
 size_t CCoinsViewDB::EstimateSize() const
 {
-    return m_db->EstimateSize(DB_COIN, (char)(DB_COIN+1));
+    return m_db->EstimateSize(DB_COIN, uint8_t(DB_COIN + 1));
 }
 
 CBlockTreeDB::CBlockTreeDB(size_t nCacheSize, bool fMemory, bool fWipe) : CDBWrapper(GetDataDir() / "blocks" / "index", nCacheSize, fMemory, fWipe) {
@@ -159,7 +159,7 @@ bool CBlockTreeDB::ReadBlockFileInfo(int nFile, CBlockFileInfo &info) {
 
 bool CBlockTreeDB::WriteReindexing(bool fReindexing) {
     if (fReindexing)
-        return Write(DB_REINDEX_FLAG, '1');
+        return Write(DB_REINDEX_FLAG, uint8_t{'1'});
     else
         return Erase(DB_REINDEX_FLAG);
 }
@@ -172,9 +172,34 @@ bool CBlockTreeDB::ReadLastBlockFile(int &nFile) {
     return Read(DB_LAST_BLOCK, nFile);
 }
 
-CCoinsViewCursor *CCoinsViewDB::Cursor() const
+/** Specialization of CCoinsViewCursor to iterate over a CCoinsViewDB */
+class CCoinsViewDBCursor: public CCoinsViewCursor
 {
-    CCoinsViewDBCursor *i = new CCoinsViewDBCursor(const_cast<CDBWrapper&>(*m_db).NewIterator(), GetBestBlock());
+public:
+    // Prefer using CCoinsViewDB::Cursor() since we want to perform some
+    // cache warmup on instantiation.
+    CCoinsViewDBCursor(CDBIterator* pcursorIn, const uint256&hashBlockIn):
+        CCoinsViewCursor(hashBlockIn), pcursor(pcursorIn) {}
+    ~CCoinsViewDBCursor() {}
+
+    bool GetKey(COutPoint &key) const override;
+    bool GetValue(Coin &coin) const override;
+    unsigned int GetValueSize() const override;
+
+    bool Valid() const override;
+    void Next() override;
+
+private:
+    std::unique_ptr<CDBIterator> pcursor;
+    std::pair<uint8_t, COutPoint> keyTmp;
+
+    friend class CCoinsViewDB;
+};
+
+std::unique_ptr<CCoinsViewCursor> CCoinsViewDB::Cursor() const
+{
+    auto i = std::make_unique<CCoinsViewDBCursor>(
+        const_cast<CDBWrapper&>(*m_db).NewIterator(), GetBestBlock());
     /* It seems that there are no "const iterators" for LevelDB.  Since we
        only need read operations on it, use a const-cast to get around
        that restriction.  */
@@ -274,7 +299,7 @@ bool CBlockTreeDB::ReadAddressUnspentIndex(uint160 addressHash, AddressType type
     pcursor->Seek(std::make_pair(DB_ADDRESSUNSPENTINDEX, CAddressIndexIteratorKey(type, addressHash)));
 
     while (pcursor->Valid()) {
-        std::pair<char,CAddressUnspentKey> key;
+        std::pair<uint8_t, CAddressUnspentKey> key;
         if (pcursor->GetKey(key) && key.first == DB_ADDRESSUNSPENTINDEX && key.second.m_address_bytes == addressHash) {
             CAddressUnspentValue nValue;
             if (pcursor->GetValue(nValue)) {
@@ -318,7 +343,7 @@ bool CBlockTreeDB::ReadAddressIndex(uint160 addressHash, AddressType type,
     }
 
     while (pcursor->Valid()) {
-        std::pair<char,CAddressIndexKey> key;
+        std::pair<uint8_t, CAddressIndexKey> key;
         if (pcursor->GetKey(key) && key.first == DB_ADDRESSINDEX && key.second.m_address_bytes == addressHash) {
             if (end > 0 && key.second.m_block_height > end) {
                 break;
@@ -358,7 +383,7 @@ bool CBlockTreeDB::ReadTimestampIndex(const unsigned int &high, const unsigned i
     pcursor->Seek(std::make_pair(DB_TIMESTAMPINDEX, CTimestampIndexIteratorKey(low)));
 
     while (pcursor->Valid()) {
-        std::pair<char, CTimestampIndexKey> key;
+        std::pair<uint8_t, CTimestampIndexKey> key;
         if (pcursor->GetKey(key) && key.first == DB_TIMESTAMPINDEX && key.second.m_block_time <= high) {
             hashes.push_back(key.second.m_block_hash);
             pcursor->Next();
@@ -371,14 +396,14 @@ bool CBlockTreeDB::ReadTimestampIndex(const unsigned int &high, const unsigned i
 }
 
 bool CBlockTreeDB::WriteFlag(const std::string &name, bool fValue) {
-    return Write(std::make_pair(DB_FLAG, name), fValue ? '1' : '0');
+    return Write(std::make_pair(DB_FLAG, name), fValue ? uint8_t{'1'} : uint8_t{'0'});
 }
 
 bool CBlockTreeDB::ReadFlag(const std::string &name, bool &fValue) {
-    char ch;
+    uint8_t ch;
     if (!Read(std::make_pair(DB_FLAG, name), ch))
         return false;
-    fValue = ch == '1';
+    fValue = ch == uint8_t{'1'};
     return true;
 }
 
@@ -391,7 +416,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
     // Load m_block_index
     while (pcursor->Valid()) {
         if (ShutdownRequested()) return false;
-        std::pair<char, uint256> key;
+        std::pair<uint8_t, uint256> key;
         if (pcursor->GetKey(key) && key.first == DB_BLOCK_INDEX) {
             CDiskBlockIndex diskindex;
             if (pcursor->GetValue(diskindex)) {

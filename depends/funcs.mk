@@ -138,11 +138,17 @@ $(1)_config_env+=$($(1)_config_env_$(host_arch)_$(host_os)) $($(1)_config_env_$(
 
 $(1)_config_env+=PKG_CONFIG_LIBDIR=$($($(1)_type)_prefix)/lib/pkgconfig
 $(1)_config_env+=PKG_CONFIG_PATH=$($($(1)_type)_prefix)/share/pkgconfig
+$(1)_config_env+=CMAKE_MODULE_PATH=$($($(1)_type)_prefix)/lib/cmake
 $(1)_config_env+=PATH=$(build_prefix)/bin:$(PATH)
 $(1)_build_env+=PATH=$(build_prefix)/bin:$(PATH)
 $(1)_stage_env+=PATH=$(build_prefix)/bin:$(PATH)
-$(1)_autoconf=./configure --host=$($($(1)_type)_host) --prefix=$($($(1)_type)_prefix) $$($(1)_config_opts) CC="$$($(1)_cc)" CXX="$$($(1)_cxx)"
 
+# Setting a --build type that differs from --host will explicitly enable
+# cross-compilation mode. Note that --build defaults to the output of
+# config.guess, which is what we set it too here. This also quells autoconf
+# warnings, "If you wanted to set the --build type, don't use --host.",
+# when using versions older than 2.70.
+$(1)_autoconf=./configure --build=$(BUILD) --host=$($($(1)_type)_host) --prefix=$($($(1)_type)_prefix) $$($(1)_config_opts) CC="$$($(1)_cc)" CXX="$$($(1)_cxx)"
 ifneq ($($(1)_nm),)
 $(1)_autoconf += NM="$$($(1)_nm)"
 endif
@@ -164,6 +170,22 @@ endif
 ifneq ($($(1)_ldflags),)
 $(1)_autoconf += LDFLAGS="$$($(1)_ldflags)"
 endif
+
+$(1)_cmake=env CC="$$($(1)_cc)" \
+               CFLAGS="$$($(1)_cppflags) $$($(1)_cflags)" \
+               CXX="$$($(1)_cxx)" \
+               CXXFLAGS="$$($(1)_cppflags) $$($(1)_cxxflags)" \
+               LDFLAGS="$$($(1)_ldflags)" \
+             cmake -DCMAKE_INSTALL_PREFIX:PATH="$$($($(1)_type)_prefix)" $$($(1)_cmake_opts)
+ifeq ($($(1)_type),build)
+$(1)_cmake += -DCMAKE_INSTALL_RPATH:PATH="$$($($(1)_type)_prefix)/lib"
+else
+ifneq ($(host),$(build))
+$(1)_cmake += -DCMAKE_SYSTEM_NAME=$($(host_os)_cmake_system)
+$(1)_cmake += -DCMAKE_C_COMPILER_TARGET=$(host)
+$(1)_cmake += -DCMAKE_CXX_COMPILER_TARGET=$(host)
+endif
+endif
 endef
 
 define int_add_cmds
@@ -171,40 +193,40 @@ $($(1)_fetched):
 	mkdir -p $$(@D) $(SOURCES_PATH)
 	rm -f $$@
 	touch $$@
-	cd $$(@D); $(call $(1)_fetch_cmds,$(1))
+	cd $$(@D); $($(1)_fetch_cmds)
 	cd $($(1)_source_dir); $(foreach source,$($(1)_all_sources),$(build_SHA256SUM) $(source) >> $$(@);)
 	touch $$@
 $($(1)_extracted): | $($(1)_fetched)
 	echo Extracting $(1)...
 	mkdir -p $$(@D)
-	cd $$(@D); $(call $(1)_extract_cmds,$(1))
+	cd $$(@D); $($(1)_extract_cmds)
 	touch $$@
 $($(1)_preprocessed): | $($(1)_extracted)
 	echo Preprocessing $(1)...
 	mkdir -p $$(@D) $($(1)_patch_dir)
 	$(foreach patch,$($(1)_patches),cd $(PATCHES_PATH)/$(1); cp $(patch) $($(1)_patch_dir) ;)
-	cd $$(@D); $(call $(1)_preprocess_cmds, $(1))
+	cd $$(@D); $($(1)_preprocess_cmds)
 	touch $$@
 $($(1)_configured): | $($(1)_dependencies) $($(1)_preprocessed)
 	echo Configuring $(1)...
 	rm -rf $(host_prefix); mkdir -p $(host_prefix)/lib; cd $(host_prefix); $(foreach package,$($(1)_all_dependencies), $(build_TAR) --no-same-owner -xf $($(package)_cached); )
 	mkdir -p $$(@D)
-	+cd $$(@D); $($(1)_config_env) $(call $(1)_config_cmds, $(1))
+	+cd $$(@D); $($(1)_config_env) $($(1)_config_cmds)
 	touch $$@
 $($(1)_built): | $($(1)_configured)
 	echo Building $(1)...
 	mkdir -p $$(@D)
-	+cd $$(@D); $($(1)_build_env) $(call $(1)_build_cmds, $(1))
+	+cd $$(@D); $($(1)_build_env) $($(1)_build_cmds)
 	touch $$@
 $($(1)_staged): | $($(1)_built)
 	echo Staging $(1)...
 	mkdir -p $($(1)_staging_dir)/$(host_prefix)
-	cd $($(1)_build_dir); $($(1)_stage_env) $(call $(1)_stage_cmds, $(1))
+	cd $($(1)_build_dir); $($(1)_stage_env) $($(1)_stage_cmds)
 	rm -rf $($(1)_extract_dir)
 	touch $$@
 $($(1)_postprocessed): | $($(1)_staged)
 	echo Postprocessing $(1)...
-	cd $($(1)_staging_prefix_dir); $(call $(1)_postprocess_cmds)
+	cd $($(1)_staging_prefix_dir); $($(1)_postprocess_cmds)
 	touch $$@
 $($(1)_cached): | $($(1)_dependencies) $($(1)_postprocessed)
 	echo Caching $(1)...

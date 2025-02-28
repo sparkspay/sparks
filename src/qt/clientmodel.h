@@ -1,5 +1,5 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2011-2019 The Bitcoin Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -17,10 +17,10 @@
 #include <uint256.h>
 
 class BanTableModel;
+class CBlockIndex;
 class OptionsModel;
 class PeerTableModel;
-
-class CBlockIndex;
+enum class SynchronizationState;
 
 QT_BEGIN_NAMESPACE
 class QTimer;
@@ -128,7 +128,7 @@ Q_SIGNALS:
     void numConnectionsChanged(int count);
     void masternodeListChanged() const;
     void chainLockChanged(const QString& bestChainLockHash, int bestChainLockHeight);
-    void numBlocksChanged(int count, const QDateTime& blockDate, const QString& blockHash, double nVerificationProgress, bool header);
+    void numBlocksChanged(int count, const QDateTime& blockDate, const QString& blockHash, double nVerificationProgress, bool header, SynchronizationState sync_state);
     void additionalDataSyncProgressChanged(double nSyncProgress);
     void mempoolSizeChanged(long count, size_t mempoolSizeInBytes);
     void islockCountChanged(size_t count);

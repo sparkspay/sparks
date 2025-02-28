@@ -16,6 +16,7 @@
 #include <version.h>
 
 #include <algorithm>
+#include <string>
 
 namespace {
 
@@ -31,10 +32,9 @@ opcodetype ParseOpCode(const std::string& s)
             if (op < OP_NOP && op != OP_RESERVED)
                 continue;
 
-            const char* name = GetOpName(static_cast<opcodetype>(op));
-            if (strcmp(name, "OP_UNKNOWN") == 0)
+            std::string strName = GetOpName(static_cast<opcodetype>(op));
+            if (strName == "OP_UNKNOWN")
                 continue;
-            std::string strName(name);
             mapOpNames[strName] = static_cast<opcodetype>(op);
             // Convenience: OP_ADD and just ADD are both recognized:
             if (strName.compare(0, 3, "OP_") == 0) {  // strName starts with "OP_"
@@ -100,23 +100,29 @@ CScript ParseScript(const std::string& s)
     return result;
 }
 
-bool DecodeHexTx(CMutableTransaction& tx, const std::string& strHexTx)
+static bool DecodeTx(CMutableTransaction& tx, const std::vector<unsigned char>& tx_data)
 {
-    if (!IsHex(strHexTx))
-        return false;
-
-    std::vector<unsigned char> txData(ParseHex(strHexTx));
-    CDataStream ssData(txData, SER_NETWORK, PROTOCOL_VERSION);
+    CDataStream ssData(tx_data, SER_NETWORK, PROTOCOL_VERSION);
     try {
         ssData >> tx;
-        if (!ssData.empty())
+        if (!ssData.empty()) {
             return false;
-    }
-    catch (const std::exception&) {
+        }
+    } catch (const std::exception&) {
         return false;
     }
 
     return true;
+}
+
+bool DecodeHexTx(CMutableTransaction& tx, const std::string& hex_tx)
+{
+    if (!IsHex(hex_tx)) {
+        return false;
+    }
+
+    std::vector<unsigned char> txData(ParseHex(hex_tx));
+    return DecodeTx(tx, txData);
 }
 
 bool DecodeHexBlockHeader(CBlockHeader& header, const std::string& hex_header)

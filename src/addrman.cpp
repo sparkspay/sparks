@@ -13,6 +13,8 @@
 
 #include <cmath>
 #include <optional>
+#include <unordered_map>
+#include <unordered_set>
 
 int CAddrInfo::GetTriedBucket(const uint256& nKey, const std::vector<bool> &asmap) const
 {
@@ -37,20 +39,22 @@ int CAddrInfo::GetNewBucket(const uint256& nKey, const CNetAddr& src, const std:
 
 int CAddrInfo::GetBucketPosition(const uint256 &nKey, bool fNew, int nBucket) const
 {
-    uint64_t hash1 = (CHashWriter(SER_GETHASH, 0) << nKey << (fNew ? 'N' : 'K') << nBucket << GetKey()).GetCheapHash();
+    uint64_t hash1 = (CHashWriter(SER_GETHASH, 0) << nKey << (fNew ? uint8_t{'N'} : uint8_t{'K'}) << nBucket << GetKey()).GetCheapHash();
     return hash1 % ADDRMAN_BUCKET_SIZE;
 }
 
 bool CAddrInfo::IsTerrible(int64_t nNow) const
 {
-    if (nLastTry && nLastTry >= nNow - 60) // never remove things tried in the last minute
+    if (nNow - nLastTry <= 60) { // never remove things tried in the last minute
         return false;
+    }
 
     if (nTime > nNow + 10 * 60) // came in a flying DeLorean
         return true;
 
-    if (nTime == 0 || nNow - nTime > ADDRMAN_HORIZON_DAYS * 24 * 60 * 60) // not seen in recent history
+    if (nNow - nTime > ADDRMAN_HORIZON_DAYS * 24 * 60 * 60) { // not seen in recent history
         return true;
+    }
 
     if (nLastSuccess == 0 && nAttempts >= ADDRMAN_RETRIES) // tried N times and never a success
         return true;
@@ -115,12 +119,12 @@ CAddrInfo* CAddrMan::Find(const CService& addr, int* pnId)
         addr2.SetPort(0);
     }
 
-    std::map<CService, int>::iterator it = mapAddr.find(addr2);
+    const auto it = mapAddr.find(addr2);
     if (it == mapAddr.end())
         return nullptr;
     if (pnId)
         *pnId = (*it).second;
-    std::map<int, CAddrInfo>::iterator it2 = mapInfo.find((*it).second);
+    const auto it2 = mapInfo.find((*it).second);
     if (it2 != mapInfo.end())
         return &(*it2).second;
     return nullptr;
@@ -144,7 +148,7 @@ CAddrInfo* CAddrMan::Create(const CAddress& addr, const CNetAddr& addrSource, in
     return &mapInfo[nId];
 }
 
-void CAddrMan::SwapRandom(unsigned int nRndPos1, unsigned int nRndPos2)
+void CAddrMan::SwapRandom(unsigned int nRndPos1, unsigned int nRndPos2) const
 {
     AssertLockHeld(cs);
 
@@ -156,11 +160,13 @@ void CAddrMan::SwapRandom(unsigned int nRndPos1, unsigned int nRndPos2)
     int nId1 = vRandom[nRndPos1];
     int nId2 = vRandom[nRndPos2];
 
-    assert(mapInfo.count(nId1) == 1);
-    assert(mapInfo.count(nId2) == 1);
+    const auto it_1{mapInfo.find(nId1)};
+    const auto it_2{mapInfo.find(nId2)};
+    assert(it_1 != mapInfo.end());
+    assert(it_2 != mapInfo.end());
 
-    mapInfo[nId1].nRandomPos = nRndPos2;
-    mapInfo[nId2].nRandomPos = nRndPos1;
+    it_1->second.nRandomPos = nRndPos2;
+    it_2->second.nRandomPos = nRndPos1;
 
     vRandom[nRndPos1] = nId2;
     vRandom[nRndPos2] = nId1;
@@ -346,15 +352,17 @@ bool CAddrMan::Add_(const CAddress& addr, const CNetAddr& source, int64_t nTimeP
         // periodically update nTime
         bool fCurrentlyOnline = (GetAdjustedTime() - addr.nTime < 24 * 60 * 60);
         int64_t nUpdateInterval = (fCurrentlyOnline ? 60 * 60 : 24 * 60 * 60);
-        if (addr.nTime && (!pinfo->nTime || pinfo->nTime < addr.nTime - nUpdateInterval - nTimePenalty))
+        if (pinfo->nTime < addr.nTime - nUpdateInterval - nTimePenalty) {
             pinfo->nTime = std::max((int64_t)0, addr.nTime - nTimePenalty);
+        }
 
         // add services
         pinfo->nServices = ServiceFlags(pinfo->nServices | addr.nServices);
 
         // do not update if no new information is present
-        if (!addr.nTime || (pinfo->nTime && addr.nTime <= pinfo->nTime))
+        if (addr.nTime <= pinfo->nTime) {
             return false;
+        }
 
         // do not update if the entry was already in the "tried" table
         if (pinfo->fInTried)
@@ -425,7 +433,7 @@ void CAddrMan::Attempt_(const CService& addr, bool fCountFailure, int64_t nTime)
     }
 }
 
-CAddrInfo CAddrMan::Select_(bool newOnly)
+CAddrInfo CAddrMan::Select_(bool newOnly) const
 {
     AssertLockHeld(cs);
 
@@ -448,8 +456,9 @@ CAddrInfo CAddrMan::Select_(bool newOnly)
                 nKBucketPos = (nKBucketPos + insecure_rand.randbits(ADDRMAN_BUCKET_SIZE_LOG2)) % ADDRMAN_BUCKET_SIZE;
             }
             int nId = vvTried[nKBucket][nKBucketPos];
-            assert(mapInfo.count(nId) == 1);
-            CAddrInfo& info = mapInfo[nId];
+            const auto it_found{mapInfo.find(nId)};
+            assert(it_found != mapInfo.end());
+            const CAddrInfo& info{it_found->second};
             if (insecure_rand.randbits(30) < fChanceFactor * info.GetChance() * (1 << 30))
                 return info;
             fChanceFactor *= 1.2;
@@ -465,8 +474,9 @@ CAddrInfo CAddrMan::Select_(bool newOnly)
                 nUBucketPos = (nUBucketPos + insecure_rand.randbits(ADDRMAN_BUCKET_SIZE_LOG2)) % ADDRMAN_BUCKET_SIZE;
             }
             int nId = vvNew[nUBucket][nUBucketPos];
-            assert(mapInfo.count(nId) == 1);
-            CAddrInfo& info = mapInfo[nId];
+            const auto it_found{mapInfo.find(nId)};
+            assert(it_found != mapInfo.end());
+            const CAddrInfo& info{it_found->second};
             if (insecure_rand.randbits(30) < fChanceFactor * info.GetChance() * (1 << 30))
                 return info;
             fChanceFactor *= 1.2;
@@ -478,8 +488,8 @@ CAddrInfo CAddrMan::Select_(bool newOnly)
 int CAddrMan::Check_()
 {
     AssertLockHeld(cs);
-    std::set<int> setTried;
-    std::map<int, int> mapNew;
+    std::unordered_set<int> setTried;
+    std::unordered_map<int, int> mapNew;
 
     if (vRandom.size() != (size_t)(nTried + nNew))
         return -7;
@@ -517,15 +527,15 @@ int CAddrMan::Check_()
 
     for (int n = 0; n < ADDRMAN_TRIED_BUCKET_COUNT; n++) {
         for (int i = 0; i < ADDRMAN_BUCKET_SIZE; i++) {
-             if (vvTried[n][i] != -1) {
-                 if (!setTried.count(vvTried[n][i]))
-                     return -11;
-                 if (mapInfo[vvTried[n][i]].GetTriedBucket(nKey, m_asmap) != n)
-                     return -17;
-                 if (mapInfo[vvTried[n][i]].GetBucketPosition(nKey, false, n) != i)
-                     return -18;
-                 setTried.erase(vvTried[n][i]);
-             }
+            if (vvTried[n][i] != -1) {
+                if (!setTried.count(vvTried[n][i]))
+                    return -11;
+                if (mapInfo[vvTried[n][i]].GetTriedBucket(nKey, m_asmap) != n)
+                    return -17;
+                if (mapInfo[vvTried[n][i]].GetBucketPosition(nKey, false, n) != i)
+                    return -18;
+                setTried.erase(vvTried[n][i]);
+            }
         }
     }
 
@@ -553,7 +563,7 @@ int CAddrMan::Check_()
 }
 #endif
 
-void CAddrMan::GetAddr_(std::vector<CAddress>& vAddr, size_t max_addresses, size_t max_pct, std::optional<Network> network)
+void CAddrMan::GetAddr_(std::vector<CAddress>& vAddr, size_t max_addresses, size_t max_pct, std::optional<Network> network) const
 {
     AssertLockHeld(cs);
 
@@ -573,9 +583,10 @@ void CAddrMan::GetAddr_(std::vector<CAddress>& vAddr, size_t max_addresses, size
 
         int nRndPos = insecure_rand.randrange(vRandom.size() - n) + n;
         SwapRandom(n, nRndPos);
-        assert(mapInfo.count(vRandom[n]) == 1);
+        const auto it{mapInfo.find(vRandom[n])};
+        assert(it != mapInfo.end());
 
-        const CAddrInfo& ai = mapInfo[vRandom[n]];
+        const CAddrInfo& ai{it->second};
 
         // Filter by network (optional)
         if (network != std::nullopt && ai.GetNetClass() != network) continue;
@@ -672,25 +683,27 @@ void CAddrMan::ResolveCollisions_()
                 int id_old = vvTried[tried_bucket][tried_bucket_pos];
                 CAddrInfo& info_old = mapInfo[id_old];
 
+                const auto current_time{GetAdjustedTime()};
+
                 // Has successfully connected in last X hours
-                if (GetAdjustedTime() - info_old.nLastSuccess < ADDRMAN_REPLACEMENT_HOURS*(60*60)) {
+                if (current_time - info_old.nLastSuccess < ADDRMAN_REPLACEMENT_HOURS*(60*60)) {
                     erase_collision = true;
-                } else if (GetAdjustedTime() - info_old.nLastTry < ADDRMAN_REPLACEMENT_HOURS*(60*60)) { // attempted to connect and failed in last X hours
+                } else if (current_time - info_old.nLastTry < ADDRMAN_REPLACEMENT_HOURS*(60*60)) { // attempted to connect and failed in last X hours
 
                     // Give address at least 60 seconds to successfully connect
-                    if (GetAdjustedTime() - info_old.nLastTry > 60) {
+                    if (current_time - info_old.nLastTry > 60) {
                         LogPrint(BCLog::ADDRMAN, "Replacing %s with %s in tried table\n", info_old.ToString(), info_new.ToString());
 
                         // Replaces an existing address already in the tried table with the new address
-                        Good_(info_new, false, GetAdjustedTime());
+                        Good_(info_new, false, current_time);
                         erase_collision = true;
                     }
-                } else if (GetAdjustedTime() - info_new.nLastSuccess > ADDRMAN_TEST_WINDOW) {
+                } else if (current_time - info_new.nLastSuccess > ADDRMAN_TEST_WINDOW) {
                     // If the collision hasn't resolved in some reasonable amount of time,
                     // just evict the old entry -- we must not be able to
                     // connect to it for some reason.
                     LogPrint(BCLog::ADDRMAN, "Unable to test; replacing %s with %s in tried table anyway\n", info_old.ToString(), info_new.ToString());
-                    Good_(info_new, false, GetAdjustedTime());
+                    Good_(info_new, false, current_time);
                     erase_collision = true;
                 }
             } else { // Collision is not actually a collision anymore
@@ -749,7 +762,7 @@ std::vector<bool> CAddrMan::DecodeAsmap(fs::path path)
     int length = ftell(filestr);
     LogPrintf("Opened asmap file %s (%d bytes) from disk\n", path, length);
     fseek(filestr, 0, SEEK_SET);
-    char cur_byte;
+    uint8_t cur_byte;
     for (int i = 0; i < length; ++i) {
         file >> cur_byte;
         for (int bit = 0; bit < 8; ++bit) {

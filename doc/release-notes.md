@@ -1,12 +1,8 @@
-# Sparks Core version v20.0.4
+# Sparks Core version v20.1.1
 
-Release is now available from:
+This is a new patch version release, including bug fixes.
 
-  <https://www.sparkspay.io/downloads/#wallets>
-
-This is a new patch version release, bringing small bug fixes and build system enhancements.
-
-This release is optional for all nodes.
+This release is optional but recommended for all nodes.
 
 Please report bugs using the issue tracker at GitHub:
 
@@ -20,10 +16,7 @@ Please report bugs using the issue tracker at GitHub:
 If you are running an older version, shut it down. Wait until it has completely
 shut down (which might take a few minutes for older versions), then run the
 installer (on Windows) or just copy over /Applications/Sparks-Qt (on Mac) or
-sparksd/sparks-qt (on Linux). If you upgrade after DIP0003 activation and you were
-using version < 0.13 you will have to reindex (start with -reindex-chainstate
-or -reindex) to make sure your wallet has all the new data synced. Upgrading
-from version 0.13 should not require any additional actions.
+sparksd/sparks-qt (on Linux).
 
 ## Downgrade warning
 
@@ -35,29 +28,12 @@ reindex or re-sync the whole chain.
 
 # Notable changes
 
-## Build changes
+## Work Queue RPC Fix / Deadlock Fix
 
-The miner has been disabled for Windows binaries built via Guix. This resolves
-an issue that was preventing users from installing v20.0.3 due to false
-positive alerts from Microsoft Defender and other antivirus providers.
+A deadlock caused nodes to become non-responsive and RPC to report "Work depth queue exceeded".
+Thanks to Konstantin Akimov (knst) who discovered the cause. This previously caused masternodes to become PoSe banned.
 
-Use a self-signed Windows code signing certificate instead of expired one. The
-expired certificate being used previously caused most antivirus software to trigger.
-The new self-signed certificate results in a greatly improved installation experience.
-
-Updated expired gpg keys for builders. Note that the actual keys themselves are the same.
-The updated keys changed their expiration dates and added additional information such as
-new email addresses.
-
-## Governance
-
-Triggers from the past are now ignored when voting.
-
-## Asset lock and unlock transactions
-
-Use the correct quorum for signing withdrawal (asset unlock) txes on RegTest.
-
-# v20.0.4 Change log
+# v20.1.1 Change log
 
 See detailed [set of changes][set-of-changes].
 
@@ -65,37 +41,19 @@ See detailed [set of changes][set-of-changes].
 
 Thanks to everyone who directly contributed to this release:
 
-- Konstantin Akimov (knst)
+- Konstantin Akimov
 - PastaPastaPasta
-- UdjinM6
+- thephez
 
 As well as everyone that submitted issues, reviewed pull requests and helped
 debug the release candidates.
 
 # Older releases
 
-Sparks was previously known as Darkcoin.
-
-Darkcoin tree 0.8.x was a fork of Litecoin tree 0.8, original name was XCoin
-which was first released on Jan/18/2014.
-
-Darkcoin tree 0.9.x was the open source implementation of masternodes based on
-the 0.8.x tree and was first released on Mar/13/2014.
-
-Darkcoin tree 0.10.x used to be the closed source implementation of Darksend
-which was released open source on Sep/25/2014.
-
-Sparks Core tree 0.11.x was a fork of Bitcoin Core tree 0.9,
-Darkcoin was rebranded to Sparks.
-
-Sparks Core tree 0.12.0.x was a fork of Bitcoin Core tree 0.10.
-
-Sparks Core tree 0.12.1.x was a fork of Bitcoin Core tree 0.12.
-
-Sparks Core tree 0.12.3.x was a fork of Sparks Core tree 0.12.3.x.
-
 These release are considered obsolete. Old release notes can be found here:
 
+- [v20.1.0](https://github.com/Sparkspay/Sparks/blob/master/doc/release-notes/Sparks/release-notes-20.1.0.md) released March/5/2024
+- [v20.0.4](https://github.com/Sparkspay/Sparks/blob/master/doc/release-notes/Sparks/release-notes-20.0.4.md) released Jan/13/2024
 - [v20.0.3](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-20.0.3.md) released December/26/2023
 - [v20.0.2](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-20.0.2.md) released December/06/2023
 - [v20.0.1](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-20.0.1.md) released November/18/2023
@@ -138,4 +96,4 @@ These release are considered obsolete. Old release notes can be found here:
 - [v0.10.x](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-0.10.0.md) released Sep/25/2014
 - [v0.9.x](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-0.9.0.md) released Mar/13/2014
 
-[set-of-changes]: https://github.com/sparkspay/sparks/compare/v20.0.3...sparkspay:v20.0.4
+[set-of-changes]: https://github.com/sparkspay/sparks/compare/v20.1.0...sparkspay:v20.1.1

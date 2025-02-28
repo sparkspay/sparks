@@ -271,7 +271,7 @@ class TestNode():
                     return
                 self.rpc = rpc
                 self.rpc_connected = True
-                self.url = self.rpc.url
+                self.url = self.rpc.rpc_url
                 return
             except JSONRPCException as e:  # Initialization phase
                 # -28 RPC in warmup
@@ -563,16 +563,7 @@ class TestNode():
 
         return p2p_conn
 
-    @property
-    def p2p(self):
-        """Return the first p2p connection
-
-        Convenience property - most tests only use a single p2p connection to each
-        node, so this saves having to write node.p2ps[0] many times."""
-        assert self.p2ps, self._node_msg("No p2p connection")
-        return self.p2ps[0]
-
-    def num_connected_mininodes(self):
+    def num_test_p2p_connections(self):
         """Return number of test framework p2p connections to the node."""
         return len([peer for peer in self.getpeerinfo() if peer['subver'] == MY_SUBVERSION.decode("utf-8")])
 
@@ -591,7 +582,7 @@ class TestNode():
         wait_until(check_peers, timeout=5)
 
         del self.p2ps[:]
-        wait_until(lambda: self.num_connected_mininodes() == 0)
+        wait_until(lambda: self.num_test_p2p_connections() == 0)
 
 
 class TestNodeCLIAttr:

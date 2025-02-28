@@ -10,7 +10,6 @@
 #include <consensus/params.h>
 #include <flatfile.h>
 #include <primitives/block.h>
-#include <tinyformat.h>
 #include <uint256.h>
 
 #include <vector>
@@ -168,7 +167,7 @@ public:
 
     //! (memory only) Number of transactions in the chain up to and including this block.
     //! This value will be non-zero only if and only if transactions for this block and all its parents are available.
-    //! Change to 64-bit type when necessary; won't happen before 2030
+    //! Change to 64-bit type before 2024 (assuming worst case of 60 byte transactions).
     //!
     //! Note: this value is faked during use of a UTXO snapshot because we don't
     //! have the underlying block data available during snapshot load.
@@ -281,13 +280,7 @@ public:
         return pbegin[(pend - pbegin)/2];
     }
 
-    std::string ToString() const
-    {
-        return strprintf("CBlockIndex(pprev=%p, nHeight=%d, merkle=%s, hashBlock=%s)",
-            pprev, nHeight,
-            hashMerkleRoot.ToString(),
-            GetBlockHash().ToString());
-    }
+    std::string ToString() const;
 
     //! Check whether this block index entry is valid up to the passed validity level.
     bool IsValid(enum BlockStatus nUpTo = BLOCK_VALID_TRANSACTIONS) const
@@ -381,16 +374,8 @@ public:
         return block.GetHash();
     }
 
+    std::string ToString() const;
 
-    std::string ToString() const
-    {
-        std::string str = "CDiskBlockIndex(";
-        str += CBlockIndex::ToString();
-        str += strprintf("\n                hashBlock=%s, hashPrev=%s)",
-            GetBlockHash().ToString(),
-            hashPrev.ToString());
-        return str;
-    }
 };
 
 /** An in-memory indexed chain of blocks. */

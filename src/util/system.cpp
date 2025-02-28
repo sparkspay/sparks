@@ -1,12 +1,17 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <util/system.h>
 
 #include <support/allocators/secure.h>
+
+#ifdef HAVE_BOOST_PROCESS
+#include <boost/process.hpp>
+#endif // HAVE_BOOST_PROCESS
+
 #include <chainparamsbase.h>
 #include <ctpl_stl.h>
 #include <stacktraces.h>
@@ -16,6 +21,7 @@
 #include <util/threadnames.h>
 #include <util/translation.h>
 
+#include <tinyformat.h>
 
 #if (defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__))
 #include <pthread.h>
@@ -51,12 +57,6 @@
 #pragma warning(disable:4717)
 #endif
 
-#ifdef _WIN32_IE
-#undef _WIN32_IE
-#endif
-#define _WIN32_IE 0x0501
-
-#define WIN32_LEAN_AND_MEAN 1
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -424,7 +424,7 @@ bool ArgsManager::GetSettingsPath(fs::path* filepath, bool temp) const
     }
     if (filepath) {
         std::string settings = GetArg("-settings", BITCOIN_SETTINGS_FILENAME);
-        *filepath = fs::absolute(temp ? settings + ".tmp" : settings, GetDataDir(/* net_specific= */ true));
+        *filepath = fsbridge::AbsPathJoin(GetDataDir(/* net_specific= */ true), temp ? settings + ".tmp" : settings);
     }
     return true;
 }
@@ -1300,6 +1300,43 @@ void RenameThreadPool(ctpl::thread_pool& tp, const char* baseName)
     }
 }
 
+#ifdef HAVE_BOOST_PROCESS
+UniValue RunCommandParseJSON(const std::string& str_command, const std::string& str_std_in)
+{
+    namespace bp = boost::process;
+
+    UniValue result_json;
+    bp::opstream stdin_stream;
+    bp::ipstream stdout_stream;
+    bp::ipstream stderr_stream;
+
+    if (str_command.empty()) return UniValue::VNULL;
+
+    bp::child c(
+        str_command,
+        bp::std_out > stdout_stream,
+        bp::std_err > stderr_stream,
+        bp::std_in < stdin_stream
+    );
+    if (!str_std_in.empty()) {
+        stdin_stream << str_std_in << std::endl;
+    }
+    stdin_stream.pipe().close();
+
+    std::string result;
+    std::string error;
+    std::getline(stdout_stream, result);
+    std::getline(stderr_stream, error);
+
+    c.wait();
+    const int n_error = c.exit_code();
+    if (n_error) throw std::runtime_error(strprintf("RunCommandParseJSON error: process(%s) returned %d: %s\n", str_command, n_error, error));
+    if (!result_json.read(result)) throw std::runtime_error("Unable to parse JSON: " + result);
+
+    return result_json;
+}
+#endif // HAVE_BOOST_PROCESS
+
 void SetupEnvironment()
 {
 #ifdef HAVE_MALLOPT_ARENA_MAX
@@ -1386,7 +1423,7 @@ fs::path AbsPathForConfigVal(const fs::path& path, bool net_specific)
     if (path.is_absolute()) {
         return path;
     }
-    return fs::absolute(path, GetDataDir(net_specific));
+    return fsbridge::AbsPathJoin(GetDataDir(net_specific), path);
 }
 
 void ScheduleBatchPriority()

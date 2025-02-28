@@ -54,7 +54,7 @@ Node1 is unused in tests 3-7:
 
 from test_framework.blocktools import create_block, create_coinbase, create_tx_with_script
 from test_framework.messages import CBlockHeader, CInv, MSG_BLOCK, msg_block, msg_headers, msg_inv
-from test_framework.mininode import mininode_lock, P2PInterface
+from test_framework.p2p import p2p_lock, P2PInterface
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error
 
@@ -194,13 +194,13 @@ class AcceptBlockTest(BitcoinTestFramework):
         # 6. Try to get node to request the missing block.
         # Poke the node with an inv for block at height 3 and see if that
         # triggers a getdata on block 2 (it should if block 2 is missing).
-        with mininode_lock:
+        with p2p_lock:
             # Clear state so we can check the getdata request
             test_node.last_message.pop("getdata", None)
             test_node.send_message(msg_inv([CInv(MSG_BLOCK, block_h3.sha256)]))
 
         test_node.sync_with_ping()
-        with mininode_lock:
+        with p2p_lock:
             getdata = test_node.last_message["getdata"]
 
         # Check that the getdata includes the right block
@@ -254,16 +254,11 @@ class AcceptBlockTest(BitcoinTestFramework):
         test_node.send_message(msg_block(block_291))
 
         # At this point we've sent an obviously-bogus block, wait for full processing
-        # without assuming whether we will be disconnected or not
-        try:
-            # Only wait a short while so the test doesn't take forever if we do get
-            # disconnected
-            test_node.sync_with_ping(timeout=1)
-        except AssertionError:
-            test_node.wait_for_disconnect()
+        # and assume disconnection
+        test_node.wait_for_disconnect()
 
-            self.nodes[0].disconnect_p2ps()
-            test_node = self.nodes[0].add_p2p_connection(P2PInterface())
+        self.nodes[0].disconnect_p2ps()
+        test_node = self.nodes[0].add_p2p_connection(P2PInterface())
 
         # We should have failed reorg and switched back to 290 (but have block 291)
         assert_equal(self.nodes[0].getblockcount(), 290)

@@ -1,8 +1,8 @@
 package=boost
-$(package)_version=1_73_0
-$(package)_download_path=https://archives.boost.io/release/$(subst _,.,$($(package)_version))/source/
+$(package)_version=1.77.0
+$(package)_download_path=https://archives.boost.io/release/$($(package)_version)/source/
 $(package)_file_name=boost_$($(package)_version).tar.bz2
-$(package)_sha256_hash=4eb3b8d442b426dc35346235c8733b5ae35ba431690e38c6a8263dce9fcbb402
+$(package)_sha256_hash=fc9f85fc030e233142908241af7a846e60630aa7388de9a5fafb1f3a26840854
 $(package)_dependencies=native_b2
 
 define $(package)_set_vars
@@ -30,7 +30,7 @@ endif
 else
 $(package)_toolset_$(host_os)=gcc
 endif
-$(package)_config_libraries=filesystem,thread,test
+$(package)_config_libraries=filesystem,test
 $(package)_cxxflags=-std=c++17 -fvisibility=hidden
 $(package)_cxxflags_linux=-fPIC
 $(package)_cxxflags_freebsd=-fPIC
@@ -39,10 +39,8 @@ $(package)_cxxflags_android=-fPIC
 $(package)_cxxflags_x86_64=-fcf-protection=full
 endef
 
-# Fix unused variable in boost_process, can be removed after upgrading to 1.72
 # Fix missing unary_function in clang15 on macos, can be removed after upgrading to 1.81
 define $(package)_preprocess_cmds
-  sed -i.old "s/int ret_sig = 0;//" boost/process/detail/posix/wait_group.hpp && \
   sed -i.old "s/unary_function/$(unary_function)/" boost/container_hash/hash.hpp && \
   echo "using $($(package)_toolset_$(host_os)) : : $($(package)_cxx) : <cflags>\"$($(package)_cflags)\" <cxxflags>\"$($(package)_cxxflags)\" <compileflags>\"$($(package)_cppflags)\" <linkflags>\"$($(package)_ldflags)\" <archiver>\"$($(package)_ar)\" <striper>\"$(host_STRIP)\"  <ranlib>\"$(host_RANLIB)\" <rc>\"$(host_WINDRES)\" : ;" > user-config.jam
 endef

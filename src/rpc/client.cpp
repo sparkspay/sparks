@@ -1,6 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -58,6 +58,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "listreceivedbylabel", 1, "addlocked" },
     { "listreceivedbylabel", 2, "include_empty" },
     { "listreceivedbylabel", 3, "include_watchonly" },
+    { "getassetunlockstatuses", 0, "indexes" },
+    { "getassetunlockstatuses", 1, "height" },
     { "getbalance", 1, "minconf" },
     { "getbalance", 2, "addlocked" },
     { "getbalance", 3, "include_watchonly" },
@@ -107,6 +109,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "gettransaction", 1, "include_watchonly" },
     { "gettransaction", 2, "verbose" },
     { "getrawtransaction", 1, "verbose" },
+    { "getrawtransactionmulti", 0, "txid_map" },
+    { "getrawtransactionmulti", 1, "verbose" },
     { "gettxchainlocks", 0, "txids" },
     { "createrawtransaction", 0, "inputs" },
     { "createrawtransaction", 1, "outputs" },

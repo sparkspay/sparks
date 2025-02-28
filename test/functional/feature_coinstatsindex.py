@@ -286,6 +286,7 @@ class CoinStatsIndexTest(BitcoinTestFramework):
         # Add another block, so we don't depend on reconsiderblock remembering which
         # blocks were touched by invalidateblock
         index_node.generate(1)
+        self.sync_all()
 
         # Ensure that removing and re-adding blocks yields consistent results
         block = index_node.getblockhash(99)
@@ -293,14 +294,6 @@ class CoinStatsIndexTest(BitcoinTestFramework):
         index_node.reconsiderblock(block)
         res3 = index_node.gettxoutsetinfo(hash_type='muhash', hash_or_height=112)
         assert_equal(res2, res3)
-
-        self.log.info("Test that a node aware of stale blocks syncs them as well")
-        node = self.nodes[0]
-        # Ensure the node is aware of a stale block prior to restart
-        node.getblock(reorg_block)
-
-        self.restart_node(0, ["-coinstatsindex"])
-        assert_raises_rpc_error(-32603, "Unable to get data because coinstatsindex is still syncing.", node.gettxoutsetinfo, 'muhash', reorg_block)
 
     def _test_index_rejects_hash_serialized(self):
         self.log.info("Test that the rpc raises if the legacy hash is passed with the index")

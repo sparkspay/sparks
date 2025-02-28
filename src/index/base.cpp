@@ -5,15 +5,15 @@
 #include <chainparams.h>
 #include <index/base.h>
 #include <node/blockstorage.h>
+#include <node/ui_interface.h>
 #include <shutdown.h>
 #include <tinyformat.h>
-#include <ui_interface.h>
 #include <util/thread.h>
 #include <util/translation.h>
 #include <validation.h> // For g_chainman
 #include <warnings.h>
 
-constexpr char DB_BEST_BLOCK = 'B';
+constexpr uint8_t DB_BEST_BLOCK{'B'};
 
 constexpr auto SYNC_LOG_INTERVAL{30s};
 constexpr auto SYNC_LOCATOR_WRITE_INTERVAL{30s};
@@ -22,7 +22,7 @@ template <typename... Args>
 static void FatalError(const char* fmt, const Args&... args)
 {
     std::string strMessage = tfm::format(fmt, args...);
-    SetMiscWarning(strMessage);
+    SetMiscWarning(Untranslated(strMessage));
     LogPrintf("*** %s\n", strMessage);
     AbortError(_("A fatal internal error occurred, see debug.log for details"));
     StartShutdown();
@@ -66,6 +66,10 @@ bool BaseIndex::Init()
     } else {
         m_best_block_index = m_chainstate->m_blockman.FindForkInGlobalIndex(active_chain, locator);
     }
+
+    // Note: this will latch to true immediately if the user starts up with an empty
+    // datadir and an index enabled. If this is the case, indexation will happen solely
+    // via `BlockConnected` signals until, possibly, the next restart.
     m_synced = m_best_block_index.load() == active_chain.Tip();
     if (!m_synced) {
         bool prune_violation = false;

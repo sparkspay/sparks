@@ -149,7 +149,7 @@ static const unsigned char ParseHex_expected[65] = {
     0xde, 0x5c, 0x38, 0x4d, 0xf7, 0xba, 0x0b, 0x8d, 0x57, 0x8a, 0x4c, 0x70, 0x2b, 0x6b, 0xf1, 0x1d,
     0x5f
 };
-BOOST_AUTO_TEST_CASE(util_ParseHex)
+BOOST_AUTO_TEST_CASE(parse_hex)
 {
     std::vector<unsigned char> result;
     std::vector<unsigned char> expected(ParseHex_expected, ParseHex_expected + sizeof(ParseHex_expected));
@@ -164,6 +164,14 @@ BOOST_AUTO_TEST_CASE(util_ParseHex)
     // Leading space must be supported (used in BerkeleyEnvironment::Salvage)
     result = ParseHex(" 89 34 56 78");
     BOOST_CHECK(result.size() == 4 && result[0] == 0x89 && result[1] == 0x34 && result[2] == 0x56 && result[3] == 0x78);
+
+    // Embedded null is treated as end
+    const std::string with_embedded_null{" 11 "s
+                                         " \0 "
+                                         " 22 "s};
+    BOOST_CHECK_EQUAL(with_embedded_null.size(), 11);
+    result = ParseHex(with_embedded_null);
+    BOOST_CHECK(result.size() == 1 && result[0] == 0x11);
 
     // Stop parsing at invalid value
     result = ParseHex("1234 invalid 1234");
@@ -344,9 +352,9 @@ public:
         BOOST_CHECK_EQUAL(test.GetSetting("-value").write(), expect.setting.write());
         auto settings_list = test.GetSettingsList("-value");
         if (expect.setting.isNull() || expect.setting.isFalse()) {
-            BOOST_CHECK_EQUAL(settings_list.size(), 0);
+            BOOST_CHECK_EQUAL(settings_list.size(), 0U);
         } else {
-            BOOST_CHECK_EQUAL(settings_list.size(), 1);
+            BOOST_CHECK_EQUAL(settings_list.size(), 1U);
             BOOST_CHECK_EQUAL(settings_list[0].write(), expect.setting.write());
         }
 
@@ -1506,9 +1514,17 @@ static void TestAddMatrixOverflow()
     constexpr T MAXI{std::numeric_limits<T>::max()};
     BOOST_CHECK(!CheckedAdd(T{1}, MAXI));
     BOOST_CHECK(!CheckedAdd(MAXI, MAXI));
+    BOOST_CHECK_EQUAL(MAXI, SaturatingAdd(T{1}, MAXI));
+    BOOST_CHECK_EQUAL(MAXI, SaturatingAdd(MAXI, MAXI));
+
     BOOST_CHECK_EQUAL(0, CheckedAdd(T{0}, T{0}).value());
     BOOST_CHECK_EQUAL(MAXI, CheckedAdd(T{0}, MAXI).value());
     BOOST_CHECK_EQUAL(MAXI, CheckedAdd(T{1}, MAXI - 1).value());
+    BOOST_CHECK_EQUAL(MAXI - 1, CheckedAdd(T{1}, MAXI - 2).value());
+    BOOST_CHECK_EQUAL(0, SaturatingAdd(T{0}, T{0}));
+    BOOST_CHECK_EQUAL(MAXI, SaturatingAdd(T{0}, MAXI));
+    BOOST_CHECK_EQUAL(MAXI, SaturatingAdd(T{1}, MAXI - 1));
+    BOOST_CHECK_EQUAL(MAXI - 1, SaturatingAdd(T{1}, MAXI - 2));
 }
 
 /* Check for overflow or underflow */
@@ -1520,9 +1536,17 @@ static void TestAddMatrix()
     constexpr T MAXI{std::numeric_limits<T>::max()};
     BOOST_CHECK(!CheckedAdd(T{-1}, MINI));
     BOOST_CHECK(!CheckedAdd(MINI, MINI));
+    BOOST_CHECK_EQUAL(MINI, SaturatingAdd(T{-1}, MINI));
+    BOOST_CHECK_EQUAL(MINI, SaturatingAdd(MINI, MINI));
+
     BOOST_CHECK_EQUAL(MINI, CheckedAdd(T{0}, MINI).value());
     BOOST_CHECK_EQUAL(MINI, CheckedAdd(T{-1}, MINI + 1).value());
     BOOST_CHECK_EQUAL(-1, CheckedAdd(MINI, MAXI).value());
+    BOOST_CHECK_EQUAL(MINI + 1, CheckedAdd(T{-1}, MINI + 2).value());
+    BOOST_CHECK_EQUAL(MINI, SaturatingAdd(T{0}, MINI));
+    BOOST_CHECK_EQUAL(MINI, SaturatingAdd(T{-1}, MINI + 1));
+    BOOST_CHECK_EQUAL(MINI + 1, SaturatingAdd(T{-1}, MINI + 2));
+    BOOST_CHECK_EQUAL(-1, SaturatingAdd(MINI, MAXI));
 }
 
 BOOST_AUTO_TEST_CASE(util_overflow)
@@ -2181,24 +2205,24 @@ BOOST_AUTO_TEST_CASE(test_tracked_vector)
     BOOST_CHECK(t3.origin == &t3);
 
     auto v1 = Vector(t1);
-    BOOST_CHECK_EQUAL(v1.size(), 1);
+    BOOST_CHECK_EQUAL(v1.size(), 1U);
     BOOST_CHECK(v1[0].origin == &t1);
     BOOST_CHECK_EQUAL(v1[0].copies, 1);
 
     auto v2 = Vector(std::move(t2));
-    BOOST_CHECK_EQUAL(v2.size(), 1);
+    BOOST_CHECK_EQUAL(v2.size(), 1U);
     BOOST_CHECK(v2[0].origin == &t2);
     BOOST_CHECK_EQUAL(v2[0].copies, 0);
 
     auto v3 = Vector(t1, std::move(t2));
-    BOOST_CHECK_EQUAL(v3.size(), 2);
+    BOOST_CHECK_EQUAL(v3.size(), 2U);
     BOOST_CHECK(v3[0].origin == &t1);
     BOOST_CHECK(v3[1].origin == &t2);
     BOOST_CHECK_EQUAL(v3[0].copies, 1);
     BOOST_CHECK_EQUAL(v3[1].copies, 0);
 
     auto v4 = Vector(std::move(v3[0]), v3[1], std::move(t3));
-    BOOST_CHECK_EQUAL(v4.size(), 3);
+    BOOST_CHECK_EQUAL(v4.size(), 3U);
     BOOST_CHECK(v4[0].origin == &t1);
     BOOST_CHECK(v4[1].origin == &t2);
     BOOST_CHECK(v4[2].origin == &t3);
@@ -2207,7 +2231,7 @@ BOOST_AUTO_TEST_CASE(test_tracked_vector)
     BOOST_CHECK_EQUAL(v4[2].copies, 0);
 
     auto v5 = Cat(v1, v4);
-    BOOST_CHECK_EQUAL(v5.size(), 4);
+    BOOST_CHECK_EQUAL(v5.size(), 4U);
     BOOST_CHECK(v5[0].origin == &t1);
     BOOST_CHECK(v5[1].origin == &t1);
     BOOST_CHECK(v5[2].origin == &t2);
@@ -2218,7 +2242,7 @@ BOOST_AUTO_TEST_CASE(test_tracked_vector)
     BOOST_CHECK_EQUAL(v5[3].copies, 1);
 
     auto v6 = Cat(std::move(v1), v3);
-    BOOST_CHECK_EQUAL(v6.size(), 3);
+    BOOST_CHECK_EQUAL(v6.size(), 3U);
     BOOST_CHECK(v6[0].origin == &t1);
     BOOST_CHECK(v6[1].origin == &t1);
     BOOST_CHECK(v6[2].origin == &t2);
@@ -2227,7 +2251,7 @@ BOOST_AUTO_TEST_CASE(test_tracked_vector)
     BOOST_CHECK_EQUAL(v6[2].copies, 1);
 
     auto v7 = Cat(v2, std::move(v4));
-    BOOST_CHECK_EQUAL(v7.size(), 4);
+    BOOST_CHECK_EQUAL(v7.size(), 4U);
     BOOST_CHECK(v7[0].origin == &t2);
     BOOST_CHECK(v7[1].origin == &t1);
     BOOST_CHECK(v7[2].origin == &t2);
@@ -2238,7 +2262,7 @@ BOOST_AUTO_TEST_CASE(test_tracked_vector)
     BOOST_CHECK_EQUAL(v7[3].copies, 0);
 
     auto v8 = Cat(std::move(v2), std::move(v3));
-    BOOST_CHECK_EQUAL(v8.size(), 3);
+    BOOST_CHECK_EQUAL(v8.size(), 3U);
     BOOST_CHECK(v8[0].origin == &t2);
     BOOST_CHECK(v8[1].origin == &t1);
     BOOST_CHECK(v8[2].origin == &t2);
@@ -2285,11 +2309,11 @@ BOOST_AUTO_TEST_CASE(test_Capitalize)
 BOOST_AUTO_TEST_CASE(test_CRanges)
 {
     std::mt19937 gen;
-    for (size_t test = 0; test < 17; ++test) {
+    for (int test = 0; test < 17; ++test) {
         std::uniform_int_distribution<uint64_t> dist_value(0, (1 << test));
         CRangesSet ranges;
         std::unordered_set<uint64_t> set_2;
-        for (size_t iter = 0; iter < (1 << test) * 2; ++iter) {
+        for (int iter = 0; iter < (1 << test) * 2; ++iter) {
             uint64_t value = dist_value(gen);
             BOOST_CHECK_EQUAL(ranges.Contains(value), !!set_2.count(value));
             if (!ranges.Contains(value)) {
@@ -2303,7 +2327,7 @@ BOOST_AUTO_TEST_CASE(test_CRanges)
             BOOST_CHECK_EQUAL(ranges.Size(), set_2.size());
         }
         if (test > 4) {
-            BOOST_CHECK(ranges.Size() > ((1 << test) / 4));
+            BOOST_CHECK(ranges.Size() > ((1u << test) / 4));
         }
     }
 }

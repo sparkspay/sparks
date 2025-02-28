@@ -11,9 +11,7 @@ from test_framework.messages import (
     NODE_NETWORK,
     msg_addr,
 )
-from test_framework.mininode import (
-    P2PInterface,
-)
+from test_framework.p2p import P2PInterface
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import (
     assert_equal,
@@ -47,7 +45,7 @@ class AddrTest(BitcoinTestFramework):
         addr_source = self.nodes[0].add_p2p_connection(P2PInterface())
         msg = msg_addr()
 
-        self.log.info('Send too large addr message')
+        self.log.info('Send too-large addr message')
         msg.addrs = ADDRS * 101
         with self.nodes[0].assert_debug_log(['addr message size = 1010']):
             addr_source.send_and_ping(msg)

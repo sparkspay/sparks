@@ -22,7 +22,9 @@ static const unsigned int QUEUE_BATCH_SIZE = 128;
 // and there is a little bit of work done between calls to Add.
 static void CCheckQueueSpeedPrevectorJob(benchmark::Bench& bench)
 {
-    const ECCVerifyHandle verify_handle;
+    // We shouldn't ever be running with the checkqueue on a single core machine.
+    if (GetNumCores() <= 1) return;
+
     ECC_Start();
 
     struct PrevectorJob {
@@ -36,7 +38,10 @@ static void CCheckQueueSpeedPrevectorJob(benchmark::Bench& bench)
         {
             return true;
         }
-        void swap(PrevectorJob& x){p.swap(x.p);};
+        void swap(PrevectorJob& x) noexcept
+        {
+            p.swap(x.p);
+        };
     };
     CCheckQueue<PrevectorJob> queue {QUEUE_BATCH_SIZE};
 
