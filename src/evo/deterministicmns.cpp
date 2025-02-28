@@ -186,17 +186,17 @@ CDeterministicMNCPtr CDeterministicMNList::GetMNPayee(gsl::not_null<const CBlock
         return nullptr;
     }
 
-    const bool isv19Active{DeploymentActiveAfter(pindexPrev, Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
+    const bool isV19Active{DeploymentActiveAfter(pindexPrev, Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
     const bool isMNRewardReallocation{DeploymentActiveAfter(pindexPrev, Params().GetConsensus(), Consensus::DEPLOYMENT_MN_RR)};
     // EvoNodes are rewarded 4 blocks in a row until MNRewardReallocation (Platform release)
     // For optimization purposes we also check if v19 active to avoid loop over all masternodes
     CDeterministicMNCPtr best = nullptr;
-    if (isv19Active && !isMNRewardReallocation) {
+    if (isV19Active && !isMNRewardReallocation) {
         ForEachMNShared(true, [&](const CDeterministicMNCPtr& dmn) {
             if (dmn->pdmnState->nLastPaidHeight == nHeight) {
                 // We found the last MN Payee.
                 // If the last payee is an EvoNode, we need to check its consecutive payments and pay him again if needed
-                if (dmn->nType == MnType::Evo && dmn->pdmnState->nConsecutivePayments < GetMnType(MnType::Evo, pIndex).voting_weight) {
+                if (dmn->nType == MnType::Evo && dmn->pdmnState->nConsecutivePayments < GetMnType(MnType::Evo, pindexPrev).voting_weight) {
                     best = dmn;
                 }
             }
@@ -233,7 +233,7 @@ std::vector<CDeterministicMNCPtr> CDeterministicMNList::GetProjectedMNPayees(gsl
     const bool isMNRewardReallocation{DeploymentActiveAfter(pindexPrev, Params().GetConsensus(), Consensus::DEPLOYMENT_MN_RR)};
     if (!isMNRewardReallocation) {
         ForEachMNShared(true, [&](const CDeterministicMNCPtr& dmn) {
-            const dmn_types::mntype_struct masternodeType = GetMnType(dmn->nType, pindex);
+            const dmn_types::mntype_struct masternodeType = GetMnType(dmn->nType, pindexPrev);
             if (dmn->pdmnState->nLastPaidHeight == nHeight) {
                 // We found the last MN Payee.
                 // If the last payee is an EvoNode, we need to check its consecutive payments and pay him again if needed
@@ -250,7 +250,7 @@ std::vector<CDeterministicMNCPtr> CDeterministicMNList::GetProjectedMNPayees(gsl
 
     ForEachMNShared(true, [&](const CDeterministicMNCPtr& dmn) {
         if (dmn == evo_to_be_skipped) return;
-        for ([[maybe_unused]] auto _ : irange::range(GetMnType(dmn->nType, pindex).voting_weight)) {
+        for ([[maybe_unused]] auto _ : irange::range(GetMnType(dmn->nType, pindexPrev).voting_weight)) {
             result.emplace_back(dmn);
         }
     });
@@ -769,10 +769,9 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, gsl::no
 
             Coin coin;
             CAmount expectedCollateral;
-            bool isv19Active = llmq::utils::IsV19Active(pindexPrev);
-            if (!isv19Active) {
+            if (!isV19Active) {
                 expectedCollateral = 25000 * COIN; //Old regular masternode collateral
-            } else if (isv19Active && pindexPrev->nHeight < Params().GetConsensus().V19Height && proTx.nType == MnType::Regular){
+            } else if (isV19Active && pindexPrev->nHeight < Params().GetConsensus().V19Height && proTx.nType == MnType::Regular){
                 expectedCollateral = 25000 * COIN; //Old regular masternode collateral
             } else {
                 expectedCollateral = GetMnType(proTx.nType, pindexPrev).collat_amount;
@@ -1124,10 +1123,10 @@ bool CDeterministicMNManager::IsProTxWithCollateral(const CTransactionRef& tx, u
 
     CAmount expectedCollateral;
     CBlockIndex *pindexPrev = ::ChainActive().Tip();
-    bool isv19Active = llmq::utils::IsV19Active(pindexPrev);
-    if (!isv19Active) {
+    const bool isV19Active{DeploymentActiveAfter(pindexPrev, Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
+    if (!isV19Active) {
         expectedCollateral = 25000 * COIN; //Old regular masternode collateral
-    } else if (isv19Active && ::ChainActive().Height() < Params().GetConsensus().V19Height && proTx.nType == MnType::Regular){
+    } else if (isV19Active && ::ChainActive().Height() < Params().GetConsensus().V19Height && proTx.nType == MnType::Regular){
         expectedCollateral = 25000 * COIN; //Old regular masternode collateral
     } else {
         expectedCollateral = GetMnType(proTx.nType, pindexPrev).collat_amount;
@@ -1577,10 +1576,10 @@ bool CheckProRegTx(const CTransaction& tx, gsl::not_null<const CBlockIndex*> pin
     COutPoint collateralOutpoint;
 
     CAmount expectedCollateral;
-    bool isv19Active = llmq::utils::IsV19Active(pindexPrev);
-    if (!isv19Active) {
+    const bool isV19Active{DeploymentActiveAfter(pindexPrev, Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
+    if (!isV19Active) {
         expectedCollateral = 25000 * COIN; //Old regular masternode collateral
-    } else if (isv19Active && pindexPrev->nHeight < Params().GetConsensus().V19Height && ptx.nType == MnType::Regular){
+    } else if (isV19Active && pindexPrev->nHeight < Params().GetConsensus().V19Height && opt_ptx->nType == MnType::Regular){
         expectedCollateral = 25000 * COIN; //Old regular masternode collateral
     } else {
         expectedCollateral = GetMnType(opt_ptx->nType, pindexPrev).collat_amount;

@@ -292,7 +292,7 @@ void CQuorumManager::UpdatedBlockTip(const CBlockIndex* pindexNew, bool fInitial
     if (!m_mn_sync->IsBlockchainSynced()) return;
 
     //modified for sparks
-    for (auto& params : llmq::utils::GetEnabledQuorums(pindexNew)) {
+    for (auto& params : llmq::GetEnabledQuorums(pindexNew)) {
         CheckQuorumConnections(params, pindexNew);
     }
 

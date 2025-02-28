@@ -12,6 +12,7 @@
 #include <chainparams.h>
 #include <consensus/consensus.h>
 #include <consensus/validation.h>
+#include <core_io.h>
 #include <crypto/common.h>
 #include <fs.h>
 #include <interfaces/chain.h>
@@ -1292,8 +1293,6 @@ void CWallet::blockConnected(const CBlock& block, int height)
 
     // Auto-combine functionality
     // If turned on Auto Combine will scan wallet for dust to combine
-    // Outside of the cs_wallet lock because requires cs_main for now
-    // due CreateTransaction/CommitTransaction dependency.
     if (fCombineDust) {
         AutoCombineDust();
     }
@@ -4652,8 +4651,8 @@ void CWallet::AutoCombineDust()
         vecSend[0].nAmount = nTotalRewardsValue - (nTotalRewardsValue * ValueFromAmount(nAutoCombineSafemargin).get_real());
 
         {
-            // For now, CreateTransaction requires cs_main lock.
-            LOCK2(cs_main, cs_wallet);
+
+            LOCK(cs_wallet);
             if (!CreateTransaction(vecSend, wtx, nFeeRet, nChangePosInOut, strErr, *coinControl,
                                    true, CAmount(0))) {
                 LogPrintf("AutoCombineDust createtransaction failed, reason: %s\n", strErr.original);

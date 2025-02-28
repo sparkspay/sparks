@@ -201,10 +201,10 @@ popd
        for troubleshooting by developers. It is assumed that anyone that is
        interested in debugging can run guix to generate the files for
        themselves. To avoid end-user confusion about which file to pick, as well
-       as save storage space *do not upload these to the sparks.org server*.
+       as save storage space *do not upload these to the sparkspay.io server*.
 
        ```sh
-       find guix-build-${VERSION}/output/ -maxdepth 2 -type f -not -name "SHA256SUMS.part" -and -not -name "*debug*" -exec scp {} user@sparks.org:/var/www/bin/sparks-core-${VERSION} \;
+       find guix-build-${VERSION}/output/ -maxdepth 2 -type f -not -name "SHA256SUMS.part" -and -not -name "*debug*" -exec scp {} user@sparkspay.io:/var/www/bin/sparks-core-${VERSION} \;
        ```
 
     2. The `SHA256SUMS` file
@@ -218,7 +218,7 @@ popd
 * [ ] Ensure that docker hub images are up to date
 
 ### Announce the release:
-* [ ] Release on Sparks forum: https://www.sparks.org/forum/topic/official-announcements.54/ (necessary so we have a permalink to use on twitter, reddit, etc.)
+* [ ] Release on Sparks forum: https://www.sparkspay.io/forum/topic/official-announcements.54/ (necessary so we have a permalink to use on twitter, reddit, etc.)
 * [ ] Prepare product brief (major versions only)
 * [ ] Prepare a release announcement tweet
 * [ ] Follow-up tweets with any important block heights for consensus changes
@@ -227,7 +227,7 @@ popd
 
 ### After the release:
 * [ ] Submit patches to BTCPay to ensure they use latest / compatible version see https://github.com/sparkspay/sparks/issues/4211#issuecomment-966608207
-* [ ] Update Core and User docs (docs.sparks.org)
+* [ ] Update Core and User docs (docs.sparkspay.io)
 * [ ] Test Docker build runs without error in Sparksmate
 * [ ] Add new Release Process items to repo [Release Process](release-process.md) document
 * [ ] Merge `master` branch back into `develop` so that `master` could be fast-forwarded on next release again

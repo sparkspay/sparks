@@ -1816,10 +1816,10 @@ UniValue datatx_get(const JSONRPCRequest& request)
 
     UniValue result(UniValue::VOBJ);
     if (tx->nType == TRANSACTION_DATA) {
-        CDataTx dataTx;
-        if (GetTxPayload(*tx, dataTx)) {
+        std::optional<CDataTx> dataTx = GetTxPayload<CDataTx>(*tx);
+        if (dataTx.has_value()) {
             UniValue obj;
-            dataTx.ToJson(obj);
+            dataTx->ToJson(obj);
             result.pushKV("datatx", obj);
         }
     } else {

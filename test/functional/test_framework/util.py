@@ -340,7 +340,7 @@ def initialize_datadir(dirname, n, chain):
     datadir = get_datadir_path(dirname, n)
     if not os.path.isdir(datadir):
         os.makedirs(datadir)
-    write_config(os.path.join(datadir, "dash.conf"), n=n, chain=chain)
+    write_config(os.path.join(datadir, "sparks.conf"), n=n, chain=chain)
     os.makedirs(os.path.join(datadir, 'stderr'), exist_ok=True)
     os.makedirs(os.path.join(datadir, 'stdout'), exist_ok=True)
     return datadir

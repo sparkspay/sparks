@@ -177,10 +177,10 @@ $ FUZZ=process_message honggfuzz/honggfuzz -i inputs/ -- src/test/fuzz/fuzz
 
 Read the [Honggfuzz documentation](https://github.com/google/honggfuzz/blob/master/docs/USAGE.md) for more information.
 
-## Fuzzing the Dash Core P2P layer using Honggfuzz NetDriver
+## Fuzzing the Sparks Core P2P layer using Honggfuzz NetDriver
 
-Honggfuzz NetDriver allows for very easy fuzzing of TCP servers such as Dash
-Core without having to write any custom fuzzing harness. The `dashd` server
+Honggfuzz NetDriver allows for very easy fuzzing of TCP servers such as Sparks
+Core without having to write any custom fuzzing harness. The `sparksd` server
 process is largely fuzzed without modification.
 
 This makes the fuzzing highly realistic: a bug reachable by the fuzzer is likely
@@ -191,8 +191,8 @@ To quickly get started fuzzing the P2P layer using Honggfuzz NetDriver:
 ```sh
 $ mkdir bitcoin-honggfuzz-p2p/
 $ cd bitcoin-honggfuzz-p2p/
-$ git clone https://github.com/dashpay/dash/
-$ cd dash/
+$ git clone https://github.com/sparkspay/sparks/
+$ cd sparks/
 $ ./autogen.sh
 $ git clone https://github.com/google/honggfuzz
 $ cd honggfuzz/
@@ -242,11 +242,11 @@ index cf987b699..636a4176a 100644
                   SanitizeString(msg->m_command), msg->m_message_size,
                   HexStr(Span<uint8_t>(hash.begin(), hash.begin() + CMessageHeader::CHECKSUM_SIZE)),
 EOF
-$ make -C src/ dashd
+$ make -C src/ sparksd
 $ mkdir -p inputs/
 $ honggfuzz/honggfuzz --exit_upon_crash --quiet --timeout 4 -n 1 -Q \
       -E HFND_TCP_PORT=18444 -f inputs/ -- \
-          src/dashd -regtest -discover=0 -dns=0 -dnsseed=0 -listenonion=0 \
+          src/sparksd -regtest -discover=0 -dns=0 -dnsseed=0 -listenonion=0 \
                        -nodebuglogfile -bind=127.0.0.1:18444 -logthreadnames \
                        -debug
 ```

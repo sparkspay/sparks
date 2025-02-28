@@ -2,7 +2,7 @@ OpenBSD build guide
 ======================
 (updated for OpenBSD 6.7)
 
-This guide describes how to build sparksd, dash-qt, and command-line utilities on OpenBSD.
+This guide describes how to build sparksd, sparks-qt, and command-line utilities on OpenBSD.
 
 Preparation
 -------------

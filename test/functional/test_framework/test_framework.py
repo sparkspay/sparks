@@ -423,7 +423,7 @@ class BitcoinTestFramework(metaclass=BitcoinTestMetaClass):
     def setup_nodes(self):
         """Override this method to customize test node setup"""
 
-        """If this method is updated - backport changes to  DashTestFramework.setup_nodes"""
+        """If this method is updated - backport changes to  SparksTestFramework.setup_nodes"""
         extra_args = None
         if hasattr(self, "extra_args"):
             extra_args = self.extra_args

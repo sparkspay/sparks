@@ -144,13 +144,6 @@ enum class SynchronizationState {
     POST_INIT
 };
 
-/** Current sync state passed to tip changed callbacks. */
-enum class SynchronizationState {
-    INIT_REINDEX,
-    INIT_DOWNLOAD,
-    POST_INIT
-};
-
 //! -mindatatxfee default
 static const CAmount DEFAULT_DATA_TRANSACTION_MINFEE = 1000000;
 extern RecursiveMutex cs_main;

@@ -17,8 +17,8 @@ bool CheckDataTx(const CTransaction& tx, const CBlockIndex* pindexPrev, TxValida
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-datatx-type");
     }
 
-    CDataTx datatx;
-    if (!GetTxPayload(tx, datatx)) {
+    std::optional<CDataTx> dataTx = GetTxPayload<CDataTx>(tx);
+    if (!dataTx.has_value()) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-datatx-payload");
     }
 

@@ -303,10 +303,10 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
             entry.pushKV("assetUnlockTx", opt_assetUnlockTx->ToJson());
         }
     } else if (tx.nType == TRANSACTION_DATA) {
-        CDataTx dataTx;
-        if (GetTxPayload(tx, dataTx)) {
+        std::optional<CDataTx> dataTx = GetTxPayload<CDataTx>(tx);
+        if (dataTx.has_value()) {
             UniValue obj;
-            dataTx.ToJson(obj);
+            dataTx->ToJson(obj);
             entry.pushKV("datatx", obj);
         }
     }

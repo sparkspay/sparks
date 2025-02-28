@@ -9,7 +9,7 @@
 #include <chain.h>
 #include <chainparams.h>
 #include <validation.h>
-#include <llmq/utils.h>
+#include <deploymentstatus.h>
 
 #include <limits>
 #include <string_view>
@@ -67,9 +67,11 @@ constexpr auto Invalid = mntype_struct{
 
 [[nodiscard]] inline const dmn_types::mntype_struct GetEvoVersion(gsl::not_null<const CBlockIndex*> pindexPrev)
 {
-    if (pindexPrev->nHeight >= Params().GetConsensus().V19Height && !llmq::utils::IsV20Active(pindexPrev)) {
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    const bool isV20Active{DeploymentActiveAt(*pindexPrev, consensusParams, Consensus::DEPLOYMENT_V20)};
+    if (pindexPrev->nHeight >= consensusParams.V19Height && !isV20Active) {
         return dmn_types::Evo4;
-    } else if (llmq::utils::IsV20Active(pindexPrev)){
+    } else if (isV20Active){
         return dmn_types::Evo1;
     } else {
         //when enabling masternodes again, should add new condition here and should return Evo5

@@ -25,7 +25,7 @@ static bool EvalSpork(Consensus::LLMQType llmqType, int64_t spork_value)
     if (spork_value == 0) {
         return true;
     }
-    if (spork_value == 1 && llmqType != Consensus::LLMQType::LLMQ_100_67 && llmqType != Consensus::LLMQType::LLMQ_400_60 && llmqType != Consensus::LLMQType::LLMQ_400_85) {
+    if (spork_value == 1 && llmqType != Consensus::LLMQType::LLMQ_20_70 && llmqType != Consensus::LLMQType::LLMQ_25_60 && llmqType != Consensus::LLMQType::LLMQ_25_80) {
         return true;
     }
     return false;
@@ -126,30 +126,43 @@ bool IsQuorumTypeEnabledInternal(Consensus::LLMQType llmqType, gsl::not_null<con
 
     const bool fDIP0024IsActive{optDIP0024IsActive.value_or(DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_DIP0024))};
     const bool fHaveDIP0024Quorums{optHaveDIP0024Quorums.value_or(pindexPrev->nHeight >= consensusParams.DIP0024QuorumsHeight)};
+    bool fDIP0008IsActive = pindexPrev && pindexPrev->nHeight + 1 >= consensusParams.DIP0008Height;
     switch (llmqType)
     {
         case Consensus::LLMQType::LLMQ_DEVNET:
             return true;
         case Consensus::LLMQType::LLMQ_50_60:
+            if (fDIP0008IsActive) {
+                return false;
+            }
             return !fDIP0024IsActive || !fHaveDIP0024Quorums ||
                     Params().NetworkIDString() == CBaseChainParams::TESTNET;
         case Consensus::LLMQType::LLMQ_TEST_INSTANTSEND:
             return !fDIP0024IsActive || !fHaveDIP0024Quorums ||
                     consensusParams.llmqTypeDIP0024InstantSend == Consensus::LLMQType::LLMQ_TEST_INSTANTSEND;
-        case Consensus::LLMQType::LLMQ_TEST:
         case Consensus::LLMQType::LLMQ_TEST_PLATFORM:
         case Consensus::LLMQType::LLMQ_400_60:
         case Consensus::LLMQType::LLMQ_400_85:
         case Consensus::LLMQType::LLMQ_DEVNET_PLATFORM:
+            if (fDIP0008IsActive) {
+                return false;
+            }
             return true;
-
+        case Consensus::LLMQType::LLMQ_15_60:
+        case Consensus::LLMQType::LLMQ_25_60:
+        case Consensus::LLMQType::LLMQ_25_80:
+        case Consensus::LLMQType::LLMQ_TEST:
+            if (!fDIP0008IsActive) {
+                return false;
+            }
+            return true;
         case Consensus::LLMQType::LLMQ_TEST_V17: {
             return DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_TESTDUMMY);
         }
-        case Consensus::LLMQType::LLMQ_100_67:
+        case Consensus::LLMQType::LLMQ_20_70:
             return DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_DIP0020);
 
-        case Consensus::LLMQType::LLMQ_60_75:
+        case Consensus::LLMQType::LLMQ_20_75:
         case Consensus::LLMQType::LLMQ_DEVNET_DIP0024:
         case Consensus::LLMQType::LLMQ_TEST_DIP0024: {
             return fDIP0024IsActive;
@@ -172,6 +185,18 @@ std::vector<Consensus::LLMQType> GetEnabledQuorumTypes(gsl::not_null<const CBloc
     for (const auto& params : Params().GetConsensus().llmqs) {
         if (IsQuorumTypeEnabled(params.type, pindex)) {
             ret.push_back(params.type);
+        }
+    }
+    return ret;
+}
+
+// created for sparks
+std::vector<Consensus::LLMQParams> GetEnabledQuorums(gsl::not_null<const CBlockIndex*> pindex)
+{
+    std::vector<Consensus::LLMQParams> ret;
+    for (const auto& p : Params().GetConsensus().llmqs) {
+        if (IsQuorumTypeEnabled(p.type, pindex)) {
+            ret.push_back(p);
         }
     }
     return ret;

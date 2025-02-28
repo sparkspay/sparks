@@ -152,7 +152,7 @@ chain for " target " development."))
                                        (base-libc (hardened-glibc glibc-2.28))
                                        (base-gcc (make-gcc-rpath-link (hardened-gcc base-gcc))))
   "Convenience wrapper around MAKE-CROSS-TOOLCHAIN with default values
-desirable for building Dash Core release binaries."
+desirable for building Sparks Core release binaries."
   (make-cross-toolchain target
                         base-gcc-for-libc
                         base-kernel-headers

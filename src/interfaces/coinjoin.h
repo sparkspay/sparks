@@ -13,7 +13,7 @@ class CWallet;
 
 namespace interfaces {
 namespace CoinJoin {
-//! Interface for the wallet constrained src/coinjoin part of a dash node (dashd process).
+//! Interface for the wallet constrained src/coinjoin part of a sparks node (sparksd process).
 class Client
 {
 public:
