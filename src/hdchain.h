@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 #ifndef BITCOIN_HDCHAIN_H
 #define BITCOIN_HDCHAIN_H
@@ -26,7 +26,7 @@ public:
 class CHDChain
 {
 private:
-    mutable CCriticalSection cs;
+    mutable RecursiveMutex cs;
 
     static const int CURRENT_VERSION = 1;
     int nVersion GUARDED_BY(cs) {CURRENT_VERSION};
@@ -42,6 +42,8 @@ private:
     std::map<uint32_t, CHDAccount> GUARDED_BY(cs) mapAccounts;
 
 public:
+    /** Default for -mnemonicbits */
+    static constexpr int DEFAULT_MNEMONIC_BITS = 128; // 128 bits == 12 words
 
     CHDChain() = default;
     CHDChain(const CHDChain& other) :
@@ -68,7 +70,7 @@ public:
                 );
     }
 
-    void swap(CHDChain& first, CHDChain& second) // nothrow
+    void swap(CHDChain& first, CHDChain& second) noexcept
     {
         // enable ADL (not necessary in our case, but good practice)
         using std::swap;

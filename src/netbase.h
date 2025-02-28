@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -55,6 +55,8 @@ std::vector<CNetAddr> WrappedGetAddrInfo(const std::string& name, bool allow_loo
 
 enum Network ParseNetwork(const std::string& net);
 std::string GetNetworkName(enum Network net);
+/** Return a vector of publicly routable Network names; optionally append NET_UNROUTABLE. */
+std::vector<std::string> GetNetworkNames(bool append_unroutable = false);
 bool SetProxy(enum Network net, const proxyType &addrProxy);
 bool GetProxy(enum Network net, proxyType &proxyInfoOut);
 bool IsProxy(const CNetAddr &addr);
@@ -176,7 +178,7 @@ extern std::function<std::unique_ptr<Sock>(const CService&)> CreateSock;
  * Try to connect to the specified service on the specified socket.
  *
  * @param addrConnect The service to which to connect.
- * @param hSocket The socket on which to connect.
+ * @param sock The socket on which to connect.
  * @param nTimeout Wait this many milliseconds for the connection to be
  *                 established.
  * @param manual_connection Whether or not the connection was manually requested
@@ -184,7 +186,7 @@ extern std::function<std::unique_ptr<Sock>(const CService&)> CreateSock;
  *
  * @returns Whether or not a connection was successfully made.
  */
-bool ConnectSocketDirectly(const CService &addrConnect, const SOCKET& hSocket, int nTimeout, bool manual_connection);
+bool ConnectSocketDirectly(const CService &addrConnect, const Sock& sock, int nTimeout, bool manual_connection);
 
 /**
  * Connect to a specified destination service through a SOCKS5 proxy by first
@@ -203,8 +205,8 @@ bool ConnectSocketDirectly(const CService &addrConnect, const SOCKET& hSocket, i
  */
 bool ConnectThroughProxy(const proxyType& proxy, const std::string& strDest, uint16_t port, const Sock& sock, int nTimeout, bool& outProxyConnectionFailed);
 
-/** Disable or enable blocking-mode for a socket */
-bool SetSocketNonBlocking(const SOCKET& hSocket, bool fNonBlocking);
+/** Enable non-blocking mode for a socket */
+bool SetSocketNonBlocking(const SOCKET& hSocket);
 /** Set the TCP_NODELAY flag on a socket */
 bool SetSocketNoDelay(const SOCKET& hSocket);
 void InterruptSocks5(bool interrupt);

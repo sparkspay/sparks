@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2023 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -12,14 +12,14 @@
 #include <functional>
 #include <set>
 
-#include <llmq/dkgsessionhandler.h>
-
 class CDataStream;
 class CInv;
 class CScheduler;
 
 namespace llmq
 {
+
+enum class QuorumPhase;
 
 class CDKGDebugMemberStatus
 {
@@ -37,7 +37,7 @@ public:
             bool receivedComplaint : 1;
             bool receivedJustification : 1;
             bool receivedPrematureCommitment : 1;
-        };
+        } statusBits;
         uint8_t statusBitset;
     };
 
@@ -65,7 +65,7 @@ public:
             bool sentPrematureCommitment : 1;
 
             bool aborted : 1;
-        };
+        } statusBits;
         uint8_t statusBitset;
     };
 
@@ -92,7 +92,7 @@ public:
 class CDKGDebugManager
 {
 private:
-    mutable CCriticalSection cs;
+    mutable RecursiveMutex cs;
     CDKGDebugStatus localStatus GUARDED_BY(cs);
 
 public:

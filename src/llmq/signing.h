@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,21 +6,27 @@
 #define BITCOIN_LLMQ_SIGNING_H
 
 #include <bls/bls.h>
-#include <unordered_lru_cache.h>
-
 #include <consensus/params.h>
-#include <dbwrapper.h>
+#include <gsl/pointers.h>
+#include <net_types.h>
 #include <random.h>
 #include <saltedhasher.h>
 #include <sync.h>
+#include <threadinterrupt.h>
 #include <univalue.h>
+#include <unordered_lru_cache.h>
 
 #include <unordered_map>
 
-using NodeId = int64_t;
 class CConnman;
+class CDataStream;
+class CDBBatch;
+class CDBWrapper;
 class CInv;
 class CNode;
+class PeerManager;
+
+using NodeId = int64_t;
 
 namespace llmq
 {
@@ -107,17 +113,14 @@ class CRecoveredSigsDb
 private:
     std::unique_ptr<CDBWrapper> db{nullptr};
 
-    mutable CCriticalSection cs;
+    mutable RecursiveMutex cs;
     mutable unordered_lru_cache<std::pair<Consensus::LLMQType, uint256>, bool, StaticSaltedHasher, 30000> hasSigForIdCache GUARDED_BY(cs);
     mutable unordered_lru_cache<uint256, bool, StaticSaltedHasher, 30000> hasSigForSessionCache GUARDED_BY(cs);
     mutable unordered_lru_cache<uint256, bool, StaticSaltedHasher, 30000> hasSigForHashCache GUARDED_BY(cs);
 
 public:
-    explicit CRecoveredSigsDb(bool fMemory, bool fWipe) :
-            db(std::make_unique<CDBWrapper>(fMemory ? "" : (GetDataDir() / "llmq/recsigdb"), 8 << 20, fMemory, fWipe))
-    {
-        MigrateRecoveredSigs();
-    }
+    explicit CRecoveredSigsDb(bool fMemory, bool fWipe);
+    ~CRecoveredSigsDb();
 
     bool HasRecoveredSig(Consensus::LLMQType llmqType, const uint256& id, const uint256& msgHash) const;
     bool HasRecoveredSigForId(Consensus::LLMQType llmqType, const uint256& id) const;
@@ -154,19 +157,14 @@ public:
 
 class CSigningManager
 {
-    friend class CSigSharesManager;
-
-    // when selecting a quorum for signing and verification, we use CQuorumManager::SelectQuorum with this offset as
-    // starting height for scanning. This is because otherwise the resulting signatures would not be verifiable by nodes
-    // which are not 100% at the chain tip.
-    static constexpr int SIGN_HEIGHT_OFFSET{8};
-
 private:
-    mutable CCriticalSection cs;
+    mutable RecursiveMutex cs;
 
     CRecoveredSigsDb db;
     CConnman& connman;
     const CQuorumManager& qman;
+
+    std::atomic<PeerManager*> m_peerman{nullptr};
 
     // Incoming and not verified yet
     std::unordered_map<NodeId, std::list<std::shared_ptr<const CRecoveredSig>>> pendingRecoveredSigs GUARDED_BY(cs);
@@ -184,7 +182,7 @@ public:
     bool AlreadyHave(const CInv& inv) const;
     bool GetRecoveredSigForGetData(const uint256& hash, CRecoveredSig& ret) const;
 
-    void ProcessMessage(const CNode& pnode, const std::string& msg_type, CDataStream& vRecv);
+    PeerMsgRet ProcessMessage(const CNode& pnode, gsl::not_null<PeerManager*> peerman, const std::string& msg_type, CDataStream& vRecv);
 
     // This is called when a recovered signature was was reconstructed from another P2P message and is known to be valid
     // This is the case for example when a signature appears as part of InstantSend or ChainLocks
@@ -197,7 +195,7 @@ public:
     void TruncateRecoveredSig(Consensus::LLMQType llmqType, const uint256& id);
 
 private:
-    void ProcessMessageRecoveredSig(const CNode& pfrom, const std::shared_ptr<const CRecoveredSig>& recoveredSig);
+    PeerMsgRet ProcessMessageRecoveredSig(const CNode& pfrom, gsl::not_null<PeerManager*> peerman, const std::shared_ptr<const CRecoveredSig>& recoveredSig);
     static bool PreVerifyRecoveredSig(const CQuorumManager& quorum_manager, const CRecoveredSig& recoveredSig, bool& retBan);
 
     void CollectPendingRecoveredSigsToVerify(size_t maxUniqueSessions,
@@ -205,7 +203,10 @@ private:
             std::unordered_map<std::pair<Consensus::LLMQType, uint256>, CQuorumCPtr, StaticSaltedHasher>& retQuorums);
     void ProcessPendingReconstructedRecoveredSigs();
     bool ProcessPendingRecoveredSigs(); // called from the worker thread of CSigSharesManager
+public:
+    // TODO - should not be public!
     void ProcessRecoveredSig(const std::shared_ptr<const CRecoveredSig>& recoveredSig);
+private:
     void Cleanup(); // called from the worker thread of CSigSharesManager
 
 public:
@@ -222,12 +223,51 @@ public:
 
     bool GetVoteForId(Consensus::LLMQType llmqType, const uint256& id, uint256& msgHashRet) const;
 
-    static std::vector<CQuorumCPtr> GetActiveQuorumSet(Consensus::LLMQType llmqType, int signHeight);
-    static CQuorumCPtr SelectQuorumForSigning(const Consensus::LLMQParams& llmq_params, const CQuorumManager& quorum_manager, const uint256& selectionHash, int signHeight = -1 /*chain tip*/, int signOffset = SIGN_HEIGHT_OFFSET);
+private:
+    std::thread workThread;
+    CThreadInterrupt workInterrupt;
+    void WorkThreadMain();
 
-    // Verifies a recovered sig that was signed while the chain tip was at signedAtTip
-    static bool VerifyRecoveredSig(Consensus::LLMQType llmqType, const CQuorumManager& quorum_manager, int signedAtHeight, const uint256& id, const uint256& msgHash, const CBLSSignature& sig, int signOffset = SIGN_HEIGHT_OFFSET);
+public:
+    void StartWorkerThread();
+    void StopWorkerThread();
+    void InterruptWorkerThread();
 };
+
+template<typename NodesContainer, typename Continue, typename Callback>
+void IterateNodesRandom(NodesContainer& nodeStates, Continue&& cont, Callback&& callback, FastRandomContext& rnd)
+{
+    std::vector<typename NodesContainer::iterator> rndNodes;
+    rndNodes.reserve(nodeStates.size());
+    for (auto it = nodeStates.begin(); it != nodeStates.end(); ++it) {
+        rndNodes.emplace_back(it);
+    }
+    if (rndNodes.empty()) {
+        return;
+    }
+    Shuffle(rndNodes.begin(), rndNodes.end(), rnd);
+
+    size_t idx = 0;
+    while (!rndNodes.empty() && cont()) {
+        auto nodeId = rndNodes[idx]->first;
+        auto& ns = rndNodes[idx]->second;
+
+        if (callback(nodeId, ns)) {
+            idx = (idx + 1) % rndNodes.size();
+        } else {
+            rndNodes.erase(rndNodes.begin() + idx);
+            if (rndNodes.empty()) {
+                break;
+            }
+            idx %= rndNodes.size();
+        }
+    }
+}
+
+uint256 BuildSignHash(Consensus::LLMQType llmqType, const uint256& quorumHash, const uint256& id, const uint256& msgHash);
+
+bool IsQuorumActive(Consensus::LLMQType llmqType, const CQuorumManager& qman, const uint256& quorumHash);
+
 } // namespace llmq
 
 #endif // BITCOIN_LLMQ_SIGNING_H

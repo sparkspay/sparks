@@ -5,18 +5,15 @@
 #ifndef BITCOIN_INDEX_BLOCKFILTERINDEX_H
 #define BITCOIN_INDEX_BLOCKFILTERINDEX_H
 
+#include <attributes.h>
 #include <blockfilter.h>
 #include <chain.h>
 #include <flatfile.h>
 #include <index/base.h>
+#include <util/hasher.h>
 
 /** Interval between compact filter checkpoints. See BIP 157. */
 static constexpr int CFCHECKPT_INTERVAL = 1000;
-
-struct FilterHeaderHasher
-{
-    size_t operator()(const uint256& hash) const { return ReadLE64(hash.begin()); }
-};
 
 /**
  * BlockFilterIndex is used to store and retrieve block filters, hashes, and headers for a range of
@@ -51,9 +48,9 @@ protected:
 
     bool Rewind(const CBlockIndex* current_tip, const CBlockIndex* new_tip) override;
 
-    BaseIndex::DB& GetDB() const override { return *m_db; }
+    BaseIndex::DB& GetDB() const LIFETIMEBOUND override { return *m_db; }
 
-    const char* GetName() const override { return m_name.c_str(); }
+    const char* GetName() const LIFETIMEBOUND override { return m_name.c_str(); }
 
 public:
     /** Constructs the index, which becomes available to be queried. */

@@ -112,7 +112,7 @@ TestingSetup::TestingSetup(const std::string& chainName) : BasicTestingSetup(cha
             throw std::runtime_error("LoadGenesisBlock failed.");
         }
         {
-            CValidationState state;
+            TxValidationState state;
             if (!ActivateBestChain(state, chainparams)) {
                 throw std::runtime_error(strprintf("ActivateBestChain failed. (%s)", FormatStateMessage(state)));
             }
@@ -203,7 +203,7 @@ CBlock TestChainSetup::CreateBlock(const std::vector<CMutableTransaction>& txns,
         if (!GetTxPayload(*block.vtx[0], cbTx)) {
             BOOST_ASSERT(false);
         }
-        CValidationState state;
+        TxValidationState state;
         if (!CalcCbTxMerkleRootMNList(block, chainActive.Tip(), cbTx.merkleRootMNList, state, *pcoinsTip.get())) {
             BOOST_ASSERT(false);
         }

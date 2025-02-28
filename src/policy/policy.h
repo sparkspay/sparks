@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -36,6 +36,8 @@ static const unsigned int DEFAULT_INCREMENTAL_RELAY_FEE = 1000;
 static const unsigned int DEFAULT_BYTES_PER_SIGOP = 20;
 /** Default for -permitbaremultisig */
 static const bool DEFAULT_PERMIT_BAREMULTISIG = true;
+/** The maximum size of a standard ScriptSig */
+static const unsigned int MAX_STANDARD_SCRIPTSIG_SIZE = 1650;
 /** Min feerate for defining dust. Historically this has been based on the
  * minRelayTxFee, however changing the dust limit changes which transactions are
  * standard and should be done with care and ideally rarely. It makes sense to

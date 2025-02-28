@@ -2,8 +2,8 @@
 #
 # linearize-hashes.py:  List blocks in a linear, no-fork version of the chain.
 #
-# Copyright (c) 2013-2014 The Bitcoin Core developers
-# Copyright (c) 2016-2022 The Sparks Core developers
+# Copyright (c) 2013-2019 The Bitcoin Core developers
+# Copyright (c) 2016-2025 The Sparks Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
@@ -118,16 +118,16 @@ if __name__ == '__main__':
         settings[m.group(1)] = m.group(2)
     f.close()
 
-	if 'host' not in settings:
-		settings['host'] = '127.0.0.1'
-	if 'port' not in settings:
-		settings['port'] = 8818
-	if 'min_height' not in settings:
-		settings['min_height'] = 0
-	if 'max_height' not in settings:
-		settings['max_height'] = 101000
-	if 'rev_hash_bytes' not in settings:
-		settings['rev_hash_bytes'] = 'false'
+    if 'host' not in settings:
+        settings['host'] = '127.0.0.1'
+    if 'port' not in settings:
+        settings['port'] = 8818
+    if 'min_height' not in settings:
+        settings['min_height'] = 0
+    if 'max_height' not in settings:
+        settings['max_height'] = 101000
+    if 'rev_hash_bytes' not in settings:
+        settings['rev_hash_bytes'] = 'false'
 
     use_userpass = True
     use_datadir = False

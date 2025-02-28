@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019 The Bitcoin Core developers
+// Copyright (c) 2017-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,6 +8,7 @@
 
 #include <interfaces/chain.h>
 #include <interfaces/node.h>
+#include <qt/clientmodel.h>
 #include <qt/editaddressdialog.h>
 #include <qt/optionsmodel.h>
 #include <qt/qvalidatedlineedit.h>
@@ -59,7 +60,8 @@ void TestAddAddressesToSendBook(interfaces::Node& node)
 {
     TestChain100Setup test;
     node.setContext(&test.m_node);
-    std::shared_ptr<CWallet> wallet = std::make_shared<CWallet>(node.context()->chain.get(), "", CreateMockWalletDatabase());
+    std::shared_ptr<CWallet> wallet = std::make_shared<CWallet>(node.context()->chain.get(), node.context()->coinjoin_loader.get(), "", CreateMockWalletDatabase());
+    wallet->SetupLegacyScriptPubKeyMan();
     bool firstRun;
     wallet->LoadWallet(firstRun);
 
@@ -96,16 +98,17 @@ void TestAddAddressesToSendBook(interfaces::Node& node)
 
     auto check_addbook_size = [wallet](int expected_size) {
         LOCK(wallet->cs_wallet);
-        QCOMPARE(static_cast<int>(wallet->mapAddressBook.size()), expected_size);
+        QCOMPARE(static_cast<int>(wallet->m_address_book.size()), expected_size);
     };
 
     // We should start with the two addresses we added earlier and nothing else.
     check_addbook_size(2);
 
     // Initialize relevant QT models.
-    OptionsModel optionsModel(node);
+    OptionsModel optionsModel;
+    ClientModel clientModel(node, &optionsModel);
     AddWallet(wallet);
-    WalletModel walletModel(interfaces::MakeWallet(wallet), node, &optionsModel);
+    WalletModel walletModel(interfaces::MakeWallet(wallet), clientModel);
     RemoveWallet(wallet, std::nullopt);
     EditAddressDialog editAddressDialog(EditAddressDialog::NewSendingAddress);
     editAddressDialog.setModel(walletModel.getAddressTableModel());

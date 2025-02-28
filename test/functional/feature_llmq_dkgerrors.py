@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2022 The Dash Core developers
+# Copyright (c) 2015-2023 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -85,7 +85,7 @@ class LLMQDKGErrors(SparksTestFramework):
         # We're not testing PoSe here, so lets heal the MNs :)
         self.nodes[0].sporkupdate("SPORK_18_QUORUM_DKG_ENABLED", 4070908800)
         self.wait_for_sporks_same()
-        for i in range(blockCount):
+        for _ in range(blockCount):
             self.bump_mocktime(1)
             self.nodes[0].generate(1)
         self.sync_all()

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019 The Bitcoin Core developers
+// Copyright (c) 2017-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -28,6 +28,12 @@
  * constant for consistency.
  */
 extern const std::string UNIX_EPOCH_TIME;
+
+/**
+ * Example Sparks addresses for the RPCExamples help documentation. They are intentionally
+ * invalid to prevent accidental transactions by users.
+ */
+extern const std::string EXAMPLE_ADDRESS[2];
 
 class FillableSigningProvider;
 class FillableSigningProvider;
@@ -84,7 +90,7 @@ extern std::string HelpExampleRpc(const std::string& methodname, const std::stri
 
 CPubKey HexToPubKey(const std::string& hex_in);
 CPubKey AddrToPubKey(const FillableSigningProvider& keystore, const std::string& addr_in);
-CScript CreateMultisigRedeemscript(const int required, const std::vector<CPubKey>& pubkeys);
+CTxDestination AddAndGetMultisigDestination(const int required, const std::vector<CPubKey>& pubkeys, FillableSigningProvider& keystore, CScript& script_out);
 
 UniValue DescribeAddress(const CTxDestination& dest);
 

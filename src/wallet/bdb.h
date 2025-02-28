@@ -13,7 +13,6 @@
 #include <util/system.h>
 #include <wallet/db.h>
 
-#include <atomic>
 #include <map>
 #include <memory>
 #include <string>
@@ -56,7 +55,7 @@ public:
     std::unordered_map<std::string, WalletDatabaseFileId> m_fileids;
     std::condition_variable_any m_db_in_use;
 
-    BerkeleyEnvironment(const fs::path& env_directory);
+    explicit BerkeleyEnvironment(const fs::path& env_directory);
     BerkeleyEnvironment();
     ~BerkeleyEnvironment();
     void Reset();
@@ -143,6 +142,7 @@ public:
     /** Return path to main database filename */
     std::string Filename() override { return (env->Directory() / strFile).string(); }
 
+    std::string Format() override { return "bdb"; }
     /**
      * Pointer to shared database environment.
      *
@@ -221,6 +221,10 @@ public:
 };
 
 std::string BerkeleyDatabaseVersion();
+
+/** Perform sanity check of runtime BDB version versus linked BDB version.
+ */
+bool BerkeleyDatabaseSanityCheck();
 
 //! Return object giving access to Berkeley database at specified path.
 std::unique_ptr<BerkeleyDatabase> MakeBerkeleyDatabase(const fs::path& path, const DatabaseOptions& options, DatabaseStatus& status, bilingual_str& error);

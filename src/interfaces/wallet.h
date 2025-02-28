@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Bitcoin Core developers
+// Copyright (c) 2018-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,8 +11,8 @@
 #include <pubkey.h>                    // For CKeyID and CScriptID (definitions needed in CTxDestination instantiation)
 #include <script/standard.h>           // For CTxDestination
 #include <support/allocators/secure.h> // For SecureString
-#include <ui_interface.h>              // For ChangeType
-#include <util/system.h>
+#include <util/message.h>
+#include <util/ui_change_type.h>
 
 #include <functional>
 #include <map>
@@ -28,6 +28,7 @@ class CCoinControl;
 class CFeeRate;
 class CKey;
 class CWallet;
+class UniValue;
 enum class FeeReason;
 enum class TransactionError;
 enum isminetype : unsigned int;
@@ -46,27 +47,12 @@ struct WalletBalances;
 struct WalletTx;
 struct WalletTxOut;
 struct WalletTxStatus;
+namespace CoinJoin {
+class Loader;
+}
 
 using WalletOrderForm = std::vector<std::pair<std::string, std::string>>;
 using WalletValueMap = std::map<std::string, std::string>;
-
-namespace CoinJoin {
-//! Interface for the wallet constrained src/coinjoin part of a sparks node (sparksd process).
-class Client
-{
-public:
-    virtual ~Client() {}
-    virtual void resetCachedBlocks() = 0;
-    virtual void resetPool() = 0;
-    virtual int getCachedBlocks() = 0;
-    virtual std::string getSessionDenoms() = 0;
-    virtual void setCachedBlocks(int nCachedBlocks) = 0;
-    virtual void disableAutobackups() = 0;
-    virtual bool isMixing() = 0;
-    virtual bool startMixing() = 0;
-    virtual void stopMixing() = 0;
-};
-}
 
 //! Interface for accessing a wallet.
 class Wallet
@@ -117,8 +103,8 @@ public:
     //! Get public key.
     virtual bool getPubKey(const CScript& script, const CKeyID& address, CPubKey& pub_key) = 0;
 
-    //! Get private key.
-    virtual bool getPrivKey(const CScript& script, const CKeyID& address, CKey& key) = 0;
+    //! Sign message
+    virtual SigningResult signMessage(const std::string& message, const PKHash& pkhash, std::string& str_sig) = 0;
 
     //! Return whether wallet has private key.
     virtual bool isSpendable(const CScript& script) = 0;
@@ -203,6 +189,7 @@ public:
     //! Try to get updated status for a particular transaction, if possible without blocking.
     virtual bool tryGetTxStatus(const uint256& txid,
         WalletTxStatus& tx_status,
+        int& num_blocks,
         int64_t& block_time) = 0;
 
     //! Get transaction details.
@@ -219,17 +206,18 @@ public:
     virtual bool isFullyMixed(const COutPoint& outpoint) = 0;
 
     //! Fill PSBT.
-    virtual TransactionError fillPSBT(PartiallySignedTransaction& psbtx,
+    virtual TransactionError fillPSBT(int sighash_type,
+        bool sign,
+        bool bip32derivs,
+        PartiallySignedTransaction& psbtx,
         bool& complete,
-        int sighash_type = 1 /* SIGHASH_ALL */,
-        bool sign = true,
-        bool bip32derivs = false) = 0;
+        size_t* n_signed) = 0;
 
     //! Get balances.
     virtual WalletBalances getBalances() = 0;
 
     //! Get balances if possible without blocking.
-    virtual bool tryGetBalances(WalletBalances& balances, int& num_blocks) = 0;
+    virtual bool tryGetBalances(WalletBalances& balances, uint256& block_hash) = 0;
 
     //! Get balance.
     virtual CAmount getBalance() = 0;
@@ -290,10 +278,8 @@ public:
     // Return whether the wallet is blank.
     virtual bool canGetAddresses() = 0;
 
-    // check if a certain wallet flag is set.
-    virtual bool IsWalletFlagSet(uint64_t flag) = 0;
-
-    virtual CoinJoin::Client& coinJoin() = 0;
+    // Return whether private keys enabled.
+    virtual bool privateKeysDisabled() = 0;
 
     //! Get max tx fee.
     virtual CAmount getDefaultMaxTxFee() = 0;
@@ -348,7 +334,7 @@ public:
 //! Wallet chain client that in addition to having chain client methods for
 //! starting up, shutting down, and registering RPCs, also has additional
 //! methods (called by the GUI) to load and create wallets.
-class WalletClient : public ChainClient
+class WalletLoader : public ChainClient
 {
 public:
     //! Create new wallet.
@@ -455,9 +441,9 @@ struct WalletTxOut
 //! dummywallet.cpp and throws if the wallet component is not compiled.
 std::unique_ptr<Wallet> MakeWallet(const std::shared_ptr<CWallet>& wallet);
 
-//! Return implementation of ChainClient interface for a wallet client. This
+//! Return implementation of ChainClient interface for a wallet loader. This
 //! function will be undefined in builds where ENABLE_WALLET is false.
-std::unique_ptr<WalletClient> MakeWalletClient(Chain& chain, ArgsManager& args);
+std::unique_ptr<WalletLoader> MakeWalletLoader(Chain& chain, const std::unique_ptr<CoinJoin::Loader>& coinjoin_loader, ArgsManager& args);
 
 } // namespace interfaces
 

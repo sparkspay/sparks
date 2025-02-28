@@ -4,15 +4,15 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test BIP68 implementation."""
 
-from test_framework.blocktools import create_block, create_coinbase
+from test_framework.blocktools import create_block, NORMAL_GBT_REQUEST_PARAMS
 from test_framework.messages import COIN, COutPoint, CTransaction, CTxIn, CTxOut, FromHex, ToHex
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import (
     assert_equal,
     assert_greater_than,
     assert_raises_rpc_error,
-    get_bip9_status,
-    satoshi_round
+    satoshi_round,
+    softfork_active,
 )
 from test_framework.script_util import DUMMY_P2SH_SCRIPT
 
@@ -22,7 +22,7 @@ SEQUENCE_LOCKTIME_GRANULARITY = 9 # this is a bit-shift
 SEQUENCE_LOCKTIME_MASK = 0x0000ffff
 
 # RPC error for non-BIP68 final transactions
-NOT_FINAL_ERROR = "non-BIP68-final (code 64)"
+NOT_FINAL_ERROR = "non-BIP68-final"
 
 class BIP68Test(BitcoinTestFramework):
     def set_test_params(self):
@@ -50,7 +50,7 @@ class BIP68Test(BitcoinTestFramework):
         self.log.info("Running test sequence-lock-unconfirmed-inputs")
         self.test_sequence_lock_unconfirmed_inputs()
 
-        self.log.info("Running test BIP68 not consensus before versionbits activation")
+        self.log.info("Running test BIP68 not consensus before activation")
         self.test_bip68_not_consensus()
 
         self.log.info("Activating BIP68 (and 112/113)")
@@ -136,7 +136,7 @@ class BIP68Test(BitcoinTestFramework):
         # some of those inputs to be sequence locked (and randomly choose
         # between height/time locking). Small random chance of making the locks
         # all pass.
-        for i in range(400):
+        for _ in range(400):
             # Randomly choose up to 10 inputs
             num_inputs = random.randint(1, 10)
             random.shuffle(utxos)
@@ -255,7 +255,7 @@ class BIP68Test(BitcoinTestFramework):
         # Use prioritisetransaction to lower the effective feerate to 0
         self.nodes[0].prioritisetransaction(tx2.hash, int(-self.relayfee*COIN))
         cur_time = self.mocktime
-        for i in range(10):
+        for _ in range(10):
             self.nodes[0].setmocktime(cur_time + 600)
             self.nodes[0].generate(1)
             cur_time += 600
@@ -270,6 +270,8 @@ class BIP68Test(BitcoinTestFramework):
 
         # Advance the time on the node so that we can test timelocks
         self.nodes[0].setmocktime(cur_time+600)
+        # Save block template now to use for the reorg later
+        tmpl = self.nodes[0].getblocktemplate(NORMAL_GBT_REQUEST_PARAMS)
         self.nodes[0].generate(1)
         assert tx2.hash not in self.nodes[0].getrawmempool()
 
@@ -313,16 +315,15 @@ class BIP68Test(BitcoinTestFramework):
         # diagram above).
         # This would cause tx2 to be added back to the mempool, which in turn causes
         # tx3 to be removed.
-        tip = int(self.nodes[0].getblockhash(self.nodes[0].getblockcount()-1), 16)
-        height = self.nodes[0].getblockcount()
         for i in range(2):
-            block = create_block(tip, create_coinbase(height), cur_time)
-            block.nVersion = 3
+            block = create_block(tmpl=tmpl, ntime=cur_time)
             block.rehash()
             block.solve()
             tip = block.sha256
-            height += 1
             assert_equal(None if i == 1 else 'inconclusive', self.nodes[0].submitblock(ToHex(block)))
+            tmpl = self.nodes[0].getblocktemplate(NORMAL_GBT_REQUEST_PARAMS)
+            tmpl['previousblockhash'] = '%x' % tip
+            tmpl['transactions'] = []
             cur_time += 1
 
         mempool = self.nodes[0].getrawmempool()
@@ -334,12 +335,12 @@ class BIP68Test(BitcoinTestFramework):
         self.nodes[0].invalidateblock(self.nodes[0].getblockhash(cur_height+1))
         self.nodes[0].generate(10)
 
-    # Make sure that BIP68 isn't being used to validate blocks, prior to
-    # versionbits activation.  If more blocks are mined prior to this test
+    # Make sure that BIP68 isn't being used to validate blocks prior to
+    # activation height.  If more blocks are mined prior to this test
     # being run, then it's possible the test has activated the soft fork, and
     # this test should be moved to run earlier, or deleted.
     def test_bip68_not_consensus(self):
-        assert get_bip9_status(self.nodes[0], 'csv')['status'] != 'active'
+        assert not softfork_active(self.nodes[0], 'csv')
         txid = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), 2)
 
         tx1 = FromHex(CTransaction(), self.nodes[0].getrawtransaction(txid))
@@ -370,9 +371,7 @@ class BIP68Test(BitcoinTestFramework):
         assert_raises_rpc_error(-26, NOT_FINAL_ERROR, self.nodes[0].sendrawtransaction, ToHex(tx3))
 
         # make a block that violates bip68; ensure that the tip updates
-        tip = int(self.nodes[0].getbestblockhash(), 16)
-        block = create_block(tip, create_coinbase(self.nodes[0].getblockcount()+1), self.mocktime + 600)
-        block.nVersion = 3
+        block = create_block(tmpl=self.nodes[0].getblocktemplate(NORMAL_GBT_REQUEST_PARAMS))
         block.vtx.extend([tx1, tx2, tx3])
         block.hashMerkleRoot = block.calc_merkle_root()
         block.rehash()
@@ -388,9 +387,9 @@ class BIP68Test(BitcoinTestFramework):
         height = self.nodes[0].getblockcount()
         assert_greater_than(min_activation_height - height, 2)
         self.nodes[0].generate(min_activation_height - height - 2)
-        assert_equal(get_bip9_status(self.nodes[0], 'csv')['status'], "locked_in")
+        assert not softfork_active(self.nodes[0], 'csv')
         self.nodes[0].generate(1)
-        assert_equal(get_bip9_status(self.nodes[0], 'csv')['status'], "active")
+        assert softfork_active(self.nodes[0], 'csv')
         self.sync_blocks()
 
     # Use self.nodes[1] to test that version 2 transactions are standard.

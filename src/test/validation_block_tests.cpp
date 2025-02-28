@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Bitcoin Core developers
+// Copyright (c) 2018-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,12 +8,12 @@
 #include <consensus/consensus.h>
 #include <consensus/merkle.h>
 #include <consensus/validation.h>
+#include <evo/evodb.h>
 #include <governance/governance.h>
 #include <llmq/blockprocessor.h>
 #include <llmq/chainlocks.h>
 #include <llmq/context.h>
 #include <llmq/instantsend.h>
-#include <evo/evodb.h>
 #include <miner.h>
 #include <pow.h>
 #include <random.h>
@@ -40,7 +40,7 @@ static const std::vector<unsigned char> V_OP_TRUE{OP_TRUE};
 
 BOOST_FIXTURE_TEST_SUITE(validation_block_tests, MinerTestingSetup)
 
-struct TestSubscriber : public CValidationInterface {
+struct TestSubscriber final : public CValidationInterface {
     uint256 m_expected_tip;
 
     explicit TestSubscriber(uint256 tip) : m_expected_tip(tip) {}
@@ -75,7 +75,7 @@ std::shared_ptr<CBlock> MinerTestingSetup::Block(const uint256& prev_hash)
     CScript pubKey;
     pubKey << i++ << OP_TRUE;
 
-    auto ptemplate = BlockAssembler(*sporkManager, *governance, *m_node.llmq_ctx->quorum_block_processor, *m_node.llmq_ctx->clhandler,  *m_node.llmq_ctx->isman, *m_node.evodb, *m_node.mempool, Params()).CreateNewBlock(pubKey);
+    auto ptemplate = BlockAssembler(*m_node.sporkman, *m_node.govman, *m_node.llmq_ctx, *m_node.evodb, ::ChainstateActive(), *m_node.mempool, Params()).CreateNewBlock(pubKey);
     auto pblock = std::make_shared<CBlock>(ptemplate->block);
     pblock->hashPrevBlock = prev_hash;
     pblock->nTime = ++time;
@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE(processnewblock_signals_ordering)
     }
 
     bool ignored;
-    CValidationState state;
+    BlockValidationState state;
     std::vector<CBlockHeader> headers;
     std::transform(blocks.begin(), blocks.end(), std::back_inserter(headers), [](std::shared_ptr<const CBlock> b) { return b->GetBlockHeader(); });
 
@@ -179,8 +179,8 @@ BOOST_AUTO_TEST_CASE(processnewblock_signals_ordering)
         LOCK(cs_main);
         initial_tip = ::ChainActive().Tip();
     }
-    TestSubscriber sub(initial_tip->GetBlockHash());
-    RegisterValidationInterface(&sub);
+    auto sub = std::make_shared<TestSubscriber>(initial_tip->GetBlockHash());
+    RegisterSharedValidationInterface(sub);
 
     // create a bunch of threads that repeatedly process a block generated above at random
     // this will create parallelism and randomness inside validation - the ValidationInterface
@@ -208,14 +208,12 @@ BOOST_AUTO_TEST_CASE(processnewblock_signals_ordering)
     for (auto& t : threads) {
         t.join();
     }
-    while (GetMainSignals().CallbacksPending() > 0) {
-        UninterruptibleSleep(std::chrono::milliseconds{100});
-    }
+    SyncWithValidationInterfaceQueue();
 
-    UnregisterValidationInterface(&sub);
+    UnregisterSharedValidationInterface(sub);
 
     LOCK(cs_main);
-    BOOST_CHECK_EQUAL(sub.m_expected_tip, ::ChainActive().Tip()->GetBlockHash());
+    BOOST_CHECK_EQUAL(sub->m_expected_tip, ::ChainActive().Tip()->GetBlockHash());
 }
 
 /**
@@ -296,15 +294,9 @@ BOOST_AUTO_TEST_CASE(mempool_locks_reorg)
         // Add the txs to the tx pool
         {
             LOCK(cs_main);
-            CValidationState state;
             for (const auto& tx : txs) {
-                BOOST_REQUIRE(AcceptToMemoryPool(
-                    *m_node.mempool,
-                    state,
-                    tx,
-                    /* pfMissingInputs */ &ignored,
-                    /* bypass_limits */ false,
-                    /* nAbsurdFee */ 0));
+                const MempoolAcceptResult result = AcceptToMemoryPool(::ChainstateActive(), *m_node.mempool, tx, false /* bypass_limits */);
+                BOOST_REQUIRE(result.m_result_type == MempoolAcceptResult::ResultType::VALID);
             }
         }
 

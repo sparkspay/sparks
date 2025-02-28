@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2019 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -21,9 +21,7 @@
 #include <fs.h>
 #include <logging.h>
 #include <sync.h>
-#include <tinyformat.h>
 #include <util/settings.h>
-#include <util/threadnames.h>
 #include <util/time.h>
 #include <amount.h>
 
@@ -54,6 +52,8 @@ extern bool fDisableGovernance;
 extern int nWalletBackups;
 extern const std::string gCoinJoinName;
 
+class UniValue;
+
 // Application startup time (used for uptime calculation)
 int64_t GetStartupTime();
 
@@ -71,7 +71,19 @@ bool error(const char* fmt, const Args&... args)
 }
 
 void PrintExceptionContinue(const std::exception_ptr pex, const char* pszExceptionOrigin);
+
+/**
+ * Ensure file contents are fully committed to disk, using a platform-specific
+ * feature analogous to fsync().
+ */
 bool FileCommit(FILE *file);
+
+/**
+ * Sync directory contents. This is required on some environments to ensure that
+ * newly created files are committed to disk.
+ */
+void DirectoryCommit(const fs::path &dirname);
+
 bool TruncateFile(FILE *file, unsigned int length);
 int RaiseFileDescriptorLimit(int nMinFD);
 void AllocateFileRange(FILE *file, unsigned int offset, unsigned int length);
@@ -80,6 +92,14 @@ bool LockDirectory(const fs::path& directory, const std::string lockfile_name, b
 void UnlockDirectory(const fs::path& directory, const std::string& lockfile_name);
 bool DirIsWritable(const fs::path& directory);
 bool CheckDiskSpace(const fs::path& dir, uint64_t additional_bytes = 0);
+
+/** Get the size of a file by scanning it.
+ *
+ * @param[in] path The file path
+ * @param[in] max Stop seeking beyond this limit
+ * @return The file size or max
+ */
+std::streampos GetFileSize(const char* path, std::streamsize max = std::numeric_limits<std::streamsize>::max());
 
 /** Release all directory locks. This is used for unit testing only, at runtime
  * the global destructor will take care of the locks.
@@ -106,6 +126,16 @@ std::string ShellEscape(const std::string& arg);
 #if HAVE_SYSTEM
 void runCommand(const std::string& strCommand);
 #endif
+#ifdef HAVE_BOOST_PROCESS
+/**
+ * Execute a command which returns JSON, and parse the result.
+ *
+ * @param str_command The command to execute, including any arguments
+ * @param str_std_in string to pass to stdin
+ * @return parsed JSON
+ */
+UniValue RunCommandParseJSON(const std::string& str_command, const std::string& str_std_in="");
+#endif // HAVE_BOOST_PROCESS
 
 /**
  * Most paths passed as configuration arguments are treated as relative to
@@ -178,8 +208,6 @@ public:
     };
 
 protected:
-    friend class ArgsManagerHelper;
-
     struct Arg
     {
         std::string m_help_param;
@@ -187,7 +215,7 @@ protected:
         unsigned int m_flags;
     };
 
-    mutable CCriticalSection cs_args;
+    mutable RecursiveMutex cs_args;
     util::Settings m_settings GUARDED_BY(cs_args);
     std::string m_network GUARDED_BY(cs_args);
     std::set<std::string> m_network_only_args GUARDED_BY(cs_args);
@@ -195,6 +223,27 @@ protected:
     std::list<SectionInfo> m_config_sections GUARDED_BY(cs_args);
 
     [[nodiscard]] bool ReadConfigStream(std::istream& stream, const std::string& filepath, std::string& error, bool ignore_invalid_keys = false);
+
+    /**
+     * Returns true if settings values from the default section should be used,
+     * depending on the current network and whether the setting is
+     * network-specific.
+     */
+    bool UseDefaultSection(const std::string& arg) const EXCLUSIVE_LOCKS_REQUIRED(cs_args);
+
+    /**
+     * Get setting value.
+     *
+     * Result will be null if setting was unset, true if "-setting" argument was passed
+     * false if "-nosetting" argument was passed, and a string if a "-setting=value"
+     * argument was passed.
+     */
+    util::SettingsValue GetSetting(const std::string& arg) const;
+
+    /**
+     * Get list of setting values.
+     */
+    std::vector<util::SettingsValue> GetSettingsList(const std::string& arg) const;
 
 public:
     ArgsManager();
@@ -428,24 +477,6 @@ namespace ctpl {
     class thread_pool;
 }
 void RenameThreadPool(ctpl::thread_pool& tp, const char* baseName);
-
-/**
- * .. and a wrapper that just calls func once
- */
-template <typename Callable> void TraceThread(const std::string name,  Callable func)
-{
-    util::ThreadRename(name.c_str());
-    try
-    {
-        LogPrintf("%s thread start\n", name);
-        func();
-        LogPrintf("%s thread exit\n", name);
-    }
-    catch (...) {
-        PrintExceptionContinue(std::current_exception(), name.c_str());
-        throw;
-    }
-}
 
 std::string CopyrightHolders(const std::string& strPrefix, unsigned int nStartYear, unsigned int nEndYear);
 

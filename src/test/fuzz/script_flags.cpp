@@ -1,23 +1,16 @@
-// Copyright (c) 2009-2019 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <pubkey.h>
 #include <script/interpreter.h>
 #include <streams.h>
+#include <test/util/script.h>
 #include <version.h>
 
 #include <test/fuzz/fuzz.h>
 
-/** Flags that are not forbidden by an assert */
-static bool IsValidFlagCombination(unsigned flags);
-
-void initialize_script_flags()
-{
-    static const ECCVerifyHandle verify_handle;
-}
-
-FUZZ_TARGET_INIT(script_flags, initialize_script_flags)
+FUZZ_TARGET(script_flags)
 {
     CDataStream ds(buffer, SER_NETWORK, INIT_PROTO_VERSION);
     try {
@@ -71,10 +64,4 @@ FUZZ_TARGET_INIT(script_flags, initialize_script_flags)
     } catch (const std::ios_base::failure&) {
         return;
     }
-}
-
-static bool IsValidFlagCombination(unsigned flags)
-{
-    if (flags & SCRIPT_VERIFY_CLEANSTACK && ~flags & SCRIPT_VERIFY_P2SH) return false;
-    return true;
 }

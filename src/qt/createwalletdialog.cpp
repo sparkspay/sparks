@@ -9,10 +9,12 @@
 #include <qt/createwalletdialog.h>
 #include <qt/forms/ui_createwalletdialog.h>
 
+#include <qt/guiutil.h>
+
 #include <QPushButton>
 
 CreateWalletDialog::CreateWalletDialog(QWidget* parent) :
-    QDialog(parent),
+    QDialog(parent, GUIUtil::dialog_flags),
     ui(new Ui::CreateWalletDialog)
 {
     ui->setupUi(this);
@@ -32,6 +34,21 @@ CreateWalletDialog::CreateWalletDialog(QWidget* parent) :
         // When the disable_privkeys_checkbox is disabled, uncheck it.
         if (!ui->disable_privkeys_checkbox->isEnabled()) {
             ui->disable_privkeys_checkbox->setChecked(false);
+        }
+    });
+    connect(ui->disable_privkeys_checkbox, &QCheckBox::toggled, [this](bool checked) {
+        // Disable the encrypt_wallet_checkbox when isDisablePrivateKeysChecked is
+        // set to true, enable it when isDisablePrivateKeysChecked is false.
+        ui->encrypt_wallet_checkbox->setEnabled(!checked);
+
+        // Wallets without private keys start out blank
+        if (checked) {
+            ui->blank_wallet_checkbox->setChecked(true);
+        }
+
+        // When the encrypt_wallet_checkbox is disabled, uncheck it.
+        if (!ui->encrypt_wallet_checkbox->isEnabled()) {
+            ui->encrypt_wallet_checkbox->setChecked(false);
         }
     });
 }

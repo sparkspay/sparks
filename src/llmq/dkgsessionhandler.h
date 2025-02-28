@@ -1,18 +1,23 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_LLMQ_DKGSESSIONHANDLER_H
 #define BITCOIN_LLMQ_DKGSESSIONHANDLER_H
 
-
 #include <ctpl_stl.h>
 #include <net.h>
 
+#include <gsl/pointers.h>
+
+#include <atomic>
+#include <map>
 #include <optional>
 
-class CBLSWorker;
 class CBlockIndex;
+class CBLSWorker;
+class CChainState;
+class PeerManager;
 
 namespace llmq
 {
@@ -45,7 +50,8 @@ public:
     using BinaryMessage = std::pair<NodeId, std::shared_ptr<CDataStream>>;
 
 private:
-    mutable CCriticalSection cs;
+    mutable RecursiveMutex cs;
+    std::atomic<PeerManager*> m_peerman{nullptr};
     const int invType;
     size_t maxMessagesPerNode GUARDED_BY(cs);
     std::list<BinaryMessage> pendingMessages GUARDED_BY(cs);
@@ -56,17 +62,18 @@ public:
     explicit CDKGPendingMessages(size_t _maxMessagesPerNode, int _invType) :
             invType(_invType), maxMessagesPerNode(_maxMessagesPerNode) {};
 
-    void PushPendingMessage(NodeId from, CDataStream& vRecv);
+    void PushPendingMessage(NodeId from, PeerManager* peerman, CDataStream& vRecv);
     std::list<BinaryMessage> PopPendingMessages(size_t maxCount);
     bool HasSeen(const uint256& hash) const;
+    void Misbehaving(NodeId from, int score);
     void Clear();
 
     template<typename Message>
-    void PushPendingMessage(NodeId from, Message& msg)
+    void PushPendingMessage(NodeId from, PeerManager* peerman, Message& msg)
     {
         CDataStream ds(SER_NETWORK, PROTOCOL_VERSION);
         ds << msg;
-        PushPendingMessage(from, ds);
+        PushPendingMessage(from, peerman, ds);
     }
 
     // Might return nullptr messages, which indicates that deserialization failed for some reason
@@ -106,16 +113,17 @@ private:
     friend class CDKGSessionManager;
 
 private:
-    mutable CCriticalSection cs;
+    mutable RecursiveMutex cs;
     std::atomic<bool> stopRequested{false};
 
-    const Consensus::LLMQParams params;
-    CConnman& connman;
-    const int quorumIndex;
     CBLSWorker& blsWorker;
-    CDKGSessionManager& dkgManager;
+    CChainState& m_chainstate;
+    CConnman& connman;
     CDKGDebugManager& dkgDebugManager;
+    CDKGSessionManager& dkgManager;
     CQuorumBlockProcessor& quorumBlockProcessor;
+    const Consensus::LLMQParams params;
+    const int quorumIndex;
 
     QuorumPhase phase GUARDED_BY(cs) {QuorumPhase::Idle};
     int currentHeight GUARDED_BY(cs) {-1};
@@ -123,6 +131,7 @@ private:
 
     std::unique_ptr<CDKGSession> curSession;
     std::thread phaseHandlerThread;
+    std::string m_thread_name;
 
     // Do not guard these, they protect their internals themselves
     CDKGPendingMessages pendingContributions;
@@ -131,12 +140,13 @@ private:
     CDKGPendingMessages pendingPrematureCommitments;
 
 public:
-    CDKGSessionHandler(const Consensus::LLMQParams& _params, CBLSWorker& _blsWorker, CDKGSessionManager& _dkgManager,
-                       CDKGDebugManager& _dkgDebugManager, CQuorumBlockProcessor& _quorumBlockProcessor, CConnman& _connman, int _quorumIndex);
+    CDKGSessionHandler(CBLSWorker& _blsWorker, CChainState& chainstate, CConnman& _connman, CDKGDebugManager& _dkgDebugManager,
+                       CDKGSessionManager& _dkgManager, CQuorumBlockProcessor& _quorumBlockProcessor,
+                       const Consensus::LLMQParams& _params, int _quorumIndex);
     ~CDKGSessionHandler() = default;
 
     void UpdatedBlockTip(const CBlockIndex *pindexNew);
-    void ProcessMessage(const CNode& pfrom, const std::string& msg_type, CDataStream& vRecv);
+    void ProcessMessage(const CNode& pfrom, gsl::not_null<PeerManager*> peerman, const std::string& msg_type, CDataStream& vRecv);
 
     void StartThread();
     void StopThread();

@@ -1,17 +1,18 @@
-// Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_GOVERNANCE_VOTEDB_H
 #define BITCOIN_GOVERNANCE_VOTEDB_H
 
-#include <list>
-#include <map>
-
 #include <governance/vote.h>
 #include <serialize.h>
 #include <streams.h>
 #include <uint256.h>
+
+#include <list>
+#include <map>
+#include <vector>
 
 /**
  * Represents the collection of votes associated with a given CGovernanceObject

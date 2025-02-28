@@ -1,14 +1,14 @@
-// Copyright (c) 2015 The Bitcoin Core developers
+// Copyright (c) 2015-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <bench/bench.h>
-#include <util/system.h>
 #include <checkqueue.h>
 #include <key.h>
 #include <prevector.h>
 #include <pubkey.h>
 #include <random.h>
+#include <util/system.h>
 
 #include <vector>
 
@@ -22,7 +22,9 @@ static const unsigned int QUEUE_BATCH_SIZE = 128;
 // and there is a little bit of work done between calls to Add.
 static void CCheckQueueSpeedPrevectorJob(benchmark::Bench& bench)
 {
-    const ECCVerifyHandle verify_handle;
+    // We shouldn't ever be running with the checkqueue on a single core machine.
+    if (GetNumCores() <= 1) return;
+
     ECC_Start();
 
     struct PrevectorJob {
@@ -36,7 +38,10 @@ static void CCheckQueueSpeedPrevectorJob(benchmark::Bench& bench)
         {
             return true;
         }
-        void swap(PrevectorJob& x){p.swap(x.p);};
+        void swap(PrevectorJob& x) noexcept
+        {
+            p.swap(x.p);
+        };
     };
     CCheckQueue<PrevectorJob> queue {QUEUE_BATCH_SIZE};
 

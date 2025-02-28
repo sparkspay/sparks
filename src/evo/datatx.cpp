@@ -11,25 +11,25 @@
 #include <chainparams.h>
 #include <consensus/merkle.h>
 
-bool CheckDataTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
+bool CheckDataTx(const CTransaction& tx, const CBlockIndex* pindexPrev, TxValidationState& state)
 {
     if (tx.nType != TRANSACTION_DATA) {
-        return state.Invalid(ValidationInvalidReason::CONSENSUS, false, REJECT_INVALID, "bad-datatx-type");
+        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-datatx-type");
     }
 
-    CDataTx datatx;
-    if (!GetTxPayload(tx, datatx)) {
-        return state.Invalid(ValidationInvalidReason::CONSENSUS, false, REJECT_INVALID, "bad-datatx-payload");
+    std::optional<CDataTx> dataTx = GetTxPayload<CDataTx>(tx);
+    if (!dataTx.has_value()) {
+        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-datatx-payload");
     }
 
     bool fDataTXActive;
     {
         LOCK(cs_main);
-        fDataTXActive = VersionBitsState(pindexPrev, Params().GetConsensus(), Consensus::DEPLOYMENT_DATATX, versionbitscache) == ThresholdState::ACTIVE;
+        fDataTXActive = pindexPrev->nHeight + 1 >= Params().GetConsensus().DATATXHeight;
     }
 
     if (!fDataTXActive) {
-        return state.Invalid(ValidationInvalidReason::CONSENSUS, false, REJECT_INVALID, "bad-datatx-not-active");
+        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-datatx-not-active");
     }
 
     return true;

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2016 The Bitcoin Core developers
+# Copyright (c) 2016-2019 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test Wallet encryption"""
@@ -13,6 +13,7 @@ from test_framework.util import (
     assert_greater_than,
     assert_greater_than_or_equal,
 )
+
 
 class WalletEncryptionTest(BitcoinTestFramework):
     def set_test_params(self):
@@ -70,20 +71,27 @@ class WalletEncryptionTest(BitcoinTestFramework):
 
         # Test timeout bounds
         assert_raises_rpc_error(-8, "Timeout cannot be negative.", self.nodes[0].walletpassphrase, passphrase2, -10)
-        # Check the timeout
-        # Check a time less than the limit
+
+        self.log.info('Check a timeout less than the limit')
         MAX_VALUE = 100000000
         expected_time = self.mocktime + MAX_VALUE - 600
         self.nodes[0].walletpassphrase(passphrase2, MAX_VALUE - 600)
+        self.bump_mocktime(1)
+        # give buffer for walletpassphrase, since it iterates over all crypted keys
+        expected_time_with_buffer = self.mocktime + MAX_VALUE - 600
         actual_time = self.nodes[0].getwalletinfo()['unlocked_until']
         assert_greater_than_or_equal(actual_time, expected_time)
-        assert_greater_than(expected_time + 5, actual_time) # 5 second buffer
-        # Check a time greater than the limit
+        assert_greater_than(expected_time_with_buffer, actual_time)
+
+        self.log.info('Check a timeout greater than the limit')
         expected_time = self.mocktime + MAX_VALUE - 1
         self.nodes[0].walletpassphrase(passphrase2, MAX_VALUE + 1000)
+        self.bump_mocktime(1)
+        expected_time_with_buffer = self.mocktime + MAX_VALUE
         actual_time = self.nodes[0].getwalletinfo()['unlocked_until']
         assert_greater_than_or_equal(actual_time, expected_time)
-        assert_greater_than(expected_time + 5, actual_time) # 5 second buffer
+        assert_greater_than(expected_time_with_buffer, actual_time)
+
 
 if __name__ == '__main__':
     WalletEncryptionTest().main()

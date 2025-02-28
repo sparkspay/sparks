@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2019 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -37,6 +37,10 @@ static constexpr uint8_t PSBT_OUT_BIP32_DERIVATION = 0x02;
 // as a 0 length key which indicates that this is the separator. The separator has no value.
 static constexpr uint8_t PSBT_SEPARATOR = 0x00;
 
+// BIP 174 does not specify a maximum file size, but we set a limit anyway
+// to prevent reading a stream indefinitely and running out of memory.
+const std::streamsize MAX_FILE_SIZE_PSBT = 100000000; // 100 MiB
+
 /** A structure for PSBTs which contain per-input information */
 struct PSBTInput
 {
@@ -52,7 +56,6 @@ struct PSBTInput
     void FillSignatureData(SignatureData& sigdata) const;
     void FromSignatureData(const SignatureData& sigdata);
     void Merge(const PSBTInput& input);
-    bool IsSane() const;
     PSBTInput() {}
 
     template <typename Stream>
@@ -66,7 +69,7 @@ struct PSBTInput
         if (final_script_sig.empty()) {
             // Write any partial signatures
             for (auto sig_pair : partial_sigs) {
-                SerializeToVector(s, PSBT_IN_PARTIAL_SIG, MakeSpan(sig_pair.second.first));
+                SerializeToVector(s, PSBT_IN_PARTIAL_SIG, Span{sig_pair.second.first});
                 s << sig_pair.second.second;
             }
 
@@ -225,7 +228,6 @@ struct PSBTOutput
     void FillSignatureData(SignatureData& sigdata) const;
     void FromSignatureData(const SignatureData& sigdata);
     void Merge(const PSBTOutput& output);
-    bool IsSane() const;
     PSBTOutput() {}
 
     template <typename Stream>
@@ -326,7 +328,6 @@ struct PartiallySignedTransaction
     /** Merge psbt into this. The two psbts must have the same underlying CTransaction (i.e. the
       * same actual Bitcoin transaction.) Returns true if the merge succeeded, false otherwise. */
     [[nodiscard]] bool Merge(const PartiallySignedTransaction& psbt);
-    bool IsSane() const;
     bool AddInput(const CTxIn& txin, PSBTInput& psbtin);
     bool AddOutput(const CTxOut& txout, const PSBTOutput& psbtout);
     PartiallySignedTransaction() {}
@@ -474,10 +475,6 @@ struct PartiallySignedTransaction
         if (outputs.size() != tx->vout.size()) {
             throw std::ios_base::failure("Outputs provided does not match the number of outputs in transaction.");
         }
-        // Sanity check
-        if (!IsSane()) {
-            throw std::ios_base::failure("PSBT is not sane.");
-        }
     }
 
     template <typename Stream>
@@ -494,41 +491,6 @@ enum class PSBTRole {
     EXTRACTOR
 };
 
-/**
- * Holds an analysis of one input from a PSBT
- */
-struct PSBTInputAnalysis {
-    bool has_utxo; //!< Whether we have UTXO information for this input
-    bool is_final; //!< Whether the input has all required information including signatures
-    PSBTRole next; //!< Which of the BIP 174 roles needs to handle this input next
-
-    std::vector<CKeyID> missing_pubkeys; //!< Pubkeys whose BIP32 derivation path is missing
-    std::vector<CKeyID> missing_sigs;    //!< Pubkeys whose signatures are missing
-    uint160 missing_redeem_script;       //!< Hash160 of redeem script, if missing
-};
-
-/**
- * Holds the results of AnalyzePSBT (miscellaneous information about a PSBT)
- */
-struct PSBTAnalysis {
-    std::optional<size_t> estimated_vsize;      //!< Estimated weight of the transaction
-    std::optional<CFeeRate> estimated_feerate;  //!< Estimated feerate (fee / weight) of the transaction
-    std::optional<CAmount> fee;                 //!< Amount of fee being paid by the transaction
-    std::vector<PSBTInputAnalysis> inputs; //!< More information about the individual inputs of the transaction
-    PSBTRole next;                         //!< Which of the BIP 174 roles needs to handle the transaction next
-    std::string error;                     //!< Error message
-
-    void SetInvalid(std::string err_msg)
-    {
-        estimated_vsize = std::nullopt;
-        estimated_feerate = std::nullopt;
-        fee = std::nullopt;
-        inputs.clear();
-        next = PSBTRole::CREATOR;
-        error = err_msg;
-    }
-};
-
 std::string PSBTRoleName(PSBTRole role);
 
 /** Checks whether a PSBTInput is already signed. */
@@ -536,6 +498,9 @@ bool PSBTInputSigned(const PSBTInput& input);
 
 /** Signs a PSBTInput, verifying that all provided data matches what is being signed. */
 bool SignPSBTInput(const SigningProvider& provider, PartiallySignedTransaction& psbt, int index, int sighash = SIGHASH_ALL, SignatureData* out_sigdata = nullptr, bool use_dummy = false);
+
+/** Counts the unsigned inputs of a PSBT. */
+size_t CountPSBTUnsignedInputs(const PartiallySignedTransaction& psbt);
 
 /** Updates a PSBTOutput with information from provider.
  *
@@ -568,14 +533,6 @@ bool FinalizeAndExtractPSBT(PartiallySignedTransaction& psbtx, CMutableTransacti
  * @return error (OK if we successfully combined the transactions, other error if they were not compatible)
  */
 [[nodiscard]] TransactionError CombinePSBTs(PartiallySignedTransaction& out, const std::vector<PartiallySignedTransaction>& psbtxs);
-
-/**
- * Provides helpful miscellaneous information about where a PSBT is in the signing workflow.
- *
- * @param[in] psbtx the PSBT to analyze
- * @return A PSBTAnalysis with information about the provided PSBT.
- */
-PSBTAnalysis AnalyzePSBT(PartiallySignedTransaction psbtx);
 
 //! Decode a base64ed PSBT into a PartiallySignedTransaction
 [[nodiscard]] bool DecodeBase64PSBT(PartiallySignedTransaction& decoded_psbt, const std::string& base64_psbt, std::string& error);

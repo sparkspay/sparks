@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,7 +10,6 @@
 #include <consensus/params.h>
 #include <flatfile.h>
 #include <primitives/block.h>
-#include <tinyformat.h>
 #include <uint256.h>
 
 #include <vector>
@@ -161,14 +160,27 @@ public:
 
     //! Number of transactions in this block.
     //! Note: in a potential headers-first mode, this number cannot be relied upon
+    //! Note: this value is faked during UTXO snapshot load to ensure that
+    //! LoadBlockIndex() will load index entries for blocks that we lack data for.
+    //! @sa ActivateSnapshot
     unsigned int nTx{0};
 
     //! (memory only) Number of transactions in the chain up to and including this block.
     //! This value will be non-zero only if and only if transactions for this block and all its parents are available.
-    //! Change to 64-bit type when necessary; won't happen before 2030
+    //! Change to 64-bit type before 2024 (assuming worst case of 60 byte transactions).
+    //!
+    //! Note: this value is faked during use of a UTXO snapshot because we don't
+    //! have the underlying block data available during snapshot load.
+    //! @sa AssumeutxoData
+    //! @sa ActivateSnapshot
     unsigned int nChainTx{0};
 
     //! Verification status of this block. See enum BlockStatus
+    //!
+    //! Note: this value is modified to show BLOCK_OPT_WITNESS during UTXO snapshot
+    //! load to avoid the block index being spuriously rewound.
+    //! @sa RewindBlockIndex
+    //! @sa ActivateSnapshot
     uint32_t nStatus{0};
 
     //! block header
@@ -268,13 +280,7 @@ public:
         return pbegin[(pend - pbegin)/2];
     }
 
-    std::string ToString() const
-    {
-        return strprintf("CBlockIndex(pprev=%p, nHeight=%d, merkle=%s, hashBlock=%s)",
-            pprev, nHeight,
-            hashMerkleRoot.ToString(),
-            GetBlockHash().ToString());
-    }
+    std::string ToString() const;
 
     //! Check whether this block index entry is valid up to the passed validity level.
     bool IsValid(enum BlockStatus nUpTo = BLOCK_VALID_TRANSACTIONS) const
@@ -334,12 +340,12 @@ public:
     SERIALIZE_METHODS(CDiskBlockIndex, obj)
     {
         int _nVersion = s.GetVersion();
-        if (!(s.GetType() & SER_GETHASH)) READWRITE(VARINT(_nVersion, VarIntMode::NONNEGATIVE_SIGNED));
+        if (!(s.GetType() & SER_GETHASH)) READWRITE(VARINT_MODE(_nVersion, VarIntMode::NONNEGATIVE_SIGNED));
 
-        READWRITE(VARINT(obj.nHeight, VarIntMode::NONNEGATIVE_SIGNED));
+        READWRITE(VARINT_MODE(obj.nHeight, VarIntMode::NONNEGATIVE_SIGNED));
         READWRITE(VARINT(obj.nStatus));
         READWRITE(VARINT(obj.nTx));
-        if (obj.nStatus & (BLOCK_HAVE_DATA | BLOCK_HAVE_UNDO)) READWRITE(VARINT(obj.nFile, VarIntMode::NONNEGATIVE_SIGNED));
+        if (obj.nStatus & (BLOCK_HAVE_DATA | BLOCK_HAVE_UNDO)) READWRITE(VARINT_MODE(obj.nFile, VarIntMode::NONNEGATIVE_SIGNED));
         if (obj.nStatus & BLOCK_HAVE_DATA) READWRITE(VARINT(obj.nDataPos));
         if (obj.nStatus & BLOCK_HAVE_UNDO) READWRITE(VARINT(obj.nUndoPos));
 
@@ -368,16 +374,8 @@ public:
         return block.GetHash();
     }
 
+    std::string ToString() const;
 
-    std::string ToString() const
-    {
-        std::string str = "CDiskBlockIndex(";
-        str += CBlockIndex::ToString();
-        str += strprintf("\n                hashBlock=%s, hashPrev=%s)",
-            GetBlockHash().ToString(),
-            hashPrev.ToString());
-        return str;
-    }
 };
 
 /** An in-memory indexed chain of blocks. */

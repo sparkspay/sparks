@@ -1,6 +1,6 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
-// Copyright (c) 2016-2022 The Sparks Core developers
+// Copyright (c) 2011-2019 The Bitcoin Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
+// Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -43,7 +43,7 @@ bool CCoinControlWidgetItem::operator<(const QTreeWidgetItem &other) const {
 }
 
 CoinControlDialog::CoinControlDialog(CCoinControl& coin_control, WalletModel* _model, QWidget* parent) :
-    QDialog(parent),
+    QDialog(parent, GUIUtil::dialog_flags),
     ui(new Ui::CoinControlDialog),
     m_coin_control(coin_control),
     model(_model)
@@ -161,6 +161,8 @@ CoinControlDialog::CoinControlDialog(CCoinControl& coin_control, WalletModel* _m
         updateLabelLocked();
         CoinControlDialog::updateLabels(m_coin_control, _model, this);
     }
+
+    GUIUtil::handleCloseWindowShortcut(this);
 }
 
 CoinControlDialog::~CoinControlDialog()
@@ -482,7 +484,6 @@ void CoinControlDialog::updateLabels(CCoinControl& m_coin_control, WalletModel *
     unsigned int nBytesInputs   = 0;
     unsigned int nQuantity      = 0;
     bool fUnselectedSpent{false};
-    bool fUnselectedNonMixed{false};
 
     std::vector<COutPoint> vCoinControl;
     m_coin_control.ListSelected(vCoinControl);
@@ -513,7 +514,7 @@ void CoinControlDialog::updateLabels(CCoinControl& m_coin_control, WalletModel *
         {
             CPubKey pubkey;
             PKHash *pkhash = std::get_if<PKHash>(&address);
-            if (pkhash && model->wallet().getPubKey(out.txout.scriptPubKey, CKeyID(*pkhash), pubkey))
+            if (pkhash && model->wallet().getPubKey(out.txout.scriptPubKey, ToKeyID(*pkhash), pubkey))
             {
                 nBytesInputs += (pubkey.IsCompressed() ? 148 : 180);
             }
@@ -576,7 +577,7 @@ void CoinControlDialog::updateLabels(CCoinControl& m_coin_control, WalletModel *
 
     // actually update labels
     int nDisplayUnit = BitcoinUnits::SPK;
-    if (model && model->getOptionsModel())
+    if (model->getOptionsModel())
         nDisplayUnit = model->getOptionsModel()->getDisplayUnit();
 
     QLabel *l1 = dialog->findChild<QLabel *>("labelCoinControlQuantity");
@@ -639,10 +640,6 @@ void CoinControlDialog::updateLabels(CCoinControl& m_coin_control, WalletModel *
     if (fUnselectedSpent) {
         QMessageBox::warning(dialog, "CoinControl",
             tr("Some coins were unselected because they were spent."),
-            QMessageBox::Ok, QMessageBox::Ok);
-    } else if (fUnselectedNonMixed) {
-        QMessageBox::warning(dialog, "CoinControl",
-            tr("Some coins were unselected because they do not have enough mixing rounds."),
             QMessageBox::Ok, QMessageBox::Ok);
     }
 }

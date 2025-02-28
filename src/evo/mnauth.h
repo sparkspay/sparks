@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2022 The Dash Core developers
+// Copyright (c) 2019-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,16 +6,18 @@
 #define BITCOIN_EVO_MNAUTH_H
 
 #include <bls/bls.h>
+#include <net_types.h>
 #include <serialize.h>
 
+class CBlockIndex;
 class CConnman;
 class CDataStream;
 class CDeterministicMN;
 class CDeterministicMNList;
 class CDeterministicMNListDiff;
 class CNode;
+
 class UniValue;
-class CBlockIndex;
 
 /**
  * This class handles the p2p message MNAUTH. MNAUTH is sent directly after VERACK and authenticates the sender as a
@@ -46,7 +48,7 @@ public:
     }
 
     static void PushMNAUTH(CNode& peer, CConnman& connman, const CBlockIndex* tip);
-    static void ProcessMessage(CNode& peer, CConnman& connman, std::string_view msg_type, CDataStream& vRecv);
+    static PeerMsgRet ProcessMessage(CNode& peer, CConnman& connman, std::string_view msg_type, CDataStream& vRecv);
     static void NotifyMasternodeListChanged(bool undo, const CDeterministicMNList& oldMNList, const CDeterministicMNListDiff& diff, CConnman& connman);
 };
 

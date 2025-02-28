@@ -1,11 +1,11 @@
-// Copyright (c) 2019 The Bitcoin Core developers
+// Copyright (c) 2019-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_QT_WALLETCONTROLLER_H
 #define BITCOIN_QT_WALLETCONTROLLER_H
 
-#include <qt/walletmodel.h>
+#include <qt/sendcoinsrecipient.h>
 #include <support/allocators/secure.h>
 #include <sync.h>
 #include <util/translation.h>
@@ -22,12 +22,15 @@
 #include <QTimer>
 #include <QString>
 
+class ClientModel;
 class OptionsModel;
 class PlatformStyle;
+class WalletModel;
 
 namespace interfaces {
 class Handler;
 class Node;
+class Wallet;
 } // namespace interfaces
 
 class AskPassphraseDialog;
@@ -46,7 +49,7 @@ class WalletController : public QObject
     void removeAndDeleteWallet(WalletModel* wallet_model);
 
 public:
-    WalletController(interfaces::Node& node, OptionsModel* options_model, QObject* parent);
+    WalletController(ClientModel& client_model, QObject* parent);
     ~WalletController();
 
     //! Returns wallet models currently open.
@@ -59,6 +62,7 @@ public:
     std::map<std::string, bool> listWalletDir() const;
 
     void closeWallet(WalletModel* wallet_model, QWidget* parent = nullptr);
+    void closeAllWallets(QWidget* parent = nullptr);
 
 Q_SIGNALS:
     void walletAdded(WalletModel* wallet_model);
@@ -69,6 +73,7 @@ Q_SIGNALS:
 private:
     QThread* const m_activity_thread;
     QObject* const m_activity_worker;
+    ClientModel& m_client_model;
     interfaces::Node& m_node;
     OptionsModel* const m_options_model;
     mutable QMutex m_mutex;

@@ -2,7 +2,9 @@
 # - sudo/dist/group are set so as to get Blue Box VMs, necessary for [loopback]
 #   IPv6 support
 
-dist: xenial
+version: ~> 1.0
+
+dist: bionic
 
 os: linux
 language: minimal
@@ -12,14 +14,8 @@ services:
   - docker
 
 cache:
-  ccache: true
   directories:
-    - $BASE_BUILD_DIR/ci/scratch/.ccache
-    # macOS
-    - $HOME/Library/Caches/Homebrew
-    - /usr/local/Homebrew
-before_cache:
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then brew cleanup; fi
+    - $BASE_BUILD_DIR/releases/$HOST
 env:
   global:
     # DOCKER_HUB_USER
@@ -60,7 +56,6 @@ builddocker: &builddocker
     # no need to run tests again here
     - if [ "$DOCKER_BUILD" = "true" ]; then $DOCKER_RUN_IN_BUILDER ./ci/sparks/build_depends.sh && $DOCKER_RUN_IN_BUILDER ./ci/sparks/build_src.sh && BUILD_DIR=build-ci/sparkscore-$BUILD_TARGET ./ci/sparks/build-docker.sh; fi
     - CI_RETRY_EXE="travis_retry"
-    - CI_WAIT="while sleep 500; do echo .; done"
     - CACHE_ERR_MSG="Error! Initial build successful, but not enough time remains to run later build stages and tests. See https://docs.travis-ci.com/user/customizing-the-build#build-timeouts . Please manually re-run this job by using the travis restart button. The next run should not time out because the build cache has been saved."
 before_install:
   - set -o errexit; source ./ci/test/00_setup_env.sh
@@ -68,9 +63,11 @@ before_install:
 install:
   - set -o errexit; source ./ci/test/04_install.sh
 before_script:
-  - set -o errexit; source ./ci/test/05_before_script.sh
+  # Temporary workaround for https://github.com/bitcoin/bitcoin/issues/16368
+  - for i in {1..4}; do echo "$(sleep 500)" ; done &
+  - set -o errexit; source ./ci/test/05_before_script.sh &> "/dev/null"
 script:
-  - if [ $SECONDS -gt 1200 ]; then set +o errexit; echo "Travis early exit to cache current state"; false; else set -o errexit; source .travis/test_06_script.sh; fi
+  - if [[ $SECONDS -gt 1200 ]]; then set +o errexit; echo "Travis early exit to cache current state"; false; else set -o errexit; source .travis/test_06_script.sh; fi
 after_script:
   - echo $TRAVIS_COMMIT_RANGE
 jobs:
@@ -82,9 +79,6 @@ jobs:
     - <<: *builddepends
       name: depends-win64
       env: BUILD_TARGET=win64
-    - <<: *builddepends
-      name: depends-linux32
-      env: BUILD_TARGET=linux32
     - <<: *builddepends
       name: depends-linux64
       env: BUILD_TARGET=linux64
@@ -107,9 +101,6 @@ jobs:
       name: src-win64
       env: BUILD_TARGET=win64
     - <<: *buildsrc
-      name: src-linux32
-      env: BUILD_TARGET=linux32
-    - <<: *buildsrc
       name: src-linux64
       env: BUILD_TARGET=linux64
     - <<: *buildsrc
@@ -127,9 +118,6 @@ jobs:
     - <<: *runtests
       name: tests-win64
       env: BUILD_TARGET=win64
-    - <<: *runtests
-      name: tests-linux32
-      env: BUILD_TARGET=linux32
     - <<: *runtests
       name: tests-linux64
       env: BUILD_TARGET=linux64
@@ -168,7 +156,7 @@ install:
     - ls -lah $HOST_CACHE_DIR && ls -lah $HOST_CACHE_DIR/depends && ls -lah $HOST_CACHE_DIR/ccache && ls -lah $HOST_CACHE_DIR/docker
     # Load cached builder image
     - if [ -f $HOST_CACHE_DIR/docker/sparks-builder-$BUILD_TARGET.tar.gz ]; then zcat $HOST_CACHE_DIR/docker/sparks-builder-$BUILD_TARGET.tar.gz | docker load || true; fi
-    - travis_retry docker pull ubuntu:bionic
+    - travis_retry docker pull ubuntu:focal
     - travis_retry docker build -t $BUILDER_IMAGE_NAME --build-arg=USER_ID=$UID --build-arg=GROUP_ID=$UID --build-arg=BUILD_TARGET=$BUILD_TARGET -f contrib/containers/ci/Dockerfile ci
 before_script:
     # Make sure stdout is in blocking mode. Otherwise builds will fail due to large writes to stdout
@@ -176,9 +164,9 @@ before_script:
     - python3 -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
     # Build docker image only for develop branch of the main repo
     - if [ "$TRAVIS_REPO_SLUG" != "sparkspay/sparks" -o "$TRAVIS_BRANCH" != "develop" -o "$TRAVIS_PULL_REQUEST" != "false" ]; then export DOCKER_BUILD="false"; echo DOCKER_BUILD=$DOCKER_BUILD; fi
-    - if [ "$TRAVIS_REPO_SLUG" != "sparkspay/sparks" -o "$TRAVIS_BRANCH" != "develop" -o "$TRAVIS_PULL_REQUEST" != "false" ]; then export DOCKER_BUILD="false"; echo DOCKER_BUILD=$DOCKER_BUILD; fi
+    
     # TODO: Check keys and signed commits
-    #- if [ "$TRAVIS_REPO_SLUG" = "sparkspay/sparks" -a "$TRAVIS_PULL_REQUEST" = "false" ]; then while read LINE; do travis_retry gpg --keyserver hkp://subset.pool.sks-keyservers.net --recv-keys $LINE; done < contrib/verify-commits/trusted-keys; fi
+    #- if [ "$TRAVIS_REPO_SLUG" = "sparkspay/sparks" -a "$TRAVIS_PULL_REQUEST" = "false" ]; then travis_retry gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys $(<contrib/verify-commits/trusted-keys); fi
     #- if [ "$TRAVIS_REPO_SLUG" = "sparkspay/sparks" -a "$TRAVIS_EVENT_TYPE" = "cron" ]; then travis_wait 30 contrib/verify-commits/verify-commits.py; fi
 after_script:
     - echo $TRAVIS_COMMIT_RANGE
@@ -188,9 +176,9 @@ after_success:
     - stage: lint
       name: 'lint'
       env:
-      cache: false
+      cache: pip
       language: python
-      python: '3.5' # Oldest supported version according to doc/dependencies.md
+      python: '3.8' # Oldest supported version according to doc/dependencies.md
       install:
         - set -o errexit; source ./ci/lint/04_install.sh
       before_script:
@@ -198,87 +186,7 @@ after_success:
       script:
         - set -o errexit; source ./ci/lint/06_script.sh
 
-    - stage: extended-lint
-      name: 'extended lint [runtime >= 60 seconds]'
-      env:
-      cache: false
-      language: python
-      python: '3.5'
-      install:
-        - set -o errexit; source ./ci/extended_lint/04_install.sh
-      before_script:
-        - set -o errexit; source ./ci/lint/05_before_script.sh
-      script:
-        - set -o errexit; source ./ci/extended_lint/06_script.sh
-
     - stage: test
-      name: 'ARM  [GOAL: install]  [unit tests, functional tests]'
-      arch: arm64
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_arm.sh"
-        QEMU_USER_CMD=""  # Can run the tests natively without qemu
-
-    - stage: test
-      name: 'S390x  [GOAL: install]  [unit tests, functional tests]'
-      arch: s390x
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_s390x.sh"
-
-    - stage: test
-      name: 'Win64  [GOAL: deploy]  [unit tests, no gui, no functional tests]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_win64.sh"
-
-    - stage: test
-      name: '32-bit + sparks  [GOAL: install] [GUI: no BIP70]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_i686.sh"
-
-    - stage: test
-      name: 'x86_64 Linux  [GOAL: install]  [CentOS 7]  [no depends, only system libs]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_native_centos.sh"
-
-    - stage: test
-      name: 'x86_64 Linux  [GOAL: install]  [bionic]  [uses qt5 dev package instead of depends Qt to speed up build and avoid timeout] [unsigned char]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_native_qt5.sh"
-# x86_64 Linux (xenial, no depends, only system libs, sanitizers: thread (TSan))
-    - stage: test
-      name: 'x86_64 Linux  [GOAL: install]  [xenial]  [no depends, only system libs, sanitizers: thread (TSan), no wallet]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_native_tsan.sh"
-# x86_64 Linux (no depends, only system libs, sanitizers: address/leak (ASan + LSan) + undefined (UBSan) + integer)
-    - stage: test
-      name: 'x86_64 Linux  [GOAL: install]  [bionic]  [no depends, only system libs, sanitizers: address/leak (ASan + LSan) + undefined (UBSan) + integer]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_native_asan.sh"
-
-    - stage: test
-      name: 'x86_64 Linux  [GOAL: install]  [bionic]  [no wallet]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_native_fuzz.sh"
-
-    - stage: test
-      name: 'x86_64 Linux  [GOAL: install]  [bionic]  [no depends, only system libs, fuzzers under valgrind]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_native_fuzz_with_valgrind.sh"
-
-    - stage: test
+      name: 'x86_64 Linux  [GOAL: install]  [focal]  [no wallet]'
       env: >-
         FILE_ENV="./ci/test/00_setup_env_native_nowallet.sh"
-
-    - stage: test
-      name: 'macOS 10.12  [GOAL: deploy] [no functional tests]'
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_mac.sh"
-
-    - stage: test
-      name: 'macOS 10.14 native [GOAL: install] [GUI: BIP70 enabled] [no depends]'
-      os: osx
-      # Use the most recent version:
-      # Xcode 11, macOS 10.14, JDK 12.0.1
-      # https://docs.travis-ci.com/user/reference/osx/#macos-version
-      osx_image: xcode11
-      env: >-
-        FILE_ENV="./ci/test/00_setup_env_mac_host.sh"

@@ -1316,6 +1316,10 @@ QWidget#OverviewPage QLabel#labelAlerts {
      padding: 5px;
  }
 
+QWidget#no_wallet_group {
+    border: 0;
+}
+
 /******************************************************
 OverviewPage Balances
 ******************************************************/
@@ -1586,6 +1590,13 @@ QWidget#RPCConsole QLabel#peerHeading,
 QWidget#RPCConsole QLabel#banHeading {
 }
 
+QWidget#RPCConsole QLabel#label_alerts {
+    background-color: #c79304;
+    color: #222222;
+    border-radius: 5px;
+    padding: 5px;
+}
+
 QWidget#RPCConsole QLabel#labelNetwork,
 QWidget#RPCConsole QLabel#label_10,
 QWidget#RPCConsole QLabel#labelMempoolTitle { /* Margin between Network and Block Chain headers */
@@ -1687,7 +1698,7 @@ QDialog#SendCoinsDialog .QScrollArea#scrollArea .QWidget#scrollAreaWidgetContent
     background-color: #00000000;
 }
 
-QDialog#SendCoinsDialog QLabel#labelBalanceText,
+QDialog#SendCoinsDialog QLabel#labelBalanceName,
 QDialog#SendCoinsDialog QLabel#labelBalance {
     qproperty-alignment: 'AlignLeading | AlignLeft';
     min-height: 20px;

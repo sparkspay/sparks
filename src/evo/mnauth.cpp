@@ -7,17 +7,17 @@
 #include <bls/bls.h>
 #include <chain.h>
 #include <chainparams.h>
+#include <deploymentstatus.h>
 #include <evo/deterministicmns.h>
 #include <llmq/utils.h>
 #include <masternode/meta.h>
 #include <masternode/node.h>
 #include <masternode/sync.h>
 #include <net.h>
-#include <net_processing.h>
+#include <net_types.h>
 #include <netmessagemaker.h>
+#include <util/time.h>
 #include <validation.h>
-
-#include <unordered_set>
 
 void CMNAuth::PushMNAUTH(CNode& peer, CConnman& connman, const CBlockIndex* tip)
 {
@@ -41,12 +41,12 @@ void CMNAuth::PushMNAUTH(CNode& peer, CConnman& connman, const CBlockIndex* tip)
     if (Params().NetworkIDString() != CBaseChainParams::MAIN && gArgs.IsArgSet("-pushversion")) {
         nOurNodeVersion = gArgs.GetArg("-pushversion", PROTOCOL_VERSION);
     }
-    bool isV19active = llmq::utils::IsV19Active(tip);
-    const CBLSPublicKeyVersionWrapper pubKey(*activeMasternodeInfo.blsPubKeyOperator, !isV19active);
+    const bool is_basic_scheme_active{DeploymentActiveAfter(tip, Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
+    const CBLSPublicKeyVersionWrapper pubKey(*activeMasternodeInfo.blsPubKeyOperator, !is_basic_scheme_active);
     if (peer.nVersion < MNAUTH_NODE_VER_VERSION || nOurNodeVersion < MNAUTH_NODE_VER_VERSION) {
-        signHash = ::SerializeHash(std::make_tuple(pubKey, receivedMNAuthChallenge, peer.fInbound));
+        signHash = ::SerializeHash(std::make_tuple(pubKey, receivedMNAuthChallenge, peer.IsInboundConn()));
     } else {
-        signHash = ::SerializeHash(std::make_tuple(pubKey, receivedMNAuthChallenge, peer.fInbound, nOurNodeVersion));
+        signHash = ::SerializeHash(std::make_tuple(pubKey, receivedMNAuthChallenge, peer.IsInboundConn(), nOurNodeVersion));
     }
 
     CMNAuth mnauth;
@@ -55,14 +55,14 @@ void CMNAuth::PushMNAUTH(CNode& peer, CConnman& connman, const CBlockIndex* tip)
 
     LogPrint(BCLog::NET_NETCONN, "CMNAuth::%s -- Sending MNAUTH, peer=%d\n", __func__, peer.GetId());
 
-    connman.PushMessage(&peer, CNetMsgMaker(peer.GetSendVersion()).Make(NetMsgType::MNAUTH, mnauth));
+    connman.PushMessage(&peer, CNetMsgMaker(peer.GetCommonVersion()).Make(NetMsgType::MNAUTH, mnauth));
 }
 
-void CMNAuth::ProcessMessage(CNode& peer, CConnman& connman, std::string_view msg_type, CDataStream& vRecv)
+PeerMsgRet CMNAuth::ProcessMessage(CNode& peer, CConnman& connman, std::string_view msg_type, CDataStream& vRecv)
 {
     if (msg_type != NetMsgType::MNAUTH || !::masternodeSync->IsBlockchainSynced()) {
         // we can't verify MNAUTH messages when we don't have the latest MN list
-        return;
+        return {};
     }
 
     CMNAuth mnauth;
@@ -70,40 +70,30 @@ void CMNAuth::ProcessMessage(CNode& peer, CConnman& connman, std::string_view ms
 
     // only one MNAUTH allowed
     if (!peer.GetVerifiedProRegTxHash().IsNull()) {
-        LOCK(cs_main);
-        Misbehaving(peer.GetId(), 100, "duplicate mnauth");
-        return;
+        return tl::unexpected{MisbehavingError{100, "duplicate mnauth"}};
     }
 
     if ((~peer.nServices) & (NODE_NETWORK | NODE_BLOOM)) {
         // either NODE_NETWORK or NODE_BLOOM bit is missing in node's services
-        LOCK(cs_main);
-        Misbehaving(peer.GetId(), 100, "mnauth from a node with invalid services");
-        return;
+        return tl::unexpected{MisbehavingError{100, "mnauth from a node with invalid services"}};
     }
 
     if (mnauth.proRegTxHash.IsNull()) {
-        LOCK(cs_main);
-        Misbehaving(peer.GetId(), 100, "empty mnauth proRegTxHash");
-        return;
+        return tl::unexpected{MisbehavingError{100, "empty mnauth proRegTxHash"}};
     }
 
     if (!mnauth.sig.IsValid()) {
-        LOCK(cs_main);
-        Misbehaving(peer.GetId(), 100, "invalid mnauth signature");
         LogPrint(BCLog::NET_NETCONN, "CMNAuth::ProcessMessage -- invalid mnauth for protx=%s with sig=%s\n", mnauth.proRegTxHash.ToString(), mnauth.sig.ToString());
-        return;
+        return tl::unexpected{MisbehavingError{100, "invalid mnauth signature"}};
     }
 
     const auto mnList = deterministicMNManager->GetListAtChainTip();
     const auto dmn = mnList.GetMN(mnauth.proRegTxHash);
     if (!dmn) {
-        LOCK(cs_main);
         // in case node was unlucky and not up to date, just let it be connected as a regular node, which gives it
         // a chance to get up-to-date and thus realize that it's not a MN anymore. We still give it a
         // low DoS score.
-        Misbehaving(peer.GetId(), 10, "missing mnauth masternode");
-        return;
+        return tl::unexpected{MisbehavingError{10, "missing mnauth masternode"}};
     }
 
     uint256 signHash;
@@ -112,33 +102,33 @@ void CMNAuth::ProcessMessage(CNode& peer, CConnman& connman, std::string_view ms
         nOurNodeVersion = gArgs.GetArg("-pushversion", PROTOCOL_VERSION);
     }
     const CBlockIndex* tip = ::ChainActive().Tip();
-    bool isV19active = llmq::utils::IsV19Active(tip);
-    ConstCBLSPublicKeyVersionWrapper pubKey(dmn->pdmnState->pubKeyOperator.Get(), !isV19active);
+    const bool is_basic_scheme_active{DeploymentActiveAfter(tip, Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
+    ConstCBLSPublicKeyVersionWrapper pubKey(dmn->pdmnState->pubKeyOperator.Get(), !is_basic_scheme_active);
     // See comment in PushMNAUTH (fInbound is negated here as we're on the other side of the connection)
     if (peer.nVersion < MNAUTH_NODE_VER_VERSION || nOurNodeVersion < MNAUTH_NODE_VER_VERSION) {
-        signHash = ::SerializeHash(std::make_tuple(pubKey, peer.GetSentMNAuthChallenge(), !peer.fInbound));
+        signHash = ::SerializeHash(std::make_tuple(pubKey, peer.GetSentMNAuthChallenge(), !peer.IsInboundConn()));
     } else {
-        signHash = ::SerializeHash(std::make_tuple(pubKey, peer.GetSentMNAuthChallenge(), !peer.fInbound, peer.nVersion.load()));
+        signHash = ::SerializeHash(std::make_tuple(pubKey, peer.GetSentMNAuthChallenge(), !peer.IsInboundConn(), peer.nVersion.load()));
     }
     LogPrint(BCLog::NET_NETCONN, "CMNAuth::%s -- constructed signHash for nVersion %d, peer=%d\n", __func__, peer.nVersion, peer.GetId());
 
     if (!mnauth.sig.VerifyInsecure(dmn->pdmnState->pubKeyOperator.Get(), signHash)) {
-        LOCK(cs_main);
         // Same as above, MN seems to not know its fate yet, so give it a chance to update. If this is a
         // malicious node (DoSing us), it'll get banned soon.
-        Misbehaving(peer.GetId(), 10, "mnauth signature verification failed");
-        return;
+        return tl::unexpected{MisbehavingError{10, "mnauth signature verification failed"}};
     }
 
-    if (!peer.fInbound) {
-        mmetaman.GetMetaInfo(mnauth.proRegTxHash)->SetLastOutboundSuccess(GetAdjustedTime());
+    if (!peer.IsInboundConn()) {
+        mmetaman->GetMetaInfo(mnauth.proRegTxHash)->SetLastOutboundSuccess(GetTime<std::chrono::seconds>().count());
         if (peer.m_masternode_probe_connection) {
             LogPrint(BCLog::NET_NETCONN, "CMNAuth::ProcessMessage -- Masternode probe successful for %s, disconnecting. peer=%d\n",
                      mnauth.proRegTxHash.ToString(), peer.GetId());
             peer.fDisconnect = true;
-            return;
+            return {};
         }
     }
+
+    const uint256 myProTxHash = WITH_LOCK(activeMasternodeInfoCs, return activeMasternodeInfo.proTxHash);
 
     connman.ForEachNode([&](CNode* pnode2) {
         if (peer.fDisconnect) {
@@ -147,23 +137,25 @@ void CMNAuth::ProcessMessage(CNode& peer, CConnman& connman, std::string_view ms
         }
 
         if (pnode2->GetVerifiedProRegTxHash() == mnauth.proRegTxHash) {
-            if (fMasternodeMode) {
-                const auto deterministicOutbound = WITH_LOCK(activeMasternodeInfoCs, return llmq::utils::DeterministicOutboundConnection(activeMasternodeInfo.proTxHash, mnauth.proRegTxHash));
+            if (fMasternodeMode && !myProTxHash.IsNull()) {
+                const auto deterministicOutbound = llmq::utils::DeterministicOutboundConnection(myProTxHash, mnauth.proRegTxHash);
                 LogPrint(BCLog::NET_NETCONN, "CMNAuth::ProcessMessage -- Masternode %s has already verified as peer %d, deterministicOutbound=%s. peer=%d\n",
                          mnauth.proRegTxHash.ToString(), pnode2->GetId(), deterministicOutbound.ToString(), peer.GetId());
-                if (WITH_LOCK(activeMasternodeInfoCs, return deterministicOutbound == activeMasternodeInfo.proTxHash)) {
-                    if (pnode2->fInbound) {
-                        LogPrint(BCLog::NET_NETCONN, "CMNAuth::ProcessMessage -- dropping old inbound, peer=%d\n", pnode2->GetId());
-                        pnode2->fDisconnect = true;
-                    } else if (peer.fInbound) {
-                        LogPrint(BCLog::NET_NETCONN, "CMNAuth::ProcessMessage -- dropping new inbound, peer=%d\n", peer.GetId());
-                        peer.fDisconnect = true;
+                if (deterministicOutbound == myProTxHash) {
+                    // NOTE: do not drop inbound nodes here, mark them as probes so that
+                    // they would be disconnected later in CMasternodeUtils::DoMaintenance
+                    if (pnode2->IsInboundConn()) {
+                        LogPrint(BCLog::NET_NETCONN, "CMNAuth::ProcessMessage -- marking old inbound for dropping it later, peer=%d\n", pnode2->GetId());
+                        pnode2->m_masternode_probe_connection = true;
+                    } else if (peer.IsInboundConn()) {
+                        LogPrint(BCLog::NET_NETCONN, "CMNAuth::ProcessMessage -- marking new inbound for dropping it later, peer=%d\n", peer.GetId());
+                        peer.m_masternode_probe_connection = true;
                     }
                 } else {
-                    if (!pnode2->fInbound) {
+                    if (!pnode2->IsInboundConn()) {
                         LogPrint(BCLog::NET_NETCONN, "CMNAuth::ProcessMessage -- dropping old outbound, peer=%d\n", pnode2->GetId());
                         pnode2->fDisconnect = true;
-                    } else if (!peer.fInbound) {
+                    } else if (!peer.IsInboundConn()) {
                         LogPrint(BCLog::NET_NETCONN, "CMNAuth::ProcessMessage -- dropping new outbound, peer=%d\n", peer.GetId());
                         peer.fDisconnect = true;
                     }
@@ -177,7 +169,7 @@ void CMNAuth::ProcessMessage(CNode& peer, CConnman& connman, std::string_view ms
     });
 
     if (peer.fDisconnect) {
-        return;
+        return {};
     }
 
     peer.SetVerifiedProRegTxHash(mnauth.proRegTxHash);
@@ -188,12 +180,13 @@ void CMNAuth::ProcessMessage(CNode& peer, CConnman& connman, std::string_view ms
         // Otherwise, the peer would only announce/send messages resulting from QRECSIG,
         // e.g. InstantSend locks or ChainLocks. SPV and regular full nodes should not send
         // this message as they are usually only interested in the higher level messages.
-        const CNetMsgMaker msgMaker(peer.GetSendVersion());
+        const CNetMsgMaker msgMaker(peer.GetCommonVersion());
         connman.PushMessage(&peer, msgMaker.Make(NetMsgType::QSENDRECSIGS, true));
         peer.m_masternode_iqr_connection = true;
     }
 
     LogPrint(BCLog::NET_NETCONN, "CMNAuth::%s -- Valid MNAUTH for %s, peer=%d\n", __func__, mnauth.proRegTxHash.ToString(), peer.GetId());
+    return {};
 }
 
 void CMNAuth::NotifyMasternodeListChanged(bool undo, const CDeterministicMNList& oldMNList, const CDeterministicMNListDiff& diff, CConnman& connman)
@@ -203,7 +196,7 @@ void CMNAuth::NotifyMasternodeListChanged(bool undo, const CDeterministicMNList&
         return;
     }
 
-    connman.ForEachNode([&](CNode* pnode) {
+    connman.ForEachNode([&oldMNList, &diff](CNode* pnode) {
         const auto verifiedProRegTxHash = pnode->GetVerifiedProRegTxHash();
         if (verifiedProRegTxHash.IsNull()) {
             return;
@@ -215,12 +208,9 @@ void CMNAuth::NotifyMasternodeListChanged(bool undo, const CDeterministicMNList&
         bool doRemove = false;
         if (diff.removedMns.count(verifiedDmn->GetInternalId())) {
             doRemove = true;
-        } else {
-            const auto it = diff.updatedMNs.find(verifiedDmn->GetInternalId());
-            if (it != diff.updatedMNs.end()) {
-                if ((it->second.fields & CDeterministicMNStateDiff::Field_pubKeyOperator) && it->second.state.pubKeyOperator.GetHash() != pnode->GetVerifiedPubKeyHash()) {
-                    doRemove = true;
-                }
+        } else if (const auto it = diff.updatedMNs.find(verifiedDmn->GetInternalId()); it != diff.updatedMNs.end()) {
+            if ((it->second.fields & CDeterministicMNStateDiff::Field_pubKeyOperator) && it->second.state.pubKeyOperator.GetHash() != pnode->GetVerifiedPubKeyHash()) {
+                doRemove = true;
             }
         }
 

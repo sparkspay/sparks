@@ -1,10 +1,10 @@
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 
 #include <governance/validators.h>
 #include <util/strencodings.h>
 
-#include <test/data/proposals_valid.json.h>
 #include <test/data/proposals_invalid.json.h>
+#include <test/data/proposals_valid.json.h>
 
 #include <test/util/setup_common.h>
 

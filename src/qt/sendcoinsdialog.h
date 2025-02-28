@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -19,6 +19,7 @@ class CCoinControl;
 class ClientModel;
 class SendCoinsEntry;
 class SendCoinsRecipient;
+enum class SynchronizationState;
 
 namespace Ui {
     class SendCoinsDialog;
@@ -64,8 +65,9 @@ private:
     ClientModel *clientModel;
     WalletModel *model;
     std::unique_ptr<CCoinControl> m_coin_control;
+    std::unique_ptr<WalletModelTransaction> m_current_transaction;
     bool fNewRecipientAllowed;
-    void send(QList<SendCoinsRecipient> recipients);
+    bool send(const QList<SendCoinsRecipient>& recipients, QString& question_string, QString& informative_text, QString& detailed_text);
     bool fFeeMinimized;
     bool fKeepChangeAddress;
 
@@ -74,6 +76,8 @@ private:
     // Additional parameter msgArg can be used via .arg(msgArg).
     void processSendCoinsReturn(const WalletModel::SendCoinsReturn &sendCoinsReturn, const QString &msgArg = QString());
     void minimizeFeeSection(bool fMinimize);
+    // Format confirmation message
+    bool PrepareSendText(QString& question_string, QString& informative_text, QString& detailed_text);
     void updateFeeMinimizedLabel();
     // Update the passed in CCoinControl with state from the GUI
     void updateCoinControlState(CCoinControl& ctrl);
@@ -98,6 +102,7 @@ private Q_SLOTS:
     void coinControlClipboardLowOutput();
     void coinControlClipboardChange();
     void updateFeeSectionControls();
+    void updateNumberOfBlocks(int count, const QDateTime& blockDate, const QString& blockHash, double nVerificationProgress, bool header, SynchronizationState sync_state);
     void updateSmartFeeLabel();
     void keepChangeAddressChanged(bool);
 
@@ -114,7 +119,7 @@ class SendConfirmationDialog : public QMessageBox
 
 public:
     SendConfirmationDialog(const QString &title, const QString &text, int secDelay = 0, QWidget *parent = nullptr);
-    SendConfirmationDialog(const QString& title, const QString& text, const QString& informative_text = "", const QString& detailed_text = "", int secDelay = 0, const QString& confirmText = "Send", QWidget* parent = nullptr);
+    SendConfirmationDialog(const QString& title, const QString& text, const QString& informative_text = "", const QString& detailed_text = "", int secDelay = 0, const QString& confirmText = "", QWidget* parent = nullptr);
     int exec() override;
 
 private Q_SLOTS:

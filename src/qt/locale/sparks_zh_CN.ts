@@ -106,16 +106,8 @@
         <translation>导出地址列表</translation>
     </message>
     <message>
-        <source>Comma separated file (*.csv)</source>
-        <translation>逗号分隔文件 (*.csv)</translation>
-    </message>
-    <message>
         <source>Exporting Failed</source>
         <translation>导出失败</translation>
-    </message>
-    <message>
-        <source>There was an error trying to save the address list to %1. Please try again.</source>
-        <translation>尝试保存地址列表至%1时发生错误。请重新执行操作。</translation>
     </message>
 </context>
 <context>
@@ -215,14 +207,6 @@
         <translation>解锁钱包</translation>
     </message>
     <message>
-        <source>This operation needs your wallet passphrase to decrypt the wallet.</source>
-        <translation>该操作需要您首先使用密码解密钱包。</translation>
-    </message>
-    <message>
-        <source>Decrypt wallet</source>
-        <translation>解密钱包</translation>
-    </message>
-    <message>
         <source>Change passphrase</source>
         <translation>更改密码</translation>
     </message>
@@ -275,10 +259,6 @@
         <translation>用于解密钱包的密码不正确。</translation>
     </message>
     <message>
-        <source>Wallet decryption failed</source>
-        <translation>钱包解密失败。</translation>
-    </message>
-    <message>
         <source>Wallet passphrase was successfully changed.</source>
         <translation>修改钱包密码成功。</translation>
     </message>
@@ -307,22 +287,6 @@
 </context>
 <context>
     <name>BitcoinGUI</name>
-    <message>
-        <source>A fatal error occurred. Sparks Core can no longer continue safely and will quit.</source>
-        <translation>发生严重错误。Sparks Core钱包不再能安全地运行下去，程序将会关闭。</translation>
-    </message>
-    <message>
-        <source>Sparks Core</source>
-        <translation>Sparks Core</translation>
-    </message>
-    <message>
-        <source>Wallet</source>
-        <translation>钱包</translation>
-    </message>
-    <message>
-        <source>Node</source>
-        <translation>节点</translation>
-    </message>
     <message>
         <source>&amp;Overview</source>
         <translation>概况(&amp;O)</translation>
@@ -357,7 +321,7 @@
     </message>
     <message>
         <source>&amp;Masternodes</source>
-        <translation>主节点(&amp;M)</translation>
+        <translation>&amp;主节点</translation>
     </message>
     <message>
         <source>Browse masternodes</source>
@@ -472,10 +436,6 @@
         <translation>Debug控制台(&amp;D)</translation>
     </message>
     <message>
-        <source>Open debugging console</source>
-        <translation>打开调试控制台</translation>
-    </message>
-    <message>
         <source>&amp;Network Monitor</source>
         <translation>网络流量监控(&amp;N)</translation>
     </message>
@@ -485,7 +445,7 @@
     </message>
     <message>
         <source>&amp;Peers list</source>
-        <translation>节点列表(&amp;P)</translation>
+        <translation>&amp;节点列表</translation>
     </message>
     <message>
         <source>Show peers info</source>
@@ -501,7 +461,7 @@
     </message>
     <message>
         <source>Open Wallet &amp;Configuration File</source>
-        <translation>打开钱包配置文件(&amp;C)</translation>
+        <translation>打开钱包 &amp;配置文件</translation>
     </message>
     <message>
         <source>Open configuration file</source>
@@ -509,7 +469,7 @@
     </message>
     <message>
         <source>Show Automatic &amp;Backups</source>
-        <translation>显示自动备份(&amp;B)</translation>
+        <translation>显示自动 &amp;备份</translation>
     </message>
     <message>
         <source>Show automatically created wallet backups</source>
@@ -536,12 +496,8 @@
         <translation>打开 &amp;URI...</translation>
     </message>
     <message>
-        <source>Open a sparks: URI or payment request</source>
-        <translation>打开一个Sparks协议的URI或付款请求</translation>
-    </message>
-    <message>
         <source>&amp;Command-line options</source>
-        <translation>命令行选项(&amp;C)</translation>
+        <translation>&amp;命令行选项</translation>
     </message>
     <message>
         <source>Show the %1 help message to get a list with possible Sparks command-line options</source>
@@ -564,6 +520,26 @@
     <message>
         <source>&amp;File</source>
         <translation>文件(&amp;F)</translation>
+    </message>
+    <message>
+        <source>Show information about %1</source>
+        <translation>显示有关%1的相关信息</translation>
+    </message>
+    <message>
+        <source>Open debugging and diagnostic console</source>
+        <translation>打开调试和诊断控制台</translation>
+    </message>
+    <message>
+        <source>Open a sparks: URI</source>
+        <translation>打开一个sparks: URI</translation>
+    </message>
+    <message>
+        <source>Create Wallet...</source>
+        <translation>创建钱包...</translation>
+    </message>
+    <message>
+        <source>Create a new wallet</source>
+        <translation>创建一个新钱包</translation>
     </message>
     <message>
         <source>%1 &amp;information</source>
@@ -739,7 +715,15 @@
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation>钱包已被&lt;b&gt;加密&lt;/b&gt;，当前为&lt;b&gt;锁定&lt;/b&gt;状态</translation>
     </message>
-</context>
+    <message>
+        <source>Proxy is &lt;b&gt;enabled&lt;/b&gt;: %1</source>
+        <translation>代理服务器 &lt;b&gt;已启用&lt;/b&gt;: %1</translation>
+    </message>
+    <message>
+        <source>Original message:</source>
+        <translation>原始信息:</translation>
+    </message>
+    </context>
 <context>
     <name>CoinControlDialog</name>
     <message>
@@ -899,10 +883,6 @@
         <translation>一些币被取消选择, 因为它们已经被发送了.</translation>
     </message>
     <message>
-        <source>Some coins were unselected because they do not have enough mixing rounds.</source>
-        <translation>一些币被取消选择, 因为它们没有足够的混币循环.</translation>
-    </message>
-    <message>
         <source>Show all coins</source>
         <translation>显示所有币</translation>
     </message>
@@ -1010,6 +990,33 @@
     </message>
 </context>
 <context>
+    <name>GovernanceList</name>
+    <message>
+        <source>Form</source>
+        <translation>表格</translation>
+    </message>
+    <message>
+        <source>Filter List:</source>
+        <translation>筛选列表:</translation>
+    </message>
+    <message>
+        <source>Filter proposal list</source>
+        <translation>筛选提案列表</translation>
+    </message>
+    <message>
+        <source>Proposal Count:</source>
+        <translation>提案数量:</translation>
+    </message>
+    <message>
+        <source>Filter by Title</source>
+        <translation>按标题筛选</translation>
+    </message>
+    <message>
+        <source>Proposal Info: %1</source>
+        <translation>提案信息: %1</translation>
+    </message>
+</context>
+<context>
     <name>HelpMessageDialog</name>
     <message>
         <source>version</source>
@@ -1021,7 +1028,7 @@
     </message>
     <message>
         <source>About %1</source>
-        <translation>關於 %1</translation>
+        <translation>关于 %1</translation>
     </message>
     <message>
         <source>Command-line options</source>
@@ -1094,14 +1101,6 @@
         <source>Error</source>
         <translation>错误</translation>
     </message>
-    <message>
-        <source>%1 GB of free space available</source>
-        <translation>%1GB的可用空间</translation>
-    </message>
-    <message>
-        <source>(of %1 GB needed)</source>
-        <translation>(需要 %1 GB的空间)</translation>
-    </message>
 </context>
 <context>
     <name>MasternodeList</name>
@@ -1140,6 +1139,10 @@
     <message>
         <source>Service</source>
         <translation>服务</translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation>类型</translation>
     </message>
     <message>
         <source>PoSe Score</source>
@@ -1191,7 +1194,7 @@
     </message>
     <message>
         <source>ENABLED</source>
-        <translation>ENABLED</translation>
+        <translation>激活的</translation>
     </message>
     <message>
         <source>POSE_BANNED</source>
@@ -1199,7 +1202,7 @@
     </message>
     <message>
         <source>UNKNOWN</source>
-        <translation>UNKNOWN</translation>
+        <translation>未知</translation>
     </message>
     <message>
         <source>to %1</source>
@@ -1207,7 +1210,7 @@
     </message>
     <message>
         <source>to UNKNOWN</source>
-        <translation>至 UNKNOWN</translation>
+        <translation>至 未知</translation>
     </message>
     <message>
         <source>but not claimed</source>
@@ -1215,7 +1218,7 @@
     </message>
     <message>
         <source>NONE</source>
-        <translation>NONE</translation>
+        <translation>没有</translation>
     </message>
     <message>
         <source>Filter by any property (e.g. address or protx hash)</source>
@@ -1288,20 +1291,27 @@
         <translation>打开 URI</translation>
     </message>
     <message>
-        <source>Open payment request from URI or file</source>
-        <translation>打开来自URI或文件的付款请求 </translation>
-    </message>
-    <message>
         <source>URI:</source>
         <translation>URI:</translation>
     </message>
+</context>
+<context>
+    <name>OpenWalletActivity</name>
     <message>
-        <source>Select payment request file</source>
-        <translation>选择付款请求文件 </translation>
+        <source>Open wallet failed</source>
+        <translation>打开钱包失败</translation>
     </message>
     <message>
-        <source>Select payment request file to open</source>
-        <translation>选择需要打开的付款请求文件 </translation>
+        <source>Open wallet warning</source>
+        <translation>打开钱包警告</translation>
+    </message>
+    <message>
+        <source>default wallet</source>
+        <translation>默认钱包</translation>
+    </message>
+    <message>
+        <source>Opening Wallet &lt;b&gt;%1&lt;/b&gt;...</source>
+        <translation>正在打开钱包 &lt;b&gt;%1&lt;/b&gt;...</translation>
     </message>
 </context>
 <context>
@@ -1337,6 +1347,30 @@
     <message>
         <source>&amp;Appearance</source>
         <translation>&amp;外观</translation>
+    </message>
+    <message>
+        <source>Prune &amp;block storage to</source>
+        <translation>修剪&amp;区块存储到</translation>
+    </message>
+    <message>
+        <source>GB</source>
+        <translation>GB</translation>
+    </message>
+    <message>
+        <source>Reverting this setting requires re-downloading the entire blockchain.</source>
+        <translation>还原此设置需要重新下载整个区块链.</translation>
+    </message>
+    <message>
+        <source>MiB</source>
+        <translation>MiB</translation>
+    </message>
+    <message>
+        <source>Whether to keep the specified custom change address or not.</source>
+        <translation>是否保留指定的自定义找零地址.</translation>
+    </message>
+    <message>
+        <source>Keep custom change &amp;address</source>
+        <translation>保留自定义找零&amp;地址</translation>
     </message>
     <message>
         <source>Show additional tab listing all your masternodes in first sub-tab&lt;br/&gt;and all masternodes on the network in second sub-tab.</source>
@@ -1403,6 +1437,10 @@
         <translation>自动在路由器打开Sparks Core客户端端口。此项只在路由器支持UPnP且开启时有效。</translation>
     </message>
     <message>
+        <source>Map port using NA&amp;T-PMP</source>
+        <translation>使用NA&amp;T-PMP映射端口</translation>
+    </message>
+    <message>
         <source>Accept connections from outside.</source>
         <translation>接受来自外部的连接.</translation>
     </message>
@@ -1423,8 +1461,8 @@
         <translation>如果是使用提供的默认SOCKS5代理来连接到节点就加以显示。</translation>
     </message>
     <message>
-        <source>Use separate SOCKS&amp;5 proxy to reach peers via Tor hidden services:</source>
-        <translation>使用独立的SOCK&amp;5代理服务器, 并通过Tor隐藏服务到对等用户群:</translation>
+        <source>Options set in this dialog are overridden by the command line or in the configuration file:</source>
+        <translation>此对话框中设置的选项被命令行或配置文件覆盖:</translation>
     </message>
     <message>
         <source>Hide the icon from the system tray.</source>
@@ -1479,6 +1517,10 @@
         <translation>使用UPnP映射端口(&amp;U)</translation>
     </message>
     <message>
+        <source>Automatically open the Sparks Core client port on the router. This only works when your router supports NAT-PMP and it is enabled. The external port could be random.</source>
+        <translation>自动打开路由器上Sparks Core客户端端口. 这仅在您的路由器支持NAT-PMP并且已启用时才有效. 外部端口可以是随机的.</translation>
+    </message>
+    <message>
         <source>Proxy &amp;IP:</source>
         <translation>代理服务器IP(&amp;I)：</translation>
     </message>
@@ -1509,10 +1551,6 @@
     <message>
         <source>Tor</source>
         <translation>Tor</translation>
-    </message>
-    <message>
-        <source>Connect to the Sparks network through a separate SOCKS5 proxy for Tor hidden services.</source>
-        <translation>通过另一个SOCKS5代理服务器作为Tor隐藏服务来连接到Sparks网络。</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
@@ -1829,6 +1867,9 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
+    <name>PSBTOperationsDialog</name>
+    </context>
+<context>
     <name>PaymentServer</name>
     <message>
         <source>Payment request error</source>
@@ -1847,8 +1888,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>'sparks://' 不是一个有效链接. 请使用'sparks:'</translation>
     </message>
     <message>
-        <source>Payment request fetch URL is invalid: %1</source>
-        <translation>付款请求URI链接非法：%1</translation>
+        <source>Cannot process payment request as BIP70 is no longer supported.</source>
+        <translation>无法处理付款请求因为不再支持BIP70.</translation>
+    </message>
+    <message>
+        <source>Due to discontinued support, you should request the merchant to provide you with a BIP21 compatible URI or use a wallet that does continue to support BIP70.</source>
+        <translation>由于终止支持, 您应当要求商家为您提供一个兼容BIP21的URI, 或使用仍支持BIP70的钱包.</translation>
     </message>
     <message>
         <source>Invalid payment address %1</source>
@@ -1862,77 +1907,9 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Payment request file handling</source>
         <translation>付款请求文件处理 </translation>
     </message>
-    <message>
-        <source>Payment request file cannot be read! This can be caused by an invalid payment request file.</source>
-        <translation>付款请求文件不能读取！这可能是个无效的付款请求文件。</translation>
-    </message>
-    <message>
-        <source>Payment request rejected</source>
-        <translation>付款请求被拒绝</translation>
-    </message>
-    <message>
-        <source>Payment request network doesn't match client network.</source>
-        <translation>付款请求网络与客户端网络不符。</translation>
-    </message>
-    <message>
-        <source>Payment request expired.</source>
-        <translation>付款请求已过期。</translation>
-    </message>
-    <message>
-        <source>Payment request is not initialized.</source>
-        <translation>付款请求没有完成初始化。</translation>
-    </message>
-    <message>
-        <source>Unverified payment requests to custom payment scripts are unsupported.</source>
-        <translation>不支持到自定义付款脚本的未验证付款请求。</translation>
-    </message>
-    <message>
-        <source>Invalid payment request.</source>
-        <translation>无效的支付请求。</translation>
-    </message>
-    <message>
-        <source>Requested payment amount of %1 is too small (considered dust).</source>
-        <translation>请求支付的金额 %1 太小（会被网络认为是没有必要的零散金额）。</translation>
-    </message>
-    <message>
-        <source>Refund from %1</source>
-        <translation>来自%1的退款</translation>
-    </message>
-    <message>
-        <source>Payment request %1 is too large (%2 bytes, allowed %3 bytes).</source>
-        <translation>付款请求 %1 过大（%2字节，上限%3字节位）。</translation>
-    </message>
-    <message>
-        <source>Error communicating with %1: %2</source>
-        <translation>跟%1通信时发生错误：%2</translation>
-    </message>
-    <message>
-        <source>Payment request cannot be parsed!</source>
-        <translation>支付请求不能被解析！</translation>
-    </message>
-    <message>
-        <source>Bad response from server %1</source>
-        <translation>来自 %1 服务器的错误响应</translation>
-    </message>
-    <message>
-        <source>Network request error</source>
-        <translation>网络请求出错</translation>
-    </message>
-    <message>
-        <source>Payment acknowledged</source>
-        <translation>支付已到账</translation>
-    </message>
 </context>
 <context>
     <name>PeerTableModel</name>
-    <message>
-        <source>NodeId</source>
-        <translation>节点ID</translation>
-    </message>
-    <message>
-        <source>Node/Service</source>
-        <translation>节点/服务</translation>
-    </message>
     <message>
         <source>User Agent</source>
         <translation>用户代理</translation>
@@ -1948,6 +1925,56 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Received</source>
         <translation>已接收</translation>
+    </message>
+    </context>
+<context>
+    <name>Proposal</name>
+    <message>
+        <source>Passing +%1</source>
+        <translation>通过 +%1</translation>
+    </message>
+    <message>
+        <source>Needs additional %1 votes</source>
+        <translation>需要额外的 %1 票</translation>
+    </message>
+</context>
+<context>
+    <name>ProposalModel</name>
+    <message>
+        <source>Yes</source>
+        <translation>赞成</translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation>反对</translation>
+    </message>
+    <message>
+        <source>Hash</source>
+        <translation>哈希值</translation>
+    </message>
+    <message>
+        <source>Title</source>
+        <translation>标题</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>开始</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>结束</translation>
+    </message>
+    <message>
+        <source>Amount</source>
+        <translation>金额</translation>
+    </message>
+    <message>
+        <source>Active</source>
+        <translation>活跃的</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>状态</translation>
     </message>
 </context>
 <context>
@@ -1983,10 +2010,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Reset all settings changed in the GUI</source>
         <translation>重置图形界面所有的变更设置</translation>
-    </message>
-    <message>
-        <source>Set SSL root certificates for payment request (default: -system-)</source>
-        <translation>设置SSL根证书的付款请求(默认：-系统-)</translation>
     </message>
     <message>
         <source>Show splash screen on startup (default: %u)</source>
@@ -2107,34 +2130,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Error: %1</source>
         <translation>错误：%1</translation>
     </message>
-    <message>
-        <source>Error: Failed to load application fonts.</source>
-        <translation>错误: 加载应用程序字体失败.</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-family invalid. Valid values: %1.</source>
-        <translation>错误: 指定的字体系列无效. 有效值: %1.</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-weight-normal invalid. Valid range %1 to %2.</source>
-        <translation>错误: 指定的字体粗细标准无效. 有效范围%1 至 %2.</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-weight-bold invalid. Valid range %1 to %2.</source>
-        <translation>错误: 指定的字体粗体无效. 有效范围%1 至 %2.</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-scale invalid. Valid range %1 to %2.</source>
-        <translation>错误: 指定的字体大小无效. 有效范围%1 至 %2.</translation>
-    </message>
-    <message>
-        <source>Error: Invalid -custom-css-dir path.</source>
-        <translation>错误: 无效的 -custom-css-dir 路径.</translation>
-    </message>
-    <message>
-        <source>Error: %1 CSS file(s) missing in -custom-css-dir path.</source>
-        <translation>错误: -custom-css-dir 路径下%1 CSS file(s)丢失.</translation>
-    </message>
 </context>
 <context>
     <name>QRDialog</name>
@@ -2147,52 +2142,22 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>二维码</translation>
     </message>
     <message>
-        <source>&amp;Save Image...</source>
-        <translation>保存图片(&amp;S)...</translation>
+        <source>Resulting URI too long, try to reduce the text for label / message.</source>
+        <translation>生成的URI 太长, 请试着精简标签或消息文本.</translation>
     </message>
     <message>
-        <source>Error creating QR Code.</source>
-        <translation>生成二维码错误</translation>
-    </message>
-</context>
-<context>
-    <name>QRGeneralImageWidget</name>
-    <message>
-        <source>&amp;Save Image...</source>
-        <translation>保存图片(&amp;S)...</translation>
+        <source>Error encoding URI into QR Code.</source>
+        <translation>将 URI转为二维码失败.</translation>
     </message>
     <message>
-        <source>&amp;Copy Image</source>
-        <translation>复制图片</translation>
-    </message>
-    <message>
-        <source>Save QR Code</source>
-        <translation>保存QR二维码</translation>
-    </message>
-    <message>
-        <source>PNG Image (*.png)</source>
-        <translation>PNG 图像(*.png)</translation>
-    </message>
-</context>
-<context>
-    <name>QRImageWidget</name>
-    <message>
-        <source>&amp;Save Image...</source>
-        <translation>保存图片(&amp;S)...</translation>
-    </message>
-    <message>
-        <source>&amp;Copy Image</source>
-        <translation>复制图片(&amp;C)</translation>
+        <source>QR code support not available.</source>
+        <translation>二维码支持不可用.</translation>
     </message>
     <message>
         <source>Save QR Code</source>
         <translation>保存二维码</translation>
     </message>
-    <message>
-        <source>PNG Image (*.png)</source>
-        <translation>PNG图片(*.png)</translation>
-    </message>
-</context>
+    </context>
 <context>
     <name>RPCConsole</name>
     <message>
@@ -2256,10 +2221,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>区块链</translation>
     </message>
     <message>
-        <source>Number of Masternodes</source>
-        <translation>主节点数量</translation>
-    </message>
-    <message>
         <source>Memory Pool</source>
         <translation>内存池</translation>
     </message>
@@ -2308,10 +2269,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>选择一个节点查看详细信息.</translation>
     </message>
     <message>
-        <source>Whitelisted</source>
-        <translation>白名单</translation>
-    </message>
-    <message>
         <source>Direction</source>
         <translation>方向</translation>
     </message>
@@ -2346,10 +2303,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>-rescan=2: Rescan the block chain for missing wallet transactions starting from genesis block.</source>
         <translation>-rescan=2: 从初始块开始重新扫描区块链以查找遗漏的钱包交易。</translation>
-    </message>
-    <message>
-        <source>Wallet Path</source>
-        <translation>钱包路径</translation>
     </message>
     <message>
         <source>User Agent</source>
@@ -2440,42 +2393,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>钱包修复(&amp;W)</translation>
     </message>
     <message>
-        <source>Salvage wallet</source>
-        <translation>抢救钱包</translation>
-    </message>
-    <message>
-        <source>Recover transactions 1</source>
-        <translation>恢复交易 1</translation>
-    </message>
-    <message>
-        <source>Recover transactions 2</source>
-        <translation>恢复交易 2</translation>
-    </message>
-    <message>
-        <source>Upgrade wallet format</source>
-        <translation>升级钱包格式</translation>
-    </message>
-    <message>
-        <source>The buttons below will restart the wallet with command-line options to repair the wallet, fix issues with corrupt blockhain files or missing/obsolete transactions.</source>
-        <translation>下面的按钮将重新启动钱包并使用命令行选项进行修复，解决损坏或丢失的区块链文件/超时的交易问题。</translation>
-    </message>
-    <message>
-        <source>-salvagewallet: Attempt to recover private keys from a corrupt wallet.dat.</source>
-        <translation>-salvagewallet：尝试从已损坏的钱包文件中找回私钥。</translation>
-    </message>
-    <message>
-        <source>-zapwallettxes=1: Recover transactions from blockchain (keep meta-data, e.g. account owner).</source>
-        <translation>-zapwallettxes=1：从区块链恢复交易（保留交易描述信息，例如账户拥有者）。</translation>
-    </message>
-    <message>
-        <source>-zapwallettxes=2: Recover transactions from blockchain (drop meta-data).</source>
-        <translation>-zapwallettxes=2：从区块链恢复交易（删除交易描述信息）。</translation>
-    </message>
-    <message>
-        <source>-upgradewallet: Upgrade wallet to latest format on startup. (Note: this is NOT an update of the wallet itself!)</source>
-        <translation>-upgradewallet：在启动时升级钱包到最新格式。（注：这并不是钱包软件本身的更新！）</translation>
-    </message>
-    <message>
         <source>Wallet repair options.</source>
         <translation>钱包修复选项。</translation>
     </message>
@@ -2560,10 +2477,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>使用 "%1" 钱包执行命令</translation>
     </message>
     <message>
-        <source>(node id: %1)</source>
-        <translation>(节点ID：%1)</translation>
-    </message>
-    <message>
         <source>via %1</source>
         <translation>经由 %1</translation>
     </message>
@@ -2580,12 +2493,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>导出</translation>
     </message>
     <message>
-        <source>Yes</source>
-        <translation>是</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>否</translation>
+        <source>Outbound block-relay</source>
+        <translation>向外区块广播</translation>
     </message>
     <message>
         <source>Regular</source>
@@ -2621,6 +2530,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the Sparks network.</source>
         <translation>附加在付款要求中的讯息，可以不填，打开要求内容时会显示。&lt;br&gt;注意：这个讯息不会随着付款送到Sparks网路上。</translation>
+    </message>
+    <message>
+        <source>An optional label to associate with the new receiving address (used by you to identify an invoice).  It is also attached to the payment request.</source>
+        <translation>与新得接收地址关联的可选标签 (您可用以识别账单). 它也附在付款请求中.</translation>
     </message>
     <message>
         <source>Use this form to request payments. All fields are &lt;b&gt;optional&lt;/b&gt;.</source>
@@ -2698,10 +2611,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
 <context>
     <name>ReceiveRequestDialog</name>
     <message>
-        <source>QR Code</source>
-        <translation>二维码</translation>
-    </message>
-    <message>
         <source>Copy &amp;URI</source>
         <translation>复制 URI(&amp;U)</translation>
     </message>
@@ -2720,38 +2629,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Payment information</source>
         <translation>付款信息</translation>
-    </message>
-    <message>
-        <source>URI</source>
-        <translation>URI</translation>
-    </message>
-    <message>
-        <source>Address</source>
-        <translation>地址</translation>
-    </message>
-    <message>
-        <source>Amount</source>
-        <translation>金额</translation>
-    </message>
-    <message>
-        <source>Label</source>
-        <translation>标签</translation>
-    </message>
-    <message>
-        <source>Message</source>
-        <translation>消息</translation>
-    </message>
-    <message>
-        <source>Wallet</source>
-        <translation>钱包</translation>
-    </message>
-    <message>
-        <source>Resulting URI too long, try to reduce the text for label / message.</source>
-        <translation>URI 太长，请试着精简标签或消息文本。</translation>
-    </message>
-    <message>
-        <source>Error encoding URI into QR Code.</source>
-        <translation>将 URI 转为二维码失败。</translation>
     </message>
 </context>
 <context>
@@ -2852,8 +2729,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>选择...</translation>
     </message>
     <message>
-        <source>collapse fee-settings</source>
-        <translation>收起手续费设置</translation>
+        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
+        <translation>当交易量小于区块空间时, 矿工和中继节点或许会强制收取最低费用. 仅支付最低费用也可以, 但请注意, 一旦Sparks交易的需求超出了网络的处理能力, 则会导致这笔交易永远无法被确认.</translation>
+    </message>
+    <message>
+        <source>A too low fee might result in a never confirming transaction (read the tooltip)</source>
+        <translation>过低的交易手续费也许会导致交易永远无法被确认 (阅读提示信息)</translation>
     </message>
     <message>
         <source>Confirmation time target:</source>
@@ -2862,10 +2743,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation>如果自定手续费设定为1000 duffs，而交易信息只有250字节的话，那么选择"每千字节"就只会支付250 duffs的手续费，&lt;br /&gt;而"至少"会支付1000 duffs。但如果交易信息大于一千字节,那么两者都要按每千字节付费。</translation>
-    </message>
-    <message>
-        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
-        <translation>当交易量少于区块可容纳的空间时，只需支付最低手续费。&lt;br /&gt;但当交易量的需求增长到超过总体网络可处理的量时，可能会造成一笔一直不被确认的交易。</translation>
     </message>
     <message>
         <source>per kilobyte</source>
@@ -2882,10 +2759,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Hide</source>
         <translation>隐藏</translation>
-    </message>
-    <message>
-        <source>(read the tooltip)</source>
-        <translation>(请看提示)</translation>
     </message>
     <message>
         <source>Recommended:</source>
@@ -2960,10 +2833,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>%1 (%2 区块)</translation>
     </message>
     <message>
-        <source>from wallet %1</source>
-        <translation>来自%1钱包</translation>
-    </message>
-    <message>
         <source>using</source>
         <translation>使用</translation>
     </message>
@@ -2989,11 +2858,31 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>S&amp;end mixed funds</source>
-        <translation>S&amp;end 混币资金</translation>
+        <translation>发&amp;送 混币资金</translation>
     </message>
     <message>
         <source>Confirm the %1 send action</source>
         <translation>确认%1发送行为</translation>
+    </message>
+    <message>
+        <source>Cr&amp;eate Unsigned</source>
+        <translation>创&amp;建未签名的</translation>
+    </message>
+    <message>
+        <source>Creates a Partially Signed Bitcoin Transaction (PSBT) for use with e.g. an offline %1 wallet, or a PSBT-compatible hardware wallet.</source>
+        <translation>如使用一个离线的 %1 钱包, 或一个PSBT兼容的硬件钱包来创建一个部分签名的比特币交易 (PSBT).</translation>
+    </message>
+    <message>
+        <source> from wallet '%1'</source>
+        <translation>来自钱包 '%1'</translation>
+    </message>
+    <message>
+        <source>%1 to '%2'</source>
+        <translation>%1 到 '%2'</translation>
+    </message>
+    <message>
+        <source>Do you want to draft this transaction?</source>
+        <translation>您想要起草这笔交易吗?</translation>
     </message>
     <message>
         <source>%1 funds only</source>
@@ -3024,8 +2913,32 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>提醒: 使用 %1与%2或更多输入不利于您的隐私保护，并不推荐</translation>
     </message>
     <message>
+        <source>Click to learn more</source>
+        <translation>点击了解更多</translation>
+    </message>
+    <message>
+        <source>Total Amount</source>
+        <translation>总金额</translation>
+    </message>
+    <message>
+        <source>or</source>
+        <translation>或</translation>
+    </message>
+    <message>
+        <source>To review recipient list click "Show Details..."</source>
+        <translation>查看收件人列表请点击 "显示详细信息..."</translation>
+    </message>
+    <message>
         <source>Confirm send coins</source>
         <translation>确认发送货币</translation>
+    </message>
+    <message>
+        <source>Confirm transaction proposal</source>
+        <translation>确认交易提案</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>发送</translation>
     </message>
     <message>
         <source>The recipient address is not valid. Please recheck.</source>
@@ -3058,14 +2971,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>A fee higher than %1 is considered an absurdly high fee.</source>
         <translation>交易费一般不应超过 %1。</translation>
-    </message>
-    <message>
-        <source>Payment request expired.</source>
-        <translation>付款请求已过期。</translation>
-    </message>
-    <message>
-        <source>Pay only the required fee of %1</source>
-        <translation>只支付必要费用 %1</translation>
     </message>
     <message numerus="yes">
         <source>Estimated to begin confirmation within %n block(s).</source>
@@ -3173,17 +3078,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Memo:</source>
         <translation>便条：</translation>
-    </message>
-    <message>
-        <source>Enter a label for this address to add it to your address book</source>
-        <translation>为这个地址输入一个标签，以便将它添加到您的地址簿</translation>
-    </message>
-</context>
-<context>
-    <name>SendConfirmationDialog</name>
-    <message>
-        <source>Yes</source>
-        <translation>是</translation>
     </message>
 </context>
 <context>
@@ -3349,13 +3243,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
-    <name>SplashScreen</name>
-    <message>
-        <source>[testnet]</source>
-        <translation>[testnet]</translation>
-    </message>
-</context>
-<context>
     <name>TrafficGraphWidget</name>
     <message>
         <source>KB/s</source>
@@ -3511,10 +3398,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Transaction total size</source>
         <translation>交易总大小</translation>
-    </message>
-    <message>
-        <source>Merchant</source>
-        <translation>商店</translation>
     </message>
     <message>
         <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to "not accepted" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
@@ -3782,6 +3665,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>放弃交易</translation>
     </message>
     <message>
+        <source>Resend transaction</source>
+        <translation>重新发送交易</translation>
+    </message>
+    <message>
         <source>Copy address</source>
         <translation>复制地址</translation>
     </message>
@@ -3820,10 +3707,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Export Transaction History</source>
         <translation>导出交易历史</translation>
-    </message>
-    <message>
-        <source>Comma separated file (*.csv)</source>
-        <translation>逗号分隔文件 (*.csv)</translation>
     </message>
     <message>
         <source>Confirmed</source>
@@ -3890,10 +3773,33 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
+    <name>WalletController</name>
+    <message>
+        <source>Close wallet</source>
+        <translation>关闭钱包</translation>
+    </message>
+    <message>
+        <source>Are you sure you wish to close the wallet &lt;i&gt;%1&lt;/i&gt;?</source>
+        <translation>您确定要关闭钱包吗&lt;i&gt;%1&lt;/i&gt; ?</translation>
+    </message>
+    <message>
+        <source>Closing the wallet for too long can result in having to resync the entire chain if pruning is enabled.</source>
+        <translation>如果启用修剪后, 关闭钱包太久可能会导致必须重新同步整个区块链.</translation>
+    </message>
+    </context>
+<context>
     <name>WalletFrame</name>
     <message>
-        <source>No wallet has been loaded.</source>
-        <translation>没有载入钱包。</translation>
+        <source>No wallet has been loaded.
+Go to File &gt; Open Wallet to load a wallet.
+- OR -</source>
+        <translation>没有钱包被加载.
+打开文件 &gt; 打开钱包选项加载一个钱包.
+- 或 -</translation>
+    </message>
+    <message>
+        <source>Create a new wallet</source>
+        <translation>创建一个新钱包</translation>
     </message>
 </context>
 <context>
@@ -3920,10 +3826,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Backup Wallet</source>
         <translation>备份钱包</translation>
-    </message>
-    <message>
-        <source>Wallet Data (*.dat)</source>
-        <translation>钱包文件(*.dat)</translation>
     </message>
     <message>
         <source>Backup Failed</source>
@@ -3957,20 +3859,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>这是一个预发布测试版本 - 您自己承担风险使用 - 采矿商或交易商不要使用本应用程序</translation>
     </message>
     <message>
-        <source>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</source>
-        <translation>警告: Sparks网路对于区块链结的决定目前有分歧！看来有些矿工会有问题。</translation>
-    </message>
-    <message>
         <source>Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.</source>
         <translation>警告: 我们和某些连线的节点对于区块链结的决定不同！您可能需要升级，或是需要等其它的节点升级。</translation>
     </message>
     <message>
         <source>Already have that input.</source>
         <translation>输入已存在。</translation>
-    </message>
-    <message>
-        <source>Cannot downgrade wallet</source>
-        <translation>不能降级钱包</translation>
     </message>
     <message>
         <source>Collateral not valid.</source>
@@ -4045,6 +3939,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>设定 -maxtxfee=&lt;金额&gt;  的金额无效&lt;amount&gt;：'%s' (必须大于等于最低转发手续费%s 以避免交易无法被确认)</translation>
     </message>
     <message>
+        <source>SQLiteDatabase: Unknown sqlite wallet schema version %d. Only version %d is supported</source>
+        <translation>SQLite数据库: 未知的sqlite钱包架构版本 %d. 仅支持 %d 版本</translation>
+    </message>
+    <message>
         <source>Transaction index can't be disabled with governance validation enabled. Either start with -disablegovernance command line switch or enable transaction index.</source>
         <translation>管理验证启动后不能禁用交易索引. 可以使用-disablegovernance命令行选项进行关闭, 或者启用交易索引.</translation>
     </message>
@@ -4117,20 +4015,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>无效的最少数叉勺签名人以  -minsporkkeys 标识</translation>
     </message>
     <message>
-        <source>Keypool ran out, please call keypoolrefill first</source>
-        <translation>Keypool用完了，请先调用keypoolrefill</translation>
-    </message>
-    <message>
         <source>Loading banlist...</source>
         <translation>正在加载黑名单...</translation>
-    </message>
-    <message>
-        <source>Loading fulfilled requests cache...</source>
-        <translation>正在加载己完成请求的缓存…</translation>
-    </message>
-    <message>
-        <source>Loading masternode cache...</source>
-        <translation>正在读取主节点缓存...</translation>
     </message>
     <message>
         <source>Lock is already in place.</source>
@@ -4253,10 +4139,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>修剪：最后的钱包同步超过了修剪的数据。您需要通过 -reindex (重新下载整个区块链以防止节点被修剪)</translation>
     </message>
     <message>
-        <source>Rescans are not possible in pruned mode. You will need to use -reindex which will download the whole blockchain again.</source>
-        <translation>无法在开启修剪的状态下重扫描。请使用 -reindex重新下载完整的区块链。</translation>
-    </message>
-    <message>
         <source>The block database contains a block which appears to be from the future. This may be due to your computer's date and time being set incorrectly. Only rebuild the block database if you are sure that your computer's date and time are correct</source>
         <translation>区块数据库包含未来的交易，这可能是由本机错误的日期时间引起。若确认本机日期时间正确，请重新建立区块数据库。</translation>
     </message>
@@ -4317,8 +4199,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>升级evo数据库出错</translation>
     </message>
     <message>
-        <source>Error: A fatal internal error occurred, see debug.log for details</source>
-        <translation>错误：发生了致命的内部错误，详情见 debug.log 文件</translation>
+        <source>Error: Disk space is low for %s</source>
+        <translation>错误: %s 磁盘空间不足</translation>
     </message>
     <message>
         <source>Error: failed to add socket to epollfd (epoll_ctl returned error %s)</source>
@@ -4365,6 +4247,18 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>在初始化时无法重新扫描钱包</translation>
     </message>
     <message>
+        <source>Failed to verify database</source>
+        <translation>验证数据库失败</translation>
+    </message>
+    <message>
+        <source>Ignoring duplicate -wallet %s.</source>
+        <translation>忽略重复 -钱包 %s.</translation>
+    </message>
+    <message>
+        <source>Invalid P2P permission: '%s'</source>
+        <translation>无效的 P2P 权限: '%s'</translation>
+    </message>
+    <message>
         <source>Invalid amount for -fallbackfee=&lt;amount&gt;: '%s'</source>
         <translation>设定-fallbackfee=&lt;amount&gt;的金额无效：'%s'</translation>
     </message>
@@ -4375,26 +4269,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>It has been replaced by -disablegovernance.</source>
         <translation>它已被 -disablegovernance代替.</translation>
-    </message>
-    <message>
-        <source>Its replacement -disablegovernance has been forced instead.</source>
-        <translation>代替命令 -disablegovernance已被强制执行.</translation>
-    </message>
-    <message>
-        <source>Loading block index...</source>
-        <translation>正在读取区块索引...</translation>
-    </message>
-    <message>
-        <source>Loading governance cache...</source>
-        <translation>正在加载治理缓存…</translation>
-    </message>
-    <message>
-        <source>Loading sporks cache...</source>
-        <translation>正在读取叉勺缓存...</translation>
-    </message>
-    <message>
-        <source>Loading wallet... (%3.2f %%)</source>
-        <translation>正在读取钱包...(%3.2f%%)</translation>
     </message>
     <message>
         <source>Loading wallet...</source>
@@ -4443,6 +4317,26 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Pruning blockstore...</source>
         <translation>正在修剪区块存储...</translation>
+    </message>
+    <message>
+        <source>SQLiteDatabase: Failed to execute statement to verify database: %s</source>
+        <translation>SQLite数据库: 无法执行语句来验证数据库: %s</translation>
+    </message>
+    <message>
+        <source>SQLiteDatabase: Failed to prepare statement to verify database: %s</source>
+        <translation>SQLite数据库: 无法调试语句来验证数据库: %s</translation>
+    </message>
+    <message>
+        <source>SQLiteDatabase: Failed to read database verification error: %s</source>
+        <translation>SQLite数据库: 无法读取数据库验证错误: %s</translation>
+    </message>
+    <message>
+        <source>SQLiteDatabase: Unexpected application id. Expected %u, got %u</source>
+        <translation>SQLite数据库: 意外应用程序ID. 期望 %u, 获得 %u</translation>
+    </message>
+    <message>
+        <source>Section [%s] is not recognized.</source>
+        <translation>片段 [%s]无法被识别.</translation>
     </message>
     <message>
         <source>Specified -walletdir "%s" does not exist</source>
@@ -4515,10 +4409,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
         <translation>钱包需要被重写：请重新启动%s来完成</translation>
-    </message>
-    <message>
-        <source>Warning: unknown new rules activated (versionbit %i)</source>
-        <translation>警告：不明的新规则被激活(versionbit %i)</translation>
     </message>
     <message>
         <source>Wasn't able to create wallet backup folder %s!</source>
@@ -4597,24 +4487,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>这是在费用估计不可用时您可能会支付的交易费。</translation>
     </message>
     <message>
-        <source>This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit %s and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard.</source>
-        <translation>此产品包含了由OpenSSL Project所开发的OpenSSL Toolkit软件%s，由Eric Young撰写的加解密软件，以及由Thomas Bernard所撰写的UPnP软件。</translation>
-    </message>
-    <message>
         <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
         <translation>无法重播区块. 您需要使用 -reindex-chainstate命令来重建数据库.</translation>
     </message>
     <message>
         <source>Warning: Wallet file corrupt, data salvaged! Original %s saved as %s in %s; if your balance or transactions are incorrect you should restore from a backup.</source>
         <translation>警告：钱包文件损坏，但数据被救回！原始的钱包文件%s已经重命名为%s并存储到%s目录下 。如果您的账户余额或者交易记录不正确，请使用您的钱包备份文件恢复。</translation>
-    </message>
-    <message>
-        <source>%d of last 100 blocks have unexpected version</source>
-        <translation>最近100个区块中的 %d 个区块有意外版本</translation>
-    </message>
-    <message>
-        <source>%s corrupt, salvage failed</source>
-        <translation>%s 已损坏，抢救备份失败</translation>
     </message>
     <message>
         <source>%s is not a valid backup folder!</source>
@@ -4667,10 +4545,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Error loading %s: You can't disable HD on an already existing HD wallet</source>
         <translation>加载%s时出错：您不能在HD钱包上禁用HD功能</translation>
-    </message>
-    <message>
-        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
-        <translation>加载钱包 %s 时出错. 指定了重复的 -wallet 文件名.</translation>
     </message>
     <message>
         <source>Error upgrading chainstate database</source>
@@ -4751,6 +4625,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Last queue was created too recently.</source>
         <translation>上一次队列才被创建.</translation>
+    </message>
+    <message>
+        <source>%s corrupt. Try using the wallet tool sparks-wallet to salvage or restoring a backup.</source>
+        <translation>%s 已损坏. 请尝试使用钱包工具 sparks-wallet 来挽救或恢复备份.</translation>
     </message>
     <message>
         <source>Last successful action was too recent.</source>
@@ -4863,10 +4741,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Your entries added successfully.</source>
         <translation>您的词条已添加成功.</translation>
-    </message>
-    <message>
-        <source>Zapping all transactions from wallet...</source>
-        <translation>正在清除钱包中的所有交易...</translation>
     </message>
 </context>
 </TS>

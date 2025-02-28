@@ -1,5 +1,5 @@
-// Copyright (c) 2014-2022 The Dash Core developers
-// Copyright (c) 2016-2023 The Sparks Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,11 +7,11 @@
 
 #include <chainparams.h>
 #include <consensus/params.h>
+#include <flat-database.h>
 #include <key_io.h>
 #include <logging.h>
 #include <messagesigner.h>
 #include <net.h>
-#include <net_processing.h>
 #include <netmessagemaker.h>
 #include <primitives/block.h>
 #include <protocol.h>
@@ -25,6 +25,8 @@
 #include <string>
 
 std::unique_ptr<CSporkManager> sporkManager;
+
+const std::string SporkStore::SERIALIZATION_VERSION_STRING = "CSporkManager-Version-2";
 
 std::optional<SporkValue> CSporkManager::SporkValueIfActive(SporkId nSporkID) const
 {
@@ -57,7 +59,7 @@ std::optional<SporkValue> CSporkManager::SporkValueIfActive(SporkId nSporkID) co
     return std::nullopt;
 }
 
-void CSporkManager::Clear()
+void SporkStore::Clear()
 {
     LOCK(cs);
     mapSporksActive.clear();
@@ -66,10 +68,32 @@ void CSporkManager::Clear()
     // we should not alter them here.
 }
 
+CSporkManager::CSporkManager() :
+    m_db{std::make_unique<db_type>("sporks.dat", "magicSporkCache")}
+{
+}
+
+CSporkManager::~CSporkManager()
+{
+    if (!is_valid) return;
+    m_db->Store(*this);
+}
+
+bool CSporkManager::LoadCache()
+{
+    assert(m_db != nullptr);
+    is_valid = m_db->Load(*this);
+    if (is_valid) {
+        CheckAndRemove();
+    }
+    return is_valid;
+}
+
 void CSporkManager::CheckAndRemove()
 {
     LOCK(cs);
-    assert(!setSporkPubKeyIDs.empty());
+
+    if (setSporkPubKeyIDs.empty()) return;
 
     for (auto itActive = mapSporksActive.begin(); itActive != mapSporksActive.end();) {
         auto itSignerPair = itActive->second.begin();
@@ -106,16 +130,17 @@ void CSporkManager::CheckAndRemove()
     }
 }
 
-void CSporkManager::ProcessMessage(CNode& peer, CConnman& connman, std::string_view msg_type, CDataStream& vRecv)
+PeerMsgRet CSporkManager::ProcessMessage(CNode& peer, CConnman& connman, std::string_view msg_type, CDataStream& vRecv)
 {
     if (msg_type == NetMsgType::SPORK) {
-        ProcessSpork(peer, connman, vRecv);
+        return ProcessSpork(peer, connman, vRecv);
     } else if (msg_type == NetMsgType::GETSPORKS) {
         ProcessGetSporks(peer, connman);
     }
+    return {};
 }
 
-void CSporkManager::ProcessSpork(const CNode& peer, CConnman& connman, CDataStream& vRecv)
+PeerMsgRet CSporkManager::ProcessSpork(const CNode& peer, CConnman& connman, CDataStream& vRecv)
 {
     CSporkMessage spork;
     vRecv >> spork;
@@ -126,24 +151,20 @@ void CSporkManager::ProcessSpork(const CNode& peer, CConnman& connman, CDataStre
     {
         LOCK(cs_main);
         EraseObjectRequest(peer.GetId(), CInv(MSG_SPORK, hash));
-        if (!::ChainActive().Tip()) return;
+        if (!::ChainActive().Tip()) return {};
         strLogMsg = strprintf("SPORK -- hash: %s id: %d value: %10d bestHeight: %d peer=%d", hash.ToString(), spork.nSporkID, spork.nValue, ::ChainActive().Height(), peer.GetId());
     }
 
     if (spork.nTimeSigned > GetAdjustedTime() + 2 * 60 * 60) {
-        LOCK(cs_main);
         LogPrint(BCLog::SPORK, "CSporkManager::ProcessSpork -- ERROR: too far into the future\n");
-        Misbehaving(peer.GetId(), 100);
-        return;
+        return tl::unexpected{100};
     }
 
     auto opt_keyIDSigner = spork.GetSignerKeyID();
 
     if (opt_keyIDSigner == std::nullopt || WITH_LOCK(cs, return !setSporkPubKeyIDs.count(*opt_keyIDSigner))) {
-        LOCK(cs_main);
         LogPrint(BCLog::SPORK, "CSporkManager::ProcessSpork -- ERROR: invalid signature\n");
-        Misbehaving(peer.GetId(), 100);
-        return;
+        return tl::unexpected{100};
     }
 
     auto keyIDSigner = *opt_keyIDSigner;
@@ -154,7 +175,7 @@ void CSporkManager::ProcessSpork(const CNode& peer, CConnman& connman, CDataStre
             if (mapSporksActive[spork.nSporkID].count(keyIDSigner)) {
                 if (mapSporksActive[spork.nSporkID][keyIDSigner].nTimeSigned >= spork.nTimeSigned) {
                     LogPrint(BCLog::SPORK, "%s seen\n", strLogMsg);
-                    return;
+                    return {};
                 } else {
                     LogPrintf("%s updated\n", strLogMsg);
                 }
@@ -176,6 +197,7 @@ void CSporkManager::ProcessSpork(const CNode& peer, CConnman& connman, CDataStre
         WITH_LOCK(cs_mapSporksCachedValues, mapSporksCachedValues.erase(spork.nSporkID));
     }
     spork.Relay(connman);
+    return {};
 }
 
 void CSporkManager::ProcessGetSporks(CNode& peer, CConnman& connman)
@@ -183,7 +205,7 @@ void CSporkManager::ProcessGetSporks(CNode& peer, CConnman& connman)
     LOCK(cs); // make sure to not lock this together with cs_main
     for (const auto& pair : mapSporksActive) {
         for (const auto& signerSporkPair : pair.second) {
-            connman.PushMessage(&peer, CNetMsgMaker(peer.GetSendVersion()).Make(NetMsgType::SPORK, signerSporkPair.second));
+            connman.PushMessage(&peer, CNetMsgMaker(peer.GetCommonVersion()).Make(NetMsgType::SPORK, signerSporkPair.second));
         }
     }
 }
@@ -289,7 +311,7 @@ bool CSporkManager::SetSporkAddress(const std::string& strAddress)
         LogPrintf("CSporkManager::SetSporkAddress -- Failed to parse spork address\n");
         return false;
     }
-    setSporkPubKeyIDs.insert(CKeyID(*pkhash));
+    setSporkPubKeyIDs.insert(ToKeyID(*pkhash));
     return true;
 }
 
@@ -330,7 +352,7 @@ bool CSporkManager::SetPrivKey(const std::string& strPrivKey)
     return true;
 }
 
-std::string CSporkManager::ToString() const
+std::string SporkStore::ToString() const
 {
     LOCK(cs);
     return strprintf("Sporks: %llu", mapSporksActive.size());

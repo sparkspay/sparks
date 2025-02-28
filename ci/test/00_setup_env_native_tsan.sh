@@ -1,20 +1,18 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2019 The Bitcoin Core developers
+# Copyright (c) 2019-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 export LC_ALL=C.UTF-8
 
-export PACKAGES="clang llvm python3-zmq qtbase5-dev qttools5-dev-tools libevent-dev bsdmainutils libboost-filesystem-dev libboost-test-dev libboost-thread-dev libdb5.3++-dev libminiupnpc-dev libzmq3-dev libqrencode-dev"
-export DEP_OPTS="NO_UPNP=1 DEBUG=1"
+export CONTAINER_NAME=ci_native_tsan
+export PACKAGES="clang-16 llvm-16 libclang-rt-16-dev libc++abi-16-dev libc++-16-dev python3-zmq"
+export DEP_OPTS="CC=clang-16 CXX='clang++-16 -stdlib=libc++'"
 export TEST_RUNNER_EXTRA="--extended --exclude feature_pruning,feature_dbcrash,wallet_multiwallet.py" # Temporarily suppress ASan heap-use-after-free (see issue #14163)
-export RUN_BENCH=true
+export TEST_RUNNER_EXTRA="${TEST_RUNNER_EXTRA} --timeout-factor=4"  # Increase timeout because sanitizers slow down
 export GOAL="install"
-export BITCOIN_CONFIG="--enable-zmq --enable-reduce-exports --enable-crash-hooks --with-sanitizers=thread"
+export BITCOIN_CONFIG="--enable-zmq --with-gui=no --with-sanitizers=thread CC=clang-16 CXX=clang++-16 --with-boost-process"
 export CPPFLAGS="-DDEBUG_LOCKORDER -DENABLE_SPARKS_DEBUG -DARENA_DEBUG"
 export PYZMQ=true
-
-# xenial comes with old clang versions that can not parse the sanitizer suppressions files
-# Remove unparseable lines as a hacky workaround
-sed -i '/^implicit-/d' "${BASE_ROOT_DIR}/test/sanitizer_suppressions/ubsan"
+export RUN_SYMBOL_TESTS=false

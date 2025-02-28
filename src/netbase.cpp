@@ -1,10 +1,11 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <netbase.h>
 
+#include <compat.h>
 #include <sync.h>
 #include <tinyformat.h>
 #include <util/sock.h>
@@ -14,28 +15,23 @@
 #include <util/time.h>
 
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <memory>
 
 #ifndef WIN32
 #include <fcntl.h>
-#else
-#include <codecvt>
 #endif
 
 #ifdef USE_POLL
 #include <poll.h>
 #endif
 
-#if !defined(MSG_NOSIGNAL)
-#define MSG_NOSIGNAL 0
-#endif
-
 // Settings
-static CCriticalSection cs_proxyInfos;
-static proxyType proxyInfo[NET_MAX] GUARDED_BY(cs_proxyInfos);
-static proxyType nameProxy GUARDED_BY(cs_proxyInfos);
+static Mutex g_proxyinfo_mutex;
+static proxyType proxyInfo[NET_MAX] GUARDED_BY(g_proxyinfo_mutex);
+static proxyType nameProxy GUARDED_BY(g_proxyinfo_mutex);
 int nConnectTimeout = DEFAULT_CONNECT_TIMEOUT;
 bool fNameLookup = DEFAULT_NAME_LOOKUP;
 
@@ -96,17 +92,40 @@ enum Network ParseNetwork(const std::string& net_in) {
         LogPrintf("Warning: net name 'tor' is deprecated and will be removed in the future. You should use 'onion' instead.\n");
         return NET_ONION;
     }
+    if (net == "i2p") {
+        return NET_I2P;
+    }
     return NET_UNROUTABLE;
 }
 
-std::string GetNetworkName(enum Network net) {
-    switch(net)
-    {
+std::string GetNetworkName(enum Network net)
+{
+    switch (net) {
+    case NET_UNROUTABLE: return "not_publicly_routable";
     case NET_IPV4: return "ipv4";
     case NET_IPV6: return "ipv6";
     case NET_ONION: return "onion";
-    default: return "";
+    case NET_I2P: return "i2p";
+    case NET_CJDNS: return "cjdns";
+    case NET_INTERNAL: return "internal";
+    case NET_MAX: assert(false);
+    } // no default case, so the compiler can warn about missing cases
+
+    assert(false);
+}
+
+std::vector<std::string> GetNetworkNames(bool append_unroutable)
+{
+    std::vector<std::string> names;
+    for (int n = 0; n < NET_MAX; ++n) {
+        const enum Network network{static_cast<Network>(n)};
+        if (network == NET_UNROUTABLE || network == NET_CJDNS || network == NET_INTERNAL) continue;
+        names.emplace_back(GetNetworkName(network));
     }
+    if (append_unroutable) {
+        names.emplace_back(GetNetworkName(NET_UNROUTABLE));
+    }
+    return names;
 }
 
 static bool LookupIntern(const std::string& name, std::vector<CNetAddr>& vIP, unsigned int nMaxSolutions, bool fAllowLookup, DNSLookupFn dns_lookup_function)
@@ -282,15 +301,12 @@ enum class IntrRecvError {
  *
  * @see This function can be interrupted by calling InterruptSocks5(bool).
  *      Sockets can be made non-blocking with SetSocketNonBlocking(const
- *      SOCKET&, bool).
+ *      SOCKET&).
  */
 static IntrRecvError InterruptibleRecv(uint8_t* data, size_t len, int timeout, const Sock& sock)
 {
     int64_t curTime = GetTimeMillis();
     int64_t endTime = curTime + timeout;
-    // Maximum time to wait for I/O readiness. It will take up until this time
-    // (in millis) to break off in case of an interruption.
-    const int64_t maxWait = 1000;
     while (len > 0 && curTime < endTime) {
         ssize_t ret = sock.Recv(data, len, 0); // Optimistically try the recv first
         if (ret > 0) {
@@ -301,10 +317,11 @@ static IntrRecvError InterruptibleRecv(uint8_t* data, size_t len, int timeout, c
         } else { // Other error or blocking
             int nErr = WSAGetLastError();
             if (nErr == WSAEINPROGRESS || nErr == WSAEWOULDBLOCK || nErr == WSAEINVAL) {
-                // Only wait at most maxWait milliseconds at a time, unless
+                // Only wait at most MAX_WAIT_FOR_IO at a time, unless
                 // we're approaching the end of the specified total timeout
-                int timeout_ms = std::min(endTime - curTime, maxWait);
-                if (!sock.Wait(std::chrono::milliseconds{timeout_ms}, Sock::RECV)) {
+                const auto remaining = std::chrono::milliseconds{endTime - curTime};
+                const auto timeout = std::min(remaining, std::chrono::milliseconds{MAX_WAIT_FOR_IO});
+                if (!sock.Wait(timeout, Sock::RECV)) {
                     return IntrRecvError::NetworkError;
                 }
             } else {
@@ -497,7 +514,7 @@ std::unique_ptr<Sock> CreateSockTCP(const CService& address_family)
     SetSocketNoDelay(hSocket);
 
     // Set the non-blocking option on the socket.
-    if (!SetSocketNonBlocking(hSocket, true)) {
+    if (!SetSocketNonBlocking(hSocket)) {
         CloseSocket(hSocket);
         LogPrintf("Error setting socket to non-blocking: %s\n", NetworkErrorString(WSAGetLastError()));
         return nullptr;
@@ -517,12 +534,12 @@ static void LogConnectFailure(bool manual_connection, const char* fmt, const Arg
     }
 }
 
-bool ConnectSocketDirectly(const CService &addrConnect, const SOCKET& hSocket, int nTimeout, bool manual_connection)
+bool ConnectSocketDirectly(const CService &addrConnect, const Sock& sock, int nTimeout, bool manual_connection)
 {
     // Create a sockaddr from the specified service.
     struct sockaddr_storage sockaddr;
     socklen_t len = sizeof(sockaddr);
-    if (hSocket == INVALID_SOCKET) {
+    if (sock.Get() == INVALID_SOCKET) {
         LogPrintf("Cannot connect to %s: invalid socket\n", addrConnect.ToString());
         return false;
     }
@@ -532,8 +549,7 @@ bool ConnectSocketDirectly(const CService &addrConnect, const SOCKET& hSocket, i
     }
 
     // Connect to the addrConnect service on the hSocket socket.
-    if (connect(hSocket, (struct sockaddr*)&sockaddr, len) == SOCKET_ERROR)
-    {
+    if (sock.Connect(reinterpret_cast<struct sockaddr*>(&sockaddr), len) == SOCKET_ERROR) {
         int nErr = WSAGetLastError();
         // WSAEINVAL is here because some legacy version of winsock uses it
         if (nErr == WSAEINPROGRESS || nErr == WSAEWOULDBLOCK || nErr == WSAEINVAL)
@@ -541,46 +557,34 @@ bool ConnectSocketDirectly(const CService &addrConnect, const SOCKET& hSocket, i
             // Connection didn't actually fail, but is being established
             // asynchronously. Thus, use async I/O api (select/poll)
             // synchronously to check for successful connection with a timeout.
-#ifdef USE_POLL
-            struct pollfd pollfd = {};
-            pollfd.fd = hSocket;
-            pollfd.events = POLLIN | POLLOUT;
-            int nRet = poll(&pollfd, 1, nTimeout);
-#else
-            struct timeval timeout = MillisToTimeval(nTimeout);
-            fd_set fdset;
-            FD_ZERO(&fdset);
-            FD_SET(hSocket, &fdset);
-            int nRet = select(hSocket + 1, nullptr, &fdset, nullptr, &timeout);
-#endif
-            // Upon successful completion, both select and poll return the total
-            // number of file descriptors that have been selected. A value of 0
-            // indicates that the call timed out and no file descriptors have
-            // been selected.
-            if (nRet == 0)
-            {
-                LogPrint(BCLog::NET, "connection to %s timeout\n", addrConnect.ToString());
+            const Sock::Event requested = Sock::RECV | Sock::SEND;
+            Sock::Event occurred;
+            if (!sock.Wait(std::chrono::milliseconds{nTimeout}, requested, &occurred)) {
+                LogPrintf("wait for connect to %s failed: %s\n",
+                          addrConnect.ToString(),
+                          NetworkErrorString(WSAGetLastError()));
                 return false;
-            }
-            if (nRet == SOCKET_ERROR)
-            {
-                LogPrintf("select() for %s failed: %s\n", addrConnect.ToString(), NetworkErrorString(WSAGetLastError()));
+            } else if (occurred == 0) {
+                LogPrint(BCLog::NET, "connection attempt to %s timed out\n", addrConnect.ToString());
                 return false;
             }
 
-            // Even if the select/poll was successful, the connect might not
+            // Even if the wait was successful, the connect might not
             // have been successful. The reason for this failure is hidden away
             // in the SO_ERROR for the socket in modern systems. We read it into
-            // nRet here.
-            socklen_t nRetSize = sizeof(nRet);
-            if (getsockopt(hSocket, SOL_SOCKET, SO_ERROR, (sockopt_arg_type)&nRet, &nRetSize) == SOCKET_ERROR)
-            {
+            // sockerr here.
+            int sockerr;
+            socklen_t sockerr_len = sizeof(sockerr);
+            if (sock.GetSockOpt(SOL_SOCKET, SO_ERROR, (sockopt_arg_type)&sockerr, &sockerr_len) ==
+                SOCKET_ERROR) {
                 LogPrintf("getsockopt() for %s failed: %s\n", addrConnect.ToString(), NetworkErrorString(WSAGetLastError()));
                 return false;
             }
-            if (nRet != 0)
-            {
-                LogConnectFailure(manual_connection, "connect() to %s failed after select(): %s", addrConnect.ToString(), NetworkErrorString(nRet));
+            if (sockerr != 0) {
+                LogConnectFailure(manual_connection,
+                                  "connect() to %s failed after wait: %s",
+                                  addrConnect.ToString(),
+                                  NetworkErrorString(sockerr));
                 return false;
             }
         }
@@ -601,14 +605,14 @@ bool SetProxy(enum Network net, const proxyType &addrProxy) {
     assert(net >= 0 && net < NET_MAX);
     if (!addrProxy.IsValid())
         return false;
-    LOCK(cs_proxyInfos);
+    LOCK(g_proxyinfo_mutex);
     proxyInfo[net] = addrProxy;
     return true;
 }
 
 bool GetProxy(enum Network net, proxyType &proxyInfoOut) {
     assert(net >= 0 && net < NET_MAX);
-    LOCK(cs_proxyInfos);
+    LOCK(g_proxyinfo_mutex);
     if (!proxyInfo[net].IsValid())
         return false;
     proxyInfoOut = proxyInfo[net];
@@ -618,13 +622,13 @@ bool GetProxy(enum Network net, proxyType &proxyInfoOut) {
 bool SetNameProxy(const proxyType &addrProxy) {
     if (!addrProxy.IsValid())
         return false;
-    LOCK(cs_proxyInfos);
+    LOCK(g_proxyinfo_mutex);
     nameProxy = addrProxy;
     return true;
 }
 
 bool GetNameProxy(proxyType &nameProxyOut) {
-    LOCK(cs_proxyInfos);
+    LOCK(g_proxyinfo_mutex);
     if(!nameProxy.IsValid())
         return false;
     nameProxyOut = nameProxy;
@@ -632,12 +636,12 @@ bool GetNameProxy(proxyType &nameProxyOut) {
 }
 
 bool HaveNameProxy() {
-    LOCK(cs_proxyInfos);
+    LOCK(g_proxyinfo_mutex);
     return nameProxy.IsValid();
 }
 
 bool IsProxy(const CNetAddr &addr) {
-    LOCK(cs_proxyInfos);
+    LOCK(g_proxyinfo_mutex);
     for (int i = 0; i < NET_MAX; i++) {
         if (addr == static_cast<CNetAddr>(proxyInfo[i].proxy))
             return true;
@@ -648,7 +652,7 @@ bool IsProxy(const CNetAddr &addr) {
 bool ConnectThroughProxy(const proxyType& proxy, const std::string& strDest, uint16_t port, const Sock& sock, int nTimeout, bool& outProxyConnectionFailed)
 {
     // first connect to proxy server
-    if (!ConnectSocketDirectly(proxy.proxy, sock.Get(), nTimeout, true)) {
+    if (!ConnectSocketDirectly(proxy.proxy, sock, nTimeout, true)) {
         outProxyConnectionFailed = true;
         return false;
     }
@@ -674,14 +678,11 @@ bool LookupSubNet(const std::string& strSubnet, CSubNet& ret, DNSLookupFn dns_lo
         return false;
     }
     size_t slash = strSubnet.find_last_of('/');
-    std::vector<CNetAddr> vIP;
+    CNetAddr network;
 
     std::string strAddress = strSubnet.substr(0, slash);
-    // TODO: Use LookupHost(const std::string&, CNetAddr&, bool) instead to just get
-    //       one CNetAddr.
-    if (LookupHost(strAddress, vIP, 1, false, dns_lookup_function))
+    if (LookupHost(strAddress, network, false, dns_lookup_function))
     {
-        CNetAddr network = vIP[0];
         if (slash != strSubnet.npos)
         {
             std::string strNetmask = strSubnet.substr(slash + 1);
@@ -693,14 +694,15 @@ bool LookupSubNet(const std::string& strSubnet, CSubNet& ret, DNSLookupFn dns_lo
             }
             else // If not a valid number, try full netmask syntax
             {
+                CNetAddr netmask;
                 // Never allow lookup for netmask
-                if (LookupHost(strNetmask, vIP, 1, false, dns_lookup_function)) {
-                    ret = CSubNet(network, vIP[0]);
+                if (LookupHost(strNetmask, netmask, false, dns_lookup_function)) {
+                    ret = CSubNet(network, netmask);
                     return ret.IsValid();
                 }
             }
         }
-        else
+        else // Single IP subnet (<ipv4>/32 or <ipv6>/128)
         {
             ret = CSubNet(network);
             return ret.IsValid();
@@ -709,28 +711,16 @@ bool LookupSubNet(const std::string& strSubnet, CSubNet& ret, DNSLookupFn dns_lo
     return false;
 }
 
-bool SetSocketNonBlocking(const SOCKET& hSocket, bool fNonBlocking)
+bool SetSocketNonBlocking(const SOCKET& hSocket)
 {
-    if (fNonBlocking) {
 #ifdef WIN32
-        u_long nOne = 1;
-        if (ioctlsocket(hSocket, FIONBIO, &nOne) == SOCKET_ERROR) {
+    u_long nOne = 1;
+    if (ioctlsocket(hSocket, FIONBIO, &nOne) == SOCKET_ERROR) {
 #else
-        int fFlags = fcntl(hSocket, F_GETFL, 0);
-        if (fcntl(hSocket, F_SETFL, fFlags | O_NONBLOCK) == SOCKET_ERROR) {
+    int fFlags = fcntl(hSocket, F_GETFL, 0);
+    if (fcntl(hSocket, F_SETFL, fFlags | O_NONBLOCK) == SOCKET_ERROR) {
 #endif
-            return false;
-        }
-    } else {
-#ifdef WIN32
-        u_long nZero = 0;
-        if (ioctlsocket(hSocket, FIONBIO, &nZero) == SOCKET_ERROR) {
-#else
-        int fFlags = fcntl(hSocket, F_GETFL, 0);
-        if (fcntl(hSocket, F_SETFL, fFlags & ~O_NONBLOCK) == SOCKET_ERROR) {
-#endif
-            return false;
-        }
+        return false;
     }
 
     return true;

@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2023 The Dash Core developers
+// Copyright (c) 2019-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,16 +10,22 @@
 
 #include <chain.h>
 #include <coins.h>
-#include <dbwrapper.h>
+#include <net_types.h>
 #include <primitives/transaction.h>
 #include <threadinterrupt.h>
 #include <txmempool.h>
 
+#include <gsl/pointers.h>
+
+#include <atomic>
 #include <unordered_map>
 #include <unordered_set>
 
-class CSporkManager;
+class CChainState;
+class CDBWrapper;
 class CMasternodeSync;
+class CSporkManager;
+class PeerManager;
 
 namespace llmq
 {
@@ -30,35 +36,26 @@ class CSigSharesManager;
 
 struct CInstantSendLock
 {
-    // This is the old format of instant send lock, it must be 0
-    static constexpr uint8_t islock_version{0};
-    // This is the new format of instant send deterministic lock, this should be incremented for new isdlock versions
-    static constexpr uint8_t isdlock_version{1};
+    static constexpr uint8_t CURRENT_VERSION{1};
 
-    uint8_t nVersion;
+    uint8_t nVersion{CURRENT_VERSION};
     std::vector<COutPoint> inputs;
     uint256 txid;
     uint256 cycleHash;
     CBLSLazySignature sig;
 
-    CInstantSendLock() : CInstantSendLock(islock_version) {}
-    explicit CInstantSendLock(const uint8_t desiredVersion) : nVersion(desiredVersion) {}
+    CInstantSendLock() = default;
 
     SERIALIZE_METHODS(CInstantSendLock, obj)
     {
-        if (s.GetVersion() >= ISDLOCK_PROTO_VERSION && obj.IsDeterministic()) {
-            READWRITE(obj.nVersion);
-        }
+        READWRITE(obj.nVersion);
         READWRITE(obj.inputs);
         READWRITE(obj.txid);
-        if (s.GetVersion() >= ISDLOCK_PROTO_VERSION && obj.IsDeterministic()) {
-            READWRITE(obj.cycleHash);
-        }
+        READWRITE(obj.cycleHash);
         READWRITE(obj.sig);
     }
 
     uint256 GetRequestId() const;
-    bool IsDeterministic() const { return nVersion != islock_version; }
     bool TriviallyValid() const;
 };
 
@@ -116,9 +113,8 @@ private:
 
 
 public:
-    explicit CInstantSendDb(bool unitTests, bool fWipe) :
-            db(std::make_unique<CDBWrapper>(unitTests ? "" : (GetDataDir() / "llmq/isdb"), 32 << 20, unitTests, fWipe))
-    {}
+    explicit CInstantSendDb(bool unitTests, bool fWipe);
+    ~CInstantSendDb();
 
     void Upgrade(const CTxMemPool& mempool) LOCKS_EXCLUDED(cs_db);
 
@@ -145,8 +141,8 @@ public:
      * @param nUntilHeight the height from which to base the remove of archive IS Locks
      */
     void RemoveArchivedInstantSendLocks(int nUntilHeight) LOCKS_EXCLUDED(cs_db);
-    void WriteBlockInstantSendLocks(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexConnected) LOCKS_EXCLUDED(cs_db);
-    void RemoveBlockInstantSendLocks(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexDisconnected) LOCKS_EXCLUDED(cs_db);
+    void WriteBlockInstantSendLocks(const gsl::not_null<std::shared_ptr<const CBlock>>& pblock, gsl::not_null<const CBlockIndex*> pindexConnected) LOCKS_EXCLUDED(cs_db);
+    void RemoveBlockInstantSendLocks(const gsl::not_null<std::shared_ptr<const CBlock>>& pblock, gsl::not_null<const CBlockIndex*> pindexDisconnected) LOCKS_EXCLUDED(cs_db);
     bool KnownInstantSendLock(const uint256& islockHash) const LOCKS_EXCLUDED(cs_db);
     /**
      * Gets the number of IS Locks which have not been confirmed by a block
@@ -194,22 +190,23 @@ public:
      * @return A vector of IS Lock hashes of all IS Locks removed
      */
     std::vector<uint256> RemoveChainedInstantSendLocks(const uint256& islockHash, const uint256& txid, int nHeight) LOCKS_EXCLUDED(cs_db);
-
-    void RemoveAndArchiveInstantSendLock(const CInstantSendLockPtr& islock, int nHeight) LOCKS_EXCLUDED(cs_db);
 };
 
 class CInstantSendManager : public CRecoveredSigsListener
 {
 private:
     CInstantSendDb db;
+
+    CChainLocksHandler& clhandler;
+    CChainState& m_chainstate;
     CConnman& connman;
-    CTxMemPool& mempool;
-    CSporkManager& spork_manager;
     CQuorumManager& qman;
     CSigningManager& sigman;
     CSigSharesManager& shareman;
-    CChainLocksHandler& clhandler;
-    const std::unique_ptr<CMasternodeSync>& m_mn_sync;
+    CSporkManager& spork_manager;
+    CTxMemPool& mempool;
+    const CMasternodeSync& m_mn_sync;
+    std::atomic<PeerManager*> m_peerman{nullptr};
 
     std::atomic<bool> fUpgradedDB{false};
 
@@ -257,11 +254,13 @@ private:
     std::unordered_set<uint256, StaticSaltedHasher> pendingRetryTxs GUARDED_BY(cs_pendingRetry);
 
 public:
-    explicit CInstantSendManager(CTxMemPool& _mempool, CConnman& _connman, CSporkManager& sporkManager,
+    explicit CInstantSendManager(CChainLocksHandler& _clhandler, CChainState& chainstate, CConnman& _connman,
                                  CQuorumManager& _qman, CSigningManager& _sigman, CSigSharesManager& _shareman,
-                                 CChainLocksHandler& _clhandler, const std::unique_ptr<CMasternodeSync>& mn_sync, bool unitTests, bool fWipe) :
-        db(unitTests, fWipe), connman(_connman), mempool(_mempool), spork_manager(sporkManager), qman(_qman), sigman(_sigman), shareman(_shareman),
-        clhandler(_clhandler), m_mn_sync(mn_sync)
+                                 CSporkManager& sporkManager, CTxMemPool& _mempool, const CMasternodeSync& mn_sync,
+                                 bool unitTests, bool fWipe) :
+        db(unitTests, fWipe),
+        clhandler(_clhandler), m_chainstate(chainstate), connman(_connman), qman(_qman), sigman(_sigman),
+        shareman(_shareman), spork_manager(sporkManager), mempool(_mempool), m_mn_sync(mn_sync)
     {
         workInterrupt.reset();
     }
@@ -275,7 +274,6 @@ private:
     void ProcessTx(const CTransaction& tx, bool fRetroactive, const Consensus::Params& params);
     bool CheckCanLock(const CTransaction& tx, bool printDebug, const Consensus::Params& params) const;
     bool CheckCanLock(const COutPoint& outpoint, bool printDebug, const uint256& txHash, const Consensus::Params& params) const;
-    bool IsConflicted(const CTransaction& tx) const { return GetConflictingLock(tx) != nullptr; };
 
     void HandleNewInputLockRecoveredSig(const CRecoveredSig& recoveredSig, const uint256& txid);
     void HandleNewInstantSendLockRecoveredSig(const CRecoveredSig& recoveredSig) LOCKS_EXCLUDED(cs_creating, cs_pendingLocks);
@@ -283,9 +281,8 @@ private:
     bool TrySignInputLocks(const CTransaction& tx, bool allowResigning, Consensus::LLMQType llmqType, const Consensus::Params& params) LOCKS_EXCLUDED(cs_inputReqests);
     void TrySignInstantSendLock(const CTransaction& tx) LOCKS_EXCLUDED(cs_creating);
 
-    void ProcessMessageInstantSendLock(const CNode& pfrom, const CInstantSendLockPtr& islock);
-    bool ProcessPendingInstantSendLocks();
-    bool ProcessPendingInstantSendLocks(bool deterministic) LOCKS_EXCLUDED(cs_pendingLocks);
+    PeerMsgRet ProcessMessageInstantSendLock(const CNode& pfrom, const CInstantSendLockPtr& islock);
+    bool ProcessPendingInstantSendLocks() LOCKS_EXCLUDED(cs_pendingLocks);
 
     std::unordered_set<uint256, StaticSaltedHasher> ProcessPendingInstantSendLocks(const Consensus::LLMQParams& llmq_params,
                                                                                    int signOffset,
@@ -316,7 +313,7 @@ public:
 
     void HandleNewRecoveredSig(const CRecoveredSig& recoveredSig) override LOCKS_EXCLUDED(cs_inputReqests, cs_creating);
 
-    void ProcessMessage(const CNode& pfrom, const std::string& msg_type, CDataStream& vRecv);
+    PeerMsgRet ProcessMessage(const CNode& pfrom, gsl::not_null<PeerManager*> peerman, std::string_view msg_type, CDataStream& vRecv);
 
     void TransactionAddedToMempool(const CTransactionRef& tx) LOCKS_EXCLUDED(cs_pendingLocks);
     void TransactionRemovedFromMempool(const CTransactionRef& tx);

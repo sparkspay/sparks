@@ -1,4 +1,4 @@
-// Copyright (c) 2021 The Dash Core developers
+// Copyright (c) 2021-2023 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,6 +9,7 @@
 #include <atomic>
 #include <mutex>
 
+// This header is used by both Wallet and Server libraries
 class UniValue;
 
 static constexpr int MIN_COINJOIN_SESSIONS = 1;
@@ -61,8 +62,11 @@ public:
 
     static void SetEnabled(bool fEnabled);
     static void SetMultiSessionEnabled(bool fEnabled);
+    static void SetSessions(int sessions);
     static void SetRounds(int nRounds);
     static void SetAmount(CAmount amount);
+    static void SetDenomsGoal(int denoms_goal);
+    static void SetDenomsHardCap(int denoms_hardcap);
 
     static bool IsEnabled() { return CCoinJoinClientOptions::Get().fEnableCoinJoin; }
     static bool IsMultiSessionEnabled() { return CCoinJoinClientOptions::Get().fCoinJoinMultiSession; }

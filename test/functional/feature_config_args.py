@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2017 The Bitcoin Core developers
+# Copyright (c) 2017-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test various command line arguments and configuration file parameters."""
@@ -7,6 +7,7 @@
 import os
 
 from test_framework.test_framework import BitcoinTestFramework
+from test_framework import util
 
 
 class ConfArgsTest(BitcoinTestFramework):
@@ -42,10 +43,11 @@ class ConfArgsTest(BitcoinTestFramework):
                 conf.write("wallet=foo\n")
             self.nodes[0].assert_start_raises_init_error(expected_msg='Error: Config setting for -wallet only applied on %s network when in [%s] section.' % (self.chain, self.chain))
 
+        main_conf_file_path = os.path.join(self.options.tmpdir, 'node0', 'sparks_main.conf')
+        util.write_config(main_conf_file_path, n=0, chain='', extra_config='includeconf={}\n'.format(inc_conf_file_path))
         with open(inc_conf_file_path, 'w', encoding='utf-8') as conf:
-            conf.write('regtest=0\n') # mainnet
             conf.write('acceptnonstdtxn=1\n')
-        self.nodes[0].assert_start_raises_init_error(expected_msg='Error: acceptnonstdtxn is not currently supported for main chain')
+        self.nodes[0].assert_start_raises_init_error(extra_args=["-conf={}".format(main_conf_file_path)], expected_msg='Error: acceptnonstdtxn is not currently supported for main chain')
 
         with open(inc_conf_file_path, 'w', encoding='utf-8') as conf:
             conf.write('nono\n')
@@ -79,6 +81,11 @@ class ConfArgsTest(BitcoinTestFramework):
         with open(inc_conf_file2_path, 'w', encoding='utf-8') as conf:
             conf.write('')  # clear
 
+    def test_invalid_command_line_options(self):
+        self.nodes[0].assert_start_raises_init_error(
+            expected_msg='Error: No proxy server specified. Use -proxy=<ip> or -proxy=<ip:port>.',
+            extra_args=['-proxy'],
+        )
 
     def test_log_buffer(self):
         with self.nodes[0].assert_debug_log(expected_msgs=['Warning: parsed potentially confusing double-negative -connect=0\n']):
@@ -122,6 +129,7 @@ class ConfArgsTest(BitcoinTestFramework):
 
 
         self.test_config_file_parser()
+        self.test_invalid_command_line_options()
 
         # Remove the -datadir argument so it doesn't override the config file
         self.nodes[0].args = [arg for arg in self.nodes[0].args if not arg.startswith("-datadir")]

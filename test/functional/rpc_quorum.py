@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022 The Dash Core developers
+# Copyright (c) 2022-2023 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-from test_framework.test_framework import DashTestFramework
+from test_framework.test_framework import SparksTestFramework
 from test_framework.util import assert_equal, p2p_port
 
 '''
@@ -11,7 +11,7 @@ rpc_quorum.py
 Test "quorum" rpc subcommands
 '''
 
-class RPCMasternodeTest(DashTestFramework):
+class RPCMasternodeTest(SparksTestFramework):
     def set_test_params(self):
         self.set_sparks_test_params(4, 3, fast_dip3_enforcement=True)
 

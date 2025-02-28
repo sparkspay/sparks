@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -60,10 +60,11 @@ public:
     enum ColumnIndex {
         NetNodeId = 0,
         Address = 1,
-        Ping = 2,
-        Sent = 3,
-        Received = 4,
-        Subversion = 5
+        Network = 2,
+        Ping = 3,
+        Sent = 4,
+        Received = 5,
+        Subversion = 6
     };
 
     /** @name Methods overridden from QAbstractTableModel
@@ -82,7 +83,7 @@ public Q_SLOTS:
 
 private:
     interfaces::Node& m_node;
-    QStringList columns;
+    const QStringList columns{tr("Peer Id"), tr("Address"), tr("Network"), tr("Ping"), tr("Sent"), tr("Received"), tr("User Agent")};
     std::unique_ptr<PeerTablePriv> priv;
     QTimer *timer;
 };

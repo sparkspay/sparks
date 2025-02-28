@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2018 The Bitcoin Core developers
+# Copyright (c) 2018-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test the Partially Signed Transaction RPCs.
@@ -21,14 +21,7 @@ import os
 class PSBTTest(BitcoinTestFramework):
 
     def set_test_params(self):
-        self.setup_clean_chain = False
         self.num_nodes = 3
-       # TODO: remove -txindex. Currently required for getrawtransaction call.
-        self.extra_args = [
-            ["-txindex"],
-            ["-txindex"],
-            ["-txindex"]
-        ]
         self.supports_cli = False
 
     def skip_test_if_missing_module(self):
@@ -46,6 +39,15 @@ class PSBTTest(BitcoinTestFramework):
         signed_tx = self.nodes[0].walletprocesspsbt(psbtx)['psbt']
         final_tx = self.nodes[0].finalizepsbt(signed_tx)['hex']
         self.nodes[0].sendrawtransaction(final_tx)
+
+        # Manually selected inputs can be locked:
+        assert_equal(len(self.nodes[0].listlockunspent()), 0)
+        utxo1 = self.nodes[0].listunspent()[0]
+        psbtx1 = self.nodes[0].walletcreatefundedpsbt([{"txid": utxo1['txid'], "vout": utxo1['vout']}], {self.nodes[2].getnewaddress():1}, 0,{"lockUnspents": True})["psbt"]
+        assert_equal(len(self.nodes[0].listlockunspent()), 1)
+
+        # Locks are ignored for manually selected inputs
+        self.nodes[0].walletcreatefundedpsbt([{"txid": utxo1['txid'], "vout": utxo1['vout']}], {self.nodes[2].getnewaddress():1}, 0)
 
         # Create p2sh and p2pkh addresses
         pubkey0 = self.nodes[0].getaddressinfo(self.nodes[0].getnewaddress())['pubkey']
@@ -73,8 +75,13 @@ class PSBTTest(BitcoinTestFramework):
                 p2pkh_pos = out['n']
 
         # spend single key from node 1
-        rawtx = self.nodes[1].walletcreatefundedpsbt([{"txid":txid,"vout":p2pkh_pos}], {self.nodes[1].getnewaddress():9.99})['psbt']
-        walletprocesspsbt_out = self.nodes[1].walletprocesspsbt(rawtx)
+        created_psbt = self.nodes[1].walletcreatefundedpsbt([{"txid":txid,"vout":p2pkh_pos}], {self.nodes[1].getnewaddress():9.99})
+        walletprocesspsbt_out = self.nodes[1].walletprocesspsbt(created_psbt['psbt'])
+        # Make sure it has both types of UTXOs
+        decoded = self.nodes[1].decodepsbt(walletprocesspsbt_out['psbt'])
+        assert 'non_witness_utxo' in decoded['inputs'][0]
+        # Check decodepsbt fee calculation (input values shall only be counted once per UTXO)
+        assert_equal(decoded['fee'], created_psbt['fee'])
         assert_equal(walletprocesspsbt_out['complete'], True)
         self.nodes[1].sendrawtransaction(self.nodes[1].finalizepsbt(walletprocesspsbt_out['psbt'])['hex'])
 
@@ -88,7 +95,7 @@ class PSBTTest(BitcoinTestFramework):
 
         # feeRate of 10 SPARKS / KB produces a total fee well above -maxtxfee
         # previously this was silently capped at -maxtxfee
-        assert_raises_rpc_error(-4, "Fee exceeds maximum configured by -maxtxfee", self.nodes[1].walletcreatefundedpsbt, [{"txid":txid,"vout":p2pkh_pos},{"txid":txid,"vout":p2sh_pos},{"txid":txid,"vout":p2pkh_pos}], {self.nodes[1].getnewaddress():29.99}, 0, {"feeRate": 10})
+        assert_raises_rpc_error(-4, "Fee exceeds maximum configured by user (e.g. -maxtxfee, maxfeerate)", self.nodes[1].walletcreatefundedpsbt, [{"txid":txid,"vout":p2pkh_pos},{"txid":txid,"vout":p2sh_pos},{"txid":txid,"vout":p2pkh_pos}], {self.nodes[1].getnewaddress():29.99}, 0, {"feeRate": 10})
 
         # partially sign multisig things with node 1
         psbtx = self.nodes[1].walletcreatefundedpsbt([{"txid":txid,"vout":p2sh_pos}], {self.nodes[1].getnewaddress():9.99})['psbt']
@@ -157,6 +164,20 @@ class PSBTTest(BitcoinTestFramework):
         self.nodes[0].sendrawtransaction(finalized)
         self.nodes[0].generate(6)
         self.sync_all()
+
+        # Make sure change address wallet does not have P2SH innerscript access to results in success
+        # when attempting BnB coin selection
+        block_height = self.nodes[0].getblockcount()
+        self.nodes[0].walletcreatefundedpsbt([], [{self.nodes[2].getnewaddress():self.nodes[0].listunspent()[0]["amount"]+1}], block_height+2, {"changeAddress":self.nodes[1].getnewaddress()}, False)
+
+        # Regression test for 14473 (mishandling of already-signed witness transaction):
+        unspent = self.nodes[0].listunspent()[0]
+        psbtx_info = self.nodes[0].walletcreatefundedpsbt([{"txid":unspent["txid"], "vout":unspent["vout"]}], [{self.nodes[2].getnewaddress():unspent["amount"]+1}])
+        complete_psbt = self.nodes[0].walletprocesspsbt(psbtx_info["psbt"])
+        double_processed_psbt = self.nodes[0].walletprocesspsbt(complete_psbt["psbt"])
+        assert_equal(complete_psbt, double_processed_psbt)
+        # We don't care about the decode result, but decoding must succeed.
+        self.nodes[0].decodepsbt(double_processed_psbt["psbt"])
 
         # BIP 174 Test Vectors
 
@@ -315,6 +336,13 @@ class PSBTTest(BitcoinTestFramework):
         assert_equal(analysis['next'], 'creator')
         assert_equal(analysis['error'], 'PSBT is not valid. Input 0 has invalid value')
 
+        self.log.info("PSBT with signed, but not finalized, inputs should have Finalizer as next")
+        analysis = self.nodes[0].analyzepsbt('cHNidP8BAHECAAAAAXfx5nfVEBDq0BbpUjqqfvNEWyX2dGCkx7RiW9E6DXPbAAAAAAD9////AlDDAAAAAAAAFgAUy/UxxZuzZswcmFnN/E9DGSiHLUsuGPUFAAAAABYAFLsH5o0R38wXx+X2cCosTMCZnQ4baAAAAAABACwCAAAAAAEA4fUFAAAAABl2qRTgSNoebYX9/i35W9ixgrFUmcLJbYisAAAAACICAv4uHbVQEQkVrUThtBx6BnGlZJcyVHMKOYaJoBpEjQJyRzBEAiBse8ynDCBq+3BBEvQUeCnbf6cz0yt3ylnBsgiV2+zFZwIgCzgYKpTB+BmwtRw4fx5spZjueH8hMuJSnXu/wU/z1scBAQMEAQAAACIGAv4uHbVQEQkVrUThtBx6BnGlZJcyVHMKOYaJoBpEjQJyGA8FaUNUAACAAQAAgAAAAIAAAAAAAAAAAAEBHwDh9QUAAAAAFgAU4EjaHm2F/f4t+VvYsYKxVJnCyW0AACICAv4IiIHn01IKyw4lEaIxhArVyFqGABpomkhcTjULKKv7GA8FaUNUAACAAQAAgAAAAIABAAAAAAAAAAA=')
+        # TODO update tx above.
+        # currently I can't figure out how to generate transaction, that would be valid and will show correct stage finalizer.
+        # currently it fails at `verify pubkey` for signer
+        # assert_equal(analysis['next'], 'finalizer')
+
         analysis = self.nodes[0].analyzepsbt('cHNidP8BAHECAAAAAbmNr2X0Nc+2AtaXYjPu3kIFc3Cmj1aYy5WQs5yaUfRvAAAAAAD/////AgCAgWrj0AcAFgAUKNw0x8HRctAgmvoevm4u1SbN7XL87QKVAAAAABYAFPck4gF7iL4NL4wtfRAKgQbghiTUAAAAAAABABQCAAAAAAGghgEAAAAAAAFRAAAAAAEBHwDyBSoBAAAAFgAUlQO3F/Y8ejrjUcQ4E4Ai8Uw1OvYAAAA=')
         assert_equal(analysis['next'], 'creator')
         assert_equal(analysis['error'], 'PSBT is not valid. Output amount invalid')
@@ -323,7 +351,7 @@ class PSBTTest(BitcoinTestFramework):
         assert_equal(analysis['next'], 'creator')
         assert_equal(analysis['error'], 'PSBT is not valid. Input 0 specifies invalid prevout')
 
-        assert_raises_rpc_error(-25, 'Missing inputs', self.nodes[0].walletprocesspsbt, 'cHNidP8BAJoCAAAAAkvEW8NnDtdNtDpsmze+Ht2LH35IJcKv00jKAlUs21RrAwAAAAD/////S8Rbw2cO1020OmybN74e3Ysffkglwq/TSMoCVSzbVGsBAAAAAP7///8CwLYClQAAAAAWABSNJKzjaUb3uOxixsvh1GGE3fW7zQD5ApUAAAAAFgAUKNw0x8HRctAgmvoevm4u1SbN7XIAAAAAAAEAnQIAAAACczMa321tVHuN4GKWKRncycI22aX3uXgwSFUKM2orjRsBAAAAAP7///9zMxrfbW1Ue43gYpYpGdzJwjbZpfe5eDBIVQozaiuNGwAAAAAA/v///wIA+QKVAAAAABl2qRT9zXUVA8Ls5iVqynLHe5/vSe1XyYisQM0ClQAAAAAWABRmWQUcjSjghQ8/uH4Bn/zkakwLtAAAAAAAAQEfQM0ClQAAAAAWABRmWQUcjSjghQ8/uH4Bn/zkakwLtAAAAA==')
+        assert_raises_rpc_error(-25, 'Inputs missing or spent', self.nodes[0].walletprocesspsbt, 'cHNidP8BAJoCAAAAAkvEW8NnDtdNtDpsmze+Ht2LH35IJcKv00jKAlUs21RrAwAAAAD/////S8Rbw2cO1020OmybN74e3Ysffkglwq/TSMoCVSzbVGsBAAAAAP7///8CwLYClQAAAAAWABSNJKzjaUb3uOxixsvh1GGE3fW7zQD5ApUAAAAAFgAUKNw0x8HRctAgmvoevm4u1SbN7XIAAAAAAAEAnQIAAAACczMa321tVHuN4GKWKRncycI22aX3uXgwSFUKM2orjRsBAAAAAP7///9zMxrfbW1Ue43gYpYpGdzJwjbZpfe5eDBIVQozaiuNGwAAAAAA/v///wIA+QKVAAAAABl2qRT9zXUVA8Ls5iVqynLHe5/vSe1XyYisQM0ClQAAAAAWABRmWQUcjSjghQ8/uH4Bn/zkakwLtAAAAAAAAQEfQM0ClQAAAAAWABRmWQUcjSjghQ8/uH4Bn/zkakwLtAAAAA==')
 
 if __name__ == '__main__':
     PSBTTest().main()

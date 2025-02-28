@@ -106,18 +106,8 @@
         <translation>Eksportuj listę adresów</translation>
     </message>
     <message>
-        <source>Comma separated file (*.csv)</source>
-        <translation>Wartości rozdzielone przecinkami (*.csv)</translation>
-    </message>
-    <message>
         <source>Exporting Failed</source>
         <translation>Próba eksportu nie powiodła się</translation>
-    </message>
-    <message>
-        <source>There was an error trying to save the address list to %1. Please try again.</source>
-        <comment>An error message.</comment>
-        <extracomment>%1 is a name of the file (e.g., "addrbook.csv") that the bitcoin addresses were exported to.</extracomment>
-        <translation>Wystąpił błąd podczas próby zapisu listy adresów do %1. Spróbuj ponownie.</translation>
     </message>
 </context>
 <context>
@@ -217,14 +207,6 @@
         <translation>Odblokuj portfel</translation>
     </message>
     <message>
-        <source>This operation needs your wallet passphrase to decrypt the wallet.</source>
-        <translation>Ta operacja wymaga hasła do odszyfrowania portfela.</translation>
-    </message>
-    <message>
-        <source>Decrypt wallet</source>
-        <translation>Odszyfruj portfel</translation>
-    </message>
-    <message>
         <source>Change passphrase</source>
         <translation>Zmień hasło</translation>
     </message>
@@ -277,10 +259,6 @@
         <translation>Wprowadzone hasło do odszyfrowania portfela jest niepoprawne.</translation>
     </message>
     <message>
-        <source>Wallet decryption failed</source>
-        <translation>Odszyfrowanie portfela nie powiodło się</translation>
-    </message>
-    <message>
         <source>Wallet passphrase was successfully changed.</source>
         <translation>Hasło portfela zostało pomyślnie zmienione.</translation>
     </message>
@@ -309,22 +287,6 @@
 </context>
 <context>
     <name>BitcoinGUI</name>
-    <message>
-        <source>A fatal error occurred. Sparks Core can no longer continue safely and will quit.</source>
-        <translation>Wystąpił błąd krytyczny. Sparks Core nie może bezpiecznie kontynuować i zostanie zamknięty.</translation>
-    </message>
-    <message>
-        <source>Sparks Core</source>
-        <translation>Sparks Core</translation>
-    </message>
-    <message>
-        <source>Wallet</source>
-        <translation>Portfel</translation>
-    </message>
-    <message>
-        <source>Node</source>
-        <translation>Węzeł</translation>
-    </message>
     <message>
         <source>&amp;Overview</source>
         <translation>P&amp;odsumowanie</translation>
@@ -753,7 +715,15 @@
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation>Portfel jest &lt;b&gt;zaszyfrowany&lt;/b&gt; i obecnie &lt;b&gt;zablokowany&lt;/b&gt;</translation>
     </message>
-</context>
+    <message>
+        <source>Proxy is &lt;b&gt;enabled&lt;/b&gt;: %1</source>
+        <translation>Proxy jest &lt;b&gt;włączone&lt;/b&gt;: %1</translation>
+    </message>
+    <message>
+        <source>Original message:</source>
+        <translation>Oryginalna wiadomość:</translation>
+    </message>
+    </context>
 <context>
     <name>CoinControlDialog</name>
     <message>
@@ -911,10 +881,6 @@
     <message>
         <source>Some coins were unselected because they were spent.</source>
         <translation>Niektóre monety nie zostały zaznaczone ponieważ już są wydane.</translation>
-    </message>
-    <message>
-        <source>Some coins were unselected because they do not have enough mixing rounds.</source>
-        <translation>Niektóre monety nie zostały zaznaczone ponieważ nie przeszły wystarczającej ilości rund miksowania. </translation>
     </message>
     <message>
         <source>Show all coins</source>
@@ -1134,14 +1100,6 @@
     <message>
         <source>Error</source>
         <translation>Błąd</translation>
-    </message>
-    <message>
-        <source>%1 GB of free space available</source>
-        <translation>%1 GB wolnego miejsca na dysku</translation>
-    </message>
-    <message>
-        <source>(of %1 GB needed)</source>
-        <translation>(z %1GB potrzebnego)</translation>
     </message>
 </context>
 <context>
@@ -1391,6 +1349,30 @@
         <translation>&amp;Wygląd</translation>
     </message>
     <message>
+        <source>Prune &amp;block storage to</source>
+        <translation>Ogranicz miejsce dla &amp;bloków do </translation>
+    </message>
+    <message>
+        <source>GB</source>
+        <translation>GB</translation>
+    </message>
+    <message>
+        <source>Reverting this setting requires re-downloading the entire blockchain.</source>
+        <translation>Zmiana tego ustawienia wymaga ponownego pobrania całego łańcucha bloków.</translation>
+    </message>
+    <message>
+        <source>MiB</source>
+        <translation>MiB</translation>
+    </message>
+    <message>
+        <source>Whether to keep the specified custom change address or not.</source>
+        <translation>Czy zachować określony niestandardowy adres zmiany, czy nie.</translation>
+    </message>
+    <message>
+        <source>Keep custom change &amp;address</source>
+        <translation>Zachowaj określony &amp;adres zmiany</translation>
+    </message>
+    <message>
         <source>Show additional tab listing all your masternodes in first sub-tab&lt;br/&gt;and all masternodes on the network in second sub-tab.</source>
         <translation>Pokaż dodatkową zakładkę z listą Twoich wszystkich masternodów w pierwszej podzakładce &lt;br/&gt; oraz listą wszystkich masternodów sieci w drugiej podzakładce .</translation>
     </message>
@@ -1479,8 +1461,8 @@
         <translation>Pokazuje czy podane domyślnie SOCKS5 proxy jest używane do połączenia z peerami przez ten rodzaj sieci.</translation>
     </message>
     <message>
-        <source>Use separate SOCKS&amp;5 proxy to reach peers via Tor hidden services:</source>
-        <translation>Użyj osobnego proxy SOCKS&amp;5 aby połączyć się z peerami przez ukryte usługi sieci Tor:</translation>
+        <source>Options set in this dialog are overridden by the command line or in the configuration file:</source>
+        <translation>Opcje ustawione w tym oknie są zastępowane przez wiersz poleceń lub w pliku konfiguracyjnym:</translation>
     </message>
     <message>
         <source>Hide the icon from the system tray.</source>
@@ -1535,6 +1517,10 @@
         <translation>Mapuj port używając &amp;UPnP</translation>
     </message>
     <message>
+        <source>Automatically open the Sparks Core client port on the router. This only works when your router supports NAT-PMP and it is enabled. The external port could be random.</source>
+        <translation>Automatycznie otwórz port klienta Sparks Core na routerze. Działa to tylko wtedy, gdy router obsługuje NAT-PMP i jest włączony. Port zewnętrzny może być losowy.</translation>
+    </message>
+    <message>
         <source>Proxy &amp;IP:</source>
         <translation>Proxy &amp;IP: </translation>
     </message>
@@ -1565,10 +1551,6 @@
     <message>
         <source>Tor</source>
         <translation>Tor</translation>
-    </message>
-    <message>
-        <source>Connect to the Sparks network through a separate SOCKS5 proxy for Tor hidden services.</source>
-        <translation>Połącz się z siecią Sparks przez oddzielne proxy SOCKS5 dla ukrytych usług Tor.</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
@@ -1885,6 +1867,9 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
+    <name>PSBTOperationsDialog</name>
+    </context>
+<context>
     <name>PaymentServer</name>
     <message>
         <source>Payment request error</source>
@@ -1903,6 +1888,14 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>'Sparks: //' nie jest prawidłowym identyfikatorem URI. Zamiast tego użyj 'Sparks:'.</translation>
     </message>
     <message>
+        <source>Cannot process payment request as BIP70 is no longer supported.</source>
+        <translation>Nie można przetworzyć żądania płatności, ponieważ BIP70 nie jest już obsługiwany.</translation>
+    </message>
+    <message>
+        <source>Due to discontinued support, you should request the merchant to provide you with a BIP21 compatible URI or use a wallet that does continue to support BIP70.</source>
+        <translation>Ze względu na wycofanie wsparcia należy poprosić sprzedawcę o dostarczenie identyfikatora URI zgodnego z BIP21 lub skorzystać z portfela, który nadal obsługuje BIP70.</translation>
+    </message>
+    <message>
         <source>Invalid payment address %1</source>
         <translation>Nieprawidłowy adres płatności %1</translation>
     </message>
@@ -1918,14 +1911,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
 <context>
     <name>PeerTableModel</name>
     <message>
-        <source>NodeId</source>
-        <translation>NodeId</translation>
-    </message>
-    <message>
-        <source>Node/Service</source>
-        <translation>Węzeł/Usługa</translation>
-    </message>
-    <message>
         <source>User Agent</source>
         <translation>Agent użytkownika</translation>
     </message>
@@ -1940,6 +1925,56 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Received</source>
         <translation>Otrzymany</translation>
+    </message>
+    </context>
+<context>
+    <name>Proposal</name>
+    <message>
+        <source>Passing +%1</source>
+        <translation>Zaakceptowany +%1</translation>
+    </message>
+    <message>
+        <source>Needs additional %1 votes</source>
+        <translation>Potrzebuje %1 dodatkowych głosów</translation>
+    </message>
+</context>
+<context>
+    <name>ProposalModel</name>
+    <message>
+        <source>Yes</source>
+        <translation>Tak</translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation>Nie</translation>
+    </message>
+    <message>
+        <source>Hash</source>
+        <translation>Hash</translation>
+    </message>
+    <message>
+        <source>Title</source>
+        <translation>Tytuł</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>Start</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>Koniec</translation>
+    </message>
+    <message>
+        <source>Amount</source>
+        <translation>Ilość</translation>
+    </message>
+    <message>
+        <source>Active</source>
+        <translation>Aktywne</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>Status</translation>
     </message>
 </context>
 <context>
@@ -2122,11 +2157,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Save QR Code</source>
         <translation>Zapisz Kod QR</translation>
     </message>
-    <message>
-        <source>PNG Image (*.png)</source>
-        <translation>Obraz PNG (*.png)</translation>
-    </message>
-</context>
+    </context>
 <context>
     <name>RPCConsole</name>
     <message>
@@ -2190,10 +2221,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Ciąg bloków</translation>
     </message>
     <message>
-        <source>Number of Masternodes</source>
-        <translation>Liczba masternodów</translation>
-    </message>
-    <message>
         <source>Memory Pool</source>
         <translation>Pula Pamięci</translation>
     </message>
@@ -2240,10 +2267,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Select a peer to view detailed information.</source>
         <translation>Wybierz peera aby zobaczyć jego szczegółowe informacje.</translation>
-    </message>
-    <message>
-        <source>Whitelisted</source>
-        <translation>Biała lista</translation>
     </message>
     <message>
         <source>Direction</source>
@@ -2370,14 +2393,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>&amp;Naprawa portfela</translation>
     </message>
     <message>
-        <source>Upgrade wallet format</source>
-        <translation>Uaktualnij format portfela</translation>
-    </message>
-    <message>
-        <source>-upgradewallet: Upgrade wallet to latest format on startup. (Note: this is NOT an update of the wallet itself!)</source>
-        <translation>-upgradewallet: przeprowadź upgrade portfela do najnowszego formatu podczas uruchomienia. (Nie oznacza to zaktualizowania samego portfela!)</translation>
-    </message>
-    <message>
         <source>Wallet repair options.</source>
         <translation>Opcje naprawy portfela.</translation>
     </message>
@@ -2462,10 +2477,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Wykonywanie polecenia używając portfel "%1"</translation>
     </message>
     <message>
-        <source>(node id: %1)</source>
-        <translation>(id węzła: %1)</translation>
-    </message>
-    <message>
         <source>via %1</source>
         <translation>przez %1</translation>
     </message>
@@ -2482,12 +2493,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>wychodzące</translation>
     </message>
     <message>
-        <source>Yes</source>
-        <translation>Tak</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>Nie</translation>
+        <source>Outbound block-relay</source>
+        <translation>Wychodzący przekaźnik blokowy</translation>
     </message>
     <message>
         <source>Regular</source>
@@ -2523,6 +2530,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the Sparks network.</source>
         <translation>Opcjonalna wiadomość do żądania płatności. Wiadomość wyświetli się po otwarciu żądania.&lt;br&gt; Pamiętaj: Wiadomość nie zostanie wysłana razem z płatnością poprzez sieć Sparks.</translation>
+    </message>
+    <message>
+        <source>An optional label to associate with the new receiving address (used by you to identify an invoice).  It is also attached to the payment request.</source>
+        <translation>Opcjonalna etykieta do powiązania z nowym adresem odbiorcy (używana przez Ciebie do identyfikacji faktury). Jest on również dołączony do wezwania do zapłaty.</translation>
     </message>
     <message>
         <source>Use this form to request payments. All fields are &lt;b&gt;optional&lt;/b&gt;.</source>
@@ -2600,10 +2611,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
 <context>
     <name>ReceiveRequestDialog</name>
     <message>
-        <source>QR Code</source>
-        <translation>Kod QR</translation>
-    </message>
-    <message>
         <source>Copy &amp;URI</source>
         <translation>Kopiuj &amp;URI</translation>
     </message>
@@ -2622,38 +2629,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Payment information</source>
         <translation>Informacje o płatności</translation>
-    </message>
-    <message>
-        <source>URI</source>
-        <translation>URI</translation>
-    </message>
-    <message>
-        <source>Address</source>
-        <translation>Adres</translation>
-    </message>
-    <message>
-        <source>Amount</source>
-        <translation>Kwota</translation>
-    </message>
-    <message>
-        <source>Label</source>
-        <translation>Etykieta</translation>
-    </message>
-    <message>
-        <source>Message</source>
-        <translation>Wiadomość</translation>
-    </message>
-    <message>
-        <source>Wallet</source>
-        <translation>Portfel</translation>
-    </message>
-    <message>
-        <source>Resulting URI too long, try to reduce the text for label / message.</source>
-        <translation>Wynikowy URI jest zbyt długi, spróbuj zmniejszyć tekst etykiety / wiadomości</translation>
-    </message>
-    <message>
-        <source>Error encoding URI into QR Code.</source>
-        <translation>Błąd kodowania URI w Kodzie QR.</translation>
     </message>
 </context>
 <context>
@@ -2754,8 +2729,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Wybierz...</translation>
     </message>
     <message>
-        <source>collapse fee-settings</source>
-        <translation>zamknij ustawienia opłat</translation>
+        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
+        <translation>Gdy wolumen transakcji jest mniejszy niż miejsce w blokach, górnicy oraz węzły przekazujące mogą narzucić minimalną opłatę. Płacenie tylko tej minimalnej opłaty jest w porządku, ale należy pamiętać, że może to spowodować, że transakcja nigdy nie zostanie potwierdzone gdy pojawi się większe zapotrzebowanie na transakcje Sparks, niż sieć może przetworzyć.</translation>
+    </message>
+    <message>
+        <source>A too low fee might result in a never confirming transaction (read the tooltip)</source>
+        <translation>Zbyt niska opłata może spowodować, że transakcja nigdy nie zostanie potwierdzona (przeczytaj wskazówkę)</translation>
     </message>
     <message>
         <source>Confirmation time target:</source>
@@ -2886,6 +2865,26 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Potwierdź akcję wysyłania %1</translation>
     </message>
     <message>
+        <source>Cr&amp;eate Unsigned</source>
+        <translation>Utwórz niepodpisane</translation>
+    </message>
+    <message>
+        <source>Creates a Partially Signed Bitcoin Transaction (PSBT) for use with e.g. an offline %1 wallet, or a PSBT-compatible hardware wallet.</source>
+        <translation>Tworzy częściowo podpisaną transakcję Bitcoin (PSBT) do użytku z np. portfel offline %1 lub portfel sprzętowy zgodny z PSBT.</translation>
+    </message>
+    <message>
+        <source> from wallet '%1'</source>
+        <translation>z portfela '%1'</translation>
+    </message>
+    <message>
+        <source>%1 to '%2'</source>
+        <translation>%1 do '%2'</translation>
+    </message>
+    <message>
+        <source>Do you want to draft this transaction?</source>
+        <translation>Czy chcesz sporządzić projekt tej transakcji?</translation>
+    </message>
+    <message>
         <source>%1 funds only</source>
         <translation>Tylko fundusze %1</translation>
     </message>
@@ -2914,8 +2913,32 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Uwaga: Używanie %1 z %2 lub więcej nominałami może stanowić zagrożenie dla twojej anonimowości i nie jest zalecane.</translation>
     </message>
     <message>
+        <source>Click to learn more</source>
+        <translation>Kliknij, aby dowiedzieć się więcej</translation>
+    </message>
+    <message>
+        <source>Total Amount</source>
+        <translation>Całkowita Kwota</translation>
+    </message>
+    <message>
+        <source>or</source>
+        <translation>lub</translation>
+    </message>
+    <message>
+        <source>To review recipient list click "Show Details..."</source>
+        <translation>Aby przejrzeć listę odbiorców, kliknij „Pokaż szczegóły…”</translation>
+    </message>
+    <message>
         <source>Confirm send coins</source>
         <translation>Potwierdź wysyłanie monet</translation>
+    </message>
+    <message>
+        <source>Confirm transaction proposal</source>
+        <translation>Potwierdź propozycję transakcji</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Wyślij</translation>
     </message>
     <message>
         <source>The recipient address is not valid. Please recheck.</source>
@@ -2948,10 +2971,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>A fee higher than %1 is considered an absurdly high fee.</source>
         <translation>Opłata wyższa niż %1 jest absurdalnie wysoka.</translation>
-    </message>
-    <message>
-        <source>Payment request expired.</source>
-        <translation>Żądanie płatności wygasło.</translation>
     </message>
     <message numerus="yes">
         <source>Estimated to begin confirmation within %n block(s).</source>
@@ -3221,13 +3240,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Message verified.</source>
         <translation>Wiadomość zweryfikowana.</translation>
-    </message>
-</context>
-<context>
-    <name>SplashScreen</name>
-    <message>
-        <source>[testnet]</source>
-        <translation>[testnet]</translation>
     </message>
 </context>
 <context>
@@ -3653,6 +3665,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Porzuć transakcję</translation>
     </message>
     <message>
+        <source>Resend transaction</source>
+        <translation>Wyślij ponownie transakcje</translation>
+    </message>
+    <message>
         <source>Copy address</source>
         <translation>Kopiuj adres</translation>
     </message>
@@ -3691,10 +3707,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Export Transaction History</source>
         <translation>Eksport historii transakcji</translation>
-    </message>
-    <message>
-        <source>Comma separated file (*.csv)</source>
-        <translation>CSV (rozdzielany przecinkami)</translation>
     </message>
     <message>
         <source>Confirmed</source>
@@ -3761,8 +3773,35 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
-    <name>WalletFrame</name>
+    <name>WalletController</name>
+    <message>
+        <source>Close wallet</source>
+        <translation>Zamknij portfel</translation>
+    </message>
+    <message>
+        <source>Are you sure you wish to close the wallet &lt;i&gt;%1&lt;/i&gt;?</source>
+        <translation>Jesteś pewien, że chcesz zamknąć portfel &lt;i&gt;%1&lt;/i&gt;?</translation>
+    </message>
+    <message>
+        <source>Closing the wallet for too long can result in having to resync the entire chain if pruning is enabled.</source>
+        <translation>Zbyt długie zamykanie portfela może spowodować konieczność ponownej synchronizacji całego łańcucha, jeśli włączone jest przycinanie.</translation>
+    </message>
     </context>
+<context>
+    <name>WalletFrame</name>
+    <message>
+        <source>No wallet has been loaded.
+Go to File &gt; Open Wallet to load a wallet.
+- OR -</source>
+        <translation>Żaden portfel nie został załadowany.
+Przejdź do Plik &gt; Otwórz portfel, aby załadować portfel.
+- LUB -</translation>
+    </message>
+    <message>
+        <source>Create a new wallet</source>
+        <translation>Stwórz nowy portfel</translation>
+    </message>
+</context>
 <context>
     <name>WalletModel</name>
     <message>
@@ -3787,10 +3826,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Backup Wallet</source>
         <translation>Kopia Zapasowa Portfela</translation>
-    </message>
-    <message>
-        <source>Wallet Data (*.dat)</source>
-        <translation>Dane Portfela (*.dat)</translation>
     </message>
     <message>
         <source>Backup Failed</source>
@@ -3824,20 +3859,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Ta wersja nie jest jeszcze gotowa na oficjalne wydanie - używaj jej na własne ryzyko - nie używaj tej wersji do kopania monet lub do świadczenia usług komercyjnych.</translation>
     </message>
     <message>
-        <source>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</source>
-        <translation>Uwaga: Wygląda na to, że istnieją pewne rozbieżności w sieci! Możliwe, że niektórzy kopacze doświadczają problemów technicznych. </translation>
-    </message>
-    <message>
         <source>Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.</source>
         <translation>Uwaga: Wydaje się, że nie w pełni zgadzamy się z naszymi peerami. Konieczna może być aktualizacja lub inne węzły mogą wymagać aktualizacji.</translation>
     </message>
     <message>
         <source>Already have that input.</source>
         <translation>Ta wartość wejściowa już istnieje</translation>
-    </message>
-    <message>
-        <source>Cannot downgrade wallet</source>
-        <translation>Nie można obniżyć wersji portfela</translation>
     </message>
     <message>
         <source>Collateral not valid.</source>
@@ -3912,6 +3939,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Nieprawidłowa kwota za -maxtxfee=&lt;amount&gt;: '%s' (musi ona wynosić co najmniej tyle co minimalna opłata za retransmisje %s aby zapobiec utknięciu transakcji)</translation>
     </message>
     <message>
+        <source>SQLiteDatabase: Unknown sqlite wallet schema version %d. Only version %d is supported</source>
+        <translation>SQLiteDatabase: Nieznana wersja schematu portfela sqlite %d. Obsługiwana jest tylko wersja %d</translation>
+    </message>
+    <message>
         <source>Transaction index can't be disabled with governance validation enabled. Either start with -disablegovernance command line switch or enable transaction index.</source>
         <translation>Indeks transakcji nie może zostać wyłączony jeśli walidacja zarządzania jest włączona. Albo uruchom z komendą  -dsiablegovernance lub włącz indeks transakcji. </translation>
     </message>
@@ -3984,20 +4015,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Nieważna  minimalna liczba osób podpisujących sporka ustawiona z -minsporkkeys</translation>
     </message>
     <message>
-        <source>Keypool ran out, please call keypoolrefill first</source>
-        <translation>Wyczerpana pula kluczy, najpierw wywołaj keypoolrefill</translation>
-    </message>
-    <message>
         <source>Loading banlist...</source>
         <translation>Ładuję listę blokowanych...</translation>
-    </message>
-    <message>
-        <source>Loading fulfilled requests cache...</source>
-        <translation>Ładuję bufor zrealizowanych żądań...</translation>
-    </message>
-    <message>
-        <source>Loading masternode cache...</source>
-        <translation>Ładuję pamięć podręczną masternoda...</translation>
     </message>
     <message>
         <source>Lock is already in place.</source>
@@ -4228,6 +4247,18 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Skanowanie portfela podczas uruchomienia portfela nie powiodło się</translation>
     </message>
     <message>
+        <source>Failed to verify database</source>
+        <translation>Nie udało się zweryfikować bazy danych</translation>
+    </message>
+    <message>
+        <source>Ignoring duplicate -wallet %s.</source>
+        <translation>Ignorowanie duplikatu -portfel %s.</translation>
+    </message>
+    <message>
+        <source>Invalid P2P permission: '%s'</source>
+        <translation>Nieprawidłowe uprawnienie P2P: '%s'</translation>
+    </message>
+    <message>
         <source>Invalid amount for -fallbackfee=&lt;amount&gt;: '%s'</source>
         <translation>Błędna ilość -fallbackfee=&lt;amount&gt;: '%s'</translation>
     </message>
@@ -4238,26 +4269,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>It has been replaced by -disablegovernance.</source>
         <translation>Zostało zastąpione przez -dsablegovernance. </translation>
-    </message>
-    <message>
-        <source>Its replacement -disablegovernance has been forced instead.</source>
-        <translation>W zamian zostało wymuszone zastępstwo za -disablegovernance </translation>
-    </message>
-    <message>
-        <source>Loading block index...</source>
-        <translation>Wczytuję indeks bloków</translation>
-    </message>
-    <message>
-        <source>Loading governance cache...</source>
-        <translation>Wczytuję bufor governance</translation>
-    </message>
-    <message>
-        <source>Loading sporks cache...</source>
-        <translation>Ładowanie bufora sporków....</translation>
-    </message>
-    <message>
-        <source>Loading wallet... (%3.2f %%)</source>
-        <translation>Ładuję portfel... (%3.2f %%)</translation>
     </message>
     <message>
         <source>Loading wallet...</source>
@@ -4306,6 +4317,26 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Pruning blockstore...</source>
         <translation>Kasuję stare bloki ...</translation>
+    </message>
+    <message>
+        <source>SQLiteDatabase: Failed to execute statement to verify database: %s</source>
+        <translation>SQLiteDatabase: Nie można wykonać instrukcji w celu zweryfikowania bazy danych: %s</translation>
+    </message>
+    <message>
+        <source>SQLiteDatabase: Failed to prepare statement to verify database: %s</source>
+        <translation>SQLiteDatabase: Nie udało się przygotować instrukcji do weryfikacji bazy danych: %s</translation>
+    </message>
+    <message>
+        <source>SQLiteDatabase: Failed to read database verification error: %s</source>
+        <translation>SQLiteDatabase: Nie można odczytać błędu weryfikacji bazy danych: %s</translation>
+    </message>
+    <message>
+        <source>SQLiteDatabase: Unexpected application id. Expected %u, got %u</source>
+        <translation>SQLiteDatabase: Nieoczekiwany identyfikator aplikacji. Oczekiwano %u, otrzymano %u</translation>
+    </message>
+    <message>
+        <source>Section [%s] is not recognized.</source>
+        <translation>Sekcja [%s] nie została rozpoznana.</translation>
     </message>
     <message>
         <source>Specified -walletdir "%s" does not exist</source>
@@ -4378,10 +4409,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
         <translation>Portfel wymaga przepisania: zrestartuj %s aby ukończyć</translation>
-    </message>
-    <message>
-        <source>Warning: unknown new rules activated (versionbit %i)</source>
-        <translation>Uwaga: aktywowane zostały nowe zasady (versionbit %i)</translation>
     </message>
     <message>
         <source>Wasn't able to create wallet backup folder %s!</source>
@@ -4466,14 +4493,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Warning: Wallet file corrupt, data salvaged! Original %s saved as %s in %s; if your balance or transactions are incorrect you should restore from a backup.</source>
         <translation>Ostrzeżenie: Odzyskano dane z uszkodzonego pliku portfela! Oryginalny %s został zapisany jako %s w %s; jeśli twoje saldo lub transakcje są niepoprawne, należy odtworzyć kopię zapasową.</translation>
-    </message>
-    <message>
-        <source>%d of last 100 blocks have unexpected version</source>
-        <translation>%d z ostatnich 100 bloków ma nieoczekiwaną wersję</translation>
-    </message>
-    <message>
-        <source>%s corrupt, salvage failed</source>
-        <translation>%s uszkodzony, odtworzenie się nie powiodło</translation>
     </message>
     <message>
         <source>%s is not a valid backup folder!</source>
@@ -4606,6 +4625,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Last queue was created too recently.</source>
         <translation>Ostatnia kolejka została utworzona zbyt niedawno.</translation>
+    </message>
+    <message>
+        <source>%s corrupt. Try using the wallet tool sparks-wallet to salvage or restoring a backup.</source>
+        <translation>%s uszkodzony. Spróbuj użyć narzędzia sparks-wallet aby odzyskać lub odbudować portfel z kopi zapasowej.</translation>
     </message>
     <message>
         <source>Last successful action was too recent.</source>

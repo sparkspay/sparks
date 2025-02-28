@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2018 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,6 +7,9 @@
 #include <util/system.h>
 #include <util/threadnames.h>
 #include <util/time.h>
+
+#include <algorithm>
+#include <array>
 
 const char * const DEFAULT_DEBUGLOGFILE = "debug.log";
 
@@ -130,8 +133,7 @@ bool BCLog::Logger::DefaultShrinkDebugFile() const
     return m_categories == BCLog::NONE;
 }
 
-struct CLogCategoryDesc
-{
+struct CLogCategoryDesc {
     BCLog::LogFlags flag;
     std::string category;
 };
@@ -161,6 +163,8 @@ const CLogCategoryDesc LogCategories[] =
     {BCLog::COINDB, "coindb"},
     {BCLog::QT, "qt"},
     {BCLog::LEVELDB, "leveldb"},
+    {BCLog::VALIDATION, "validation"},
+    {BCLog::I2P, "i2p"},
     {BCLog::ALL, "1"},
     {BCLog::ALL, "all"},
 
@@ -176,6 +180,8 @@ const CLogCategoryDesc LogCategories[] =
     {BCLog::COINJOIN, "coinjoin"},
     {BCLog::SPORK, "spork"},
     {BCLog::NETCONN, "netconn"},
+    {BCLog::CREDITPOOL, "creditpool"},
+    {BCLog::EHF, "ehf"},
     {BCLog::SPARKS, "sparks"},
     //End Sparks
 };
@@ -195,51 +201,21 @@ bool GetLogCategory(BCLog::LogFlags& flag, const std::string& str)
     return false;
 }
 
-std::string ListLogCategories()
+std::vector<LogCategory> BCLog::Logger::LogCategoriesList(bool enabled_only) const
 {
-    std::string ret;
-    int outcount = 0;
-    for (const CLogCategoryDesc& category_desc : LogCategories) {
-        // Omit the special cases.
-        if (category_desc.flag != BCLog::NONE && category_desc.flag != BCLog::ALL && category_desc.flag != BCLog::SPARKS) {
-            if (outcount != 0) ret += ", ";
-            ret += category_desc.category;
-            outcount++;
-        }
-    }
-    return ret;
-}
+    // Sort log categories by alphabetical order.
+    std::array<CLogCategoryDesc, std::size(LogCategories)> categories;
+    std::copy(std::begin(LogCategories), std::end(LogCategories), categories.begin());
+    std::sort(categories.begin(), categories.end(), [](auto a, auto b) { return a.category < b.category; });
 
-std::vector<CLogCategoryActive> ListActiveLogCategories()
-{
-    std::vector<CLogCategoryActive> ret;
-    for (const CLogCategoryDesc& category_desc : LogCategories) {
-        // Omit the special cases.
-        if (category_desc.flag != BCLog::NONE && category_desc.flag != BCLog::ALL && category_desc.flag != BCLog::SPARKS) {
-            CLogCategoryActive catActive;
-            catActive.category = category_desc.category;
-            catActive.active = LogAcceptCategory(category_desc.flag);
+    std::vector<LogCategory> ret;
+    for (const CLogCategoryDesc& category_desc : categories) {
+        if (category_desc.flag == BCLog::NONE || category_desc.flag == BCLog::ALL || category_desc.flag == BCLog::SPARKS) continue;
+        LogCategory catActive;
+        catActive.category = category_desc.category;
+        catActive.active = WillLogCategory(category_desc.flag);
+        if (!enabled_only || catActive.active) {
             ret.push_back(catActive);
-        }
-    }
-    return ret;
-}
-
-std::string ListActiveLogCategoriesString()
-{
-    if (LogInstance().GetCategoryMask() == BCLog::NONE)
-        return "0";
-    if (LogInstance().GetCategoryMask() == BCLog::ALL)
-        return "1";
-
-    std::string ret;
-    int outcount = 0;
-    for (const CLogCategoryDesc& category_desc : LogCategories) {
-        // Omit the special cases.
-        if (category_desc.flag != BCLog::NONE && category_desc.flag != BCLog::ALL && category_desc.flag != BCLog::SPARKS && LogAcceptCategory(category_desc.flag)) {
-            if (outcount != 0) ret += ", ";
-            ret += category_desc.category;
-            outcount++;
         }
     }
     return ret;
@@ -259,9 +235,9 @@ std::string BCLog::Logger::LogTimestampStr(const std::string& str)
             strStamped.pop_back();
             strStamped += strprintf(".%06dZ", nTimeMicros%1000000);
         }
-        int64_t mocktime = GetMockTime();
-        if (mocktime) {
-            strStamped += " (mocktime: " + FormatISO8601DateTime(mocktime) + ")";
+        std::chrono::seconds mocktime = GetMockTime();
+        if (mocktime > 0s) {
+            strStamped += " (mocktime: " + FormatISO8601DateTime(count_seconds(mocktime)) + ")";
         }
         strStamped += ' ' + str;
     } else
@@ -290,7 +266,7 @@ namespace BCLog {
         }
         return ret;
     }
-}
+} // namespace BCLog
 
 void BCLog::Logger::LogPrintStr(const std::string& str)
 {

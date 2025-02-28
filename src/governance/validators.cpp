@@ -1,14 +1,15 @@
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <governance/object.h>
+#include <governance/common.h>
 #include <governance/validators.h>
 
 #include <key_io.h>
 #include <timedata.h>
 #include <tinyformat.h>
 #include <util/strencodings.h>
+#include <util/underlying.h>
 
 #include <algorithm>
 
@@ -77,8 +78,8 @@ bool CProposalValidator::ValidateType()
         return false;
     }
 
-    if (nType != GOVERNANCE_OBJECT_PROPOSAL) {
-        strErrorMessages += strprintf("type is not %d;", GOVERNANCE_OBJECT_PROPOSAL);
+    if (nType != ToUnderlying(GovernanceObject::PROPOSAL)) {
+        strErrorMessages += strprintf("type is not %d;", ToUnderlying(GovernanceObject::PROPOSAL));
         return false;
     }
 

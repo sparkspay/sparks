@@ -5,6 +5,28 @@ The headless daemon `sparksd` has the JSON-RPC API enabled by default, the GUI
 option. In the GUI it is possible to execute RPC methods in the Debug Console
 Dialog.
 
+## Parameter passing
+
+The JSON-RPC server supports both _by-position_ and _by-name_ [parameter
+structures](https://www.jsonrpc.org/specification#parameter_structures)
+described in the JSON-RPC specification. For extra convenience, to avoid the
+need to name every parameter value, all RPC methods accept a named parameter
+called `args`, which can be set to an array of initial positional values that
+are combined with named values.
+
+Examples:
+
+```sh
+# "params": ["mywallet", false, false, "", false, false, true]
+sparks-cli createwallet mywallet false false "" false false true
+
+# "params": {"wallet_name": "mywallet", "load_on_startup": true}
+sparks-cli -named createwallet wallet_name=mywallet load_on_startup=true
+
+# "params": {"args": ["mywallet"], "load_on_startup": true}
+sparks-cli -named createwallet mywallet load_on_startup=true
+```
+
 ## Versioning
 
 The RPC interface might change from one major version of Sparks Core to the
@@ -60,7 +82,7 @@ RPC interface will be abused.
   are sent as clear text that can be read by anyone on your network
   path.  Additionally, the RPC interface has not been hardened to
   withstand arbitrary Internet traffic, so changing the above settings
-  to expose it to the Internet (even using something like a Tor hidden
+  to expose it to the Internet (even using something like a Tor onion
   service) could expose you to unconsidered vulnerabilities.  See
   `sparksd -help` for more information about these settings and other
   settings described in this document.

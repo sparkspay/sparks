@@ -1,15 +1,16 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <qt/createwalletdialog.h>
-#include <qt/walletcontroller.h>
 #include <qt/walletframe.h>
-#include <qt/walletmodel.h>
 
 #include <qt/bitcoingui.h>
+#include <qt/createwalletdialog.h>
 #include <qt/governancelist.h>
 #include <qt/masternodelist.h>
+#include <qt/overviewpage.h>
+#include <qt/walletcontroller.h>
+#include <qt/walletmodel.h>
 #include <qt/walletview.h>
 
 #include <cassert>
@@ -19,9 +20,10 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-WalletFrame::WalletFrame(BitcoinGUI* _gui) :
-    QFrame(_gui),
-    gui(_gui)
+WalletFrame::WalletFrame(BitcoinGUI* _gui)
+    : QFrame(_gui),
+      gui(_gui),
+      m_size_hint(OverviewPage{nullptr}.sizeHint())
 {
     // Leave HBox hook for adding a list view later
     QHBoxLayout *walletFrameLayout = new QHBoxLayout(this);
@@ -32,6 +34,7 @@ WalletFrame::WalletFrame(BitcoinGUI* _gui) :
 
     // hbox for no wallet
     no_wallet_group = new QGroupBox(walletStack);
+    no_wallet_group->setObjectName("no_wallet_group");
     QVBoxLayout* no_wallet_layout = new QVBoxLayout(no_wallet_group);
 
     QLabel *noWallet = new QLabel(tr("No wallet has been loaded.\nGo to File > Open Wallet to load a wallet.\n- OR -"));
@@ -83,6 +86,7 @@ bool WalletFrame::addWallet(WalletModel *walletModel)
     walletView->setClientModel(clientModel);
     walletView->setWalletModel(walletModel);
     walletView->showOutOfSyncWarning(bOutOfSync);
+    walletView->setPrivacy(gui->isPrivacyModeActivated());
 
     WalletView* current_wallet_view = currentWalletView();
     if (current_wallet_view) {
@@ -103,6 +107,7 @@ bool WalletFrame::addWallet(WalletModel *walletModel)
     connect(walletView, &WalletView::encryptionStatusChanged, gui, &BitcoinGUI::updateWalletStatus);
     connect(walletView, &WalletView::incomingTransaction, gui, &BitcoinGUI::incomingTransaction);
     connect(walletView, &WalletView::hdEnabledStatusChanged, gui, &BitcoinGUI::updateWalletStatus);
+    connect(gui, &BitcoinGUI::setPrivacy, walletView, &WalletView::setPrivacy);
 
     return true;
 }
@@ -235,6 +240,14 @@ void WalletFrame::gotoVerifyMessageTab(QString addr)
     WalletView *walletView = currentWalletView();
     if (walletView)
         walletView->gotoVerifyMessageTab(addr);
+}
+
+void WalletFrame::gotoLoadPSBT(bool from_clipboard)
+{
+    WalletView *walletView = currentWalletView();
+    if (walletView) {
+        walletView->gotoLoadPSBT(from_clipboard);
+    }
 }
 
 void WalletFrame::encryptWallet()

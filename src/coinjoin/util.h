@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,6 +7,7 @@
 
 #include <wallet/wallet.h>
 
+class CBlockPolicyEstimator;
 class CTransactionBuilder;
 struct bilingual_str;
 
@@ -100,7 +101,7 @@ class CTransactionBuilder
     friend class CTransactionBuilderOutput;
 
 public:
-    CTransactionBuilder(std::shared_ptr<CWallet> pwalletIn, const CompactTallyItem& tallyItemIn);
+    CTransactionBuilder(std::shared_ptr<CWallet> pwalletIn, const CompactTallyItem& tallyItemIn, const CBlockPolicyEstimator& fee_estimator);
     ~CTransactionBuilder();
     /// Check it would be possible to add a single output with the amount nAmount. Returns true if its possible and false if not.
     bool CouldAddOutput(CAmount nAmountOutput) const;

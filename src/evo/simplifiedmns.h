@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 The Dash Core developers
+// Copyright (c) 2017-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -34,12 +34,12 @@ public:
     CBLSLazyPublicKey pubKeyOperator;
     CKeyID keyIDVoting;
     bool isValid{false};
-    MnType nType{MnType::Regular};
     uint16_t platformHTTPPort{0};
     uint160 platformNodeID{};
     CScript scriptPayout; // mem-only
     CScript scriptOperatorPayout; // mem-only
     uint16_t nVersion{LEGACY_BLS_VERSION};
+    MnType nType{MnType::Regular};
 
     CSimplifiedMNListEntry() = default;
     explicit CSimplifiedMNListEntry(const CDeterministicMN& dmn);
@@ -81,7 +81,7 @@ public:
         }
         if (obj.nVersion == BASIC_BLS_VERSION) {
             READWRITE(obj.nType);
-            if (obj.nType == MnType::HighPerformance) {
+            if (obj.nType == MnType::Evo) {
                 READWRITE(obj.platformHTTPPort);
                 READWRITE(obj.platformNodeID);
             }
@@ -91,7 +91,7 @@ public:
     uint256 CalcHash() const;
 
     std::string ToString() const;
-    void ToJson(UniValue& obj, bool extended = false) const;
+    [[nodiscard]] UniValue ToJson(bool extended = false) const;
 };
 
 class CSimplifiedMNList
@@ -100,8 +100,10 @@ public:
     std::vector<std::unique_ptr<CSimplifiedMNListEntry>> mnList;
 
     CSimplifiedMNList() = default;
-    explicit CSimplifiedMNList(const std::vector<CSimplifiedMNListEntry>& smlEntries);
     explicit CSimplifiedMNList(const CDeterministicMNList& dmnList);
+
+    // This constructor from std::vector is used in unit-tests
+    explicit CSimplifiedMNList(const std::vector<CSimplifiedMNListEntry>& smlEntries);
 
     uint256 CalcMerkleRoot(bool* pmutated = nullptr) const;
     bool operator==(const CSimplifiedMNList& rhs) const;
@@ -137,14 +139,24 @@ public:
     std::vector<std::pair<uint8_t, uint256>> deletedQuorums; // p<LLMQType, quorumHash>
     std::vector<llmq::CFinalCommitment> newQuorums;
 
+    // Map of Chainlock Signature used for shuffling per set of quorums
+    // The set of quorums is the set of indexes corresponding to entries in newQuorums
+    std::map<CBLSSignature, std::set<uint16_t>> quorumsCLSigs;
+
     SERIALIZE_METHODS(CSimplifiedMNListDiff, obj)
     {
+        if ((s.GetType() & SER_NETWORK) && s.GetVersion() >= MNLISTDIFF_VERSION_ORDER) {
+            READWRITE(obj.nVersion);
+        }
         READWRITE(obj.baseBlockHash, obj.blockHash, obj.cbTxMerkleTree, obj.cbTx);
-        if ((s.GetType() & SER_NETWORK) && s.GetVersion() >= BLS_SCHEME_PROTO_VERSION) {
+        if ((s.GetType() & SER_NETWORK) && s.GetVersion() >= BLS_SCHEME_PROTO_VERSION && s.GetVersion() < MNLISTDIFF_VERSION_ORDER) {
             READWRITE(obj.nVersion);
         }
         READWRITE(obj.deletedMNs, obj.mnList);
         READWRITE(obj.deletedQuorums, obj.newQuorums);
+        if ((s.GetType() & SER_NETWORK) && s.GetVersion() >= MNLISTDIFF_CHAINLOCKS_PROTO_VERSION) {
+            READWRITE(obj.quorumsCLSigs);
+        }
     }
 
     CSimplifiedMNListDiff();
@@ -152,8 +164,9 @@ public:
 
     bool BuildQuorumsDiff(const CBlockIndex* baseBlockIndex, const CBlockIndex* blockIndex,
                           const llmq::CQuorumBlockProcessor& quorum_block_processor);
+    void BuildQuorumChainlockInfo(const CBlockIndex* blockIndex);
 
-    void ToJson(UniValue& obj, bool extended = false) const;
+    [[nodiscard]] UniValue ToJson(bool extended = false) const;
 };
 
 bool BuildSimplifiedMNListDiff(const uint256& baseBlockHash, const uint256& blockHash, CSimplifiedMNListDiff& mnListDiffRet,

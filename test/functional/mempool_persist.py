@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2014-2017 The Bitcoin Core developers
+# Copyright (c) 2014-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test mempool persistence.
@@ -38,8 +38,8 @@ Test is as follows:
 from decimal import Decimal
 import os
 
+# from test_framework.p2p import P2PTxInvStore
 from test_framework.test_framework import BitcoinTestFramework
-# from test_framework.mininode import P2PTxInvStore
 from test_framework.util import (
     assert_equal,
     assert_greater_than_or_equal, assert_raises_rpc_error,
@@ -57,7 +57,7 @@ class MempoolPersistTest(BitcoinTestFramework):
     def run_test(self):
         self.log.debug("Send 5 transactions from node2 (to its own address)")
         tx_creation_time_lower = self.mocktime
-        for i in range(5):
+        for _ in range(5):
             last_txid = self.nodes[2].sendtoaddress(self.nodes[2].getnewaddress(), Decimal("10"))
         node2_balance = self.nodes[2].getbalance()
         self.sync_all()
@@ -67,6 +67,8 @@ class MempoolPersistTest(BitcoinTestFramework):
         assert_equal(len(self.nodes[0].getrawmempool()), 5)
         assert_equal(len(self.nodes[1].getrawmempool()), 5)
 
+        total_fee_old = self.nodes[0].getmempoolinfo()['total_fee']
+
         self.log.debug("Prioritize a transaction on node0")
         fees = self.nodes[0].getmempoolentry(txid=last_txid)['fees']
         assert_equal(fees['base'], fees['modified'])
@@ -74,12 +76,18 @@ class MempoolPersistTest(BitcoinTestFramework):
         fees = self.nodes[0].getmempoolentry(txid=last_txid)['fees']
         assert_equal(fees['base'] + Decimal('0.00001000'), fees['modified'])
 
+        self.log.info('Check the total base fee is unchanged after prioritisetransaction')
+        assert_equal(total_fee_old, self.nodes[0].getmempoolinfo()['total_fee'])
+        assert_equal(total_fee_old, sum(v['fees']['base'] for k, v in self.nodes[0].getrawmempool(verbose=True).items()))
+
         tx_creation_time = self.nodes[0].getmempoolentry(txid=last_txid)['time']
         assert_greater_than_or_equal(tx_creation_time, tx_creation_time_lower)
         assert_greater_than_or_equal(tx_creation_time_higher, tx_creation_time)
 
         # disconnect nodes & make a txn that remains in the unbroadcast set.
-        self.disconnect_nodes(0, 2)
+        self.disconnect_nodes(0, 1)
+        assert(len(self.nodes[0].getpeerinfo()) == 0)
+        assert(len(self.nodes[0].p2ps) == 0)
         self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), Decimal("12"))
         self.connect_nodes(0, 2)
 
@@ -152,8 +160,10 @@ class MempoolPersistTest(BitcoinTestFramework):
         # clear out mempool
         node0.generate(1)
 
-        # disconnect nodes to make a txn that remains in the unbroadcast set.
-        self.disconnect_nodes(0, 1)
+        # ensure node0 doesn't have any connections
+        # make a transaction that will remain in the unbroadcast set
+        assert(len(node0.getpeerinfo()) == 0)
+        assert(len(node0.p2ps) == 0)
         node0.sendtoaddress(self.nodes[1].getnewaddress(), Decimal("12"))
 
         # shutdown, then startup with wallet disabled
@@ -163,7 +173,7 @@ class MempoolPersistTest(BitcoinTestFramework):
         # check that txn gets broadcast due to unbroadcast logic
         # conn = node0.add_p2p_connection(P2PTxInvStore())
         # node0.mockscheduler(16*60) # 15 min + 1 for buffer
-        # wait_until(lambda: len(conn.get_invs()) == 1)
+        # self.wait_until(lambda: len(conn.get_invs()) == 1)
 
 if __name__ == '__main__':
     MempoolPersistTest().main()

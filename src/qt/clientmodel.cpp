@@ -1,5 +1,5 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -19,8 +19,11 @@
 #include <net.h>
 #include <netbase.h>
 #include <util/system.h>
+#include <util/threadnames.h>
+#include <validation.h>
 
 #include <stdint.h>
+#include <functional>
 
 #include <QDebug>
 #include <QThread>
@@ -56,6 +59,9 @@ ClientModel::ClientModel(interfaces::Node& node, OptionsModel *_optionsModel, QO
     // move timer to thread so that polling doesn't disturb main event loop
     timer->moveToThread(m_thread);
     m_thread->start();
+    QTimer::singleShot(0, timer, []() {
+        util::ThreadRename("qt-clientmodl");
+    });
 
     subscribeToCoreSignals();
 }
@@ -82,26 +88,29 @@ int ClientModel::getNumConnections(unsigned int flags) const
     return m_node.getNodeCount(connections);
 }
 
-void ClientModel::setMasternodeList(const CDeterministicMNList& mnList)
+void ClientModel::setMasternodeList(const CDeterministicMNList& mnList, const CBlockIndex* tip)
 {
     LOCK(cs_mnlinst);
     if (mnListCached->GetBlockHash() == mnList.GetBlockHash()) {
         return;
     }
     mnListCached = std::make_shared<CDeterministicMNList>(mnList);
+    mnListTip = tip;
     Q_EMIT masternodeListChanged();
 }
 
-CDeterministicMNList ClientModel::getMasternodeList() const
+std::pair<CDeterministicMNList, const CBlockIndex*> ClientModel::getMasternodeList() const
 {
     LOCK(cs_mnlinst);
-    return *mnListCached;
+    return {*mnListCached, mnListTip};
 }
 
 void ClientModel::refreshMasternodeList()
 {
+    auto [mnList, tip] = m_node.evo().getListAtChainTip();
+
     LOCK(cs_mnlinst);
-    setMasternodeList(m_node.evo().getListAtChainTip());
+    setMasternodeList(mnList, tip);
 }
 
 int ClientModel::getHeaderTipHeight() const
@@ -137,6 +146,37 @@ void ClientModel::getAllGovernanceObjects(std::vector<CGovernanceObject> &obj)
     m_node.gov().getAllNewerThan(obj, 0);
 }
 
+int ClientModel::getNumBlocks() const
+{
+    if (m_cached_num_blocks == -1) {
+        m_cached_num_blocks = m_node.getNumBlocks();
+    }
+    return m_cached_num_blocks;
+}
+
+uint256 ClientModel::getBestBlockHash()
+{
+    uint256 tip{WITH_LOCK(m_cached_tip_mutex, return m_cached_tip_blocks)};
+
+    if (!tip.IsNull()) {
+        return tip;
+    }
+
+    // Lock order must be: first `cs_main`, then `m_cached_tip_mutex`.
+    // The following will lock `cs_main` (and release it), so we must not
+    // own `m_cached_tip_mutex` here.
+    tip = m_node.getBestBlockHash();
+
+    LOCK(m_cached_tip_mutex);
+    // We checked that `m_cached_tip_blocks` is not null above, but then we
+    // released the mutex `m_cached_tip_mutex`, so it could have changed in the
+    // meantime. Thus, check again.
+    if (m_cached_tip_blocks.IsNull()) {
+        m_cached_tip_blocks = tip;
+    }
+    return m_cached_tip_blocks;
+}
+
 void ClientModel::updateNumConnections(int numConnections)
 {
     Q_EMIT numConnectionsChanged(numConnections);
@@ -166,7 +206,7 @@ enum BlockSource ClientModel::getBlockSource() const
 
 QString ClientModel::getStatusBarWarnings() const
 {
-    return QString::fromStdString(m_node.getWarnings());
+    return QString::fromStdString(m_node.getWarnings().translated);
 }
 
 OptionsModel *ClientModel::getOptionsModel()
@@ -258,35 +298,34 @@ static void BannedListChanged(ClientModel *clientmodel)
     assert(invoked);
 }
 
-static void BlockTipChanged(ClientModel *clientmodel, bool initialSync, int height, int64_t blockTime, const std::string& strBlockHash, double verificationProgress, bool fHeader)
+static void BlockTipChanged(ClientModel* clientmodel, SynchronizationState sync_state, interfaces::BlockTip tip, double verificationProgress, bool fHeader)
 {
-    // lock free async UI updates in case we have a new block tip
-    // during initial sync, only update the UI if the last update
-    // was > 250ms (MODEL_UPDATE_DELAY) ago
-    int64_t now = 0;
-    if (initialSync)
-        now = GetTimeMillis();
-
-    int64_t& nLastUpdateNotification = fHeader ? nLastHeaderTipUpdateNotification : nLastBlockTipUpdateNotification;
-
     if (fHeader) {
         // cache best headers time and height to reduce future cs_main locks
-        clientmodel->cachedBestHeaderHeight = height;
-        clientmodel->cachedBestHeaderTime = blockTime;
+        clientmodel->cachedBestHeaderHeight = tip.block_height;
+        clientmodel->cachedBestHeaderTime = tip.block_time;
+    } else {
+        clientmodel->m_cached_num_blocks = tip.block_height;
+        WITH_LOCK(clientmodel->m_cached_tip_mutex, clientmodel->m_cached_tip_blocks = tip.block_hash;);
     }
 
-    // During initial sync, block notifications, and header notifications from reindexing are both throttled.
-    if (!initialSync || (fHeader && !clientmodel->node().getReindex()) || now - nLastUpdateNotification > MODEL_UPDATE_DELAY) {
-        //pass an async signal to the UI thread
-        bool invoked = QMetaObject::invokeMethod(clientmodel, "numBlocksChanged", Qt::QueuedConnection,
-                                  Q_ARG(int, height),
-                                  Q_ARG(QDateTime, QDateTime::fromTime_t(blockTime)),
-                                  Q_ARG(QString, QString::fromStdString(strBlockHash)),
-                                  Q_ARG(double, verificationProgress),
-                                  Q_ARG(bool, fHeader));
-        assert(invoked);
-        nLastUpdateNotification = now;
+    // Throttle GUI notifications about (a) blocks during initial sync, and (b) both blocks and headers during reindex.
+    const bool throttle = (sync_state != SynchronizationState::POST_INIT && !fHeader) || sync_state == SynchronizationState::INIT_REINDEX;
+    const int64_t now = throttle ? GetTimeMillis() : 0;
+    int64_t& nLastUpdateNotification = fHeader ? nLastHeaderTipUpdateNotification : nLastBlockTipUpdateNotification;
+    if (throttle && now < nLastUpdateNotification + MODEL_UPDATE_DELAY) {
+        return;
     }
+
+    bool invoked = QMetaObject::invokeMethod(clientmodel, "numBlocksChanged", Qt::QueuedConnection,
+        Q_ARG(int, tip.block_height),
+        Q_ARG(QDateTime, QDateTime::fromTime_t(tip.block_time)),
+        Q_ARG(QString, QString::fromStdString(tip.block_hash.ToString())),
+        Q_ARG(double, verificationProgress),
+        Q_ARG(bool, fHeader),
+        Q_ARG(SynchronizationState, sync_state));
+    assert(invoked);
+    nLastUpdateNotification = now;
 }
 
 static void NotifyChainLock(ClientModel *clientmodel, const std::string& bestChainLockHash, int bestChainLockHeight)
@@ -298,9 +337,9 @@ static void NotifyChainLock(ClientModel *clientmodel, const std::string& bestCha
     assert(invoked);
 }
 
-static void NotifyMasternodeListChanged(ClientModel *clientmodel, const CDeterministicMNList& newList)
+static void NotifyMasternodeListChanged(ClientModel *clientmodel, const CDeterministicMNList& newList, const CBlockIndex* pindex)
 {
-    clientmodel->setMasternodeList(newList);
+    clientmodel->setMasternodeList(newList, pindex);
 }
 
 static void NotifyAdditionalDataSyncProgressChanged(ClientModel *clientmodel, double nSyncProgress)
@@ -318,10 +357,10 @@ void ClientModel::subscribeToCoreSignals()
     m_handler_notify_network_active_changed = m_node.handleNotifyNetworkActiveChanged(std::bind(NotifyNetworkActiveChanged, this, std::placeholders::_1));
     m_handler_notify_alert_changed = m_node.handleNotifyAlertChanged(std::bind(NotifyAlertChanged, this));
     m_handler_banned_list_changed = m_node.handleBannedListChanged(std::bind(BannedListChanged, this));
-    m_handler_notify_block_tip = m_node.handleNotifyBlockTip(std::bind(BlockTipChanged, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, false));
+    m_handler_notify_block_tip = m_node.handleNotifyBlockTip(std::bind(BlockTipChanged, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false));
     m_handler_notify_chainlock = m_node.handleNotifyChainLock(std::bind(NotifyChainLock, this, std::placeholders::_1, std::placeholders::_2));
-    m_handler_notify_header_tip = m_node.handleNotifyHeaderTip(std::bind(BlockTipChanged, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, true));
-    m_handler_notify_masternodelist_changed = m_node.handleNotifyMasternodeListChanged(std::bind(NotifyMasternodeListChanged, this, std::placeholders::_1));
+    m_handler_notify_header_tip = m_node.handleNotifyHeaderTip(std::bind(BlockTipChanged, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true));
+    m_handler_notify_masternodelist_changed = m_node.handleNotifyMasternodeListChanged(std::bind(NotifyMasternodeListChanged, this, std::placeholders::_1, std::placeholders::_2));
     m_handler_notify_additional_data_sync_progess_changed = m_node.handleNotifyAdditionalDataSyncProgressChanged(std::bind(NotifyAdditionalDataSyncProgressChanged, this, std::placeholders::_1));
 }
 

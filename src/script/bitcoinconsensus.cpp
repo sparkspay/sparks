@@ -22,20 +22,23 @@ public:
     m_remaining(txToLen)
     {}
 
-    void read(char* pch, size_t nSize)
+    void read(Span<std::byte> dst)
     {
-        if (nSize > m_remaining)
+        if (dst.size() > m_remaining) {
             throw std::ios_base::failure(std::string(__func__) + ": end of data");
+        }
 
-        if (pch == nullptr)
+        if (dst.data() == nullptr) {
             throw std::ios_base::failure(std::string(__func__) + ": bad destination buffer");
+        }
 
-        if (m_data == nullptr)
+        if (m_data == nullptr) {
             throw std::ios_base::failure(std::string(__func__) + ": bad source buffer");
+        }
 
-        memcpy(pch, m_data, nSize);
-        m_remaining -= nSize;
-        m_data += nSize;
+        memcpy(dst.data(), m_data, dst.size());
+        m_remaining -= dst.size();
+        m_data += dst.size();
     }
 
     template<typename T>
@@ -59,12 +62,6 @@ inline int set_error(sparksconsensus_error* ret, sparksconsensus_error serror)
     return 0;
 }
 
-struct ECCryptoClosure
-{
-    ECCVerifyHandle handle;
-};
-
-ECCryptoClosure instance_of_eccryptoclosure;
 } // namespace
 
 /** Check that all specified flags are part of the libconsensus interface. */

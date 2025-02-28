@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
@@ -67,7 +67,9 @@ jobs:
         push: true
         tags: ${{ steps.docker_meta.outputs.tags }}
         labels: ${{ steps.docker_meta.outputs.labels }}
-        build-args: TAG=${{ steps.get_tag.outputs.build_tag }}
+        build-args: |
+          TAG=${{ steps.get_tag.outputs.build_tag }}
+          GITHUB_REPOSITORY=${{ github.repository }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
         platforms: linux/amd64,linux/arm64

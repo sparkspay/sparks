@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2018 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -65,7 +65,7 @@ bool VerifyWallets(interfaces::Chain& chain)
     std::set<fs::path> wallet_paths;
 
     for (const auto& wallet_file : gArgs.GetArgs("-wallet")) {
-        const fs::path path = fs::absolute(wallet_file, GetWalletDir());
+        const fs::path path = fsbridge::AbsPathJoin(GetWalletDir(), wallet_file);
 
         if (!wallet_paths.insert(path).second) {
             chain.initWarning(strprintf(_("Ignoring duplicate -wallet %s."), wallet_file));
@@ -79,7 +79,7 @@ bool VerifyWallets(interfaces::Chain& chain)
         bilingual_str error_string;
         if (!MakeWalletDatabase(wallet_file, options, status, error_string)) {
             if (status == DatabaseStatus::FAILED_NOT_FOUND) {
-                chain.initWarning(Untranslated(strprintf("Skipping -wallet path that doesn't exist. %s\n", error_string.original)));
+                chain.initWarning(Untranslated(strprintf("Skipping -wallet path that doesn't exist. %s", error_string.original)));
             } else {
                 chain.initError(error_string);
                 return false;
@@ -90,7 +90,7 @@ bool VerifyWallets(interfaces::Chain& chain)
     return true;
 }
 
-bool LoadWallets(interfaces::Chain& chain)
+bool LoadWallets(interfaces::Chain& chain, interfaces::CoinJoin::Loader& coinjoin_loader)
 {
     try {
         std::set<fs::path> wallet_paths;
@@ -108,7 +108,7 @@ bool LoadWallets(interfaces::Chain& chain)
             if (!database && status == DatabaseStatus::FAILED_NOT_FOUND) {
                 continue;
             }
-            std::shared_ptr<CWallet> pwallet = database ? CWallet::Create(chain, name, std::move(database), options.create_flags, error_string, warnings) : nullptr;
+            std::shared_ptr<CWallet> pwallet = database ? CWallet::Create(chain, coinjoin_loader, name, std::move(database), options.create_flags, error_string, warnings) : nullptr;
             if (!warnings.empty()) chain.initWarning(Join(warnings, Untranslated("\n")));
             if (!pwallet) {
                 chain.initError(error_string);
@@ -141,9 +141,7 @@ void FlushWallets()
     for (const std::shared_ptr<CWallet>& pwallet : GetWallets()) {
         if (CCoinJoinClientOptions::IsEnabled()) {
             // Stop CoinJoin, release keys
-            auto it = coinJoinClientManagers.find(pwallet->GetName());
-            it->second->ResetPool();
-            it->second->StopMixing();
+            pwallet->coinjoin_loader().FlushWallet(pwallet->GetName());
         }
         pwallet->Flush();
     }

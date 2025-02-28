@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -39,7 +39,7 @@ void CBLSSecretKey::AggregateInsecure(const CBLSSecretKey& o)
     cachedHash.SetNull();
 }
 
-CBLSSecretKey CBLSSecretKey::AggregateInsecure(const std::vector<CBLSSecretKey>& sks)
+CBLSSecretKey CBLSSecretKey::AggregateInsecure(Span<CBLSSecretKey> sks)
 {
     if (sks.empty()) {
         return {};
@@ -75,7 +75,7 @@ void CBLSSecretKey::MakeNewKey()
 }
 #endif
 
-bool CBLSSecretKey::SecretKeyShare(const std::vector<CBLSSecretKey>& msk, const CBLSId& _id)
+bool CBLSSecretKey::SecretKeyShare(Span<CBLSSecretKey> msk, const CBLSId& _id)
 {
     fValid = false;
     cachedHash.SetNull();
@@ -119,13 +119,18 @@ CBLSPublicKey CBLSSecretKey::GetPublicKey() const
 
 CBLSSignature CBLSSecretKey::Sign(const uint256& hash) const
 {
+    return Sign(hash, bls::bls_legacy_scheme.load());
+}
+
+CBLSSignature CBLSSecretKey::Sign(const uint256& hash, const bool specificLegacyScheme) const
+{
     if (!IsValid()) {
         return {};
     }
 
     CBLSSignature sigRet;
     try {
-        sigRet.impl = Scheme(bls::bls_legacy_scheme.load())->Sign(impl, bls::Bytes(hash.begin(), hash.size()));
+        sigRet.impl = Scheme(specificLegacyScheme)->Sign(impl, bls::Bytes(hash.begin(), hash.size()));
         sigRet.fValid = true;
     } catch (...) {
         sigRet.fValid = false;
@@ -147,7 +152,7 @@ void CBLSPublicKey::AggregateInsecure(const CBLSPublicKey& o)
     cachedHash.SetNull();
 }
 
-CBLSPublicKey CBLSPublicKey::AggregateInsecure(const std::vector<CBLSPublicKey>& pks)
+CBLSPublicKey CBLSPublicKey::AggregateInsecure(Span<CBLSPublicKey> pks)
 {
     if (pks.empty()) {
         return {};
@@ -171,7 +176,7 @@ CBLSPublicKey CBLSPublicKey::AggregateInsecure(const std::vector<CBLSPublicKey>&
     return ret;
 }
 
-bool CBLSPublicKey::PublicKeyShare(const std::vector<CBLSPublicKey>& mpk, const CBLSId& _id)
+bool CBLSPublicKey::PublicKeyShare(Span<CBLSPublicKey> mpk, const CBLSId& _id)
 {
     fValid = false;
     cachedHash.SetNull();
@@ -225,7 +230,7 @@ void CBLSSignature::AggregateInsecure(const CBLSSignature& o)
     cachedHash.SetNull();
 }
 
-CBLSSignature CBLSSignature::AggregateInsecure(const std::vector<CBLSSignature>& sigs)
+CBLSSignature CBLSSignature::AggregateInsecure(Span<CBLSSignature> sigs)
 {
     if (sigs.empty()) {
         return {};
@@ -249,8 +254,8 @@ CBLSSignature CBLSSignature::AggregateInsecure(const std::vector<CBLSSignature>&
     return ret;
 }
 
-CBLSSignature CBLSSignature::AggregateSecure(const std::vector<CBLSSignature>& sigs,
-                                             const std::vector<CBLSPublicKey>& pks,
+CBLSSignature CBLSSignature::AggregateSecure(Span<CBLSSignature> sigs,
+                                             Span<CBLSPublicKey> pks,
                                              const uint256& hash)
 {
     if (sigs.size() != pks.size() || sigs.empty()) {
@@ -306,7 +311,7 @@ bool CBLSSignature::VerifyInsecure(const CBLSPublicKey& pubKey, const uint256& h
     return VerifyInsecure(pubKey, hash, bls::bls_legacy_scheme.load());
 }
 
-bool CBLSSignature::VerifyInsecureAggregated(const std::vector<CBLSPublicKey>& pubKeys, const std::vector<uint256>& hashes) const
+bool CBLSSignature::VerifyInsecureAggregated(Span<CBLSPublicKey> pubKeys, Span<uint256> hashes) const
 {
     if (!IsValid()) {
         return false;
@@ -333,7 +338,7 @@ bool CBLSSignature::VerifyInsecureAggregated(const std::vector<CBLSPublicKey>& p
     }
 }
 
-bool CBLSSignature::VerifySecureAggregated(const std::vector<CBLSPublicKey>& pks, const uint256& hash) const
+bool CBLSSignature::VerifySecureAggregated(Span<CBLSPublicKey> pks, const uint256& hash) const
 {
     if (pks.empty()) {
         return false;
@@ -352,7 +357,7 @@ bool CBLSSignature::VerifySecureAggregated(const std::vector<CBLSPublicKey>& pks
     }
 }
 
-bool CBLSSignature::Recover(const std::vector<CBLSSignature>& sigs, const std::vector<CBLSId>& ids)
+bool CBLSSignature::Recover(Span<CBLSSignature> sigs, Span<CBLSId> ids)
 {
     fValid = false;
     cachedHash.SetNull();

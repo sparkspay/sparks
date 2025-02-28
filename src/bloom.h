@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2015 The Bitcoin Core developers
+// Copyright (c) 2012-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,18 +6,19 @@
 #define BITCOIN_BLOOM_H
 
 #include <serialize.h>
+#include <span.h>
 
 #include <vector>
 
 class COutPoint;
 class CScript;
 class CTransaction;
+class CTxOut;
 class uint256;
-class uint160;
 
 //! 20,000 items with fp rate < 0.1% or 10,000 items and <0.0001%
-static const unsigned int MAX_BLOOM_FILTER_SIZE = 36000; // bytes
-static const unsigned int MAX_HASH_FUNCS = 50;
+static constexpr unsigned int MAX_BLOOM_FILTER_SIZE = 36000; // bytes
+static constexpr unsigned int MAX_HASH_FUNCS = 50;
 
 /**
  * First two bits of nFlags control how much IsRelevantAndUpdate actually updates
@@ -51,10 +52,12 @@ private:
     unsigned int nTweak;
     unsigned char nFlags;
 
-    unsigned int Hash(unsigned int nHashNum, const std::vector<unsigned char>& vDataToHash) const;
+    unsigned int Hash(unsigned int nHashNum, Span<const unsigned char> vDataToHash) const;
 
     // Check matches for arbitrary script data elements
     bool CheckScript(const CScript& script) const;
+    // Check particular CTxOut helper
+    bool ProcessTxOut(const CTxOut& txout, const uint256& hash, unsigned int index);
     // Check additional matches for special transactions
     bool CheckSpecialTransactionMatchesAndUpdate(const CTransaction& tx);
 public:
@@ -72,14 +75,11 @@ public:
 
     SERIALIZE_METHODS(CBloomFilter, obj) { READWRITE(obj.vData, obj.nHashFuncs, obj.nTweak, obj.nFlags); }
 
-    void insert(const std::vector<unsigned char>& vKey);
+    void insert(Span<const unsigned char> vKey);
     void insert(const COutPoint& outpoint);
-    void insert(const uint256& hash);
 
-    bool contains(const std::vector<unsigned char>& vKey) const;
+    bool contains(Span<const unsigned char> vKey) const;
     bool contains(const COutPoint& outpoint) const;
-    bool contains(const uint256& hash) const;
-    bool contains(const uint160& hash) const;
 
     //! True if the size is <= MAX_BLOOM_FILTER_SIZE and the number of hash functions is <= MAX_HASH_FUNCS
     //! (catch a filter which was just deserialized which was too big)
@@ -117,15 +117,10 @@ public:
 class CRollingBloomFilter
 {
 public:
-    // A random bloom filter calls GetRand() at creation time.
-    // Don't create global CRollingBloomFilter objects, as they may be
-    // constructed before the randomizer is properly initialized.
     CRollingBloomFilter(const unsigned int nElements, const double nFPRate);
 
-    void insert(const std::vector<unsigned char>& vKey);
-    void insert(const uint256& hash);
-    bool contains(const std::vector<unsigned char>& vKey) const;
-    bool contains(const uint256& hash) const;
+    void insert(Span<const unsigned char> vKey);
+    bool contains(Span<const unsigned char> vKey) const;
 
     void reset();
 

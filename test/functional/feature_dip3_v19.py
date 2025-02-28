@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2022 The Dash Core developers
+# Copyright (c) 2015-2024 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,12 +11,12 @@ Checks DIP3 for v19
 '''
 from io import BytesIO
 
-from test_framework.mininode import P2PInterface
+from test_framework.p2p import P2PInterface
 from test_framework.messages import CBlock, CBlockHeader, CCbTx, CMerkleBlock, FromHex, hash256, msg_getmnlistd, \
     QuorumId, ser_uint256
-from test_framework.test_framework import DashTestFramework
+from test_framework.test_framework import SparksTestFramework
 from test_framework.util import (
-    assert_equal, wait_until
+    assert_equal
 )
 
 
@@ -31,7 +31,7 @@ class TestP2PConn(P2PInterface):
     def wait_for_mnlistdiff(self, timeout=30):
         def received_mnlistdiff():
             return self.last_mnlistdiff is not None
-        return wait_until(received_mnlistdiff, timeout=timeout)
+        return self.wait_until(received_mnlistdiff, timeout=timeout)
 
     def getmnlistdiff(self, base_block_hash, block_hash):
         msg = msg_getmnlistd(base_block_hash, block_hash)
@@ -41,9 +41,9 @@ class TestP2PConn(P2PInterface):
         return self.last_mnlistdiff
 
 
-class DIP3V19Test(DashTestFramework):
+class DIP3V19Test(SparksTestFramework):
     def set_test_params(self):
-        self.set_dash_test_params(6, 5, fast_dip3_enforcement=True, hpmn_count=2)
+        self.set_sparks_test_params(6, 5, fast_dip3_enforcement=True, evo_count=2)
 
     def run_test(self):
         # Connect all nodes to node1 so that we always have the whole network connected
@@ -87,36 +87,34 @@ class DIP3V19Test(DashTestFramework):
 
         self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
 
-        hpmn_info_0 = self.dynamically_add_masternode(hpmn=True, rnd=7)
-        assert hpmn_info_0 is not None
+        evo_info_0 = self.dynamically_add_masternode(evo=True, rnd=7)
+        assert evo_info_0 is not None
         self.nodes[0].generate(8)
         self.sync_blocks(self.nodes)
 
-        self.log.info("Checking that protxs with duplicate HPMN fields are rejected")
-        hpmn_info_1 = self.dynamically_add_masternode(hpmn=True, rnd=7, should_be_rejected=True)
-        assert hpmn_info_1 is None
-        self.dynamically_hpmn_update_service(hpmn_info_0, 8)
-        hpmn_info_2 = self.dynamically_add_masternode(hpmn=True, rnd=8, should_be_rejected=True)
-        assert hpmn_info_2 is None
-        hpmn_info_3 = self.dynamically_add_masternode(hpmn=True, rnd=9)
-        assert hpmn_info_3 is not None
+        self.log.info("Checking that protxs with duplicate EvoNodes fields are rejected")
+        evo_info_1 = self.dynamically_add_masternode(evo=True, rnd=7, should_be_rejected=True)
+        assert evo_info_1 is None
+        self.dynamically_evo_update_service(evo_info_0, 8)
+        evo_info_2 = self.dynamically_add_masternode(evo=True, rnd=8, should_be_rejected=True)
+        assert evo_info_2 is None
+        evo_info_3 = self.dynamically_add_masternode(evo=True, rnd=9)
+        assert evo_info_3 is not None
         self.nodes[0].generate(8)
         self.sync_blocks(self.nodes)
-        self.dynamically_hpmn_update_service(hpmn_info_0, 9, should_be_rejected=True)
+        self.dynamically_evo_update_service(evo_info_0, 9, should_be_rejected=True)
 
         revoke_protx = self.mninfo[-1].proTxHash
         revoke_keyoperator = self.mninfo[-1].keyOperator
         self.log.info(f"Trying to revoke proTx:{revoke_protx}")
-        self.test_revoke_protx(revoke_protx, revoke_keyoperator)
+        self.test_revoke_protx(evo_info_3.nodeIdx, revoke_protx, revoke_keyoperator)
 
         self.mine_quorum(llmq_type_name='llmq_test', llmq_type=100)
-        # revoking a MN results in disconnects, reconnect it back to let sync_blocks finish correctly
-        self.connect_nodes(hpmn_info_3.nodeIdx, 0)
 
         self.log.info("Checking that adding more regular MNs after v19 doesn't break DKGs and IS/CLs")
 
         for i in range(6):
-            new_mn = self.dynamically_add_masternode(hpmn=False, rnd=(10 + i))
+            new_mn = self.dynamically_add_masternode(evo=False, rnd=(10 + i))
             assert new_mn is not None
 
         # mine more quorums and make sure everything still works
@@ -127,7 +125,7 @@ class DIP3V19Test(DashTestFramework):
 
         self.wait_for_chainlocked_block_all_nodes(self.nodes[0].getbestblockhash())
 
-    def test_revoke_protx(self, revoke_protx, revoke_keyoperator):
+    def test_revoke_protx(self, node_idx, revoke_protx, revoke_keyoperator):
         funds_address = self.nodes[0].getnewaddress()
         fund_txid = self.nodes[0].sendtoaddress(funds_address, 1)
         self.wait_for_instantlock(fund_txid, self.nodes[0])
@@ -139,8 +137,12 @@ class DIP3V19Test(DashTestFramework):
         self.wait_for_instantlock(protx_result, self.nodes[0])
         tip = self.nodes[0].generate(1)[0]
         assert_equal(self.nodes[0].getrawtransaction(protx_result, 1, tip)['confirmations'], 1)
+        # Revoking a MN results in disconnects. Wait for disconnects to actually happen
+        # and then reconnect the corresponding node back to let sync_blocks finish correctly.
+        self.wait_until(lambda: self.nodes[node_idx].getconnectioncount() == 0)
+        self.connect_nodes(node_idx, 0)
         self.sync_all(self.nodes)
-        self.log.info(f"Succesfully revoked={revoke_protx}")
+        self.log.info(f"Successfully revoked={revoke_protx}")
         for mn in self.mninfo:
             if mn.proTxHash == revoke_protx:
                 self.mninfo.remove(mn)

@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2019 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,6 +13,11 @@
 #include <string>
 
 using namespace std::chrono_literals;
+
+using SteadyClock = std::chrono::steady_clock;
+using SteadySeconds = std::chrono::time_point<std::chrono::steady_clock, std::chrono::seconds>;
+using SteadyMilliseconds = std::chrono::time_point<std::chrono::steady_clock, std::chrono::milliseconds>;
+using SteadyMicroseconds = std::chrono::time_point<std::chrono::steady_clock, std::chrono::microseconds>;
 
 void UninterruptibleSleep(const std::chrono::microseconds& n);
 
@@ -43,14 +48,32 @@ int64_t GetTimeMicros();
 /** Returns the system time (not mockable) */
 int64_t GetSystemTimeInSeconds(); // Like GetTime(), but not mockable
 
-/** For testing. Set e.g. with the setmocktime rpc, or -mocktime argument */
+/**
+ * DEPRECATED
+ * Use SetMockTime with chrono type
+ *
+ * @param[in] nMockTimeIn Time in seconds.
+ */
 void SetMockTime(int64_t nMockTimeIn);
+
+/** For testing. Set e.g. with the setmocktime rpc, or -mocktime argument */
+void SetMockTime(std::chrono::seconds mock_time_in);
+
 /** For testing */
-int64_t GetMockTime();
+std::chrono::seconds GetMockTime();
 
 /** Return system time (or mocked time, if set) */
 template <typename T>
 T GetTime();
+/**
+ * Return the current time point cast to the given precicion. Only use this
+ * when an exact precicion is needed, otherwise use T::clock::now() directly.
+ */
+template <typename T>
+T Now()
+{
+    return std::chrono::time_point_cast<typename T::duration>(T::clock::now());
+}
 
 /**
  * ISO 8601 formatting is preferred. Use the FormatISO8601{DateTime,Date,Time}
@@ -70,5 +93,8 @@ struct timeval MillisToTimeval(int64_t nTimeout);
  * Convert milliseconds to a struct timeval for e.g. select.
  */
 struct timeval MillisToTimeval(std::chrono::milliseconds ms);
+
+/** Sanity check epoch match normal Unix epoch */
+bool ChronoSanityCheck();
 
 #endif // BITCOIN_UTIL_TIME_H

@@ -1,10 +1,11 @@
-FROM ubuntu:bionic
+FROM ubuntu:focal
 LABEL maintainer="Sparks Developers <dev@sparkspay.io>"
 LABEL description="Dockerised SparksCore"
 
 ARG USER_ID
 ARG GROUP_ID
 ARG TAG
+ARG GITHUB_REPOSITORY
 
 ENV HOME /home/sparks
 
@@ -22,11 +23,13 @@ RUN apt-get update && \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+RUN echo "https://github.com/${GITHUB_REPOSITORY}/releases/download/v${TAG}/sparkscore-${TAG}-$arch.tar.gz"
+
 RUN mach=$(uname -m) \
       && case $mach in aarch64) arch="aarch64-linux-gnu"; ;; x86_64) arch="x86_64-linux-gnu"; ;;  *) echo "ERROR: Machine type $mach not supported."; ;; esac \
-      && wget https://github.com/sparkspay/sparks/releases/download/v${TAG}/sparkscore-${TAG}-$arch.tar.gz -P /tmp \
+      && wget https://github.com/${GITHUB_REPOSITORY}/releases/download/v${TAG}/sparkscore-${TAG}-$arch.tar.gz -P /tmp \
       && tar -xvf /tmp/sparkscore-*.tar.gz -C /tmp/ \
-      && cp /tmp/sparkscore*/bin/*  /usr/local/bin \
+      && find /tmp/sparkscore*/bin -type f ! -name 'sparks-qt' -exec cp {} /usr/local/bin \; \
       && rm -rf /tmp/sparkscore* \
       && chmod a+x /usr/local/bin/*
 

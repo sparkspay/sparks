@@ -1,14 +1,14 @@
-// Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_GOVERNANCE_OBJECT_H
 #define BITCOIN_GOVERNANCE_OBJECT_H
 
+#include <governance/common.h>
 #include <governance/exceptions.h>
 #include <governance/vote.h>
 #include <governance/votedb.h>
-#include <logging.h>
 #include <sync.h>
 
 #include <univalue.h>
@@ -17,33 +17,30 @@ class CBLSSecretKey;
 class CBLSPublicKey;
 class CNode;
 
-class CGovernanceManager;
-class CGovernanceTriggerManager;
 class CGovernanceObject;
 class CGovernanceVote;
 
-extern CCriticalSection cs_main;
+extern RecursiveMutex cs_main;
 
 static constexpr double GOVERNANCE_FILTER_FP_RATE = 0.001;
 
-static constexpr int GOVERNANCE_OBJECT_UNKNOWN = 0;
-static constexpr int GOVERNANCE_OBJECT_PROPOSAL = 1;
-static constexpr int GOVERNANCE_OBJECT_TRIGGER = 2;
 
 static constexpr CAmount GOVERNANCE_PROPOSAL_FEE_TX = (1 * COIN);
-static constexpr CAmount GOVERNANCE_PROPOSAL_FEE_TX_OLD = (5 * COIN);
 
 static constexpr int64_t GOVERNANCE_FEE_CONFIRMATIONS = 6;
 static constexpr int64_t GOVERNANCE_MIN_RELAY_FEE_CONFIRMATIONS = 1;
 static constexpr int64_t GOVERNANCE_UPDATE_MIN = 60 * 60;
 static constexpr int64_t GOVERNANCE_DELETION_DELAY = 10 * 60;
 static constexpr int64_t GOVERNANCE_ORPHAN_EXPIRATION_TIME = 10 * 60;
+static constexpr int64_t GOVERNANCE_FUDGE_WINDOW = 60 * 60 * 2;
 
 // FOR SEEN MAP ARRAYS - GOVERNANCE OBJECTS AND VOTES
-static constexpr int SEEN_OBJECT_IS_VALID = 0;
-static constexpr int SEEN_OBJECT_ERROR_INVALID = 1;
-static constexpr int SEEN_OBJECT_EXECUTED = 3; //used for triggers
-static constexpr int SEEN_OBJECT_UNKNOWN = 4;  // the default
+enum class SeenObjectStatus {
+    Valid = 0,
+    ErrorInvalid,
+    Executed,
+    Unknown
+};
 
 using vote_time_pair_t = std::pair<CGovernanceVote, int64_t>;
 
@@ -96,32 +93,13 @@ public: // Types
 
 private:
     /// critical section to protect the inner data structures
-    mutable CCriticalSection cs;
+    mutable RecursiveMutex cs;
 
-    /// Object typecode
-    int nObjectType;
-
-    /// parent object, 0 is root
-    uint256 nHashParent;
-
-    /// object revision in the system
-    int nRevision;
-
-    /// time this object was created
-    int64_t nTime;
+    Governance::Object m_obj;
 
     /// time this object was marked for deletion
     int64_t nDeletionTime;
 
-    /// fee-tx
-    uint256 nCollateralHash;
-
-    /// Data field - can be used for anything
-    std::vector<unsigned char> vchData;
-
-    /// Masternode info for signed objects
-    COutPoint masternodeOutpoint;
-    std::vector<unsigned char> vchSig;
 
     /// is valid by blockchain
     bool fCachedLocalValidity;
@@ -165,9 +143,14 @@ public:
 
     // Public Getter methods
 
+    const Governance::Object& Object() const
+    {
+        return m_obj;
+    }
+
     int64_t GetCreationTime() const
     {
-        return nTime;
+        return m_obj.time;
     }
 
     int64_t GetDeletionTime() const
@@ -175,19 +158,19 @@ public:
         return nDeletionTime;
     }
 
-    int GetObjectType() const
+    GovernanceObject GetObjectType() const
     {
-        return nObjectType;
+        return m_obj.type;
     }
 
     const uint256& GetCollateralHash() const
     {
-        return nCollateralHash;
+        return m_obj.collateralHash;
     }
 
     const COutPoint& GetMasternodeOutpoint() const
     {
-        return masternodeOutpoint;
+        return m_obj.masternodeOutpoint;
     }
 
     bool IsSetCachedFunding() const
@@ -259,13 +242,14 @@ public:
         }
     }
 
-    CAmount GetMinCollateralFee(bool fork_active) const;
+    CAmount GetMinCollateralFee() const;
 
     UniValue GetJSONObject() const;
 
     void Relay(CConnman& connman) const;
 
     uint256 GetHash() const;
+    uint256 GetDataHash() const;
 
     // GET VOTE COUNT FOR SIGNAL
 
@@ -289,23 +273,10 @@ public:
     SERIALIZE_METHODS(CGovernanceObject, obj)
     {
         // SERIALIZE DATA FOR SAVING/LOADING OR NETWORK FUNCTIONS
-        READWRITE(
-                obj.nHashParent,
-                obj.nRevision,
-                obj.nTime,
-                obj.nCollateralHash,
-                obj.vchData,
-                obj.nObjectType,
-                obj.masternodeOutpoint
-                );
-        if (!(s.GetType() & SER_GETHASH)) {
-            READWRITE(obj.vchSig);
-        }
+        READWRITE(obj.m_obj);
         if (s.GetType() & SER_DISK) {
             // Only include these for the disk file format
-            LogPrint(BCLog::GOBJECT, "CGovernanceObject::SerializationOp Reading/writing votes from/to disk\n");
             READWRITE(obj.nDeletionTime, obj.fExpired, obj.mapCurrentMNVotes, obj.fileVotes);
-            LogPrint(BCLog::GOBJECT, "CGovernanceObject::SerializationOp hash = %s, vote count = %d\n", obj.GetHash().ToString(), obj.fileVotes.GetVoteCount());
         }
 
         // AFTER DESERIALIZATION OCCURS, CACHED VARIABLES MUST BE CALCULATED MANUALLY

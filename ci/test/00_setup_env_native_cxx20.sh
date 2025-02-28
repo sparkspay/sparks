@@ -6,11 +6,12 @@
 
 export LC_ALL=C.UTF-8
 
-export PACKAGES="python3-zmq qtbase5-dev qttools5-dev-tools protobuf-compiler libdbus-1-dev libharfbuzz-dev libprotobuf-dev"
+export CONTAINER_NAME=ci_native_cxx20
+export PACKAGES="python3-zmq qtbase5-dev qttools5-dev-tools libdbus-1-dev libharfbuzz-dev"
 export DEP_OPTS="NO_UPNP=1 DEBUG=1"
 export CPPFLAGS="-DDEBUG_LOCKORDER -DENABLE_SPARKS_DEBUG -DARENA_DEBUG"
 export PYZMQ=true
-export RUN_INTEGRATION_TESTS=false
+export RUN_FUNCTIONAL_TESTS=false
 export GOAL="install"
-export BITCOIN_CONFIG="--enable-zmq --enable-reduce-exports --enable-crash-hooks --enable-c++20 --enable-suppress-external-warnings --enable-werror"
+export BITCOIN_CONFIG="--enable-zmq --enable-reduce-exports --enable-crash-hooks --enable-c++20 --enable-werror"
 

@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2017 The Bitcoin Core developers
+# Copyright (c) 2017-2019 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
 # Check for specified flake8 warnings in python files.
 
 export LC_ALL=C
+export MYPY_CACHE_DIR="${BASE_ROOT_DIR}/test/.mypy_cache"
 
 enabled=(
     E101 # indentation contains mixed spaces and tabs
@@ -26,7 +27,8 @@ enabled=(
     E272 # multiple spaces before keyword
     E273 # tab after keyword
     E274 # tab before keyword
-    E275 # missing whitespace after keyword
+    # TODO: enable it after bitcoin/bitcoin#26257 - too many warnings with newer flake
+    #E275 # missing whitespace after keyword
     E304 # blank lines found after function decorator
     E306 # expected 1 blank line before a nested definition
     E401 # multiple imports on one line
@@ -54,6 +56,7 @@ enabled=(
     F621 # too many expressions in an assignment with star-unpacking
     F622 # two or more starred expressions in an assignment (a, *b, *c = d)
     F631 # assertion test is a tuple, which are always True
+    F632 # use ==/!= to compare str, bytes, and int literals
     F701 # a break statement outside of a while or for loop
     F702 # a continue statement outside of a while or for loop
     F703 # a continue statement in a finally block in a loop
@@ -96,10 +99,20 @@ else
     echo "Consider install flake8-cached for cached flake8 results."
 fi
 
-PYTHONWARNINGS="ignore" $FLAKECMD --ignore=B,C,E,F,I,N,W --select=$(IFS=","; echo "${enabled[*]}")$(
+EXIT_CODE=0
+
+if ! PYTHONWARNINGS="ignore" $FLAKECMD --ignore=B,C,E,F,I,N,W --select=$(IFS=","; echo "${enabled[*]}") $(
     if [[ $# == 0 ]]; then
         git ls-files "*.py" | grep -vE "src/(immer)/"
     else
         echo "$@"
     fi
-)
+); then
+    EXIT_CODE=1
+fi
+
+if ! mypy --ignore-missing-imports $(git ls-files "test/functional/*.py"); then
+    EXIT_CODE=1
+fi
+
+exit $EXIT_CODE

@@ -1,11 +1,13 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <protocol.h>
 
 #include <util/system.h>
+
+#include <atomic>
 
 static std::atomic<bool> g_initial_block_download_completed(false);
 
@@ -47,7 +49,6 @@ MAKE_MSG(CFHEADERS, "cfheaders");
 MAKE_MSG(GETCFCHECKPT, "getcfcheckpt");
 MAKE_MSG(CFCHECKPT, "cfcheckpt");
 // Sparks message types
-MAKE_MSG(LEGACYTXLOCKREQUEST, "ix");
 MAKE_MSG(SPORK, "spork");
 MAKE_MSG(GETSPORKS, "getsporks");
 MAKE_MSG(DSACCEPT, "dsa");
@@ -81,7 +82,6 @@ MAKE_MSG(QSIGSHARE, "qsigshare");
 MAKE_MSG(QGETDATA, "qgetdata");
 MAKE_MSG(QDATA, "qdata");
 MAKE_MSG(CLSIG, "clsig");
-MAKE_MSG(ISLOCK, "islock");
 MAKE_MSG(ISDLOCK, "isdlock");
 MAKE_MSG(MNAUTH, "mnauth");
 MAKE_MSG(GETHEADERS2, "getheaders2");
@@ -129,7 +129,6 @@ const static std::string allNetMessageTypes[] = {
     NetMsgType::CFCHECKPT,
     // Sparks message types
     // NOTE: do NOT include non-implmented here, we want them to be "Unknown command" in ProcessMessage()
-    NetMsgType::LEGACYTXLOCKREQUEST,
     NetMsgType::SPORK,
     NetMsgType::GETSPORKS,
     NetMsgType::SENDDSQUEUE,
@@ -163,7 +162,6 @@ const static std::string allNetMessageTypes[] = {
     NetMsgType::QGETDATA,
     NetMsgType::QDATA,
     NetMsgType::CLSIG,
-    NetMsgType::ISLOCK,
     NetMsgType::ISDLOCK,
     NetMsgType::MNAUTH,
     NetMsgType::GETHEADERS2,
@@ -186,7 +184,6 @@ const static std::string netMessageTypesViolateBlocksOnly[] = {
     NetMsgType::DSSTATUSUPDATE,
     NetMsgType::DSTX,
     NetMsgType::DSVIN,
-    NetMsgType::LEGACYTXLOCKREQUEST,
     NetMsgType::QBSIGSHARES,
     NetMsgType::QCOMPLAINT,
     NetMsgType::QCONTRIB,
@@ -209,7 +206,6 @@ CMessageHeader::CMessageHeader()
 {
     memset(pchMessageStart, 0, MESSAGE_START_SIZE);
     memset(pchCommand, 0, sizeof(pchCommand));
-    nMessageSize = -1;
     memset(pchChecksum, 0, CHECKSUM_SIZE);
 }
 
@@ -263,38 +259,13 @@ void SetServiceFlagsIBDCache(bool state) {
     g_initial_block_download_completed = state;
 }
 
-
-CAddress::CAddress() : CService()
-{
-    Init();
-}
-
-CAddress::CAddress(CService ipIn, ServiceFlags nServicesIn) : CService(ipIn)
-{
-    Init();
-    nServices = nServicesIn;
-}
-
-CAddress::CAddress(CService ipIn, ServiceFlags nServicesIn, uint32_t nTimeIn) : CService(ipIn)
-{
-    Init();
-    nServices = nServicesIn;
-    nTime = nTimeIn;
-}
-
-void CAddress::Init()
-{
-    nServices = NODE_NONE;
-    nTime = 100000000;
-}
-
 CInv::CInv()
 {
     type = 0;
     hash.SetNull();
 }
 
-CInv::CInv(int typeIn, const uint256& hashIn) : type(typeIn), hash(hashIn) {}
+CInv::CInv(uint32_t typeIn, const uint256& hashIn) : type(typeIn), hash(hashIn) {}
 
 bool operator<(const CInv& a, const CInv& b)
 {
@@ -313,7 +284,6 @@ const char* CInv::GetCommandInternal() const
         case MSG_TX:                            return NetMsgType::TX;
         case MSG_BLOCK:                         return NetMsgType::BLOCK;
         case MSG_FILTERED_BLOCK:                return NetMsgType::MERKLEBLOCK;
-        case MSG_LEGACY_TXLOCK_REQUEST:         return NetMsgType::LEGACYTXLOCKREQUEST;
         case MSG_CMPCT_BLOCK:                   return NetMsgType::CMPCTBLOCK;
         case MSG_SPORK:                         return NetMsgType::SPORK;
         case MSG_DSTX:                          return NetMsgType::DSTX;
@@ -326,7 +296,6 @@ const char* CInv::GetCommandInternal() const
         case MSG_QUORUM_PREMATURE_COMMITMENT:   return NetMsgType::QPCOMMITMENT;
         case MSG_QUORUM_RECOVERED_SIG:          return NetMsgType::QSIGREC;
         case MSG_CLSIG:                         return NetMsgType::CLSIG;
-        case MSG_ISLOCK:                        return NetMsgType::ISLOCK;
         case MSG_ISDLOCK:                       return NetMsgType::ISDLOCK;
         default:
             return nullptr;
@@ -373,7 +342,6 @@ static std::string serviceFlagToStr(size_t bit)
     switch ((ServiceFlags)service_flag) {
     case NODE_NONE: abort();  // impossible
     case NODE_NETWORK:         return "NETWORK";
-    case NODE_GETUTXO:         return "GETUTXO";
     case NODE_BLOOM:           return "BLOOM";
     case NODE_COMPACT_FILTERS: return "COMPACT_FILTERS";
     case NODE_NETWORK_LIMITED: return "NETWORK_LIMITED";
@@ -381,12 +349,7 @@ static std::string serviceFlagToStr(size_t bit)
     // Not using default, so we get warned when a case is missing
     }
 
-    std::ostringstream stream;
-    stream.imbue(std::locale::classic());
-    stream << "UNKNOWN[";
-    stream << "2^" << bit;
-    stream << "]";
-    return stream.str();
+    return strprintf("UNKNOWN[2^%u]", bit);
 }
 
 std::vector<std::string> serviceFlagsToStr(uint64_t flags)

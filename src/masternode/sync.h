@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef BITCOIN_MASTERNODE_SYNC_H
@@ -13,6 +13,7 @@ class CBlockIndex;
 class CConnman;
 class CNode;
 class CDataStream;
+class CGovernanceManager;
 
 static constexpr int MASTERNODE_SYNC_BLOCKCHAIN      = 1;
 static constexpr int MASTERNODE_SYNC_GOVERNANCE      = 4;
@@ -49,11 +50,12 @@ private:
     std::atomic<int64_t> nTimeLastUpdateBlockTip{0};
 
     CConnman& connman;
+    const CGovernanceManager& m_govman;
 
 public:
-    explicit CMasternodeSync(CConnman& _connman);
+    explicit CMasternodeSync(CConnman& _connman, const CGovernanceManager& govman);
 
-    void SendGovernanceSyncRequest(CNode* pnode);
+    void SendGovernanceSyncRequest(CNode* pnode) const;
 
     bool IsBlockchainSynced() const { return nCurrentAsset > MASTERNODE_SYNC_BLOCKCHAIN; }
     bool IsSynced() const { return nCurrentAsset == MASTERNODE_SYNC_FINISHED; }

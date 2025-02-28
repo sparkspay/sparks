@@ -1,5 +1,5 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -26,8 +26,6 @@ static const bool DEFAULT_SPLASHSCREEN = true;
 #define RGB_HALF 0x7f7f7f
 /** Path to the icon resource folder */
 #define ICONS_PATH ":icons/"
-/** Path to the movies resource folder */
-#define MOVIES_PATH ":movies/"
 
 /* Tooltips longer than this (in characters) are converted into rich text,
    so that they can be word-wrapped.
@@ -46,5 +44,8 @@ static const int TOOLTIP_WRAP_THRESHOLD = 80;
 
 /* One gigabyte (GB) in bytes */
 static constexpr uint64_t GB_BYTES{1000000000};
+
+// Default prune target displayed in GUI.
+static constexpr int DEFAULT_PRUNE_TARGET_GB{2};
 
 #endif // BITCOIN_QT_GUICONSTANTS_H

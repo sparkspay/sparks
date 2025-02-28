@@ -1,7 +1,7 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2019 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
-// Copyright (c) 2016-2023 The Sparks Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -18,18 +18,22 @@
 #include <boost/signals2/signal.hpp>
 
 #include <algorithm>
+#include <atomic>
+#include <cassert>
 #include <memory> // for unique_ptr
+#include <mutex>
 #include <unordered_map>
 
-static CCriticalSection cs_rpcWarmup;
+static Mutex g_rpc_warmup_mutex;
 static std::atomic<bool> g_rpc_running{false};
-static bool fRPCInWarmup GUARDED_BY(cs_rpcWarmup) = true;
-static std::string rpcWarmupStatus GUARDED_BY(cs_rpcWarmup) = "RPC server started";
+static bool fRPCInWarmup GUARDED_BY(g_rpc_warmup_mutex) = true;
+static std::string rpcWarmupStatus GUARDED_BY(g_rpc_warmup_mutex) = "RPC server started";
 /* Timer-creating functions */
 static RPCTimerInterface* timerInterface = nullptr;
 /* Map of name to timer. */
-static std::map<std::string, std::unique_ptr<RPCTimerBase> > deadlineTimers;
-static bool ExecuteCommand(const CRPCCommand& command, const JSONRPCRequest& request, UniValue& result, bool last_handler, std::multimap<std::string, std::vector<UniValue>> mapPlatformRestrictions);
+static Mutex g_deadline_timers_mutex;
+static std::map<std::string, std::unique_ptr<RPCTimerBase> > deadlineTimers GUARDED_BY(g_deadline_timers_mutex);
+static bool ExecuteCommand(const CRPCCommand& command, const JSONRPCRequest& request, UniValue& result, bool last_handler, const std::multimap<std::string, std::vector<UniValue>>& mapPlatformRestrictions);
 
 // Any commands submitted by this user will have their commands filtered based on the mapPlatformRestrictions
 static const std::string defaultPlatformUser = "platform-user";
@@ -140,12 +144,14 @@ std::string CRPCTable::help(const std::string& strCommand, const std::string& st
 void CRPCTable::InitPlatformRestrictions()
 {
     mapPlatformRestrictions = {
+        {"getassetunlockstatuses", {}},
         {"getbestblockhash", {}},
         {"getblockhash", {}},
         {"getblockcount", {}},
         {"getbestchainlock", {}},
         {"quorum", {"sign", static_cast<uint8_t>(Params().GetConsensus().llmqTypePlatform)}},
         {"quorum", {"verify"}},
+        {"submitchainlock", {}},
         {"verifyislock", {}},
     };
 }
@@ -183,7 +189,7 @@ static RPCHelpMan stop()
     // Also accept the hidden 'wait' integer argument (milliseconds)
     // For instance, 'stop 1000' makes the call wait 1 second before returning
     // to the client (intended for testing)
-        "\nStop Sparks Core server.",
+        "\nRequest a graceful shutdown of " PACKAGE_NAME ".",
         {
             {"wait", RPCArg::Type::NUM, RPCArg::Optional::OMITTED_NAMED_ARG, "how long to wait in ms", "", {}, /* hidden */ true},
         },
@@ -322,17 +328,26 @@ void StartRPC()
 
 void InterruptRPC()
 {
-    LogPrint(BCLog::RPC, "Interrupting RPC\n");
-    // Interrupt e.g. running longpolls
-    g_rpc_running = false;
+    static std::once_flag g_rpc_interrupt_flag;
+    // This function could be called twice if the GUI has been started with -server=1.
+    std::call_once(g_rpc_interrupt_flag, []() {
+        LogPrint(BCLog::RPC, "Interrupting RPC\n");
+        // Interrupt e.g. running longpolls
+        g_rpc_running = false;
+    });
 }
 
 void StopRPC()
 {
-    LogPrint(BCLog::RPC, "Stopping RPC\n");
-    deadlineTimers.clear();
-    DeleteAuthCookie();
-    g_rpcSignals.Stopped();
+    static std::once_flag g_rpc_stop_flag;
+    // This function could be called twice if the GUI has been started with -server=1.
+    assert(!g_rpc_running);
+    std::call_once(g_rpc_stop_flag, []() {
+        LogPrint(BCLog::RPC, "Stopping RPC\n");
+        WITH_LOCK(g_deadline_timers_mutex, deadlineTimers.clear());
+        DeleteAuthCookie();
+        g_rpcSignals.Stopped();
+    });
 }
 
 bool IsRPCRunning()
@@ -347,20 +362,20 @@ void RpcInterruptionPoint()
 
 void SetRPCWarmupStatus(const std::string& newStatus)
 {
-    LOCK(cs_rpcWarmup);
+    LOCK(g_rpc_warmup_mutex);
     rpcWarmupStatus = newStatus;
 }
 
 void SetRPCWarmupFinished()
 {
-    LOCK(cs_rpcWarmup);
+    LOCK(g_rpc_warmup_mutex);
     assert(fRPCInWarmup);
     fRPCInWarmup = false;
 }
 
 bool RPCIsInWarmup(std::string *outStatus)
 {
-    LOCK(cs_rpcWarmup);
+    LOCK(g_rpc_warmup_mutex);
     if (outStatus)
         *outStatus = rpcWarmupStatus;
     return fRPCInWarmup;
@@ -421,8 +436,16 @@ static inline JSONRPCRequest transformNamedArguments(const JSONRPCRequest& in, c
     for (size_t i=0; i<keys.size(); ++i) {
         argsIn[keys[i]] = &values[i];
     }
-    // Process expected parameters.
+    // Process expected parameters. If any parameters were left unspecified in
+    // the request before a parameter that was specified, null values need to be
+    // inserted at the unspecifed parameter positions, and the "hole" variable
+    // below tracks the number of null values that need to be inserted.
+    // The "initial_hole_size" variable stores the size of the initial hole,
+    // i.e. how many initial positional arguments were left unspecified. This is
+    // used after the for-loop to add initial positional arguments from the
+    // "args" parameter, if present.
     int hole = 0;
+    int initial_hole_size = 0;
     for (const std::string &argNamePattern: argNames) {
         std::vector<std::string> vargNames = SplitString(argNamePattern, '|');
         auto fr = argsIn.end();
@@ -444,6 +467,24 @@ static inline JSONRPCRequest transformNamedArguments(const JSONRPCRequest& in, c
             argsIn.erase(fr);
         } else {
             hole += 1;
+            if (out.params.empty()) initial_hole_size = hole;
+        }
+    }
+    // If leftover "args" param was found, use it as a source of positional
+    // arguments and add named arguments after. This is a convenience for
+    // clients that want to pass a combination of named and positional
+    // arguments as described in doc/JSON-RPC-interface.md#parameter-passing
+    auto positional_args{argsIn.extract("args")};
+    if (positional_args && positional_args.mapped()->isArray()) {
+        const bool has_named_arguments{initial_hole_size < (int)argNames.size()};
+        if (initial_hole_size < (int)positional_args.mapped()->size() && has_named_arguments) {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Parameter " + argNames[initial_hole_size] + " specified twice both as positional and named argument");
+        }
+        // Assign positional_args to out.params and append named_args after.
+        UniValue named_args{std::move(out.params)};
+        out.params = *positional_args.mapped();
+        for (size_t i{out.params.size()}; i < named_args.size(); ++i) {
+            out.params.push_back(named_args[i]);
         }
     }
     // If there are still arguments in the argsIn map, this is an error.
@@ -458,7 +499,7 @@ UniValue CRPCTable::execute(const JSONRPCRequest &request) const
 {
     // Return immediately if in warmup
     {
-        LOCK(cs_rpcWarmup);
+        LOCK(g_rpc_warmup_mutex);
         if (fRPCInWarmup)
             throw JSONRPCError(RPC_IN_WARMUP, rpcWarmupStatus);
     }
@@ -476,7 +517,7 @@ UniValue CRPCTable::execute(const JSONRPCRequest &request) const
     throw JSONRPCError(RPC_METHOD_NOT_FOUND, "Method not found");
 }
 
-static bool ExecuteCommand(const CRPCCommand& command, const JSONRPCRequest& request, UniValue& result, bool last_handler, std::multimap<std::string, std::vector<UniValue>> mapPlatformRestrictions)
+static bool ExecuteCommand(const CRPCCommand& command, const JSONRPCRequest& request, UniValue& result, bool last_handler, const std::multimap<std::string, std::vector<UniValue>>& mapPlatformRestrictions)
 {
     // Before executing the RPC Command, filter commands from platform rpc user
     if (fMasternodeMode && request.authUser == gArgs.GetArg("-platform-user", defaultPlatformUser)) {
@@ -583,6 +624,7 @@ void RPCRunLater(const std::string& name, std::function<void()> func, int64_t nS
 {
     if (!timerInterface)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "No timer handler registered for RPC");
+    LOCK(g_deadline_timers_mutex);
     deadlineTimers.erase(name);
     LogPrint(BCLog::RPC, "queue run of timer %s in %i seconds (using %s)\n", name, nSeconds, timerInterface->Name());
     deadlineTimers.emplace(name, std::unique_ptr<RPCTimerBase>(timerInterface->NewTimer(func, nSeconds*1000)));

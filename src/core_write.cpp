@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,8 +14,10 @@
 #include <univalue.h>
 #include <util/strencodings.h>
 
+#include <addressindex.h>
 #include <spentindex.h>
 
+#include <evo/assetlocktx.h>
 #include <evo/cbtx.h>
 #include <evo/mnhftx.h>
 #include <evo/providertx.h>
@@ -66,7 +68,7 @@ std::string FormatScript(const CScript& script)
         ret += strprintf("0x%x ", HexStr(std::vector<uint8_t>(it2, script.end())));
         break;
     }
-    return ret.substr(0, ret.size() - 1);
+    return ret.substr(0, ret.empty() ? ret.npos : ret.size() - 1);
 }
 
 const std::map<unsigned char, std::string> mapSigHashTypes = {
@@ -189,7 +191,9 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
 {
     uint256 txid = tx.GetHash();
     entry.pushKV("txid", txid.GetHex());
-    entry.pushKV("version", tx.nVersion);
+    // Transaction version is actually unsigned in consensus checks, just signed in memory,
+    // so cast to unsigned before giving it to the user.
+    entry.pushKV("version", static_cast<int64_t>(static_cast<uint16_t>(tx.nVersion)));
     entry.pushKV("type", tx.nType);
     entry.pushKV("size", (int)::GetSerializeSize(tx, PROTOCOL_VERSION));
     entry.pushKV("locktime", (int64_t)tx.nLockTime);
@@ -213,12 +217,12 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
                 auto it = ptxSpentInfo->mSpentInfo.find(spentKey);
                 if (it != ptxSpentInfo->mSpentInfo.end()) {
                     auto spentInfo = it->second;
-                    in.pushKV("value", ValueFromAmount(spentInfo.satoshis));
-                    in.pushKV("valueSat", spentInfo.satoshis);
-                    if (spentInfo.addressType == 1) {
-                        in.pushKV("address", EncodeDestination(PKHash(spentInfo.addressHash)));
-                    } else if (spentInfo.addressType == 2) {
-                        in.pushKV("address", EncodeDestination(ScriptHash(spentInfo.addressHash)));
+                    in.pushKV("value", ValueFromAmount(spentInfo.m_amount));
+                    in.pushKV("valueSat", spentInfo.m_amount);
+                    if (spentInfo.m_address_type == AddressType::P2PK_OR_P2PKH) {
+                        in.pushKV("address", EncodeDestination(PKHash(spentInfo.m_address_bytes)));
+                    } else if (spentInfo.m_address_type == AddressType::P2SH) {
+                        in.pushKV("address", EncodeDestination(ScriptHash(spentInfo.m_address_bytes)));
                     }
                 }
             }
@@ -248,9 +252,9 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
             auto it = ptxSpentInfo->mSpentInfo.find(spentKey);
             if (it != ptxSpentInfo->mSpentInfo.end()) {
                 auto spentInfo = it->second;
-                out.pushKV("spentTxId", spentInfo.txid.GetHex());
-                out.pushKV("spentIndex", (int)spentInfo.inputIndex);
-                out.pushKV("spentHeight", spentInfo.blockHeight);
+                out.pushKV("spentTxId", spentInfo.m_tx_hash.GetHex());
+                out.pushKV("spentIndex", (int)spentInfo.m_tx_index);
+                out.pushKV("spentHeight", spentInfo.m_block_height);
             }
         }
         vout.push_back(out);
@@ -263,59 +267,46 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
     }
 
     if (tx.nType == TRANSACTION_PROVIDER_REGISTER) {
-        CProRegTx proTx;
-        if (GetTxPayload(tx, proTx)) {
-            UniValue obj;
-            proTx.ToJson(obj);
-            entry.pushKV("proRegTx", obj);
+        if (const auto opt_proTx = GetTxPayload<CProRegTx>(tx)) {
+            entry.pushKV("proRegTx", opt_proTx->ToJson());
         }
     } else if (tx.nType == TRANSACTION_PROVIDER_UPDATE_SERVICE) {
-        CProUpServTx proTx;
-        if (GetTxPayload(tx, proTx)) {
-            UniValue obj;
-            proTx.ToJson(obj);
-            entry.pushKV("proUpServTx", obj);
+        if (const auto opt_proTx = GetTxPayload<CProUpServTx>(tx)) {
+            entry.pushKV("proUpServTx", opt_proTx->ToJson());
         }
     } else if (tx.nType == TRANSACTION_PROVIDER_UPDATE_REGISTRAR) {
-        CProUpRegTx proTx;
-        if (GetTxPayload(tx, proTx)) {
-            UniValue obj;
-            proTx.ToJson(obj);
-            entry.pushKV("proUpRegTx", obj);
+        if (const auto opt_proTx = GetTxPayload<CProUpRegTx>(tx)) {
+            entry.pushKV("proUpRegTx", opt_proTx->ToJson());
         }
     } else if (tx.nType == TRANSACTION_PROVIDER_UPDATE_REVOKE) {
-        CProUpRevTx proTx;
-        if (GetTxPayload(tx, proTx)) {
-            UniValue obj;
-            proTx.ToJson(obj);
-            entry.pushKV("proUpRevTx", obj);
+        if (const auto opt_proTx = GetTxPayload<CProUpRevTx>(tx)) {
+            entry.pushKV("proUpRevTx", opt_proTx->ToJson());
         }
     } else if (tx.nType == TRANSACTION_COINBASE) {
-        CCbTx cbTx;
-        if (GetTxPayload(tx, cbTx)) {
-            UniValue obj;
-            cbTx.ToJson(obj);
-            entry.pushKV("cbTx", obj);
+        if (const auto opt_cbTx = GetTxPayload<CCbTx>(tx)) {
+            entry.pushKV("cbTx", opt_cbTx->ToJson());
         }
     } else if (tx.nType == TRANSACTION_QUORUM_COMMITMENT) {
-        llmq::CFinalCommitmentTxPayload qcTx;
-        if (GetTxPayload(tx, qcTx)) {
-            UniValue obj;
-            qcTx.ToJson(obj);
-            entry.pushKV("qcTx", obj);
+        if (const auto opt_qcTx = GetTxPayload<llmq::CFinalCommitmentTxPayload>(tx)) {
+            entry.pushKV("qcTx", opt_qcTx->ToJson());
         }
     } else if (tx.nType == TRANSACTION_MNHF_SIGNAL) {
-        MNHFTxPayload mnhfTx;
-        if (GetTxPayload(tx, mnhfTx)) {
-            UniValue obj;
-            mnhfTx.ToJson(obj);
-            entry.pushKV("mnhfTx", obj);
+        if (const auto opt_mnhfTx = GetTxPayload<MNHFTxPayload>(tx)) {
+            entry.pushKV("mnhfTx", opt_mnhfTx->ToJson());
+        }
+    } else if (tx.nType == TRANSACTION_ASSET_LOCK) {
+        if (const auto opt_assetLockTx = GetTxPayload<CAssetLockPayload>(tx)) {
+            entry.pushKV("assetLockTx", opt_assetLockTx->ToJson());
+        }
+    } else if (tx.nType == TRANSACTION_ASSET_UNLOCK) {
+        if (const auto opt_assetUnlockTx = GetTxPayload<CAssetUnlockPayload>(tx)) {
+            entry.pushKV("assetUnlockTx", opt_assetUnlockTx->ToJson());
         }
     } else if (tx.nType == TRANSACTION_DATA) {
-        CDataTx dataTx;
-        if (GetTxPayload(tx, dataTx)) {
+        std::optional<CDataTx> dataTx = GetTxPayload<CDataTx>(tx);
+        if (dataTx.has_value()) {
             UniValue obj;
-            dataTx.ToJson(obj);
+            dataTx->ToJson(obj);
             entry.pushKV("datatx", obj);
         }
     }
