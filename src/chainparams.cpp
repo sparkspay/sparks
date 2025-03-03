@@ -207,14 +207,14 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].bit = 12;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nStartTime = 1748736000;     // June 01, 2025
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nTimeout = 1780272000;        // June 01, 2026
+        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nStartTime = 1746057600;     // Thursday May 01, 2025
+        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nTimeout = 1777593600;        // Friday May 01, 2026
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].nThresholdStart = 60;       // 60% of 100
 
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].bit = 13;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = 1754006400;   // August 1, 2025
-        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nTimeout = 1817078400; // August 1, 2027
+        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = 1746057600;   // Thursday May 01, 2025
+        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nTimeout = 1809129600; // Saturday May 01, 2027
         // NOTE: nWindowSize for MN_RR __MUST__ be greater than or equal to nSuperblockMaturityWindow for CSuperblock::GetPaymentsLimit() to work correctly
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nWindowSize = 4032;
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdStart = 2420;     // 60% of 4032
@@ -426,7 +426,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].bit = 12;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nStartTime = 1741564800;     // Monday, March 10, 2025 0:00:00
+        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nStartTime = 1741003200;     // Monday, March 03, 2025 12:00:00
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].nWindowSize = 10;
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].nThresholdStart = 8;         // 80% of 10
@@ -434,7 +434,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].nFalloffCoeff = 5;            // this corresponds to 10 periods
 
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].bit = 13;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = 1741564800;   // Monday, March 10, 2025 0:00:00
+        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = 1741003200;   // Monday, March 03, 2025 12:00:00
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nWindowSize = 10;
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdStart = 8;       // 80% of 10
