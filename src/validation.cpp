@@ -1210,7 +1210,7 @@ static std::pair<CAmount, CAmount> GetBlockSubsidyHelper(int nPrevBits, int nPre
     else
     {
         CAmount nSuperblockPart{};
-        nSuperblockPart = fV20Active ? 0 : nSubsidy;
+        nSuperblockPart = nSubsidy;
         return {nSuperblockPart, nSuperblockPart};
     }
     
