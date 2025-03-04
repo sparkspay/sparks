@@ -583,10 +583,12 @@ int CGovernanceObject::CountMatchingVotes(vote_signal_enum_t eVoteSignalIn, vote
         const vote_rec_t& recVote = votepair.second;
         auto it2 = recVote.mapInstances.find(eVoteSignalIn);
         if (it2 != recVote.mapInstances.end() && it2->second.eOutcome == eVoteOutcomeIn) {
-            // 4x times weight vote for EvoNode owners.
+            // 4x times weight vote for EvoNode owners after v19 active.
+            // 1x time weight vote for EvoNode owners after v20 active.
+            // will be 5x times weight vote for EvoNode owners after enabling 5000 colleteral regular masternode
             // No need to check if v19 is active since no EvoNode are allowed to register before v19s
             auto dmn = mnList.GetMNByCollateral(votepair.first);
-            if (dmn != nullptr) nCount += GetMnType(dmn->nType, ::ChainActive()[dmn->pdmnState->nRegisteredHeight]).voting_weight;
+            if (dmn != nullptr) nCount += GetMnType(dmn->nType, ::ChainActive().Tip()).voting_weight;
         }
     }
     return nCount;

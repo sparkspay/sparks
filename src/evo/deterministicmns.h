@@ -277,7 +277,7 @@ public:
     {
         return std::accumulate(mnMap.begin(), mnMap.end(), 0, [this](auto res, const auto& p) {
                                                                 if (!IsMNValid(*p.second)) return res;
-                                                                return res + GetMnType(p.second->nType, ::ChainActive()[p.second->pdmnState->nRegisteredHeight]).voting_weight;
+                                                                return res + GetMnType(p.second->nType, ::ChainActive().Tip()).voting_weight;
                                                             });
     }
 
