@@ -1190,24 +1190,12 @@ NOTE:   unlike bitcoin we are using PREVIOUS block height here,
 static std::pair<CAmount, CAmount> GetBlockSubsidyHelper(int nPrevBits, int nPrevHeight, const Consensus::Params& consensusParams, bool fV20Active)
 {
     CAmount nSubsidy = 0;
-    const bool isDevnet = Params().NetworkIDString() == CBaseChainParams::DEVNET;
-    const bool force_fixed_base_subsidy = fV20Active || (isDevnet && nPrevHeight >= consensusParams.nHighSubsidyBlocks);
-    if (force_fixed_base_subsidy) {
-        // Originally, nSubsidyBase calculations relied on difficulty. Once Platform is live,
-        // it must be able to calculate platformReward. However, we don't want it to constantly
-        // get blocks difficulty from the payment chain, so we set the nSubsidyBase to a fixed
-        // value starting from V20 activation. Note, that it doesn't affect mainnet really
-        // because blocks difficulty there is very high already.
-        // Devnets get fixed nSubsidyBase starting from nHighSubsidyBlocks to better mimic mainnet.
-        nSubsidy = 5;
-    } else if (IsSPKHardForkEnabled(consensusParams, nPrevHeight)) {    
+    if (IsSPKHardForkEnabled(consensusParams, nPrevHeight)) {    
         nSubsidy = GetRebornSubsidy(nPrevHeight, consensusParams);
     }
     else {
         nSubsidy = GetLegacySubsidy(nPrevHeight, consensusParams);
     }
-
-    
     
     if(sporkManager->IsSporkActive(SPORK_9_SUPERBLOCKS_ENABLED))
     {
