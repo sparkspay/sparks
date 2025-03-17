@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -12,13 +12,18 @@
 
 std::vector<fs::path> ListDatabases(const fs::path& wallet_dir)
 {
-    const size_t offset = wallet_dir.string().size() + 1;
+    const size_t offset = wallet_dir.string().size() + (wallet_dir == wallet_dir.root_name() ? 0 : 1);
     std::vector<fs::path> paths;
     boost::system::error_code ec;
 
     for (auto it = fs::recursive_directory_iterator(wallet_dir, ec); it != fs::recursive_directory_iterator(); it.increment(ec)) {
         if (ec) {
-            LogPrintf("%s: %s %s\n", __func__, ec.message(), it->path().string());
+            if (fs::is_directory(*it)) {
+                it.no_push();
+                LogPrintf("%s: %s %s -- skipping.\n", __func__, ec.message(), it->path().string());
+            } else {
+                LogPrintf("%s: %s %s\n", __func__, ec.message(), it->path().string());
+            }
             continue;
         }
 

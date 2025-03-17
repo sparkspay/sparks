@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2017 The Bitcoin Core developers
+# Copyright (c) 2017-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test message sending before handshake completion.
@@ -13,13 +13,17 @@ into sending us something it shouldn't.
 
 import time
 
-from test_framework.messages import msg_getaddr, msg_ping, msg_verack
-from test_framework.mininode import mininode_lock, P2PInterface
+from test_framework.messages import (
+    msg_getaddr,
+    msg_ping,
+    msg_verack,
+    msg_version,
+)
+from test_framework.p2p import p2p_lock, P2PInterface
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import (
     assert_equal,
     assert_greater_than_or_equal,
-    wait_until,
 )
 
 banscore = 10
@@ -33,7 +37,7 @@ class CLazyNode(P2PInterface):
 
     def bad_message(self, message):
         self.unexpected_msg = True
-        self.log.info("should not have received message: %s" % message.command)
+        self.log.info("should not have received message: %s" % message.msgtype)
 
     def on_open(self):
         self.ever_connected = True
@@ -65,7 +69,7 @@ class CNodeNoVersionBan(CLazyNode):
     # NOTE: implementation-specific check here. Remove if sparksd ban behavior changes
     def on_open(self):
         super().on_open()
-        for i in range(banscore):
+        for _ in range(banscore):
             self.send_message(msg_verack())
 
 # Node that never sends a version. This one just sits idle and hopes to receive
@@ -116,9 +120,9 @@ class P2PLeakTest(BitcoinTestFramework):
         # verack, since we never sent one
         no_verack_idlenode.wait_for_verack()
 
-        wait_until(lambda: no_version_bannode.ever_connected, timeout=10, lock=mininode_lock)
-        wait_until(lambda: no_version_idlenode.ever_connected, timeout=10, lock=mininode_lock)
-        wait_until(lambda: no_verack_idlenode.version_received, timeout=10, lock=mininode_lock)
+        self.wait_until(lambda: no_version_bannode.ever_connected, timeout=10, lock=p2p_lock)
+        self.wait_until(lambda: no_version_idlenode.ever_connected, timeout=10, lock=p2p_lock)
+        self.wait_until(lambda: no_verack_idlenode.version_received, timeout=10, lock=p2p_lock)
 
         # Mine a block and make sure that it's not sent to the connected nodes
         self.nodes[0].generatetoaddress(1, self.nodes[0].get_deterministic_priv_key().address)
@@ -130,9 +134,6 @@ class P2PLeakTest(BitcoinTestFramework):
         assert not no_version_bannode.is_connected
 
         self.nodes[0].disconnect_p2ps()
-
-        # Wait until all connections are closed
-        wait_until(lambda: len(self.nodes[0].getpeerinfo()) == 0)
 
         # Make sure no unexpected messages came in
         assert no_version_bannode.unexpected_msg == False
@@ -149,6 +150,15 @@ class P2PLeakTest(BitcoinTestFramework):
         assert_equal(ver.addrFrom.ip, '0.0.0.0')
         assert_equal(ver.nStartingHeight, 201)
         assert_equal(ver.nRelay, 1)
+
+        self.log.info('Check that old nodes are disconnected')
+        p2p_old_node = self.nodes[0].add_p2p_connection(P2PInterface(), send_version=False, wait_for_verack=False)
+        old_version_msg = msg_version()
+        old_version_msg.nVersion = 31799
+        self.wait_until(lambda: p2p_old_node.is_connected)
+        with self.nodes[0].assert_debug_log(['peer=4 using obsolete version 31799; disconnecting']):
+            p2p_old_node.send_message(old_version_msg)
+            p2p_old_node.wait_for_disconnect()
 
 
 if __name__ == '__main__':

@@ -1,24 +1,30 @@
-// Copyright (c) 2012-2015 The Bitcoin Core developers
+// Copyright (c) 2012-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <bloom.h>
 
-#include <primitives/transaction.h>
-#include <evo/specialtx.h>
+#include <evo/assetlocktx.h>
 #include <evo/providertx.h>
-#include <logging.h>
+#include <evo/specialtx.h>
 #include <hash.h>
+#include <logging.h>
+#include <primitives/transaction.h>
+#include <random.h>
 #include <script/script.h>
 #include <script/standard.h>
-#include <random.h>
+#include <span.h>
 #include <streams.h>
+#include <util/fastrange.h>
 
-#include <math.h>
-#include <stdlib.h>
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <limits>
+#include <vector>
 
-#define LN2SQUARED 0.4804530139182014246671025263266649717305529515945455
-#define LN2 0.6931471805599453094172321214581765680755001343602552
+static constexpr double LN2SQUARED = 0.4804530139182014246671025263266649717305529515945455;
+static constexpr double LN2 = 0.6931471805599453094172321214581765680755001343602552;
 
 CBloomFilter::CBloomFilter(const unsigned int nElements, const double nFPRate, const unsigned int nTweakIn, unsigned char nFlagsIn) :
     /**
@@ -38,13 +44,13 @@ CBloomFilter::CBloomFilter(const unsigned int nElements, const double nFPRate, c
 {
 }
 
-inline unsigned int CBloomFilter::Hash(unsigned int nHashNum, const std::vector<unsigned char>& vDataToHash) const
+inline unsigned int CBloomFilter::Hash(unsigned int nHashNum, Span<const unsigned char> vDataToHash) const
 {
     // 0xFBA4C795 chosen as it guarantees a reasonable bit difference between nHashNum values.
     return MurmurHash3(nHashNum * 0xFBA4C795 + nTweak, vDataToHash) % (vData.size() * 8);
 }
 
-void CBloomFilter::insert(const std::vector<unsigned char>& vKey)
+void CBloomFilter::insert(Span<const unsigned char> vKey)
 {
     if (vData.empty()) // Avoid divide-by-zero (CVE-2013-5700)
         return;
@@ -60,17 +66,10 @@ void CBloomFilter::insert(const COutPoint& outpoint)
 {
     CDataStream stream(SER_NETWORK, PROTOCOL_VERSION);
     stream << outpoint;
-    std::vector<unsigned char> data(stream.begin(), stream.end());
-    insert(data);
+    insert(MakeUCharSpan(stream));
 }
 
-void CBloomFilter::insert(const uint256& hash)
-{
-    std::vector<unsigned char> data(hash.begin(), hash.end());
-    insert(data);
-}
-
-bool CBloomFilter::contains(const std::vector<unsigned char>& vKey) const
+bool CBloomFilter::contains(Span<const unsigned char> vKey) const
 {
     if (vData.empty()) // Avoid divide-by-zero (CVE-2013-5700)
         return true;
@@ -88,20 +87,7 @@ bool CBloomFilter::contains(const COutPoint& outpoint) const
 {
     CDataStream stream(SER_NETWORK, PROTOCOL_VERSION);
     stream << outpoint;
-    std::vector<unsigned char> data(stream.begin(), stream.end());
-    return contains(data);
-}
-
-bool CBloomFilter::contains(const uint256& hash) const
-{
-    std::vector<unsigned char> data(hash.begin(), hash.end());
-    return contains(data);
-}
-
-bool CBloomFilter::contains(const uint160& hash) const
-{
-    std::vector<unsigned char> data(hash.begin(), hash.end());
-    return contains(data);
+    return contains(MakeUCharSpan(stream));
 }
 
 bool CBloomFilter::IsWithinSizeConstraints() const
@@ -140,12 +126,11 @@ bool CBloomFilter::CheckSpecialTransactionMatchesAndUpdate(const CTransaction &t
     }
     switch(tx.nType) {
     case(TRANSACTION_PROVIDER_REGISTER): {
-        CProRegTx proTx;
-        if (GetTxPayload(tx, proTx)) {
-            if(contains(proTx.collateralOutpoint) ||
-                    contains(proTx.keyIDOwner) ||
-                    contains(proTx.keyIDVoting) ||
-                    CheckScript(proTx.scriptPayout)) {
+        if (const auto opt_proTx = GetTxPayload<CProRegTx>(tx)) {
+            if(contains(opt_proTx->collateralOutpoint) ||
+                    contains(opt_proTx->keyIDOwner) ||
+                    contains(opt_proTx->keyIDVoting) ||
+                    CheckScript(opt_proTx->scriptPayout)) {
                 if ((nFlags & BLOOM_UPDATE_MASK) == BLOOM_UPDATE_ALL)
                     insert(tx.GetHash());
                 return true;
@@ -154,41 +139,52 @@ bool CBloomFilter::CheckSpecialTransactionMatchesAndUpdate(const CTransaction &t
         return false;
     }
     case(TRANSACTION_PROVIDER_UPDATE_SERVICE): {
-        CProUpServTx proTx;
-        if (GetTxPayload(tx, proTx)) {
-            if(contains(proTx.proTxHash)) {
+        if (const auto opt_proTx = GetTxPayload<CProUpServTx>(tx)) {
+            if(contains(opt_proTx->proTxHash)) {
                 return true;
             }
-            if(CheckScript(proTx.scriptOperatorPayout)) {
+            if(CheckScript(opt_proTx->scriptOperatorPayout)) {
                 if ((nFlags & BLOOM_UPDATE_MASK) == BLOOM_UPDATE_ALL)
-                    insert(proTx.proTxHash);
+                    insert(opt_proTx->proTxHash);
                 return true;
             }
         }
         return false;
     }
     case(TRANSACTION_PROVIDER_UPDATE_REGISTRAR): {
-        CProUpRegTx proTx;
-        if (GetTxPayload(tx, proTx)) {
-            if(contains(proTx.proTxHash))
+        if (const auto opt_proTx = GetTxPayload<CProUpRegTx>(tx)) {
+            if(contains(opt_proTx->proTxHash))
                 return true;
-            if(contains(proTx.keyIDVoting) ||
-                    CheckScript(proTx.scriptPayout)) {
+            if(contains(opt_proTx->keyIDVoting) ||
+                    CheckScript(opt_proTx->scriptPayout)) {
                 if ((nFlags & BLOOM_UPDATE_MASK) == BLOOM_UPDATE_ALL)
-                    insert(proTx.proTxHash);
+                    insert(opt_proTx->proTxHash);
                 return true;
             }
         }
         return false;
     }
     case(TRANSACTION_PROVIDER_UPDATE_REVOKE): {
-        CProUpRevTx proTx;
-        if (GetTxPayload(tx, proTx)) {
-            if(contains(proTx.proTxHash))
+        if (const auto opt_proTx = GetTxPayload<CProUpRevTx>(tx)) {
+            if(contains(opt_proTx->proTxHash))
                 return true;
         }
         return false;
     }
+    case(TRANSACTION_ASSET_LOCK): {
+        // inputs of Asset Lock transactions are standard. But some outputs are special
+        if (const auto opt_assetlockTx = GetTxPayload<CAssetLockPayload>(tx)) {
+            bool fFound = false;
+            const auto& extraOuts = opt_assetlockTx->getCreditOutputs();
+            for (unsigned int i = 0; i < extraOuts.size(); ++i)
+            {
+                fFound = ProcessTxOut(extraOuts[i], tx.GetHash(), i) || fFound;
+            }
+            if (fFound) return true;
+        }
+        return false;
+    }
+    case(TRANSACTION_ASSET_UNLOCK): // Outputs are standard and no inputs.
     case(TRANSACTION_COINBASE):
     case(TRANSACTION_QUORUM_COMMITMENT):
     case(TRANSACTION_MNHF_SIGNAL):
@@ -198,6 +194,29 @@ bool CBloomFilter::CheckSpecialTransactionMatchesAndUpdate(const CTransaction &t
 
     LogPrintf("Unknown special transaction type in Bloom filter check.\n");
     return false;
+}
+
+bool CBloomFilter::ProcessTxOut(const CTxOut& txout, const uint256& hash, unsigned int index)
+{
+    // Match if the filter contains any arbitrary script data element in any scriptPubKey in tx
+    // If this matches, also add the specific output that was matched.
+    // This means clients don't have to update the filter themselves when a new relevant tx
+    // is discovered in order to find spending transactions, which avoids round-tripping and race conditions.
+    bool fFound = false;
+    if(CheckScript(txout.scriptPubKey)) {
+        fFound = true;
+        if ((nFlags & BLOOM_UPDATE_MASK) == BLOOM_UPDATE_ALL)
+            insert(COutPoint(hash, index));
+        else if ((nFlags & BLOOM_UPDATE_MASK) == BLOOM_UPDATE_P2PUBKEY_ONLY)
+        {
+            std::vector<std::vector<unsigned char> > vSolutions;
+            TxoutType type = Solver(txout.scriptPubKey, vSolutions);
+            if (type == TxoutType::PUBKEY || type == TxoutType::MULTISIG) {
+                insert(COutPoint(hash, index));
+            }
+        }
+    }
+    return fFound;
 }
 
 bool CBloomFilter::IsRelevantAndUpdate(const CTransaction& tx)
@@ -216,24 +235,7 @@ bool CBloomFilter::IsRelevantAndUpdate(const CTransaction& tx)
 
     for (unsigned int i = 0; i < tx.vout.size(); i++)
     {
-        const CTxOut& txout = tx.vout[i];
-        // Match if the filter contains any arbitrary script data element in any scriptPubKey in tx
-        // If this matches, also add the specific output that was matched.
-        // This means clients don't have to update the filter themselves when a new relevant tx
-        // is discovered in order to find spending transactions, which avoids round-tripping and race conditions.
-        if(CheckScript(txout.scriptPubKey)) {
-            fFound = true;
-            if ((nFlags & BLOOM_UPDATE_MASK) == BLOOM_UPDATE_ALL)
-                insert(COutPoint(hash, i));
-            else if ((nFlags & BLOOM_UPDATE_MASK) == BLOOM_UPDATE_P2PUBKEY_ONLY)
-            {
-                std::vector<std::vector<unsigned char> > vSolutions;
-                TxoutType type = Solver(txout.scriptPubKey, vSolutions);
-                if (type == TxoutType::PUBKEY || type == TxoutType::MULTISIG) {
-                    insert(COutPoint(hash, i));
-                }
-            }
-        }
+        fFound = ProcessTxOut(tx.vout[i], hash, i) || fFound;
     }
 
     if (fFound)
@@ -281,19 +283,12 @@ CRollingBloomFilter::CRollingBloomFilter(const unsigned int nElements, const dou
 }
 
 /* Similar to CBloomFilter::Hash */
-static inline uint32_t RollingBloomHash(unsigned int nHashNum, uint32_t nTweak, const std::vector<unsigned char>& vDataToHash) {
+static inline uint32_t RollingBloomHash(unsigned int nHashNum, uint32_t nTweak, Span<const unsigned char> vDataToHash)
+{
     return MurmurHash3(nHashNum * 0xFBA4C795 + nTweak, vDataToHash);
 }
 
-
-// A replacement for x % n. This assumes that x and n are 32bit integers, and x is a uniformly random distributed 32bit value
-// which should be the case for a good hash.
-// See https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
-static inline uint32_t FastMod(uint32_t x, size_t n) {
-    return ((uint64_t)x * (uint64_t)n) >> 32;
-}
-
-void CRollingBloomFilter::insert(const std::vector<unsigned char>& vKey)
+void CRollingBloomFilter::insert(Span<const unsigned char> vKey)
 {
     if (nEntriesThisGeneration == nEntriesPerGeneration) {
         nEntriesThisGeneration = 0;
@@ -317,37 +312,25 @@ void CRollingBloomFilter::insert(const std::vector<unsigned char>& vKey)
         uint32_t h = RollingBloomHash(n, nTweak, vKey);
         int bit = h & 0x3F;
         /* FastMod works with the upper bits of h, so it is safe to ignore that the lower bits of h are already used for bit. */
-        uint32_t pos = FastMod(h, data.size());
+        uint32_t pos = FastRange32(h, data.size());
         /* The lowest bit of pos is ignored, and set to zero for the first bit, and to one for the second. */
         data[pos & ~1] = (data[pos & ~1] & ~(((uint64_t)1) << bit)) | ((uint64_t)(nGeneration & 1)) << bit;
         data[pos | 1] = (data[pos | 1] & ~(((uint64_t)1) << bit)) | ((uint64_t)(nGeneration >> 1)) << bit;
     }
 }
 
-void CRollingBloomFilter::insert(const uint256& hash)
-{
-    std::vector<unsigned char> vData(hash.begin(), hash.end());
-    insert(vData);
-}
-
-bool CRollingBloomFilter::contains(const std::vector<unsigned char>& vKey) const
+bool CRollingBloomFilter::contains(Span<const unsigned char> vKey) const
 {
     for (int n = 0; n < nHashFuncs; n++) {
         uint32_t h = RollingBloomHash(n, nTweak, vKey);
         int bit = h & 0x3F;
-        uint32_t pos = FastMod(h, data.size());
+        uint32_t pos = FastRange32(h, data.size());
         /* If the relevant bit is not set in either data[pos & ~1] or data[pos | 1], the filter does not contain vKey */
         if (!(((data[pos & ~1] | data[pos | 1]) >> bit) & 1)) {
             return false;
         }
     }
     return true;
-}
-
-bool CRollingBloomFilter::contains(const uint256& hash) const
-{
-    std::vector<unsigned char> vData(hash.begin(), hash.end());
-    return contains(vData);
 }
 
 void CRollingBloomFilter::reset()

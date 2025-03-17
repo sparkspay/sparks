@@ -6,23 +6,26 @@
 #define BITCOIN_COINJOIN_SERVER_H
 
 #include <coinjoin/coinjoin.h>
-#include <net.h>
 
+#include <net_types.h>
+
+class CChainState;
 class CCoinJoinServer;
+class CDataStream;
+class CNode;
 class CTxMemPool;
-class UniValue;
 
-// The main object for accessing mixing
-extern std::unique_ptr<CCoinJoinServer> coinJoinServer;
+class UniValue;
 
 /** Used to keep track of current status of mixing pool
  */
 class CCoinJoinServer : public CCoinJoinBaseSession, public CCoinJoinBaseManager
 {
 private:
-    CTxMemPool& mempool;
+    CChainState& m_chainstate;
     CConnman& connman;
-    const std::unique_ptr<CMasternodeSync>& m_mn_sync;
+    CTxMemPool& mempool;
+    const CMasternodeSync& m_mn_sync;
 
     // Mixing uses collateral transactions to trust parties entering the pool
     // to behave honestly. If they don't it takes their money.
@@ -70,28 +73,29 @@ private:
     void RelayCompletedTransaction(PoolMessage nMessageID) LOCKS_EXCLUDED(cs_coinjoin);
 
     void ProcessDSACCEPT(CNode& peer, CDataStream& vRecv) LOCKS_EXCLUDED(cs_vecqueue);
-    void ProcessDSQUEUE(const CNode& peer, CDataStream& vRecv) LOCKS_EXCLUDED(cs_vecqueue);
+    PeerMsgRet ProcessDSQUEUE(const CNode& peer, CDataStream& vRecv) LOCKS_EXCLUDED(cs_vecqueue);
     void ProcessDSVIN(CNode& peer, CDataStream& vRecv) LOCKS_EXCLUDED(cs_coinjoin);
     void ProcessDSSIGNFINALTX(CDataStream& vRecv) LOCKS_EXCLUDED(cs_coinjoin);
 
     void SetNull() EXCLUSIVE_LOCKS_REQUIRED(cs_coinjoin);
 
 public:
-    explicit CCoinJoinServer(CTxMemPool& mempool, CConnman& _connman, const std::unique_ptr<CMasternodeSync>& mn_sync) :
-        mempool(mempool),
+    explicit CCoinJoinServer(CChainState& chainstate, CConnman& _connman, CTxMemPool& mempool, const CMasternodeSync& mn_sync) :
+        m_chainstate(chainstate),
         connman(_connman),
+        mempool(mempool),
         m_mn_sync(mn_sync),
         vecSessionCollaterals(),
         fUnitTest(false)
     {}
 
-    void ProcessMessage(CNode& pfrom, std::string_view msg_type, CDataStream& vRecv);
+    PeerMsgRet ProcessMessage(CNode& pfrom, std::string_view msg_type, CDataStream& vRecv);
 
     bool HasTimedOut() const;
     void CheckTimeout();
     void CheckForCompleteQueue();
 
-    void DoMaintenance() const;
+    void DoMaintenance();
 
     void GetJsonInfo(UniValue& obj) const;
 };

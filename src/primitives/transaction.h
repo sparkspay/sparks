@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2016-2022 The Sparks Core developers
+// Copyright (c) 2009-2019 The Bitcoin Core developers
+// Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -24,6 +24,8 @@ enum {
     TRANSACTION_QUORUM_COMMITMENT = 6,
     TRANSACTION_MNHF_SIGNAL = 8,
     TRANSACTION_DATA = 7,
+    TRANSACTION_ASSET_LOCK = 9,
+    TRANSACTION_ASSET_UNLOCK = 10,
 };
 
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
@@ -241,8 +243,6 @@ public:
 
     // Return sum of txouts.
     CAmount GetValueOut() const;
-    // GetValueIn() is a method on CCoinsViewCache, because
-    // inputs must be known to compute value in.
 
     /**
      * Get the total transaction size in bytes, including witness data.

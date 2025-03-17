@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2014-2016 The Bitcoin Core developers
+# Copyright (c) 2014-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test the wallet backup features.
@@ -35,6 +35,7 @@ import os
 from random import randint
 import shutil
 
+from test_framework.blocktools import COINBASE_MATURITY
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error
 
@@ -119,7 +120,7 @@ class WalletBackupTest(BitcoinTestFramework):
         self.sync_blocks()
         self.nodes[2].generate(1)
         self.sync_blocks()
-        self.nodes[3].generate(100)
+        self.nodes[3].generate(COINBASE_MATURITY)
         self.sync_blocks()
 
         assert_equal(self.nodes[0].getbalance(), 500)
@@ -129,7 +130,7 @@ class WalletBackupTest(BitcoinTestFramework):
 
         self.log.info("Creating transactions")
         # Five rounds of sending each other transactions.
-        for i in range(5):
+        for _ in range(5):
             self.do_one_round()
 
         self.log.info("Backing up")
@@ -142,11 +143,11 @@ class WalletBackupTest(BitcoinTestFramework):
         self.nodes[2].dumpwallet(os.path.join(self.nodes[2].datadir, 'wallet.dump'))
 
         self.log.info("More transactions")
-        for i in range(5):
+        for _ in range(5):
             self.do_one_round()
 
         # Generate 101 more blocks, so any fees paid mature
-        self.nodes[3].generate(101)
+        self.nodes[3].generate(COINBASE_MATURITY + 1)
         self.sync_all()
 
         balance0 = self.nodes[0].getbalance()

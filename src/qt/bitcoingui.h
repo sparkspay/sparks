@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -38,6 +38,7 @@ class WalletFrame;
 class WalletModel;
 class HelpMessageDialog;
 class ModalOverlay;
+enum class SynchronizationState;
 
 namespace interfaces {
 class Handler;
@@ -49,6 +50,7 @@ QT_BEGIN_NAMESPACE
 class QAction;
 class QButtonGroup;
 class QComboBox;
+class QDateTime;
 class QMenu;
 class QProgressBar;
 class QProgressDialog;
@@ -102,6 +104,8 @@ public:
     /** Disconnect core signals from GUI client */
     void unsubscribeFromCoreSignals();
 
+    bool isPrivacyModeActivated() const;
+
 protected:
     void changeEvent(QEvent *e) override;
     void closeEvent(QCloseEvent *event) override;
@@ -145,6 +149,8 @@ private:
     QAction* usedReceivingAddressesAction = nullptr;
     QAction* signMessageAction = nullptr;
     QAction* verifyMessageAction = nullptr;
+    QAction* m_load_psbt_action = nullptr;
+    QAction* m_load_psbt_clipboard_action = nullptr;
     QAction* aboutAction = nullptr;
     QAction* receiveCoinsMenuAction = nullptr;
     QAction* optionsAction = nullptr;
@@ -169,7 +175,9 @@ private:
     QMenu* m_open_wallet_menu{nullptr};
     QAction* m_close_wallet_action{nullptr};
     QAction* showCoinJoinHelpAction = nullptr;
+    QAction* m_close_all_wallets_action{nullptr};
     QAction* m_wallet_selector_action = nullptr;
+    QAction* m_mask_values_action{nullptr};
 
     QComboBox* m_wallet_selector = nullptr;
 
@@ -250,6 +258,7 @@ Q_SIGNALS:
     void consoleShown(RPCConsole* console);
     /** Restart handling */
     void requestedRestart(QStringList args);
+    void setPrivacy(bool privacy);
 
 public Q_SLOTS:
     /** Set number of connections shown in the UI */
@@ -259,7 +268,7 @@ public Q_SLOTS:
     /** Get restart command-line parameters and request restart */
     void handleRestart(QStringList args);
     /** Set number of blocks and last block date shown in the UI */
-    void setNumBlocks(int count, const QDateTime& blockDate, const QString& blockHash, double nVerificationProgress, bool headers);
+    void setNumBlocks(int count, const QDateTime& blockDate, const QString& blockHash, double nVerificationProgress, bool headers, SynchronizationState sync_state);
     /** Set additional data sync status shown in the UI */
     void setAdditionalDataSyncProgress(double nSyncProgress);
 
@@ -327,6 +336,8 @@ public Q_SLOTS:
     void gotoSignMessageTab(QString addr = "");
     /** Show Sign/Verify Message dialog and switch to verify message tab */
     void gotoVerifyMessageTab(QString addr = "");
+    /** Load Partially Signed Sparks Transaction from file or clipboard */
+    void gotoLoadPSBT(bool from_clipboard = false);
 
     /** Show open dialog */
     void openClicked();
@@ -368,7 +379,7 @@ public Q_SLOTS:
     /** Show window if hidden, unminimize when minimized, rise when obscured or show if hidden and fToggleHidden is true */
     void showNormalIfMinimized() { showNormalIfMinimized(false); }
     void showNormalIfMinimized(bool fToggleHidden);
-    /** Simply calls showNormalIfMinimized(true) for use in SLOT() macro */
+    /** Simply calls showNormalIfMinimized(true) */
     void toggleHidden();
 
     /** called by a timer to check if ShutdownRequested() has been set **/

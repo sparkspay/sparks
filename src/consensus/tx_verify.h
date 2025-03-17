@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2017 The Bitcoin Core developers
+// Copyright (c) 2017-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,7 +14,7 @@
 class CBlockIndex;
 class CCoinsViewCache;
 class CTransaction;
-class CValidationState;
+class TxValidationState;
 
 /** Transaction validation functions */
 
@@ -25,7 +25,7 @@ namespace Consensus {
  * @param[out] txfee Set to the transaction fee if successful.
  * Preconditions: tx.IsCoinBase() is false.
  */
-bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, CAmount& txfee);
+[[nodiscard]] bool CheckTxInputs(const CTransaction& tx, TxValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, CAmount& txfee);
 
 bool IsInputBanned(const Consensus::Params& consensusParams, const CTxIn& input, const CTxOut &prev);
 
@@ -56,7 +56,7 @@ unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& ma
  * @param[out] flags Script verification flags
  * @return Total signature operation count for a tx
  */
-unsigned int GetTransactionSigOpCount(const CTransaction& tx, const CCoinsViewCache& inputs, int flags);
+unsigned int GetTransactionSigOpCount(const CTransaction& tx, const CCoinsViewCache& inputs, uint32_t flags);
 
 /**
  * Check if transaction is final and can be included in a block with the

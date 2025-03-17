@@ -106,16 +106,8 @@
         <translation>Adres Listesini Dışarı Aktar</translation>
     </message>
     <message>
-        <source>Comma separated file (*.csv)</source>
-        <translation>Virgülle ayrılmış değerler dosyası (*.csv)</translation>
-    </message>
-    <message>
         <source>Exporting Failed</source>
         <translation>Dışarı aktarmada hata</translation>
-    </message>
-    <message>
-        <source>There was an error trying to save the address list to %1. Please try again.</source>
-        <translation>Adres listesinin %1 konumuna kaydedilmesi sırasında bir hata meydana geldi. Lütfen tekrar deneyin.</translation>
     </message>
 </context>
 <context>
@@ -215,14 +207,6 @@
         <translation>Cüzdan kilidini kaldır</translation>
     </message>
     <message>
-        <source>This operation needs your wallet passphrase to decrypt the wallet.</source>
-        <translation>Bu eylem, cüzdan şifresini çözmek için cüzdan parolanıza ihtiyaç duyuyor.</translation>
-    </message>
-    <message>
-        <source>Decrypt wallet</source>
-        <translation>Cüzdanın şifrelemesini aç</translation>
-    </message>
-    <message>
         <source>Change passphrase</source>
         <translation>Parola değiştir</translation>
     </message>
@@ -275,10 +259,6 @@
         <translation>Cüzdan şifresinin açılması için girilen parola yanlıştı.</translation>
     </message>
     <message>
-        <source>Wallet decryption failed</source>
-        <translation>Cüzdan şifresinin açılması başarısız oldu</translation>
-    </message>
-    <message>
         <source>Wallet passphrase was successfully changed.</source>
         <translation>Cüzdan parolası başarılı bir şekilde değiştirildi.</translation>
     </message>
@@ -307,22 +287,6 @@
 </context>
 <context>
     <name>BitcoinGUI</name>
-    <message>
-        <source>A fatal error occurred. Sparks Core can no longer continue safely and will quit.</source>
-        <translation>Kritik bir hata oluştu. Sparks Core artık güvenli şekilde devam edemez ve kapanacak.</translation>
-    </message>
-    <message>
-        <source>Sparks Core</source>
-        <translation>Sparks Core</translation>
-    </message>
-    <message>
-        <source>Wallet</source>
-        <translation>Cüzdan</translation>
-    </message>
-    <message>
-        <source>Node</source>
-        <translation>Düğüm</translation>
-    </message>
     <message>
         <source>&amp;Overview</source>
         <translation>&amp;Genel bakış</translation>
@@ -472,10 +436,6 @@
         <translation>&amp;Debug konsolu</translation>
     </message>
     <message>
-        <source>Open debugging console</source>
-        <translation>Debug konsolunu aç</translation>
-    </message>
-    <message>
         <source>&amp;Network Monitor</source>
         <translation>&amp;Ağ Monitörü</translation>
     </message>
@@ -534,10 +494,6 @@
     <message>
         <source>Open &amp;URI...</source>
         <translation>&amp;URI Aç...</translation>
-    </message>
-    <message>
-        <source>Open a sparks: URI or payment request</source>
-        <translation>Bir Sparks: bağlantısı ya da ödeme talebi aç</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>
@@ -739,7 +695,15 @@
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation>Cüzdan &lt;b&gt;şifrelenmiştir&lt;/b&gt; ve şu anda &lt;b&gt;kilitlidir&lt;/b&gt;</translation>
     </message>
-</context>
+    <message>
+        <source>Proxy is &lt;b&gt;enabled&lt;/b&gt;: %1</source>
+        <translation>Proxy &lt;b&gt;etkinleştirildi&lt;/b&gt;: %1</translation>
+    </message>
+    <message>
+        <source>Original message:</source>
+        <translation>Orijinal mesaj:</translation>
+    </message>
+    </context>
 <context>
     <name>CoinControlDialog</name>
     <message>
@@ -899,10 +863,6 @@
         <translation>Bazı koinler harcandığı için seçilmedi.</translation>
     </message>
     <message>
-        <source>Some coins were unselected because they do not have enough mixing rounds.</source>
-        <translation>Yeterli karıştırma turları olmadığından bazı koinler seçilmedi.</translation>
-    </message>
-    <message>
         <source>Show all coins</source>
         <translation>Tüm koinleri göster</translation>
     </message>
@@ -1010,6 +970,29 @@
     </message>
 </context>
 <context>
+    <name>GovernanceList</name>
+    <message>
+        <source>Form</source>
+        <translation>Form</translation>
+    </message>
+    <message>
+        <source>Filter List:</source>
+        <translation>Filtre Listesi:</translation>
+    </message>
+    <message>
+        <source>Proposal Count:</source>
+        <translation>Teklif Sayısı:</translation>
+    </message>
+    <message>
+        <source>Filter by Title</source>
+        <translation>Başlığa göre filtrele</translation>
+    </message>
+    <message>
+        <source>Proposal Info: %1</source>
+        <translation>Teklif Bilgisi: %1</translation>
+    </message>
+</context>
+<context>
     <name>HelpMessageDialog</name>
     <message>
         <source>version</source>
@@ -1093,14 +1076,6 @@
     <message>
         <source>Error</source>
         <translation>Hata</translation>
-    </message>
-    <message>
-        <source>%1 GB of free space available</source>
-        <translation>%1 GB boş alan mevcut</translation>
-    </message>
-    <message>
-        <source>(of %1 GB needed)</source>
-        <translation>(%1 GB gerekli)</translation>
     </message>
 </context>
 <context>
@@ -1288,20 +1263,27 @@
         <translation>URI aç</translation>
     </message>
     <message>
-        <source>Open payment request from URI or file</source>
-        <translation>Dosyadan veya URI'den ödeme talebi aç</translation>
-    </message>
-    <message>
         <source>URI:</source>
         <translation>URI:</translation>
     </message>
+</context>
+<context>
+    <name>OpenWalletActivity</name>
     <message>
-        <source>Select payment request file</source>
-        <translation>Ödeme talebi dosyasını seç</translation>
+        <source>Open wallet failed</source>
+        <translation>Cüzdan açılamadı</translation>
     </message>
     <message>
-        <source>Select payment request file to open</source>
-        <translation>Açılacak ödeme talebi dosyasını seç</translation>
+        <source>Open wallet warning</source>
+        <translation>Açık cüzdan uyarısı</translation>
+    </message>
+    <message>
+        <source>default wallet</source>
+        <translation>varsayılan cüzdan</translation>
+    </message>
+    <message>
+        <source>Opening Wallet &lt;b&gt;%1&lt;/b&gt;...</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt; Cüzdan Açılıyor...</translation>
     </message>
 </context>
 <context>
@@ -1403,6 +1385,10 @@
         <translation>Router'da otomatik olarak Sparks Core istemcisi portu aç. Bu sadece router'ınız UPnP destekliyorsa ve etkinse çalışır.</translation>
     </message>
     <message>
+        <source>Map port using NA&amp;T-PMP</source>
+        <translation>NA&amp;T-PMP kullanarak bağlantı noktasını eşleyin</translation>
+    </message>
+    <message>
         <source>Accept connections from outside.</source>
         <translation>Dışarıdan bağlantı kabul et</translation>
     </message>
@@ -1423,8 +1409,8 @@
         <translation>Bu ağ türünde eşlere ulaşmak için varsayılan SOCKS5 proxy'nin kullanılıp kullanılmadığını gösterir.</translation>
     </message>
     <message>
-        <source>Use separate SOCKS&amp;5 proxy to reach peers via Tor hidden services:</source>
-        <translation>Eşlere gizli Tor servisleri kullanarak ulaşmak için ayrı SOCKS&amp;5 vekil sunucusu kullan:</translation>
+        <source>Options set in this dialog are overridden by the command line or in the configuration file:</source>
+        <translation>Bu iletişim kutusunda ayarlanan seçenekler, komut satırı veya yapılandırma dosyası tarafından geçersiz kılınır:</translation>
     </message>
     <message>
         <source>Hide the icon from the system tray.</source>
@@ -1509,10 +1495,6 @@
     <message>
         <source>Tor</source>
         <translation>Tor</translation>
-    </message>
-    <message>
-        <source>Connect to the Sparks network through a separate SOCKS5 proxy for Tor hidden services.</source>
-        <translation>Sparks ağına gizli Tor servisleri için ayrı bir SOCKS5 vekil sunucusu aracılığıyla bağlan.</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
@@ -1829,6 +1811,9 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
+    <name>PSBTOperationsDialog</name>
+    </context>
+<context>
     <name>PaymentServer</name>
     <message>
         <source>Payment request error</source>
@@ -1847,10 +1832,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>'sparks://' geçerli bir URI değil. Bunun yerine 'sparks:' kullanın.</translation>
     </message>
     <message>
-        <source>Payment request fetch URL is invalid: %1</source>
-        <translation>Ödeme talebini alma URL'i geçersiz: %1</translation>
-    </message>
-    <message>
         <source>Invalid payment address %1</source>
         <translation>%1 ödeme adresi geçersizdir</translation>
     </message>
@@ -1862,77 +1843,9 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Payment request file handling</source>
         <translation>Ödeme talebi dosyası yönetimi</translation>
     </message>
-    <message>
-        <source>Payment request file cannot be read! This can be caused by an invalid payment request file.</source>
-        <translation>Ödeme talebi dosyası okunamıyor! Bunun nedeni geçersiz bir ödeme talebi dosyası olabilir.</translation>
-    </message>
-    <message>
-        <source>Payment request rejected</source>
-        <translation>Ödeme talebi reddedildi</translation>
-    </message>
-    <message>
-        <source>Payment request network doesn't match client network.</source>
-        <translation>Ödeme talebi ağı, istemci ağıyla eşleşmiyor.</translation>
-    </message>
-    <message>
-        <source>Payment request expired.</source>
-        <translation>Ödeme talebinin geçerlilik süresi bitti.</translation>
-    </message>
-    <message>
-        <source>Payment request is not initialized.</source>
-        <translation>Ödeme talebi başlatılmadı.</translation>
-    </message>
-    <message>
-        <source>Unverified payment requests to custom payment scripts are unsupported.</source>
-        <translation>Özel ödeme betiklerine, doğrulanmamış ödeme talepleri desteklenmez.</translation>
-    </message>
-    <message>
-        <source>Invalid payment request.</source>
-        <translation>Geçersiz ödeme talebi.</translation>
-    </message>
-    <message>
-        <source>Requested payment amount of %1 is too small (considered dust).</source>
-        <translation>Talep edilen %1 ödeme tutarı çok küçüktür (toz olarak kabul edilir).</translation>
-    </message>
-    <message>
-        <source>Refund from %1</source>
-        <translation>%1 adresinden geri ödeme</translation>
-    </message>
-    <message>
-        <source>Payment request %1 is too large (%2 bytes, allowed %3 bytes).</source>
-        <translation>%1 ödeme talebi çok büyük (%2 bayt, üst sınır %3 bayt).</translation>
-    </message>
-    <message>
-        <source>Error communicating with %1: %2</source>
-        <translation>%1 ile iletişimde hata: %2</translation>
-    </message>
-    <message>
-        <source>Payment request cannot be parsed!</source>
-        <translation>Ödeme talebi ayrıştırılamaz!</translation>
-    </message>
-    <message>
-        <source>Bad response from server %1</source>
-        <translation>%1 sunucusundan hatalı yanıt</translation>
-    </message>
-    <message>
-        <source>Network request error</source>
-        <translation>Ağ talebi hatası</translation>
-    </message>
-    <message>
-        <source>Payment acknowledged</source>
-        <translation>Ödeme kabul edildi</translation>
-    </message>
 </context>
 <context>
     <name>PeerTableModel</name>
-    <message>
-        <source>NodeId</source>
-        <translation>Düğüm ID'si</translation>
-    </message>
-    <message>
-        <source>Node/Service</source>
-        <translation>Düğüm/Servis</translation>
-    </message>
     <message>
         <source>User Agent</source>
         <translation>Kullanıcı Yazılımı</translation>
@@ -1948,6 +1861,56 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Received</source>
         <translation>Alındı</translation>
+    </message>
+    </context>
+<context>
+    <name>Proposal</name>
+    <message>
+        <source>Passing +%1</source>
+        <translation>+%1'i Geçiyor</translation>
+    </message>
+    <message>
+        <source>Needs additional %1 votes</source>
+        <translation>Ek %1 oy gerekiyor</translation>
+    </message>
+</context>
+<context>
+    <name>ProposalModel</name>
+    <message>
+        <source>Yes</source>
+        <translation>Evet</translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation>Hayır</translation>
+    </message>
+    <message>
+        <source>Hash</source>
+        <translation>Hash</translation>
+    </message>
+    <message>
+        <source>Title</source>
+        <translation>Başlık</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>Başlangıç</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>Son</translation>
+    </message>
+    <message>
+        <source>Amount</source>
+        <translation>Miktar</translation>
+    </message>
+    <message>
+        <source>Active</source>
+        <translation>Aktif</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>Durum</translation>
     </message>
 </context>
 <context>
@@ -1983,10 +1946,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Reset all settings changed in the GUI</source>
         <translation>Grafik arayüzde yapılan tüm seçenek değişikliklerini sıfırla</translation>
-    </message>
-    <message>
-        <source>Set SSL root certificates for payment request (default: -system-)</source>
-        <translation>Ödeme talebi için SSL kök sertifikalarını belirle (varsayılan: -system-)</translation>
     </message>
     <message>
         <source>Show splash screen on startup (default: %u)</source>
@@ -2107,34 +2066,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Error: %1</source>
         <translation>Hata: %1</translation>
     </message>
-    <message>
-        <source>Error: Failed to load application fonts.</source>
-        <translation>Hata: Uygulama yazı tipleri yüklenemedi.</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-family invalid. Valid values: %1.</source>
-        <translation>Hata: Belirtilen yazı tipi ailesi geçersiz. Geçerli değerler: %1.</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-weight-normal invalid. Valid range %1 to %2.</source>
-        <translation>Hata: Belirtilen yazı-tipi-genişliği-normal geçersiz. Geçerli aralık %1 ile %2.</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-weight-bold invalid. Valid range %1 to %2.</source>
-        <translation>Hata: Belirtilen yazı-tipi-genişliği-kalın geçersiz. Geçerli aralık %1 ile %2.</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-scale invalid. Valid range %1 to %2.</source>
-        <translation>Hata: Belirtilen yazı-tipi-ölçeği geçersiz. Geçerli aralık %1 ile %2.</translation>
-    </message>
-    <message>
-        <source>Error: Invalid -custom-css-dir path.</source>
-        <translation>Hata: Geçersiz -custom-css-dir yolu.</translation>
-    </message>
-    <message>
-        <source>Error: %1 CSS file(s) missing in -custom-css-dir path.</source>
-        <translation>Hata: %1 CSS dosya(larında)sında -custom-css-dir yolu eksik.</translation>
-    </message>
 </context>
 <context>
     <name>QRDialog</name>
@@ -2147,52 +2078,22 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>QR Kodu</translation>
     </message>
     <message>
-        <source>&amp;Save Image...</source>
-        <translation>Resmi ka&amp;ydet...</translation>
+        <source>Resulting URI too long, try to reduce the text for label / message.</source>
+        <translation>Sonuç URI'si çok uzun, etiket / mesaj metnini küçültmeye çalışın.</translation>
     </message>
     <message>
-        <source>Error creating QR Code.</source>
-        <translation>QR Kod oluşturma hatası.</translation>
-    </message>
-</context>
-<context>
-    <name>QRGeneralImageWidget</name>
-    <message>
-        <source>&amp;Save Image...</source>
-        <translation>Resmi ka&amp;ydet...</translation>
+        <source>Error encoding URI into QR Code.</source>
+        <translation>URI'yi QR Koduna kodlarken hata oluştu.</translation>
     </message>
     <message>
-        <source>&amp;Copy Image</source>
-        <translation>Resmi &amp;Kopyala</translation>
+        <source>QR code support not available.</source>
+        <translation>QR kod desteği mevcut değil.</translation>
     </message>
     <message>
         <source>Save QR Code</source>
         <translation>QR Kodu Kaydet</translation>
     </message>
-    <message>
-        <source>PNG Image (*.png)</source>
-        <translation>PNG Resim (*.png)</translation>
-    </message>
-</context>
-<context>
-    <name>QRImageWidget</name>
-    <message>
-        <source>&amp;Save Image...</source>
-        <translation>Resmi ka&amp;ydet...</translation>
-    </message>
-    <message>
-        <source>&amp;Copy Image</source>
-        <translation>Resmi &amp;Kopyala</translation>
-    </message>
-    <message>
-        <source>Save QR Code</source>
-        <translation>QR Kodu Kaydet</translation>
-    </message>
-    <message>
-        <source>PNG Image (*.png)</source>
-        <translation>PNG Resim (*.png)</translation>
-    </message>
-</context>
+    </context>
 <context>
     <name>RPCConsole</name>
     <message>
@@ -2256,10 +2157,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Blok zinciri</translation>
     </message>
     <message>
-        <source>Number of Masternodes</source>
-        <translation>Ana düğüm sayısı</translation>
-    </message>
-    <message>
         <source>Memory Pool</source>
         <translation>Bellek Alanı</translation>
     </message>
@@ -2308,10 +2205,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Ayrıntılı bilgi görmek için bir eş seçin.</translation>
     </message>
     <message>
-        <source>Whitelisted</source>
-        <translation>Beyaz listedekiler</translation>
-    </message>
-    <message>
         <source>Direction</source>
         <translation>Yön</translation>
     </message>
@@ -2346,10 +2239,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>-rescan=2: Rescan the block chain for missing wallet transactions starting from genesis block.</source>
         <translation>-rescan=2: Cüzdana ait görünmeyen işlemleri bulmak için blok zincirini genesis blokundan itibaren tarama.</translation>
-    </message>
-    <message>
-        <source>Wallet Path</source>
-        <translation>Cüzdan Yolu</translation>
     </message>
     <message>
         <source>User Agent</source>
@@ -2440,42 +2329,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>&amp;Cüzdan Tamiri</translation>
     </message>
     <message>
-        <source>Salvage wallet</source>
-        <translation>Cüzdanı kurtar</translation>
-    </message>
-    <message>
-        <source>Recover transactions 1</source>
-        <translation>İşlemleri geri al 1</translation>
-    </message>
-    <message>
-        <source>Recover transactions 2</source>
-        <translation>İşlemleri geri al 2</translation>
-    </message>
-    <message>
-        <source>Upgrade wallet format</source>
-        <translation>Cüzdan biçimini yükselt</translation>
-    </message>
-    <message>
-        <source>The buttons below will restart the wallet with command-line options to repair the wallet, fix issues with corrupt blockhain files or missing/obsolete transactions.</source>
-        <translation>Aşağıdaki düğmeler cüzdanı tamir etmek, bozuk blok zinciri dosyalarıyla veya kayıp/geçersiz işlemlerle ilgili sorunları çözmek için cüzdanı komut istemi seçenekleri ile yeniden başlatacak.</translation>
-    </message>
-    <message>
-        <source>-salvagewallet: Attempt to recover private keys from a corrupt wallet.dat.</source>
-        <translation>-salvagewallet: Bozuk bir wallet.dat dosyasında özel anahtarları kurtarma denemesi.</translation>
-    </message>
-    <message>
-        <source>-zapwallettxes=1: Recover transactions from blockchain (keep meta-data, e.g. account owner).</source>
-        <translation>-zapwallettxes=1: Blok zincirinden işlemleri kurtarma (meta-veri tutulur, ör. hesap sahibi).</translation>
-    </message>
-    <message>
-        <source>-zapwallettxes=2: Recover transactions from blockchain (drop meta-data).</source>
-        <translation>-zapwallettxes=2: Blok zincirinden işlemleri kurtarma (meta-veri atılır).</translation>
-    </message>
-    <message>
-        <source>-upgradewallet: Upgrade wallet to latest format on startup. (Note: this is NOT an update of the wallet itself!)</source>
-        <translation>-upgradewallet: Açılışta cüzdanı en son biçime yükselt. (Not: Bu cüzdanın kendisinin güncellenmesi DEĞİLDİR!)</translation>
-    </message>
-    <message>
         <source>Wallet repair options.</source>
         <translation>Cüzdan tamir seçenekleri.</translation>
     </message>
@@ -2560,10 +2413,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>"%1" cüzdanı kullanılarak komut yürütülüyor</translation>
     </message>
     <message>
-        <source>(node id: %1)</source>
-        <translation>(düğüm kimliği: %1)</translation>
-    </message>
-    <message>
         <source>via %1</source>
         <translation>%1 vasıtasıyla</translation>
     </message>
@@ -2578,14 +2427,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Outbound</source>
         <translation>Giden</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation>Evet</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>Hayır</translation>
     </message>
     <message>
         <source>Regular</source>
@@ -2698,10 +2539,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
 <context>
     <name>ReceiveRequestDialog</name>
     <message>
-        <source>QR Code</source>
-        <translation>QR Kodu</translation>
-    </message>
-    <message>
         <source>Copy &amp;URI</source>
         <translation>&amp;URI'yi kopyala</translation>
     </message>
@@ -2720,38 +2557,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Payment information</source>
         <translation>Ödeme bilgisi</translation>
-    </message>
-    <message>
-        <source>URI</source>
-        <translation>URI</translation>
-    </message>
-    <message>
-        <source>Address</source>
-        <translation>Adres</translation>
-    </message>
-    <message>
-        <source>Amount</source>
-        <translation>Tutar</translation>
-    </message>
-    <message>
-        <source>Label</source>
-        <translation>Etiket</translation>
-    </message>
-    <message>
-        <source>Message</source>
-        <translation>İleti</translation>
-    </message>
-    <message>
-        <source>Wallet</source>
-        <translation>Cüzdan</translation>
-    </message>
-    <message>
-        <source>Resulting URI too long, try to reduce the text for label / message.</source>
-        <translation>Sonuç URI çok uzun, etiket ya da ileti metnini kısaltmayı deneyiniz.</translation>
-    </message>
-    <message>
-        <source>Error encoding URI into QR Code.</source>
-        <translation>URI'nin QR koduna kodlanmasında hata oluştu.</translation>
     </message>
 </context>
 <context>
@@ -2864,10 +2669,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Eğer özel ücret 1000 duff olarak belirlendiyse ve işlem sadece 250 bayt ise "kilobayt başına" ücret olarak sadece 250 duff ödersiniz,&lt;br /&gt;bu da "en az" 1000 duff öder. Bir kilobayttan büyük işlemler için ikisi de kilobayt başına ödeme yapar.</translation>
     </message>
     <message>
-        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
-        <translation>Bloklardaki alandan daha düşük işlem hacmi var olduğu sürece sadece minimum ücreti ödemek yeterli olur.&lt;br /&gt;Ama ağın işleyebileceğinden daha fazla sparks işlemi talebi olursa, bunun işlemlerin asla teyit edilememesi gibi bir sonucu olabileceğini unutmayın.</translation>
-    </message>
-    <message>
         <source>per kilobyte</source>
         <translation>kilobayt başı</translation>
     </message>
@@ -2882,10 +2683,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Hide</source>
         <translation>Gizle</translation>
-    </message>
-    <message>
-        <source>(read the tooltip)</source>
-        <translation>(bilgi balonunu oku)</translation>
     </message>
     <message>
         <source>Recommended:</source>
@@ -2958,10 +2755,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>%1 (%2 blocks)</source>
         <translation>%1 (%2 blocks)</translation>
-    </message>
-    <message>
-        <source>from wallet %1</source>
-        <translation>%1 cüzdanından</translation>
     </message>
     <message>
         <source>using</source>
@@ -3058,14 +2851,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>A fee higher than %1 is considered an absurdly high fee.</source>
         <translation>%1 tutarından yüksek bir ücret saçma derecede yüksek bir ücret olarak kabul edilir.</translation>
-    </message>
-    <message>
-        <source>Payment request expired.</source>
-        <translation>Ödeme talebinin geçerlilik süresi bitti.</translation>
-    </message>
-    <message>
-        <source>Pay only the required fee of %1</source>
-        <translation>Sadece asgari ücret olan %1 tutarını öde</translation>
     </message>
     <message numerus="yes">
         <source>Estimated to begin confirmation within %n block(s).</source>
@@ -3173,17 +2958,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Memo:</source>
         <translation>Not:</translation>
-    </message>
-    <message>
-        <source>Enter a label for this address to add it to your address book</source>
-        <translation>Adres defterinize eklemek için bu adrese bir etiket giriniz</translation>
-    </message>
-</context>
-<context>
-    <name>SendConfirmationDialog</name>
-    <message>
-        <source>Yes</source>
-        <translation>Evet</translation>
     </message>
 </context>
 <context>
@@ -3349,13 +3123,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
-    <name>SplashScreen</name>
-    <message>
-        <source>[testnet]</source>
-        <translation>[testnet]</translation>
-    </message>
-</context>
-<context>
     <name>TrafficGraphWidget</name>
     <message>
         <source>KB/s</source>
@@ -3511,10 +3278,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Transaction total size</source>
         <translation>İşlemin toplam boyutu</translation>
-    </message>
-    <message>
-        <source>Merchant</source>
-        <translation>Tüccar</translation>
     </message>
     <message>
         <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to "not accepted" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
@@ -3822,10 +3585,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>İşlem Tarihçesini Dışarı Aktar</translation>
     </message>
     <message>
-        <source>Comma separated file (*.csv)</source>
-        <translation>Virgülle ayrılmış değerler dosyası (*.csv)</translation>
-    </message>
-    <message>
         <source>Confirmed</source>
         <translation>Doğrulandı</translation>
     </message>
@@ -3890,12 +3649,23 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
-    <name>WalletFrame</name>
+    <name>WalletController</name>
     <message>
-        <source>No wallet has been loaded.</source>
-        <translation>Hiçbir cüzdan yüklenmedi.</translation>
+        <source>Close wallet</source>
+        <translation>Cüzdanı kapat</translation>
     </message>
-</context>
+    <message>
+        <source>Are you sure you wish to close the wallet &lt;i&gt;%1&lt;/i&gt;?</source>
+        <translation>&lt;i&gt;%1&lt;/i&gt; cüzdanını kapatmak istediğinizden emin misiniz?</translation>
+    </message>
+    <message>
+        <source>Closing the wallet for too long can result in having to resync the entire chain if pruning is enabled.</source>
+        <translation>Budama etkinse cüzdanı çok uzun süre kapatmak tüm zinciri yeniden senkronize etmek zorunda kalmanıza neden olabilir.</translation>
+    </message>
+    </context>
+<context>
+    <name>WalletFrame</name>
+    </context>
 <context>
     <name>WalletModel</name>
     <message>
@@ -3920,10 +3690,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Backup Wallet</source>
         <translation>Cüzdanı Yedekle</translation>
-    </message>
-    <message>
-        <source>Wallet Data (*.dat)</source>
-        <translation>Cüzdan Verileri (*.dat)</translation>
     </message>
     <message>
         <source>Backup Failed</source>
@@ -3957,20 +3723,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Bu yayın öncesi bir deneme sürümüdür - tüm riski siz üstlenmiş olursunuz - bitcoin oluşturmak ya da ticari uygulamalar için kullanmayınız</translation>
     </message>
     <message>
-        <source>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</source>
-        <translation>Uyarı: şebeke tamamen mutabık değil gibi görünüyor! Bazı madenciler sorun yaşıyor gibi görünüyor.</translation>
-    </message>
-    <message>
         <source>Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.</source>
         <translation>Uyarı: eşlerimizle tamamen mutabık değiliz gibi görünüyor! Güncelleme yapmanız gerekebilir ya da diğer düğümlerin güncelleme yapmaları gerekebilir.</translation>
     </message>
     <message>
         <source>Already have that input.</source>
         <translation>Bu girdi zaten var.</translation>
-    </message>
-    <message>
-        <source>Cannot downgrade wallet</source>
-        <translation>Cüzdan eski biçime geri alınamaz</translation>
     </message>
     <message>
         <source>Collateral not valid.</source>
@@ -4117,20 +3875,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>-minsporkkeys ile belirtilmiş geçersiz minimum spork imzacısı sayısı</translation>
     </message>
     <message>
-        <source>Keypool ran out, please call keypoolrefill first</source>
-        <translation>Keypool tükendi, lütfen önce keypoolrefill'i çağırın</translation>
-    </message>
-    <message>
         <source>Loading banlist...</source>
         <translation>Yasaklama listesi yükleniyor...</translation>
-    </message>
-    <message>
-        <source>Loading fulfilled requests cache...</source>
-        <translation>Tamamlanan talepler önbelleği yükleniyor...</translation>
-    </message>
-    <message>
-        <source>Loading masternode cache...</source>
-        <translation>Ana düğüm önbelleği yükleniyor...</translation>
     </message>
     <message>
         <source>Lock is already in place.</source>
@@ -4253,10 +3999,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Budama: son cüzdan eşleşmesi budanmış verilerin ötesine gitmektedir. -reindex kullanmanız gerekmektedir (Budanmış düğüm ise tüm blok zincirini tekrar indirmeniz gerekir.)</translation>
     </message>
     <message>
-        <source>Rescans are not possible in pruned mode. You will need to use -reindex which will download the whole blockchain again.</source>
-        <translation>Tekrar taramalar budanmış kipte mümkün değildir. Tüm blok zincirini tekrar indirecek olan -reindex seçeneğini kullanmanız gerekecektir.</translation>
-    </message>
-    <message>
         <source>The block database contains a block which appears to be from the future. This may be due to your computer's date and time being set incorrectly. Only rebuild the block database if you are sure that your computer's date and time are correct</source>
         <translation>Blok veritabanı gelecekten gibi görünen bir blok içermektedir. Bu, bilgisayarınızın saat ve tarihinin yanlış ayarlanmış olmasından kaynaklanabilir. Blok veritabanını sadece bilgisayarınızın tarih ve saatinin doğru olduğundan eminseniz yeniden derleyin.</translation>
     </message>
@@ -4317,8 +4059,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Evo veritabanını yükseltirken hata oluştu</translation>
     </message>
     <message>
-        <source>Error: A fatal internal error occurred, see debug.log for details</source>
-        <translation>Hata: Ölümcül dahili bir hata meydana geldi, ayrıntılar için debug.log dosyasına bakınız</translation>
+        <source>Error: Disk space is low for %s</source>
+        <translation>Hata: %s için disk alanı yetersiz</translation>
     </message>
     <message>
         <source>Error: failed to add socket to epollfd (epoll_ctl returned error %s)</source>
@@ -4375,26 +4117,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>It has been replaced by -disablegovernance.</source>
         <translation>-disablegovernance ile değiştirildi.</translation>
-    </message>
-    <message>
-        <source>Its replacement -disablegovernance has been forced instead.</source>
-        <translation>-disablegovernance bunun yerine zorlandı.</translation>
-    </message>
-    <message>
-        <source>Loading block index...</source>
-        <translation>Blok indeksi yükleniyor...</translation>
-    </message>
-    <message>
-        <source>Loading governance cache...</source>
-        <translation>Yönetim önbelleği yükleniyor...</translation>
-    </message>
-    <message>
-        <source>Loading sporks cache...</source>
-        <translation>Spork önbelleği yükleniyor...</translation>
-    </message>
-    <message>
-        <source>Loading wallet... (%3.2f %%)</source>
-        <translation>Cüzdan yükleniyor... (%3.2f %%)</translation>
     </message>
     <message>
         <source>Loading wallet...</source>
@@ -4517,10 +4239,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Cüzdanın tekrar yazılması gerekiyordu: işlemi tamamlamak için %s programını yeniden başlatınız</translation>
     </message>
     <message>
-        <source>Warning: unknown new rules activated (versionbit %i)</source>
-        <translation>Uyarı: bilinmeyen yeni kurallar etkinleştirilmiştir (versionbit %i)</translation>
-    </message>
-    <message>
         <source>Wasn't able to create wallet backup folder %s!</source>
         <translation>Cüzdan yedeği klasörü %s oluşturulamadı!</translation>
     </message>
@@ -4597,24 +4315,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>İşlem ücret tahminleri mevcut olmadığında ödeyebileceğiniz işlem ücreti budur.</translation>
     </message>
     <message>
-        <source>This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit %s and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard.</source>
-        <translation>Bu ürün OpenSSL Projesi tarafından geliştirilen OpenSSL araç takımınında kullanılmak üzere yazılan yazılımları %s Eric Young  tarafından yazılmış şifreleme yazılımını ve Thomas Bernard tarafından yazılmış UPnP yazılımını içerir.</translation>
-    </message>
-    <message>
         <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
         <translation>Bloklar tekrarlanamıyor. -Reindex-chainstate kullanarak veritabanını yeniden kurmanız gerekecek.</translation>
     </message>
     <message>
         <source>Warning: Wallet file corrupt, data salvaged! Original %s saved as %s in %s; if your balance or transactions are incorrect you should restore from a backup.</source>
         <translation>Uyarı: wallet.dat bozuk, veriler geri kazanıldı! Özgün %s, %s olarak %s klasörüne kaydedildi; bakiyeniz ya da işlemleriniz yanlışsa bir yedeklemeden tekrar yüklemeniz gerekir.</translation>
-    </message>
-    <message>
-        <source>%d of last 100 blocks have unexpected version</source>
-        <translation>Son 100 bloğun %d'si beklenmedik versiyona sahip</translation>
-    </message>
-    <message>
-        <source>%s corrupt, salvage failed</source>
-        <translation>%s bozuk, geri kazanım başarısız oldu</translation>
     </message>
     <message>
         <source>%s is not a valid backup folder!</source>
@@ -4667,10 +4373,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Error loading %s: You can't disable HD on an already existing HD wallet</source>
         <translation>%s yüklenirken hata: Zaten var olan bir HD cüzdanda HD'yi kapatamazsınız.</translation>
-    </message>
-    <message>
-        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
-        <translation>%s cüzdan yüklenirken hata oluştu. Bu dosya adı zaten mevcut.</translation>
     </message>
     <message>
         <source>Error upgrading chainstate database</source>
@@ -4751,6 +4453,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Last queue was created too recently.</source>
         <translation>Son sıra çok yakın zamanda oluşturuldu.</translation>
+    </message>
+    <message>
+        <source>%s corrupt. Try using the wallet tool sparks-wallet to salvage or restoring a backup.</source>
+        <translation>%s bozuk. Bir yedeği kurtarmak veya geri yüklemek için cüzdan aracı sparks-wallet'ı kullanmayı deneyin.</translation>
     </message>
     <message>
         <source>Last successful action was too recent.</source>
@@ -4863,10 +4569,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Your entries added successfully.</source>
         <translation>Girdileriniz başarıyla eklendi.</translation>
-    </message>
-    <message>
-        <source>Zapping all transactions from wallet...</source>
-        <translation>Cüzdandaki tüm muameleler kaldırılıyor...</translation>
     </message>
 </context>
 </TS>

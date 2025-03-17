@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,15 +9,22 @@
 #include <llmq/dkgsession.h>
 #include <bls/bls.h>
 #include <bls/bls_worker.h>
+#include <net_types.h>
 
-class UniValue;
+#include <map>
+#include <memory>
+
 class CBlockIndex;
+class CChainState;
+class CDBWrapper;
 class CDKGDebugManager;
 class CSporkManager;
+class PeerManager;
+
+class UniValue;
 
 namespace llmq
 {
-class CQuorumManager;
 
 class CDKGSessionManager
 {
@@ -25,16 +32,18 @@ class CDKGSessionManager
 
 private:
     std::unique_ptr<CDBWrapper> db{nullptr};
+
     CBLSWorker& blsWorker;
+    CChainState& m_chainstate;
     CConnman& connman;
-    CSporkManager& spork_manager;
     CDKGDebugManager& dkgDebugManager;
     CQuorumBlockProcessor& quorumBlockProcessor;
+    CSporkManager& spork_manager;
 
     //TODO name struct instead of std::pair
     std::map<std::pair<Consensus::LLMQType, int>, CDKGSessionHandler> dkgSessionHandlers;
 
-    mutable CCriticalSection contributionsCacheCs;
+    mutable RecursiveMutex contributionsCacheCs;
     struct ContributionsCacheKey {
         Consensus::LLMQType llmqType;
         uint256 quorumHash;
@@ -54,7 +63,9 @@ private:
     mutable std::map<ContributionsCacheKey, ContributionsCacheEntry> contributionsCache GUARDED_BY(contributionsCacheCs);
 
 public:
-    CDKGSessionManager(CConnman& _connman, CBLSWorker& _blsWorker, CDKGDebugManager& _dkgDebugManager, CQuorumBlockProcessor& _quorumBlockProcessor, CSporkManager& sporkManager, bool unitTests, bool fWipe);
+    CDKGSessionManager(CBLSWorker& _blsWorker, CChainState& chainstate, CConnman& _connman, CDKGDebugManager& _dkgDebugManager,
+                       CQuorumBlockProcessor& _quorumBlockProcessor, CSporkManager& sporkManager,
+                       bool unitTests, bool fWipe);
     ~CDKGSessionManager() = default;
 
     void StartThreads();
@@ -62,7 +73,7 @@ public:
 
     void UpdatedBlockTip(const CBlockIndex *pindexNew, bool fInitialDownload);
 
-    void ProcessMessage(CNode& pfrom, const CQuorumManager& quorum_manager, const std::string& msg_type, CDataStream& vRecv);
+    PeerMsgRet ProcessMessage(CNode& pfrom, PeerManager* peerman, const std::string& msg_type, CDataStream& vRecv);
     bool AlreadyHave(const CInv& inv) const;
     bool GetContribution(const uint256& hash, CDKGContribution& ret) const;
     bool GetComplaint(const uint256& hash, CDKGComplaint& ret) const;
@@ -72,7 +83,7 @@ public:
     // Contributions are written while in the DKG
     void WriteVerifiedVvecContribution(Consensus::LLMQType llmqType, const CBlockIndex* pQuorumBaseBlockIndex, const uint256& proTxHash, const BLSVerificationVectorPtr& vvec);
     void WriteVerifiedSkContribution(Consensus::LLMQType llmqType, const CBlockIndex* pQuorumBaseBlockIndex, const uint256& proTxHash, const CBLSSecretKey& skContribution);
-    bool GetVerifiedContributions(Consensus::LLMQType llmqType, const CBlockIndex* pQuorumBaseBlockIndex, const std::vector<bool>& validMembers, std::vector<uint16_t>& memberIndexesRet, std::vector<BLSVerificationVectorPtr>& vvecsRet, BLSSecretKeyVector& skContributionsRet) const;
+    bool GetVerifiedContributions(Consensus::LLMQType llmqType, const CBlockIndex* pQuorumBaseBlockIndex, const std::vector<bool>& validMembers, std::vector<uint16_t>& memberIndexesRet, std::vector<BLSVerificationVectorPtr>& vvecsRet, std::vector<CBLSSecretKey>& skContributionsRet) const;
     /// Write encrypted (unverified) DKG contributions for the member with the given proTxHash to the llmqDb
     void WriteEncryptedContributions(Consensus::LLMQType llmqType, const CBlockIndex* pQuorumBaseBlockIndex, const uint256& proTxHash, const CBLSIESMultiRecipientObjects<CBLSSecretKey>& contributions);
     /// Read encrypted (unverified) DKG contributions for the member with the given proTxHash from the llmqDb

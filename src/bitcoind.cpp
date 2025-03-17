@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2018 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,30 +14,22 @@
 #include <init.h>
 #include <interfaces/chain.h>
 #include <node/context.h>
+#include <node/ui_interface.h>
 #include <noui.h>
 #include <shutdown.h>
-#include <ui_interface.h>
 #include <util/check.h>
 #include <util/system.h>
 #include <util/strencodings.h>
 #include <util/threadnames.h>
 #include <util/translation.h>
 #include <stacktraces.h>
+#include <util/url.h>
 
 #include <functional>
-#include <optional>
 #include <stdio.h>
 
 const std::function<std::string(const char*)> G_TRANSLATION_FUN = nullptr;
-
-static void WaitForShutdown(NodeContext& node)
-{
-    while (!ShutdownRequested())
-    {
-        UninterruptibleSleep(std::chrono::milliseconds{200});
-    }
-    Interrupt(node);
-}
+UrlDecodeFn* const URL_DECODE = urlDecode;
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -66,13 +58,13 @@ static bool AppInit(int argc, char* argv[])
 
     // Process help and version before taking care about datadir
     if (HelpRequested(args) || args.IsArgSet("-version")) {
-        std::string strUsage = PACKAGE_NAME " Daemon version " + FormatFullVersion() + "\n";
+        std::string strUsage = PACKAGE_NAME " version " + FormatFullVersion() + "\n";
 
-        if (args.IsArgSet("-version")) {
-            strUsage += FormatParagraph(LicenseInfo()) + "\n";
-        } else {
-            strUsage += "\nUsage:  sparksd [options]                     Start " PACKAGE_NAME " Daemon\n";
-            strUsage += "\n" + args.GetHelpMessage();
+        if (!args.IsArgSet("-version")) {
+            strUsage += FormatParagraph(LicenseInfo()) + "\n"
+                "\nUsage:  sparksd [options]                     Start " PACKAGE_NAME "\n"
+                "\n";
+            strUsage += args.GetHelpMessage();
         }
 
         tfm::format(std::cout, "%s", strUsage);
@@ -88,7 +80,7 @@ static bool AppInit(int argc, char* argv[])
         if (!args.ReadConfigFiles(error, true)) {
             return InitError(Untranslated(strprintf("Error reading configuration file: %s\n", error)));
         }
-        // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
+        // Check for -chain, -testnet or -regtest parameter (Params() calls are only valid after this clause)
         try {
             SelectParams(args.GetChainName());
         } catch (const std::exception& e) {
@@ -131,7 +123,7 @@ static bool AppInit(int argc, char* argv[])
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-            tfm::format(std::cout, PACKAGE_NAME " daemon starting\n");
+            tfm::format(std::cout, PACKAGE_NAME " starting\n");
 
             // Daemonize
             if (daemon(1, 0)) { // don't chdir (1), do close FDs (0)
@@ -155,18 +147,16 @@ static bool AppInit(int argc, char* argv[])
         PrintExceptionContinue(std::current_exception(), "AppInit()");
     }
 
-    if (!fRet)
-    {
-        Interrupt(node);
-    } else {
-        WaitForShutdown(node);
+    if (fRet) {
+        WaitForShutdown();
     }
+    Interrupt(node);
     Shutdown(node);
 
     return fRet;
 }
 
-int main(int argc, char* argv[])
+MAIN_FUNCTION
 {
     RegisterPrettyTerminateHander();
     RegisterPrettySignalHandlers();

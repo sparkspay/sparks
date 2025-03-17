@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,11 +10,12 @@
 #include <evo/deterministicmns.h>
 #include <governance/governance.h>
 #include <governance/validators.h>
-#include <llmq/utils.h>
 #include <masternode/meta.h>
 #include <masternode/sync.h>
 #include <messagesigner.h>
 #include <net.h>
+#include <timedata.h>
+#include <util/time.h>
 #include <validation.h>
 #include <validationinterface.h>
 
@@ -22,15 +23,8 @@
 
 CGovernanceObject::CGovernanceObject() :
     cs(),
-    nObjectType(GOVERNANCE_OBJECT_UNKNOWN),
-    nHashParent(),
-    nRevision(0),
-    nTime(0),
+    m_obj{},
     nDeletionTime(0),
-    nCollateralHash(),
-    vchData(),
-    masternodeOutpoint(),
-    vchSig(),
     fCachedLocalValidity(false),
     strLocalValidityError(),
     fCachedFunding(false),
@@ -49,15 +43,8 @@ CGovernanceObject::CGovernanceObject() :
 
 CGovernanceObject::CGovernanceObject(const uint256& nHashParentIn, int nRevisionIn, int64_t nTimeIn, const uint256& nCollateralHashIn, const std::string& strDataHexIn) :
     cs(),
-    nObjectType(GOVERNANCE_OBJECT_UNKNOWN),
-    nHashParent(nHashParentIn),
-    nRevision(nRevisionIn),
-    nTime(nTimeIn),
+    m_obj{nHashParentIn, nRevisionIn, nTimeIn, nCollateralHashIn, strDataHexIn},
     nDeletionTime(0),
-    nCollateralHash(nCollateralHashIn),
-    vchData(ParseHex(strDataHexIn)),
-    masternodeOutpoint(),
-    vchSig(),
     fCachedLocalValidity(false),
     strLocalValidityError(),
     fCachedFunding(false),
@@ -76,15 +63,8 @@ CGovernanceObject::CGovernanceObject(const uint256& nHashParentIn, int nRevision
 
 CGovernanceObject::CGovernanceObject(const CGovernanceObject& other) :
     cs(),
-    nObjectType(other.nObjectType),
-    nHashParent(other.nHashParent),
-    nRevision(other.nRevision),
-    nTime(other.nTime),
+    m_obj{other.m_obj},
     nDeletionTime(other.nDeletionTime),
-    nCollateralHash(other.nCollateralHash),
-    vchData(other.vchData),
-    masternodeOutpoint(other.masternodeOutpoint),
-    vchSig(other.vchSig),
     fCachedLocalValidity(other.fCachedLocalValidity),
     strLocalValidityError(other.strLocalValidityError),
     fCachedFunding(other.fCachedFunding),
@@ -184,7 +164,7 @@ bool CGovernanceObject::ProcessVote(const CGovernanceVote& vote, CGovernanceExce
         nVoteTimeUpdate = nNow;
     }
 
-    bool onlyVotingKeyAllowed = nObjectType == GOVERNANCE_OBJECT_PROPOSAL && vote.GetSignal() == VOTE_SIGNAL_FUNDING;
+    bool onlyVotingKeyAllowed = m_obj.type == GovernanceObject::PROPOSAL && vote.GetSignal() == VOTE_SIGNAL_FUNDING;
 
     // Finally check that the vote is actually valid (done last because of cost of signature verification)
     if (!vote.IsValid(onlyVotingKeyAllowed)) {
@@ -199,7 +179,7 @@ bool CGovernanceObject::ProcessVote(const CGovernanceVote& vote, CGovernanceExce
         return false;
     }
 
-    if (!mmetaman.AddGovernanceVote(dmn->proTxHash, vote.GetParentHash())) {
+    if (!mmetaman->AddGovernanceVote(dmn->proTxHash, vote.GetParentHash())) {
         std::ostringstream ostr;
         ostr << "CGovernanceObject::ProcessVote -- Unable to add governance vote"
              << ", MN outpoint = " << vote.GetMasternodeOutpoint().ToStringShort()
@@ -245,7 +225,7 @@ std::set<uint256> CGovernanceObject::RemoveInvalidVotes(const COutPoint& mnOutpo
         return {};
     }
 
-    auto removedVotes = fileVotes.RemoveInvalidVotes(mnOutpoint, nObjectType == GOVERNANCE_OBJECT_PROPOSAL);
+    auto removedVotes = fileVotes.RemoveInvalidVotes(mnOutpoint, m_obj.type == GovernanceObject::PROPOSAL);
     if (removedVotes.empty()) {
         return {};
     }
@@ -276,18 +256,13 @@ std::set<uint256> CGovernanceObject::RemoveInvalidVotes(const COutPoint& mnOutpo
 
 uint256 CGovernanceObject::GetHash() const
 {
-    // Note: doesn't match serialization
+    return m_obj.GetHash();
+}
 
-    // CREATE HASH OF ALL IMPORTANT PIECES OF DATA
-
+uint256 CGovernanceObject::GetDataHash() const
+{
     CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-    ss << nHashParent;
-    ss << nRevision;
-    ss << nTime;
     ss << GetDataAsHexString();
-    ss << masternodeOutpoint << uint8_t{} << 0xffffffff; // adding dummy values here to match old hashing
-    ss << vchSig;
-    // fee_tx is left out on purpose
 
     return ss.GetHash();
 }
@@ -299,26 +274,24 @@ uint256 CGovernanceObject::GetSignatureHash() const
 
 void CGovernanceObject::SetMasternodeOutpoint(const COutPoint& outpoint)
 {
-    masternodeOutpoint = outpoint;
+    m_obj.masternodeOutpoint = outpoint;
 }
 
 bool CGovernanceObject::Sign(const CBLSSecretKey& key)
 {
-    CBLSSignature sig = key.Sign(GetSignatureHash());
+    CBLSSignature sig = key.Sign(GetSignatureHash(), false);
     if (!sig.IsValid()) {
         return false;
     }
-    vchSig = sig.ToByteVector();
+    m_obj.vchSig = sig.ToByteVector(false);
     return true;
 }
 
 bool CGovernanceObject::CheckSignature(const CBLSPublicKey& pubKey) const
 {
     CBLSSignature sig;
-    const auto pindex = llmq::utils::V19ActivationIndex(::ChainActive().Tip());
-    bool is_bls_legacy_scheme = pindex == nullptr || nTime < pindex->pprev->nTime;
-    sig.SetByteVector(vchSig, is_bls_legacy_scheme);
-    if (!sig.VerifyInsecure(pubKey, GetSignatureHash(), is_bls_legacy_scheme)) {
+    sig.SetByteVector(m_obj.vchSig, false);
+    if (!sig.VerifyInsecure(pubKey, GetSignatureHash(), false)) {
         LogPrintf("CGovernanceObject::CheckSignature -- VerifyInsecure() failed\n");
         return false;
     }
@@ -333,7 +306,7 @@ bool CGovernanceObject::CheckSignature(const CBLSPublicKey& pubKey) const
 UniValue CGovernanceObject::GetJSONObject() const
 {
     UniValue obj(UniValue::VOBJ);
-    if (vchData.empty()) {
+    if (m_obj.vchData.empty()) {
         return obj;
     }
 
@@ -361,7 +334,7 @@ UniValue CGovernanceObject::GetJSONObject() const
 
 void CGovernanceObject::LoadData()
 {
-    if (vchData.empty()) {
+    if (m_obj.vchData.empty()) {
         return;
     }
 
@@ -371,7 +344,7 @@ void CGovernanceObject::LoadData()
         GetData(objResult);
         LogPrint(BCLog::GOBJECT, "CGovernanceObject::LoadData -- GetDataAsPlainString = %s\n", GetDataAsPlainString());
         UniValue obj = GetJSONObject();
-        nObjectType = obj["type"].get_int();
+        m_obj.type = GovernanceObject(obj["type"].get_int());
     } catch (std::exception& e) {
         fUnparsable = true;
         std::ostringstream ostr;
@@ -409,36 +382,19 @@ void CGovernanceObject::GetData(UniValue& objResult) const
 *   --------------------------------------------------------
 *
 */
-
 std::string CGovernanceObject::GetDataAsHexString() const
 {
-    return HexStr(vchData);
+    return m_obj.GetDataAsHexString();
 }
 
 std::string CGovernanceObject::GetDataAsPlainString() const
 {
-    return std::string(vchData.begin(), vchData.end());
+    return m_obj.GetDataAsPlainString();
 }
 
 UniValue CGovernanceObject::ToJson() const
 {
-    UniValue obj(UniValue::VOBJ);
-    obj.pushKV("objectHash", GetHash().ToString());
-    obj.pushKV("parentHash", nHashParent.ToString());
-    obj.pushKV("collateralHash", GetCollateralHash().ToString());
-    obj.pushKV("createdAt", GetCreationTime());
-    obj.pushKV("revision", nRevision);
-    UniValue data;
-    if (!data.read(GetDataAsPlainString())) {
-        data.clear();
-        data.setObject();
-        data.pushKV("plain", GetDataAsPlainString());
-        data.pushKV("hex", GetDataAsHexString());
-    } else {
-        data.pushKV("hex", GetDataAsHexString());
-    }
-    obj.pushKV("data", data);
-    return obj;
+    return m_obj.ToJson();
 }
 
 void CGovernanceObject::UpdateLocalValidity()
@@ -467,10 +423,9 @@ bool CGovernanceObject::IsValidLocally(std::string& strError, bool& fMissingConf
         return false;
     }
 
-    switch (nObjectType) {
-    case GOVERNANCE_OBJECT_PROPOSAL: {
-        bool fAllowScript = (VersionBitsTipState(Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0024) == ThresholdState::ACTIVE);
-        CProposalValidator validator(GetDataAsHexString(), fAllowScript);
+    switch (m_obj.type) {
+    case GovernanceObject::PROPOSAL: {
+        CProposalValidator validator(GetDataAsHexString());
         // Note: It's ok to have expired proposals
         // they are going to be cleared by CGovernanceManager::UpdateCachesAndClean()
         // TODO: should they be tagged as "expired" to skip vote downloading?
@@ -484,7 +439,7 @@ bool CGovernanceObject::IsValidLocally(std::string& strError, bool& fMissingConf
         }
         return true;
     }
-    case GOVERNANCE_OBJECT_TRIGGER: {
+    case GovernanceObject::TRIGGER: {
         if (!fCheckCollateral) {
             // nothing else we can check here (yet?)
             return true;
@@ -492,8 +447,8 @@ bool CGovernanceObject::IsValidLocally(std::string& strError, bool& fMissingConf
 
         auto mnList = deterministicMNManager->GetListAtChainTip();
 
-        std::string strOutpoint = masternodeOutpoint.ToStringShort();
-        auto dmn = mnList.GetMNByCollateral(masternodeOutpoint);
+        std::string strOutpoint = m_obj.masternodeOutpoint.ToStringShort();
+        auto dmn = mnList.GetMNByCollateral(m_obj.masternodeOutpoint);
         if (!dmn) {
             strError = "Failed to find Masternode by UTXO, missing masternode=" + strOutpoint;
             return false;
@@ -508,23 +463,25 @@ bool CGovernanceObject::IsValidLocally(std::string& strError, bool& fMissingConf
         return true;
     }
     default: {
-        strError = strprintf("Invalid object type %d", nObjectType);
+        strError = strprintf("Invalid object type %d", ToUnderlying(m_obj.type));
         return false;
     }
     }
 }
 
-CAmount CGovernanceObject::GetMinCollateralFee(bool fork_active) const
+CAmount CGovernanceObject::GetMinCollateralFee() const
 {
     // Only 1 type has a fee for the moment but switch statement allows for future object types
-    switch (nObjectType) {
-    case GOVERNANCE_OBJECT_PROPOSAL:
-        if (fork_active) return GOVERNANCE_PROPOSAL_FEE_TX;
-        else return GOVERNANCE_PROPOSAL_FEE_TX_OLD;
-    case GOVERNANCE_OBJECT_TRIGGER:
-        return 0;
-    default:
-        return MAX_MONEY;
+    switch (m_obj.type) {
+        case GovernanceObject::PROPOSAL: {
+            return GOVERNANCE_PROPOSAL_FEE_TX;
+        }
+        case GovernanceObject::TRIGGER: {
+            return 0;
+        }
+        default: {
+            return MAX_MONEY;
+        }
     }
 }
 
@@ -538,9 +495,9 @@ bool CGovernanceObject::IsCollateralValid(std::string& strError, bool& fMissingC
 
     // RETRIEVE TRANSACTION IN QUESTION
     uint256 nBlockHash;
-    CTransactionRef txCollateral = GetTransaction(/* block_index */ nullptr, /* mempool */ nullptr, nCollateralHash, Params().GetConsensus(), nBlockHash);
+    CTransactionRef txCollateral = GetTransaction(/* block_index */ nullptr, /* mempool */ nullptr, m_obj.collateralHash, Params().GetConsensus(), nBlockHash);
     if (!txCollateral) {
-        strError = strprintf("Can't find collateral tx %s", nCollateralHash.ToString());
+        strError = strprintf("Can't find collateral tx %s", m_obj.collateralHash.ToString());
         LogPrintf("CGovernanceObject::IsCollateralValid -- %s\n", strError);
         return false;
     }
@@ -562,9 +519,7 @@ bool CGovernanceObject::IsCollateralValid(std::string& strError, bool& fMissingC
     CScript findScript;
     findScript << OP_RETURN << ToByteVector(nExpectedHash);
 
-    AssertLockHeld(cs_main);
-    bool fork_active = VersionBitsState(LookupBlockIndex(nBlockHash), Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0024, versionbitscache) == ThresholdState::ACTIVE;
-    CAmount nMinFee = GetMinCollateralFee(fork_active);
+    CAmount nMinFee = GetMinCollateralFee();
 
     LogPrint(BCLog::GOBJECT, "CGovernanceObject::IsCollateralValid -- txCollateral->vout.size() = %s, findScript = %s, nMinFee = %lld\n",
                 txCollateral->vout.size(), ScriptToAsmStr(findScript, false), nMinFee);
@@ -594,7 +549,7 @@ bool CGovernanceObject::IsCollateralValid(std::string& strError, bool& fMissingC
     AssertLockHeld(cs_main);
     int nConfirmationsIn = 0;
     if (nBlockHash != uint256()) {
-        const CBlockIndex* pindex = LookupBlockIndex(nBlockHash);
+        const CBlockIndex* pindex = g_chainman.m_blockman.LookupBlockIndex(nBlockHash);
         if (pindex && ::ChainActive().Contains(pindex)) {
             nConfirmationsIn += ::ChainActive().Height() - pindex->nHeight + 1;
         }
@@ -628,10 +583,12 @@ int CGovernanceObject::CountMatchingVotes(vote_signal_enum_t eVoteSignalIn, vote
         const vote_rec_t& recVote = votepair.second;
         auto it2 = recVote.mapInstances.find(eVoteSignalIn);
         if (it2 != recVote.mapInstances.end() && it2->second.eOutcome == eVoteOutcomeIn) {
-            // 4x times weight vote for HPMN owners.
-            // No need to check if v19 is active since no HPMN are allowed to register before v19s
+            // 4x times weight vote for EvoNode owners after v19 active.
+            // 1x time weight vote for EvoNode owners after v20 active.
+            // will be 5x times weight vote for EvoNode owners after enabling 5000 colleteral regular masternode
+            // No need to check if v19 is active since no EvoNode are allowed to register before v19s
             auto dmn = mnList.GetMNByCollateral(votepair.first);
-            if (dmn != nullptr) nCount += GetMnType(dmn->nType).voting_weight;
+            if (dmn != nullptr) nCount += GetMnType(dmn->nType, ::ChainActive().Tip()).voting_weight;
         }
     }
     return nCount;
@@ -687,19 +644,15 @@ void CGovernanceObject::Relay(CConnman& connman) const
     }
 
     int minProtoVersion = MIN_PEER_PROTO_VERSION;
-    if (nObjectType == GOVERNANCE_OBJECT_PROPOSAL) {
+    if (m_obj.type == GovernanceObject::PROPOSAL) {
         // We know this proposal is valid locally, otherwise we would not get to the point we should relay it.
         // But we don't want to relay it to pre-GOVSCRIPT_PROTO_VERSION peers if payment_address is p2sh
         // because they won't accept it anyway and will simply ban us eventually.
-        LOCK(cs_main);
-        bool fAllowScript = (VersionBitsTipState(Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0024) == ThresholdState::ACTIVE);
-        if (fAllowScript) {
-            CProposalValidator validator(GetDataAsHexString(), false /* no script */);
-            if (!validator.Validate(false /* ignore expiration */)) {
-                // The only way we could get here is when proposal is valid but payment_address is actually p2sh.
-                LogPrint(BCLog::GOBJECT, "CGovernanceObject::Relay -- won't relay %s to older peers\n", GetHash().ToString());
-                minProtoVersion = GOVSCRIPT_PROTO_VERSION;
-            }
+        CProposalValidator validator(GetDataAsHexString(), false /* no script */);
+        if (!validator.Validate(false /* ignore expiration */)) {
+            // The only way we could get here is when proposal is valid but payment_address is actually p2sh.
+            LogPrint(BCLog::GOBJECT, "CGovernanceObject::Relay -- won't relay %s to older peers\n", GetHash().ToString());
+            minProtoVersion = GOVSCRIPT_PROTO_VERSION;
         }
     }
 
@@ -733,7 +686,7 @@ void CGovernanceObject::UpdateSentinelVariables()
     if ((GetAbsoluteYesCount(VOTE_SIGNAL_DELETE) >= nAbsDeleteReq) && !fCachedDelete) {
         fCachedDelete = true;
         if (nDeletionTime == 0) {
-            nDeletionTime = GetAdjustedTime();
+            nDeletionTime = GetTime<std::chrono::seconds>().count();
         }
     }
     if (GetAbsoluteYesCount(VOTE_SIGNAL_ENDORSED) >= nAbsVoteReq) fCachedEndorsed = true;

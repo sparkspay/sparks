@@ -1,22 +1,40 @@
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <masternode/meta.h>
 
-#include <timedata.h>
+#include <flat-database.h>
+#include <util/time.h>
 
 #include <sstream>
 
-CMasternodeMetaMan mmetaman;
+std::unique_ptr<CMasternodeMetaMan> mmetaman;
 
-const std::string CMasternodeMetaMan::SERIALIZATION_VERSION_STRING = "CMasternodeMetaMan-Version-3";
+const std::string MasternodeMetaStore::SERIALIZATION_VERSION_STRING = "CMasternodeMetaMan-Version-3";
+
+CMasternodeMetaMan::CMasternodeMetaMan(bool load_cache) :
+    m_db{std::make_unique<db_type>("mncache.dat", "magicMasternodeCache")},
+    is_valid{
+        [&]() -> bool {
+            assert(m_db != nullptr);
+            return load_cache ? m_db->Load(*this) : m_db->Store(*this);
+        }()
+    }
+{
+}
+
+CMasternodeMetaMan::~CMasternodeMetaMan()
+{
+    if (!is_valid) return;
+    m_db->Store(*this);
+}
 
 UniValue CMasternodeMetaInfo::ToJson() const
 {
     UniValue ret(UniValue::VOBJ);
 
-    auto now = GetAdjustedTime();
+    int64_t now = GetTime<std::chrono::seconds>().count();
 
     ret.pushKV("lastDSQ", nLastDsq);
     ret.pushKV("mixingTxCount", nMixingTxCount);
@@ -110,14 +128,7 @@ std::vector<uint256> CMasternodeMetaMan::GetAndClearDirtyGovernanceObjectHashes(
     return vecTmp;
 }
 
-void CMasternodeMetaMan::Clear()
-{
-    LOCK(cs);
-    metaInfos.clear();
-    vecDirtyGovernanceObjectHashes.clear();
-}
-
-std::string CMasternodeMetaMan::ToString() const
+std::string MasternodeMetaStore::ToString() const
 {
     std::ostringstream info;
     LOCK(cs);
