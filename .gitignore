@@ -141,6 +141,7 @@ test/.mypy_cache/
 
 .cproject
 .project
+.vscode/
 .autotools
 /doc/doxygen/
 
