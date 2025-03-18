@@ -6,6 +6,7 @@ FORMS += \
     ../src/qt/forms/coincontroldialog.ui \
     ../src/qt/forms/debugwindow.ui \
     ../src/qt/forms/editaddressdialog.ui \
+    ../src/qt/forms/governancelist.ui \
     ../src/qt/forms/helpmessagedialog.ui \
     ../src/qt/forms/intro.ui \
     ../src/qt/forms/masternodelist.ui \
@@ -18,7 +19,8 @@ FORMS += \
     ../src/qt/forms/sendcoinsdialog.ui \
     ../src/qt/forms/sendcoinsentry.ui \
     ../src/qt/forms/signverifymessagedialog.ui \
-    ../src/qt/forms/transactiondescdialog.ui
+    ../src/qt/forms/transactiondescdialog.ui \
+    ../src/qt/forms/createwalletdialog.ui
 
 RESOURCES += \
     ../src/qt/sparks.qrc
