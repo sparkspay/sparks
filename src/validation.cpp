@@ -1337,13 +1337,14 @@ CAmount GetMasternodePayment(int nHeight, CAmount blockValue, bool fV20Active)
         // LogPrintf("GetMasternodePayment: DIP0001 active, height is %d, blockValue is %d, masternodePayment is %d\n", nHeight, blockValue, masterNodePayment);
         return masterNodePayment;
     } else {
-        if (fV20Active) {
+        //In sparkspay, we don't consider activation of V20 for this, Because we already set block reward as 80%
+        // if (fV20Active) {
             // Once MNRewardReallocated activates, block reward is 80% of block subsidy (+ tx fees) since treasury is 20%
             // Since the MN reward needs to be equal to 60% of the block subsidy (according to the proposal), MN reward is set to 75% of the block reward.
             // Previous reallocation periods are dropped.
-            CAmount masterNodePayment = blockValue * 3 / 4;
-            return masterNodePayment;
-        }
+            // CAmount masterNodePayment = blockValue * 3 / 4;
+            // return masterNodePayment;
+        // }
 
         CAmount masterNodePayment = blockValue * consensusParams.fReallocRatioMN;
         return masterNodePayment;
