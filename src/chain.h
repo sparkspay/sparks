@@ -11,6 +11,7 @@
 #include <flatfile.h>
 #include <primitives/block.h>
 #include <uint256.h>
+#include <chainparams.h>
 
 #include <vector>
 
@@ -371,7 +372,7 @@ public:
         block.nTime           = nTime;
         block.nBits           = nBits;
         block.nNonce          = nNonce;
-        return block.GetHash();
+        return block.GetHash(Params().GetConsensus());
     }
 
     std::string ToString() const;

@@ -12,6 +12,7 @@
 #include <uint256.h>
 #include <cstddef>
 #include <type_traits>
+#include <consensus/params.h>
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
@@ -53,7 +54,7 @@ public:
         return (nBits == 0);
     }
 
-    uint256 GetHash() const;
+    uint256 GetHash(const Consensus::Params& consensusParams) const;
 
     int64_t GetBlockTime() const
     {

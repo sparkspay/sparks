@@ -21,6 +21,7 @@
 #include <util/translation.h>
 #include <validation.h>
 #include <wallet/wallet.h>
+#include <chainparams.h>
 
 #include <wallet/rpcwallet.h>
 
@@ -317,7 +318,7 @@ UniValue importprunedfunds(const JSONRPCRequest& request)
 
     LOCK(pwallet->cs_wallet);
     int height;
-    if (!pwallet->chain().findAncestorByHash(pwallet->GetLastBlockHash(), merkleBlock.header.GetHash(), FoundBlock().height(height))) {
+    if (!pwallet->chain().findAncestorByHash(pwallet->GetLastBlockHash(), merkleBlock.header.GetHash(Params().GetConsensus()), FoundBlock().height(height))) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found in chain");
     }
 
@@ -328,7 +329,7 @@ UniValue importprunedfunds(const JSONRPCRequest& request)
 
     unsigned int txnIndex = vIndex[it - vMatch.begin()];
 
-    CWalletTx::Confirmation confirm(CWalletTx::Status::CONFIRMED, height, merkleBlock.header.GetHash(), txnIndex);
+    CWalletTx::Confirmation confirm(CWalletTx::Status::CONFIRMED, height, merkleBlock.header.GetHash(Params().GetConsensus()), txnIndex);
 
     CTransactionRef tx_ref = MakeTransactionRef(tx);
     if (pwallet->IsMine(*tx_ref)) {
