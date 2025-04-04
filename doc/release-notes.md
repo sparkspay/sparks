@@ -1,14 +1,8 @@
-Sparks Core version v19.3.0
-=========================
+# Sparks Core version v20.1.1
 
-Release is now available from:
+This is a new patch version release, including bug fixes.
 
-  <https://www.sparkspay.io/downloads/#wallets>
-
-This is a new minor version release, bringing various bugfixes and other
-improvements.
-
-This release is optional for all nodes.
+This release is optional but recommended for all nodes.
 
 Please report bugs using the issue tracker at GitHub:
 
@@ -22,10 +16,7 @@ Please report bugs using the issue tracker at GitHub:
 If you are running an older version, shut it down. Wait until it has completely
 shut down (which might take a few minutes for older versions), then run the
 installer (on Windows) or just copy over /Applications/Sparks-Qt (on Mac) or
-sparksd/sparks-qt (on Linux). If you upgrade after DIP0003 activation and you were
-using version < 0.13 you will have to reindex (start with -reindex-chainstate
-or -reindex) to make sure your wallet has all the new data synced. Upgrading
-from version 0.13 should not require any additional actions.
+sparksd/sparks-qt (on Linux).
 
 ## Downgrade warning
 
@@ -37,76 +28,37 @@ reindex or re-sync the whole chain.
 
 # Notable changes
 
-## CoinJoin improvements
+## Work Queue RPC Fix / Deadlock Fix
 
-This release fixes a couple of issues with mixing on nodes that start with no
-wallet loaded initially.
+A deadlock caused nodes to become non-responsive and RPC to report "Work depth queue exceeded".
+Thanks to Konstantin Akimov (knst) who discovered the cause. This previously caused masternodes to become PoSe banned.
 
-## Wallet GUI improvements
+# v20.1.1 Change log
 
-Wallets with 100k+ txes should now be able to rescan without hanging forever
-while processing notifications for every tx. Running `keypoolrefill` with a
-large number of keys will no longer lockup the GUI and can be interrupted.
-Running `upgradetohd` can also be interrupted now.
-
-## Changes in RPCs, commands and config options
-
-- `wipewallettxes`: New RPC command which removes all wallet transactions
-- `wipetxes`: New command for `sparks-wallet` that removes all wallet transactions
-- `masternodelist`: New mode `hpmn` filters only HPMNs/EvoNodes
-- `protx list`: New type `hpmn` filters only HPMNs/EvoNodes
-- `-blockversion` config option is allowed on non-mainnet networks now
-
-## Other changes
-
-There were a few other minor changes too, specifically:
-- Added Kittywhiskers Van Gogh (kittywhiskers) and Odysseas Gabrielides
-(ogabrielides) to contributors list in 19.2.0 release notes
-- There should be no false "unknown rules activated" warning in GUI and RPCs now
-- Empty `settings.json` file no longer results in node startup failure
-- Block processing was slightly optimized
-- BLS library was updated to version 1.3.0 to fix a couple tiny issues
-- Fixed a couple of small issues in tests
-
-# v19.3.0 Change log
-
-See detailed [set of changes](https://github.com/sparkspay/sparks/compare/v18.2.2...sparkspay:v19.3.0).
+See detailed [set of changes][set-of-changes].
 
 # Credits
 
 Thanks to everyone who directly contributed to this release:
 
-- Odysseas Gabrielides (ogabrielides)
+- Konstantin Akimov
 - PastaPastaPasta
-- UdjinM6
+- thephez
 
 As well as everyone that submitted issues, reviewed pull requests and helped
 debug the release candidates.
 
 # Older releases
 
-Sparks was previously known as Darkcoin.
-
-Darkcoin tree 0.8.x was a fork of Litecoin tree 0.8, original name was XCoin
-which was first released on Jan/18/2014.
-
-Darkcoin tree 0.9.x was the open source implementation of masternodes based on
-the 0.8.x tree and was first released on Mar/13/2014.
-
-Darkcoin tree 0.10.x used to be the closed source implementation of Darksend
-which was released open source on Sep/25/2014.
-
-Sparks Core tree 0.11.x was a fork of Bitcoin Core tree 0.9,
-Darkcoin was rebranded to Sparks.
-
-Sparks Core tree 0.12.0.x was a fork of Bitcoin Core tree 0.10.
-
-Sparks Core tree 0.12.1.x was a fork of Bitcoin Core tree 0.12.
-
-Sparks Core tree 0.12.3.x was a fork of Sparks Core tree 0.12.3.x.
-
 These release are considered obsolete. Old release notes can be found here:
 
+- [v20.1.0](https://github.com/Sparkspay/Sparks/blob/master/doc/release-notes/Sparks/release-notes-20.1.0.md) released March/5/2024
+- [v20.0.4](https://github.com/Sparkspay/Sparks/blob/master/doc/release-notes/Sparks/release-notes-20.0.4.md) released Jan/13/2024
+- [v20.0.3](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-20.0.3.md) released December/26/2023
+- [v20.0.2](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-20.0.2.md) released December/06/2023
+- [v20.0.1](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-20.0.1.md) released November/18/2023
+- [v20.0.0](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-20.0.0.md) released November/15/2023
+- [v19.3.0](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-19.3.0.md) released July/31/2023
 - [v18.2.1](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-18.2.2.md) released Jan/17/2023
 - [v18.2.0](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-18.2.0.md) released Jan/01/2023
 - [v18.1.1](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-18.1.1.md) released January/08/2023
@@ -143,3 +95,5 @@ These release are considered obsolete. Old release notes can be found here:
 - [v0.11.0](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-0.11.0.md) released Jan/15/2015
 - [v0.10.x](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-0.10.0.md) released Sep/25/2014
 - [v0.9.x](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-0.9.0.md) released Mar/13/2014
+
+[set-of-changes]: https://github.com/sparkspay/sparks/compare/v20.1.0...sparkspay:v20.1.1

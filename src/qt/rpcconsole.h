@@ -30,6 +30,7 @@ namespace Ui {
 
 QT_BEGIN_NAMESPACE
 class QButtonGroup;
+class QDateTime;
 class QMenu;
 class QItemSelection;
 QT_END_NAMESPACE
@@ -192,6 +193,9 @@ private:
 
     /** Update UI with latest network info from model. */
     void updateNetworkState();
+
+private Q_SLOTS:
+    void updateAlerts(const QString& warnings);
 };
 
 #endif // BITCOIN_QT_RPCCONSOLE_H

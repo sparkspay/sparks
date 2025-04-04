@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -16,21 +16,23 @@
 #include <saltedhasher.h>
 #include <scheduler.h>
 #include <sync.h>
+#include <gsl/pointers.h>
 
 #include <immer/map.hpp>
 
+#include <atomic>
 #include <limits>
 #include <numeric>
 #include <unordered_map>
 #include <utility>
 
-class CConnman;
 class CBlock;
 class CBlockIndex;
-class CValidationState;
-class CSimplifiedMNListDiff;
+class CChainState;
+class CConnman;
+class TxValidationState;
 
-extern CCriticalSection cs_main;
+extern RecursiveMutex cs_main;
 
 namespace llmq
 {
@@ -48,6 +50,12 @@ public:
     static constexpr uint16_t MN_VERSION_FORMAT = 2;
     static constexpr uint16_t MN_CURRENT_FORMAT = MN_VERSION_FORMAT;
 
+    uint256 proTxHash;
+    COutPoint collateralOutpoint;
+    uint16_t nOperatorReward{0};
+    MnType nType{MnType::Regular};
+    std::shared_ptr<const CDeterministicMNState> pdmnState;
+
     CDeterministicMN() = delete; // no default constructor, must specify internalId
     explicit CDeterministicMN(uint64_t _internalId, MnType mnType = MnType::Regular) :
         internalId(_internalId),
@@ -62,12 +70,6 @@ public:
     {
         SerializationOp(s, CSerActionUnserialize(), format_version);
     }
-
-    uint256 proTxHash;
-    COutPoint collateralOutpoint;
-    uint16_t nOperatorReward{0};
-    MnType nType{MnType::Regular};
-    std::shared_ptr<const CDeterministicMNState> pdmnState;
 
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action, const uint8_t format_version)
@@ -116,7 +118,7 @@ public:
     [[nodiscard]] uint64_t GetInternalId() const;
 
     [[nodiscard]] std::string ToString() const;
-    void ToJson(UniValue& obj) const;
+    [[nodiscard]] UniValue ToJson() const;
 };
 using CDeterministicMNCPtr = std::shared_ptr<const CDeterministicMN>;
 
@@ -188,6 +190,7 @@ public:
         nHeight(_height),
         nTotalRegisteredCount(_totalRegisteredCount)
     {
+        assert(nHeight >= 0);
     }
 
     template <typename Stream, typename Operation>
@@ -236,7 +239,7 @@ public:
 
     [[nodiscard]] size_t GetValidMNsCount() const
     {
-        return ranges::count_if(mnMap, [](const auto& p){ return IsMNValid(*p.second); });
+        return ranges::count_if(mnMap, [this](const auto& p){ return IsMNValid(*p.second); });
     }
     size_t GetIPv4Count() const
     {
@@ -260,21 +263,21 @@ public:
         return count;
     }
 
-    [[nodiscard]] size_t GetAllHPMNsCount() const
+    [[nodiscard]] size_t GetAllEvoCount() const
     {
-        return ranges::count_if(mnMap, [](const auto& p) { return p.second->nType == MnType::HighPerformance; });
+        return ranges::count_if(mnMap, [this](const auto& p) { return p.second->nType == MnType::Evo; });
     }
 
-    [[nodiscard]] size_t GetValidHPMNsCount() const
+    [[nodiscard]] size_t GetValidEvoCount() const
     {
-        return ranges::count_if(mnMap, [](const auto& p) { return p.second->nType == MnType::HighPerformance && IsMNValid(*p.second); });
+        return ranges::count_if(mnMap, [this](const auto& p) { return p.second->nType == MnType::Evo && IsMNValid(*p.second); });
     }
 
     [[nodiscard]] size_t GetValidWeightedMNsCount() const
     {
-        return std::accumulate(mnMap.begin(), mnMap.end(), 0, [](auto res, const auto& p) {
+        return std::accumulate(mnMap.begin(), mnMap.end(), 0, [this](auto res, const auto& p) {
                                                                 if (!IsMNValid(*p.second)) return res;
-                                                                return res + GetMnType(p.second->nType).voting_weight;
+                                                                return res + GetMnType(p.second->nType, ::ChainActive().Tip()).voting_weight;
                                                             });
     }
 
@@ -321,10 +324,12 @@ public:
     }
     [[nodiscard]] int GetHeight() const
     {
+        assert(nHeight >= 0);
         return nHeight;
     }
     void SetHeight(int _height)
     {
+        assert(_height >= 0);
         nHeight = _height;
     }
     [[nodiscard]] uint32_t GetTotalRegisteredCount() const
@@ -356,7 +361,7 @@ public:
     [[nodiscard]] CDeterministicMNCPtr GetValidMNByCollateral(const COutPoint& collateralOutpoint) const;
     [[nodiscard]] CDeterministicMNCPtr GetMNByService(const CService& service) const;
     [[nodiscard]] CDeterministicMNCPtr GetMNByInternalId(uint64_t internalId) const;
-    [[nodiscard]] CDeterministicMNCPtr GetMNPayee(const CBlockIndex* pIndex) const;
+    [[nodiscard]] CDeterministicMNCPtr GetMNPayee(gsl::not_null<const CBlockIndex*> pindexPrev) const;
 
     /**
      * Calculates the projected MN payees for the next *count* blocks. The result is not guaranteed to be correct
@@ -364,7 +369,7 @@ public:
      * @param nCount the number of payees to return. "nCount = max()"" means "all", use it to avoid calling GetValidWeightedMNsCount twice.
      * @return
      */
-    [[nodiscard]] std::vector<CDeterministicMNCPtr> GetProjectedMNPayees(int nCount = std::numeric_limits<int>::max()) const;
+    [[nodiscard]] std::vector<CDeterministicMNCPtr> GetProjectedMNPayees(gsl::not_null<const CBlockIndex* const> pindexPrev, int nCount = std::numeric_limits<int>::max()) const;
 
     /**
      * Calculate a quorum based on the modifier. The resulting list is deterministically sorted by score
@@ -372,8 +377,8 @@ public:
      * @param modifier
      * @return
      */
-    [[nodiscard]] std::vector<CDeterministicMNCPtr> CalculateQuorum(size_t maxSize, const uint256& modifier, const bool onlyHighPerformanceMasternodes = false) const;
-    [[nodiscard]] std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CalculateScores(const uint256& modifier, const bool onlyHighPerformanceMasternodes) const;
+    [[nodiscard]] std::vector<CDeterministicMNCPtr> CalculateQuorum(size_t maxSize, const uint256& modifier, const bool onlyEvoNodes = false) const;
+    [[nodiscard]] std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CalculateScores(const uint256& modifier, const bool onlyEvoNodes) const;
 
     /**
      * Calculates the maximum penalty which is allowed at the height of this MN list. It is dynamic and might change
@@ -401,16 +406,15 @@ public:
      */
     void PoSePunish(const uint256& proTxHash, int penalty, bool debugLogs);
 
+    void DecreaseScores();
     /**
      * Decrease penalty score of MN by 1.
      * Only allowed on non-banned MNs.
-     * @param proTxHash
      */
-    void PoSeDecrease(const uint256& proTxHash);
+    void PoSeDecrease(const CDeterministicMN& dmn);
 
     [[nodiscard]] CDeterministicMNListDiff BuildDiff(const CDeterministicMNList& to) const;
-    [[nodiscard]] CSimplifiedMNListDiff BuildSimplifiedDiff(const CDeterministicMNList& to, bool extended) const;
-    [[nodiscard]] CDeterministicMNList ApplyDiff(const CBlockIndex* pindex, const CDeterministicMNListDiff& diff) const;
+    [[nodiscard]] CDeterministicMNList ApplyDiff(gsl::not_null<const CBlockIndex*> pindex, const CDeterministicMNListDiff& diff) const;
 
     void AddMN(const CDeterministicMNCPtr& dmn, bool fBumpTotalCount = true);
     void UpdateMN(const CDeterministicMN& oldDmn, const std::shared_ptr<const CDeterministicMNState>& pdmnState);
@@ -437,9 +441,7 @@ private:
     template <typename T>
     [[nodiscard]] uint256 GetUniquePropertyHash(const T& v) const
     {
-        if constexpr (std::is_same<T, CBLSPublicKey>()) {
-            assert(false);
-        }
+        static_assert(!std::is_same<T, CBLSPublicKey>(), "GetUniquePropertyHash cannot be templated against CBLSPublicKey");
         return ::SerializeHash(v);
     }
     template <typename T>
@@ -584,6 +586,13 @@ constexpr int llmq_max_blocks() {
     return max_blocks;
 }
 
+struct MNListUpdates
+{
+    CDeterministicMNList old_list;
+    CDeterministicMNList new_list;
+    CDeterministicMNListDiff diff;
+};
+
 class CDeterministicMNManager
 {
     static constexpr int DISK_SNAPSHOT_PERIOD = 576; // once per day
@@ -591,10 +600,8 @@ class CDeterministicMNManager
     static constexpr int DISK_SNAPSHOTS = llmq_max_blocks() / DISK_SNAPSHOT_PERIOD + 1;
     static constexpr int LIST_DIFFS_CACHE_SIZE = DISK_SNAPSHOT_PERIOD * DISK_SNAPSHOTS;
 
-public:
-    CCriticalSection cs;
-
 private:
+    Mutex cs;
     Mutex cs_cleanup;
     // We have performed CleanupCache() on this height.
     int did_cleanup GUARDED_BY(cs_cleanup) {0};
@@ -602,51 +609,54 @@ private:
     // Main thread has indicated we should perform cleanup up to this height
     std::atomic<int> to_cleanup {0};
 
-    CEvoDB& m_evoDb;
+    CChainState& m_chainstate;
     CConnman& connman;
+    CEvoDB& m_evoDb;
 
     std::unordered_map<uint256, CDeterministicMNList, StaticSaltedHasher> mnListsCache GUARDED_BY(cs);
     std::unordered_map<uint256, CDeterministicMNListDiff, StaticSaltedHasher> mnListDiffsCache GUARDED_BY(cs);
     const CBlockIndex* tipIndex GUARDED_BY(cs) {nullptr};
+    const CBlockIndex* m_initial_snapshot_index GUARDED_BY(cs) {nullptr};
 
 public:
-    explicit CDeterministicMNManager(CEvoDB& evoDb, CConnman& _connman) :
-        m_evoDb(evoDb), connman(_connman) {}
+    explicit CDeterministicMNManager(CChainState& chainstate, CConnman& _connman, CEvoDB& evoDb) :
+        m_chainstate(chainstate), connman(_connman), m_evoDb(evoDb) {}
     ~CDeterministicMNManager() = default;
 
-    bool ProcessBlock(const CBlock& block, const CBlockIndex* pindex, CValidationState& state,
-                      const CCoinsViewCache& view, bool fJustCheck) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
-    bool UndoBlock(const CBlockIndex* pindex);
+    bool ProcessBlock(const CBlock& block, gsl::not_null<const CBlockIndex*> pindex, BlockValidationState& state,
+                      const CCoinsViewCache& view, bool fJustCheck, std::optional<MNListUpdates>& updatesRet) EXCLUSIVE_LOCKS_REQUIRED(cs_main) LOCKS_EXCLUDED(cs);
+    bool UndoBlock(gsl::not_null<const CBlockIndex*> pindex, std::optional<MNListUpdates>& updatesRet) LOCKS_EXCLUDED(cs);
 
-    void UpdatedBlockTip(const CBlockIndex* pindex);
+    void UpdatedBlockTip(gsl::not_null<const CBlockIndex*> pindex) LOCKS_EXCLUDED(cs);
 
     // the returned list will not contain the correct block hash (we can't know it yet as the coinbase TX is not updated yet)
-    bool BuildNewListFromBlock(const CBlock& block, const CBlockIndex* pindexPrev, CValidationState& state, const CCoinsViewCache& view,
-                               CDeterministicMNList& mnListRet, bool debugLogs) EXCLUSIVE_LOCKS_REQUIRED(cs);
-    static void HandleQuorumCommitment(const llmq::CFinalCommitment& qc, const CBlockIndex* pQuorumBaseBlockIndex, CDeterministicMNList& mnList, bool debugLogs);
-    static void DecreasePoSePenalties(CDeterministicMNList& mnList);
+    bool BuildNewListFromBlock(const CBlock& block, gsl::not_null<const CBlockIndex*> pindexPrev, BlockValidationState& state, const CCoinsViewCache& view,
+                               CDeterministicMNList& mnListRet, bool debugLogs) LOCKS_EXCLUDED(cs);
+    static void HandleQuorumCommitment(const llmq::CFinalCommitment& qc, gsl::not_null<const CBlockIndex*> pQuorumBaseBlockIndex, CDeterministicMNList& mnList, bool debugLogs);
 
-    CDeterministicMNList GetListForBlock(const CBlockIndex* pindex);
-    CDeterministicMNList GetListAtChainTip();
+    CDeterministicMNList GetListForBlock(gsl::not_null<const CBlockIndex*> pindex) LOCKS_EXCLUDED(cs) {
+        LOCK(cs);
+        return GetListForBlockInternal(pindex);
+    };
+    CDeterministicMNList GetListAtChainTip() LOCKS_EXCLUDED(cs);
 
     // Test if given TX is a ProRegTx which also contains the collateral at index n
     static bool IsProTxWithCollateral(const CTransactionRef& tx, uint32_t n);
 
-    bool IsDIP3Enforced(int nHeight = -1);
-
     bool MigrateDBIfNeeded();
     bool MigrateDBIfNeeded2();
 
-    void DoMaintenance();
+    void DoMaintenance() LOCKS_EXCLUDED(cs);
 
 private:
     void CleanupCache(int nHeight) EXCLUSIVE_LOCKS_REQUIRED(cs);
+    CDeterministicMNList GetListForBlockInternal(gsl::not_null<const CBlockIndex*> pindex) EXCLUSIVE_LOCKS_REQUIRED(cs);
 };
 
-bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state, const CCoinsViewCache& view, bool check_sigs);
-bool CheckProUpServTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state, bool check_sigs);
-bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state, const CCoinsViewCache& view, bool check_sigs);
-bool CheckProUpRevTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state, bool check_sigs);
+bool CheckProRegTx(const CTransaction& tx, gsl::not_null<const CBlockIndex*> pindexPrev, TxValidationState& state, const CCoinsViewCache& view, bool check_sigs);
+bool CheckProUpServTx(const CTransaction& tx, gsl::not_null<const CBlockIndex*> pindexPrev, TxValidationState& state, bool check_sigs);
+bool CheckProUpRegTx(const CTransaction& tx, gsl::not_null<const CBlockIndex*> pindexPrev, TxValidationState& state, const CCoinsViewCache& view, bool check_sigs);
+bool CheckProUpRevTx(const CTransaction& tx, gsl::not_null<const CBlockIndex*> pindexPrev, TxValidationState& state, bool check_sigs);
 
 extern std::unique_ptr<CDeterministicMNManager> deterministicMNManager;
 

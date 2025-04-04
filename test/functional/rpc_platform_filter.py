@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020-2022 The Dash Core developers
+# Copyright (c) 2020-2023 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test that commands submitted by the platform user are filtered."""
@@ -56,11 +56,13 @@ class HTTPBasicsTest(BitcoinTestFramework):
                 assert_equal(resp.status, expexted_status)
             conn.close()
 
-        whitelisted = ["getbestblockhash",
+        whitelisted = ["getassetunlockstatuses",
+                       "getbestblockhash",
                        "getblockhash",
                        "getblockcount",
                        "getbestchainlock",
                        "quorum",
+                       "submitchainlock",
                        "verifyislock"]
 
         help_output = self.nodes[0].help().split('\n')

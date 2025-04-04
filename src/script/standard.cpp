@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,21 +8,30 @@
 #include <pubkey.h>
 #include <script/script.h>
 
+#include <string>
+
 typedef std::vector<unsigned char> valtype;
 
 bool fAcceptDatacarrier = DEFAULT_ACCEPT_DATACARRIER;
 unsigned nMaxDatacarrierBytes = MAX_OP_RETURN_RELAY;
 
-CScriptID::CScriptID(const CScript& in) : uint160(Hash160(in.begin(), in.end())) {}
+CScriptID::CScriptID(const CScript& in) : BaseHash(Hash160(in)) {}
+CScriptID::CScriptID(const ScriptHash& in) : BaseHash(static_cast<uint160>(in)) {}
 
-ScriptHash::ScriptHash(const CScript& in) : uint160(Hash160(in.begin(), in.end())) {}
+ScriptHash::ScriptHash(const CScript& in) : BaseHash(Hash160(in)) {}
+ScriptHash::ScriptHash(const CScriptID& in) : BaseHash(static_cast<uint160>(in)) {}
 
-PKHash::PKHash(const CPubKey& pubkey) : uint160(pubkey.GetID()) {}
+PKHash::PKHash(const CPubKey& pubkey) : BaseHash(pubkey.GetID()) {}
+PKHash::PKHash(const CKeyID& pubkey_id) : BaseHash(pubkey_id) {}
 
-const char* GetTxnOutputType(TxoutType t)
+CKeyID ToKeyID(const PKHash& key_hash)
 {
-    switch (t)
-    {
+    return CKeyID{static_cast<uint160>(key_hash)};
+}
+
+std::string GetTxnOutputType(TxoutType t)
+{
+    switch (t) {
     case TxoutType::NONSTANDARD: return "nonstandard";
     case TxoutType::PUBKEY: return "pubkey";
     case TxoutType::PUBKEYHASH: return "pubkeyhash";
@@ -30,7 +39,7 @@ const char* GetTxnOutputType(TxoutType t)
     case TxoutType::MULTISIG: return "multisig";
     case TxoutType::NULL_DATA: return "nulldata";
     } // no default case, so the compiler can warn about missing cases
-    return nullptr;
+    assert(false);
 }
 
 static bool MatchPayToPubkey(const CScript& script, valtype& pubkey)
@@ -130,7 +139,8 @@ bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet)
     std::vector<valtype> vSolutions;
     TxoutType whichType = Solver(scriptPubKey, vSolutions);
 
-    if (whichType == TxoutType::PUBKEY) {
+    switch (whichType) {
+    case TxoutType::PUBKEY: {
         CPubKey pubKey(vSolutions[0]);
         if (!pubKey.IsValid())
             return false;
@@ -138,18 +148,21 @@ bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet)
         addressRet = PKHash(pubKey);
         return true;
     }
-    else if (whichType == TxoutType::PUBKEYHASH)
-    {
+    case TxoutType::PUBKEYHASH: {
         addressRet = PKHash(uint160(vSolutions[0]));
         return true;
     }
-    else if (whichType == TxoutType::SCRIPTHASH)
-    {
+    case TxoutType::SCRIPTHASH: {
         addressRet = ScriptHash(uint160(vSolutions[0]));
         return true;
     }
-    // Multisig txns have more than one address...
-    return false;
+    case TxoutType::MULTISIG:
+        // Multisig txns have more than one address...
+    case TxoutType::NULL_DATA:
+    case TxoutType::NONSTANDARD:
+        return false;
+    } // no default case, so the compiler can warn about missing cases
+    assert(false);
 }
 
 bool ExtractDestinations(const CScript& scriptPubKey, TxoutType& typeRet, std::vector<CTxDestination>& addressRet, int& nRequiredRet)
@@ -233,7 +246,6 @@ CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys)
     script << CScript::EncodeOP_N(keys.size()) << OP_CHECKMULTISIG;
     return script;
 }
-
 
 bool IsValidDestination(const CTxDestination& dest) {
     return dest.index() != 0;

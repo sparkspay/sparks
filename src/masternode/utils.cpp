@@ -13,26 +13,26 @@
 #include <shutdown.h>
 #include <validation.h>
 #include <util/ranges.h>
+#include <coinjoin/context.h>
 
-
-void CMasternodeUtils::DoMaintenance(CConnman& connman, const CMasternodeSync& mn_sync)
+void CMasternodeUtils::DoMaintenance(CConnman& connman, const CMasternodeSync& mn_sync, const CJContext& cj_ctx)
 {
     if (!mn_sync.IsBlockchainSynced()) return;
     if (ShutdownRequested()) return;
 
     std::vector<CDeterministicMNCPtr> vecDmns; // will be empty when no wallet
 #ifdef ENABLE_WALLET
-    for (const auto& pair : coinJoinClientManagers) {
+    for (auto& pair : cj_ctx.walletman->raw()) {
         pair.second->GetMixingMasternodesInfo(vecDmns);
     }
 #endif // ENABLE_WALLET
 
     // Don't disconnect masternode connections when we have less then the desired amount of outbound nodes
     int nonMasternodeCount = 0;
-    connman.ForEachNode(CConnman::AllNodes, [&](CNode* pnode) {
-        if ((!pnode->fInbound &&
-            !pnode->fFeeler &&
-            !pnode->m_manual_connection &&
+    connman.ForEachNode(CConnman::AllNodes, [&](const CNode* pnode) {
+        if ((!pnode->IsInboundConn() &&
+            !pnode->IsFeelerConn() &&
+            !pnode->IsManualConn() &&
             !pnode->m_masternode_connection &&
             !pnode->m_masternode_probe_connection)
             ||
@@ -46,30 +46,33 @@ void CMasternodeUtils::DoMaintenance(CConnman& connman, const CMasternodeSync& m
     }
 
     connman.ForEachNode(CConnman::AllNodes, [&](CNode* pnode) {
-        // we're only disconnecting m_masternode_connection connections
-        if (!pnode->m_masternode_connection) return;
-        if (!pnode->GetVerifiedProRegTxHash().IsNull()) {
-            // keep _verified_ LLMQ connections
-            if (connman.IsMasternodeQuorumNode(pnode)) {
+        if (pnode->m_masternode_probe_connection) {
+            // we're not disconnecting masternode probes for at least PROBE_WAIT_INTERVAL seconds
+            if (GetSystemTimeInSeconds() - pnode->nTimeConnected < PROBE_WAIT_INTERVAL) return;
+        } else {
+            // we're only disconnecting m_masternode_connection connections
+            if (!pnode->m_masternode_connection) return;
+            if (!pnode->GetVerifiedProRegTxHash().IsNull()) {
+                // keep _verified_ LLMQ connections
+                if (connman.IsMasternodeQuorumNode(pnode)) {
+                    return;
+                }
+                // keep _verified_ LLMQ relay connections
+                if (connman.IsMasternodeQuorumRelayMember(pnode->GetVerifiedProRegTxHash())) {
+                    return;
+                }
+                // keep _verified_ inbound connections
+                if (pnode->IsInboundConn()) {
+                    return;
+                }
+            } else if (GetSystemTimeInSeconds() - pnode->nTimeConnected < 5) {
+                // non-verified, give it some time to verify itself
+                return;
+            } else if (pnode->qwatch) {
+                // keep watching nodes
                 return;
             }
-            // keep _verified_ LLMQ relay connections
-            if (connman.IsMasternodeQuorumRelayMember(pnode->GetVerifiedProRegTxHash())) {
-                return;
-            }
-            // keep _verified_ inbound connections
-            if (pnode->fInbound) {
-                return;
-            }
-        } else if (GetSystemTimeInSeconds() - pnode->nTimeConnected < 5) {
-            // non-verified, give it some time to verify itself
-            return;
-        } else if (pnode->qwatch) {
-            // keep watching nodes
-            return;
         }
-        // we're not disconnecting masternode probes for at least a few seconds
-        if (pnode->m_masternode_probe_connection && GetSystemTimeInSeconds() - pnode->nTimeConnected < 5) return;
 
 #ifdef ENABLE_WALLET
         bool fFound = ranges::any_of(vecDmns, [&pnode](const auto& dmn){ return pnode->addr == dmn->pdmnState->addr; });

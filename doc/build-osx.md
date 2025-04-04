@@ -17,38 +17,89 @@ When the popup appears, click `Install`.
 
 Then install [Homebrew](https://brew.sh).
 
-## Base build dependencies
-
+## Dependencies
 ```shell
-brew install automake libtool pkg-config libnatpmp sqlite
-```
-
-See [dependencies.md](dependencies.md) for a complete overview.
-
-If you want to build the disk image with `make deploy` (.dmg / optional), you need RSVG:
-```shell
-brew install librsvg
+brew install automake libtool boost gmp miniupnpc pkg-config python qt@5 libevent libnatpmp qrencode
 ```
 
 If you run into issues, check [Homebrew's troubleshooting page](https://docs.brew.sh/Troubleshooting).
+See [dependencies.md](dependencies.md) for a complete overview.
 
-## Building
+The wallet support requires one or both of the dependencies ([*SQLite*](#sqlite) and [*Berkeley DB*](#berkeley-db)) in the sections below.
+To build Sparks Core without wallet, see [*Disable-wallet mode*](#disable-wallet-mode).
 
-It's possible that your `PATH` environment variable contains some problematic strings, run
+#### SQLite
+
+Usually, macOS installation already has a suitable SQLite installation.
+Also, the Homebrew package could be installed:
+
 ```shell
-export PATH=$(echo "$PATH" | sed -e '/\\/!s/ /\\ /g') # fix whitespaces
+brew install sqlite
 ```
 
-Next, follow the instructions in [build-generic](build-generic.md)
+In that case the Homebrew package will prevail.
 
-## `disable-wallet` mode
+If you want to build the disk image with `make deploy` (.dmg / optional), you need:
+[`macdeployqtplus`](../contrib/macdeploy/README.md) dependencies:
+```shell
+pip3 install ds_store mac_alias
+```
+
+#### Berkeley DB
+
+It is recommended to use Berkeley DB 4.8. If you have to build it yourself,
+you can use [the installation script included in contrib/](contrib/install_db4.sh)
+like so:
+
+```shell
+./contrib/install_db4.sh .
+```
+
+from the root of the repository.
+
+Also, the Homebrew package could be installed:
+
+```shell
+brew install berkeley-db4
+```
+
+## Build Sparks Core
+
+1. Clone the Sparks Core source code:
+    ```shell
+    git clone https://github.com/sparkspay/sparks
+    cd sparks
+    ```
+
+2.  Build Sparks Core:
+
+    Configure and build the headless Sparks Core binaries as well as the GUI (if Qt is found).
+
+    You can disable the GUI build by passing `--without-gui` to configure.
+    ```shell
+    ./autogen.sh
+    ./configure
+    make
+    ```
+
+3.  It is recommended to build and run the unit tests:
+    ```shell
+    make check
+    ```
+
+4.  You can also create a  `.dmg` that contains the `.app` bundle (optional):
+    ```shell
+    make deploy
+    ```
+
+## Disable-wallet mode
 When the intention is to run only a P2P node without a wallet, Sparks Core may be
-compiled in `disable-wallet` mode with:
+compiled in disable-wallet mode with:
 ```shell
 ./configure --disable-wallet
 ```
 
-In this case there is no dependency on Berkeley DB 4.8 and SQLite.
+In this case there is no dependency on [*Berkeley DB*](#berkeley-db) and [*SQLite*](#sqlite).
 
 Mining is also possible in disable-wallet mode using the `getblocktemplate` RPC call.
 
@@ -65,8 +116,7 @@ touch "/Users/${USER}/Library/Application Support/SparksCore/sparks.conf"
 chmod 600 "/Users/${USER}/Library/Application Support/SparksCore/sparks.conf"
 ```
 
-The first time you run sparksd, it will start downloading the blockchain. This process could
-take many hours, or even days on slower than average systems.
+The first time you run sparksd, it will start downloading the blockchain. This process could take many hours, or even days on slower than average systems.
 
 You can monitor the download process by looking at the debug.log file:
 ```shell
@@ -81,7 +131,13 @@ Other commands:
     ./src/sparks-cli help # Outputs a list of RPC commands when the daemon is running.
 =======
 ```shell
-./src/sparksd -daemon # Starts the sparks daemon.
-./src/sparks-cli --help # Outputs a list of command-line options.
-./src/sparks-cli help # Outputs a list of RPC commands when the daemon is running.
+./src/sparksd -daemon      # Starts the sparks daemon.
+./src/sparks-cli --help    # Outputs a list of command-line options.
+./src/sparks-cli help      # Outputs a list of RPC commands when the daemon is running.
 ```
+
+## Notes
+
+* Tested on OS X 10.12 Sierra through macOS 10.15 Catalina on 64-bit Intel
+processors only.
+* Building with downloaded Qt binaries is not officially supported. See the notes in [#7714](https://github.com/bitcoin/bitcoin/issues/7714).

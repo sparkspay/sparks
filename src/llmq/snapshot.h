@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2022 The Dash Core developers
+// Copyright (c) 2021-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -82,7 +82,7 @@ public:
         }
     }
 
-    void ToJson(UniValue& obj) const;
+    [[nodiscard]] UniValue ToJson() const;
 };
 
 class CGetQuorumRotationInfo
@@ -204,17 +204,17 @@ public:
     CQuorumRotationInfo() = default;
     CQuorumRotationInfo(const CQuorumRotationInfo& dmn) {}
 
-    void ToJson(UniValue& obj) const;
+    [[nodiscard]] UniValue ToJson() const;
 };
 
 bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotationInfo& response,
                              const CQuorumManager& qman, const CQuorumBlockProcessor& quorumBlockProcessor, std::string& errorRet);
-uint256 GetLastBaseBlockHash(const std::vector<const CBlockIndex*>& baseBlockIndexes, const CBlockIndex* blockIndex);
+uint256 GetLastBaseBlockHash(Span<const CBlockIndex*> baseBlockIndexes, const CBlockIndex* blockIndex);
 
 class CQuorumSnapshotManager
 {
 private:
-    mutable CCriticalSection snapshotCacheCs;
+    mutable RecursiveMutex snapshotCacheCs;
 
     CEvoDB& m_evoDb;
 

@@ -1,5 +1,5 @@
-// Copyright (c) 2014 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2019 The Bitcoin Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,6 +11,8 @@
 #include <chainparams.h>
 #include <tinyformat.h>
 #include <util/system.h>
+
+#include <chainparamsbase.h>
 
 #include <QApplication>
 
@@ -86,8 +88,9 @@ NetworkStyle::NetworkStyle(const QString &_appName, const int iconColorHueShift,
     splashImage         = QPixmap(":/images/splash");
 }
 
-const NetworkStyle *NetworkStyle::instantiate(const QString &networkId)
+const NetworkStyle* NetworkStyle::instantiate(const std::string& networkId)
 {
+    std::string titleAddText = networkId == CBaseChainParams::MAIN ? "" : strprintf("[%s]", networkId);
     for (const auto& network_style : network_styles)
     {
         if (networkId == network_style.networkId)
@@ -95,7 +98,7 @@ const NetworkStyle *NetworkStyle::instantiate(const QString &networkId)
             std::string appName = network_style.appName;
             std::string titleAddText = network_style.titleAddText;
 
-            if (networkId == QString(CBaseChainParams::DEVNET.c_str())) {
+            if (networkId == CBaseChainParams::DEVNET.c_str()) {
                 appName = strprintf(appName, gArgs.GetDevNetName());
                 titleAddText = strprintf(titleAddText, gArgs.GetDevNetName());
             }

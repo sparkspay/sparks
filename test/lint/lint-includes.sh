@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2018 The Bitcoin Core developers
+# Copyright (c) 2018-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
@@ -49,7 +49,6 @@ if [[ ${INCLUDED_CPP_FILES} != "" ]]; then
 fi
 
 EXPECTED_BOOST_INCLUDES=(
-    boost/algorithm/string/replace.hpp
     boost/date_time/posix_time/posix_time.hpp
     boost/filesystem.hpp
     boost/filesystem/fstream.hpp
@@ -61,8 +60,7 @@ EXPECTED_BOOST_INCLUDES=(
     boost/multi_index_container.hpp
     boost/optional.hpp
     boost/pool/pool_alloc.hpp
-    boost/preprocessor/cat.hpp
-    boost/preprocessor/stringize.hpp
+    boost/process.hpp
     boost/signals2/connection.hpp
     boost/signals2/optional_last_value.hpp
     boost/signals2/signal.hpp

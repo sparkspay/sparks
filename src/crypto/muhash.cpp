@@ -299,7 +299,7 @@ Num3072 MuHash3072::ToNum3072(Span<const unsigned char> in) {
     unsigned char tmp[Num3072::BYTE_SIZE];
 
     uint256 hashed_in = (CHashWriter(SER_DISK, 0) << in).GetSHA256();
-    ChaCha20(hashed_in.data(), hashed_in.size()).Keystream(tmp, Num3072::BYTE_SIZE);
+    ChaCha20Aligned(hashed_in.data()).Keystream64(tmp, Num3072::BYTE_SIZE / 64);
     Num3072 out{tmp};
 
     return out;
@@ -341,6 +341,6 @@ MuHash3072& MuHash3072::Insert(Span<const unsigned char> in) noexcept {
 }
 
 MuHash3072& MuHash3072::Remove(Span<const unsigned char> in) noexcept {
-    m_numerator.Divide(ToNum3072(in));
+    m_denominator.Multiply(ToNum3072(in));
     return *this;
 }

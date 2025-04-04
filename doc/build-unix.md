@@ -2,22 +2,29 @@ UNIX BUILD NOTES
 ====================
 Some notes on how to build Sparks Core in Unix.
 
-(For BSD specific instructions, see [build-openbsd.md](build-openbsd.md) and/or
-[build-netbsd.md](build-netbsd.md))
+(For BSD specific instructions, see `build-*bsd.md` in this directory.)
 
 Note
 ---------------------
-Always use absolute paths to configure and compile Sparks Core and the dependencies,
-for example, when specifying the path of the dependency:
+Always use absolute paths to configure and compile Sparks Core and the dependencies.
+For example, when specifying the path of the dependency:
 
-Run the following commands to install required packages:
+	../dist/configure --enable-cxx --disable-shared --with-pic --prefix=$BDB_PREFIX
 
-##### Debian/Ubuntu:
+Here BDB_PREFIX must be an absolute path - it is defined using $(pwd) which ensures
+the usage of the absolute path.
+
+To Build
+---------------------
+
 ```bash
-$ sudo apt-get install curl build-essential libtool autotools-dev automake pkg-config python3 bsdmainutils bison libsqlite3-dev
+./autogen.sh
+./configure
+make
+make install # optional
 ```
 
-This will build sparks-qt as well if the dependencies are met.
+This will build sparks-qt as well, if the dependencies are met.
 
 Dependencies
 ---------------------
@@ -26,7 +33,6 @@ These dependencies are required:
 
  Library     | Purpose          | Description
  ------------|------------------|----------------------
- libssl      | Crypto           | Random Number Generation, Elliptic Curve Cryptography
  libboost    | Utility          | Library for threading, data structures, etc
  libevent    | Networking       | OS independent asynchronous networking
 
@@ -34,15 +40,16 @@ Optional dependencies:
 
  Library     | Purpose          | Description
  ------------|------------------|----------------------
+ gmp         | Optimized math routines | Arbitrary precision arithmetic library
  miniupnpc   | UPnP Support     | Firewall-jumping support
+ libnatpmp   | NAT-PMP Support  | Firewall-jumping support
  libdb4.8    | Berkeley DB      | Wallet storage (only needed when wallet enabled)
  qt          | GUI              | GUI toolkit (only needed when GUI enabled)
- protobuf    | Payments in GUI  | Data interchange format used for payment protocol (only needed when GUI enabled)
  libqrencode | QR codes in GUI  | Optional for generating QR codes (only needed when GUI enabled)
- univalue    | Utility          | JSON parsing and encoding (bundled version will be used unless --with-system-univalue passed to configure)
- libzmq3     | ZMQ notification | Optional, allows generating ZMQ notifications (requires ZMQ version >= 4.x)
+ libzmq3     | ZMQ notification | Optional, allows generating ZMQ notifications (requires ZMQ version >= 4.0.0)
+ sqlite3     | SQLite DB        | Wallet storage (only needed when wallet enabled)
 
-For the versions used in the release, see [release-process.md](release-process.md) under *Fetch and build inputs*.
+For the versions used, see [dependencies.md](dependencies.md)
 
 Memory Requirements
 --------------------
@@ -54,64 +61,61 @@ tuned to conserve memory with additional CXXFLAGS:
 
     ./configure CXXFLAGS="--param ggc-min-expand=1 --param ggc-min-heapsize=32768"
 
-Dependency Build Instructions: Ubuntu & Debian
-----------------------------------------------
+
+## Linux Distribution Specific Instructions
+
+### Ubuntu & Debian
+
+#### Dependency Build Instructions
+
 Build requirements:
 
-    sudo apt-get install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils
+    sudo apt-get install build-essential libtool autotools-dev automake pkg-config bsdmainutils bison python3
 
-Options when installing required Boost library files:
+Now, you can either build from self-compiled [depends](/depends/README.md) or install the required dependencies:
 
-1. On at least Ubuntu 14.04+ and Debian 7+ there are generic names for the
-individual boost development packages, so the following can be used to only
-install necessary parts of boost:
+    sudo apt-get libevent-dev libboost-system-dev libboost-filesystem-dev libboost-test-dev
 
-        sudo apt-get install libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev
+Berkeley DB is required for the wallet.
 
-2. If that doesn't work, you can install all boost development packages with:
-
-        sudo apt-get install libboost-all-dev
-
-BerkeleyDB is required for the wallet.
-
-**For Ubuntu only:** db4.8 packages are available [here](https://launchpad.net/~bitcoin/+archive/bitcoin).
-You can add the repository and install using the following commands:
-
-    sudo apt-get install software-properties-common
-    sudo add-apt-repository ppa:bitcoin/bitcoin
-    sudo apt-get update
-    sudo apt-get install libdb4.8-dev libdb4.8++-dev
-
-Ubuntu and Debian have their own libdb-dev and libdb++-dev packages, but these will install
-BerkeleyDB 5.1 or later, which break binary wallet compatibility with the distributed executables which
+Ubuntu and Debian have their own `libdb-dev` and `libdb++-dev` packages, but these will install
+Berkeley DB 5.1 or later. This will break binary wallet compatibility with the distributed executables, which
 are based on BerkeleyDB 4.8. If you do not care about wallet compatibility,
 pass `--with-incompatible-bdb` to configure.
 
-See the section "Disable-wallet mode" to build Sparks Core without wallet.
+Otherwise, you can build Berkeley DB [yourself](#berkeley-db).
 
-Optional (see --with-miniupnpc and --enable-upnp-default):
+SQLite is required for the wallet:
 
-    sudo apt-get install libminiupnpc-dev
+    sudo apt install libsqlite3-dev
 
-ZMQ dependencies (provides ZMQ API 4.x):
+To build Sparks Core without wallet, see [*Disable-wallet mode*](#disable-wallet-mode)
+
+Optional port mapping libraries (see: `--with-miniupnpc` and `--with-natpmp`):
+
+    sudo apt install libminiupnpc-dev libnatpmp-dev
+
+ZMQ dependencies (provides ZMQ API):
 
     sudo apt-get install libzmq3-dev
 
-Dependencies for the GUI: Ubuntu & Debian
------------------------------------------
+GMP dependencies (provides platform-optimized routines):
 
-If you want to build Sparks-Qt, make sure that the required packages for Qt development
-are installed. Either Qt 5 or Qt 4 are necessary to build the GUI.
-If both Qt 4 and Qt 5 are installed, Qt 5 will be used. Pass `--with-gui=qt4` to configure to choose Qt4.
+   sudo apt-get install libgmp-dev
+
+GUI dependencies:
+
+If you want to build sparks-qt, make sure that the required packages for Qt development
+are installed. Qt 5 is necessary to build the GUI.
 To build without GUI pass `--without-gui`.
 
-To build with Qt 5 (recommended) you need the following:
+To build with Qt 5 you need the following:
 
-    sudo apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
+    sudo apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools
 
-Alternatively, to build with Qt 4 you need the following:
+Additionally, to support Wayland protocol for modern desktop environments:
 
-    sudo apt-get install libqt4-dev libprotobuf-dev protobuf-compiler
+    sudo apt install qtwayland5
 
 libqrencode (optional) can be installed with:
 
@@ -120,23 +124,68 @@ libqrencode (optional) can be installed with:
 Once these are installed, they will be found by configure and a sparks-qt executable will be
 built by default.
 
-Dependency Build Instructions: Fedora
--------------------------------------
+
+### Fedora
+
+#### Dependency Build Instructions
+
 Build requirements:
 
-    sudo dnf install gcc-c++ libtool make autoconf automake openssl-devel libevent-devel boost-devel libdb4-devel libdb4-cxx-devel
+    sudo dnf install gcc-c++ libtool make autoconf automake python3
 
-Optional:
+Now, you can either build from self-compiled [depends](/depends/README.md) or install the required dependencies:
 
-    sudo dnf install miniupnpc-devel
+    sudo dnf install libevent-devel boost-devel
 
-To build with Qt 5 (recommended) you need the following:
+Berkeley DB is required for the wallet:
 
-    sudo dnf install qt5-qttools-devel qt5-qtbase-devel protobuf-devel
+    sudo dnf install libdb4-devel libdb4-cxx-devel
+
+Newer Fedora releases, since Fedora 33, have only `libdb-devel` and `libdb-cxx-devel` packages, but these will install
+Berkeley DB 5.3 or later. This will break binary wallet compatibility with the distributed executables, which
+are based on Berkeley DB 4.8. If you do not care about wallet compatibility,
+pass `--with-incompatible-bdb` to configure.
+
+Otherwise, you can build Berkeley DB [yourself](#berkeley-db).
+
+SQLite is required for the wallet:
+
+    sudo dnf install sqlite-devel
+
+To build Sparks Core without wallet, see [*Disable-wallet mode*](#disable-wallet-mode)
+
+Optional port mapping libraries (see: `--with-miniupnpc` and `--with-natpmp`):
+
+    sudo dnf install miniupnpc-devel libnatpmp-devel
+
+ZMQ dependencies (provides ZMQ API):
+
+    sudo dnf install zeromq-devel
+
+GMP dependencies (provides platform-optimized routines):
+
+    sudo dnf install gmp-devel
+
+GUI dependencies:
+
+If you want to build sparks-qt, make sure that the required packages for Qt development
+are installed. Qt 5 is necessary to build the GUI.
+To build without GUI pass `--without-gui`.
+
+To build with Qt 5 you need the following:
+
+    sudo dnf install qt5-qttools-devel qt5-qtbase-devel
+
+Additionally, to support Wayland protocol for modern desktop environments:
+
+    sudo dnf install qt5-qtwayland
 
 libqrencode (optional) can be installed with:
 
     sudo dnf install qrencode-devel
+
+Once these are installed, they will be found by configure and a sparks-qt executable will be
+built by default.
 
 Notes
 -----
@@ -147,47 +196,41 @@ symbols, which reduces the executable size by about 90%.
 miniupnpc
 ---------
 
-[miniupnpc](http://miniupnp.free.fr/) may be used for UPnP port mapping.  It can be downloaded from [here](
-http://miniupnp.tuxfamily.org/files/).  UPnP support is compiled in and
-turned off by default.  See the configure options for upnp behavior desired:
+[miniupnpc](https://miniupnp.tuxfamily.org) may be used for UPnP port mapping.  It can be downloaded from [here](
+https://miniupnp.tuxfamily.org/files/).  UPnP support is compiled in and
+turned off by default.
 
-	--without-miniupnpc      No UPnP support miniupnp not required
-	--disable-upnp-default   (the default) UPnP support turned off by default at runtime
-	--enable-upnp-default    UPnP support turned on by default at runtime
+libnatpmp
+---------
 
+[libnatpmp](https://miniupnp.tuxfamily.org/libnatpmp.html) may be used for NAT-PMP port mapping. It can be downloaded
+from [here](https://miniupnp.tuxfamily.org/files/). NAT-PMP support is compiled in and
+turned off by default.
 
 Berkeley DB
 -----------
-It is recommended to use Berkeley DB 4.8. If you have to build it yourself:
+It is recommended to use Berkeley DB 4.8. If you have to build it yourself,
+you can use [the installation script included in contrib/](contrib/install_db4.sh)
+like so:
 
-```bash
-$ sudo dnf install gcc-c++ libtool make autoconf automake python3 libstdc++-static patch sqlite-devel
+```shell
+./contrib/install_db4.sh `pwd`
 ```
 
-##### Arch Linux:
-```bash
-$ pacman -S base-devel python3
-```
+from the root of the repository.
 
-##### Alpine Linux:
-```sh
-$ sudo apk --update --no-cache add autoconf automake curl g++ gcc libexecinfo-dev libexecinfo-static libtool make perl pkgconfig python3 patch linux-headers
-```
+Otherwise, you can build Sparks Core from self-compiled [depends](/depends/README.md).
 
-##### FreeBSD/OpenBSD:
-```bash
-pkg_add gmake libtool
-pkg_add autoconf # (select highest version, e.g. 2.69)
-pkg_add automake # (select highest version, e.g. 1.15)
-pkg_add python # (select highest version, e.g. 3.5)
-```
+**Note**: You only need Berkeley DB if the wallet is enabled (see [*Disable-wallet mode*](#disable-wallet-mode)).
 
-For the versions used, see [dependencies.md](dependencies.md)
+Boost
+-----
+If you need to build Boost yourself:
 
-Building
---------
+	sudo su
+	./bootstrap.sh
+	./bjam install
 
-Follow the instructions in [build-generic](build-generic.md)
 
 Security
 --------
@@ -197,8 +240,8 @@ This can be disabled with:
 
 Hardening Flags:
 
-	./configure --prefix=<prefix> --enable-hardening
-	./configure --prefix=<prefix> --disable-hardening
+	./configure --enable-hardening
+	./configure --disable-hardening
 
 
 Hardening enables the following features:
@@ -241,7 +284,7 @@ Disable-wallet mode
 When the intention is to run only a P2P node without a wallet, Sparks Core may be compiled in
 disable-wallet mode with:
 
-    ./configure --prefix=<prefix> --disable-wallet
+    ./configure --disable-wallet
 
 In this case there is no dependency on Berkeley DB 4.8 and SQLite.
 
@@ -289,83 +332,9 @@ To build executables for ARM:
     cd depends
     make HOST=arm-linux-gnueabihf NO_QT=1
     cd ..
-    ./configure --prefix=$PWD/depends/arm-linux-gnueabihf --enable-glibc-back-compat --enable-reduce-exports LDFLAGS=-static-libstdc++
+    ./autogen.sh
+    CONFIG_SITE=$PWD/depends/arm-linux-gnueabihf/share/config.site ./configure --enable-reduce-exports LDFLAGS=-static-libstdc++
     make
 
 
 For further documentation on the depends system see [README.md](../depends/README.md) in the depends directory.
-
-Building on FreeBSD
---------------------
-
-(TODO, this is untested, please report if it works and if changes to this documentation are needed)
-
-Clang is installed by default as `cc` compiler, this makes it easier to get
-started than on [OpenBSD](build-openbsd.md). Installing dependencies:
-
-    pkg install autoconf automake libtool pkgconf
-    pkg install boost-libs openssl libevent
-    pkg install gmake
-
-You need to use GNU make (`gmake`) instead of `make`.
-(`libressl` instead of `openssl` will also work)
-
-For the wallet (optional):
-
-    pkg install db5
-
-This will give a warning "configure: WARNING: Found Berkeley DB other
-than 4.8; wallets opened by this build will not be portable!", but as FreeBSD never
-had a binary release, this may not matter. If backwards compatibility
-with 4.8-built Sparks Core is needed follow the steps under "Berkeley DB" above.
-
-Then build using:
-
-    ./autogen.sh
-    ./configure --with-incompatible-bdb BDB_CFLAGS="-I/usr/local/include/db5" BDB_LIBS="-L/usr/local/lib -ldb_cxx-5"
-    gmake
-
-*Note on debugging*: The version of `gdb` installed by default is [ancient and considered harmful](https://wiki.freebsd.org/GdbRetirement).
-It is not suitable for debugging a multi-threaded C++ program, not even for getting backtraces. Please install the package `gdb` and
-use the versioned gdb command e.g. `gdb7111`.
-
-Building on OpenBSD
--------------------
-
-(TODO, this is untested, please report if it works and if changes to this documentation are needed)
-
-**Important**: From OpenBSD 6.2 onwards a C++11-supporting clang compiler is
-part of the base image, and while building it is necessary to make sure that this
-compiler is used and not ancient g++ 4.2.1. This is done by appending
-`CC=cc CXX=c++` to configuration commands. Mixing different compilers
-within the same executable will result in linker errors.
-
-```bash
-$ cd depends
-$ make CC=cc CXX=c++
-$ cd ..
-$ export AUTOCONF_VERSION=2.69 # replace this with the autoconf version that you installed
-$ export AUTOMAKE_VERSION=1.15 # replace this with the automake version that you installed
-$ ./autogen.sh
-$ ./configure --prefix=<prefix> CC=cc CXX=c++
-$ gmake # use -jX here for parallelism
-```
-
-OpenBSD Resource limits
--------------------
-If the build runs into out-of-memory errors, the instructions in this section
-might help.
-
-The standard ulimit restrictions in OpenBSD are very strict:
-
-    data(kbytes)         1572864
-
-This, unfortunately, in some cases not enough to compile some `.cpp` files in the project,
-(see issue [#6658](https://github.com/bitcoin/bitcoin/issues/6658)).
-If your user is in the `staff` group the limit can be raised with:
-
-    ulimit -d 3000000
-
-The change will only affect the current shell and processes spawned by it. To
-make the change system-wide, change `datasize-cur` and `datasize-max` in
-`/etc/login.conf`, and reboot.

@@ -32,6 +32,12 @@ FILE *fopen(const fs::path& p, const char *mode)
 #endif
 }
 
+fs::path AbsPathJoin(const fs::path& base, const fs::path& path)
+{
+    assert(base.is_absolute());
+    return fs::absolute(path, base);
+}
+
 #ifndef WIN32
 
 static std::string GetErrorReason()
@@ -120,7 +126,7 @@ bool FileLock::TryLock()
     if (hFile == INVALID_HANDLE_VALUE) {
         return false;
     }
-    _OVERLAPPED overlapped = {0};
+    _OVERLAPPED overlapped = {};
     if (!LockFileEx(hFile, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, std::numeric_limits<DWORD>::max(), std::numeric_limits<DWORD>::max(), &overlapped)) {
         reason = GetErrorReason();
         return false;

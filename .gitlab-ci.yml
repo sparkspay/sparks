@@ -1,4 +1,4 @@
-image: "ubuntu:bionic"
+image: "ubuntu:focal"
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -35,16 +35,20 @@ builder-image:
 
 .build-depends-template:
   stage: build-depends
+  rules:
+    - when: on_success
+  needs:
+    - builder-image
   image: $CI_REGISTRY_IMAGE:builder-$CI_COMMIT_REF_SLUG
   variables:
     SDK_URL: https://bitcoincore.org/depends-sources/sdks
-    XCODE_VERSION: "12.1"
-    XCODE_BUILD_ID: 12A7403
+    XCODE_VERSION: "12.2"
+    XCODE_BUILD_ID: 12B45b
     MAKEJOBS: -j4
   before_script:
     - echo HOST=$HOST
     - |
-      if [ "$HOST" = "x86_64-apple-darwin19" ]; then
+      if [ "$HOST" = "x86_64-apple-darwin" ]; then
         mkdir -p depends/SDKs
         mkdir -p depends/sdk-sources
         OSX_SDK_BASENAME="Xcode-${XCODE_VERSION}-${XCODE_BUILD_ID}-extracted-SDK-with-libcxx-headers.tar.gz"
@@ -78,6 +82,8 @@ builder-image:
 
 .base-template:
   image: $CI_REGISTRY_IMAGE:builder-$CI_COMMIT_REF_SLUG
+  rules:
+    - when: on_success
   before_script:
     - export CACHE_DIR=$CI_PROJECT_DIR/cache
     - echo BUILD_TARGET=$BUILD_TARGET
@@ -109,6 +115,8 @@ builder-image:
 .build-template:
   stage: build
   extends: .base-template
+  variables:
+    CCACHE_SIZE: "400M"
   script:
     - ./ci/sparks/build_src.sh
     - ./ci/sparks/test_unittests.sh # Run unit tests in build stage to avoid creating too many parallel jobs
@@ -144,6 +152,15 @@ builder-image:
   script:
     - echo "INTEGRATION_TESTS_ARGS=${INTEGRATION_TESTS_ARGS}"
     - ./ci/sparks/test_integrationtests.sh $INTEGRATION_TESTS_ARGS
+  cache:
+    # Let all branches share the same cache, which is ok because get_previous_releases.py extracts release binaries in separate folders
+    key:
+      files:
+        # CI files where $PREVIOUS_RELEASES_TO_DOWNLOAD is defined
+        - ci/test/00_setup_env_native_qt5.sh
+      prefix: ${CI_JOB_NAME}
+    paths:
+      - releases
   after_script:
     - mkdir -p $CI_PROJECT_DIR/testlogs
   artifacts:
@@ -157,7 +174,7 @@ builder-image:
   rules:
     - if: '$FAST_MODE == "true"'
       when: never
-    - when: always
+    - when: on_success
 
 ###
 
@@ -173,13 +190,6 @@ x86_64-w64-mingw32:
   variables:
     HOST: x86_64-w64-mingw32
 
-i686-pc-linux-gnu:
-  extends:
-    - .build-depends-template
-    - .skip-in-fast-mode-template
-  variables:
-    HOST: i686-pc-linux-gnu
-
 x86_64-pc-linux-gnu-debug:
   extends: .build-depends-template
   variables:
@@ -194,12 +204,23 @@ x86_64-pc-linux-gnu-nowallet:
     HOST: x86_64-pc-linux-gnu
     DEP_OPTS: "NO_WALLET=1"
 
-x86_64-apple-darwin19:
+## TODO: # Skip on non-depends, non-multiprocess PRs
+## if: type != pull_request OR commit_message =~ /depends:|multiprocess:/
+#x86_64-pc-linux-gnu-multiprocess:
+#  extends:
+#    - .build-depends-template
+#    - .skip-in-fast-mode-template
+#  variables:
+#    HOST: x86_64-pc-linux-gnu
+#    DEP_OPTS: "MULTIPROCESS=1"
+#
+
+x86_64-apple-darwin:
   extends:
     - .build-depends-template
     - .skip-in-fast-mode-template
   variables:
-    HOST: x86_64-apple-darwin19
+    HOST: x86_64-apple-darwin
 
 ###
 
@@ -219,24 +240,6 @@ win64-build:
   variables:
     BUILD_TARGET: win64
 
-linux32-build:
-  extends:
-    - .build-template
-    - .skip-in-fast-mode-template
-  needs:
-    - i686-pc-linux-gnu
-  variables:
-    BUILD_TARGET: linux32
-
-linux32_ubsan-build:
-  extends:
-    - .build-template
-    - .skip-in-fast-mode-template
-  needs:
-    - i686-pc-linux-gnu
-  variables:
-    BUILD_TARGET: linux32_ubsan
-
 linux64-build:
   extends: .build-template
   needs:
@@ -245,25 +248,40 @@ linux64-build:
     BUILD_TARGET: linux64
 
 linux64_cxx20-build:
-  extends: .build-template
+  extends:
+    - .build-template
+    - .skip-in-fast-mode-template
   needs:
     - x86_64-pc-linux-gnu-debug
   variables:
     BUILD_TARGET: linux64_cxx20
 
 linux64_sqlite-build:
-  extends: .build-template
+  extends:
+    - .build-template
+    - .skip-in-fast-mode-template
   needs:
     - x86_64-pc-linux-gnu-debug
   variables:
     BUILD_TARGET: linux64_sqlite
 
 linux64_fuzz-build:
-  extends: .build-template
+  extends:
+    - .build-template
+    - .skip-in-fast-mode-template
   needs:
     - x86_64-pc-linux-gnu-debug
   variables:
     BUILD_TARGET: linux64_fuzz
+
+#linux64_asan-build:
+#  extends:
+#    - .build-template
+#    - .skip-in-fast-mode-template
+#  needs:
+#    - x86_64-pc-linux-gnu-debug
+#  variables:
+#    BUILD_TARGET: linux64_asan
 
 linux64_tsan-build:
   extends:
@@ -274,6 +292,15 @@ linux64_tsan-build:
   variables:
     BUILD_TARGET: linux64_tsan
 
+linux64_ubsan-build:
+  extends:
+    - .build-template
+    - .skip-in-fast-mode-template
+  needs:
+    - x86_64-pc-linux-gnu-debug
+  variables:
+    BUILD_TARGET: linux64_ubsan
+
 linux64_nowallet-build:
   extends:
     - .build-template
@@ -283,34 +310,34 @@ linux64_nowallet-build:
   variables:
     BUILD_TARGET: linux64_nowallet
 
+#linux64_multiprocess-build:
+#  extends:
+#    - .build-template
+#    - .skip-in-fast-mode-template
+#  needs:
+#    - x86_64-pc-linux-gnu-multiprocess
+#  variables:
+#    BUILD_TARGET: linux64_multiprocess
+
+#linux64_valgrind-build:
+#  extends:
+#    - .build-template
+#    - .skip-in-fast-mode-template
+#  needs:
+#    - x86_64-pc-linux-gnu-debug
+#  variables:
+#    BUILD_TARGET: linux64_valgrind
+
 mac-build:
   extends:
     - .build-template
     - .skip-in-fast-mode-template
   needs:
-    - x86_64-apple-darwin19
+    - x86_64-apple-darwin
   variables:
     BUILD_TARGET: mac
 
 ###
-
-linux32-test:
-  extends:
-    - .test-template
-    - .skip-in-fast-mode-template
-  needs:
-    - linux32-build
-  variables:
-    BUILD_TARGET: linux32
-
-linux32_ubsan-test:
-  extends:
-    - .test-template
-    - .skip-in-fast-mode-template
-  needs:
-    - linux32_ubsan-build
-  variables:
-    BUILD_TARGET: linux32_ubsan
 
 linux64-test:
   extends: .test-template
@@ -320,11 +347,22 @@ linux64-test:
     BUILD_TARGET: linux64
 
 linux64_sqlite-test:
-  extends: .test-template
+  extends:
+    - .test-template
+    - .skip-in-fast-mode-template
   needs:
     - linux64_sqlite-build
   variables:
     BUILD_TARGET: linux64_sqlite
+
+#linux64_asan-test:
+#  extends:
+#    - .test-template
+#    - .skip-in-fast-mode-template
+#  needs:
+#    - linux64_asan-build
+#  variables:
+#    BUILD_TARGET: linux64_asan
 
 linux64_tsan-test:
   extends:
@@ -334,3 +372,32 @@ linux64_tsan-test:
     - linux64_tsan-build
   variables:
     BUILD_TARGET: linux64_tsan
+
+linux64_ubsan-test:
+  extends:
+    - .test-template
+    - .skip-in-fast-mode-template
+  needs:
+    - linux64_ubsan-build
+  variables:
+    BUILD_TARGET: linux64_ubsan
+
+# TODO: enable multiprocess back in CI once it has any value
+# or in case if any new backports to test
+#linux64_multiprocess-test:
+#  extends:
+#    - .test-template
+#    - .skip-in-fast-mode-template
+#  needs:
+#    - linux64_multiprocess-build
+#  variables:
+#    BUILD_TARGET: linux64_multiprocess
+
+#linux64_valgrind-test:
+#  extends:
+#    - .test-template
+#    - .skip-in-fast-mode-template
+#  needs:
+#    - linux64_valgrind-build
+#  variables:
+#    BUILD_TARGET: linux64_valgrind

@@ -37,7 +37,7 @@ QToolBar / QToolButton
 
 QToolBar QLabel#lblToolbarLogo {
     padding: 12px;
-    image: url(':/images/sparks_logo_toolbar_blue');
+    image: url(':/images/sparks_logo_toolbar_red');
     height: 2.5em;
 }
 
@@ -248,6 +248,17 @@ QWidget .QFrame#frame_2 QListView { /* Transaction List */
     background: #00000000;
     min-width: 430px;
     margin-right: 10px;
+}
+
+/******************************************************
+RPCConsole
+******************************************************/
+
+QWidget#RPCConsole QLabel#label_alerts {
+    background-color: #c79304;
+    color: #222222;
+    border-radius: 5px;
+    padding: 5px;
 }
 
 /******************************************************

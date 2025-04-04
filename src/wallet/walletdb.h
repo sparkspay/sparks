@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Copyright (c) 2015-2022 The PIVX developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -31,7 +31,6 @@
 static const bool DEFAULT_FLUSHWALLET = true;
 
 struct CBlockLocator;
-class CGovernanceObject;
 class CHDChain;
 class CHDPubKey;
 class CKeyPool;
@@ -41,6 +40,11 @@ class CWallet;
 class CWalletTx;
 class uint160;
 class uint256;
+
+namespace Governance
+{
+    class Object;
+} // namespace Governance
 
 /** Error statuses for the wallet database */
 enum class DBErrors
@@ -77,6 +81,7 @@ extern const std::string ORDERPOSNEXT;
 extern const std::string POOL;
 extern const std::string PURPOSE;
 extern const std::string PRIVATESEND_SALT;
+extern const std::string SETTINGS;
 extern const std::string TX;
 extern const std::string VERSION;
 extern const std::string WATCHMETA;
@@ -202,7 +207,7 @@ public:
     bool WriteCoinJoinSalt(const uint256& salt);
 
     /** Write a CGovernanceObject to the database */
-    bool WriteGovernanceObject(const CGovernanceObject& obj);
+    bool WriteGovernanceObject(const Governance::Object& obj);
 
     /// Write destination data key,value tuple to database
     bool WriteDestData(const std::string &address, const std::string &key, const std::string &value);
@@ -210,7 +215,7 @@ public:
     bool EraseDestData(const std::string &address, const std::string &key);
 
     DBErrors LoadWallet(CWallet* pwallet);
-    DBErrors FindWalletTx(std::vector<uint256>& vTxHash, std::vector<CWalletTx>& vWtx);
+    DBErrors FindWalletTx(std::vector<uint256>& vTxHash, std::list<CWalletTx>& vWtx);
     DBErrors ZapSelectTx(std::vector<uint256>& vHashIn, std::vector<uint256>& vHashOut);
     /* Function to determine if a certain KV/key-type is a key (cryptographical key) type */
     static bool IsKeyType(const std::string& strType);

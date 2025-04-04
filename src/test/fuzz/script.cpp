@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Bitcoin Core developers
+// Copyright (c) 2019-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -30,9 +30,6 @@
 
 void initialize_script()
 {
-    // Fuzzers using pubkey must hold an ECCVerifyHandle.
-    static const ECCVerifyHandle verify_handle;
-
     SelectParams(CBaseChainParams::REGTEST);
 }
 
@@ -43,13 +40,15 @@ FUZZ_TARGET_INIT(script, initialize_script)
     if (!script_opt) return;
     const CScript script{*script_opt};
 
-    std::vector<unsigned char> compressed;
+    CompressedScript compressed;
     if (CompressScript(script, compressed)) {
         const unsigned int size = compressed[0];
+        compressed.erase(compressed.begin());
         assert(size <= 5);
         CScript decompressed_script;
         const bool ok = DecompressScript(decompressed_script, size, compressed);
         assert(ok);
+        assert(script == decompressed_script);
     }
 
     CTxDestination address;
@@ -66,7 +65,22 @@ FUZZ_TARGET_INIT(script, initialize_script)
     (void)IsSolvable(signing_provider, script);
 
     TxoutType which_type;
-    (void)IsStandard(script, which_type);
+    bool is_standard_ret = IsStandard(script, which_type);
+    if (!is_standard_ret) {
+        assert(which_type == TxoutType::NONSTANDARD ||
+               which_type == TxoutType::NULL_DATA ||
+               which_type == TxoutType::MULTISIG);
+    }
+    if (which_type == TxoutType::NONSTANDARD) {
+        assert(!is_standard_ret);
+    }
+    if (which_type == TxoutType::NULL_DATA) {
+        assert(script.IsUnspendable());
+    }
+    if (script.IsUnspendable()) {
+        assert(which_type == TxoutType::NULL_DATA ||
+               which_type == TxoutType::NONSTANDARD);
+    }
 
     (void)RecursiveDynamicUsage(script);
 
@@ -75,7 +89,6 @@ FUZZ_TARGET_INIT(script, initialize_script)
 
     (void)script.IsPayToScriptHash();
     (void)script.IsPushOnly();
-    (void)script.IsUnspendable();
     (void)script.GetSigOpCount(/* fAccurate= */ false);
 
     (void)FormatScript(script);
@@ -93,10 +106,12 @@ FUZZ_TARGET_INIT(script, initialize_script)
 
     {
         const std::vector<uint8_t> bytes = ConsumeRandomLengthByteVector(fuzzed_data_provider);
+        CompressedScript compressed_script;
+        compressed_script.assign(bytes.begin(), bytes.end());
         // DecompressScript(..., ..., bytes) is not guaranteed to be defined if the bytes vector is too short
-        if (bytes.size() >= 32) {
+        if (compressed_script.size() >= 32) {
             CScript decompressed_script;
-            DecompressScript(decompressed_script, fuzzed_data_provider.ConsumeIntegral<unsigned int>(), bytes);
+            DecompressScript(decompressed_script, fuzzed_data_provider.ConsumeIntegral<unsigned int>(), compressed_script);
         }
     }
 

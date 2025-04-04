@@ -106,16 +106,8 @@
         <translation>تصدير قائمة العناوين</translation>
     </message>
     <message>
-        <source>Comma separated file (*.csv)</source>
-        <translation>ملف مفصول بفواصل (*.csv)</translation>
-    </message>
-    <message>
         <source>Exporting Failed</source>
         <translation>فشل التصدير</translation>
-    </message>
-    <message>
-        <source>There was an error trying to save the address list to %1. Please try again.</source>
-        <translation>لقد حدث خطأ أثناء حفظ قائمة العناوين إلى %1. يرجى المحاولة مرة أخرى.</translation>
     </message>
 </context>
 <context>
@@ -215,14 +207,6 @@
         <translation>إفتح المحفظة</translation>
     </message>
     <message>
-        <source>This operation needs your wallet passphrase to decrypt the wallet.</source>
-        <translation>هذه العملية تحتاج كلمة مرور محفظتك لفك تشفيرها</translation>
-    </message>
-    <message>
-        <source>Decrypt wallet</source>
-        <translation>فك تشفير المحفظة</translation>
-    </message>
-    <message>
         <source>Change passphrase</source>
         <translation>تغيير كلمة المرور</translation>
     </message>
@@ -275,10 +259,6 @@
         <translation>كلمة المرور التي تم إدخالها لفك تشفير المحفظة غير صحيحة</translation>
     </message>
     <message>
-        <source>Wallet decryption failed</source>
-        <translation>فشل فك التشفير المحفظة</translation>
-    </message>
-    <message>
         <source>Wallet passphrase was successfully changed.</source>
         <translation>لقد تم تغير عبارة مرور المحفظة بنجاح</translation>
     </message>
@@ -307,22 +287,6 @@
 </context>
 <context>
     <name>BitcoinGUI</name>
-    <message>
-        <source>A fatal error occurred. Sparks Core can no longer continue safely and will quit.</source>
-        <translation>خطأ فادح حدث . لا يمكن اتمام داش بامان سيتم الخروج</translation>
-    </message>
-    <message>
-        <source>Sparks Core</source>
-        <translation>جوهر الداش</translation>
-    </message>
-    <message>
-        <source>Wallet</source>
-        <translation>محفظة</translation>
-    </message>
-    <message>
-        <source>Node</source>
-        <translation>جهاز</translation>
-    </message>
     <message>
         <source>&amp;Overview</source>
         <translation>نظرة عامة</translation>
@@ -468,10 +432,6 @@
         <translation>وحدة تصحيح الأخطاء</translation>
     </message>
     <message>
-        <source>Open debugging console</source>
-        <translation>فتح وحدة التحكم في التصحيح</translation>
-    </message>
-    <message>
         <source>&amp;Network Monitor</source>
         <translation>مراقبة الشبكة</translation>
     </message>
@@ -530,10 +490,6 @@
     <message>
         <source>Open &amp;URI...</source>
         <translation>فتح URI</translation>
-    </message>
-    <message>
-        <source>Open a sparks: URI or payment request</source>
-        <translation>افتح شرطة: عنوان أوري أو طلب الدفع</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>
@@ -731,7 +687,15 @@
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation>المحفظة هي &lt;b&gt;مشفرة&lt;/b&gt; وحاليا &lt;b&gt;مؤمنة&lt;/b&gt;</translation>
     </message>
-</context>
+    <message>
+        <source>Proxy is &lt;b&gt;enabled&lt;/b&gt;: %1</source>
+        <translation>تم &lt;b&gt;تمكين&lt;/b&gt; الوكيل:%1</translation>
+    </message>
+    <message>
+        <source>Original message:</source>
+        <translation>رسالة أصلية:</translation>
+    </message>
+    </context>
 <context>
     <name>CoinControlDialog</name>
     <message>
@@ -891,10 +855,6 @@
         <translation>تم إلغاء تحديد بعض العملات المعدنية لأنها تم إنفاقها.</translation>
     </message>
     <message>
-        <source>Some coins were unselected because they do not have enough mixing rounds.</source>
-        <translation>لم يتم تحديد بعض العملات المعدنية لأنها لا تحتوي على دورات خلط كافية.</translation>
-    </message>
-    <message>
         <source>Show all coins</source>
         <translation>اظهار جميع العملات</translation>
     </message>
@@ -994,6 +954,29 @@
     </message>
 </context>
 <context>
+    <name>GovernanceList</name>
+    <message>
+        <source>Form</source>
+        <translation>نمودج</translation>
+    </message>
+    <message>
+        <source>Filter List:</source>
+        <translation>قائمة تصفية:</translation>
+    </message>
+    <message>
+        <source>Proposal Count:</source>
+        <translation>عدد الاقتراح:</translation>
+    </message>
+    <message>
+        <source>Filter by Title</source>
+        <translation>تصفية حسب العنوان</translation>
+    </message>
+    <message>
+        <source>Proposal Info: %1</source>
+        <translation>معلومات الاقتراح:%1</translation>
+    </message>
+</context>
+<context>
     <name>HelpMessageDialog</name>
     <message>
         <source>version</source>
@@ -1069,14 +1052,6 @@
     <message>
         <source>Error</source>
         <translation>خطأ</translation>
-    </message>
-    <message>
-        <source>%1 GB of free space available</source>
-        <translation>يتوفر %1 جيغابايت من المساحة متاح</translation>
-    </message>
-    <message>
-        <source>(of %1 GB needed)</source>
-        <translation>(على %1 جيغابايت محتاجة)</translation>
     </message>
 </context>
 <context>
@@ -1264,20 +1239,27 @@
         <translation>افتح URL</translation>
     </message>
     <message>
-        <source>Open payment request from URI or file</source>
-        <translation>حدد طلب الدفع من ملف او URI</translation>
-    </message>
-    <message>
         <source>URI:</source>
         <translation>العنوان:</translation>
     </message>
+</context>
+<context>
+    <name>OpenWalletActivity</name>
     <message>
-        <source>Select payment request file</source>
-        <translation>حدد ملف طلب الدفع</translation>
+        <source>Open wallet failed</source>
+        <translation>فشل فتح المحفظة</translation>
     </message>
     <message>
-        <source>Select payment request file to open</source>
-        <translation>حدد ملف طلب الدفع لفتحه</translation>
+        <source>Open wallet warning</source>
+        <translation>فتح تحذير المحفظة</translation>
+    </message>
+    <message>
+        <source>default wallet</source>
+        <translation>المحفظة الافتراضية</translation>
+    </message>
+    <message>
+        <source>Opening Wallet &lt;b&gt;%1&lt;/b&gt;...</source>
+        <translation>جاري فتح المحفظة&lt;b&gt;%1&lt;/b&gt; ...</translation>
     </message>
 </context>
 <context>
@@ -1379,6 +1361,10 @@
         <translation>فتح منفذ عميل داش كور تلقائيًا على جهاز التوجيه. هذا يعمل فقط عندما يدعم جهاز التوجيه الخاص بك UPnP وتمكينه.</translation>
     </message>
     <message>
+        <source>Map port using NA&amp;T-PMP</source>
+        <translation>ميناء الخريطة باستخدام NA &amp; T-PMP</translation>
+    </message>
+    <message>
         <source>Accept connections from outside.</source>
         <translation>اقبل الاتصالات من الخارج.</translation>
     </message>
@@ -1399,8 +1385,8 @@
         <translation>يظهر ما إذا كان وكيل SOCKS5 الافتراضي المقدم مستخدمًا للوصول إلى الأقران عبر هذا النوع من الشبكة.</translation>
     </message>
     <message>
-        <source>Use separate SOCKS&amp;5 proxy to reach peers via Tor hidden services:</source>
-        <translation>استخدم بروكسي SOCKS5 منفصل للوصول إلى الأقران عبر خدمات Tor المخفية:</translation>
+        <source>Options set in this dialog are overridden by the command line or in the configuration file:</source>
+        <translation>يتم تجاوز الخيارات المعينة في مربع الحوار هذا بواسطة سطر الأوامر أو في ملف التكوين:</translation>
     </message>
     <message>
         <source>Hide the icon from the system tray.</source>
@@ -1485,10 +1471,6 @@
     <message>
         <source>Tor</source>
         <translation>تور</translation>
-    </message>
-    <message>
-        <source>Connect to the Sparks network through a separate SOCKS5 proxy for Tor hidden services.</source>
-        <translation>اتصل بشبكة داش من خلال وكيل SOCKS5 منفصل لخدمات المخفية.</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
@@ -1781,6 +1763,9 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
+    <name>PSBTOperationsDialog</name>
+    </context>
+<context>
     <name>PaymentServer</name>
     <message>
         <source>Payment request error</source>
@@ -1799,10 +1784,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>'sparks: //' ليس URI صالحًا. استخدم "شرطة:" بدلاً من ذلك.</translation>
     </message>
     <message>
-        <source>Payment request fetch URL is invalid: %1</source>
-        <translation>عنوان الخاص بجلب طلب الدفع غير صالح: %1</translation>
-    </message>
-    <message>
         <source>Invalid payment address %1</source>
         <translation>عنوان الدفع غير صالح %1</translation>
     </message>
@@ -1814,77 +1795,9 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Payment request file handling</source>
         <translation>التعامل مع ملف طلب الدفع</translation>
     </message>
-    <message>
-        <source>Payment request file cannot be read! This can be caused by an invalid payment request file.</source>
-        <translation>لا يمكن قراءة ملف طلب الدفع! يمكن أن يحدث هذا بسبب ملف لطلب الدفع غير صالح.</translation>
-    </message>
-    <message>
-        <source>Payment request rejected</source>
-        <translation>تم رفض طلب الدفع</translation>
-    </message>
-    <message>
-        <source>Payment request network doesn't match client network.</source>
-        <translation>لا تتطابق شبكة طلب الدفع مع شبكة العميل.</translation>
-    </message>
-    <message>
-        <source>Payment request expired.</source>
-        <translation>انتهاء صلاحية طلب الدفع.</translation>
-    </message>
-    <message>
-        <source>Payment request is not initialized.</source>
-        <translation>لم يتم تهيئة طلب الدفع.</translation>
-    </message>
-    <message>
-        <source>Unverified payment requests to custom payment scripts are unsupported.</source>
-        <translation>طلبات الدفع غير المؤكدة إلى نصوص الدفع المخصصة غير مدعومة.</translation>
-    </message>
-    <message>
-        <source>Invalid payment request.</source>
-        <translation>طلب دفع غير صالح.</translation>
-    </message>
-    <message>
-        <source>Requested payment amount of %1 is too small (considered dust).</source>
-        <translation>المبلغ المطلوب للدفع %1 صغير جداً (يعتبر غبار).</translation>
-    </message>
-    <message>
-        <source>Refund from %1</source>
-        <translation>إعادة مال من %1</translation>
-    </message>
-    <message>
-        <source>Payment request %1 is too large (%2 bytes, allowed %3 bytes).</source>
-        <translation>طلب الدفع %1 كبير جداً (%2 بايت، المسموح به %3 بايت).</translation>
-    </message>
-    <message>
-        <source>Error communicating with %1: %2</source>
-        <translation>حدث خطأ في الاتصال بـ %1: %2</translation>
-    </message>
-    <message>
-        <source>Payment request cannot be parsed!</source>
-        <translation>لا يمكن تحليل طلب الدفع!</translation>
-    </message>
-    <message>
-        <source>Bad response from server %1</source>
-        <translation>استجابة سيئة من الملقم %1</translation>
-    </message>
-    <message>
-        <source>Network request error</source>
-        <translation>خطأ في طلب الشبكة</translation>
-    </message>
-    <message>
-        <source>Payment acknowledged</source>
-        <translation>اعتراف بالدفع</translation>
-    </message>
 </context>
 <context>
     <name>PeerTableModel</name>
-    <message>
-        <source>NodeId</source>
-        <translation>رقم العقدة</translation>
-    </message>
-    <message>
-        <source>Node/Service</source>
-        <translation>عقدة/خدمة</translation>
-    </message>
     <message>
         <source>User Agent</source>
         <translation>وكيل المستخدم</translation>
@@ -1900,6 +1813,56 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Received</source>
         <translation>وصلت</translation>
+    </message>
+    </context>
+<context>
+    <name>Proposal</name>
+    <message>
+        <source>Passing +%1</source>
+        <translation>تمرير +%1</translation>
+    </message>
+    <message>
+        <source>Needs additional %1 votes</source>
+        <translation>يحتاج إلى%1 تصويتات إضافية</translation>
+    </message>
+</context>
+<context>
+    <name>ProposalModel</name>
+    <message>
+        <source>Yes</source>
+        <translation>نعم</translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation>لا</translation>
+    </message>
+    <message>
+        <source>Hash</source>
+        <translation>تجزئة</translation>
+    </message>
+    <message>
+        <source>Title</source>
+        <translation>عنوان</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>ابدأ</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>نهاية</translation>
+    </message>
+    <message>
+        <source>Amount</source>
+        <translation>مبلغ</translation>
+    </message>
+    <message>
+        <source>Active</source>
+        <translation>نشيط</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>الحالة.</translation>
     </message>
 </context>
 <context>
@@ -1935,10 +1898,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Reset all settings changed in the GUI</source>
         <translation>اعد تعديل جميع الإعدادات المتغيرة في GUI</translation>
-    </message>
-    <message>
-        <source>Set SSL root certificates for payment request (default: -system-)</source>
-        <translation>أضع شهادة بروتوكول الشبقة الأمنية لطلب المدفوع (افتراضي: -نظام-)</translation>
     </message>
     <message>
         <source>Show splash screen on startup (default: %u)</source>
@@ -2055,34 +2014,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Error: %1</source>
         <translation>خطأ: %1</translation>
     </message>
-    <message>
-        <source>Error: Failed to load application fonts.</source>
-        <translation>خطأ: فشل تحميل خطوط التطبيق.</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-family invalid. Valid values: %1.</source>
-        <translation>خطأ: مجموعة الخطوط المحددة غير صالحة. القيم الصالحة: %1.</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-weight-normal invalid. Valid range %1 to %2.</source>
-        <translation>خطأ: خط الوزن العادي المحدد غير صالح. النطاق الصالح %1 إلى %2.</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-weight-bold invalid. Valid range %1 to %2.</source>
-        <translation>خطأ: خط غامق محدد غير صالح. النطاق الصالح %1 إلى %2.</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-scale invalid. Valid range %1 to %2.</source>
-        <translation>خطأ: مقياس الخط المحدد غير صالح. النطاق الصالح %1 إلى %2.</translation>
-    </message>
-    <message>
-        <source>Error: Invalid -custom-css-dir path.</source>
-        <translation>خطأ: مسار -custom-css-dir غير صالح.</translation>
-    </message>
-    <message>
-        <source>Error: %1 CSS file(s) missing in -custom-css-dir path.</source>
-        <translation>خطأ: يفتقد %1 ملف (ملفات) CSS في المسار -custom-css-dir.</translation>
-    </message>
 </context>
 <context>
     <name>QRDialog</name>
@@ -2095,52 +2026,22 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>رمز كيو ار</translation>
     </message>
     <message>
-        <source>&amp;Save Image...</source>
-        <translation>&amp;حفظ الصورة</translation>
+        <source>Resulting URI too long, try to reduce the text for label / message.</source>
+        <translation>العنوان المستخدم طويل جدًا، حاول أن تقوم بتقليل نص التسمية / الرسالة.</translation>
     </message>
     <message>
-        <source>Error creating QR Code.</source>
-        <translation>خطأ في إنشاء رمز الاستجابة السريعة.</translation>
-    </message>
-</context>
-<context>
-    <name>QRGeneralImageWidget</name>
-    <message>
-        <source>&amp;Save Image...</source>
-        <translation>&amp;حفظ الصورة</translation>
+        <source>Error encoding URI into QR Code.</source>
+        <translation>خطأ في ترميز العنوان إلى الرمز المربع.</translation>
     </message>
     <message>
-        <source>&amp;Copy Image</source>
-        <translation>&amp;نسخ الصورة</translation>
+        <source>QR code support not available.</source>
+        <translation>دعم رمز الاستجابة السريعة غير متاح.</translation>
     </message>
     <message>
         <source>Save QR Code</source>
         <translation>حفظ رمز الاستجابة السريعة QR</translation>
     </message>
-    <message>
-        <source>PNG Image (*.png)</source>
-        <translation>صورة PNG (*.png)</translation>
-    </message>
-</context>
-<context>
-    <name>QRImageWidget</name>
-    <message>
-        <source>&amp;Save Image...</source>
-        <translation>&amp;حفظ الصورة</translation>
-    </message>
-    <message>
-        <source>&amp;Copy Image</source>
-        <translation>&amp;نسخ الصورة</translation>
-    </message>
-    <message>
-        <source>Save QR Code</source>
-        <translation>حفظ رمز الاستجابة السريعة QR</translation>
-    </message>
-    <message>
-        <source>PNG Image (*.png)</source>
-        <translation>صورة PNG (*.png)</translation>
-    </message>
-</context>
+    </context>
 <context>
     <name>RPCConsole</name>
     <message>
@@ -2204,10 +2105,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>سلسلة الكتل</translation>
     </message>
     <message>
-        <source>Number of Masternodes</source>
-        <translation>ارقام ماسترنود</translation>
-    </message>
-    <message>
         <source>Memory Pool</source>
         <translation>تجمع الذاكرة</translation>
     </message>
@@ -2256,10 +2153,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>حدد نظير لعرض معلومات مفصلة.</translation>
     </message>
     <message>
-        <source>Whitelisted</source>
-        <translation>اللائحة البيضاء</translation>
-    </message>
-    <message>
         <source>Direction</source>
         <translation>جهة</translation>
     </message>
@@ -2294,10 +2187,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>-rescan=2: Rescan the block chain for missing wallet transactions starting from genesis block.</source>
         <translation>-rescan = 2: إعادة فحص سلسلة الكتل بحثًا عن معاملات المحفظة المفقودة بدءًا من كتلة التكوين.</translation>
-    </message>
-    <message>
-        <source>Wallet Path</source>
-        <translation>محفظة path</translation>
     </message>
     <message>
         <source>User Agent</source>
@@ -2388,42 +2277,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>إصلاح المحفظة</translation>
     </message>
     <message>
-        <source>Salvage wallet</source>
-        <translation>محفظة الإنقاذ</translation>
-    </message>
-    <message>
-        <source>Recover transactions 1</source>
-        <translation>استرداد المعاملات 1</translation>
-    </message>
-    <message>
-        <source>Recover transactions 2</source>
-        <translation>استرداد المعاملات 2</translation>
-    </message>
-    <message>
-        <source>Upgrade wallet format</source>
-        <translation>ترقية تنسيق المحفظة</translation>
-    </message>
-    <message>
-        <source>The buttons below will restart the wallet with command-line options to repair the wallet, fix issues with corrupt blockhain files or missing/obsolete transactions.</source>
-        <translation>ستقوم الأزرار الموجودة أدناه بإعادة تشغيل المحفظة باستخدام خيارات سطر الأوامر لإصلاح المحفظة ، وإصلاح المشكلات المتعلقة بملفات بلوكشين الفاسدة أو معاملات مفقودة / قديمة.</translation>
-    </message>
-    <message>
-        <source>-salvagewallet: Attempt to recover private keys from a corrupt wallet.dat.</source>
-        <translation>محفظة النقود: محاولة استرداد المفاتيح الخاصة من wallet.dat فاسدة.</translation>
-    </message>
-    <message>
-        <source>-zapwallettxes=1: Recover transactions from blockchain (keep meta-data, e.g. account owner).</source>
-        <translation>zapwallettxes = 1: استرداد المعاملات من بلوكشين (الاحتفاظ ببيانات التعريف ، على سبيل المثال ، مالك الحساب).</translation>
-    </message>
-    <message>
-        <source>-zapwallettxes=2: Recover transactions from blockchain (drop meta-data).</source>
-        <translation>zapwallettxes = 2: استرداد المعاملات من بلوكشين (إسقاط بيانات التعريف).</translation>
-    </message>
-    <message>
-        <source>-upgradewallet: Upgrade wallet to latest format on startup. (Note: this is NOT an update of the wallet itself!)</source>
-        <translation>ترقية المحفظة: ترقية المحفظة إلى أحدث تنسيق عند بدء التشغيل. (ملاحظة: هذا ليس تحديثًا للمحفظة نفسها!)</translation>
-    </message>
-    <message>
         <source>Wallet repair options.</source>
         <translation>خيارات إصلاح المحفظة.</translation>
     </message>
@@ -2508,10 +2361,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>تنفيذ الأمر باستخدام المحفظة "%1"</translation>
     </message>
     <message>
-        <source>(node id: %1)</source>
-        <translation>(معرف العقدة: %1)</translation>
-    </message>
-    <message>
         <source>via %1</source>
         <translation>خلال %1</translation>
     </message>
@@ -2526,14 +2375,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Outbound</source>
         <translation>خارجي</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation>نعم</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>لا</translation>
     </message>
     <message>
         <source>Regular</source>
@@ -2646,10 +2487,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
 <context>
     <name>ReceiveRequestDialog</name>
     <message>
-        <source>QR Code</source>
-        <translation>رمز كيو ار</translation>
-    </message>
-    <message>
         <source>Copy &amp;URI</source>
         <translation>نسخ  &amp;URI</translation>
     </message>
@@ -2668,38 +2505,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Payment information</source>
         <translation>معلومات الدفع</translation>
-    </message>
-    <message>
-        <source>URI</source>
-        <translation> URI</translation>
-    </message>
-    <message>
-        <source>Address</source>
-        <translation>عنوان</translation>
-    </message>
-    <message>
-        <source>Amount</source>
-        <translation>مبلغ</translation>
-    </message>
-    <message>
-        <source>Label</source>
-        <translation>وصف</translation>
-    </message>
-    <message>
-        <source>Message</source>
-        <translation>رسالة </translation>
-    </message>
-    <message>
-        <source>Wallet</source>
-        <translation>محفظة</translation>
-    </message>
-    <message>
-        <source>Resulting URI too long, try to reduce the text for label / message.</source>
-        <translation>العنوان المستخدم طويل جدًا، حاول أن تقوم بتقليل نص التسمية / الرسالة.</translation>
-    </message>
-    <message>
-        <source>Error encoding URI into QR Code.</source>
-        <translation>خطأ في ترميز العنوان إلى الرمز المربع.</translation>
     </message>
 </context>
 <context>
@@ -2812,10 +2617,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>إذا تم تعيين الرسوم الجمركية على 1000 دافع وكانت المعاملة 250 بايتًا فقط ، فإن "كل كيلوبايت" يدفع 250 جنيهًا فقط رسومًا ،&lt;br /&gt; بينما "على الأقل" يدفع 1000 دفين. لمعاملات أكبر من كيلوبايت تدفع كل من كيلوبايت.</translation>
     </message>
     <message>
-        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
-        <translation>إن دفع الحد الأدنى فقط من الرسوم يكون على ما يرام طالما أن حجم المعاملات أقل من المساحة الموجودة في الكتل.&lt;br /&gt; ولكن كن على علم بأن هذا يمكن أن ينتهي في معاملة تؤكد أبدا عندما يكون هناك المزيد من الطلب على معاملات اندفاعة مما يمكن أن تعالجه الشبكة.</translation>
-    </message>
-    <message>
         <source>per kilobyte</source>
         <translation>لكل كيلوبايت</translation>
     </message>
@@ -2830,10 +2631,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Hide</source>
         <translation>إخفاء</translation>
-    </message>
-    <message>
-        <source>(read the tooltip)</source>
-        <translation>(اقرأ تلميح الأدوات)</translation>
     </message>
     <message>
         <source>Recommended:</source>
@@ -2908,10 +2705,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>%1 (%2 كتل)</translation>
     </message>
     <message>
-        <source>from wallet %1</source>
-        <translation>من المحفظة %1</translation>
-    </message>
-    <message>
         <source>using</source>
         <translation>إستخدام</translation>
     </message>
@@ -2982,14 +2775,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>A fee higher than %1 is considered an absurdly high fee.</source>
         <translation>تعتبر الرسوم الأعلى من %1 رسوماً باهظة.</translation>
-    </message>
-    <message>
-        <source>Payment request expired.</source>
-        <translation>انتهاء صلاحية طلب الدفع.</translation>
-    </message>
-    <message>
-        <source>Pay only the required fee of %1</source>
-        <translation>دفع فقط الرسوم المطلوبة ل %1</translation>
     </message>
     <message numerus="yes">
         <source>Estimated to begin confirmation within %n block(s).</source>
@@ -3097,17 +2882,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Memo:</source>
         <translation>مذكرة:</translation>
-    </message>
-    <message>
-        <source>Enter a label for this address to add it to your address book</source>
-        <translation>إدخال تسمية لهذا العنوان لإضافته إلى دفتر العناوين الخاص بك</translation>
-    </message>
-</context>
-<context>
-    <name>SendConfirmationDialog</name>
-    <message>
-        <source>Yes</source>
-        <translation>نعم</translation>
     </message>
 </context>
 <context>
@@ -3273,13 +3047,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
-    <name>SplashScreen</name>
-    <message>
-        <source>[testnet]</source>
-        <translation>[testnet]</translation>
-    </message>
-</context>
-<context>
     <name>TrafficGraphWidget</name>
     <message>
         <source>KB/s</source>
@@ -3435,10 +3202,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Transaction total size</source>
         <translation>المجموع الكلي للمعاملات</translation>
-    </message>
-    <message>
-        <source>Merchant</source>
-        <translation>تاجر</translation>
     </message>
     <message>
         <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to "not accepted" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
@@ -3702,10 +3465,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>تصدير تفاصيل المعاملات</translation>
     </message>
     <message>
-        <source>Comma separated file (*.csv)</source>
-        <translation>ملف مفصول بفواصل (*.csv)</translation>
-    </message>
-    <message>
         <source>Confirmed</source>
         <translation>تأكيد</translation>
     </message>
@@ -3770,12 +3529,23 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
-    <name>WalletFrame</name>
+    <name>WalletController</name>
     <message>
-        <source>No wallet has been loaded.</source>
-        <translation>لا يوجد محفظة تم تحميلها.</translation>
+        <source>Close wallet</source>
+        <translation>أغلق المحفظة</translation>
     </message>
-</context>
+    <message>
+        <source>Are you sure you wish to close the wallet &lt;i&gt;%1&lt;/i&gt;?</source>
+        <translation>هل أنت متأكد من رغبتك في إغلاق المحفظة&lt;i&gt;%1&lt;/i&gt;؟</translation>
+    </message>
+    <message>
+        <source>Closing the wallet for too long can result in having to resync the entire chain if pruning is enabled.</source>
+        <translation>قد يؤدي إغلاق المحفظة لفترة طويلة إلى الاضطرار إلى إعادة مزامنة السلسلة بأكملها إذا تم تمكين التقليم.</translation>
+    </message>
+    </context>
+<context>
+    <name>WalletFrame</name>
+    </context>
 <context>
     <name>WalletModel</name>
     <message>
@@ -3800,10 +3570,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Backup Wallet</source>
         <translation>نسخ احتياط للمحفظة</translation>
-    </message>
-    <message>
-        <source>Wallet Data (*.dat)</source>
-        <translation>بيانات المحفظة (*.dat)</translation>
     </message>
     <message>
         <source>Backup Failed</source>
@@ -3837,20 +3603,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>This is a pre-release test build - use at your own risk - do not use for mining or merchant applications</translation>
     </message>
     <message>
-        <source>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</source>
-        <translation>تحذير: لا يبدو أن الشبكة توافق تمامًا! يبدو أن بعض المشتغلين بالتعدين يواجهون مشكلات.</translation>
-    </message>
-    <message>
         <source>Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.</source>
         <translation>تحذير: لا يبدو أننا نتفق تمامًا مع نظرائنا! قد تحتاج إلى الترقية ، أو قد تحتاج العقد الأخرى إلى الترقية.</translation>
     </message>
     <message>
         <source>Already have that input.</source>
         <translation>بالفعل هذا الإدخال.</translation>
-    </message>
-    <message>
-        <source>Cannot downgrade wallet</source>
-        <translation>لا يمكن تخفيض قيمة المحفظة</translation>
     </message>
     <message>
         <source>Collateral not valid.</source>
@@ -3997,20 +3755,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>الحد الأدنى لعدد مميّزي مواقع السبط المحدد </translation>
     </message>
     <message>
-        <source>Keypool ran out, please call keypoolrefill first</source>
-        <translation>ركض خارج ، يرجى الاتصال الأولى</translation>
-    </message>
-    <message>
         <source>Loading banlist...</source>
         <translation>جاري تحميل قائمة الحظر...</translation>
-    </message>
-    <message>
-        <source>Loading fulfilled requests cache...</source>
-        <translation>جارٍ تحميل ذاكرة التخزين المؤقت للطلبات المكتملة ...</translation>
-    </message>
-    <message>
-        <source>Loading masternode cache...</source>
-        <translation>جارٍ تحميل ذاكرة التخزين المؤقت في ماسترنود ...</translation>
     </message>
     <message>
         <source>Lock is already in place.</source>
@@ -4121,10 +3867,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>تقليم: آخر تزامن المحفظة يتجاوز البيانات المحصورة. تحتاج إلى -reindex (قم بتنزيل بلوكشين بأكمله مرة أخرى في حالة عقدة مقشرة)</translation>
     </message>
     <message>
-        <source>Rescans are not possible in pruned mode. You will need to use -reindex which will download the whole blockchain again.</source>
-        <translation>إعادة المسح ليست ممكنة في وضع مجسم. سوف تحتاج إلى استخدام -reindex التي ستقوم بتنزيل بلوكشين كله مرة أخرى.</translation>
-    </message>
-    <message>
         <source>The block database contains a block which appears to be from the future. This may be due to your computer's date and time being set incorrectly. Only rebuild the block database if you are sure that your computer's date and time are correct</source>
         <translation>تحتوي قاعدة البيانات كتلة على كتلة يبدو من المستقبل. قد يكون هذا بسبب تعيين تاريخ ووقت الكمبيوتر الخاص بك بشكل غير صحيح. فقط إعادة إنشاء قاعدة البيانات كتلة إذا كنت متأكداً من صحة التاريخ والوقت للكمبيوتر الخاص بك</translation>
     </message>
@@ -4185,8 +3927,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>خطأ في ترقية قاعدة بيانات evo</translation>
     </message>
     <message>
-        <source>Error: A fatal internal error occurred, see debug.log for details</source>
-        <translation>خطأ: حدث خطأ داخلي فادح، راجع debug.log للحصول على التفاصيل</translation>
+        <source>Error: Disk space is low for %s</source>
+        <translation>خطأ: مساحة القرص منخفضة لـ%s</translation>
     </message>
     <message>
         <source>Error: failed to add socket to epollfd (epoll_ctl returned error %s)</source>
@@ -4243,26 +3985,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>It has been replaced by -disablegovernance.</source>
         <translation>تم استبدالها بـ -disablegovernance.</translation>
-    </message>
-    <message>
-        <source>Its replacement -disablegovernance has been forced instead.</source>
-        <translation>وبدلاً من ذلك ، تم إجبار نظام الحكم البديل المعطل.</translation>
-    </message>
-    <message>
-        <source>Loading block index...</source>
-        <translation>تحميل مؤشر الكتلة</translation>
-    </message>
-    <message>
-        <source>Loading governance cache...</source>
-        <translation>جارٍ تحميل ذاكرة التخزين المؤقتة ...</translation>
-    </message>
-    <message>
-        <source>Loading sporks cache...</source>
-        <translation>جارٍ تحميل ذاكرة التخزين المؤقت ...</translation>
-    </message>
-    <message>
-        <source>Loading wallet... (%3.2f %%)</source>
-        <translation>جارٍ تحميل المحفظة ... (%3.2f %%)</translation>
     </message>
     <message>
         <source>Loading wallet...</source>
@@ -4385,10 +4107,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>يلزم إعادة كتابة المحفظة: إعادة تشغيل %s لإكمال العملية</translation>
     </message>
     <message>
-        <source>Warning: unknown new rules activated (versionbit %i)</source>
-        <translation>تحذير: قواعد جديدة غير معروفة مفعلة (versionbit %i)</translation>
-    </message>
-    <message>
         <source>Wasn't able to create wallet backup folder %s!</source>
         <translation>لم يكن قادراً على إنشاء مجلد النسخ الاحتياطي المحفظة %s!</translation>
     </message>
@@ -4461,24 +4179,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>هذه هي رسوم المعاملة التي قد تدفعها عندما لا تكون تقديرات الرسوم متاح.</translation>
     </message>
     <message>
-        <source>This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit %s and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard.</source>
-        <translation>يتضمن هذا المنتج برنامجًا تم تطويره بواسطة OpenSSL Project للاستخدام في OpenSSL Toolkit %s وبرنامج التشفير الذي كتبه Eric Young و UPnP الذي كتبه Thomas Bernard.</translation>
-    </message>
-    <message>
         <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
         <translation>غير قادر على إعادة الكتل. ستحتاج إلى إعادة بناء قاعدة البيانات باستخدام -reindex-chainstate.</translation>
     </message>
     <message>
         <source>Warning: Wallet file corrupt, data salvaged! Original %s saved as %s in %s; if your balance or transactions are incorrect you should restore from a backup.</source>
         <translation>تحذير: ملف المحفظة فاسد ، تم انقاذ البيانات! تم حفظ %s الأصلي ك %s في %s؛ إذا كان رصيدك أو كانت معاملاتك غير صحيحة، فيجب عليك الإستعادة من نسخة احتياطية.</translation>
-    </message>
-    <message>
-        <source>%d of last 100 blocks have unexpected version</source>
-        <translation>%d من الـ 100 كتلة الأخيرة بها إصدار غير متوقع</translation>
-    </message>
-    <message>
-        <source>%s corrupt, salvage failed</source>
-        <translation>%s فاسدة ، فشلت عملية الإنقاذ</translation>
     </message>
     <message>
         <source>%s is not a valid backup folder!</source>
@@ -4527,10 +4233,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Error loading %s: You can't disable HD on an already existing HD wallet</source>
         <translation>حدث خطأ أثناء تحميل %s: لا يمكنك تعطيل HD في محفظة HD موجودة بالفعل</translation>
-    </message>
-    <message>
-        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
-        <translation>خطأ في تحميل المحفظة %s. تم تحديد اسم ملف مكرر -wallet.</translation>
     </message>
     <message>
         <source>Error upgrading chainstate database</source>
@@ -4603,6 +4305,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Last queue was created too recently.</source>
         <translation>تم إنشاء قائمة الانتظار الأخيرة مؤخرًا.</translation>
+    </message>
+    <message>
+        <source>%s corrupt. Try using the wallet tool sparks-wallet to salvage or restoring a backup.</source>
+        <translation>%s تالف. حاول استخدام sparks-wallet لأداة المحفظة لإنقاذ أو استعادة نسخة احتياطية.</translation>
     </message>
     <message>
         <source>Last successful action was too recent.</source>
@@ -4703,10 +4409,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Your entries added successfully.</source>
         <translation>تمت إضافة إدخالاتك بنجاح.</translation>
-    </message>
-    <message>
-        <source>Zapping all transactions from wallet...</source>
-        <translation>إزالة جميع المعاملات من المحفظة...</translation>
     </message>
 </context>
 </TS>

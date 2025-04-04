@@ -1,19 +1,22 @@
-// Copyright (c) 2019-2022 The Dash Core developers
+// Copyright (c) 2019-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <node/context.h>
 #include <validation.h>
-#ifdef ENABLE_WALLET
-#include <coinjoin/client.h>
-#include <coinjoin/options.h>
-#include <wallet/rpcwallet.h>
-#endif // ENABLE_WALLET
+#include <coinjoin/context.h>
 #include <coinjoin/server.h>
 #include <rpc/blockchain.h>
 #include <rpc/server.h>
 #include <rpc/util.h>
 #include <util/strencodings.h>
+
+#ifdef ENABLE_WALLET
+#include <coinjoin/client.h>
+#include <coinjoin/options.h>
+#include <interfaces/coinjoin.h>
+#include <wallet/rpcwallet.h>
+#endif // ENABLE_WALLET
 
 #include <univalue.h>
 
@@ -49,7 +52,9 @@ static UniValue coinjoin(const JSONRPCRequest& request)
         }
     }
 
-    auto it = coinJoinClientManagers.find(wallet->GetName());
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
+    auto cj_clientman = node.coinjoin_loader->walletman().Get(wallet->GetName());
+    CHECK_NONFATAL(cj_clientman != nullptr);
 
     if (request.params[0].get_str() == "start") {
         {
@@ -58,23 +63,23 @@ static UniValue coinjoin(const JSONRPCRequest& request)
                 throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please unlock wallet for mixing with walletpassphrase first.");
         }
 
-        if (!it->second->StartMixing()) {
+        if (!cj_clientman->StartMixing()) {
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Mixing has been started already.");
         }
 
-        const NodeContext& node = EnsureNodeContext(request.context);
-        CTxMemPool& mempool = EnsureMemPool(request.context);
-        bool result = it->second->DoAutomaticDenominating(mempool, *node.connman);
-        return "Mixing " + (result ? "started successfully" : ("start failed: " + it->second->GetStatuses().original + ", will retry"));
+        CTxMemPool& mempool = EnsureMemPool(node);
+        CBlockPolicyEstimator& fee_estimator = EnsureFeeEstimator(node);
+        bool result = cj_clientman->DoAutomaticDenominating(*node.connman, fee_estimator, mempool);
+        return "Mixing " + (result ? "started successfully" : ("start failed: " + cj_clientman->GetStatuses().original + ", will retry"));
     }
 
     if (request.params[0].get_str() == "stop") {
-        it->second->StopMixing();
+        cj_clientman->StopMixing();
         return "Mixing was stopped";
     }
 
     if (request.params[0].get_str() == "reset") {
-        it->second->ResetPool();
+        cj_clientman->ResetPool();
         return "Mixing was reset";
     }
 
@@ -142,25 +147,26 @@ static UniValue getcoinjoininfo(const JSONRPCRequest& request)
             }.Check(request);
 
     UniValue obj(UniValue::VOBJ);
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
 
     if (fMasternodeMode) {
-        coinJoinServer->GetJsonInfo(obj);
+        node.cj_ctx->server->GetJsonInfo(obj);
         return obj;
     }
 
-
 #ifdef ENABLE_WALLET
-
     CCoinJoinClientOptions::GetJsonInfo(obj);
 
-    obj.pushKV("queue_size", coinJoinClientQueueManager->GetQueueSize());
+    obj.pushKV("queue_size", node.cj_ctx->queueman->GetQueueSize());
 
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
     if (!wallet) {
         return obj;
     }
 
-    coinJoinClientManagers.at(wallet->GetName())->GetJsonInfo(obj);
+    auto manager = node.coinjoin_loader->walletman().Get(wallet->GetName());
+    CHECK_NONFATAL(manager != nullptr);
+    manager->GetJsonInfo(obj);
 
     obj.pushKV("keys_left",     wallet->nKeysLeftSinceAutoBackup);
     obj.pushKV("warnings",      wallet->nKeysLeftSinceAutoBackup < COINJOIN_KEYS_THRESHOLD_WARNING
@@ -169,6 +175,8 @@ static UniValue getcoinjoininfo(const JSONRPCRequest& request)
 
     return obj;
 }
+void RegisterCoinJoinRPCCommands(CRPCTable &t)
+{
 // clang-format off
 static const CRPCCommand commands[] =
     { //  category              name                      actor (function)         argNames
@@ -180,8 +188,6 @@ static const CRPCCommand commands[] =
 #endif // ENABLE_WALLET
 };
 // clang-format on
-void RegisterCoinJoinRPCCommands(CRPCTable &t)
-{
     for (const auto& command : commands) {
         t.appendCommand(command.name, &command);
     }

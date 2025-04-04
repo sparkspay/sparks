@@ -1,8 +1,8 @@
 .NOTPARALLEL :
 
 # Pattern rule to print variables, e.g. make print-top_srcdir
-print-%:
-	@echo $* = $($*)
+print-%: FORCE
+	@echo '$*'='$($*)'
 
 # When invoking a sub-make, keep only the command line variable definitions
 # matching the pattern in the filter function.
@@ -34,10 +34,13 @@ BASE_CACHE ?= $(BASEDIR)/built
 SDK_PATH ?= $(BASEDIR)/SDKs
 NO_QT ?=
 NO_QR ?=
+NO_BDB ?=
+NO_SQLITE ?=
 NO_WALLET ?=
 NO_ZMQ ?=
 NO_UPNP ?=
 NO_NATPMP ?=
+MULTIPROCESS ?=
 FALLBACK_DOWNLOAD_PATH ?= https://bitcoincore.org/depends-sources
 
 BUILD = $(shell ./config.guess)
@@ -71,6 +74,9 @@ build_vendor=$(word 2,$(subst -, ,$(build)))
 full_build_os:=$(subst $(build_arch)-$(build_vendor)-,,$(build))
 build_os:=$(findstring linux,$(full_build_os))
 build_os+=$(findstring darwin,$(full_build_os))
+build_os+=$(findstring freebsd,$(full_build_os))
+build_os+=$(findstring netbsd,$(full_build_os))
+build_os+=$(findstring openbsd,$(full_build_os))
 build_os:=$(strip $(build_os))
 ifeq ($(build_os),)
 build_os=$(full_build_os)
@@ -81,6 +87,9 @@ host_vendor=$(word 2,$(subst -, ,$(canonical_host)))
 full_host_os:=$(subst $(host_arch)-$(host_vendor)-,,$(canonical_host))
 host_os:=$(findstring linux,$(full_host_os))
 host_os+=$(findstring darwin,$(full_host_os))
+host_os+=$(findstring freebsd,$(full_host_os))
+host_os+=$(findstring netbsd,$(full_host_os))
+host_os+=$(findstring openbsd,$(full_host_os))
 host_os+=$(findstring mingw32,$(full_host_os))
 
 ifeq (android,$(findstring android,$(full_host_os)))
@@ -98,10 +107,6 @@ host_prefix=$($(host_arch)_$(host_os)_prefix)
 build_prefix=$(host_prefix)/native
 build_host=$(build)
 
-AT_$(V):=
-AT_:=@
-AT:=$(AT_$(V))
-
 all: install
 
 include hosts/$(host_os).mk
@@ -110,26 +115,31 @@ include builders/$(build_os).mk
 include builders/default.mk
 include packages/packages.mk
 
-build_id_string:=$(BUILD_ID_SALT)
-build_id_string+=$(shell $(build_CC) --version 2>/dev/null)
-build_id_string+=$(shell $(build_AR) --version 2>/dev/null)
-build_id_string+=$(shell $(build_CXX) --version 2>/dev/null)
-build_id_string+=$(shell $(build_RANLIB) --version 2>/dev/null)
-build_id_string+=$(shell $(build_STRIP) --version 2>/dev/null)
-
-$(host_arch)_$(host_os)_id_string:=$(HOST_ID_SALT)
-$(host_arch)_$(host_os)_id_string+=$(shell $(host_CC) --version 2>/dev/null)
-$(host_arch)_$(host_os)_id_string+=$(shell $(host_AR) --version 2>/dev/null)
-$(host_arch)_$(host_os)_id_string+=$(shell $(host_CXX) --version 2>/dev/null)
-$(host_arch)_$(host_os)_id_string+=$(shell $(host_RANLIB) --version 2>/dev/null)
-$(host_arch)_$(host_os)_id_string+=$(shell $(host_STRIP) --version 2>/dev/null)
-
-ifneq ($(strip $(FORCE_USE_SYSTEM_CLANG)),)
-# Make sure that cache is invalidated when switching between system and
-# depends-managed, pinned clang
-build_id_string+=system_clang
-$(host_arch)_$(host_os)_id_string+=system_clang
-endif
+# Previously, we directly invoked the well-known programs using $(shell ...)
+# to contruct build_id_string. However, that was problematic because:
+#
+# 1. When invoking a shell, GNU Make special-cases exit code 127 (command not
+#    found) by not capturing the output but instead passing it through. This is
+#    not done for any other exit code.
+#
+# 2. Characters like '#' (from these programs' output) would end up in make
+#    variables like build_id_string, which would be wrongly interpreted by make
+#    when these variables were used.
+#
+# Therefore, we should avoid having arbitrary strings in make variables where
+# possible. The gen_id script used here hashes the output to construct a
+# "make-safe" id.
+#
+# Also note that these lines need to be:
+#
+#     1. After including {hosts,builders}/*.mk, since they rely on the tool
+#        variables (e.g. build_CC, host_STRIP, etc.) to be set.
+#
+#     2. Before including packages/*.mk (excluding packages/packages.mk), since
+#        they rely on the build_id variables
+#
+build_id:=$(shell env CC='$(build_CC)' CXX='$(build_CXX)' AR='$(build_AR)' RANLIB='$(build_RANLIB)' STRIP='$(build_STRIP)' SHA256SUM='$(build_SHA256SUM)' DEBUG='$(DEBUG)' ./gen_id '$(BUILD_ID_SALT)' 'GUIX_ENVIRONMENT=$(realpath $(GUIX_ENVIRONMENT))')
+$(host_arch)_$(host_os)_id:=$(shell env CC='$(host_CC)' CXX='$(host_CXX)' AR='$(host_AR)' RANLIB='$(host_RANLIB)' STRIP='$(host_STRIP)' SHA256SUM='$(build_SHA256SUM)' DEBUG='$(DEBUG)' ./gen_id '$(HOST_ID_SALT)' 'GUIX_ENVIRONMENT=$(realpath $(GUIX_ENVIRONMENT))')
 
 qrencode_packages_$(NO_QR) = $(qrencode_$(host_os)_packages)
 
@@ -143,12 +153,18 @@ upnp_packages_$(NO_UPNP) = $(upnp_packages)
 natpmp_packages_$(NO_NATPMP) = $(natpmp_packages)
 
 zmq_packages_$(NO_ZMQ) = $(zmq_packages)
+multiprocess_packages_$(MULTIPROCESS) = $(multiprocess_packages)
 
 packages += $($(host_arch)_$(host_os)_packages) $($(host_os)_packages) $(qt_packages_) $(wallet_packages_) $(upnp_packages_) $(natpmp_packages_)
 native_packages += $($(host_arch)_$(host_os)_native_packages) $($(host_os)_native_packages)
 
 ifneq ($(zmq_packages_),)
 packages += $(zmq_packages)
+endif
+
+ifeq ($(multiprocess_packages_),)
+packages += $(multiprocess_packages)
+native_packages += $(multiprocess_native_packages)
 endif
 
 all_packages = $(packages) $(native_packages)
@@ -163,12 +179,12 @@ include funcs.mk
 final_build_id_long+=$(shell $(build_SHA256SUM) config.site.in)
 final_build_id+=$(shell echo -n "$(final_build_id_long)" | $(build_SHA256SUM) | cut -c-$(HASH_LENGTH))
 $(host_prefix)/.stamp_$(final_build_id): $(native_packages) $(packages)
-	$(AT)rm -rf $(@D)
-	$(AT)mkdir -p $(@D)
-	$(AT)echo copying packages: $^
-	$(AT)echo to: $(@D)
-	$(AT)cd $(@D); $(foreach package,$^, tar xf $($(package)_cached); )
-	$(AT)touch $@
+	rm -rf $(@D)
+	mkdir -p $(@D)
+	echo copying packages: $^
+	echo to: $(@D)
+	cd $(@D); $(foreach package,$^, $(build_TAR) xf $($(package)_cached); )
+	touch $@
 
 # $PATH is not preserved between ./configure and make by convention. Its
 # modification and overriding at ./configure time is (as I understand it)
@@ -195,8 +211,8 @@ $(host_prefix)/.stamp_$(final_build_id): $(native_packages) $(packages)
 # we expect them to be available in $PATH at all times, more specificity does
 # not hurt.
 $(host_prefix)/share/config.site : config.site.in $(host_prefix)/.stamp_$(final_build_id)
-	$(AT)@mkdir -p $(@D)
-	$(AT)sed -e 's|@HOST@|$(host)|' \
+	@mkdir -p $(@D)
+	sed -e 's|@HOST@|$(host)|' \
             -e 's|@CC@|$(host_CC)|' \
             -e 's|@CXX@|$(host_CXX)|' \
             -e 's|@AR@|$(host_AR)|' \
@@ -209,15 +225,19 @@ $(host_prefix)/share/config.site : config.site.in $(host_prefix)/.stamp_$(final_
             -e 's|@CXXFLAGS@|$(strip $(host_CXXFLAGS) $(host_$(release_type)_CXXFLAGS))|' \
             -e 's|@CPPFLAGS@|$(strip $(host_CPPFLAGS) $(host_$(release_type)_CPPFLAGS))|' \
             -e 's|@LDFLAGS@|$(strip $(host_LDFLAGS) $(host_$(release_type)_LDFLAGS))|' \
+            -e 's|@allow_host_packages@|$(ALLOW_HOST_PACKAGES)|' \
             -e 's|@no_qt@|$(NO_QT)|' \
             -e 's|@no_qr@|$(NO_QR)|' \
             -e 's|@no_zmq@|$(NO_ZMQ)|' \
             -e 's|@no_wallet@|$(NO_WALLET)|' \
+            -e 's|@no_bdb@|$(NO_BDB)|' \
+            -e 's|@no_sqlite@|$(NO_SQLITE)|' \
             -e 's|@no_upnp@|$(NO_UPNP)|' \
             -e 's|@no_natpmp@|$(NO_NATPMP)|' \
+            -e 's|@multiprocess@|$(MULTIPROCESS)|' \
             -e 's|@debug@|$(DEBUG)|' \
             $< > $@
-	$(AT)touch $@
+	touch $@
 
 
 define check_or_remove_cached
@@ -244,7 +264,7 @@ $(host_prefix)/share/config.site: check-packages
 check-packages: check-sources
 
 clean-all: clean
-	@rm -rf $(SOURCES_PATH) x86_64* i686* mips* arm* aarch64* riscv32* riscv64*
+	@rm -rf $(SOURCES_PATH) x86_64* i686* mips* arm* aarch64* powerpc* riscv32* riscv64* s390x*
 
 clean:
 	@rm -rf $(WORK_PATH) $(BASE_CACHE) $(BUILD)
@@ -265,3 +285,5 @@ download: download-osx download-linux download-win
 $(foreach package,$(all_packages),$(eval $(call ext_add_stages,$(package))))
 
 .PHONY: install cached clean clean-all download-one download-osx download-linux download-win download check-packages check-sources
+.PHONY: FORCE
+$(V).SILENT:

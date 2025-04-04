@@ -9,6 +9,7 @@
 
 from decimal import Decimal
 
+from test_framework.blocktools import COINBASE_MATURITY
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error, satoshi_round
 
@@ -31,7 +32,7 @@ class MempoolPackagesTest(BitcoinTestFramework):
         for (txid, vout) in zip(parent_txids, vouts):
             inputs.append({'txid' : txid, 'vout' : vout})
         outputs = {}
-        for i in range(num_outputs):
+        for _ in range(num_outputs):
             outputs[node.getnewaddress()] = send_value
         rawtx = node.createrawtransaction(inputs, outputs)
         signedtx = node.signrawtransactionwithwallet(rawtx)
@@ -42,7 +43,7 @@ class MempoolPackagesTest(BitcoinTestFramework):
 
     def run_test(self):
         # Mine some blocks and have them mature.
-        self.nodes[0].generate(101)
+        self.nodes[0].generate(COINBASE_MATURITY + 1)
         utxo = self.nodes[0].listunspent(10)
         txid = utxo[0]['txid']
         vout = utxo[0]['vout']
