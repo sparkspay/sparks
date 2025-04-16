@@ -207,14 +207,14 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].bit = 12;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nStartTime = 1746057600;     // Thursday May 01, 2025
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nTimeout = 1777593600;        // Friday May 01, 2026
+        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nStartTime = 1747612800;     // Monday May 19, 2025
+        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nTimeout = 1779148800;        // Tuesday May 19, 2026
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].nThresholdStart = 60;       // 60% of 100
 
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].bit = 13;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = 1746057600;   // Thursday May 01, 2025
-        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nTimeout = 1809129600; // Saturday May 01, 2027
+        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = 1747612800;   // Monday May 19, 2025
+        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nTimeout = 1810684800; // Wednesday May 19, 2027
         // NOTE: nWindowSize for MN_RR __MUST__ be greater than or equal to nSuperblockMaturityWindow for CSuperblock::GetPaymentsLimit() to work correctly
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nWindowSize = 4032;
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdStart = 2420;     // 60% of 4032
