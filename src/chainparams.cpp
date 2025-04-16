@@ -207,18 +207,17 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].bit = 12;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nStartTime = 1746057600;     // Thursday May 01, 2025
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nTimeout = 1777593600;        // Friday May 01, 2026
+        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nStartTime = 1747612800;     // Monday May 19, 2025
+        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nTimeout = 1779148800;        // Tuesday May 19, 2026
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].nThresholdStart = 60;       // 60% of 100
 
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].bit = 13;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = 1746057600;   // Thursday May 01, 2025
-        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nTimeout = 1809129600; // Saturday May 01, 2027
+        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = 1747612800;   // Monday May 19, 2025
+        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nTimeout = 1810684800; // Wednesday May 19, 2027
         // NOTE: nWindowSize for MN_RR __MUST__ be greater than or equal to nSuperblockMaturityWindow for CSuperblock::GetPaymentsLimit() to work correctly
-        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nWindowSize = 4032;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdStart = 2420;     // 60% of 4032
-        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].useEHF = true;
+        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdStart = 60;     // 60% of 100
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000fdd4d4f9cf3649");//1548000
@@ -355,7 +354,7 @@ public:
                 {1350000, uint256S("0x00000000c3201a1df55a622d690abc63c0f7f7cf1d31267f251e879393bb43e0")},
                 {1380000, uint256S("0x0000000178f4cb3f7553ea30639a115dda34740392b995cf6f82e07c8d40df48")},
                 {1500000, uint256S("0x0000000e63ff8de7019208e19a6d915c9b2841fcb06f181d8004a6838008ac07")},
-                {1548000, uint256S("0x0000000aacc1b9455ddec76205b30a9446fb91455dab23faeed5ab1aa7d8e9e8")},
+                {1590000, uint256S("0x00000001f9fa78b6b0b8fe46194b8a5b3e24f7d41a60e533fbe8d0a005a891c0")},
            }
         };
 
