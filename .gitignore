@@ -9,10 +9,11 @@ reset-files.bash
 src/sparks
 src/sparksd
 src/sparks-cli
+src/sparks-gui
+src/sparks-node
 src/sparks-tx
 src/sparks-wallet
-src/test/fuzz
-!src/test/fuzz/*.*
+src/test/fuzz/fuzz
 src/test/test_sparks
 src/qt/test/test_sparks-qt
 src/qt/res/css/colors/*
@@ -114,13 +115,19 @@ qrc_*.cpp
 build
 *.dSYM
 
+# Previous releases
+releases
+
 #lcov
 *.gcno
 *.gcda
 /*.info
 test_sparks.coverage/
 total.coverage/
+fuzz.coverage/
 coverage_percent.txt
+/cov_tool_wrapper.sh
+qa-assets/
 
 #build tests
 linux-coverage-build
@@ -128,11 +135,13 @@ linux-build
 win32-build
 test/config.ini
 test/cache/*
+test/.mypy_cache/
 
 !src/leveldb*/Makefile
 
 .cproject
 .project
+.vscode/
 .autotools
 /doc/doxygen/
 
@@ -158,12 +167,11 @@ cmake-build-debug
 
 osx_volname
 dist/
-*.background.tiff
 
 /guix-build-*
 
 # cppcheck cache-directory
-.cppcheck/*
+test/lint/.cppcheck/*
 
 # flake8 cache location
 .cache/*

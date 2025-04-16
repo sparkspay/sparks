@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 The Bitcoin Core developers
+// Copyright (c) 2017-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,7 +11,16 @@
 #include <threadinterrupt.h>
 #include <validationinterface.h>
 
+#include <atomic>
+
 class CBlockIndex;
+class CChainState;
+
+struct IndexSummary {
+    std::string name;
+    bool synced{false};
+    int best_block_height{0};
+};
 
 /**
  * Base class for indices of blockchain data. This implements
@@ -34,10 +43,10 @@ protected:
         DB(const fs::path& path, size_t n_cache_size,
            bool f_memory = false, bool f_wipe = false, bool f_obfuscate = false);
 
-        /// Read block locator of the chain that the txindex is in sync with.
+        /// Read block locator of the chain that the index is in sync with.
         bool ReadBestBlock(CBlockLocator& locator) const;
 
-        /// Write block locator of the chain that the txindex is in sync with.
+        /// Write block locator of the chain that the index is in sync with.
         void WriteBestBlock(CDBBatch& batch, const CBlockLocator& locator);
     };
 
@@ -45,6 +54,10 @@ private:
     /// Whether the index is in sync with the main chain. The flag is flipped
     /// from false to true once, after which point this starts processing
     /// ValidationInterface notifications to stay in sync.
+    ///
+    /// Note that this will latch to true *immediately* upon startup if
+    /// `m_chainstate->m_chain` is empty, which will be the case upon startup
+    /// with an empty datadir if, e.g., `-txindex=1` is specified.
     std::atomic<bool> m_synced{false};
 
     /// The last block in the chain that the index is in sync with.
@@ -69,14 +82,17 @@ private:
     /// to a chain reorganization), the index must halt until Commit succeeds or else it could end up
     /// getting corrupted.
     bool Commit();
-
 protected:
+    CChainState* m_chainstate{nullptr};
+
     void BlockConnected(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex) override;
 
     void ChainStateFlushed(const CBlockLocator& locator) override;
 
+    const CBlockIndex* CurrentIndex() { return m_best_block_index.load(); };
+
     /// Initialize internal state from the database and block index.
-    virtual bool Init();
+    [[nodiscard]] virtual bool Init();
 
     /// Write update index entries for a newly connected block.
     virtual bool WriteBlock(const CBlock& block, const CBlockIndex* pindex) { return true; }
@@ -103,16 +119,19 @@ public:
     /// sync once and only needs to process blocks in the ValidationInterface
     /// queue. If the index is catching up from far behind, this method does
     /// not block and immediately returns false.
-    bool BlockUntilSyncedToCurrentChain();
+    bool BlockUntilSyncedToCurrentChain() const;
 
     void Interrupt();
 
     /// Start initializes the sync state and registers the instance as a
     /// ValidationInterface so that it stays in sync with blockchain updates.
-    void Start();
+    [[nodiscard]] bool Start(CChainState& active_chainstate);
 
     /// Stops the instance from staying in sync with blockchain updates.
     void Stop();
+
+    /// Get a summary of the index and its state.
+    IndexSummary GetSummary() const;
 };
 
 #endif // BITCOIN_INDEX_BASE_H

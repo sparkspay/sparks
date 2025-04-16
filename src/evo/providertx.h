@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 The Dash Core developers
+// Copyright (c) 2018-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,13 +14,12 @@
 #include <key_io.h>
 #include <netaddress.h>
 #include <pubkey.h>
-#include <tinyformat.h>
 #include <univalue.h>
 #include <util/underlying.h>
 
 class CBlockIndex;
 class CCoinsViewCache;
-class CValidationState;
+class TxValidationState;
 
 class CProRegTx
 {
@@ -59,6 +58,7 @@ public:
             // unknown version, bail out early
             return;
         }
+
         READWRITE(
                 obj.nType,
                 obj.nMode,
@@ -71,7 +71,7 @@ public:
                 obj.scriptPayout,
                 obj.inputsHash
         );
-        if (obj.nVersion == BASIC_BLS_VERSION && obj.nType == MnType::HighPerformance) {
+        if (obj.nType == MnType::Evo) {
             READWRITE(
                 obj.platformNodeID,
                 obj.platformP2PPort,
@@ -88,9 +88,9 @@ public:
 
     std::string ToString() const;
 
-    void ToJson(UniValue& obj) const
+    [[nodiscard]] UniValue ToJson() const
     {
-        obj.clear();
+        UniValue obj;
         obj.setObject();
         obj.pushKV("version", nVersion);
         obj.pushKV("type", ToUnderlying(nType));
@@ -100,21 +100,21 @@ public:
         obj.pushKV("ownerAddress", EncodeDestination(PKHash(keyIDOwner)));
         obj.pushKV("votingAddress", EncodeDestination(PKHash(keyIDVoting)));
 
-        CTxDestination dest;
-        if (ExtractDestination(scriptPayout, dest)) {
+        if (CTxDestination dest; ExtractDestination(scriptPayout, dest)) {
             obj.pushKV("payoutAddress", EncodeDestination(dest));
         }
         obj.pushKV("pubKeyOperator", pubKeyOperator.ToString());
         obj.pushKV("operatorReward", (double)nOperatorReward / 100);
-        if (nType == MnType::HighPerformance) {
+        if (nType == MnType::Evo) {
             obj.pushKV("platformNodeID", platformNodeID.ToString());
             obj.pushKV("platformP2PPort", platformP2PPort);
             obj.pushKV("platformHTTPPort", platformHTTPPort);
         }
         obj.pushKV("inputsHash", inputsHash.ToString());
+        return obj;
     }
 
-    maybe_error IsTriviallyValid(bool is_bls_legacy_scheme) const;
+    bool IsTriviallyValid(bool is_bls_legacy_scheme, TxValidationState& state) const;
 };
 
 class CProUpServTx
@@ -159,7 +159,7 @@ public:
                 obj.scriptOperatorPayout,
                 obj.inputsHash
         );
-        if (obj.nVersion == BASIC_BLS_VERSION && obj.nType == MnType::HighPerformance) {
+        if (obj.nType == MnType::Evo) {
             READWRITE(
                 obj.platformNodeID,
                 obj.platformP2PPort,
@@ -167,34 +167,34 @@ public:
         }
         if (!(s.GetType() & SER_GETHASH)) {
             READWRITE(
-                    CBLSSignatureVersionWrapper(const_cast<CBLSSignature&>(obj.sig), (obj.nVersion == LEGACY_BLS_VERSION), true)
+                    CBLSSignatureVersionWrapper(const_cast<CBLSSignature&>(obj.sig), (obj.nVersion == LEGACY_BLS_VERSION))
             );
         }
     }
 
     std::string ToString() const;
 
-    void ToJson(UniValue& obj) const
+    [[nodiscard]] UniValue ToJson() const
     {
-        obj.clear();
+        UniValue obj;
         obj.setObject();
         obj.pushKV("version", nVersion);
         obj.pushKV("type", ToUnderlying(nType));
         obj.pushKV("proTxHash", proTxHash.ToString());
         obj.pushKV("service", addr.ToString(false));
-        CTxDestination dest;
-        if (ExtractDestination(scriptOperatorPayout, dest)) {
+        if (CTxDestination dest; ExtractDestination(scriptOperatorPayout, dest)) {
             obj.pushKV("operatorPayoutAddress", EncodeDestination(dest));
         }
-        if (nType == MnType::HighPerformance) {
+        if (nType == MnType::Evo) {
             obj.pushKV("platformNodeID", platformNodeID.ToString());
             obj.pushKV("platformP2PPort", platformP2PPort);
             obj.pushKV("platformHTTPPort", platformHTTPPort);
         }
         obj.pushKV("inputsHash", inputsHash.ToString());
+        return obj;
     }
 
-    maybe_error IsTriviallyValid(bool is_bls_legacy_scheme) const;
+    bool IsTriviallyValid(bool is_bls_legacy_scheme, TxValidationState& state) const;
 };
 
 class CProUpRegTx
@@ -244,22 +244,22 @@ public:
 
     std::string ToString() const;
 
-    void ToJson(UniValue& obj) const
+    [[nodiscard]] UniValue ToJson() const
     {
-        obj.clear();
+        UniValue obj;
         obj.setObject();
         obj.pushKV("version", nVersion);
         obj.pushKV("proTxHash", proTxHash.ToString());
         obj.pushKV("votingAddress", EncodeDestination(PKHash(keyIDVoting)));
-        CTxDestination dest;
-        if (ExtractDestination(scriptPayout, dest)) {
+        if (CTxDestination dest; ExtractDestination(scriptPayout, dest)) {
             obj.pushKV("payoutAddress", EncodeDestination(dest));
         }
         obj.pushKV("pubKeyOperator", pubKeyOperator.ToString());
         obj.pushKV("inputsHash", inputsHash.ToString());
+        return obj;
     }
 
-    maybe_error IsTriviallyValid(bool is_bls_legacy_scheme) const;
+    bool IsTriviallyValid(bool is_bls_legacy_scheme, TxValidationState& state) const;
 };
 
 class CProUpRevTx
@@ -305,34 +305,35 @@ public:
         );
         if (!(s.GetType() & SER_GETHASH)) {
             READWRITE(
-                    CBLSSignatureVersionWrapper(const_cast<CBLSSignature&>(obj.sig), (obj.nVersion == LEGACY_BLS_VERSION), true)
+                    CBLSSignatureVersionWrapper(const_cast<CBLSSignature&>(obj.sig), (obj.nVersion == LEGACY_BLS_VERSION))
             );
         }
     }
 
     std::string ToString() const;
 
-    void ToJson(UniValue& obj) const
+    [[nodiscard]] UniValue ToJson() const
     {
-        obj.clear();
+        UniValue obj;
         obj.setObject();
         obj.pushKV("version", nVersion);
         obj.pushKV("proTxHash", proTxHash.ToString());
         obj.pushKV("reason", (int)nReason);
         obj.pushKV("inputsHash", inputsHash.ToString());
+        return obj;
     }
 
-    maybe_error IsTriviallyValid(bool is_bls_legacy_scheme) const;
+    bool IsTriviallyValid(bool is_bls_legacy_scheme, TxValidationState& state) const;
 };
 
 template <typename ProTx>
-static maybe_error CheckInputsHash(const CTransaction& tx, const ProTx& proTx)
+static bool CheckInputsHash(const CTransaction& tx, const ProTx& proTx, TxValidationState& state)
 {
     if (uint256 inputsHash = CalcTxInputsHash(tx); inputsHash != proTx.inputsHash) {
-        return {ValidationInvalidReason::CONSENSUS, "bad-protx-inputs-hash"};
+        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-inputs-hash");
     }
 
-    return {};
+    return true;
 }
 
 

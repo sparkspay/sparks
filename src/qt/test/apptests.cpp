@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Bitcoin Core developers
+// Copyright (c) 2018-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -73,7 +73,7 @@ void AppTests::appTests()
     GUIUtil::loadFonts();
     m_app.createOptionsModel(true /* reset settings */);
     QScopedPointer<const NetworkStyle> style(
-        NetworkStyle::instantiate(QString::fromStdString(Params().NetworkIDString())));
+        NetworkStyle::instantiate(Params().NetworkIDString()));
     m_app.createWindow(style.data());
     connect(&m_app, &BitcoinApplication::windowShown, this, &AppTests::guiTests);
     expectCallback("guiTests");
@@ -87,8 +87,11 @@ void AppTests::appTests()
     // Reset global state to avoid interfering with later tests.
     LogInstance().DisconnectTestLogger();
     AbortShutdown();
-    UnloadBlockIndex(/* mempool */ nullptr);
-    WITH_LOCK(::cs_main, g_chainman.Reset());
+    {
+        LOCK(cs_main);
+        UnloadBlockIndex(/* mempool */ nullptr, g_chainman);
+        g_chainman.Reset();
+    }
 }
 
 //! Entry point for BitcoinGUI tests.

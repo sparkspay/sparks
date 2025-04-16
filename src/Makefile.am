@@ -1,8 +1,12 @@
 # Copyright (c) 2013-2016 The Bitcoin Core developers
 # Copyright (c) 2014-2018 The Dash Core developers
-# Copyright (c) 2016-2022 The Sparks Core developers
+# Copyright (c) 2016-2025 The Sparks Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+# Pattern rule to print variables, e.g. make print-top_srcdir
+print-%: FORCE
+	@echo '$*'='$($*)'
 
 DIST_SUBDIRS = secp256k1
 
@@ -107,6 +111,10 @@ if BUILD_BITCOIND
   bin_PROGRAMS += sparksd
 endif
 
+if BUILD_BITCOIN_NODE
+  bin_PROGRAMS += sparks-node
+endif
+
 if BUILD_BITCOIN_CLI
   bin_PROGRAMS += sparks-cli
 endif
@@ -138,6 +146,7 @@ BITCOIN_CORE_H = \
   cachemap.h \
   cachemultimap.h \
   blockfilter.h \
+  bloom.h \
   chain.h \
   chainparams.h \
   chainparamsbase.h \
@@ -146,6 +155,8 @@ BITCOIN_CORE_H = \
   clientversion.h \
   coinjoin/coinjoin.h \
   coinjoin/client.h \
+  coinjoin/common.h \
+  coinjoin/context.h \
   coinjoin/options.h \
   coinjoin/server.h \
   coinjoin/util.h \
@@ -155,7 +166,6 @@ BITCOIN_CORE_H = \
   compat/byteswap.h \
   compat/cpuid.h \
   compat/endian.h \
-  compat/sanity.h \
   compressor.h \
   context.h \
   consensus/consensus.h \
@@ -166,8 +176,13 @@ BITCOIN_CORE_H = \
   cuckoocache.h \
   ctpl_stl.h \
   cxxtimer.hpp \
+  dbwrapper.h \
+  deploymentinfo.h \
+  deploymentstatus.h \
+  evo/assetlocktx.h \
   evo/dmn_types.h \
   evo/cbtx.h \
+  evo/creditpool.h \
   evo/deterministicmns.h \
   evo/dmnstate.h \
   evo/evodb.h \
@@ -181,47 +196,55 @@ BITCOIN_CORE_H = \
   dsnotificationinterface.h \
   governance/governance.h \
   governance/classes.h \
+  governance/common.h \
   governance/exceptions.h \
   governance/object.h \
   governance/validators.h \
   governance/vote.h \
   governance/votedb.h \
+  gsl/assert.h \
+  gsl/pointers.h \
   flat-database.h \
   hdchain.h \
   flatfile.h \
   fs.h \
   httprpc.h \
   httpserver.h \
+  i2p.h \
   index/base.h \
   index/blockfilterindex.h \
+  index/coinstatsindex.h \
   index/disktxpos.h \
   index/txindex.h \
   indirectmap.h \
   init.h \
   interfaces/chain.h \
+  interfaces/coinjoin.h \
   interfaces/handler.h \
   interfaces/node.h \
   interfaces/wallet.h \
   key.h \
   key_io.h \
-  dbwrapper.h \
   limitedmap.h \
-  llmq/quorums.h \
   llmq/blockprocessor.h \
-  llmq/commitment.h \
   llmq/chainlocks.h \
   llmq/clsig.h \
+  llmq/commitment.h \
+  llmq/context.h \
   llmq/debug.h \
+  llmq/dkgsession.h \
   llmq/dkgsessionhandler.h \
   llmq/dkgsessionmgr.h \
-  llmq/dkgsession.h \
-  llmq/context.h \
+  llmq/ehf_signals.cpp \
+  llmq/ehf_signals.h \
   llmq/instantsend.h \
-  llmq/snapshot.h \
+  llmq/options.h \
+  llmq/params.h \
+  llmq/quorums.h \
   llmq/signing.h \
   llmq/signing_shares.h \
+  llmq/snapshot.h \
   llmq/utils.h \
-  llmq/params.h \
   logging.h \
   logging/timer.h \
   mapport.h \
@@ -242,14 +265,19 @@ BITCOIN_CORE_H = \
   netbase.h \
   netfulfilledman.h \
   netmessagemaker.h \
+  node/blockstorage.h \
   node/coin.h \
   node/coinstats.h \
   node/context.h \
+  node/psbt.h \
   node/transaction.h \
+  node/ui_interface.h \
   node/utxo_snapshot.h \
   noui.h \
+  outputtype.h \
   policy/feerate.h \
   policy/fees.h \
+  policy/packages.h \
   policy/policy.h \
   policy/settings.h \
   pow.h \
@@ -260,6 +288,7 @@ BITCOIN_CORE_H = \
   reverse_iterator.h \
   rpc/blockchain.h \
   rpc/client.h \
+  rpc/mining.h \
   rpc/protocol.h \
   rpc/rawtransaction_util.h \
   rpc/register.h \
@@ -275,6 +304,7 @@ BITCOIN_CORE_H = \
   script/signingprovider.h \
   script/standard.h \
   shutdown.h \
+  source_location.h \
   spork.h \
   stacktraces.h \
   streams.h \
@@ -287,56 +317,64 @@ BITCOIN_CORE_H = \
   support/events.h \
   support/lockedpool.h \
   sync.h \
-  threadsafety.h \
+  timestampindex.h \
   threadinterrupt.h \
+  threadsafety.h \
   timedata.h \
   torcontrol.h \
   txdb.h \
   txmempool.h \
-  ui_interface.h \
   undo.h \
   unordered_lru_cache.h \
   util/bip32.h \
   util/bytevectorhash.h \
   util/check.h \
   util/enumerate.h \
+  util/epochguard.h \
   util/error.h \
+  util/expected.h \
+  util/fastrange.h \
   util/fees.h \
   util/golombrice.h \
+  util/hasher.h \
+  util/hash_type.h \
   util/irange.h \
-  util/spanparsing.h \
-  util/system.h \
   util/asmap.h \
   util/getuniquepath.h \
   util/macros.h \
   util/message.h \
   util/moneystr.h \
+  util/overflow.h \
   util/ranges.h \
+  util/readwritefile.h \
   util/underlying.h \
   util/serfloat.h \
   util/settings.h \
+  util/ranges_set.h \
   util/sock.h \
   util/string.h \
+  util/spanparsing.h \
+  util/system.h \
   util/time.h \
+  util/thread.h \
   util/threadnames.h \
+  util/trace.h \
   util/translation.h \
-  util/vector.h \
+  util/ui_change_type.h \
   util/url.h \
-  util/validation.h \
+  util/vector.h \
   validation.h \
   validationinterface.h \
   versionbits.h \
-  versionbitsinfo.h \
-  walletinitinterface.h \
   wallet/bdb.h \
   wallet/coincontrol.h \
+  wallet/coinselection.h \
   wallet/context.h \
   wallet/crypter.h \
   wallet/db.h \
   wallet/fees.h \
   wallet/ismine.h \
   wallet/load.h \
-  wallet/psbtwallet.h \
   wallet/rpcwallet.h \
   wallet/salvage.h \
   wallet/scriptpubkeyman.h \
@@ -345,7 +383,7 @@ BITCOIN_CORE_H = \
   wallet/walletdb.h \
   wallet/wallettool.h \
   wallet/walletutil.h \
-  wallet/coinselection.h \
+  walletinitinterface.h \
   warnings.h \
   zmq/zmqabstractnotifier.h \
   zmq/zmqnotificationinterface.h \
@@ -368,6 +406,7 @@ libbitcoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(MINIUPNPC_CP
 libbitcoin_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libbitcoin_server_a_SOURCES = \
   addrdb.cpp \
+  addressindex.cpp \
   addrman.cpp \
   banman.cpp \
   batchedlogger.cpp \
@@ -375,12 +414,15 @@ libbitcoin_server_a_SOURCES = \
   blockfilter.cpp \
   chain.cpp \
   coinjoin/coinjoin.cpp \
-  coinjoin/options.cpp \
+  coinjoin/context.cpp \
   coinjoin/server.cpp \
   consensus/tx_verify.cpp \
   dbwrapper.cpp \
+  deploymentstatus.cpp \
   dsnotificationinterface.cpp \
+  evo/assetlocktx.cpp \
   evo/cbtx.cpp \
+  evo/creditpool.cpp \
   evo/deterministicmns.cpp \
   evo/dmnstate.cpp \
   evo/evodb.cpp \
@@ -392,20 +434,22 @@ libbitcoin_server_a_SOURCES = \
   evo/specialtxman.cpp \
   evo/datatx.cpp \
   flatfile.cpp \
-  httprpc.cpp \
-  httpserver.cpp \
-  index/base.cpp \
-  index/blockfilterindex.cpp \
-  index/txindex.cpp \
-  interfaces/chain.cpp \
-  interfaces/node.cpp \
-  init.cpp \
-  governance/governance.cpp \
   governance/classes.cpp \
+  governance/exceptions.cpp \
+  governance/governance.cpp \
   governance/object.cpp \
   governance/validators.cpp \
   governance/vote.cpp \
   governance/votedb.cpp \
+  gsl/assert.cpp \
+  httprpc.cpp \
+  httpserver.cpp \
+  i2p.cpp \
+  index/base.cpp \
+  index/blockfilterindex.cpp \
+  index/coinstatsindex.cpp \
+  index/txindex.cpp \
+  init.cpp \
   llmq/quorums.cpp \
   llmq/blockprocessor.cpp \
   llmq/commitment.cpp \
@@ -417,6 +461,7 @@ libbitcoin_server_a_SOURCES = \
   llmq/dkgsession.cpp \
   llmq/context.cpp \
   llmq/instantsend.cpp \
+  llmq/options.cpp \
   llmq/snapshot.cpp \
   llmq/signing.cpp \
   llmq/signing_shares.cpp \
@@ -432,12 +477,17 @@ libbitcoin_server_a_SOURCES = \
   net.cpp \
   netfulfilledman.cpp \
   net_processing.cpp \
+  node/blockstorage.cpp \
   node/coin.cpp \
   node/coinstats.cpp \
   node/context.cpp \
+  node/interfaces.cpp \
+  node/psbt.cpp \
   node/transaction.cpp \
+  node/ui_interface.cpp \
   noui.cpp \
   policy/fees.cpp \
+  policy/packages.cpp \
   policy/policy.cpp \
   policy/settings.cpp \
   pow.cpp \
@@ -461,7 +511,6 @@ libbitcoin_server_a_SOURCES = \
   torcontrol.cpp \
   txdb.cpp \
   txmempool.cpp \
-  ui_interface.cpp \
   validation.cpp \
   validationinterface.cpp \
   versionbits.cpp \
@@ -492,16 +541,16 @@ libbitcoin_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(SQLITE_CFLAG
 libbitcoin_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libbitcoin_wallet_a_SOURCES = \
   coinjoin/client.cpp \
-  coinjoin/options.cpp \
+  coinjoin/interfaces.cpp \
   coinjoin/util.cpp \
-  interfaces/wallet.cpp \
+  hdchain.cpp \
   wallet/coincontrol.cpp \
   wallet/context.cpp \
   wallet/crypter.cpp \
   wallet/db.cpp \
   wallet/fees.cpp \
+  wallet/interfaces.cpp \
   wallet/load.cpp \
-  wallet/psbtwallet.cpp \
   wallet/rpcdump.cpp \
   wallet/rpcwallet.cpp \
   wallet/scriptpubkeyman.cpp \
@@ -672,13 +721,16 @@ libbitcoin_common_a_SOURCES = \
   compressor.cpp \
   core_read.cpp \
   core_write.cpp \
-  hdchain.cpp \
+  deploymentinfo.cpp \
+  governance/common.cpp \
   key.cpp \
   key_io.cpp \
+  llmq/utils.cpp \
   merkleblock.cpp \
   netaddress.cpp \
   netbase.cpp \
   net_permissions.cpp \
+  outputtype.cpp \
   policy/feerate.cpp \
   policy/policy.cpp \
   protocol.cpp \
@@ -691,13 +743,10 @@ libbitcoin_common_a_SOURCES = \
   script/sign.cpp \
   script/signingprovider.cpp \
   script/standard.cpp \
-  versionbitsinfo.cpp \
   warnings.cpp \
   $(BITCOIN_CORE_H)
 
 # util: shared between all executables.
-# This library *must* be included to make sure that the glibc
-# backward-compatibility objects and their sanity checks are linked.
 libbitcoin_util_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
 libbitcoin_util_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libbitcoin_util_a_SOURCES = \
@@ -706,10 +755,11 @@ libbitcoin_util_a_SOURCES = \
   bls/bls_ies.h \
   bls/bls_worker.cpp \
   bls/bls_worker.h \
+  coinjoin/common.cpp \
+  coinjoin/options.cpp \
   support/lockedpool.cpp \
   chainparamsbase.cpp \
   clientversion.cpp \
-  compat/glibcxx_sanity.cpp \
   compat/strnlen.cpp \
   fs.cpp \
   interfaces/handler.cpp \
@@ -724,27 +774,29 @@ libbitcoin_util_a_SOURCES = \
   util/asmap.cpp \
   util/bip32.cpp \
   util/bytevectorhash.cpp \
+  util/check.cpp \
   util/error.cpp \
   util/fees.cpp \
+  util/hasher.cpp \
   util/getuniquepath.cpp \
   util/sock.cpp \
   util/system.cpp \
   util/message.cpp \
   util/moneystr.cpp \
+  util/readwritefile.cpp \
   util/settings.cpp \
+  util/ranges_set.cpp \
   util/spanparsing.cpp \
   util/strencodings.cpp \
   util/time.cpp \
   util/serfloat.cpp \
   util/string.cpp \
+  util/thread.cpp \
   util/threadnames.cpp \
-  util/url.cpp \
-  util/validation.cpp \
   $(BITCOIN_CORE_H)
 
-if GLIBC_BACK_COMPAT
-libbitcoin_util_a_SOURCES += compat/glibc_compat.cpp
-AM_LDFLAGS += $(COMPAT_LDFLAGS)
+if USE_LIBEVENT
+libbitcoin_util_a_SOURCES += util/url.cpp
 endif
 
 # cli: shared between sparks-cli and sparks-qt
@@ -759,22 +811,21 @@ libbitcoin_cli_a_SOURCES = \
 nodist_libbitcoin_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
-# sparksd binary #
-sparksd_SOURCES = bitcoind.cpp
-sparksd_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-sparksd_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-sparksd_LDFLAGS = $(LDFLAGS_WRAP_EXCEPTIONS) $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
+# sparksd & sparks-node binaries #
+bitcoin_daemon_sources = bitcoind.cpp
+bitcoin_bin_cppflags = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+bitcoin_bin_cxxflags = $(AM_CXXFLAGS) $(PIE_FLAGS)
+bitcoin_bin_ldflags = $(LDFLAGS_WRAP_EXCEPTIONS) $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
 
 if TARGET_WINDOWS
-sparksd_SOURCES += sparksd-res.rc
+bitcoin_daemon_sources += sparksd-res.rc
 endif
 
-sparksd_LDADD = \
-  $(LIBBITCOIN_SERVER) \
+bitcoin_bin_ldadd = \
   $(LIBBITCOIN_WALLET) \
   $(LIBBITCOIN_COMMON) \
-  $(LIBUNIVALUE) \
   $(LIBBITCOIN_UTIL) \
+  $(LIBUNIVALUE) \
   $(LIBBITCOIN_ZMQ) \
   $(LIBBITCOIN_CONSENSUS) \
   $(LIBBITCOIN_CRYPTO) \
@@ -784,7 +835,19 @@ sparksd_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1)
 
-sparksd_LDADD += $(BACKTRACE_LIB) $(BOOST_LIBS) $(BDB_LIBS) $(MINIUPNPC_LIBS) $(NATPMP_LIBS) $(SQLITE_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS) $(GMP_LIBS)
+bitcoin_bin_ldadd += $(BACKTRACE_LIB) $(BOOST_LIBS) $(BDB_LIBS) $(MINIUPNPC_LIBS) $(NATPMP_LIBS) $(SQLITE_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS) $(GMP_LIBS)
+
+sparksd_SOURCES = $(bitcoin_daemon_sources)
+sparksd_CPPFLAGS = $(bitcoin_bin_cppflags)
+sparksd_CXXFLAGS = $(bitcoin_bin_cxxflags)
+sparksd_LDFLAGS = $(bitcoin_bin_ldflags)
+sparksd_LDADD = $(LIBBITCOIN_SERVER) $(bitcoin_bin_ldadd)
+
+sparks_node_SOURCES = $(bitcoin_daemon_sources)
+sparks_node_CPPFLAGS = $(bitcoin_bin_cppflags)
+sparks_node_CXXFLAGS = $(bitcoin_bin_cxxflags)
+sparks_node_LDFLAGS = $(bitcoin_bin_ldflags)
+sparks_node_LDADD = $(LIBBITCOIN_SERVER) $(bitcoin_bin_ldadd)
 
 # sparks-cli binary #
 sparks_cli_SOURCES = bitcoin-cli.cpp
@@ -828,44 +891,20 @@ sparks_tx_LDADD += $(BACKTRACE_LIB) $(BOOST_LIBS) $(GMP_LIBS)
 
 # sparks-wallet binary #
 sparks_wallet_SOURCES = bitcoin-wallet.cpp
-sparks_wallet_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-sparks_wallet_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-sparks_wallet_LDFLAGS = $(LDFLAGS_WRAP_EXCEPTIONS) $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
+sparks_wallet_CPPFLAGS = $(bitcoin_bin_cppflags)
+sparks_wallet_CXXFLAGS = $(bitcoin_bin_cxxflags)
+sparks_wallet_LDFLAGS = $(bitcoin_bin_ldflags)
+sparks_wallet_LDADD = $(LIBBITCOIN_WALLET_TOOL) $(bitcoin_bin_ldadd)
 
 if TARGET_WINDOWS
 sparks_wallet_SOURCES += sparks-wallet-res.rc
 endif
-
-# Libraries below may be listed more than once to resolve circular dependencies (see
-# https://eli.thegreenplace.net/2013/07/09/library-order-in-static-linking#circular-dependency)
-sparks_wallet_LDADD = \
-  $(LIBBITCOIN_WALLET_TOOL) \
-  $(LIBBITCOIN_SERVER) \
-  $(LIBBITCOIN_WALLET) \
-  $(LIBBITCOIN_SERVER) \
-  $(LIBBITCOIN_COMMON) \
-  $(LIBBITCOIN_CONSENSUS) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_CRYPTO) \
-  $(LIBBITCOIN_ZMQ) \
-  $(LIBDASHBLS) \
-  $(LIBLEVELDB) \
-  $(LIBLEVELDB_SSE42) \
-  $(LIBMEMENV) \
-  $(LIBSECP256K1) \
-  $(LIBUNIVALUE)
-
-sparks_wallet_LDADD += $(BACKTRACE_LIB) $(BOOST_LIBS) $(BDB_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(MINIUPNPC_LIBS) $(NATPMP_LIBS) $(SQLITE_LIBS) $(ZMQ_LIBS) $(GMP_LIBS)
 #
 
 # sparksconsensus library #
 if BUILD_BITCOIN_LIBS
 include_HEADERS = script/bitcoinconsensus.h
 libsparksconsensus_la_SOURCES = support/cleanse.cpp $(crypto_libbitcoin_crypto_base_a_SOURCES) $(libbitcoin_consensus_a_SOURCES)
-
-if GLIBC_BACK_COMPAT
-  libsparksconsensus_la_SOURCES += compat/glibc_compat.cpp
-endif
 
 libsparksconsensus_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined $(RELDFLAGS)
 libsparksconsensus_la_LIBADD = $(LIBDASHBLS) $(LIBSECP256K1) $(GMP_LIBS)
@@ -935,20 +974,13 @@ clean-local:
 	$(AM_V_GEN) $(WINDRES) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CPPFLAGS) -DWINDRES_PREPROC -i $< -o $@
 
 check-symbols: $(bin_PROGRAMS)
-if TARGET_DARWIN
-	@echo "Checking macOS dynamic libraries..."
-	$(AM_V_at) OTOOL=$(OTOOL) $(PYTHON) $(top_srcdir)/contrib/devtools/symbol-check.py $(bin_PROGRAMS)
-endif
-
-if GLIBC_BACK_COMPAT
-	@echo "Checking glibc back compat..."
-	$(AM_V_at) CPPFILT=$(CPPFILT) $(PYTHON) $(top_srcdir)/contrib/devtools/symbol-check.py $(bin_PROGRAMS)
-endif
+	@echo "Running symbol and dynamic library checks..."
+	$(AM_V_at) $(PYTHON) $(top_srcdir)/contrib/devtools/symbol-check.py $(bin_PROGRAMS)
 
 check-security: $(bin_PROGRAMS)
 if HARDEN
 	@echo "Checking binary security..."
-	$(AM_V_at) OBJDUMP=$(OBJDUMP) OTOOL=$(OTOOL) $(PYTHON) $(top_srcdir)/contrib/devtools/security-check.py $(bin_PROGRAMS)
+	$(AM_V_at) $(PYTHON) $(top_srcdir)/contrib/devtools/security-check.py $(bin_PROGRAMS)
 endif
 
 

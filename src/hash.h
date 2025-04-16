@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -84,104 +84,29 @@ public:
 };
 
 /** Compute the 256-bit hash of an object. */
-template<typename T1>
-inline uint256 Hash(const T1 pbegin, const T1 pend)
+template<typename T>
+inline uint256 Hash(const T& in1)
 {
-    static const unsigned char pblank[1] = {};
     uint256 result;
-    CHash256().Write({pbegin == pend ? pblank : (const unsigned char*)&pbegin[0], (pend - pbegin) * sizeof(pbegin[0])})
-              .Finalize(result);
+    CHash256().Write(MakeUCharSpan(in1)).Finalize(result);
     return result;
 }
 
 /** Compute the 256-bit hash of the concatenation of two objects. */
 template<typename T1, typename T2>
-inline uint256 Hash(const T1 p1begin, const T1 p1end,
-                    const T2 p2begin, const T2 p2end) {
-    static const unsigned char pblank[1] = {};
+inline uint256 Hash(const T1& in1, const T2& in2) {
     uint256 result;
-    CHash256().Write({p1begin == p1end ? pblank : (const unsigned char*)&p1begin[0], (p1end - p1begin) * sizeof(p1begin[0])})
-              .Write({p2begin == p2end ? pblank : (const unsigned char*)&p2begin[0], (p2end - p2begin) * sizeof(p2begin[0])})
-              .Finalize(result);
-    return result;
-}
-
-/** Compute the 256-bit hash of the concatenation of three objects. */
-template<typename T1, typename T2, typename T3, typename T4>
-inline uint256 Hash(const T1 p1begin, const T1 p1end,
-                    const T2 p2begin, const T2 p2end,
-                    const T3 p3begin, const T3 p3end,
-                    const T4 p4begin, const T4 p4end) {
-    static const unsigned char pblank[1] = {};
-    uint256 result;
-    CHash256().Write(p1begin == p1end ? pblank : (const unsigned char*)&p1begin[0], (p1end - p1begin) * sizeof(p1begin[0]))
-              .Write(p2begin == p2end ? pblank : (const unsigned char*)&p2begin[0], (p2end - p2begin) * sizeof(p2begin[0]))
-              .Write(p3begin == p3end ? pblank : (const unsigned char*)&p3begin[0], (p3end - p3begin) * sizeof(p3begin[0]))
-              .Write(p4begin == p4end ? pblank : (const unsigned char*)&p4begin[0], (p4end - p4begin) * sizeof(p4begin[0]))
-              .Finalize((unsigned char*)&result);
-    return result;
-}
-
-/** Compute the 256-bit hash of the concatenation of three objects. */
-template<typename T1, typename T2, typename T3, typename T4, typename T5>
-inline uint256 Hash(const T1 p1begin, const T1 p1end,
-                    const T2 p2begin, const T2 p2end,
-                    const T3 p3begin, const T3 p3end,
-                    const T4 p4begin, const T4 p4end,
-                    const T5 p5begin, const T5 p5end) {
-    static const unsigned char pblank[1] = {};
-    uint256 result;
-    CHash256().Write(p1begin == p1end ? pblank : (const unsigned char*)&p1begin[0], (p1end - p1begin) * sizeof(p1begin[0]))
-              .Write(p2begin == p2end ? pblank : (const unsigned char*)&p2begin[0], (p2end - p2begin) * sizeof(p2begin[0]))
-              .Write(p3begin == p3end ? pblank : (const unsigned char*)&p3begin[0], (p3end - p3begin) * sizeof(p3begin[0]))
-              .Write(p4begin == p4end ? pblank : (const unsigned char*)&p4begin[0], (p4end - p4begin) * sizeof(p4begin[0]))
-              .Write(p5begin == p5end ? pblank : (const unsigned char*)&p5begin[0], (p5end - p5begin) * sizeof(p5begin[0]))
-              .Finalize((unsigned char*)&result);
-    return result;
-}
-
-/** Compute the 256-bit hash of the concatenation of three objects. */
-template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-inline uint256 Hash(const T1 p1begin, const T1 p1end,
-                    const T2 p2begin, const T2 p2end,
-                    const T3 p3begin, const T3 p3end,
-                    const T4 p4begin, const T4 p4end,
-                    const T5 p5begin, const T5 p5end,
-                    const T6 p6begin, const T6 p6end) {
-    static const unsigned char pblank[1] = {};
-    uint256 result;
-    CHash256().Write(p1begin == p1end ? pblank : (const unsigned char*)&p1begin[0], (p1end - p1begin) * sizeof(p1begin[0]))
-              .Write(p2begin == p2end ? pblank : (const unsigned char*)&p2begin[0], (p2end - p2begin) * sizeof(p2begin[0]))
-              .Write(p3begin == p3end ? pblank : (const unsigned char*)&p3begin[0], (p3end - p3begin) * sizeof(p3begin[0]))
-              .Write(p4begin == p4end ? pblank : (const unsigned char*)&p4begin[0], (p4end - p4begin) * sizeof(p4begin[0]))
-              .Write(p5begin == p5end ? pblank : (const unsigned char*)&p5begin[0], (p5end - p5begin) * sizeof(p5begin[0]))
-              .Write(p6begin == p6end ? pblank : (const unsigned char*)&p6begin[0], (p6end - p6begin) * sizeof(p6begin[0]))
-              .Finalize((unsigned char*)&result);
+    CHash256().Write(MakeUCharSpan(in1)).Write(MakeUCharSpan(in2)).Finalize(result);
     return result;
 }
 
 /** Compute the 160-bit hash an object. */
 template<typename T1>
-inline uint160 Hash160(const T1 pbegin, const T1 pend)
+inline uint160 Hash160(const T1& in1)
 {
-    static unsigned char pblank[1] = {};
     uint160 result;
-    CHash160().Write({pbegin == pend ? pblank : (const unsigned char*)&pbegin[0], (pend - pbegin) * sizeof(pbegin[0])})
-              .Finalize(result);
+    CHash160().Write(MakeUCharSpan(in1)).Finalize(result);
     return result;
-}
-
-/** Compute the 160-bit hash of a vector. */
-inline uint160 Hash160(const std::vector<unsigned char>& vch)
-{
-    return Hash160(vch.begin(), vch.end());
-}
-
-/** Compute the 160-bit hash of a vector. */
-template<unsigned int N>
-inline uint160 Hash160(const prevector<N, unsigned char>& vch)
-{
-    return Hash160(vch.begin(), vch.end());
 }
 
 /** A writer stream (for serialization) that computes a 256-bit hash. */
@@ -199,8 +124,9 @@ public:
     int GetType() const { return nType; }
     int GetVersion() const { return nVersion; }
 
-    void write(const char *pch, size_t size) {
-        ctx.Write((const unsigned char*)pch, size);
+    void write(Span<const std::byte> src)
+    {
+        ctx.Write(UCharCast(src.data()), src.size());
     }
 
     /** Compute the double-SHA256 hash of all data written to this object.
@@ -250,18 +176,18 @@ private:
 public:
     explicit CHashVerifier(Source* source_) : CHashWriter(source_->GetType(), source_->GetVersion()), source(source_) {}
 
-    void read(char* pch, size_t nSize)
+    void read(Span<std::byte> dst)
     {
-        source->read(pch, nSize);
-        this->write(pch, nSize);
+        source->read(dst);
+        this->write(dst);
     }
 
     void ignore(size_t nSize)
     {
-        char data[1024];
+        std::byte data[1024];
         while (nSize > 0) {
             size_t now = std::min<size_t>(nSize, 1024);
-            read(data, now);
+            read({data, now});
             nSize -= now;
         }
     }

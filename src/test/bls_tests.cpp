@@ -1,15 +1,17 @@
-// Copyright (c) 2019-2022 The Dash Core developers
+// Copyright (c) 2019-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <bls/bls.h>
 #include <bls/bls_batchverifier.h>
+#include <clientversion.h>
 #include <random.h>
-#include <test/util/setup_common.h>
+#include <streams.h>
+#include <util/irange.h>
 
 #include <boost/test/unit_test.hpp>
 
-BOOST_FIXTURE_TEST_SUITE(bls_tests, BasicTestingSetup)
+BOOST_AUTO_TEST_SUITE(bls_tests)
 
 void FuncSign(const bool legacy_scheme)
 {
@@ -64,16 +66,16 @@ void FuncSetHexStr(const bool legacy_scheme)
     CBLSSecretKey sk;
     std::string strValidSecret = "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
     // Note: invalid string passed to SetHexStr() should cause it to fail and reset key internal data
-    BOOST_CHECK(sk.SetHexStr(strValidSecret));
-    BOOST_CHECK(!sk.SetHexStr("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1g")); // non-hex
+    BOOST_CHECK(sk.SetHexStr(strValidSecret, legacy_scheme));
+    BOOST_CHECK(!sk.SetHexStr("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1g", legacy_scheme)); // non-hex
     BOOST_CHECK(!sk.IsValid());
     BOOST_CHECK(sk == CBLSSecretKey());
     // Try few more invalid strings
-    BOOST_CHECK(sk.SetHexStr(strValidSecret));
-    BOOST_CHECK(!sk.SetHexStr("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e")); // hex but too short
+    BOOST_CHECK(sk.SetHexStr(strValidSecret, legacy_scheme));
+    BOOST_CHECK(!sk.SetHexStr("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e", legacy_scheme)); // hex but too short
     BOOST_CHECK(!sk.IsValid());
-    BOOST_CHECK(sk.SetHexStr(strValidSecret));
-    BOOST_CHECK(!sk.SetHexStr("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20")); // hex but too long
+    BOOST_CHECK(sk.SetHexStr(strValidSecret, legacy_scheme));
+    BOOST_CHECK(!sk.SetHexStr("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20", legacy_scheme)); // hex but too long
     BOOST_CHECK(!sk.IsValid());
 
     return;
@@ -357,6 +359,56 @@ void FuncBatchVerifier(const bool legacy_scheme)
     Verify(msgs);
 }
 
+void FuncThresholdSignature(const bool legacy_scheme)
+{
+    bls::bls_legacy_scheme.store(legacy_scheme);
+
+    [[maybe_unused]] const uint256 hash = GetRandHash();
+
+    constexpr size_t m_size = 20;
+    constexpr size_t m_threshold = 15;
+
+    std::vector<CBLSSecretKey> v_threshold_sks;
+    std::vector<CBLSPublicKey> v_threshold_pks;
+    for ([[maybe_unused]] const auto i : irange::range(m_threshold)) {
+        CBLSSecretKey sk;
+        sk.MakeNewKey();
+        v_threshold_sks.push_back(sk);
+        v_threshold_pks.emplace_back(sk.GetPublicKey());
+    }
+
+    CBLSSecretKey thr_sk = v_threshold_sks[0];
+    CBLSPublicKey thr_pk = v_threshold_pks[0];
+    CBLSSignature thr_sig = thr_sk.Sign(hash);
+
+    std::vector<CBLSId> v_size_ids;
+    std::vector<CBLSSecretKey> v_size_sk_shares;
+    std::vector<CBLSPublicKey> v_size_pk_shares;
+    for ([[maybe_unused]] const auto m_shares : irange::range(m_size)) {
+        v_size_ids.emplace_back(GetRandHash());
+        CBLSSecretKey sk;
+        BOOST_CHECK(sk.SecretKeyShare(v_threshold_sks, v_size_ids[m_shares]));
+        v_size_sk_shares.push_back(sk);
+        CBLSPublicKey pk;
+        BOOST_CHECK(pk.PublicKeyShare(v_threshold_pks, v_size_ids[m_shares]));
+        v_size_pk_shares.push_back(pk);
+
+        std::vector<CBLSSignature> v_share_sigs;
+        std::vector<CBLSId> v_share_ids;
+        for ([[maybe_unused]] const auto j : irange::range(m_shares)) {
+            v_share_sigs.emplace_back(v_size_sk_shares[j].Sign(hash));
+            BOOST_CHECK(v_share_sigs.back().VerifyInsecure(v_size_pk_shares[j], hash));
+            v_share_ids.push_back(v_size_ids[j]);
+        }
+
+        CBLSSignature rec_share_sig;
+        BOOST_CHECK_EQUAL(rec_share_sig.Recover(v_share_sigs, v_share_ids), m_shares >= 2);
+        BOOST_CHECK_EQUAL(rec_share_sig.IsValid(), m_shares >= 2);
+        BOOST_CHECK_EQUAL(rec_share_sig == thr_sig, m_shares >= m_threshold);
+        BOOST_CHECK_EQUAL(rec_share_sig.VerifyInsecure(thr_pk, hash), m_shares >= m_threshold);
+    }
+}
+
 BOOST_AUTO_TEST_CASE(bls_sethexstr_tests)
 {
     FuncSetHexStr(true);
@@ -409,6 +461,12 @@ BOOST_AUTO_TEST_CASE(batch_verifier_tests)
 {
     FuncBatchVerifier(true);
     FuncBatchVerifier(false);
+}
+
+BOOST_AUTO_TEST_CASE(bls_threshold_signature_tests)
+{
+    FuncThresholdSignature(true);
+    FuncThresholdSignature(false);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

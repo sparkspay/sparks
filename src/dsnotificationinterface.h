@@ -11,14 +11,16 @@ class CConnman;
 class CDeterministicMNManager;
 class CGovernanceManager;
 class CMasternodeSync;
+struct CJContext;
 struct LLMQContext;
 
 class CDSNotificationInterface : public CValidationInterface
 {
 public:
     explicit CDSNotificationInterface(CConnman& _connman,
-                                      std::unique_ptr<CMasternodeSync>& _mn_sync, std::unique_ptr<CDeterministicMNManager>& _dmnman,
-                                      std::unique_ptr<CGovernanceManager>& _govman, std::unique_ptr<LLMQContext>& _llmq_ctx);
+                                      CMasternodeSync& _mn_sync, const std::unique_ptr<CDeterministicMNManager>& _dmnman,
+                                      CGovernanceManager& _govman, const std::unique_ptr<LLMQContext>& _llmq_ctx,
+                                      const std::unique_ptr<CJContext>& _cj_ctx);
     virtual ~CDSNotificationInterface() = default;
 
     // a small helper to initialize current block height in sub-modules on startup
@@ -34,17 +36,18 @@ protected:
     void TransactionRemovedFromMempool(const CTransactionRef& ptx, MemPoolRemovalReason reason) override;
     void BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex) override;
     void BlockDisconnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexDisconnected) override;
-    void NotifyMasternodeListChanged(bool undo, const CDeterministicMNList& oldMNList, const CDeterministicMNListDiff& diff, CConnman& connman) override;
+    void NotifyMasternodeListChanged(bool undo, const CDeterministicMNList& oldMNList, const CDeterministicMNListDiff& diff) override;
     void NotifyChainLock(const CBlockIndex* pindex, const std::shared_ptr<const llmq::CChainLockSig>& clsig) override;
 
 private:
     CConnman& connman;
 
-    std::unique_ptr<CMasternodeSync>& m_mn_sync;
-    std::unique_ptr<CDeterministicMNManager>& dmnman;
-    std::unique_ptr<CGovernanceManager>& govman;
+    CMasternodeSync& m_mn_sync;
+    const std::unique_ptr<CDeterministicMNManager>& dmnman;
+    CGovernanceManager& govman;
 
-    std::unique_ptr<LLMQContext>& llmq_ctx;
+    const std::unique_ptr<LLMQContext>& llmq_ctx;
+    const std::unique_ptr<CJContext>& cj_ctx;
 };
 
 #endif // BITCOIN_DSNOTIFICATIONINTERFACE_H

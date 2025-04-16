@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2018 The Bitcoin Core developers
+// Copyright (c) 2016-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -23,12 +23,16 @@ static void WalletToolReleaseWallet(CWallet* wallet)
 
 static void WalletCreate(CWallet* wallet_instance)
 {
+    LOCK(wallet_instance->cs_wallet);
     wallet_instance->SetMinVersion(FEATURE_COMPRPUBKEY);
 
     // generate a new HD seed
-    // NOTE: we do not yet create HD wallets by default
-    // auto spk_man = wallet_instance->GetLegacyScriptPubKeyMan();
-    // spk_man->GenerateNewHDChain("", "");
+    wallet_instance->SetupLegacyScriptPubKeyMan();
+    auto spk_man = wallet_instance->GetLegacyScriptPubKeyMan();
+    // NOTE: drop this condition after removing option to create non-HD wallets
+    if (spk_man->IsHDEnabled()) {
+        spk_man->GenerateNewHDChain(/*secureMnemonic=*/"", /*secureMnemonicPassphrase=*/"");
+    }
 
     tfm::format(std::cout, "Topping up keypool...\n");
     wallet_instance->TopUpKeyPool();
@@ -51,7 +55,7 @@ static std::shared_ptr<CWallet> MakeWallet(const std::string& name, const fs::pa
     }
 
     // dummy chain interface
-    std::shared_ptr<CWallet> wallet_instance{new CWallet(nullptr /* chain */, name, std::move(database)), WalletToolReleaseWallet};
+    std::shared_ptr<CWallet> wallet_instance{new CWallet(/*chain=*/ nullptr, /*coinjoin_loader=*/ nullptr, name, std::move(database)), WalletToolReleaseWallet};
     DBErrors load_wallet_ret;
     try {
         bool first_run;
@@ -99,12 +103,12 @@ static void WalletShowInfo(CWallet* wallet_instance)
     tfm::format(std::cout, "HD (hd seed available): %s\n", wallet_instance->IsHDEnabled() ? "yes" : "no");
     tfm::format(std::cout, "Keypool Size: %u\n", wallet_instance->GetKeyPoolSize());
     tfm::format(std::cout, "Transactions: %zu\n", wallet_instance->mapWallet.size());
-    tfm::format(std::cout, "Address Book: %zu\n", wallet_instance->mapAddressBook.size());
+    tfm::format(std::cout, "Address Book: %zu\n", wallet_instance->m_address_book.size());
 }
 
 bool ExecuteWalletToolFunc(const std::string& command, const std::string& name)
 {
-    fs::path path = fs::absolute(name, GetWalletDir());
+    const fs::path path = fsbridge::AbsPathJoin(GetWalletDir(), name);
 
     if (command == "create") {
         std::shared_ptr<CWallet> wallet_instance = MakeWallet(name, path, /* create= */ true);

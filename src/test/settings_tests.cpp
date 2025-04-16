@@ -1,11 +1,12 @@
-// Copyright (c) 2011-2019 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <util/settings.h>
 
-#include <test/util.h>
 #include <test/util/setup_common.h>
+#include <test/util/str.h>
+
 
 #include <boost/test/unit_test.hpp>
 #include <univalue.h>
@@ -124,6 +125,19 @@ BOOST_AUTO_TEST_CASE(Simple)
 
     // The first given arg takes precedence when specified via config file.
     CheckValues(settings2, R"("val2")", R"(["val2","val3"])");
+}
+
+// Confirm that a high priority setting overrides a lower priority setting even
+// if the high priority setting is null. This behavior is useful for a high
+// priority setting source to be able to effectively reset any setting back to
+// its default value.
+BOOST_AUTO_TEST_CASE(NullOverride)
+{
+    util::Settings settings;
+    settings.command_line_options["name"].push_back("value");
+    BOOST_CHECK_EQUAL(R"("value")", GetSetting(settings, "section", "name", false, false).write().c_str());
+    settings.forced_settings["name"] = {};
+    BOOST_CHECK_EQUAL(R"(null)", GetSetting(settings, "section", "name", false, false).write().c_str());
 }
 
 // Test different ways settings can be merged, and verify results. This test can

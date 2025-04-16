@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2017 The Bitcoin Core developers
+// Copyright (c) 2012-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,7 +14,6 @@
 #include <condition_variable>
 #include <mutex>
 #include <thread>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -24,11 +23,11 @@ static const unsigned int QUEUE_BATCH_SIZE = 128;
 static const int SCRIPT_CHECK_THREADS = 3;
 
 struct FakeCheck {
-    bool operator()()
+    bool operator()() const
     {
         return true;
     }
-    void swap(FakeCheck& x){};
+    void swap(FakeCheck& x) noexcept {};
 };
 
 struct FakeCheckCheckCompletion {
@@ -38,18 +37,18 @@ struct FakeCheckCheckCompletion {
         n_calls.fetch_add(1, std::memory_order_relaxed);
         return true;
     }
-    void swap(FakeCheckCheckCompletion& x){};
+    void swap(FakeCheckCheckCompletion& x) noexcept {};
 };
 
 struct FailingCheck {
     bool fails;
     FailingCheck(bool _fails) : fails(_fails){};
     FailingCheck() : fails(true){};
-    bool operator()()
+    bool operator()() const
     {
         return !fails;
     }
-    void swap(FailingCheck& x)
+    void swap(FailingCheck& x) noexcept
     {
         std::swap(fails, x.fails);
     };
@@ -67,14 +66,17 @@ struct UniqueCheck {
         results.insert(check_id);
         return true;
     }
-    void swap(UniqueCheck& x) { std::swap(x.check_id, check_id); };
+    void swap(UniqueCheck& x) noexcept
+    {
+        std::swap(x.check_id, check_id);
+    };
 };
 
 
 struct MemoryCheck {
     static std::atomic<size_t> fake_allocated_memory;
     bool b {false};
-    bool operator()()
+    bool operator()() const
     {
         return true;
     }
@@ -95,7 +97,10 @@ struct MemoryCheck {
     {
         fake_allocated_memory.fetch_sub(b, std::memory_order_relaxed);
     };
-    void swap(MemoryCheck& x) { std::swap(b, x.b); };
+    void swap(MemoryCheck& x) noexcept
+    {
+        std::swap(b, x.b);
+    };
 };
 
 struct FrozenCleanupCheck {
@@ -105,7 +110,7 @@ struct FrozenCleanupCheck {
     // Freezing can't be the default initialized behavior given how the queue
     // swaps in default initialized Checks.
     bool should_freeze {false};
-    bool operator()()
+    bool operator()() const
     {
         return true;
     }
@@ -119,7 +124,10 @@ struct FrozenCleanupCheck {
             cv.wait(l, []{ return nFrozen.load(std::memory_order_relaxed) == 0;});
         }
     }
-    void swap(FrozenCleanupCheck& x){std::swap(should_freeze, x.should_freeze);};
+    void swap(FrozenCleanupCheck& x) noexcept
+    {
+        std::swap(should_freeze, x.should_freeze);
+    };
 };
 
 // Static Allocations

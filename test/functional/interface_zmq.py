@@ -5,21 +5,19 @@
 """Test the ZMQ notification interface."""
 import struct
 
-from codecs import encode
-
 from test_framework.address import ADDRESS_BCRT1_UNSPENDABLE
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.messages import sparkshash
-from test_framework.util import (
-    assert_equal,
-    hash256,
-    )
+from test_framework.messages import sparkshash, hash256
+from test_framework.util import assert_equal
+from time import sleep
 
 ADDRESS = "tcp://127.0.0.1:28332"
 
-def sparkshash_helper(b):
-    return encode(sparkshash(b)[::-1], 'hex_codec').decode('ascii')
+def hash256_reversed(byte_str):
+    return hash256(byte_str)[::-1]
 
+def sparkshash_reversed(byte_str):
+    return sparkshash(byte_str)[::-1]
 
 class ZMQSubscriber:
     def __init__(self, socket, topic):
@@ -59,7 +57,6 @@ class ZMQTest (BitcoinTestFramework):
         self.zmq_context = zmq.Context()
         socket = self.zmq_context.socket(zmq.SUB)
         socket.set(zmq.RCVTIMEO, 60000)
-        socket.connect(ADDRESS)
 
         # Subscribe to all available topics.
         self.hashblock = ZMQSubscriber(socket, b"hashblock")
@@ -73,11 +70,15 @@ class ZMQTest (BitcoinTestFramework):
         ]
         self.add_nodes(self.num_nodes, self.extra_args)
         self.start_nodes()
+        socket.connect(ADDRESS)
+        # Relax so that the subscriber is ready before publishing zmq messages
+        sleep(0.2)
         self.import_deterministic_coinbase_privkeys()
 
     def run_test(self):
         try:
             self._zmq_test()
+            self.test_multiple_interfaces()
         finally:
             # Destroy the ZMQ context.
             self.log.debug("Destroying ZMQ context")
@@ -95,7 +96,7 @@ class ZMQTest (BitcoinTestFramework):
 
             # Should receive the coinbase raw transaction.
             hex = self.rawtx.receive()
-            assert_equal(hash256(hex), txid)
+            assert_equal(hash256_reversed(hex), txid)
 
             # Should receive the generated block hash.
             hash = self.hashblock.receive().hex()
@@ -105,7 +106,7 @@ class ZMQTest (BitcoinTestFramework):
 
             # Should receive the generated raw block.
             block = self.rawblock.receive()
-            assert_equal(genhashes[x], sparkshash_helper(block[:80]))
+            assert_equal(genhashes[x], sparkshash_reversed(block[:80]).hex())
 
         if self.is_wallet_compiled():
             self.log.info("Wait for tx from second node")
@@ -118,7 +119,7 @@ class ZMQTest (BitcoinTestFramework):
 
             # Should receive the broadcasted raw transaction.
             hex = self.rawtx.receive()
-            assert_equal(payment_txid, hash256(hex).hex())
+            assert_equal(payment_txid, hash256_reversed(hex).hex())
 
 
         self.log.info("Test the getzmqnotifications RPC")
@@ -130,6 +131,30 @@ class ZMQTest (BitcoinTestFramework):
         ])
 
         assert_equal(self.nodes[1].getzmqnotifications(), [])
+
+    def test_multiple_interfaces(self):
+        import zmq
+        # Set up two subscribers with different addresses
+        subscribers = []
+        for i in range(2):
+            address = 'tcp://127.0.0.1:%d' % (28334 + i)
+            socket = self.zmq_context.socket(zmq.SUB)
+            socket.set(zmq.RCVTIMEO, 60000)
+            hashblock = ZMQSubscriber(socket, b"hashblock")
+            socket.connect(address)
+            subscribers.append({'address': address, 'hashblock': hashblock})
+
+        self.restart_node(0, ['-zmqpub%s=%s' % (subscriber['hashblock'].topic.decode(), subscriber['address']) for subscriber in subscribers])
+
+        # Relax so that the subscriber is ready before publishing zmq messages
+        sleep(0.2)
+
+        # Generate 1 block in nodes[0] and receive all notifications
+        self.nodes[0].generatetoaddress(1, ADDRESS_BCRT1_UNSPENDABLE)
+
+        # Should receive the same block hash on both subscribers
+        assert_equal(self.nodes[0].getbestblockhash(), subscribers[0]['hashblock'].receive().hex())
+        assert_equal(self.nodes[0].getbestblockhash(), subscribers[1]['hashblock'].receive().hex())
 
 if __name__ == '__main__':
     ZMQTest().main()

@@ -1,5 +1,5 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2016-2022 The Sparks Core developers
+// Copyright (c) 2011-2019 The Bitcoin Core developers
+// Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -93,7 +93,7 @@ public:
 
         if (valid) {
             val = qBound(m_min_amount, val, m_max_amount);
-            setText(BitcoinUnits::format(currentUnit, val, false, BitcoinUnits::separatorAlways));
+            setText(BitcoinUnits::format(currentUnit, val, false, BitcoinUnits::SeparatorStyle::ALWAYS));
         }
     }
 
@@ -104,7 +104,7 @@ public:
 
     void setValue(const CAmount& value)
     {
-        setText(BitcoinUnits::format(currentUnit, value, false, BitcoinUnits::separatorAlways));
+        setText(BitcoinUnits::format(currentUnit, value, false, BitcoinUnits::SeparatorStyle::ALWAYS));
         Q_EMIT valueChanged();
     }
 
@@ -131,6 +131,7 @@ public:
         currentUnit = unit;
         amountValidator->updateUnit(unit);
 
+        setPlaceholderText(BitcoinUnits::format(currentUnit, m_min_amount, false, BitcoinUnits::SeparatorStyle::ALWAYS));
         if(valid)
             setValue(val);
         else
@@ -142,7 +143,7 @@ public:
         ensurePolished();
         const QFontMetrics fm(fontMetrics());
         int h = 0;
-        int w = GUIUtil::TextWidth(fm, BitcoinUnits::format(BitcoinUnits::SPK, BitcoinUnits::maxMoney(), false, BitcoinUnits::separatorAlways));
+        int w = GUIUtil::TextWidth(fm, BitcoinUnits::format(BitcoinUnits::SPK, BitcoinUnits::maxMoney(), false, BitcoinUnits::SeparatorStyle::ALWAYS));
         w += 2; // cursor blinking space
         w += GUIUtil::sparksThemeActive() ? 24 : 0; // counteract padding from css
         return QSize(w, h);

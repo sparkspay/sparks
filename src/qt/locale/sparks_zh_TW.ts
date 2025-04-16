@@ -106,16 +106,8 @@
         <translation>匯出位址清單</translation>
     </message>
     <message>
-        <source>Comma separated file (*.csv)</source>
-        <translation>逗號分隔資料檔(*.csv)</translation>
-    </message>
-    <message>
         <source>Exporting Failed</source>
         <translation>匯出失敗</translation>
-    </message>
-    <message>
-        <source>There was an error trying to save the address list to %1. Please try again.</source>
-        <translation>儲存位址列表到 %1 時發生錯誤。請重試一次。</translation>
     </message>
 </context>
 <context>
@@ -215,14 +207,6 @@
         <translation>解鎖錢包</translation>
     </message>
     <message>
-        <source>This operation needs your wallet passphrase to decrypt the wallet.</source>
-        <translation>這個動作需要你的錢包密碼來把錢包解密。</translation>
-    </message>
-    <message>
-        <source>Decrypt wallet</source>
-        <translation>解密錢包</translation>
-    </message>
-    <message>
         <source>Change passphrase</source>
         <translation>更改密碼</translation>
     </message>
@@ -275,10 +259,6 @@
         <translation>輸入要用來解密錢包的密碼不對。</translation>
     </message>
     <message>
-        <source>Wallet decryption failed</source>
-        <translation>錢包解密失敗</translation>
-    </message>
-    <message>
         <source>Wallet passphrase was successfully changed.</source>
         <translation>成功更改錢包的密碼。</translation>
     </message>
@@ -307,22 +287,6 @@
 </context>
 <context>
     <name>BitcoinGUI</name>
-    <message>
-        <source>A fatal error occurred. Sparks Core can no longer continue safely and will quit.</source>
-        <translation>發生致命錯誤。達世幣核心軟體不再能安全地繼續運行下去，程式將會關閉。</translation>
-    </message>
-    <message>
-        <source>Sparks Core</source>
-        <translation>達世幣核心</translation>
-    </message>
-    <message>
-        <source>Wallet</source>
-        <translation>錢包</translation>
-    </message>
-    <message>
-        <source>Node</source>
-        <translation>節點</translation>
-    </message>
     <message>
         <source>&amp;Overview</source>
         <translation>總覽(&amp;O)</translation>
@@ -472,10 +436,6 @@
         <translation>除錯主控台(&amp;D)</translation>
     </message>
     <message>
-        <source>Open debugging console</source>
-        <translation>開啓除錯主控台</translation>
-    </message>
-    <message>
         <source>&amp;Network Monitor</source>
         <translation>網絡監視器(&amp;N)</translation>
     </message>
@@ -534,10 +494,6 @@
     <message>
         <source>Open &amp;URI...</source>
         <translation>開啓 &amp;URI...</translation>
-    </message>
-    <message>
-        <source>Open a sparks: URI or payment request</source>
-        <translation>開啓一個達世幣協議的 URI 或付款要求</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>
@@ -739,7 +695,15 @@
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation>錢包&lt;b&gt;已加密&lt;/b&gt;目前為&lt;b&gt;鎖定&lt;/b&gt;狀態</translation>
     </message>
-</context>
+    <message>
+        <source>Proxy is &lt;b&gt;enabled&lt;/b&gt;: %1</source>
+        <translation>代理服務器 &lt;b&gt;已啟用&lt;/b&gt;: %1</translation>
+    </message>
+    <message>
+        <source>Original message:</source>
+        <translation>原始信息:</translation>
+    </message>
+    </context>
 <context>
     <name>CoinControlDialog</name>
     <message>
@@ -899,10 +863,6 @@
         <translation>某些資金被取消選取，因為它們已經花費了。</translation>
     </message>
     <message>
-        <source>Some coins were unselected because they do not have enough mixing rounds.</source>
-        <translation>某些資金被取消選取，因為它們沒有足夠的混合次數。</translation>
-    </message>
-    <message>
         <source>Show all coins</source>
         <translation>顯示所有資金</translation>
     </message>
@@ -1010,6 +970,29 @@
     </message>
 </context>
 <context>
+    <name>GovernanceList</name>
+    <message>
+        <source>Form</source>
+        <translation>表單</translation>
+    </message>
+    <message>
+        <source>Filter List:</source>
+        <translation>篩選列表:</translation>
+    </message>
+    <message>
+        <source>Proposal Count:</source>
+        <translation>提案數量:</translation>
+    </message>
+    <message>
+        <source>Filter by Title</source>
+        <translation>按標題過濾</translation>
+    </message>
+    <message>
+        <source>Proposal Info: %1</source>
+        <translation>提案信息: %1</translation>
+    </message>
+</context>
+<context>
     <name>HelpMessageDialog</name>
     <message>
         <source>version</source>
@@ -1093,14 +1076,6 @@
     <message>
         <source>Error</source>
         <translation>錯誤</translation>
-    </message>
-    <message>
-        <source>%1 GB of free space available</source>
-        <translation>可用空間尚存 %1 GB</translation>
-    </message>
-    <message>
-        <source>(of %1 GB needed)</source>
-        <translation>(需要 %1 GB)</translation>
     </message>
 </context>
 <context>
@@ -1288,20 +1263,27 @@
         <translation>開啓 URI</translation>
     </message>
     <message>
-        <source>Open payment request from URI or file</source>
-        <translation>從 URI 或檔案開啟付款要求</translation>
-    </message>
-    <message>
         <source>URI:</source>
         <translation>URI:</translation>
     </message>
+</context>
+<context>
+    <name>OpenWalletActivity</name>
     <message>
-        <source>Select payment request file</source>
-        <translation>選擇付款要求資料檔</translation>
+        <source>Open wallet failed</source>
+        <translation>開啟錢包失敗</translation>
     </message>
     <message>
-        <source>Select payment request file to open</source>
-        <translation>選擇要開啟的付款要求資料檔</translation>
+        <source>Open wallet warning</source>
+        <translation>打開錢包警告</translation>
+    </message>
+    <message>
+        <source>default wallet</source>
+        <translation>預設錢包</translation>
+    </message>
+    <message>
+        <source>Opening Wallet &lt;b&gt;%1&lt;/b&gt;...</source>
+        <translation>正在打開錢包 &lt;b&gt;%1&lt;/b&gt;...</translation>
     </message>
 </context>
 <context>
@@ -1403,6 +1385,10 @@
         <translation>自動在路由器上開放達世幣核心客戶端的通訊埠。只有在你的路由器支援且開啓「通用即插即用」協定(UPnP)時才有作用。</translation>
     </message>
     <message>
+        <source>Map port using NA&amp;T-PMP</source>
+        <translation>使用 NA&amp;T-PMP 映射端口</translation>
+    </message>
+    <message>
         <source>Accept connections from outside.</source>
         <translation>接受來自外部的連接。</translation>
     </message>
@@ -1423,8 +1409,8 @@
         <translation>如果是使用提供的預設 SOCKS5 代理來連接到對等用戶群就加以顯示。</translation>
     </message>
     <message>
-        <source>Use separate SOCKS&amp;5 proxy to reach peers via Tor hidden services:</source>
-        <translation>使用單獨的SOCKS＆5代理通過Tor隱藏服務到達對等用戶群:</translation>
+        <source>Options set in this dialog are overridden by the command line or in the configuration file:</source>
+        <translation>此對話框中設置的選項被命令行或配置文件覆蓋:</translation>
     </message>
     <message>
         <source>Hide the icon from the system tray.</source>
@@ -1509,10 +1495,6 @@
     <message>
         <source>Tor</source>
         <translation>Tor</translation>
-    </message>
-    <message>
-        <source>Connect to the Sparks network through a separate SOCKS5 proxy for Tor hidden services.</source>
-        <translation>透過另一個SOCKS5 代理伺服器作為Tor隱藏服務來連線到達世幣網路。</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
@@ -1829,6 +1811,9 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
+    <name>PSBTOperationsDialog</name>
+    </context>
+<context>
     <name>PaymentServer</name>
     <message>
         <source>Payment request error</source>
@@ -1847,10 +1832,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>'sparks://' 不是有效的URI。請用'sparks:' 來代替。</translation>
     </message>
     <message>
-        <source>Payment request fetch URL is invalid: %1</source>
-        <translation>取得付款要求的 URL 無效: %1</translation>
-    </message>
-    <message>
         <source>Invalid payment address %1</source>
         <translation>無效的付款位址 %1</translation>
     </message>
@@ -1862,77 +1843,9 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Payment request file handling</source>
         <translation>處理付款要求檔案</translation>
     </message>
-    <message>
-        <source>Payment request file cannot be read! This can be caused by an invalid payment request file.</source>
-        <translation>沒辦法讀取付款要求檔案！可能是無效的檔案造成的。</translation>
-    </message>
-    <message>
-        <source>Payment request rejected</source>
-        <translation>付款的要求被拒絕了</translation>
-    </message>
-    <message>
-        <source>Payment request network doesn't match client network.</source>
-        <translation>付款要求的網路類型跟客戶端不符。</translation>
-    </message>
-    <message>
-        <source>Payment request expired.</source>
-        <translation>付款的要求已經過期了。</translation>
-    </message>
-    <message>
-        <source>Payment request is not initialized.</source>
-        <translation>付款的要求沒有完成初始化。</translation>
-    </message>
-    <message>
-        <source>Unverified payment requests to custom payment scripts are unsupported.</source>
-        <translation>不支援含有自訂付款指令碼，且沒驗證過的付款要求。</translation>
-    </message>
-    <message>
-        <source>Invalid payment request.</source>
-        <translation>無效的付款請求。</translation>
-    </message>
-    <message>
-        <source>Requested payment amount of %1 is too small (considered dust).</source>
-        <translation>要求付款的金額 %1 太少(會被網路認為是沒必要的零散錢)。</translation>
-    </message>
-    <message>
-        <source>Refund from %1</source>
-        <translation>來自 %1 的退款</translation>
-    </message>
-    <message>
-        <source>Payment request %1 is too large (%2 bytes, allowed %3 bytes).</source>
-        <translation>付款要求 %1 過大 (%2 位元組, 上限 %3 位元組).</translation>
-    </message>
-    <message>
-        <source>Error communicating with %1: %2</source>
-        <translation>跟 %1 通訊時發生錯誤: %2</translation>
-    </message>
-    <message>
-        <source>Payment request cannot be parsed!</source>
-        <translation>沒辦法解析付款要求內容！</translation>
-    </message>
-    <message>
-        <source>Bad response from server %1</source>
-        <translation>伺服器 %1 的回應有誤</translation>
-    </message>
-    <message>
-        <source>Network request error</source>
-        <translation>發出要求時發生網路錯誤</translation>
-    </message>
-    <message>
-        <source>Payment acknowledged</source>
-        <translation>已確認付款</translation>
-    </message>
 </context>
 <context>
     <name>PeerTableModel</name>
-    <message>
-        <source>NodeId</source>
-        <translation>節點ID</translation>
-    </message>
-    <message>
-        <source>Node/Service</source>
-        <translation>節點/服務</translation>
-    </message>
     <message>
         <source>User Agent</source>
         <translation>使用者代理</translation>
@@ -1948,6 +1861,56 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Received</source>
         <translation>已收到</translation>
+    </message>
+    </context>
+<context>
+    <name>Proposal</name>
+    <message>
+        <source>Passing +%1</source>
+        <translation>通過 +%1</translation>
+    </message>
+    <message>
+        <source>Needs additional %1 votes</source>
+        <translation>需要額外的 %1 票</translation>
+    </message>
+</context>
+<context>
+    <name>ProposalModel</name>
+    <message>
+        <source>Yes</source>
+        <translation>讚成</translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation>反對</translation>
+    </message>
+    <message>
+        <source>Hash</source>
+        <translation>哈希值</translation>
+    </message>
+    <message>
+        <source>Title</source>
+        <translation>標題</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>啟動</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>結束</translation>
+    </message>
+    <message>
+        <source>Amount</source>
+        <translation>金額</translation>
+    </message>
+    <message>
+        <source>Active</source>
+        <translation>活躍</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>狀態</translation>
     </message>
 </context>
 <context>
@@ -1983,10 +1946,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Reset all settings changed in the GUI</source>
         <translation>重置所有在GUI 更改的設置</translation>
-    </message>
-    <message>
-        <source>Set SSL root certificates for payment request (default: -system-)</source>
-        <translation>設定付款請求時所使用的 SSL 根憑證 (預設值: 系統憑證庫)</translation>
     </message>
     <message>
         <source>Show splash screen on startup (default: %u)</source>
@@ -2107,34 +2066,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Error: %1</source>
         <translation>錯誤: %1</translation>
     </message>
-    <message>
-        <source>Error: Failed to load application fonts.</source>
-        <translation>錯誤: 無法加載應用程序字體。</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-family invalid. Valid values: %1.</source>
-        <translation>錯誤: 指定的字體系列無效。 有效值: %1。</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-weight-normal invalid. Valid range %1 to %2.</source>
-        <translation>錯誤: 指定的 font-weight-normal 無效。 有效範圍 %1 到 %2。</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-weight-bold invalid. Valid range %1 to %2.</source>
-        <translation>錯誤: 指定的 font-weight-bold 無效。 有效範圍 %1 到%2。</translation>
-    </message>
-    <message>
-        <source>Error: Specified font-scale invalid. Valid range %1 to %2.</source>
-        <translation>錯誤: 指定的字體比例無效。 有效範圍 %1 到 %2。</translation>
-    </message>
-    <message>
-        <source>Error: Invalid -custom-css-dir path.</source>
-        <translation>錯誤: 無效的 -custom-css-dir 路徑。</translation>
-    </message>
-    <message>
-        <source>Error: %1 CSS file(s) missing in -custom-css-dir path.</source>
-        <translation>錯誤:  -custom-css-dir 路徑中缺少 %1 個CSS 文件。</translation>
-    </message>
 </context>
 <context>
     <name>QRDialog</name>
@@ -2147,52 +2078,22 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>QR Code</translation>
     </message>
     <message>
-        <source>&amp;Save Image...</source>
-        <translation>儲存圖片(&amp;S)...</translation>
+        <source>Resulting URI too long, try to reduce the text for label / message.</source>
+        <translation>導致 URI 太長，嘗試減少標籤/消息的文本。</translation>
     </message>
     <message>
-        <source>Error creating QR Code.</source>
-        <translation>創建QR碼時出錯</translation>
-    </message>
-</context>
-<context>
-    <name>QRGeneralImageWidget</name>
-    <message>
-        <source>&amp;Save Image...</source>
-        <translation>儲存圖片(&amp;S)...</translation>
+        <source>Error encoding URI into QR Code.</source>
+        <translation>將 URI 編碼為 QR 碼時出錯。</translation>
     </message>
     <message>
-        <source>&amp;Copy Image</source>
-        <translation>複製圖片(&amp;C)</translation>
+        <source>QR code support not available.</source>
+        <translation>二維碼支持不可用。</translation>
     </message>
     <message>
         <source>Save QR Code</source>
         <translation>儲存 QR Code</translation>
     </message>
-    <message>
-        <source>PNG Image (*.png)</source>
-        <translation>PNG 圖檔(*.png)</translation>
-    </message>
-</context>
-<context>
-    <name>QRImageWidget</name>
-    <message>
-        <source>&amp;Save Image...</source>
-        <translation>儲存圖片(&amp;S)...</translation>
-    </message>
-    <message>
-        <source>&amp;Copy Image</source>
-        <translation>複製圖片(&amp;C)</translation>
-    </message>
-    <message>
-        <source>Save QR Code</source>
-        <translation>儲存 QR Code</translation>
-    </message>
-    <message>
-        <source>PNG Image (*.png)</source>
-        <translation>PNG 圖檔(*.png)</translation>
-    </message>
-</context>
+    </context>
 <context>
     <name>RPCConsole</name>
     <message>
@@ -2256,10 +2157,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>區塊鏈</translation>
     </message>
     <message>
-        <source>Number of Masternodes</source>
-        <translation>主節點數目</translation>
-    </message>
-    <message>
         <source>Memory Pool</source>
         <translation>內存池</translation>
     </message>
@@ -2308,10 +2205,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>選擇一個對等用戶來查看詳細資訊。</translation>
     </message>
     <message>
-        <source>Whitelisted</source>
-        <translation>列入白名單</translation>
-    </message>
-    <message>
         <source>Direction</source>
         <translation>方向</translation>
     </message>
@@ -2346,10 +2239,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>-rescan=2: Rescan the block chain for missing wallet transactions starting from genesis block.</source>
         <translation>-rescan=2: 從創世區塊開始重新掃描區塊鏈以尋找漏掉的錢包交易。</translation>
-    </message>
-    <message>
-        <source>Wallet Path</source>
-        <translation>錢包路徑</translation>
     </message>
     <message>
         <source>User Agent</source>
@@ -2440,42 +2329,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>錢包修復(&amp;W)</translation>
     </message>
     <message>
-        <source>Salvage wallet</source>
-        <translation>搶救錢包</translation>
-    </message>
-    <message>
-        <source>Recover transactions 1</source>
-        <translation>復原交易 1</translation>
-    </message>
-    <message>
-        <source>Recover transactions 2</source>
-        <translation>復原交易 2</translation>
-    </message>
-    <message>
-        <source>Upgrade wallet format</source>
-        <translation>升級錢包格式</translation>
-    </message>
-    <message>
-        <source>The buttons below will restart the wallet with command-line options to repair the wallet, fix issues with corrupt blockhain files or missing/obsolete transactions.</source>
-        <translation>下面的按鈕將重新啟動錢包並使用命令行選項來修復錢包，修復損壞或丟失的區塊鏈文件/過時的交易問題。</translation>
-    </message>
-    <message>
-        <source>-salvagewallet: Attempt to recover private keys from a corrupt wallet.dat.</source>
-        <translation>-salvagewallet: 嘗試從損壞的 wallet.dat 裡恢復私鑰。</translation>
-    </message>
-    <message>
-        <source>-zapwallettxes=1: Recover transactions from blockchain (keep meta-data, e.g. account owner).</source>
-        <translation>-zapwallettxes=1: 從區塊鏈恢復交易資料 (保留交易描述資料，例如帳戶擁有者)。</translation>
-    </message>
-    <message>
-        <source>-zapwallettxes=2: Recover transactions from blockchain (drop meta-data).</source>
-        <translation>-zapwallettxes=2: 從區塊鏈恢復交易資料 (丟棄交易描述資料)。</translation>
-    </message>
-    <message>
-        <source>-upgradewallet: Upgrade wallet to latest format on startup. (Note: this is NOT an update of the wallet itself!)</source>
-        <translation>-upgradewallet: 在啟動時升級錢包到最新的格式。 (注：這不是錢包軟件本身的更新！)</translation>
-    </message>
-    <message>
         <source>Wallet repair options.</source>
         <translation>錢包修復選項。</translation>
     </message>
@@ -2560,10 +2413,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>使用 "%1" 錢包執行命令</translation>
     </message>
     <message>
-        <source>(node id: %1)</source>
-        <translation>(節點 id: %1)</translation>
-    </message>
-    <message>
         <source>via %1</source>
         <translation>經由 %1</translation>
     </message>
@@ -2578,14 +2427,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Outbound</source>
         <translation>出去</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation>是</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>不是</translation>
     </message>
     <message>
         <source>Regular</source>
@@ -2698,10 +2539,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
 <context>
     <name>ReceiveRequestDialog</name>
     <message>
-        <source>QR Code</source>
-        <translation>QR Code</translation>
-    </message>
-    <message>
         <source>Copy &amp;URI</source>
         <translation>複製 &amp;URI</translation>
     </message>
@@ -2720,38 +2557,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Payment information</source>
         <translation>付款資訊</translation>
-    </message>
-    <message>
-        <source>URI</source>
-        <translation>URI</translation>
-    </message>
-    <message>
-        <source>Address</source>
-        <translation>位址</translation>
-    </message>
-    <message>
-        <source>Amount</source>
-        <translation>金額</translation>
-    </message>
-    <message>
-        <source>Label</source>
-        <translation>標記</translation>
-    </message>
-    <message>
-        <source>Message</source>
-        <translation>訊息</translation>
-    </message>
-    <message>
-        <source>Wallet</source>
-        <translation>錢包</translation>
-    </message>
-    <message>
-        <source>Resulting URI too long, try to reduce the text for label / message.</source>
-        <translation>產生的 URI 過長，請試著縮短標記或訊息的文字內容。</translation>
-    </message>
-    <message>
-        <source>Error encoding URI into QR Code.</source>
-        <translation>把 URI 編碼成 QR Code 時發生錯誤。</translation>
     </message>
 </context>
 <context>
@@ -2864,10 +2669,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>如果自訂手續費設定為 1000 duffs ，而交易資料大小只有 250 個位元組的話，那麽選擇「每千位元組」就只會付 250 duffs 的手續費，&lt;br /&gt;而「至少」會支付 1000 duffs。但是如果交易資料大小超過一千個位元組，那麽兩者都是每千位元組的費用。</translation>
     </message>
     <message>
-        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
-        <translation>當交易量少於區塊可容納的空間時，只付最低手續費不會有什麽問題。&lt;br /&gt;但是當交易量的需求成長到超過整體網路可以處理的量時，可能會造成一筆一直不會被確認的交易。</translation>
-    </message>
-    <message>
         <source>per kilobyte</source>
         <translation>每千位元組</translation>
     </message>
@@ -2882,10 +2683,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Hide</source>
         <translation>隱藏</translation>
-    </message>
-    <message>
-        <source>(read the tooltip)</source>
-        <translation>(請看提示)</translation>
     </message>
     <message>
         <source>Recommended:</source>
@@ -2958,10 +2755,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>%1 (%2 blocks)</source>
         <translation>%1 (%2 個區塊)</translation>
-    </message>
-    <message>
-        <source>from wallet %1</source>
-        <translation>從錢包 %1</translation>
     </message>
     <message>
         <source>using</source>
@@ -3058,14 +2851,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>A fee higher than %1 is considered an absurdly high fee.</source>
         <translation>手續費高於 %1 的被認為是非常高的費用。</translation>
-    </message>
-    <message>
-        <source>Payment request expired.</source>
-        <translation>付款的要求已經過期了。</translation>
-    </message>
-    <message>
-        <source>Pay only the required fee of %1</source>
-        <translation>只需支付所需的費用 %1</translation>
     </message>
     <message numerus="yes">
         <source>Estimated to begin confirmation within %n block(s).</source>
@@ -3173,17 +2958,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Memo:</source>
         <translation>備註:</translation>
-    </message>
-    <message>
-        <source>Enter a label for this address to add it to your address book</source>
-        <translation>請輸入這個位址的標記來把它加進位址簿中</translation>
-    </message>
-</context>
-<context>
-    <name>SendConfirmationDialog</name>
-    <message>
-        <source>Yes</source>
-        <translation>是</translation>
     </message>
 </context>
 <context>
@@ -3349,13 +3123,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
-    <name>SplashScreen</name>
-    <message>
-        <source>[testnet]</source>
-        <translation>[testnet]</translation>
-    </message>
-</context>
-<context>
     <name>TrafficGraphWidget</name>
     <message>
         <source>KB/s</source>
@@ -3511,10 +3278,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Transaction total size</source>
         <translation>交易的總大小</translation>
-    </message>
-    <message>
-        <source>Merchant</source>
-        <translation>商家</translation>
     </message>
     <message>
         <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to "not accepted" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
@@ -3822,10 +3585,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>匯出交易記錄</translation>
     </message>
     <message>
-        <source>Comma separated file (*.csv)</source>
-        <translation>逗點分隔資料檔(*.csv)</translation>
-    </message>
-    <message>
         <source>Confirmed</source>
         <translation>已確認</translation>
     </message>
@@ -3890,12 +3649,23 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
 </context>
 <context>
-    <name>WalletFrame</name>
+    <name>WalletController</name>
     <message>
-        <source>No wallet has been loaded.</source>
-        <translation>沒有載入錢包。</translation>
+        <source>Close wallet</source>
+        <translation>關閉錢包</translation>
     </message>
-</context>
+    <message>
+        <source>Are you sure you wish to close the wallet &lt;i&gt;%1&lt;/i&gt;?</source>
+        <translation>你確定要關閉錢包嗎 &lt;i&gt;%1&lt;/i&gt;?</translation>
+    </message>
+    <message>
+        <source>Closing the wallet for too long can result in having to resync the entire chain if pruning is enabled.</source>
+        <translation>如果啟用修剪後，關閉錢包太久可能會導致必須重新同步整個區塊鏈。</translation>
+    </message>
+    </context>
+<context>
+    <name>WalletFrame</name>
+    </context>
 <context>
     <name>WalletModel</name>
     <message>
@@ -3920,10 +3690,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Backup Wallet</source>
         <translation>備份錢包</translation>
-    </message>
-    <message>
-        <source>Wallet Data (*.dat)</source>
-        <translation>錢包資料檔(*.dat)</translation>
     </message>
     <message>
         <source>Backup Failed</source>
@@ -3957,20 +3723,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>這是個還沒發表的測試版本 - 使用請自負風險 - 請不要用來開採或商業應用</translation>
     </message>
     <message>
-        <source>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</source>
-        <translation>警告: 達世幣網路對於區塊鏈結的決定目前有分歧！看來有些礦工會有問題。</translation>
-    </message>
-    <message>
         <source>Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.</source>
         <translation>警告: 我們和某些連線的對等用戶群對於區塊鏈結的決定不同！你可能需要升級，或是需要等其它的對等用戶升級。</translation>
     </message>
     <message>
         <source>Already have that input.</source>
         <translation>該輸入已經存在。</translation>
-    </message>
-    <message>
-        <source>Cannot downgrade wallet</source>
-        <translation>沒辦法把錢包格式降級</translation>
     </message>
     <message>
         <source>Collateral not valid.</source>
@@ -4117,20 +3875,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>使用-minsporkkeys 指定的最低叉勺簽名者數目無效</translation>
     </message>
     <message>
-        <source>Keypool ran out, please call keypoolrefill first</source>
-        <translation>Keypool 用完了，請先調用 keypoolrefill </translation>
-    </message>
-    <message>
         <source>Loading banlist...</source>
         <translation>正在載入禁止清單...</translation>
-    </message>
-    <message>
-        <source>Loading fulfilled requests cache...</source>
-        <translation>正在載入己滿足要求的緩存...</translation>
-    </message>
-    <message>
-        <source>Loading masternode cache...</source>
-        <translation>正在載入主節點緩存...</translation>
     </message>
     <message>
         <source>Lock is already in place.</source>
@@ -4253,10 +3999,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>修剪 : 最後的錢包同步超出了修剪的數據。你需要用-reindex (在修剪節點的情況下再次下載整個區塊鏈)</translation>
     </message>
     <message>
-        <source>Rescans are not possible in pruned mode. You will need to use -reindex which will download the whole blockchain again.</source>
-        <translation>在修剪模式下不能重新掃描區塊資料。你需要使用-reindex 這將再次下載整個區塊鏈。</translation>
-    </message>
-    <message>
         <source>The block database contains a block which appears to be from the future. This may be due to your computer's date and time being set incorrectly. Only rebuild the block database if you are sure that your computer's date and time are correct</source>
         <translation>區塊數據庫包含似乎來自未來的區塊數據。這可能是由於電腦的日期和時間設置不正確。只有在確定電腦的日期和時間正確的情況下，才能重建區塊數據庫</translation>
     </message>
@@ -4317,8 +4059,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>升級evo數據庫時出錯</translation>
     </message>
     <message>
-        <source>Error: A fatal internal error occurred, see debug.log for details</source>
-        <translation>錯誤:發生一個致命的內部錯誤，請到debug.log查看更多細節</translation>
+        <source>Error: Disk space is low for %s</source>
+        <translation>錯誤: %s 的磁盤空間不足</translation>
     </message>
     <message>
         <source>Error: failed to add socket to epollfd (epoll_ctl returned error %s)</source>
@@ -4375,26 +4117,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>It has been replaced by -disablegovernance.</source>
         <translation>它已由 -disablegovernance 所代替。</translation>
-    </message>
-    <message>
-        <source>Its replacement -disablegovernance has been forced instead.</source>
-        <translation>替代命令 -disablegovernance 已被強制執行。</translation>
-    </message>
-    <message>
-        <source>Loading block index...</source>
-        <translation>正在載入區塊索引...</translation>
-    </message>
-    <message>
-        <source>Loading governance cache...</source>
-        <translation>正在載入治理緩存...</translation>
-    </message>
-    <message>
-        <source>Loading sporks cache...</source>
-        <translation>正在載入勺叉緩存...</translation>
-    </message>
-    <message>
-        <source>Loading wallet... (%3.2f %%)</source>
-        <translation>正在載入錢包資料... (%3.2f %%)</translation>
     </message>
     <message>
         <source>Loading wallet...</source>
@@ -4517,10 +4239,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>錢包需要重寫: 請重新啓動 %s 來完成</translation>
     </message>
     <message>
-        <source>Warning: unknown new rules activated (versionbit %i)</source>
-        <translation>警告: 未知的新規則已激活 (versionbit %i)</translation>
-    </message>
-    <message>
         <source>Wasn't able to create wallet backup folder %s!</source>
         <translation>無法創建錢包備份資料夾%s</translation>
     </message>
@@ -4597,24 +4315,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>這是當預估手續費還沒計算出來時，付款交易預設會付的手續費。</translation>
     </message>
     <message>
-        <source>This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit %s and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard.</source>
-        <translation>此產品包含了由 OpenSSL Project 所開發的 OpenSSL Toolkit 軟體 %s, 由 Eric Young 撰寫的加解密軟體，以及由 Thomas Bernard 所撰寫的 UPnP 軟體。</translation>
-    </message>
-    <message>
         <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
         <translation>無法重播區塊。您將需要使用-reindex-chainstate來重建數據庫。</translation>
     </message>
     <message>
         <source>Warning: Wallet file corrupt, data salvaged! Original %s saved as %s in %s; if your balance or transactions are incorrect you should restore from a backup.</source>
         <translation>警告: 錢包檔壞掉，但資料被救回來了！原來的檔案 %s 改儲存為 %s，在目錄 %s 下。 如果餘額或交易資料有誤的話，你應該要從備份資料復原回來。</translation>
-    </message>
-    <message>
-        <source>%d of last 100 blocks have unexpected version</source>
-        <translation>最近100個區塊中的 %d 個區塊，有意想不到的版本</translation>
-    </message>
-    <message>
-        <source>%s corrupt, salvage failed</source>
-        <translation>錢包檔 %s 壞掉了，搶救失敗</translation>
     </message>
     <message>
         <source>%s is not a valid backup folder!</source>
@@ -4667,10 +4373,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Error loading %s: You can't disable HD on an already existing HD wallet</source>
         <translation>加載%s時出錯: 您不能在HD錢包上禁用HD功能</translation>
-    </message>
-    <message>
-        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
-        <translation>加載錢包 %s 時出錯。 指定了重複的-wallet文件名。</translation>
     </message>
     <message>
         <source>Error upgrading chainstate database</source>
@@ -4751,6 +4453,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Last queue was created too recently.</source>
         <translation>距離上一個隊列的時間過短。</translation>
+    </message>
+    <message>
+        <source>%s corrupt. Try using the wallet tool sparks-wallet to salvage or restoring a backup.</source>
+        <translation>%s 已損壞。 請嘗試使用錢包工具 sparks-wallet 來挽救或恢復備份。</translation>
     </message>
     <message>
         <source>Last successful action was too recent.</source>
@@ -4863,10 +4569,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Your entries added successfully.</source>
         <translation>你的條目已經成功被添加。</translation>
-    </message>
-    <message>
-        <source>Zapping all transactions from wallet...</source>
-        <translation>正在砍掉錢包中的所有交易...</translation>
     </message>
 </context>
 </TS>

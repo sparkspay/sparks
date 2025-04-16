@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -18,7 +18,7 @@ private:
     std::string strErrorMessages;
 
 public:
-    explicit CProposalValidator(const std::string& strDataHexIn = std::string(), bool fAllowScript = false);
+    explicit CProposalValidator(const std::string& strDataHexIn = std::string(), bool fAllowScript = true);
 
     bool Validate(bool fCheckExpiration = true);
 

@@ -2,8 +2,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 //
-#include <torcontrol.h>
-#include <test/util/setup_common.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -16,7 +14,7 @@ std::pair<std::string, std::string> SplitTorReplyLine(const std::string& s);
 std::map<std::string, std::string> ParseTorReplyMapping(const std::string& s);
 
 
-BOOST_FIXTURE_TEST_SUITE(torcontrol_tests, BasicTestingSetup)
+BOOST_AUTO_TEST_SUITE(torcontrol_tests)
 
 static void CheckSplitTorReplyLine(std::string input, std::string command, std::string args)
 {

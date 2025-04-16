@@ -1,23 +1,22 @@
-// Copyright (c) 2017-2019 The Bitcoin Core developers
+// Copyright (c) 2017-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <chainparamsbase.h>
 #include <key_io.h>
+#include <outputtype.h>
 #include <pubkey.h>
 #include <rpc/util.h>
 #include <script/descriptor.h>
 #include <script/signingprovider.h>
 #include <tinyformat.h>
 #include <util/system.h>
-#include <util/string.h>
 #include <util/strencodings.h>
+#include <util/string.h>
 #include <util/translation.h>
 
-#include <tuple>
-
 const std::string UNIX_EPOCH_TIME = "UNIX epoch time";
-
+const std::string EXAMPLE_ADDRESS[2] = {"XunLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPw0", "XwQQkwA4FYkq2XERzMY2CiAZhJTEDAbtc0"};
 
 void RPCTypeCheck(const UniValue& params,
                   const std::list<UniValueType>& typesExpected,
@@ -87,16 +86,12 @@ CAmount AmountFromValue(const UniValue& value)
 
 uint256 ParseHashV(const UniValue& v, std::string strName)
 {
-    std::string strHex;
-    if (v.isStr())
-        strHex = v.get_str();
+    std::string strHex{v.get_str()};
+    if (64 != strHex.length())
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("%s must be of length %d (not %d, for '%s')", strName, 64, strHex.length(), strHex));
     if (!IsHex(strHex)) // Note: IsHex("") is false
         throw JSONRPCError(RPC_INVALID_PARAMETER, strName+" must be hexadecimal string (not '"+strHex+"')");
-    if (64 != strHex.length())
-        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("%s must be of length %d (not %d)", strName, 64, strHex.length()));
-    uint256 result;
-    result.SetHex(strHex);
-    return result;
+    return uint256S(strHex);
 }
 uint256 ParseHashO(const UniValue& o, std::string strKey)
 {
@@ -170,8 +165,8 @@ std::string HelpExampleCli(const std::string& methodname, const std::string& arg
 
 std::string HelpExampleRpc(const std::string& methodname, const std::string& args)
 {
-    return "> curl --user myusername --data-binary '{\"jsonrpc\": \"1.0\", \"id\":\"curltest\", "
-        "\"method\": \"" + methodname + "\", \"params\": [" + args + "] }' -H 'content-type: text/plain;'"
+    return "> curl --user myusername --data-binary '{\"jsonrpc\": \"1.0\", \"id\": \"curltest\", "
+        "\"method\": \"" + methodname + "\", \"params\": [" + args + "]}' -H 'content-type: text/plain;'"
         " http://127.0.0.1:9998/\n";
 }
 
@@ -200,7 +195,7 @@ CPubKey AddrToPubKey(const FillableSigningProvider& keystore, const std::string&
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("%s does not refer to a key", addr_in));
     }
     CPubKey vchPubKey;
-    if (!keystore.GetPubKey(CKeyID(*pkhash), vchPubKey)) {
+    if (!keystore.GetPubKey(ToKeyID(*pkhash), vchPubKey)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("no full public key for address %s", addr_in));
     }
     if (!vchPubKey.IsFullyValid()) {
@@ -209,8 +204,8 @@ CPubKey AddrToPubKey(const FillableSigningProvider& keystore, const std::string&
     return vchPubKey;
 }
 
-// Creates a multisig redeemscript from a given list of public keys and number required.
-CScript CreateMultisigRedeemscript(const int required, const std::vector<CPubKey>& pubkeys)
+// Creates a multisig address from a given list of public keys, number of signatures required
+CTxDestination AddAndGetMultisigDestination(const int required, const std::vector<CPubKey>& pubkeys, FillableSigningProvider& keystore, CScript& script_out)
 {
     // Gather public keys
     if (required < 1) {
@@ -223,13 +218,14 @@ CScript CreateMultisigRedeemscript(const int required, const std::vector<CPubKey
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Number of keys involved in the multisignature address creation > 16\nReduce the number");
     }
 
-    CScript result = GetScriptForMultisig(required, pubkeys);
+    script_out = GetScriptForMultisig(required, pubkeys);
 
-    if (result.size() > MAX_SCRIPT_ELEMENT_SIZE) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, (strprintf("redeemScript exceeds size limit: %d > %d", result.size(), MAX_SCRIPT_ELEMENT_SIZE)));
+    if (script_out.size() > MAX_SCRIPT_ELEMENT_SIZE) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, (strprintf("redeemScript exceeds size limit: %d > %d", script_out.size(), MAX_SCRIPT_ELEMENT_SIZE)));
     }
 
-    return result;
+    // Make the address (simplier implementation in compare to bitcoin)
+    return AddAndGetDestinationForScript(keystore, script_out);
 }
 
 class DescribeAddressVisitor
@@ -736,11 +732,7 @@ std::string RPCArg::ToString(const bool oneline) const
     }
     case Type::OBJ:
     case Type::OBJ_USER_KEYS: {
-        std::string res;
-        for (size_t i = 0; i < m_inner.size();) {
-            res += m_inner[i].ToStringObj(oneline);
-            if (++i < m_inner.size()) res += ",";
-        }
+        const std::string res = Join(m_inner, ",", [&](const RPCArg& i) { return i.ToStringObj(oneline); });
         if (m_type == Type::OBJ) {
             return "{" + res + "}";
         } else {

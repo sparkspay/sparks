@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2022 The Dash Core developers
+# Copyright (c) 2015-2024 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 from test_framework.mininode import *
@@ -16,11 +16,12 @@ Checks DIP4 merkle roots in coinbases
 from io import BytesIO
 
 from test_framework.messages import CBlock, CBlockHeader, CCbTx, CMerkleBlock, FromHex, hash256, msg_getmnlistd, QuorumId, ser_uint256
-from test_framework.mininode import P2PInterface
-from test_framework.test_framework import DashTestFramework
-from test_framework.util import assert_equal, wait_until
+from test_framework.p2p import P2PInterface
+from test_framework.test_framework import SparksTestFramework
+from test_framework.util import assert_equal
 
 
+# TODO: this helper used in many tests, find a new home for it
 class TestP2PConn(P2PInterface):
     def __init__(self):
         super().__init__()
@@ -32,7 +33,7 @@ class TestP2PConn(P2PInterface):
     def wait_for_mnlistdiff(self, timeout=30):
         def received_mnlistdiff():
             return self.last_mnlistdiff is not None
-        return wait_until(received_mnlistdiff, timeout=timeout)
+        self.wait_until(received_mnlistdiff, timeout=timeout)
 
     def getmnlistdiff(self, baseBlockHash, blockHash):
         msg = msg_getmnlistd(baseBlockHash, blockHash)
@@ -44,10 +45,15 @@ class TestP2PConn(P2PInterface):
 
 class LLMQCoinbaseCommitmentsTest(SparksTestFramework):
     def set_test_params(self):
-        extra_args = [["-vbparams=dip0024:999999999999:999999999999"]] * 4 # disable dip0024
-        self.set_sparks_test_params(4, 3, extra_args=extra_args, fast_dip3_enforcement=True)
+        self.set_sparks_test_params(4, 3, fast_dip3_enforcement=True)
 
     def run_test(self):
+        # No IS or Chainlocks in this test
+        self.bump_mocktime(1)
+        self.nodes[0].sporkupdate("SPORK_2_INSTANTSEND_ENABLED", 4070908800)
+        self.nodes[0].sporkupdate("SPORK_19_CHAINLOCKS_ENABLED", 4070908800)
+        self.wait_for_sporks_same()
+
         self.test_node = self.nodes[0].add_p2p_connection(TestP2PConn())
 
         self.confirm_mns()
@@ -89,20 +95,13 @@ class LLMQCoinbaseCommitmentsTest(SparksTestFramework):
 
         self.nodes[0].generate(1)
         oldhash = self.nodes[0].getbestblockhash()
-        # Have to disable ChainLocks here because they won't let you to invalidate already locked blocks
-        self.nodes[0].sporkupdate("SPORK_19_CHAINLOCKS_ENABLED", 4070908800)
-        self.wait_for_sporks_same()
+
         # Test DIP8 activation once with a pre-existing quorum and once without (we don't know in which order it will activate on mainnet)
         self.test_dip8_quorum_merkle_root_activation(True)
         for n in self.nodes:
             n.invalidateblock(oldhash)
         self.sync_all()
         first_quorum = self.test_dip8_quorum_merkle_root_activation(False, True)
-
-        # Re-enable ChainLocks again
-        self.nodes[0].sporkupdate("SPORK_19_CHAINLOCKS_ENABLED", 0)
-        self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
-        self.wait_for_sporks_same()
 
         # Verify that the first quorum appears in MNLISTDIFF
         expectedDeleted = []

@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2015 The Bitcoin Core developers
+// Copyright (c) 2012-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,9 +10,10 @@
 #include <leveldb/cache.h>
 #include <leveldb/env.h>
 #include <leveldb/filter_policy.h>
-#include <memenv.h>
+#include <leveldb/helpers/memenv/memenv.h>
 #include <stdint.h>
 #include <algorithm>
+#include <optional>
 
 class CBitcoinLevelDBLogger : public leveldb::Logger {
 public:
@@ -197,13 +198,15 @@ bool CDBWrapper::WriteBatch(CDBBatch& batch, bool fSync)
     return true;
 }
 
-size_t CDBWrapper::DynamicMemoryUsage() const {
+size_t CDBWrapper::DynamicMemoryUsage() const
+{
     std::string memory;
-    if (!pdb->GetProperty("leveldb.approximate-memory-usage", &memory)) {
+    std::optional<size_t> parsed;
+    if (!pdb->GetProperty("leveldb.approximate-memory-usage", &memory) || !(parsed = ToIntegral<size_t>(memory))) {
         LogPrint(BCLog::LEVELDB, "Failed to get approximate-memory-usage property\n");
         return 0;
     }
-    return stoul(memory);
+    return parsed.value();
 }
 
 // Prefixed with null character to avoid collisions with other keys
@@ -220,10 +223,9 @@ const unsigned int CDBWrapper::OBFUSCATE_KEY_NUM_BYTES = 8;
  */
 std::vector<unsigned char> CDBWrapper::CreateObfuscateKey() const
 {
-    unsigned char buff[OBFUSCATE_KEY_NUM_BYTES];
-    GetRandBytes(buff, OBFUSCATE_KEY_NUM_BYTES);
-    return std::vector<unsigned char>(&buff[0], &buff[OBFUSCATE_KEY_NUM_BYTES]);
-
+    std::vector<uint8_t> ret(OBFUSCATE_KEY_NUM_BYTES);
+    GetRandBytes(ret.data(), OBFUSCATE_KEY_NUM_BYTES);
+    return ret;
 }
 
 bool CDBWrapper::IsEmpty()

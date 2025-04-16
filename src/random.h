@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,11 +8,14 @@
 
 #include <crypto/chacha20.h>
 #include <crypto/common.h>
+#include <span.h>
 #include <uint256.h>
 
+#include <cassert>
 #include <chrono> // For std::chrono::microseconds
 #include <cstdint>
 #include <limits>
+#include <vector>
 
 /**
  * Overall design of the RNG and entropy sources.
@@ -67,9 +70,21 @@
  * Thread-safe.
  */
 void GetRandBytes(unsigned char* buf, int num) noexcept;
+/** Generate a uniform random integer in the range [0..range). Precondition: range > 0 */
 uint64_t GetRand(uint64_t nMax) noexcept;
-std::chrono::microseconds GetRandMicros(std::chrono::microseconds duration_max) noexcept;
-std::chrono::milliseconds GetRandMillis(std::chrono::milliseconds duration_max) noexcept;
+/** Generate a uniform random duration in the range [0..max). Precondition: max.count() > 0 */
+template <typename D>
+D GetRandomDuration(typename std::common_type<D>::type max) noexcept
+// Having the compiler infer the template argument from the function argument
+// is dangerous, because the desired return value generally has a different
+// type than the function argument. So std::common_type is used to force the
+// call site to specify the type of the return value.
+{
+    assert(max.count() > 0);
+    return D{GetRand(max.count())};
+};
+constexpr auto GetRandMicros = GetRandomDuration<std::chrono::microseconds>;
+constexpr auto GetRandMillis = GetRandomDuration<std::chrono::milliseconds>;
 int GetRandInt(int nMax) noexcept;
 uint256 GetRandHash() noexcept;
 
@@ -112,22 +127,10 @@ private:
     bool requires_seed;
     ChaCha20 rng;
 
-    unsigned char bytebuf[64];
-    int bytebuf_size;
-
     uint64_t bitbuf;
     int bitbuf_size;
 
     void RandomSeed();
-
-    void FillByteBuffer()
-    {
-        if (requires_seed) {
-            RandomSeed();
-        }
-        rng.Keystream(bytebuf, sizeof(bytebuf));
-        bytebuf_size = sizeof(bytebuf);
-    }
 
     void FillBitBuffer()
     {
@@ -152,10 +155,10 @@ public:
     /** Generate a random 64-bit integer. */
     uint64_t rand64() noexcept
     {
-        if (bytebuf_size < 8) FillByteBuffer();
-        uint64_t ret = ReadLE64(bytebuf + 64 - bytebuf_size);
-        bytebuf_size -= 8;
-        return ret;
+        if (requires_seed) RandomSeed();
+        unsigned char buf[8];
+        rng.Keystream(buf, 8);
+        return ReadLE64(buf);
     }
 
     /** Generate a random (bits)-bit integer. */
@@ -197,7 +200,11 @@ public:
     }
 
     /** Generate random bytes. */
-    std::vector<unsigned char> randbytes(size_t len);
+    template <typename B = unsigned char>
+    std::vector<B> randbytes(size_t len);
+
+    /** Fill a byte Span with random bytes. */
+    void fillrand(Span<std::byte> output);
 
     /** Generate a random 32-bit integer. */
     uint32_t rand32() noexcept { return randbits(32); }
@@ -207,6 +214,23 @@ public:
 
     /** Generate a random boolean. */
     bool randbool() noexcept { return randbits(1); }
+
+    /** Return the time point advanced by a uniform random duration. */
+    template <typename Tp>
+    Tp rand_uniform_delay(const Tp& time, typename Tp::duration range)
+    {
+        return time + rand_uniform_duration<Tp>(range);
+    }
+
+    /** Generate a uniform random duration in the range from 0 (inclusive) to range (exclusive). */
+    template <typename Chrono>
+    typename Chrono::duration rand_uniform_duration(typename Chrono::duration range) noexcept
+    {
+        using Dur = typename Chrono::duration;
+        return range.count() > 0 ? /* interval [0..range) */ Dur{randrange(range.count())} :
+               range.count() < 0 ? /* interval (range..0] */ -Dur{randrange(-range.count())} :
+                                   /* interval [0..0] */ Dur{0};
+    };
 
     // Compatibility with the C++11 UniformRandomBitGenerator concept
     typedef uint64_t result_type;

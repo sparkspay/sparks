@@ -1,5 +1,5 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -29,8 +29,8 @@
 #include <QVBoxLayout>
 
 /** "Help message" or "About" dialog box */
-HelpMessageDialog::HelpMessageDialog(interfaces::Node& node, QWidget *parent, HelpMode helpMode) :
-    QDialog(parent),
+HelpMessageDialog::HelpMessageDialog(QWidget *parent, HelpMode helpMode) :
+    QDialog(parent, GUIUtil::dialog_flags),
     ui(new Ui::HelpMessageDialog)
 {
     ui->setupUi(this);
@@ -147,6 +147,8 @@ For more information, see the <a style=\"%2\" href=\"%3\">%1 documentation</a>."
         ui->aboutMessage->setWordWrap(true);
         ui->helpMessage->setVisible(false);
     }
+
+    GUIUtil::handleCloseWindowShortcut(this);
 }
 
 HelpMessageDialog::~HelpMessageDialog()
@@ -178,7 +180,7 @@ void HelpMessageDialog::on_okButton_accepted()
 
 
 /** "Shutdown" window */
-ShutdownWindow::ShutdownWindow(interfaces::Node& node, QWidget *parent, Qt::WindowFlags f):
+ShutdownWindow::ShutdownWindow(QWidget *parent, Qt::WindowFlags f):
     QWidget(parent, f)
 {
     setObjectName("ShutdownWindow");
@@ -190,14 +192,16 @@ ShutdownWindow::ShutdownWindow(interfaces::Node& node, QWidget *parent, Qt::Wind
     setLayout(layout);
 
     GUIUtil::updateFonts();
+
+    GUIUtil::handleCloseWindowShortcut(this);
 }
 
-QWidget* ShutdownWindow::showShutdownWindow(interfaces::Node& node, QMainWindow* window)
+QWidget* ShutdownWindow::showShutdownWindow(QMainWindow* window)
 {
     assert(window != nullptr);
 
     // Show a simple window indicating shutdown status
-    QWidget *shutdownWindow = new ShutdownWindow(node);
+    QWidget *shutdownWindow = new ShutdownWindow();
     shutdownWindow->setWindowTitle(window->windowTitle());
 
     // Center shutdown window at where main window was

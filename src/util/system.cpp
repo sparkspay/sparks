@@ -1,20 +1,27 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <util/system.h>
 
 #include <support/allocators/secure.h>
+
+#ifdef HAVE_BOOST_PROCESS
+#include <boost/process.hpp>
+#endif // HAVE_BOOST_PROCESS
+
 #include <chainparamsbase.h>
 #include <ctpl_stl.h>
 #include <stacktraces.h>
 #include <util/getuniquepath.h>
 #include <util/strencodings.h>
 #include <util/string.h>
+#include <util/threadnames.h>
 #include <util/translation.h>
 
+#include <tinyformat.h>
 
 #if (defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__))
 #include <pthread.h>
@@ -22,7 +29,7 @@
 #endif
 
 #ifndef WIN32
-// for posix_fallocate
+// for posix_fallocate, in configure.ac we check if it is present after this
 #ifdef __linux__
 
 #ifdef _POSIX_C_SOURCE
@@ -34,6 +41,8 @@
 #endif // __linux__
 
 #include <algorithm>
+#include <atomic>
+#include <cassert>
 #include <fcntl.h>
 #include <sched.h>
 #include <sys/resource.h>
@@ -48,12 +57,6 @@
 #pragma warning(disable:4717)
 #endif
 
-#ifdef _WIN32_IE
-#undef _WIN32_IE
-#endif
-#define _WIN32_IE 0x0501
-
-#define WIN32_LEAN_AND_MEAN 1
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -69,6 +72,7 @@
 #endif
 
 #include <thread>
+#include <typeinfo>
 #include <univalue.h>
 
 // Application startup time (used for uptime calculation)
@@ -160,6 +164,12 @@ bool CheckDiskSpace(const fs::path& dir, uint64_t additional_bytes)
     return free_bytes_available >= min_disk_space + additional_bytes;
 }
 
+std::streampos GetFileSize(const char* path, std::streamsize max) {
+    std::ifstream file(path, std::ios::binary);
+    file.ignore(max);
+    return file.gcount();
+}
+
 /**
  * Interpret a string argument as a boolean.
  *
@@ -186,23 +196,6 @@ static std::string SettingName(const std::string& arg)
 {
     return arg.size() > 0 && arg[0] == '-' ? arg.substr(1) : arg;
 }
-
-/** Internal helper functions for ArgsManager */
-class ArgsManagerHelper {
-public:
-    /** Determine whether to use config settings in the default section,
-     *  See also comments around ArgsManager::ArgsManager() below. */
-    static inline bool UseDefaultSection(const ArgsManager& am, const std::string& arg) EXCLUSIVE_LOCKS_REQUIRED(am.cs_args)
-    {
-        return (am.m_network == CBaseChainParams::MAIN || am.m_network_only_args.count(arg) == 0);
-    }
-
-    static util::SettingsValue Get(const ArgsManager& am, const std::string& arg)
-    {
-        LOCK(am.cs_args);
-        return GetSetting(am.m_settings, am.m_network, SettingName(arg), !UseDefaultSection(am, arg), /* get_chain_name= */ false);
-    }
-};
 
 /**
  * Interpret -nofoo as if the user supplied -foo=0.
@@ -368,15 +361,16 @@ bool ArgsManager::ParseParameters(int argc, const char* const argv[], std::strin
         m_settings.command_line_options[key].push_back(value);
     }
 
-    // we do not allow -includeconf from command line, so we clear it here
-    bool success = true;
+    // we do not allow -includeconf from command line, only -noincludeconf
     if (auto* includes = util::FindKey(m_settings.command_line_options, "includeconf")) {
-        for (const auto& include : util::SettingsSpan(*includes)) {
-            error += "-includeconf cannot be used from commandline; -includeconf=" + include.get_str() + "\n";
-            success = false;
+        const util::SettingsSpan values{*includes};
+        // Range may be empty if -noincludeconf was passed
+        if (!values.empty()) {
+            error = "-includeconf cannot be used from commandline; -includeconf=" + values.begin()->write();
+            return false; // pick first value as example
         }
     }
-    return success;
+    return true;
 }
 
 std::optional<unsigned int> ArgsManager::GetArgFlags(const std::string& name) const
@@ -393,11 +387,8 @@ std::optional<unsigned int> ArgsManager::GetArgFlags(const std::string& name) co
 
 std::vector<std::string> ArgsManager::GetArgs(const std::string& strArg) const
 {
-    LOCK(cs_args);
-    bool ignore_default_section_config = !ArgsManagerHelper::UseDefaultSection(*this, strArg);
     std::vector<std::string> result;
-    for (const util::SettingsValue& value :
-        util::GetSettingsList(m_settings, m_network, SettingName(strArg), ignore_default_section_config)) {
+    for (const util::SettingsValue& value : GetSettingsList(strArg)) {
         result.push_back(value.isFalse() ? "0" : value.isTrue() ? "1" : value.get_str());
     }
     return result;
@@ -405,7 +396,7 @@ std::vector<std::string> ArgsManager::GetArgs(const std::string& strArg) const
 
 bool ArgsManager::IsArgSet(const std::string& strArg) const
 {
-    return !ArgsManagerHelper::Get(*this, strArg).isNull();
+    return !GetSetting(strArg).isNull();
 }
 
 bool ArgsManager::InitSettings(std::string& error)
@@ -433,7 +424,7 @@ bool ArgsManager::GetSettingsPath(fs::path* filepath, bool temp) const
     }
     if (filepath) {
         std::string settings = GetArg("-settings", BITCOIN_SETTINGS_FILENAME);
-        *filepath = fs::absolute(temp ? settings + ".tmp" : settings, GetDataDir(/* net_specific= */ true));
+        *filepath = fsbridge::AbsPathJoin(GetDataDir(/* net_specific= */ true), temp ? settings + ".tmp" : settings);
     }
     return true;
 }
@@ -496,24 +487,24 @@ bool ArgsManager::WriteSettingsFile(std::vector<std::string>* errors) const
 
 bool ArgsManager::IsArgNegated(const std::string& strArg) const
 {
-    return ArgsManagerHelper::Get(*this, strArg).isFalse();
+    return GetSetting(strArg).isFalse();
 }
 
 std::string ArgsManager::GetArg(const std::string& strArg, const std::string& strDefault) const
 {
-    const util::SettingsValue value = ArgsManagerHelper::Get(*this, strArg);
+    const util::SettingsValue value = GetSetting(strArg);
     return value.isNull() ? strDefault : value.isFalse() ? "0" : value.isTrue() ? "1" : value.get_str();
 }
 
 int64_t ArgsManager::GetArg(const std::string& strArg, int64_t nDefault) const
 {
-    const util::SettingsValue value = ArgsManagerHelper::Get(*this, strArg);
+    const util::SettingsValue value = GetSetting(strArg);
     return value.isNull() ? nDefault : value.isFalse() ? 0 : value.isTrue() ? 1 : value.isNum() ? value.get_int64() : LocaleIndependentAtoi<int64_t>(value.get_str());
 }
 
 bool ArgsManager::GetBoolArg(const std::string& strArg, bool fDefault) const
 {
-    const util::SettingsValue value = ArgsManagerHelper::Get(*this, strArg);
+    const util::SettingsValue value = GetSetting(strArg);
     return value.isNull() ? fDefault : value.isBool() ? value.get_bool() : InterpretBool(value.get_str());
 }
 
@@ -704,10 +695,9 @@ void PrintExceptionContinue(const std::exception_ptr pex, const char* pszExcepti
 
 fs::path GetDefaultDataDir()
 {
-    // Windows < Vista: C:\Documents and Settings\Username\Application Data\SparksCore
-    // Windows >= Vista: C:\Users\Username\AppData\Roaming\SparksCore
-    // Mac: ~/Library/Application Support/SparksCore
-    // Unix: ~/.sparkscore
+    // Windows: C:\Users\Username\AppData\Roaming\SparksCore
+    // macOS: ~/Library/Application Support/SparksCore
+    // Unix-like: ~/.sparkscore
 #ifdef WIN32
     // Windows
     return GetSpecialFolderPath(CSIDL_APPDATA) / "SparksCore";
@@ -719,14 +709,27 @@ fs::path GetDefaultDataDir()
     else
         pathRet = fs::path(pszHome);
 #ifdef MAC_OSX
-    // Mac
+    // macOS
     return pathRet / "Library/Application Support/SparksCore";
 #else
-    // Unix
+    // Unix-like
     return pathRet / ".sparkscore";
 #endif
 #endif
 }
+
+namespace {
+fs::path StripRedundantLastElementsOfPath(const fs::path& path)
+{
+    auto result = path;
+    while (result.filename().string() == ".") {
+        result = result.parent_path();
+    }
+
+    assert(fs::equivalent(result, path));
+    return result;
+}
+} // namespace
 
 static fs::path g_blocks_path_cache_net_specific;
 static fs::path pathCached;
@@ -755,6 +758,7 @@ const fs::path &GetBlocksDir()
     path /= BaseParams().DataDir();
     path /= "blocks";
     fs::create_directories(path);
+    path = StripRedundantLastElementsOfPath(path);
     return path;
 }
 
@@ -785,6 +789,7 @@ const fs::path &GetDataDir(bool fNetSpecific)
         fs::create_directories(path / "wallets");
     }
 
+    path = StripRedundantLastElementsOfPath(path);
     return path;
 }
 
@@ -906,7 +911,7 @@ bool ArgsManager::ReadConfigFiles(std::string& error, bool ignore_invalid_keys)
             return false;
         }
         // `-includeconf` cannot be included in the command line arguments except
-        // as `-noincludeconf` (which indicates that no conf file should be used).
+        // as `-noincludeconf` (which indicates that no included conf file should be used).
         bool use_conf_file{true};
         {
             LOCK(cs_args);
@@ -986,19 +991,20 @@ std::string ArgsManager::GetChainName() const
 {
     auto get_net = [&](const std::string& arg, bool interpret_bool = true) {
         LOCK(cs_args);
-        util::SettingsValue value = GetSetting(m_settings, /* section= */ "", SettingName(arg),
-                                               /* ignore_default_section_config= */ false,
-                                               /* get_chain_name= */ true);
+        util::SettingsValue value = util::GetSetting(m_settings, /* section= */ "", SettingName(arg),
+            /* ignore_default_section_config= */ false,
+            /* get_chain_name= */ true);
         return value.isNull() ? false : value.isBool() ? value.get_bool() : (!interpret_bool || InterpretBool(value.get_str()));
     };
 
     const bool fRegTest = get_net("-regtest");
     const bool fTestNet = get_net("-testnet");
     const bool fDevNet = get_net("-devnet", false);
+    const bool is_chain_arg_set = IsArgSet("-chain");
 
-    int nameParamsCount = (fRegTest ? 1 : 0) + (fDevNet ? 1 : 0) + (fTestNet ? 1 : 0);
+    int nameParamsCount = (fRegTest ? 1 : 0) + (fDevNet ? 1 : 0) + (fTestNet ? 1 : 0) + (is_chain_arg_set ? 1 : 0);
     if (nameParamsCount > 1)
-        throw std::runtime_error("Only one of -regtest, -testnet or -devnet can be used.");
+        throw std::runtime_error("Only one of -regtest, -testnet, -devnet or -chain can be used.");
 
     if (fDevNet)
         return CBaseChainParams::DEVNET;
@@ -1006,7 +1012,7 @@ std::string ArgsManager::GetChainName() const
         return CBaseChainParams::REGTEST;
     if (fTestNet)
         return CBaseChainParams::TESTNET;
-    return CBaseChainParams::MAIN;
+    return GetArg("-chain", CBaseChainParams::MAIN);
 }
 
 std::string ArgsManager::GetDevNetName() const
@@ -1044,6 +1050,24 @@ void ArgsManager::LogArgs() const
         LogPrintf("Setting file arg: %s = %s\n", setting.first, setting.second.write());
     }
     logArgsPrefix("Command-line arg:", "", m_settings.command_line_options);
+}
+
+bool ArgsManager::UseDefaultSection(const std::string& arg) const
+{
+    return m_network == CBaseChainParams::MAIN || m_network_only_args.count(arg) == 0;
+}
+
+util::SettingsValue ArgsManager::GetSetting(const std::string& arg) const
+{
+    LOCK(cs_args);
+    return util::GetSetting(
+        m_settings, m_network, SettingName(arg), !UseDefaultSection(arg), /* get_chain_name= */ false);
+}
+
+std::vector<util::SettingsValue> ArgsManager::GetSettingsList(const std::string& arg) const
+{
+    LOCK(cs_args);
+    return util::GetSettingsList(m_settings, m_network, SettingName(arg), !UseDefaultSection(arg));
 }
 
 bool RenameOver(fs::path src, fs::path dest)
@@ -1088,25 +1112,34 @@ bool FileCommit(FILE *file)
         LogPrintf("%s: FlushFileBuffers failed: %d\n", __func__, GetLastError());
         return false;
     }
-#else
-    #if defined(HAVE_FDATASYNC)
-    if (fdatasync(fileno(file)) != 0 && errno != EINVAL) { // Ignore EINVAL for filesystems that don't support sync
-        LogPrintf("%s: fdatasync failed: %d\n", __func__, errno);
-        return false;
-    }
-    #elif defined(MAC_OSX) && defined(F_FULLFSYNC)
+#elif defined(MAC_OSX) && defined(F_FULLFSYNC)
     if (fcntl(fileno(file), F_FULLFSYNC, 0) == -1) { // Manpage says "value other than -1" is returned on success
         LogPrintf("%s: fcntl F_FULLFSYNC failed: %d\n", __func__, errno);
         return false;
     }
-    #else
+#elif HAVE_FDATASYNC
+    if (fdatasync(fileno(file)) != 0 && errno != EINVAL) { // Ignore EINVAL for filesystems that don't support sync
+        LogPrintf("%s: fdatasync failed: %d\n", __func__, errno);
+        return false;
+    }
+#else
     if (fsync(fileno(file)) != 0 && errno != EINVAL) {
         LogPrintf("%s: fsync failed: %d\n", __func__, errno);
         return false;
     }
-    #endif
 #endif
     return true;
+}
+
+void DirectoryCommit(const fs::path &dirname)
+{
+#ifndef WIN32
+    FILE* file = fsbridge::fopen(dirname, "r");
+    if (file) {
+        fsync(fileno(file));
+        fclose(file);
+    }
+#endif
 }
 
 bool TruncateFile(FILE *file, unsigned int length) {
@@ -1170,7 +1203,7 @@ void AllocateFileRange(FILE *file, unsigned int offset, unsigned int length) {
     }
     ftruncate(fileno(file), static_cast<off_t>(offset) + length);
 #else
-    #if defined(__linux__)
+    #if defined(HAVE_POSIX_FALLOCATE)
     // Version using posix_fallocate
     off_t nEndPos = (off_t)offset + length;
     if (0 == posix_fallocate(fileno(file), 0, nEndPos)) return;
@@ -1267,6 +1300,43 @@ void RenameThreadPool(ctpl::thread_pool& tp, const char* baseName)
     }
 }
 
+#ifdef HAVE_BOOST_PROCESS
+UniValue RunCommandParseJSON(const std::string& str_command, const std::string& str_std_in)
+{
+    namespace bp = boost::process;
+
+    UniValue result_json;
+    bp::opstream stdin_stream;
+    bp::ipstream stdout_stream;
+    bp::ipstream stderr_stream;
+
+    if (str_command.empty()) return UniValue::VNULL;
+
+    bp::child c(
+        str_command,
+        bp::std_out > stdout_stream,
+        bp::std_err > stderr_stream,
+        bp::std_in < stdin_stream
+    );
+    if (!str_std_in.empty()) {
+        stdin_stream << str_std_in << std::endl;
+    }
+    stdin_stream.pipe().close();
+
+    std::string result;
+    std::string error;
+    std::getline(stdout_stream, result);
+    std::getline(stderr_stream, error);
+
+    c.wait();
+    const int n_error = c.exit_code();
+    if (n_error) throw std::runtime_error(strprintf("RunCommandParseJSON error: process(%s) returned %d: %s\n", str_command, n_error, error));
+    if (!result_json.read(result)) throw std::runtime_error("Unable to parse JSON: " + result);
+
+    return result_json;
+}
+#endif // HAVE_BOOST_PROCESS
+
 void SetupEnvironment()
 {
 #ifdef HAVE_MALLOPT_ARENA_MAX
@@ -1353,7 +1423,7 @@ fs::path AbsPathForConfigVal(const fs::path& path, bool net_specific)
     if (path.is_absolute()) {
         return path;
     }
-    return fs::absolute(path, GetDataDir(net_specific));
+    return fsbridge::AbsPathJoin(GetDataDir(net_specific), path);
 }
 
 void ScheduleBatchPriority()

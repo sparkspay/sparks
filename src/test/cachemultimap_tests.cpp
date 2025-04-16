@@ -1,15 +1,15 @@
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2023 The Dash Core developers
 
 #include <cachemultimap.h>
-
-#include <test/util/setup_common.h>
+#include <streams.h>
+#include <version.h>
 
 #include <algorithm>
 #include <iostream>
 
 #include <boost/test/unit_test.hpp>
 
-BOOST_FIXTURE_TEST_SUITE(cachemultimap_tests, BasicTestingSetup)
+BOOST_AUTO_TEST_SUITE(cachemultimap_tests)
 
 static bool Compare(const CacheMultiMap<int,int>& cmmap1, const CacheMultiMap<int,int>& cmmap2)
 {
