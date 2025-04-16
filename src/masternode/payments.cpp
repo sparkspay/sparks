@@ -34,16 +34,17 @@
     bool fV20Active = DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_V20);
     CAmount masternodeReward = GetMasternodePayment(nBlockHeight, blockSubsidy + feeReward, fV20Active);
 
-    if (DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_MN_RR)) {
-        CAmount masternodeSubsidyReward = GetMasternodePayment(nBlockHeight, blockSubsidy, fV20Active);
-        const CAmount platformReward = MasternodePayments::PlatformShare(masternodeSubsidyReward);
-        masternodeReward -= platformReward;
+    //Temporary commented that condition till implementing platform feature for sparkspay
+    // if (DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_MN_RR)) {
+    //     CAmount masternodeSubsidyReward = GetMasternodePayment(nBlockHeight, blockSubsidy, fV20Active);
+    //     const CAmount platformReward = MasternodePayments::PlatformShare(masternodeSubsidyReward);
+    //     masternodeReward -= platformReward;
 
-        assert(MoneyRange(masternodeReward));
+    //     assert(MoneyRange(masternodeReward));
 
-        LogPrint(BCLog::MNPAYMENTS, "CMasternodePayments::%s -- MN reward %lld reallocated to credit pool\n", __func__, platformReward);
-        voutMasternodePaymentsRet.emplace_back(platformReward, CScript() << OP_RETURN);
-    }
+    //     LogPrint(BCLog::MNPAYMENTS, "CMasternodePayments::%s -- MN reward %lld reallocated to credit pool\n", __func__, platformReward);
+    //     voutMasternodePaymentsRet.emplace_back(platformReward, CScript() << OP_RETURN);
+    // }
 
     auto dmnPayee = deterministicMNManager->GetListForBlock(pindexPrev).GetMNPayee(pindexPrev);
     if (!dmnPayee) {
