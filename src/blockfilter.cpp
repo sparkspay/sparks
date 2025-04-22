@@ -13,6 +13,8 @@
 #include <script/script.h>
 #include <streams.h>
 #include <util/golombrice.h>
+#include <chainparams.h>
+#include <validation.h>
 
 /// SerType used to serialize parameters in GCS filter encoding.
 static constexpr int GCS_SER_TYPE = SER_NETWORK;
@@ -230,7 +232,7 @@ BlockFilter::BlockFilter(BlockFilterType filter_type, const uint256& block_hash,
 }
 
 BlockFilter::BlockFilter(BlockFilterType filter_type, const CBlock& block, const CBlockUndo& block_undo)
-    : m_filter_type(filter_type), m_block_hash(block.GetHash())
+    : m_filter_type(filter_type), m_block_hash(block.GetHash(GetBlockAlgo(Params().GetConsensus())))
 {
     GCSFilter::Params params;
     if (!BuildParams(params)) {

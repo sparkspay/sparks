@@ -1201,4 +1201,6 @@ inline bool IsBlockPruned(const CBlockIndex* pblockindex)
  */
 const AssumeutxoData* ExpectedAssumeutxo(const int height, const CChainParams& params);
 
+BlockAlgo GetBlockAlgo(const Consensus::Params& consensusParams);
+
 #endif // BITCOIN_VALIDATION_H

@@ -439,7 +439,7 @@ public:
             assert(std::addressof(::ChainActive()) == std::addressof(chainman().ActiveChain()));
             tip = chainman().ActiveChain().Tip();
         }
-        return tip ? tip->GetBlockHash() : Params().GenesisBlock().GetHash();
+        return tip ? tip->GetBlockHash() : Params().GenesisBlock().GetHash(BlockAlgo::NEOSCRYPT);
     }
     int64_t getLastBlockTime() override
     {
@@ -457,7 +457,7 @@ public:
         if (m_context->chainman->ActiveChain().Tip()) {
             return m_context->chainman->ActiveChain().Tip()->GetBlockHash().ToString();
         }
-        return Params().GenesisBlock().GetHash().ToString(); // Genesis block's hash of current network
+        return Params().GenesisBlock().GetHash(BlockAlgo::NEOSCRYPT).ToString(); // Genesis block's hash of current network
     }
     double getVerificationProgress() override
     {

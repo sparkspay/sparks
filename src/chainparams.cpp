@@ -88,7 +88,7 @@ static CBlock FindDevNetGenesisBlock(const CBlock &prevBlock, const CAmount& rew
     std::string devNetName = gArgs.GetDevNetName();
     assert(!devNetName.empty());
 
-    CBlock block = CreateDevNetGenesisBlock(prevBlock.GetHash(), devNetName, prevBlock.nTime + 1, 0, prevBlock.nBits, reward);
+    CBlock block = CreateDevNetGenesisBlock(prevBlock.GetHash(BlockAlgo::NEOSCRYPT), devNetName, prevBlock.nTime + 1, 0, prevBlock.nBits, reward);
 
     arith_uint256 bnTarget;
     bnTarget.SetCompact(block.nBits);
@@ -96,7 +96,7 @@ static CBlock FindDevNetGenesisBlock(const CBlock &prevBlock, const CAmount& rew
     for (uint32_t nNonce = 0; nNonce < UINT32_MAX; nNonce++) {
         block.nNonce = nNonce;
 
-        uint256 hash = block.GetHash();
+        uint256 hash = block.GetHash(BlockAlgo::NEOSCRYPT);
         if (UintToArith256(hash) <= bnTarget)
             return block;
     }
@@ -256,7 +256,7 @@ public:
         m_assumed_chain_state_size = 1;
 
         genesis = CreateGenesisBlock(1513902562, 682979, 0x1e0ffff0, 1, 50 * COIN);
-        consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.hashGenesisBlock = genesis.GetHash(BlockAlgo::NEOSCRYPT);
         assert(consensus.hashGenesisBlock == uint256S("0x00000a5c6ddfaac5097218560d5b92d416931cfeba1abf10c81d1d6a232fc8ea"));
         assert(genesis.hashMerkleRoot == uint256S("0x1b3952bab9df804c6f02372bb62df20fa2927030a4e80389ec14c1d86fc921e4"));
 
@@ -440,6 +440,14 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdMin = 0;         // 60% of 10
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nFalloffCoeff = 0;          // this corresponds to 10 periods
 
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].bit = 14;
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nStartTime = 1743724800; // Tuesday April 04, 2025 00:00:00
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nWindowSize = 10;
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nThresholdStart = 8;         // 80% of 10
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nThresholdMin = 6;           // 60% of 10
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nFalloffCoeff = 5;            // this corresponds to 10 periods
+
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("000000000000000000000000000000000000000000000000000000084d1084ef"); //34000
 
@@ -469,7 +477,7 @@ public:
         m_assumed_chain_state_size = 1;
 
         genesis = CreateGenesisBlock(1513902563, 109775, 0x1e0ffff0, 1, 50 * COIN);
-        consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.hashGenesisBlock = genesis.GetHash(BlockAlgo::NEOSCRYPT);
         assert(consensus.hashGenesisBlock == uint256S("0x000005f15ec2b9e4495efb539fb5b113338df946291cccd8dfd192bb68cd6dcf"));
         assert(genesis.hashMerkleRoot == uint256S("0x1b3952bab9df804c6f02372bb62df20fa2927030a4e80389ec14c1d86fc921e4"));
 
@@ -640,12 +648,12 @@ public:
 
         UpdateDevnetSubsidyAndDiffParametersFromArgs(args);
         genesis = CreateGenesisBlock(1417713337, 1096447, 0x207fffff, 1, 50 * COIN);
-        consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.hashGenesisBlock = genesis.GetHash(BlockAlgo::NEOSCRYPT);
         // assert(consensus.hashGenesisBlock == uint256S("0x000008ca1832a4baf228eb1553c03d3a2c8e02399550dd6ea8d65cec3ef23d2e"));
         // assert(genesis.hashMerkleRoot == uint256S("0xe0028eb9648db56b1ac77cf090b99048a8007e2bb64b68f092c03c7f56a662c7"));
 
         devnetGenesis = FindDevNetGenesisBlock(genesis, 50 * COIN);
-        consensus.hashDevnetGenesisBlock = devnetGenesis.GetHash();
+        consensus.hashDevnetGenesisBlock = devnetGenesis.GetHash(BlockAlgo::NEOSCRYPT);
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -707,7 +715,7 @@ public:
         checkpointData = (CCheckpointData) {
             {
                 { 0, uint256S("0x000008ca1832a4baf228eb1553c03d3a2c8e02399550dd6ea8d65cec3ef23d2e")},
-                { 1, devnetGenesis.GetHash() },
+                { 1, devnetGenesis.GetHash(BlockAlgo::NEOSCRYPT) },
             }
         };
 
@@ -895,7 +903,7 @@ public:
         UpdateBudgetParametersFromArgs(args);
 
         genesis = CreateGenesisBlock(1513902564, 3483397, 0x1e0ffff0, 1, 50 * COIN);
-        consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.hashGenesisBlock = genesis.GetHash(BlockAlgo::NEOSCRYPT);
         assert(consensus.hashGenesisBlock == uint256S("0x00000a584fb9211f6dc67cebc024138caa9e387274bf91400cbb2aa49c53ceca"));
         assert(genesis.hashMerkleRoot == uint256S("0x1b3952bab9df804c6f02372bb62df20fa2927030a4e80389ec14c1d86fc921e4"));
 
