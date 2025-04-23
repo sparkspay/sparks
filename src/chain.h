@@ -377,7 +377,7 @@ public:
         block.nTime           = nTime;
         block.nBits           = nBits;
         block.nNonce          = nNonce;
-        return block.GetHash(GetBlockAlgo(Params().GetConsensus()));
+        return block.GetHash(Params().GetConsensus());
     }
 
     std::string ToString() const;
