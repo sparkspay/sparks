@@ -4,6 +4,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <chain.h>
+#include <validation.h>
+#include <deploymentstatus.h>
 
 #include <tinyformat.h>
 
@@ -190,9 +192,15 @@ const CBlockIndex* LastCommonAncestor(const CBlockIndex* pa, const CBlockIndex* 
     return pa;
 }
 
-BlockAlgo GetBlockAlgo(const Consensus::Params& consensusParams, const uint32_t& nTime) {
-    if (nTime >= consensusParams.YespowerR16StartTime) {
-        return BlockAlgo::YESPOWER_R16;
+BlockAlgo GetBlockAlgo(const Consensus::Params& consensusParams) {
+    const CBlockIndex* pindex = ChainActive().Tip(); 
+    if (pindex && pindex->pprev) {
+        const CBlockIndex* pindexPrev = pindex->pprev;
+        if (pindexPrev && DeploymentActiveAt(*pindexPrev, consensusParams, Consensus::DEPLOYMENT_YESPOWERR16)) {
+            return BlockAlgo::YESPOWER_R16;
+        } else {
+            return BlockAlgo::NEOSCRYPT;
+        }
     } else {
         return BlockAlgo::NEOSCRYPT;
     }

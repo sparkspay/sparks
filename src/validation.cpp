@@ -6214,17 +6214,3 @@ void ChainstateManager::MaybeRebalanceCaches()
         }
     }
 }
-
-BlockAlgo GetBlockAlgo(const Consensus::Params& consensusParams) {
-    const CBlockIndex* pindex = ChainActive().Tip();
-    if (pindex && pindex->pprev) {
-        const CBlockIndex* pindexPrev = pindex->pprev;
-        if (pindexPrev && DeploymentActiveAt(*pindexPrev, consensusParams, Consensus::DEPLOYMENT_YESPOWERR16)) {
-            return BlockAlgo::YESPOWER_R16;
-        } else {
-            return BlockAlgo::NEOSCRYPT;
-        }
-    } else {
-        return BlockAlgo::NEOSCRYPT;
-    }
-}

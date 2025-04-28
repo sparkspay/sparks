@@ -17,7 +17,7 @@
 uint256 CBlockHeader::GetHash(const Consensus::Params& consensusParams) const
 {
         uint256 thash;
-        BlockAlgo blockAlgo = GetBlockAlgo(consensusParams, nTime);
+        BlockAlgo blockAlgo = GetBlockAlgo(consensusParams);
         
         switch (blockAlgo)
         {

@@ -193,7 +193,6 @@ public:
         consensus.DATATXHeight = 1337600; // 0000000425ef35325cd88be91b7cb35b6a215c41edf1d883c6aa00f43aaac1d1
         consensus.DIP0024Height = 1386100; // 0000000633967f4b173e84427426c898a3817ebc177de2b7c22ba0fa2b09b1c8
         consensus.V19Height = 1547800; // 0000003db5bd9c33d765d714fbc7ac207d3a65d00b5081e676c61c3139050348
-        consensus.YespowerR16StartTime = 1746057600;
         consensus.MinBIP9WarningHeight = 1547800 + 2016; // V19 activation height + miner confirmation window
         consensus.nPowTargetTimespan = 60 * 60; // Sparks: 1 hour, 24 blocks
         consensus.nPowTargetSpacing = 2 * 60; // Sparks: 120 seconds
@@ -220,13 +219,13 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nWindowSize = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdStart = 0;     // 60% of 100
 
-        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].bit = 14;
-        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nStartTime = 1746057600; // Thursday May 01, 2025
-        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
-        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nWindowSize = 10;
-        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nThresholdStart = 8;         // 80% of 10
-        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nThresholdMin = 6;           // 60% of 10
-        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nFalloffCoeff = 5;            // this corresponds to 10 periods
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].bit = 14;
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nStartTime = 1746057600; // Thursday May 01, 2025
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nWindowSize = 10;
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nThresholdStart = 8;         // 80% of 10
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nThresholdMin = 6;           // 60% of 10
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nFalloffCoeff = 5;            // this corresponds to 10 periods
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000fdd4d4f9cf3649");//1548000
@@ -419,7 +418,6 @@ public:
         consensus.DATATXHeight = 140; // 00000ccdb0f5e0cb489dd14698e09489c79d0dcd8412ae263d3b9da59f2fbcfc
         consensus.DIP0024Height = 2430; // 0000030485d7c29b8315cae01793d5ef5c314f7db633dca3fa7e94791c910fe8
         consensus.V19Height = 12560; // 00000ff3c6008732e8d62f38276c4ebfab0b096972385c6e5c5b213752cd333c
-        consensus.YespowerR16StartTime = 1745499000;
         consensus.MinBIP9WarningHeight = 12560 + 2016;  // v19 activation height + miner confirmation window
         consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 20
         consensus.nPowTargetTimespan = 5 * 60; // Sparks: 5 minutes, 50 blocks
@@ -450,13 +448,13 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdMin = 0;         // 60% of 10
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nFalloffCoeff = 0;          // this corresponds to 10 periods
 
-        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].bit = 14;
-        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nStartTime = 1746057600; // Tuesday April 04, 2025 00:00:00
-        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
-        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nWindowSize = 10;
-        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nThresholdStart = 8;         // 80% of 10
-        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nThresholdMin = 6;           // 60% of 10
-        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nFalloffCoeff = 5;            // this corresponds to 10 periods
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].bit = 14;
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nStartTime = 1745499000; // Thursday April 24, 2025 12:50:00
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nWindowSize = 10;
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nThresholdStart = 8;         // 80% of 10
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nThresholdMin = 6;           // 60% of 10
+        consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nFalloffCoeff = 5;            // this corresponds to 10 periods
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("000000000000000000000000000000000000000000000000000000084d1084ef"); //34000
@@ -609,7 +607,6 @@ public:
         consensus.DIP0024Height = 300;
         consensus.DIP0024QuorumsHeight = 300;
         consensus.V19Height = 300;
-        consensus.YespowerR16StartTime = 1746057600;
         consensus.MinBIP9WarningHeight = 300 + 2016; // v19 activation height + miner confirmation window
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 1
         consensus.nPowTargetTimespan = 24 * 60 * 60; // Sparks: 1 day
@@ -855,7 +852,6 @@ public:
         consensus.DIP0024Height = 900;
         consensus.DIP0024QuorumsHeight = 900;
         consensus.V19Height = 900;
-        consensus.YespowerR16StartTime = 1746057600;
         consensus.MinBIP9WarningHeight = 0;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = true;
