@@ -377,7 +377,7 @@ public:
         block.nTime           = nTime;
         block.nBits           = nBits;
         block.nNonce          = nNonce;
-        return block.GetHash(BlockAlgo::NEOSCRYPT);
+        return block.GetHash(Params().GetConsensus());
     }
 
     std::string ToString() const;
@@ -437,5 +437,7 @@ public:
     /** Find the earliest block with timestamp equal or greater than the given time and height equal or greater than the given height. */
     CBlockIndex* FindEarliestAtLeast(int64_t nTime, int height) const;
 };
+
+BlockAlgo GetBlockAlgo(const Consensus::Params& consensusParams, const uint32_t& nTime);
 
 #endif // BITCOIN_CHAIN_H

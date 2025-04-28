@@ -2436,7 +2436,7 @@ bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::Bloc
         if (tip_info) {
             tip_info->block_height = chain_active_height;
             tip_info->block_time = chainman.ActiveChain().Tip() ? chainman.ActiveChain().Tip()->GetBlockTime() : Params().GenesisBlock().GetBlockTime();
-            tip_info->block_hash = chainman.ActiveChain().Tip() ? chainman.ActiveChain().Tip()->GetBlockHash() : Params().GenesisBlock().GetHash(BlockAlgo::NEOSCRYPT);
+            tip_info->block_hash = chainman.ActiveChain().Tip() ? chainman.ActiveChain().Tip()->GetBlockHash() : Params().GenesisBlock().GetHash(chainparams.GetConsensus());
             tip_info->verification_progress = GuessVerificationProgress(Params().TxData(), chainman.ActiveChain().Tip());
         }
         if (tip_info && ::pindexBestHeader) {

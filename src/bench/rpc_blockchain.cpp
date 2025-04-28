@@ -32,7 +32,7 @@ struct TestBlockAndIndex {
 
         stream >> block;
 
-        blockHash = block.GetHash(GetBlockAlgo(Params().GetConsensus()));
+        blockHash = block.GetHash(Params().GetConsensus());
         blockindex.phashBlock = &blockHash;
         blockindex.nBits = 403014710;
     }

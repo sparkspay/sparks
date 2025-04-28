@@ -131,7 +131,8 @@ static bool GenerateBlock(ChainstateManager& chainman, CBlock& block, uint64_t& 
 
     CChainParams chainparams(Params());
 
-    while (max_tries > 0 && block.nNonce < std::numeric_limits<uint32_t>::max() && !CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus()) && !ShutdownRequested()) {
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    while (max_tries > 0 && block.nNonce < std::numeric_limits<uint32_t>::max() && !CheckProofOfWork(block.GetHash(consensusParams), block.nBits, chainparams.GetConsensus()) && !ShutdownRequested()) {
         ++block.nNonce;
         --max_tries;
     }
@@ -147,7 +148,7 @@ static bool GenerateBlock(ChainstateManager& chainman, CBlock& block, uint64_t& 
         throw JSONRPCError(RPC_INTERNAL_ERROR, "ProcessNewBlock, block not accepted");
     }
 
-    block_hash = block.GetHash();
+    block_hash = block.GetHash(consensusParams);
     return true;
 }
 
@@ -668,7 +669,7 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
             if (!DecodeHexBlk(block, dataval.get_str()))
                 throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
 
-            uint256 hash = block.GetHash();
+            uint256 hash = block.GetHash(Params().GetConsensus());
             const CBlockIndex* pindex = chainman.m_blockman.LookupBlockIndex(hash);
             if (pindex) {
                 if (pindex->IsValid(BLOCK_VALID_SCRIPTS))
@@ -972,7 +973,7 @@ public:
 
 protected:
     void BlockChecked(const CBlock& block, const BlockValidationState& stateIn) override {
-        if (block.GetHash() != hash)
+        if (block.GetHash(Params().GetConsensus()) != hash)
             return;
         found = true;
         state = stateIn;
@@ -1007,7 +1008,8 @@ static UniValue submitblock(const JSONRPCRequest& request)
     }
 
     ChainstateManager& chainman = EnsureAnyChainman(request.context);
-    uint256 hash = block.GetHash();
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    uint256 hash = block.GetHash(consensusParams);
     {
         LOCK(cs_main);
         const CBlockIndex* pindex = chainman.m_blockman.LookupBlockIndex(hash);
@@ -1022,7 +1024,7 @@ static UniValue submitblock(const JSONRPCRequest& request)
     }
 
     bool new_block;
-    auto sc = std::make_shared<submitblock_StateCatcher>(block.GetHash());
+    auto sc = std::make_shared<submitblock_StateCatcher>(block.GetHash(consensusParams));
     RegisterSharedValidationInterface(sc);
     bool accepted = chainman.ProcessNewBlock(Params(), blockptr, /* fForceProcessing */ true, /* fNewBlock */ &new_block);
     UnregisterSharedValidationInterface(sc);

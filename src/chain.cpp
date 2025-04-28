@@ -189,3 +189,11 @@ const CBlockIndex* LastCommonAncestor(const CBlockIndex* pa, const CBlockIndex* 
     assert(pa == pb);
     return pa;
 }
+
+BlockAlgo GetBlockAlgo(const Consensus::Params& consensusParams, const uint32_t& nTime) {
+    if (nTime >= consensusParams.YespowerR16StartTime) {
+        return BlockAlgo::YESPOWER_R16;
+    } else {
+        return BlockAlgo::NEOSCRYPT;
+    }
+}

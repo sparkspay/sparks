@@ -12,6 +12,7 @@
 #include <uint256.h>
 #include <cstddef>
 #include <type_traits>
+#include <consensus/params.h>
 
 enum class BlockAlgo : int;     //Forward declaration
 
@@ -55,7 +56,7 @@ public:
         return (nBits == 0);
     }
 
-    uint256 GetHash() const;
+    uint256 GetHash(const Consensus::Params& consensusParams) const;
 
     uint256 GetHash(const BlockAlgo& blockAlgo) const;
 
