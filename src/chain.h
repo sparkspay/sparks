@@ -438,6 +438,6 @@ public:
     CBlockIndex* FindEarliestAtLeast(int64_t nTime, int height) const;
 };
 
-BlockAlgo GetBlockAlgo(const Consensus::Params& consensusParams, const uint256& hashPrevBlock);
+BlockAlgo GetBlockAlgo(const Consensus::Params& consensusParams, const uint32_t& nTime);
 
 #endif // BITCOIN_CHAIN_H

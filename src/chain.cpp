@@ -4,8 +4,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <chain.h>
-#include <deploymentstatus.h>
-#include <validation.h>
 
 #include <tinyformat.h>
 
@@ -192,12 +190,10 @@ const CBlockIndex* LastCommonAncestor(const CBlockIndex* pa, const CBlockIndex* 
     return pa;
 }
 
-BlockAlgo GetBlockAlgo(const Consensus::Params& consensusParams, const uint256& hashPrevBlock) {
-    CBlockIndex* pindexPrev = g_chainman.m_blockman.LookupBlockIndex(hashPrevBlock);
-
-    // if (pindexPrev && DeploymentActiveAt(*pindexPrev, consensusParams, Consensus::DEPLOYMENT_YESPOWERR16)) {
-    //     return BlockAlgo::YESPOWER_R16;
-    // } else {
-    //     return BlockAlgo::NEOSCRYPT;
-    // }
+BlockAlgo GetBlockAlgo(const Consensus::Params& consensusParams, const uint32_t& nTime) {
+    if (nTime >= consensusParams.YespowerR16StartTime) {
+        return BlockAlgo::YESPOWER_R16;
+    } else {
+        return BlockAlgo::NEOSCRYPT;
+    }
 }

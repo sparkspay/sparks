@@ -17,19 +17,18 @@
 uint256 CBlockHeader::GetHash(const Consensus::Params& consensusParams) const
 {
         uint256 thash;
-        BlockAlgo blockAlgo = GetBlockAlgo(consensusParams, hashPrevBlock);
+        BlockAlgo blockAlgo = GetBlockAlgo(consensusParams, nTime);
         
         switch (blockAlgo)
         {
             case BlockAlgo::YESPOWER_R16:
             {
-                std::cout << "Calling YESPOWER ALGO" << std::endl;
                 const yespower_params_t yespower_params = {
                     .version = YESPOWER_1_0,
                     .N = 2048,   // R16-specific N parameter
                     .r = 16,     // R16-specific r parameter
-                    .pers = NULL,
-                    .perslen = 0
+                    .pers = (const uint8_t *)"Sparks Core",
+                    .perslen = 11
                 };
             
                 // Use YespowerR16 for blocks after the fork timestamp
@@ -41,16 +40,14 @@ uint256 CBlockHeader::GetHash(const Consensus::Params& consensusParams) const
                 }
                 // Copy the result into `thash`
                 memcpy(thash.begin(), yespowerHash.uc, 32);
-                std::cout << "End Calling YESPOWER ALGO" << std::endl;
                 break;
-            }
+            } 
+            case BlockAlgo::NEOSCRYPT:
             default:
             {
-                std::cout << "Calling NEOSCRYPT ALGO" << std::endl;
                 // Use NeoScrypt for blocks before the fork
                 unsigned int profile = 0x0;
                 neoscrypt((unsigned char *) &nVersion, (unsigned char *) &thash, profile);
-                std::cout << "End Calling NEOSCRYPT ALGO" << std::endl;
                 break;
             }
         }
