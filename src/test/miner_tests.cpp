@@ -258,13 +258,13 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
 
             // This will usually succeed in the first round as we take the nonce from blockinfo
             // It's however useful when adding new blocks with unknown nonces (you should add the found block to blockinfo)
-            while (!CheckProofOfWork(pblock->GetHash(), pblock->nBits, chainparams.GetConsensus())) {
+            while (!CheckProofOfWork(pblock->GetHash(chainparams.GetConsensus()), pblock->nBits, chainparams.GetConsensus())) {
                 pblock->nNonce++;
             }
         }
         std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
         BOOST_CHECK(Assert(m_node.chainman)->ProcessNewBlock(chainparams, shared_pblock, true, nullptr));
-        pblock->hashPrevBlock = pblock->GetHash();
+        pblock->hashPrevBlock = pblock->GetHash(chainparams.GetConsensus());
     };
 
     for ([[maybe_unused]] const auto& _ : blockinfo) {

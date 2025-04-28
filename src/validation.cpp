@@ -2176,7 +2176,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     AssertLockHeld(cs_main);
     assert(pindex);
 
-    uint256 block_hash{block.GetHash()};
+    uint256 block_hash{block.GetHash(Params().GetConsensus())};
     assert(*pindex->phashBlock == block_hash);
 
     assert(m_clhandler);
@@ -3328,7 +3328,7 @@ bool CChainState::ActivateBestChain(BlockValidationState& state, std::shared_ptr
 
                 bool fInvalidFound = false;
                 std::shared_ptr<const CBlock> nullBlockPtr;
-                if (!ActivateBestChainStep(state, pindexMostWork, pblock && pblock->GetHash() == pindexMostWork->GetBlockHash() ? pblock : nullBlockPtr, fInvalidFound, connectTrace)) {
+                if (!ActivateBestChainStep(state, pindexMostWork, pblock && pblock->GetHash(Params().GetConsensus()) == pindexMostWork->GetBlockHash() ? pblock : nullBlockPtr, fInvalidFound, connectTrace)) {
                     // A system error occurred
                     return false;
                 }
@@ -3932,7 +3932,7 @@ bool CheckBlock(const CBlock& block, BlockValidationState& state, const Consensu
 
     // Check that the header is valid (particularly PoW).  This is mostly
     // redundant with the call in AcceptBlockHeader.
-    if (!CheckBlockHeader(block, block.GetHash(), state, consensusParams, fCheckPOW))
+    if (!CheckBlockHeader(block, block.GetHash(consensusParams), state, consensusParams, fCheckPOW))
         return false;
 
     // Check the merkle root.
@@ -4151,7 +4151,7 @@ bool BlockManager::AcceptBlockHeader(const CBlockHeader& block, BlockValidationS
 {
     AssertLockHeld(cs_main);
     // Check for duplicate
-    uint256 hash = block.GetHash();
+    uint256 hash = block.GetHash(chainparams.GetConsensus());
     BlockMap::iterator miSelf = m_block_index.find(hash);
     CBlockIndex *pindex = nullptr;
 
@@ -4441,14 +4441,14 @@ bool TestBlockValidity(BlockValidationState& state,
 
     auto bls_legacy_scheme = bls::bls_legacy_scheme.load();
 
-    uint256 hash = block.GetHash();
+    uint256 hash = block.GetHash(chainparams.GetConsensus());
     if (clhandler.HasConflictingChainLock(pindexPrev->nHeight + 1, hash)) {
         LogPrintf("ERROR: %s: conflicting with chainlock\n", __func__);
         return state.Invalid(BlockValidationResult::BLOCK_INVALID_PREV, "bad-chainlock");
     }
 
     CCoinsViewCache viewNew(&chainstate.CoinsTip());
-    uint256 block_hash(block.GetHash());
+    uint256 block_hash(block.GetHash(chainparams.GetConsensus()));
     CBlockIndex indexDummy(block);
     indexDummy.pprev = pindexPrev;
     indexDummy.nHeight = pindexPrev->nHeight + 1;
@@ -5227,7 +5227,7 @@ bool CChainState::AddGenesisBlock(const CBlock& block, BlockValidationState& sta
     FlatFilePos blockPos = SaveBlockToDisk(block, 0, m_chain, m_params, nullptr);
     if (blockPos.IsNull())
         return error("%s: writing genesis block to disk failed (%s)", __func__, state.ToString());
-    CBlockIndex* pindex = m_blockman.AddToBlockIndex(block, block.GetHash());
+    CBlockIndex* pindex = m_blockman.AddToBlockIndex(block, block.GetHash(m_params.GetConsensus()));
     ReceivedBlockTransactions(block, pindex, blockPos);
     return true;
 }
@@ -5240,7 +5240,7 @@ bool CChainState::LoadGenesisBlock()
     // m_blockman.m_block_index. Note that we can't use m_chain here, since it is
     // set based on the coins db, not the block index db, which is the only
     // thing loaded at this point.
-    if (m_blockman.m_block_index.count(m_params.GenesisBlock().GetHash()))
+    if (m_blockman.m_block_index.count(m_params.GenesisBlock().GetHash(m_params.GetConsensus())))
         return true;
 
     try {
@@ -5312,7 +5312,7 @@ void CChainState::LoadExternalBlockFile(FILE* fileIn, FlatFilePos* dbp)
                 blkdat >> block;
                 nRewind = blkdat.GetPos();
 
-                uint256 hash = block.GetHash();
+                uint256 hash = block.GetHash(m_params.GetConsensus());
                 {
                     LOCK(cs_main);
                     // detect out of order blocks, and store them for later
@@ -5365,14 +5365,14 @@ void CChainState::LoadExternalBlockFile(FILE* fileIn, FlatFilePos* dbp)
                         std::multimap<uint256, FlatFilePos>::iterator it = range.first;
                         std::shared_ptr<CBlock> pblockrecursive = std::make_shared<CBlock>();
                         if (ReadBlockFromDisk(*pblockrecursive, it->second, m_params.GetConsensus())) {
-                            LogPrint(BCLog::REINDEX, "%s: Processing out of order child %s of %s\n", __func__, pblockrecursive->GetHash().ToString(),
+                            LogPrint(BCLog::REINDEX, "%s: Processing out of order child %s of %s\n", __func__, pblockrecursive->GetHash(m_params.GetConsensus()).ToString(),
                                     head.ToString());
                             LOCK(cs_main);
                             assert(std::addressof(::ChainstateActive()) == std::addressof(*this));
                             BlockValidationState dummy;
                             if (AcceptBlock(pblockrecursive, dummy, nullptr, true, &it->second, nullptr)) {
                                 nLoaded++;
-                                queue.push_back(pblockrecursive->GetHash());
+                                queue.push_back(pblockrecursive->GetHash(m_params.GetConsensus()));
                             }
                         }
                         range.first++;
@@ -5531,7 +5531,7 @@ void CChainState::CheckBlockIndex()
                 }
             }
         }
-        // assert(pindex->GetBlockHash() == pindex->GetBlockHeader().GetHash()); // Perhaps too slow
+        // assert(pindex->GetBlockHash() == pindex->GetBlockHeader().GetHash(m_params.GetConsensus())); // Perhaps too slow
         // End: actual consistency checks.
 
         // Try descending into the first subnode.

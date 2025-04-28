@@ -4,6 +4,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <chain.h>
 #include <primitives/block.h>
 
 #include <hash.h>
@@ -11,12 +12,87 @@
 #include <tinyformat.h>
 #include <crypto/common.h>
 #include <crypto/neoscrypt.h>
+#include <crypto/yespower/yespower.h>
 
-uint256 CBlockHeader::GetHash() const
+uint256 CBlockHeader::GetHash(const Consensus::Params& consensusParams) const
 {
         uint256 thash;
-        unsigned int profile = 0x0;
-        neoscrypt((unsigned char *) &nVersion, (unsigned char *) &thash, profile);
+        BlockAlgo blockAlgo = GetBlockAlgo(consensusParams);
+        
+        switch (blockAlgo)
+        {
+            case BlockAlgo::YESPOWER_R16:
+            {
+                const yespower_params_t yespower_params = {
+                    .version = YESPOWER_1_0,
+                    .N = 2048,   // R16-specific N parameter
+                    .r = 16,     // R16-specific r parameter
+                    .pers = (const uint8_t *)"Sparks Core",
+                    .perslen = 11
+                };
+            
+                // Use YespowerR16 for blocks after the fork timestamp
+                yespower_binary_t yespowerHash;
+            
+                // Use YespowerR16 for blocks after the fork
+                if (yespower_tls((unsigned char*)&nVersion, sizeof(*this), &yespower_params, &yespowerHash)) {
+                    throw std::runtime_error("YespowerR16 hashing failed");
+                }
+                // Copy the result into `thash`
+                memcpy(thash.begin(), yespowerHash.uc, 32);
+                break;
+            } 
+            case BlockAlgo::NEOSCRYPT:
+            default:
+            {
+                // Use NeoScrypt for blocks before the fork
+                unsigned int profile = 0x0;
+                neoscrypt((unsigned char *) &nVersion, (unsigned char *) &thash, profile);
+                break;
+            }
+        }
+        return thash;
+}
+
+uint256 CBlockHeader::GetHash(const BlockAlgo& blockAlgo) const
+{
+        uint256 thash;
+        
+        switch (blockAlgo)
+        {
+            case BlockAlgo::YESPOWER_R16:
+            {
+                std::cout << "Calling YESPOWER ALGO" << std::endl;
+                const yespower_params_t yespower_params = {
+                    .version = YESPOWER_1_0,
+                    .N = 2048,   // R16-specific N parameter
+                    .r = 16,     // R16-specific r parameter
+                    .pers = NULL,
+                    .perslen = 0
+                };
+            
+                // Use YespowerR16 for blocks after the fork timestamp
+                yespower_binary_t yespowerHash;
+            
+                // Use YespowerR16 for blocks after the fork
+                if (yespower_tls((unsigned char*)&nVersion, sizeof(*this), &yespower_params, &yespowerHash)) {
+                    throw std::runtime_error("YespowerR16 hashing failed");
+                }
+                // Copy the result into `thash`
+                memcpy(thash.begin(), yespowerHash.uc, 32);
+                std::cout << "End Calling YESPOWER ALGO" << std::endl;
+                break;
+            }
+            default:
+            {
+                std::cout << "Calling NEOSCRYPT ALGO" << std::endl;
+                // Use NeoScrypt for blocks before the fork
+                unsigned int profile = 0x0;
+                neoscrypt((unsigned char *) &nVersion, (unsigned char *) &thash, profile);
+                std::cout << "End Calling NEOSCRYPT ALGO" << std::endl;
+                break;
+            }
+        }
         return thash;
 }
 
@@ -24,7 +100,7 @@ std::string CBlock::ToString() const
 {
     std::stringstream s;
     s << strprintf("CBlock(hash=%s, ver=0x%08x, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, vtx=%u)\n",
-        GetHash().ToString(),
+        GetHash(Params().GetConsensus()).ToString(),
         nVersion,
         hashPrevBlock.ToString(),
         hashMerkleRoot.ToString(),
@@ -121,7 +197,7 @@ void CompressibleBlockHeader::Uncompress(const std::vector<CBlockHeader>& previo
 
     // Uncompress prev block hash
     if (bit_field.IsCompressed(CompressedHeaderBitField::Flag::PREV_BLOCK_HASH)) {
-        hashPrevBlock = last_block.GetHash();
+        hashPrevBlock = last_block.GetHash(Params().GetConsensus());
     }
 
     // Uncompress timestamp

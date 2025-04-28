@@ -53,7 +53,7 @@ FUZZ_TARGET_INIT(block, initialize_block)
     } else if (valid_incl_merkle || valid_incl_pow) {
         assert(valid_incl_none);
     }
-    (void)block.GetHash();
+    (void)block.GetHash(consensus_params);
     (void)block.ToString();
     (void)BlockMerkleRoot(block);
     const size_t raw_memory_size = RecursiveDynamicUsage(block);

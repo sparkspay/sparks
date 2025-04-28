@@ -1275,7 +1275,7 @@ void CWallet::transactionRemovedFromMempool(const CTransactionRef& tx, MemPoolRe
 
 void CWallet::blockConnected(const CBlock& block, int height)
 {
-    const uint256& block_hash = block.GetHash();
+    const uint256& block_hash = block.GetHash(Params().GetConsensus());
     LOCK(cs_wallet);
 
     m_last_block_processed_height = height;
