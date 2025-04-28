@@ -11,6 +11,7 @@
 #include <flatfile.h>
 #include <primitives/block.h>
 #include <uint256.h>
+#include <chainparams.h>
 
 #include <vector>
 
@@ -124,6 +125,11 @@ enum BlockStatus: uint32_t {
     BLOCK_FAILED_MASK        =   BLOCK_FAILED_VALID | BLOCK_FAILED_CHILD,
 
     BLOCK_CONFLICT_CHAINLOCK =   128, //!< conflicts with chainlock system
+};
+
+enum class BlockAlgo {
+    NEOSCRYPT,
+    YESPOWER_R16
 };
 
 /** The block chain is a tree shaped structure starting with the
@@ -371,7 +377,7 @@ public:
         block.nTime           = nTime;
         block.nBits           = nBits;
         block.nNonce          = nNonce;
-        return block.GetHash();
+        return block.GetHash(Params().GetConsensus());
     }
 
     std::string ToString() const;
@@ -431,5 +437,7 @@ public:
     /** Find the earliest block with timestamp equal or greater than the given time and height equal or greater than the given height. */
     CBlockIndex* FindEarliestAtLeast(int64_t nTime, int height) const;
 };
+
+BlockAlgo GetBlockAlgo(const Consensus::Params& consensusParams, const uint32_t& nTime);
 
 #endif // BITCOIN_CHAIN_H

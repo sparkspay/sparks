@@ -88,7 +88,7 @@ static CBlock FindDevNetGenesisBlock(const CBlock &prevBlock, const CAmount& rew
     std::string devNetName = gArgs.GetDevNetName();
     assert(!devNetName.empty());
 
-    CBlock block = CreateDevNetGenesisBlock(prevBlock.GetHash(), devNetName, prevBlock.nTime + 1, 0, prevBlock.nBits, reward);
+    CBlock block = CreateDevNetGenesisBlock(prevBlock.GetHash(Params().GetConsensus()), devNetName, prevBlock.nTime + 1, 0, prevBlock.nBits, reward);
 
     arith_uint256 bnTarget;
     bnTarget.SetCompact(block.nBits);
@@ -96,7 +96,7 @@ static CBlock FindDevNetGenesisBlock(const CBlock &prevBlock, const CAmount& rew
     for (uint32_t nNonce = 0; nNonce < UINT32_MAX; nNonce++) {
         block.nNonce = nNonce;
 
-        uint256 hash = block.GetHash();
+        uint256 hash = block.GetHash(Params().GetConsensus());
         if (UintToArith256(hash) <= bnTarget)
             return block;
     }
@@ -193,6 +193,7 @@ public:
         consensus.DATATXHeight = 1337600; // 0000000425ef35325cd88be91b7cb35b6a215c41edf1d883c6aa00f43aaac1d1
         consensus.DIP0024Height = 1386100; // 0000000633967f4b173e84427426c898a3817ebc177de2b7c22ba0fa2b09b1c8
         consensus.V19Height = 1547800; // 0000003db5bd9c33d765d714fbc7ac207d3a65d00b5081e676c61c3139050348
+        consensus.YespowerR16StartTime = 1746057600;
         consensus.MinBIP9WarningHeight = 1547800 + 2016; // V19 activation height + miner confirmation window
         consensus.nPowTargetTimespan = 60 * 60; // Sparks: 1 hour, 24 blocks
         consensus.nPowTargetSpacing = 2 * 60; // Sparks: 120 seconds
@@ -218,6 +219,14 @@ public:
         // NOTE: nWindowSize for MN_RR __MUST__ be greater than or equal to nSuperblockMaturityWindow for CSuperblock::GetPaymentsLimit() to work correctly
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nWindowSize = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdStart = 0;     // 60% of 100
+
+        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].bit = 14;
+        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nStartTime = 1746057600; // Thursday May 01, 2025
+        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nWindowSize = 10;
+        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nThresholdStart = 8;         // 80% of 10
+        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nThresholdMin = 6;           // 60% of 10
+        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nFalloffCoeff = 5;            // this corresponds to 10 periods
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000fdd4d4f9cf3649");//1548000
@@ -256,7 +265,7 @@ public:
         m_assumed_chain_state_size = 1;
 
         genesis = CreateGenesisBlock(1513902562, 682979, 0x1e0ffff0, 1, 50 * COIN);
-        consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.hashGenesisBlock = genesis.GetHash(consensus);
         assert(consensus.hashGenesisBlock == uint256S("0x00000a5c6ddfaac5097218560d5b92d416931cfeba1abf10c81d1d6a232fc8ea"));
         assert(genesis.hashMerkleRoot == uint256S("0x1b3952bab9df804c6f02372bb62df20fa2927030a4e80389ec14c1d86fc921e4"));
 
@@ -410,6 +419,7 @@ public:
         consensus.DATATXHeight = 140; // 00000ccdb0f5e0cb489dd14698e09489c79d0dcd8412ae263d3b9da59f2fbcfc
         consensus.DIP0024Height = 2430; // 0000030485d7c29b8315cae01793d5ef5c314f7db633dca3fa7e94791c910fe8
         consensus.V19Height = 12560; // 00000ff3c6008732e8d62f38276c4ebfab0b096972385c6e5c5b213752cd333c
+        consensus.YespowerR16StartTime = 1745499000;
         consensus.MinBIP9WarningHeight = 12560 + 2016;  // v19 activation height + miner confirmation window
         consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 20
         consensus.nPowTargetTimespan = 5 * 60; // Sparks: 5 minutes, 50 blocks
@@ -440,6 +450,14 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdMin = 0;         // 60% of 10
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nFalloffCoeff = 0;          // this corresponds to 10 periods
 
+        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].bit = 14;
+        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nStartTime = 1746057600; // Tuesday April 04, 2025 00:00:00
+        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nWindowSize = 10;
+        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nThresholdStart = 8;         // 80% of 10
+        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nThresholdMin = 6;           // 60% of 10
+        // consensus.vDeployments[Consensus::DEPLOYMENT_YESPOWERR16].nFalloffCoeff = 5;            // this corresponds to 10 periods
+
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("000000000000000000000000000000000000000000000000000000084d1084ef"); //34000
 
@@ -469,7 +487,7 @@ public:
         m_assumed_chain_state_size = 1;
 
         genesis = CreateGenesisBlock(1513902563, 109775, 0x1e0ffff0, 1, 50 * COIN);
-        consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.hashGenesisBlock = genesis.GetHash(consensus);
         assert(consensus.hashGenesisBlock == uint256S("0x000005f15ec2b9e4495efb539fb5b113338df946291cccd8dfd192bb68cd6dcf"));
         assert(genesis.hashMerkleRoot == uint256S("0x1b3952bab9df804c6f02372bb62df20fa2927030a4e80389ec14c1d86fc921e4"));
 
@@ -591,6 +609,7 @@ public:
         consensus.DIP0024Height = 300;
         consensus.DIP0024QuorumsHeight = 300;
         consensus.V19Height = 300;
+        consensus.YespowerR16StartTime = 1746057600;
         consensus.MinBIP9WarningHeight = 300 + 2016; // v19 activation height + miner confirmation window
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 1
         consensus.nPowTargetTimespan = 24 * 60 * 60; // Sparks: 1 day
@@ -640,12 +659,12 @@ public:
 
         UpdateDevnetSubsidyAndDiffParametersFromArgs(args);
         genesis = CreateGenesisBlock(1417713337, 1096447, 0x207fffff, 1, 50 * COIN);
-        consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.hashGenesisBlock = genesis.GetHash(consensus);
         // assert(consensus.hashGenesisBlock == uint256S("0x000008ca1832a4baf228eb1553c03d3a2c8e02399550dd6ea8d65cec3ef23d2e"));
         // assert(genesis.hashMerkleRoot == uint256S("0xe0028eb9648db56b1ac77cf090b99048a8007e2bb64b68f092c03c7f56a662c7"));
 
         devnetGenesis = FindDevNetGenesisBlock(genesis, 50 * COIN);
-        consensus.hashDevnetGenesisBlock = devnetGenesis.GetHash();
+        consensus.hashDevnetGenesisBlock = devnetGenesis.GetHash(consensus);
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -707,7 +726,7 @@ public:
         checkpointData = (CCheckpointData) {
             {
                 { 0, uint256S("0x000008ca1832a4baf228eb1553c03d3a2c8e02399550dd6ea8d65cec3ef23d2e")},
-                { 1, devnetGenesis.GetHash() },
+                { 1, devnetGenesis.GetHash(consensus) },
             }
         };
 
@@ -836,6 +855,7 @@ public:
         consensus.DIP0024Height = 900;
         consensus.DIP0024QuorumsHeight = 900;
         consensus.V19Height = 900;
+        consensus.YespowerR16StartTime = 1746057600;
         consensus.MinBIP9WarningHeight = 0;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = true;
@@ -895,7 +915,7 @@ public:
         UpdateBudgetParametersFromArgs(args);
 
         genesis = CreateGenesisBlock(1513902564, 3483397, 0x1e0ffff0, 1, 50 * COIN);
-        consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.hashGenesisBlock = genesis.GetHash(consensus);
         assert(consensus.hashGenesisBlock == uint256S("0x00000a584fb9211f6dc67cebc024138caa9e387274bf91400cbb2aa49c53ceca"));
         assert(genesis.hashMerkleRoot == uint256S("0x1b3952bab9df804c6f02372bb62df20fa2927030a4e80389ec14c1d86fc921e4"));
 

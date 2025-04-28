@@ -12,7 +12,7 @@ DIST_SUBDIRS = secp256k1
 
 AM_LDFLAGS = $(LIBTOOL_LDFLAGS) $(HARDENED_LDFLAGS) $(GPROF_LDFLAGS) $(SANITIZER_LDFLAGS)
 AM_CXXFLAGS = $(DEBUG_CXXFLAGS) $(HARDENED_CXXFLAGS) $(WARN_CXXFLAGS) $(NOWARN_CXXFLAGS) $(ERROR_CXXFLAGS) $(GPROF_CXXFLAGS) $(SANITIZER_CXXFLAGS)
-AM_CPPFLAGS = $(DEBUG_CPPFLAGS) $(HARDENED_CPPFLAGS)
+AM_CPPFLAGS = $(DEBUG_CPPFLAGS) $(HARDENED_CPPFLAGS) $(LEVELDB_CPPFLAGS)
 AM_LIBTOOLFLAGS = --preserve-dup-deps
 PTHREAD_FLAGS = $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 EXTRA_LIBRARIES =
@@ -609,7 +609,10 @@ crypto_libbitcoin_crypto_base_a_SOURCES = \
   crypto/sha512.cpp \
   crypto/sha512.h \
   crypto/siphash.cpp \
-  crypto/siphash.h
+  crypto/siphash.h \
+  crypto/yespower/sha256.c \
+  crypto/yespower/yespower-opt.c \
+  crypto/yespower/yespower.h
 
 if USE_ASM
 crypto_libbitcoin_crypto_base_a_SOURCES += crypto/sha256_sse4.cpp
@@ -676,6 +679,8 @@ libbitcoin_consensus_a_SOURCES = \
   arith_uint256.h \
   bls/bls.cpp \
   bls/bls.h \
+  chain.cpp \
+  chain.h \
   consensus/merkle.cpp \
   consensus/merkle.h \
   consensus/params.h \

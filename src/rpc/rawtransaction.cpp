@@ -701,7 +701,7 @@ static UniValue verifytxoutproof(const JSONRPCRequest& request)
     ChainstateManager& chainman = EnsureAnyChainman(request.context);
     LOCK(cs_main);
 
-    const CBlockIndex* pindex = chainman.m_blockman.LookupBlockIndex(merkleBlock.header.GetHash());
+    const CBlockIndex* pindex = chainman.m_blockman.LookupBlockIndex(merkleBlock.header.GetHash(Params().GetConsensus()));
     if (!pindex || !chainman.ActiveChain().Contains(pindex) || pindex->nTx == 0) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found in chain");
     }
