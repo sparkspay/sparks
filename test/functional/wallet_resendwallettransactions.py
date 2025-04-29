@@ -4,8 +4,10 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test that the wallet resends transactions periodically."""
 
-from test_framework.blocktools import create_block, create_coinbase
-from test_framework.messages import ToHex
+from test_framework.blocktools import (
+    create_block,
+    create_coinbase,
+)
 from test_framework.p2p import P2PTxInvStore
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import assert_equal
@@ -38,7 +40,7 @@ class ResendWalletTransactionsTest(BitcoinTestFramework):
             return peer_first.tx_invs_received[int(txid, 16)] >= 1
         self.wait_until(wait_p2p)
 
-        # Add a second peer since txs aren't rebroadcast to the same peer (see filterInventoryKnown)
+        # Add a second peer since txs aren't rebroadcast to the same peer (see m_tx_inventory_known_filter)
         peer_second = node.add_p2p_connection(P2PTxInvStore())
 
         self.log.info("Create a block")
@@ -50,7 +52,7 @@ class ResendWalletTransactionsTest(BitcoinTestFramework):
         block = create_block(int(node.getbestblockhash(), 16), create_coinbase(node.getblockcount() + 1), block_time)
         block.rehash()
         block.solve()
-        node.submitblock(ToHex(block))
+        node.submitblock(block.serialize().hex())
 
         # Set correct m_best_block_time, which is used in ResendWalletTransactions
         node.syncwithvalidationinterfacequeue()

@@ -118,15 +118,16 @@ class WalletLabelsTest(BitcoinTestFramework):
             assert_raises_rpc_error(-11, "No addresses with label", node.getaddressesbylabel, "")
 
         # Check that addmultisigaddress can assign labels.
-        for label in labels:
-            addresses = []
-            for _ in range(10):
-                addresses.append(node.getnewaddress())
-            multisig_address = node.addmultisigaddress(5, addresses, label.name)['address']
-            label.add_address(multisig_address)
-            label.purpose[multisig_address] = "send"
-            label.verify(node)
-        node.generate(COINBASE_MATURITY + 1)
+        if not self.options.descriptors:
+            for label in labels:
+                addresses = []
+                for _ in range(10):
+                    addresses.append(node.getnewaddress())
+                multisig_address = node.addmultisigaddress(5, addresses, label.name)['address']
+                label.add_address(multisig_address)
+                label.purpose[multisig_address] = "send"
+                label.verify(node)
+            node.generate(COINBASE_MATURITY + 1)
 
         # Check that setlabel can change the label of an address from a
         # different label.
@@ -135,6 +136,33 @@ class WalletLabelsTest(BitcoinTestFramework):
         # Check that setlabel can set the label of an address already
         # in the label. This is a no-op.
         change_label(node, labels[2].addresses[0], labels[2], labels[2])
+
+        self.log.info('Check watchonly labels')
+        node.createwallet(wallet_name='watch_only', disable_private_keys=True)
+        wallet_watch_only = node.get_wallet_rpc('watch_only')
+        VALID = {
+            '✔️_a1': 'yMNJePdcKvXtWWQnFYHNeJ5u8TF2v1dfK4',
+            '✔️_a2': 'yeMpGzMj3rhtnz48XsfpB8itPHhHtgxLc3',
+            '✔️_a3': '93bVhahvUKmQu8gu9g3QnPPa2cxFK98pMB',
+        }
+        INVALID = {
+            '❌_b1': 'y000000000000000000000000000000000',
+            '❌_b2': 'y000000000000000000000000000000001',
+        }
+        for l in VALID:
+            ad = VALID[l]
+            wallet_watch_only.importaddress(label=l, rescan=False, address=ad)
+            node.generatetoaddress(1, ad)
+            assert_equal(wallet_watch_only.getaddressesbylabel(label=l), {ad: {'purpose': 'receive'}})
+            assert_equal(wallet_watch_only.getreceivedbylabel(label=l), 0)
+        for l in INVALID:
+            ad = INVALID[l]
+            assert_raises_rpc_error(
+                -5,
+                "Address is not valid" if self.options.descriptors else "Invalid Dash address or script",
+                lambda: wallet_watch_only.importaddress(label=l, rescan=False, address=ad),
+            )
+
 
 class Label:
     def __init__(self, name):

@@ -20,7 +20,7 @@ BOOST_FIXTURE_TEST_CASE(coinstatsindex_initial_sync, TestChain100Setup)
     const CBlockIndex* block_index;
     {
         LOCK(cs_main);
-        block_index = ChainActive().Tip();
+        block_index = m_node.chainman->ActiveChain().Tip();
     }
 
     // CoinStatsIndex should not be found before it is started.
@@ -30,7 +30,7 @@ BOOST_FIXTURE_TEST_CASE(coinstatsindex_initial_sync, TestChain100Setup)
     // is started.
     BOOST_CHECK(!coin_stats_index.BlockUntilSyncedToCurrentChain());
 
-    BOOST_REQUIRE(coin_stats_index.Start(::ChainstateActive()));
+    BOOST_REQUIRE(coin_stats_index.Start(m_node.chainman->ActiveChainstate()));
 
     IndexWaitSynced(coin_stats_index);
 
@@ -38,7 +38,7 @@ BOOST_FIXTURE_TEST_CASE(coinstatsindex_initial_sync, TestChain100Setup)
     const CBlockIndex* genesis_block_index;
     {
         LOCK(cs_main);
-        genesis_block_index = ChainActive().Genesis();
+        genesis_block_index = m_node.chainman->ActiveChain().Genesis();
     }
     BOOST_CHECK(coin_stats_index.LookUpStats(genesis_block_index, coin_stats));
 
@@ -56,16 +56,22 @@ BOOST_FIXTURE_TEST_CASE(coinstatsindex_initial_sync, TestChain100Setup)
     const CBlockIndex* new_block_index;
     {
         LOCK(cs_main);
-        new_block_index = ChainActive().Tip();
+        new_block_index = m_node.chainman->ActiveChain().Tip();
     }
     coin_stats_index.LookUpStats(new_block_index, new_coin_stats);
 
     BOOST_CHECK(block_index != new_block_index);
 
+    // It is not safe to stop and destroy the index until it finishes handling
+    // the last BlockConnected notification. The BlockUntilSyncedToCurrentChain()
+    // call above is sufficient to ensure this, but the
+    // SyncWithValidationInterfaceQueue() call below is also needed to ensure
+    // TSAN always sees the test thread waiting for the notification thread, and
+    // avoid potential false positive reports.
+    SyncWithValidationInterfaceQueue();
+
     // Shutdown sequence (c.f. Shutdown() in init.cpp)
     coin_stats_index.Stop();
-
-    // Rest of shutdown sequence and destructors happen in ~TestingSetup()
 }
 
 BOOST_AUTO_TEST_SUITE_END()

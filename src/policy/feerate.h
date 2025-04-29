@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2019 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -40,11 +40,11 @@ public:
         static_assert(std::is_integral<I>::value, "CFeeRate should be used without floats");
     }
     /** Constructor for a fee rate in satoshis per kB. The size in bytes must not exceed (2^63 - 1)*/
-    CFeeRate(const CAmount& nFeePaid, size_t nBytes);
+    CFeeRate(const CAmount& nFeePaid, uint32_t num_bytes);
     /**
      * Return the fee in satoshis for the given size in bytes.
      */
-    CAmount GetFee(size_t nBytes) const;
+    CAmount GetFee(uint32_t num_bytes) const;
     /**
      * Return the fee in satoshis for a size of 1000 bytes
      */

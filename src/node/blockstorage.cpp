@@ -119,7 +119,8 @@ struct CImportingNow {
     }
 };
 
-void ThreadImport(ChainstateManager& chainman, CDSNotificationInterface& dsnfi, std::vector<fs::path> vImportFiles, const ArgsManager& args)
+void ThreadImport(ChainstateManager& chainman, CDeterministicMNManager& dmnman, CDSNotificationInterface& dsnfi,
+                  std::vector<fs::path> vImportFiles, CActiveMasternodeManager* const mn_activeman, const ArgsManager& args)
 {
     ScheduleBatchPriority();
 
@@ -200,17 +201,16 @@ void ThreadImport(ChainstateManager& chainman, CDSNotificationInterface& dsnfi, 
         LogPrintf("Filling coin cache with masternode UTXOs...\n");
         LOCK(cs_main);
         int64_t nStart = GetTimeMillis();
-        auto mnList = deterministicMNManager->GetListAtChainTip();
+        auto mnList = dmnman.GetListAtChainTip();
         mnList.ForEachMN(false, [&](auto& dmn) {
             Coin coin;
-            GetUTXOCoin(dmn.collateralOutpoint, coin);
+            GetUTXOCoin(chainman.ActiveChainstate(), dmn.collateralOutpoint, coin);
         });
         LogPrintf("Filling coin cache with masternode UTXOs: done in %dms\n", GetTimeMillis() - nStart);
     }
 
-    if (fMasternodeMode) {
-        assert(activeMasternodeManager);
-        activeMasternodeManager->Init(::ChainActive().Tip());
+    if (mn_activeman != nullptr) {
+        mn_activeman->Init(chainman.ActiveTip());
     }
 
     g_wallet_init_interface.AutoLockMasternodeCollaterals();

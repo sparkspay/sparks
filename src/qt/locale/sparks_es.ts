@@ -286,6 +286,9 @@
     </message>
 </context>
 <context>
+    <name>BitcoinApplication</name>
+    </context>
+<context>
     <name>BitcoinGUI</name>
     <message>
         <source>&amp;Overview</source>
@@ -308,8 +311,80 @@
         <translation>&amp;Recibir</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and sparks: URIs)</source>
-        <translation>Solicitar pagos (genera códigos QR y URIs de Sparks)</translation>
+        <source>Request payments (generates QR codes and dash: URIs)</source>
+        <translation>Solicitar pagos (genera códigos QR y URIs de Dash)</translation>
+    </message>
+    <message>
+        <source>&amp;Options…</source>
+        <translation>&amp;Opciones…</translation>
+    </message>
+    <message>
+        <source>&amp;Encrypt Wallet…</source>
+        <translation>&amp;Cifrar billetera…</translation>
+    </message>
+    <message>
+        <source>&amp;Backup Wallet…</source>
+        <translation>&amp;Copia de seguridad de la billetera…</translation>
+    </message>
+    <message>
+        <source>&amp;Change Passphrase…</source>
+        <translation>&amp;Cambiar contraseña…</translation>
+    </message>
+    <message>
+        <source>&amp;Unlock Wallet…</source>
+        <translation>&amp;Desbloquear billetera</translation>
+    </message>
+    <message>
+        <source>Sign &amp;message…</source>
+        <translation>Firmar &amp;mensaje…</translation>
+    </message>
+    <message>
+        <source>&amp;Verify message…</source>
+        <translation>&amp;Verificar mensaje…</translation>
+    </message>
+    <message>
+        <source>&amp;Sending addresses</source>
+        <translation>&amp;Direcciones de envío</translation>
+    </message>
+    <message>
+        <source>&amp;Receiving addresses</source>
+        <translation>&amp;Direcciones de recepción</translation>
+    </message>
+    <message>
+        <source>Open &amp;URI…</source>
+        <translation>Abrir &amp;URI…</translation>
+    </message>
+    <message>
+        <source>Open Wallet</source>
+        <translation>Abrir billetera</translation>
+    </message>
+    <message>
+        <source>Open a wallet</source>
+        <translation>Abrir una billetera</translation>
+    </message>
+    <message>
+        <source>Close wallet</source>
+        <translation>Cerrar billetera</translation>
+    </message>
+    <message>
+        <source>No wallets available</source>
+        <translation>No hay billeteras disponibles</translation>
+    </message>
+    <message>
+        <source>&amp;Window</source>
+        <translation>&amp;Ventana</translation>
+    </message>
+    <message>
+        <source>Minimize</source>
+        <translation>Minimizar</translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation>Zoom</translation>
+    </message>
+    <message>
+        <source>Main Window</source>
+        <translation>Ventana principal</translation>
     </message>
     <message>
         <source>&amp;Transactions</source>
@@ -348,10 +423,6 @@
         <translation>Mostrar información acerca de Qt</translation>
     </message>
     <message>
-        <source>&amp;Options...</source>
-        <translation>&amp;Opciones...</translation>
-    </message>
-    <message>
         <source>&amp;About %1</source>
         <translation>&amp;Acerca de %1</translation>
     </message>
@@ -372,32 +443,16 @@
         <translation>Mostrar u ocultar la ventana principal</translation>
     </message>
     <message>
-        <source>&amp;Encrypt Wallet...</source>
-        <translation>&amp;Cifrar billetera…</translation>
-    </message>
-    <message>
         <source>Encrypt the private keys that belong to your wallet</source>
         <translation>Cifrar las llaves privadas que pertenezcan a su billetera</translation>
-    </message>
-    <message>
-        <source>&amp;Backup Wallet...</source>
-        <translation>&amp;Copia de seguridad de la billetera...</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
         <translation>Crear copia de seguridad de la billetera en otra ubicación</translation>
     </message>
     <message>
-        <source>&amp;Change Passphrase...</source>
-        <translation>&amp;Cambiar contraseña…</translation>
-    </message>
-    <message>
         <source>Change the passphrase used for wallet encryption</source>
         <translation>Cambiar la contraseña utilizada para el cifrado de la billetera</translation>
-    </message>
-    <message>
-        <source>&amp;Unlock Wallet...</source>
-        <translation>&amp;Desbloquear billetera</translation>
     </message>
     <message>
         <source>Unlock wallet</source>
@@ -408,20 +463,12 @@
         <translation>&amp;Bloquear billetera</translation>
     </message>
     <message>
-        <source>Sign &amp;message...</source>
-        <translation>Firmar &amp;mensaje...</translation>
+        <source>Sign messages with your Dash addresses to prove you own them</source>
+        <translation>Firmar mensajes con sus direcciones Dash para demostrar que le pertenecen</translation>
     </message>
     <message>
-        <source>Sign messages with your Sparks addresses to prove you own them</source>
-        <translation>Firmar mensajes con sus direcciones Sparks para demostrar que le pertenecen</translation>
-    </message>
-    <message>
-        <source>&amp;Verify message...</source>
-        <translation>&amp;Verificar mensaje...</translation>
-    </message>
-    <message>
-        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
-        <translation>Verificar mensajes para comprobar que fueron firmados con la dirección Sparks indicada</translation>
+        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
+        <translation>Verificar mensajes para comprobar que fueron firmados con la dirección Dash indicada</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -492,10 +539,6 @@
         <translation>Mostrar la lista de direcciones de recepción y etiquetas</translation>
     </message>
     <message>
-        <source>Open &amp;URI...</source>
-        <translation>Abrir &amp;URI...</translation>
-    </message>
-    <message>
         <source>&amp;Command-line options</source>
         <translation>&amp;Opciones de consola de comandos</translation>
     </message>
@@ -522,6 +565,14 @@
         <translation>&amp;Archivo</translation>
     </message>
     <message>
+        <source>Show information about %1</source>
+        <translation>Mostrar información sobre %1</translation>
+    </message>
+    <message>
+        <source>Create a new wallet</source>
+        <translation>Crear una nueva billetera</translation>
+    </message>
+    <message>
         <source>%1 &amp;information</source>
         <translation>%1 &amp;Información</translation>
     </message>
@@ -545,37 +596,21 @@
         <source>Tabs toolbar</source>
         <translation>Barra de pestañas</translation>
     </message>
+    <message>
+        <source>&amp;Governance</source>
+        <translation>&amp;Governanza</translation>
+    </message>
+    <message>
+        <source>View Governance Proposals</source>
+        <translation>Ver propuestas de gobernanza</translation>
+    </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Sparks network</source>
-        <translation><numerusform>%n conexion(es) activa a la red Sparks</numerusform><numerusform>%n conexion(es) activas a la red Sparks</numerusform><numerusform>%n conexion(es) activas a la red Sparks</numerusform></translation>
+        <source>%n active connection(s) to Dash network</source>
+        <translation><numerusform>%n conexion(es) activa a la red Dash</numerusform><numerusform>%n conexion(es) activas a la red Dash</numerusform><numerusform>%n conexion(es) activas a la red Dash</numerusform></translation>
     </message>
     <message>
-        <source>Network activity disabled</source>
-        <translation>Actividad de red deshabilitada</translation>
-    </message>
-    <message>
-        <source>Syncing Headers (%1%)...</source>
-        <translation>Sincronizando encabezados (%1)...</translation>
-    </message>
-    <message>
-        <source>Synchronizing with network...</source>
-        <translation>Sincronizando con la red…</translation>
-    </message>
-    <message>
-        <source>Indexing blocks on disk...</source>
-        <translation>Indexando los bloques en el disco...</translation>
-    </message>
-    <message>
-        <source>Processing blocks on disk...</source>
-        <translation>Procesando los bloques en el disco...</translation>
-    </message>
-    <message>
-        <source>Reindexing blocks on disk...</source>
-        <translation>Reindexando bloques en disco...</translation>
-    </message>
-    <message>
-        <source>Connecting to peers...</source>
-        <translation>Conectando con los pares...</translation>
+        <source>%1 behind</source>
+        <translation>%1 por detrás</translation>
     </message>
     <message numerus="yes">
         <source>Processed %n block(s) of transaction history.</source>
@@ -586,8 +621,40 @@
         <translation>%1 por detrás</translation>
     </message>
     <message>
-        <source>Catching up...</source>
-        <translation>Poniendo al día...</translation>
+        <source>Close Wallet…</source>
+        <translation>Cerrar billetera…</translation>
+    </message>
+    <message>
+        <source>Create Wallet…</source>
+        <translation>Crear billetera…</translation>
+    </message>
+    <message>
+        <source>Syncing Headers (%1%)…</source>
+        <translation>Sincronizando encabezados (%1)…</translation>
+    </message>
+    <message>
+        <source>Synchronizing with network…</source>
+        <translation>Sincronizando con la red…</translation>
+    </message>
+    <message>
+        <source>Indexing blocks on disk…</source>
+        <translation>Indexando los bloques en el disco…</translation>
+    </message>
+    <message>
+        <source>Processing blocks on disk…</source>
+        <translation>Procesando los bloques en el disco…</translation>
+    </message>
+    <message>
+        <source>Reindexing blocks on disk…</source>
+        <translation>Reindexando bloques en disco…</translation>
+    </message>
+    <message>
+        <source>Connecting to peers…</source>
+        <translation>Conectando con los pares…</translation>
+    </message>
+    <message>
+        <source>Catching up…</source>
+        <translation>Poniendo al día…</translation>
     </message>
     <message>
         <source>Last received block was generated %1 ago.</source>
@@ -703,7 +770,7 @@
         <source>Original message:</source>
         <translation>Mensaje original:</translation>
     </message>
-    </context>
+</context>
 <context>
     <name>CoinControlDialog</name>
     <message>
@@ -896,6 +963,60 @@
     </message>
 </context>
 <context>
+    <name>CreateWalletActivity</name>
+    <message>
+        <source>Creating Wallet &lt;b&gt;%1&lt;/b&gt;…</source>
+        <translation>Creando billetera &lt;b&gt;%1&lt;/b&gt;…</translation>
+    </message>
+    <message>
+        <source>Create wallet failed</source>
+        <translation>No se pudo crear la billetera</translation>
+    </message>
+    <message>
+        <source>Create wallet warning</source>
+        <translation>Crear advertencia de billetera</translation>
+    </message>
+</context>
+<context>
+    <name>CreateWalletDialog</name>
+    <message>
+        <source>Create Wallet</source>
+        <translation>Crear billetera</translation>
+    </message>
+    <message>
+        <source>Wallet Name</source>
+        <translation>Nombre de la billetera</translation>
+    </message>
+    <message>
+        <source>Encrypt the wallet. The wallet will be encrypted with a passphrase of your choice.</source>
+        <translation>Encriptar la billetera. La billetera se encriptará con una frase de contraseña de tu elección.</translation>
+    </message>
+    <message>
+        <source>Encrypt Wallet</source>
+        <translation>Encriptar billetera</translation>
+    </message>
+    <message>
+        <source>Disable private keys for this wallet. Wallets with private keys disabled will have no private keys and cannot have an HD seed or imported private keys. This is ideal for watch-only wallets.</source>
+        <translation>Deshabilita las llaves privadas para esta billetera. Las billeteras con llaves privadas deshabilitadas no tendrán llaves privadas y no pueden tener una semilla HD o llaves privadas importadas. Esto es ideal para carteras de vigilancia</translation>
+    </message>
+    <message>
+        <source>Disable Private Keys</source>
+        <translation>Deshabilitar llaves privadas</translation>
+    </message>
+    <message>
+        <source>Make a blank wallet. Blank wallets do not initially have private keys or scripts. Private keys and addresses can be imported, or an HD seed can be set, at a later time.</source>
+        <translation>Haz una billetera en blanco. Las billeteras en blanco inicialmente no tienen llaves privadas o scripts. Las llaves privadas y las direcciones se pueden importar, o se puede configurar una semilla HD, en un momento posterior.</translation>
+    </message>
+    <message>
+        <source>Make Blank Wallet</source>
+        <translation>Hacer una billetera en blanco</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Crear</translation>
+    </message>
+    </context>
+<context>
     <name>EditAddressDialog</name>
     <message>
         <source>Edit Address</source>
@@ -1034,10 +1155,6 @@
         <translation>Al ser la primera vez que se ejecuta el programa, puede elegir donde %1 almacenará sus datos.</translation>
     </message>
     <message>
-        <source>When you click OK, %1 will begin to download and process the full %4 block chain (%2GB) starting with the earliest transactions in %3 when %4 initially launched.</source>
-        <translation>Cuando haga click en OK, %1 se empezará a descargar la %4 cadena de bloques completa (%2GB) empezando por la transacción más antigua en %3 cuando se publicó %4 originalmente.</translation>
-    </message>
-    <message>
         <source>This initial synchronisation is very demanding, and may expose hardware problems with your computer that had previously gone unnoticed. Each time you run %1, it will continue downloading where it left off.</source>
         <translation>La sincronización inicial demanda muchos recursos y podría revelar problemas de hardware que no se han notado previamente. Cada vez que ejecuta %1, continuará descargando a partir del punto anterior.</translation>
     </message>
@@ -1161,8 +1278,12 @@
         <translation>Copiar punto de garantía</translation>
     </message>
     <message>
-        <source>Updating...</source>
-        <translation>Actualizando...</translation>
+        <source>Please wait…</source>
+        <translation>Por favor espera…</translation>
+    </message>
+    <message>
+        <source>Updating…</source>
+        <translation>Actualizando…</translation>
     </message>
     <message>
         <source>ENABLED</source>
@@ -1197,10 +1318,6 @@
         <translation>Filtrar por cualquier propiedad (ej. dirección o hash protx)</translation>
     </message>
     <message>
-        <source>Please wait...</source>
-        <translation>Por favor espera...</translation>
-    </message>
-    <message>
         <source>Additional information for DIP3 Masternode %1</source>
         <translation>Información adicional para Masternode DIP3 %1</translation>
     </message>
@@ -1224,8 +1341,12 @@
         <translation>Número de bloque restantes</translation>
     </message>
     <message>
-        <source>Unknown...</source>
-        <translation>Desconocido...</translation>
+        <source>Unknown…</source>
+        <translation>Desconocido…</translation>
+    </message>
+    <message>
+        <source>calculating…</source>
+        <translation>calculando…</translation>
     </message>
     <message>
         <source>Last block time</source>
@@ -1240,10 +1361,6 @@
         <translation>Aumento de progreso por hora</translation>
     </message>
     <message>
-        <source>calculating...</source>
-        <translation>calculando...</translation>
-    </message>
-    <message>
         <source>Estimated time left until synced</source>
         <translation>Tiempo estimado restante hasta sincronización</translation>
     </message>
@@ -1252,8 +1369,8 @@
         <translation>Ocultar</translation>
     </message>
     <message>
-        <source>Unknown. Syncing Headers (%1)...</source>
-        <translation>Desconocido. Sincronizando Encabezados (%1)...</translation>
+        <source>Unknown. Syncing Headers (%1, %2%)…</source>
+        <translation>Desconocido. Sincronización de encabezados (%1, %2%)…</translation>
     </message>
 </context>
 <context>
@@ -1282,8 +1399,8 @@
         <translation>billetera predeterminada</translation>
     </message>
     <message>
-        <source>Opening Wallet &lt;b&gt;%1&lt;/b&gt;...</source>
-        <translation>Abriendo billetera &lt;b&gt;%1&lt;/b&gt;...</translation>
+        <source>Opening Wallet &lt;b&gt;%1&lt;/b&gt;…</source>
+        <translation>Abriendo billetera &lt;b&gt;%1&lt;/b&gt;…</translation>
     </message>
 </context>
 <context>
@@ -1413,14 +1530,6 @@
         <translation>Las opciones configuradas en este cuadro de diálogo se reemplazan por la línea de comando o en el archivo de configuración:</translation>
     </message>
     <message>
-        <source>Hide the icon from the system tray.</source>
-        <translation>Ocultar el icono de la bandeja del sistema.</translation>
-    </message>
-    <message>
-        <source>&amp;Hide tray icon</source>
-        <translation>&amp;Ocultar icono de bandeja</translation>
-    </message>
-    <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Exit in the menu.</source>
         <translation>Minimizar en lugar de salir de la aplicación cuando la ventana esté cerrada. Cuando esta opción está habilitada, la aplicación se cerrará solo después de seleccionar Salir en el menú.</translation>
     </message>
@@ -1519,12 +1628,6 @@
     <message>
         <source>The user interface language can be set here. This setting will take effect after restarting %1.</source>
         <translation>El idioma de la interfaz de usuario puede establecerse aquí. Esta configuración tendrá efecto tras reiniciar %1.</translation>
-    </message>
-    <message>
-        <source>Language missing or translation incomplete? Help contributing translations here:
-https://www.transifex.com/projects/p/sparks/</source>
-        <translation>¿Idioma no disponible o traducción incompleta? Contribuye a la traducción aquí:
-https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>&amp;Unit to show amounts in:</source>
@@ -1832,12 +1935,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>'sparks://' no es un URI válido. Usa 'sparks:'.</translation>
     </message>
     <message>
-        <source>Invalid payment address %1</source>
-        <translation>Dirección de pago no válida %1</translation>
-    </message>
-    <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
-        <translation>¡No se puede interpretar la URI! Esto puede deberse a una dirección Sparks inválida o a parámetros de URI mal formados.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
+        <translation>¡No se puede interpretar la URI! Esto puede deberse a una dirección Dash inválida o a parámetros de URI mal formados.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -1848,18 +1947,22 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <name>PeerTableModel</name>
     <message>
         <source>User Agent</source>
+        <extracomment>Title of Peers Table column which contains the peer's User Agent string.</extracomment>
         <translation>Agente del Usuario</translation>
     </message>
     <message>
         <source>Ping</source>
+        <extracomment>Title of Peers Table column which indicates the current latency of the connection with the peer.</extracomment>
         <translation>Ping</translation>
     </message>
     <message>
         <source>Sent</source>
+        <extracomment>Title of Peers Table column which indicates the total amount of network information we have sent to the peer.</extracomment>
         <translation>Enviado</translation>
     </message>
     <message>
         <source>Received</source>
+        <extracomment>Title of Peers Table column which indicates the total amount of network information we have received from the peer.</extracomment>
         <translation>Recibido</translation>
     </message>
     </context>
@@ -1952,8 +2055,48 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Mostrar pantalla de bienvenida al iniciar (predeterminado: %u)</translation>
     </message>
     <message>
-        <source>%1 didn't yet exit safely...</source>
-        <translation>%1 no se ha cerrado de forma segura todavía...</translation>
+        <source>Error: Specified data directory "%1" does not exist.</source>
+        <translation>Error: Directorio de datos especificado "%1" no existe.</translation>
+    </message>
+    <message>
+        <source>Error: Cannot parse configuration file: %1.</source>
+        <translation>Error: No se puede analizar el archivo de configuración: %1.</translation>
+    </message>
+    <message>
+        <source>Error: %1</source>
+        <translation>Error: %1</translation>
+    </message>
+    <message>
+        <source>Error: Failed to load application fonts.</source>
+        <translation>Error: Error al cargar las fuentes de la aplicación.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-family invalid. Valid values: %1.</source>
+        <translation>Error: La familia de fuentes especificada no es válida. Valores válidos: %1.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-weight-normal invalid. Valid range %1 to %2.</source>
+        <translation>Error: Fuente-peso-normal especificado no válido. Rango válido %1 a %2.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-weight-bold invalid. Valid range %1 to %2.</source>
+        <translation>Error: La fuente-peso-negrita especificada no es válida. Rango válido %1 a %2.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-scale invalid. Valid range %1 to %2.</source>
+        <translation>Error: La escala de fuente especificada no es válida. Rango válido %1 a %2.</translation>
+    </message>
+    <message>
+        <source>Error: Invalid -custom-css-dir path.</source>
+        <translation>Error: Camino -custom-css-dir inválido.</translation>
+    </message>
+    <message>
+        <source>Error: %1 CSS file(s) missing in -custom-css-dir path.</source>
+        <translation>Error: %1 CSS file(s) faltando en -custom-css-dir camino.</translation>
+    </message>
+    <message>
+        <source>%1 didn't yet exit safely…</source>
+        <translation>%1 no se ha cerrado de forma segura todavía…</translation>
     </message>
     <message>
         <source>Amount</source>
@@ -2063,15 +2206,15 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Error: No se puede analizar el archivo de configuración: %1. Utilice únicamente la sintaxis key=value.</translation>
     </message>
     <message>
-        <source>Error: %1</source>
-        <translation>Error: %1</translation>
+        <source>&amp;Save Image…</source>
+        <translation>&amp;Guardar Imagen…</translation>
     </message>
 </context>
 <context>
     <name>QRDialog</name>
     <message>
-        <source>QR-Code Title</source>
-        <translation>Titulo del Codigo QR</translation>
+        <source>&amp;Save Image…</source>
+        <translation>&amp;Guardar Imagen…</translation>
     </message>
     <message>
         <source>QR Code</source>
@@ -2205,10 +2348,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Seleccione un par para ver información detallada.</translation>
     </message>
     <message>
-        <source>Direction</source>
-        <translation>Dirección</translation>
-    </message>
-    <message>
         <source>Version</source>
         <translation>Versión</translation>
     </message>
@@ -2287,10 +2426,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Services</source>
         <translation>Servicios</translation>
-    </message>
-    <message>
-        <source>Ban Score</source>
-        <translation>Puntuación de Exclusión</translation>
     </message>
     <message>
         <source>Connection Time</source>
@@ -2417,18 +2552,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>vía %1</translation>
     </message>
     <message>
-        <source>never</source>
-        <translation>nunca</translation>
-    </message>
-    <message>
-        <source>Inbound</source>
-        <translation>Entrante</translation>
-    </message>
-    <message>
-        <source>Outbound</source>
-        <translation>Salientes</translation>
-    </message>
-    <message>
         <source>Regular</source>
         <translation>Regular</translation>
     </message>
@@ -2444,7 +2567,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Unknown</source>
         <translation>Desconocido</translation>
     </message>
-</context>
+    </context>
 <context>
     <name>ReceiveCoinsDialog</name>
     <message>
@@ -2535,7 +2658,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Copy amount</source>
         <translation>Copiar cantidad</translation>
     </message>
-</context>
+    </context>
 <context>
     <name>ReceiveRequestDialog</name>
     <message>
@@ -2547,8 +2670,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Copiar &amp;Dirección</translation>
     </message>
     <message>
-        <source>&amp;Save Image...</source>
-        <translation>&amp;Guardar Imagen...</translation>
+        <source>&amp;Save Image…</source>
+        <translation>&amp;Guardar Imagen…</translation>
     </message>
     <message>
         <source>Request payment to %1</source>
@@ -2601,10 +2724,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Características de Coin Control</translation>
     </message>
     <message>
-        <source>Inputs...</source>
-        <translation>Entradas...</translation>
-    </message>
-    <message>
         <source>automatically selected</source>
         <translation>seleccionadas automáticamente</translation>
     </message>
@@ -2633,6 +2752,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Polvo:</translation>
     </message>
     <message>
+        <source>Inputs…</source>
+        <translation>Entradas…</translation>
+    </message>
+    <message>
         <source>After Fee:</source>
         <translation>Después de comisión:</translation>
     </message>
@@ -2653,12 +2776,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Comisión por Transacción:</translation>
     </message>
     <message>
-        <source>Choose...</source>
-        <translation>Elegir...</translation>
-    </message>
-    <message>
-        <source>collapse fee-settings</source>
-        <translation>plegar ajustes de comisión</translation>
+        <source>(Smart fee not initialized yet. This usually takes a few blocks…)</source>
+        <translation>(La comisión inteligente no está aún inicializada. Esto habitualmente tarda unos pocos bloques…)</translation>
     </message>
     <message>
         <source>Confirmation time target:</source>
@@ -2677,6 +2796,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Usando el fallbackfee puede resultar en enviar una transacción que tome varias horas o días (o nunca) para confirmar. Considere elegir su comisión manualmente o espere hasta que haya validado la cadena completa.</translation>
     </message>
     <message>
+        <source>Choose…</source>
+        <translation>Elegir…</translation>
+    </message>
+    <message>
         <source>Note: Not enough data for fee estimation, using the fallback fee instead.</source>
         <translation>Nota: No hay suficientes datos para la estimación de tarifas, en su lugar se utiliza la tarifa de reserva.</translation>
     </message>
@@ -2691,10 +2814,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Custom:</source>
         <translation>Personalizada:</translation>
-    </message>
-    <message>
-        <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
-        <translation>(La comisión inteligente no está aún inicializada. Esto habitualmente tarda unos pocos bloques...)</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
@@ -2963,8 +3082,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
 <context>
     <name>ShutdownWindow</name>
     <message>
-        <source>%1 is shutting down...</source>
-        <translation>%1 se esta cerrando...</translation>
+        <source>%1 is shutting down…</source>
+        <translation>%1 se esta cerrando…</translation>
     </message>
     <message>
         <source>Do not shut down the computer until this window disappears.</source>
@@ -3485,8 +3604,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Este año</translation>
     </message>
     <message>
-        <source>Range...</source>
-        <translation>Rango...</translation>
+        <source>Range…</source>
+        <translation>Rango…</translation>
     </message>
     <message>
         <source>Most Common</source>
@@ -3819,26 +3938,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Error al cargar la memoria caché de solicitudes completadas</translation>
     </message>
     <message>
-        <source>Failed to load governance cache from</source>
-        <translation>Error al cargar la memoria cache de gobernanza</translation>
-    </message>
-    <message>
-        <source>Failed to load masternode cache from</source>
-        <translation>Error al cargar la memoria caché del masternode</translation>
-    </message>
-    <message>
-        <source>Found enough users, signing ( waiting %s )</source>
-        <translation>Se encontraron suficientes usuarios, firmando (esperando %s)</translation>
-    </message>
-    <message>
-        <source>Found enough users, signing ...</source>
-        <translation>Se encontraron suficientes usuarios, firmando...</translation>
-    </message>
-    <message>
-        <source>Importing...</source>
-        <translation>Importando...</translation>
-    </message>
-    <message>
         <source>Incompatible mode.</source>
         <translation>Modo incompatible.</translation>
     </message>
@@ -3875,16 +3974,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Número mínimo inválido de firmantes de spork especificados con -minsporkkeys</translation>
     </message>
     <message>
-        <source>Loading banlist...</source>
-        <translation>Cargando lista de excluidos...</translation>
-    </message>
-    <message>
         <source>Lock is already in place.</source>
         <translation>El bloqueo ya está activo.</translation>
-    </message>
-    <message>
-        <source>Mixing in progress...</source>
-        <translation>Mezclado en curso...</translation>
     </message>
     <message>
         <source>Need to specify a port with -whitebind: '%s'</source>
@@ -3907,12 +3998,36 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>No esta en la lista de Masternodes.</translation>
     </message>
     <message>
+        <source>Pruning blockstore…</source>
+        <translation>Podando almacén de bloques</translation>
+    </message>
+    <message>
+        <source>Replaying blocks…</source>
+        <translation>Reproducción de bloques…</translation>
+    </message>
+    <message>
+        <source>Rescanning…</source>
+        <translation>Reexplorando…</translation>
+    </message>
+    <message>
+        <source>Starting network threads…</source>
+        <translation>Iniciando funciones de red…</translation>
+    </message>
+    <message>
         <source>Submitted to masternode, waiting in queue %s</source>
         <translation>Enviado al masternode, esperando en cola %s</translation>
     </message>
     <message>
         <source>Synchronization finished</source>
         <translation>La sincronización finalizó</translation>
+    </message>
+    <message>
+        <source>Synchronizing blockchain…</source>
+        <translation>Sincronizando cadena de bloques…</translation>
+    </message>
+    <message>
+        <source>Synchronizing governance objects…</source>
+        <translation>Sincronizando objetos de gobernanza…</translation>
     </message>
     <message>
         <source>Unable to start HTTP server. See debug log for details.</source>
@@ -3925,26 +4040,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Unsupported argument -benchmark ignored, use -debug=bench.</source>
         <translation>El argumento -benchmark no es soportado y ha sido ignorado, utiliza -debug=bench</translation>
-    </message>
-    <message>
-        <source>Unsupported argument -debugnet ignored, use -debug=net.</source>
-        <translation>Parámetros no compatibles -debugnet ignorados , use -debug = red.</translation>
-    </message>
-    <message>
-        <source>Unsupported argument -tor found, use -onion.</source>
-        <translation>Parámetros no compatibles -tor encontrados, use -onion .</translation>
-    </message>
-    <message>
-        <source>User Agent comment (%s) contains unsafe characters.</source>
-        <translation>El comentario del Agente de Usuario (%s) contiene caracteres inseguros.</translation>
-    </message>
-    <message>
-        <source>Verifying wallet(s)...</source>
-        <translation>Verificando billetera(s)...</translation>
-    </message>
-    <message>
-        <source>Will retry...</source>
-        <translation>Se volverá a intentar...</translation>
     </message>
     <message>
         <source>Can't find random Masternode.</source>
@@ -4063,10 +4158,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Error: el espacio en disco es bajo para %s</translation>
     </message>
     <message>
-        <source>Error: failed to add socket to epollfd (epoll_ctl returned error %s)</source>
-        <translation>Error: no se pudo agregar el socket a epollfd (epoll_ctl returned error %s)</translation>
-    </message>
-    <message>
         <source>Exceeded max tries.</source>
         <translation>Se superó el máximo de intentos.</translation>
     </message>
@@ -4107,20 +4198,20 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>No se pudo volver a escanear la billetera durante la inicialización</translation>
     </message>
     <message>
+        <source>Found enough users, signing…</source>
+        <translation>Se encontraron suficientes usuarios, firmando…</translation>
+    </message>
+    <message>
+        <source>Invalid P2P permission: '%s'</source>
+        <translation>Permiso P2P no válido: '%s'</translation>
+    </message>
+    <message>
         <source>Invalid amount for -fallbackfee=&lt;amount&gt;: '%s'</source>
         <translation>Cantidad inválida para -fallbackfee=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
         <source>Invalid masternodeblsprivkey. Please see documentation.</source>
         <translation>Llave privada de Masternode inválida. Por favor ver la documentación.</translation>
-    </message>
-    <message>
-        <source>It has been replaced by -disablegovernance.</source>
-        <translation>Ha sido reemplazado por -disablegovernance.</translation>
-    </message>
-    <message>
-        <source>Loading wallet...</source>
-        <translation>Cargando billetera...</translation>
     </message>
     <message>
         <source>Masternode queue is full.</source>
@@ -4133,6 +4224,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Missing input transaction information.</source>
         <translation>Información ausente en la transacción de entrada.</translation>
+    </message>
+    <message>
+        <source>Mixing in progress…</source>
+        <translation>Mezclado en curso…</translation>
     </message>
     <message>
         <source>No errors detected.</source>
@@ -4163,8 +4258,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>El modo recorte es incompatible con -txindex.</translation>
     </message>
     <message>
-        <source>Pruning blockstore...</source>
-        <translation>Podando almacén de bloques</translation>
+        <source>Section [%s] is not recognized.</source>
+        <translation>La sección [%s] no se reconoce</translation>
     </message>
     <message>
         <source>Specified -walletdir "%s" does not exist</source>
@@ -4177,10 +4272,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Specified -walletdir "%s" is not a directory</source>
         <translation>Dirección de billetera especificada "%s" no es un directorio</translation>
-    </message>
-    <message>
-        <source>Synchronizing blockchain...</source>
-        <translation>Sincronizando cadena de bloques...</translation>
     </message>
     <message>
         <source>The wallet will avoid paying less than the minimum relay fee.</source>
@@ -4215,10 +4306,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Transacción demasiado grande</translation>
     </message>
     <message>
-        <source>Trying to connect...</source>
-        <translation>Intentando conectar...</translation>
-    </message>
-    <message>
         <source>Unable to bind to %s on this computer. %s is probably already running.</source>
         <translation>No se ha podido conectar con %s en este equipo. %s es posible que este todavia en ejecución.</translation>
     </message>
@@ -4231,8 +4318,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Actualizando la base de datos UTXO</translation>
     </message>
     <message>
-        <source>Wallet %s resides outside wallet directory %s</source>
-        <translation>Billetera %s reside fuera del directorio de billetera %s</translation>
+        <source>Verifying blocks…</source>
+        <translation>Verificando bloques…</translation>
+    </message>
+    <message>
+        <source>Verifying wallet(s)…</source>
+        <translation>Verificando billetera(s)…</translation>
     </message>
     <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
@@ -4379,8 +4470,32 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Error actualizando la base de datos chainstate</translation>
     </message>
     <message>
-        <source>Error: failed to add socket to kqueuefd (kevent returned error %s)</source>
-        <translation>Error: no se pudo agregar el socket a kqueuefd (kevent returned error %s)</translation>
+        <source>Loading P2P addresses…</source>
+        <translation>Cargando direcciones P2P …</translation>
+    </message>
+    <message>
+        <source>Loading banlist…</source>
+        <translation>Cargando lista de excluidos…</translation>
+    </message>
+    <message>
+        <source>Loading block index…</source>
+        <translation>Cargando el índice de bloques…</translation>
+    </message>
+    <message>
+        <source>Loading wallet…</source>
+        <translation>Cargando billetera…</translation>
+    </message>
+    <message>
+        <source>Failed to clear fulfilled requests cache at %s</source>
+        <translation>No se pudo borrar la memoria caché de solicitudes cumplidas en %s</translation>
+    </message>
+    <message>
+        <source>Failed to clear governance cache at %s</source>
+        <translation>No se pudo borrar la memoria caché de gobernanza en %s</translation>
+    </message>
+    <message>
+        <source>Failed to clear masternode cache at %s</source>
+        <translation>No se pudo borrar la memoria caché de masternode en %s</translation>
     </message>
     <message>
         <source>Failed to find mixing queue to join</source>
@@ -4389,6 +4504,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Failed to start a new mixing queue</source>
         <translation>Error al iniciar una nueva cola de mezclado</translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation>Importando…</translation>
     </message>
     <message>
         <source>Incorrect -rescan mode, falling back to default value</source>
@@ -4419,20 +4538,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>La dirección de spork especificada con -sporkaddr es invalida</translation>
     </message>
     <message>
-        <source>Loading P2P addresses...</source>
-        <translation>Cargando direcciones P2P ...</translation>
-    </message>
-    <message>
         <source>Reducing -maxconnections from %d to %d, because of system limitations.</source>
         <translation>Reduciendo -maxconnections de %d a %d, debido a limitaciones del sistema.</translation>
-    </message>
-    <message>
-        <source>Replaying blocks...</source>
-        <translation>Reproducción de bloques...</translation>
-    </message>
-    <message>
-        <source>Rescanning...</source>
-        <translation>Reexplorando...</translation>
     </message>
     <message>
         <source>Session not complete!</source>
@@ -4463,14 +4570,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>La última acción exitosa era demasiado reciente.</translation>
     </message>
     <message>
-        <source>Starting network threads...</source>
-        <translation>Iniciando funciones de red...</translation>
-    </message>
-    <message>
-        <source>Synchronizing governance objects...</source>
-        <translation>Sincronizando objetos de gobernanza...</translation>
-    </message>
-    <message>
         <source>The source code is available from %s.</source>
         <translation>El código fuente esta disponible desde %s.</translation>
     </message>
@@ -4499,8 +4598,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>La transacción no es válida.</translation>
     </message>
     <message>
-        <source>Transaction too large for fee policy</source>
-        <translation>Transacción demasiado grande para la política de comisiones</translation>
+        <source>Trying to connect…</source>
+        <translation>Intentando conectar…</translation>
     </message>
     <message>
         <source>Unable to bind to %s on this computer (bind returned error %s)</source>
@@ -4531,8 +4630,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Categoría de registro no compatible %s=%s.</translation>
     </message>
     <message>
-        <source>Verifying blocks...</source>
-        <translation>Verificando bloques...</translation>
+        <source>Upgrading txindex database</source>
+        <translation>Actualización de la base de datos txindex</translation>
     </message>
     <message>
         <source>Very low number of keys left: %d</source>
@@ -4557,6 +4656,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Warning: incorrect parameter %s, path must exist! Using default path.</source>
         <translation>Advertencia: parámetro %s incorrecto, ¡la ruta debe existir! Usando ruta predeterminada.</translation>
+    </message>
+    <message>
+        <source>Will retry…</source>
+        <translation>Se volverá a intentar…</translation>
     </message>
     <message>
         <source>You are starting with governance validation disabled.</source>

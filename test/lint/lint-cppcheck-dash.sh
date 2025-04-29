@@ -30,6 +30,18 @@ IGNORED_WARNINGS=(
     "src/rpc/masternode.cpp:.*:21: warning: Consider using std::copy algorithm instead of a raw loop." # UniValue doesn't support std::copy
     "src/cachemultimap.h:.*: warning: Variable 'mapIt' can be declared as reference to const"
     "src/evo/simplifiedmns.cpp:.*:20: warning: Consider using std::copy algorithm instead of a raw loop."
+    "src/llmq/commitment.cpp.* warning: Consider using std::all_of or std::none_of algorithm instead of a raw loop. \[useStlAlgorithm\]"
+    "src/rpc/.*cpp:.*: note: Function pointer used here."
+    "src/masternode/sync.cpp:.*: warning: Variable 'pnode' can be declared as pointer to const \[constVariableReference\]"
+    "src/wallet/bip39.cpp.*: warning: The scope of the variable 'ssCurrentWord' can be reduced. \[variableScope\]"
+
+
+    "src/stacktraces.cpp:.*: .*: Parameter 'info' can be declared as pointer to const"
+    "src/stacktraces.cpp:.*: note: You might need to cast the function pointer here"
+
+    "[note|warning]: Return value 'state.Invalid(.*)' is always false"
+    "note: Calling function 'Invalid' returns 0"
+
 # General catchall, for some reason any value named 'hash' is viewed as never used.
     "Variable 'hash' is assigned a value that is never used."
 
@@ -37,7 +49,8 @@ IGNORED_WARNINGS=(
 #    "Consider performing initialization in initialization list."
     "Consider using std::transform algorithm instead of a raw loop."
     "Consider using std::accumulate algorithm instead of a raw loop."
-#    "Consider using std::any_of algorithm instead of a raw loop."
+    "Consider using std::any_of algorithm instead of a raw loop."
+    "Consider using std::copy_if algorithm instead of a raw loop."
 #    "Consider using std::count_if algorithm instead of a raw loop."
 #    "Consider using std::find_if algorithm instead of a raw loop."
 #    "Member variable '.*' is not initialized in the constructor."
@@ -48,47 +61,7 @@ IGNORED_WARNINGS=(
 )
 
 # We should attempt to update this with all sparks specific code
-FILES=$(git ls-files -- "src/batchedlogger.*" \
-                        "src/bench/bls*.cpp" \
-                        "src/bls/*.cpp" \
-                        "src/bls/*.h" \
-                        "src/cachemap.h" \
-                        "src/cachemultimap.h" \
-                        "src/coinjoin/*.cpp" \
-                        "src/coinjoin/*.h" \
-                        "src/ctpl_stl.h" \
-                        "src/cxxtimer.hpp" \
-                        "src/dsnotificationinterface.*" \
-                        "src/evo/*.cpp" \
-                        "src/evo/*.h" \
-                        "src/governance/*.cpp" \
-                        "src/governance/*.h" \
-                        "src/hdchain.*" \
-                        "src/keepass.*" \
-                        "src/llmq/*.cpp" \
-                        "src/llmq/*.h" \
-                        "src/masternode/*.cpp" \
-                        "src/masternode/*.h" \
-                        "src/messagesigner.*" \
-                        "src/netfulfilledman.*" \
-                        "src/qt/governancelist.*" \
-                        "src/qt/masternodelist.*" \
-                        "src/rpc/coinjoin.cpp" \
-                        "src/rpc/evo.cpp" \
-                        "src/rpc/governance.cpp" \
-                        "src/rpc/masternode.cpp" \
-                        "src/rpc/quorums.cpp" \
-                        "src/spork.*" \
-                        "src/saltedhasher.*" \
-                        "src/stacktraces.*" \
-                        "src/statsd_client.*" \
-                        "src/test/block_reward_reallocation_tests.cpp" \
-                        "src/test/bls_tests.cpp" \
-                        "src/test/dip0020opcodes_tests.cpp" \
-                        "src/test/dynamic_activation*.cpp" \
-                        "src/test/evo*.cpp" \
-                        "src/test/governance*.cpp" \
-                        "src/unordered_lru_cache.h")
+FILES=$(git ls-files -- $(cat test/util/data/non-backported.txt))
 
 
 if ! command -v cppcheck > /dev/null; then
@@ -112,7 +85,7 @@ then
     mkdir $CPPCHECK_DIR
 fi
 WARNINGS=$(echo "${FILES}" | \
-    xargs cppcheck --enable=all --inline-suppr --suppress=missingIncludeSystem --cppcheck-build-dir=$CPPCHECK_DIR -j "$(getconf _NPROCESSORS_ONLN)" --language=c++ --std=c++17 --template=gcc -D__cplusplus -DENABLE_WALLET -DCLIENT_VERSION_BUILD -DCLIENT_VERSION_IS_RELEASE -DCLIENT_VERSION_MAJOR -DCLIENT_VERSION_MINOR -DCOPYRIGHT_YEAR -DDEBUG -DCHAR_BIT=8 -I src/ -q 2>&1 | sort -u | \
+    xargs cppcheck --enable=all --inline-suppr --suppress=missingIncludeSystem --cppcheck-build-dir=$CPPCHECK_DIR -j "$(getconf _NPROCESSORS_ONLN)" --language=c++ --std=c++17 --template=gcc -D__cplusplus -DENABLE_WALLET -DCLIENT_VERSION_BUILD -DCLIENT_VERSION_IS_RELEASE -DCLIENT_VERSION_MAJOR -DCLIENT_VERSION_MINOR -DCOPYRIGHT_YEAR -DDEBUG -DUSE_EPOLL -DCHAR_BIT=8 -I src/ -q 2>&1 | sort -u | \
     grep -E "${ENABLED_CHECKS_REGEXP}" | \
     grep -vE "${IGNORED_WARNINGS_REGEXP}" | \
     grep -E "${FILES_REGEXP}")

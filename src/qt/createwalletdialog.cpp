@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Bitcoin Core developers
+// Copyright (c) 2019-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -51,6 +51,22 @@ CreateWalletDialog::CreateWalletDialog(QWidget* parent) :
             ui->encrypt_wallet_checkbox->setChecked(false);
         }
     });
+
+    connect(ui->blank_wallet_checkbox, &QCheckBox::toggled, [this](bool checked) {
+        if (!checked) {
+          ui->disable_privkeys_checkbox->setChecked(false);
+        }
+    });
+
+#ifndef USE_SQLITE
+    ui->descriptor_checkbox->setToolTip(tr("Compiled without sqlite support (required for descriptor wallets)"));
+    ui->descriptor_checkbox->setEnabled(false);
+    ui->descriptor_checkbox->setChecked(false);
+#endif
+#ifndef USE_BDB
+    ui->descriptor_checkbox->setEnabled(false);
+    ui->descriptor_checkbox->setChecked(true);
+#endif
 }
 
 CreateWalletDialog::~CreateWalletDialog()
@@ -76,4 +92,9 @@ bool CreateWalletDialog::isDisablePrivateKeysChecked() const
 bool CreateWalletDialog::isMakeBlankWalletChecked() const
 {
     return ui->blank_wallet_checkbox->isChecked();
+}
+
+bool CreateWalletDialog::isDescriptorWalletChecked() const
+{
+    return ui->descriptor_checkbox->isChecked();
 }

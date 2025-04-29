@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2018 The Bitcoin Core developers
+# Copyright (c) 2015-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Utilities for manipulating blocks and transactions."""
@@ -19,7 +19,8 @@ from .messages import (
     CTransaction,
     CTxIn,
     CTxOut,
-    FromHex,
+    tx_from_hex,
+    from_hex,
     uint256_to_string,
 )
 from .script import CScript, CScriptNum, CScriptOp, OP_TRUE, OP_CHECKSIG
@@ -123,13 +124,13 @@ def create_block_with_mnpayments(mninfo, node, vtx=None, mn_payee=None, mn_amoun
     if mn_operator_amount > 0:
         outputs[mn_operator_payee] = str(Decimal(mn_operator_amount) / COIN)
 
-    coinbase = FromHex(CTransaction(), node.createrawtransaction([], outputs))
+    coinbase = tx_from_hex(node.createrawtransaction([], outputs))
     coinbase.vin = create_coinbase(height).vin
 
     # We can't really use this one as it would result in invalid merkle roots for masternode lists
     if len(bt['coinbase_payload']) != 0:
         tip_block = node.getblock(tip_hash)
-        cbtx = FromHex(CCbTx(version=1), bt['coinbase_payload'])
+        cbtx = from_hex(CCbTx(version=1), bt['coinbase_payload'])
         if 'cbTx' in tip_block:
             cbtx.merkleRootMNList = int(tip_block['cbTx']['merkleRootMNList'], 16)
         else:
@@ -145,7 +146,7 @@ def create_block_with_mnpayments(mninfo, node, vtx=None, mn_payee=None, mn_amoun
 
     # Add quorum commitments from template
     for tx in bt['transactions']:
-        tx2 = FromHex(CTransaction(), tx['data'])
+        tx2 = tx_from_hex(tx['data'])
         if tx2.nType == 6:
             block.vtx.append(tx2)
 
@@ -202,9 +203,8 @@ def create_tx_with_script(prevtx, n, script_sig=b"", *, amount, script_pub_key=C
 
 def create_transaction(node, txid, to_address, *, amount):
     """ Return signed transaction spending the first output of the
-        input txid. Note that the node must be able to sign for the
-        output that is being spent, and the node must not be running
-        multiple wallets.
+        input txid. Note that the node must have a wallet that can
+        sign for the output that is being spent.
     """
     raw_tx = create_raw_transaction(node, txid, to_address, amount=amount)
     tx = CTransaction()
@@ -213,14 +213,18 @@ def create_transaction(node, txid, to_address, *, amount):
 
 def create_raw_transaction(node, txid, to_address, *, amount):
     """ Return raw signed transaction spending the first output of the
-        input txid. Note that the node must be able to sign for the
-        output that is being spent, and the node must not be running
-        multiple wallets.
+        input txid. Note that the node must have a wallet that can sign
+        for the output that is being spent.
     """
-    rawtx = node.createrawtransaction(inputs=[{"txid": txid, "vout": 0}], outputs={to_address: amount})
-    signresult = node.signrawtransactionwithwallet(rawtx)
-    assert_equal(signresult["complete"], True)
-    return signresult['hex']
+    psbt = node.createpsbt(inputs=[{"txid": txid, "vout": 0}], outputs={to_address: amount})
+    for _ in range(2):
+        for w in node.listwallets():
+            wrpc = node.get_wallet_rpc(w)
+            signed_psbt = wrpc.walletprocesspsbt(psbt)
+            psbt = signed_psbt['psbt']
+    final_psbt = node.finalizepsbt(psbt)
+    assert_equal(final_psbt["complete"], True)
+    return final_psbt['hex']
 
 def get_legacy_sigopcount_block(block, accurate=True):
     count = 0
@@ -236,6 +240,17 @@ def get_legacy_sigopcount_tx(tx, accurate=True):
         # scriptSig might be of type bytes, so convert to CScript for the moment
         count += CScript(j.scriptSig).GetSigOpCount(accurate)
     return count
+
+"""
+Dash chaintips rpc returns extra info in each tip (difficulty, chainwork, and
+forkpoint). Filter down to relevant ones checked in this test.
+"""
+def filter_tip_keys(chaintips):
+    check_keys = ["hash", "height", "branchlen", "status"]
+    filtered_tips = []
+    for tip in chaintips:
+        filtered_tips.append({k: tip[k] for k in check_keys})
+    return filtered_tips
 
 # Identical to GetMasternodePayment in C++ code
 def get_masternode_payment(nHeight, blockValue, fV20Active):

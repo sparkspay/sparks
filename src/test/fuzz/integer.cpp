@@ -25,18 +25,17 @@
 #include <test/fuzz/fuzz.h>
 #include <test/fuzz/util.h>
 #include <uint256.h>
+#include <univalue.h>
 #include <util/check.h>
 #include <util/moneystr.h>
 #include <util/overflow.h>
 #include <util/strencodings.h>
 #include <util/string.h>
 #include <util/system.h>
-#include <util/time.h>
 #include <version.h>
 
 #include <cassert>
 #include <chrono>
-#include <ctime>
 #include <limits>
 #include <optional>
 #include <set>
@@ -77,10 +76,8 @@ FUZZ_TARGET_INIT(integer, initialize_integer)
     (void)ComputeMerkleRoot(v256);
     (void)CountBits(u64);
     (void)DecompressAmount(u64);
-    (void)FormatISO8601Date(i64);
-    (void)FormatISO8601DateTime(i64);
-    // FormatMoney(i) not defined when i == std::numeric_limits<int64_t>::min()
-    if (i64 != std::numeric_limits<int64_t>::min()) {
+    {
+
         if (std::optional<CAmount> parsed = ParseMoney(FormatMoney(i64))) {
             assert(parsed.value() == i64);
         }
@@ -122,8 +119,8 @@ FUZZ_TARGET_INIT(integer, initialize_integer)
     (void)SipHashUint256Extra(u64, u64, u256, u32);
     (void)ToLower(ch);
     (void)ToUpper(ch);
-    // ValueFromAmount(i) not defined when i == std::numeric_limits<int64_t>::min()
-    if (i64 != std::numeric_limits<int64_t>::min()) {
+    {
+
         if (std::optional<CAmount> parsed = ParseMoney(ValueFromAmount(i64).getValStr())) {
             assert(parsed.value() == i64);
         }

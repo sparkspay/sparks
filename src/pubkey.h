@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2019 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Copyright (c) 2017 The Zcash developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -12,7 +12,7 @@
 #include <uint256.h>
 
 #include <array>
-#include <stdexcept>
+#include <cstring>
 #include <vector>
 
 const unsigned int BIP32_EXTKEY_SIZE = 74;
@@ -213,6 +213,9 @@ private:
     std::array<std::byte, SIZE> m_pubkey;
 
 public:
+    /** Default constructor creates all-zero pubkey (which is valid). */
+    EllSwiftPubKey() noexcept = default;
+
     /** Construct a new ellswift public key from a given serialization. */
     EllSwiftPubKey(const std::array<std::byte, SIZE>& ellswift) :
         m_pubkey(ellswift) {}
@@ -251,6 +254,11 @@ struct CExtPubKey {
             a.nChild == b.nChild &&
             a.chaincode == b.chaincode &&
             a.pubkey == b.pubkey;
+    }
+
+    friend bool operator!=(const CExtPubKey &a, const CExtPubKey &b)
+    {
+        return !(a == b);
     }
 
     void Encode(unsigned char code[BIP32_EXTKEY_SIZE]) const;

@@ -11,6 +11,7 @@
 #include <chainparams.h>
 #include <consensus/validation.h>
 #include <masternode/sync.h>
+#include <net_processing.h>
 #include <node/blockstorage.h>
 #include <node/ui_interface.h>
 #include <scheduler.h>
@@ -18,6 +19,7 @@
 #include <txmempool.h>
 #include <util/thread.h>
 #include <util/time.h>
+#include <util/underlying.h>
 #include <validation.h>
 #include <validationinterface.h>
 
@@ -25,17 +27,19 @@ namespace llmq
 {
 std::unique_ptr<CChainLocksHandler> chainLocksHandler;
 
-CChainLocksHandler::CChainLocksHandler(CChainState& chainstate, CConnman& _connman, CMasternodeSync& mn_sync, CQuorumManager& _qman,
-                                       CSigningManager& _sigman, CSigSharesManager& _shareman, CSporkManager& sporkManager,
-                                       CTxMemPool& _mempool) :
+CChainLocksHandler::CChainLocksHandler(CChainState& chainstate, CQuorumManager& _qman, CSigningManager& _sigman,
+                                       CSigSharesManager& _shareman, CSporkManager& sporkman, CTxMemPool& _mempool,
+                                       const CMasternodeSync& mn_sync, const std::unique_ptr<PeerManager>& peerman,
+                                       bool is_masternode) :
     m_chainstate(chainstate),
-    connman(_connman),
-    m_mn_sync(mn_sync),
     qman(_qman),
     sigman(_sigman),
     shareman(_shareman),
-    spork_manager(sporkManager),
+    spork_manager(sporkman),
     mempool(_mempool),
+    m_mn_sync(mn_sync),
+    m_peerman(peerman),
+    m_is_masternode{is_masternode},
     scheduler(std::make_unique<CScheduler>()),
     scheduler_thread(std::make_unique<std::thread>(std::thread(util::TraceThread, "cl-schdlr", [&] { scheduler->serviceQueue(); })))
 {
@@ -127,15 +131,15 @@ PeerMsgRet CChainLocksHandler::ProcessNewChainLock(const NodeId from, const llmq
         }
     }
 
-    if (!VerifyChainLock(clsig)) {
-        LogPrint(BCLog::CHAINLOCKS, "CChainLocksHandler::%s -- invalid CLSIG (%s), peer=%d\n", __func__, clsig.ToString(), from);
+    if (const auto ret = VerifyChainLock(clsig); ret != VerifyRecSigStatus::Valid) {
+        LogPrint(BCLog::CHAINLOCKS, "CChainLocksHandler::%s -- invalid CLSIG (%s), status=%d peer=%d\n", __func__, clsig.ToString(), ToUnderlying(ret), from);
         if (from != -1) {
             return tl::unexpected{10};
         }
         return {};
     }
 
-    CBlockIndex* pindex = WITH_LOCK(cs_main, return m_chainstate.m_blockman.LookupBlockIndex(clsig.getBlockHash()));
+    const CBlockIndex* pindex = WITH_LOCK(cs_main, return m_chainstate.m_blockman.LookupBlockIndex(clsig.getBlockHash()));
 
     {
         LOCK(cs);
@@ -161,7 +165,7 @@ PeerMsgRet CChainLocksHandler::ProcessNewChainLock(const NodeId from, const llmq
 
     // Note: do not hold cs while calling RelayInv
     AssertLockNotHeld(cs);
-    connman.RelayInv(clsigInv);
+    Assert(m_peerman)->RelayInv(clsigInv);
 
     if (pindex == nullptr) {
         // we don't know the block/header for this CLSIG yet, so bail out for now
@@ -237,7 +241,7 @@ void CChainLocksHandler::TrySignChainTip()
 {
     Cleanup();
 
-    if (!fMasternodeMode) {
+    if (!m_is_masternode) {
         return;
     }
 
@@ -428,7 +432,7 @@ CChainLocksHandler::BlockTxs::mapped_type CChainLocksHandler::GetBlockTxs(const 
             }
 
             ret = std::make_shared<std::unordered_set<uint256, StaticSaltedHasher>>();
-            for (auto& tx : block.vtx) {
+            for (const auto& tx : block.vtx) {
                 if (tx->IsCoinBase() || tx->vin.empty()) {
                     continue;
                 }
@@ -495,9 +499,8 @@ void CChainLocksHandler::EnforceBestChainLock()
     LogPrint(BCLog::CHAINLOCKS, "CChainLocksHandler::%s -- enforcing block %s via CLSIG (%s)\n", __func__, pindex->GetBlockHash().ToString(), clsig->ToString());
     m_chainstate.EnforceBlock(dummy_state, pindex);
 
-    bool activateNeeded = WITH_LOCK(::cs_main, return m_chainstate.m_chain.Tip()->GetAncestor(currentBestChainLockBlockIndex->nHeight)) != currentBestChainLockBlockIndex;
 
-    if (activateNeeded) {
+    if (/*activateNeeded =*/ WITH_LOCK(::cs_main, return m_chainstate.m_chain.Tip()->GetAncestor(currentBestChainLockBlockIndex->nHeight)) != currentBestChainLockBlockIndex) {
         if (!m_chainstate.ActivateBestChain(dummy_state)) {
             LogPrintf("CChainLocksHandler::%s -- ActivateBestChain failed: %s\n", __func__, dummy_state.ToString());
             return;
@@ -549,11 +552,13 @@ bool CChainLocksHandler::HasChainLock(int nHeight, const uint256& blockHash) con
     return InternalHasChainLock(nHeight, blockHash);
 }
 
-bool CChainLocksHandler::VerifyChainLock(const CChainLockSig& clsig) const
+
+VerifyRecSigStatus CChainLocksHandler::VerifyChainLock(const CChainLockSig& clsig) const
 {
     const auto llmqType = Params().GetConsensus().llmqTypeChainLocks;
     const uint256 nRequestId = ::SerializeHash(std::make_pair(llmq::CLSIG_REQUESTID_PREFIX, clsig.getHeight()));
-    return llmq::VerifyRecoveredSig(llmqType, qman, clsig.getHeight(), nRequestId, clsig.getBlockHash(), clsig.getSig());
+
+    return llmq::VerifyRecoveredSig(llmqType, m_chainstate.m_chain, qman, clsig.getHeight(), nRequestId, clsig.getBlockHash(), clsig.getSig());
 }
 
 bool CChainLocksHandler::InternalHasChainLock(int nHeight, const uint256& blockHash) const
@@ -620,18 +625,21 @@ void CChainLocksHandler::Cleanup()
     if (GetTimeMillis() - lastCleanupTime < CLEANUP_INTERVAL) {
         return;
     }
+    lastCleanupTime = GetTimeMillis();
 
+    {
+        LOCK(cs);
+        for (auto it = seenChainLocks.begin(); it != seenChainLocks.end(); ) {
+            if (GetTimeMillis() - it->second >= CLEANUP_SEEN_TIMEOUT) {
+                it = seenChainLocks.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
     // need mempool.cs due to GetTransaction calls
     LOCK2(cs_main, mempool.cs);
     LOCK(cs);
-
-    for (auto it = seenChainLocks.begin(); it != seenChainLocks.end(); ) {
-        if (GetTimeMillis() - it->second >= CLEANUP_SEEN_TIMEOUT) {
-            it = seenChainLocks.erase(it);
-        } else {
-            ++it;
-        }
-    }
 
     for (auto it = blockTxs.begin(); it != blockTxs.end(); ) {
         const auto* pindex = m_chainstate.m_blockman.LookupBlockIndex(it->first);
@@ -664,18 +672,16 @@ void CChainLocksHandler::Cleanup()
             ++it;
         }
     }
-
-    lastCleanupTime = GetTimeMillis();
 }
 
-bool AreChainLocksEnabled(const CSporkManager& sporkManager)
+bool AreChainLocksEnabled(const CSporkManager& sporkman)
 {
-    return sporkManager.IsSporkActive(SPORK_19_CHAINLOCKS_ENABLED);
+    return sporkman.IsSporkActive(SPORK_19_CHAINLOCKS_ENABLED);
 }
 
-bool ChainLocksSigningEnabled(const CSporkManager& sporkManager)
+bool ChainLocksSigningEnabled(const CSporkManager& sporkman)
 {
-    return sporkManager.GetSporkValue(SPORK_19_CHAINLOCKS_ENABLED) == 0;
+    return sporkman.GetSporkValue(SPORK_19_CHAINLOCKS_ENABLED) == 0;
 }
 
 } // namespace llmq

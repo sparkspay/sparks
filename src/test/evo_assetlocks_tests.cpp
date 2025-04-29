@@ -9,11 +9,12 @@
 #include <consensus/validation.h>
 #include <evo/assetlocktx.h>
 #include <evo/specialtx.h>
+#include <llmq/context.h>
 #include <policy/settings.h>
 #include <script/script.h>
 #include <script/signingprovider.h>
 #include <util/ranges_set.h>
-#include <validation.h> // for ::ChainActive()
+#include <validation.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -134,7 +135,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetlock, TestChain100Setup)
     CKey key;
     key.MakeNewKey(true);
 
-    const CMutableTransaction tx = CreateAssetLockTx(keystore, coins, key);
+    const CTransaction tx = CreateAssetLockTx(keystore, coins, key);
     std::string reason;
     BOOST_CHECK(IsStandardTx(CTransaction(tx), reason));
 
@@ -149,7 +150,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetlock, TestChain100Setup)
 
     // Check version
     {
-        BOOST_CHECK(tx.nVersion == 3);
+        BOOST_CHECK(tx.IsSpecialTxVersion());
 
         const auto opt_payload = GetTxPayload<CAssetLockPayload>(tx);
 
@@ -159,7 +160,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetlock, TestChain100Setup)
 
     {
         // Wrong type "Asset Unlock TX" instead "Asset Lock TX"
-        CMutableTransaction txWrongType = tx;
+        CMutableTransaction txWrongType(tx);
         txWrongType.nType = TRANSACTION_ASSET_UNLOCK;
         BOOST_CHECK(!CheckAssetLockTx(CTransaction(txWrongType), tx_state));
         BOOST_CHECK(tx_state.GetRejectReason() == "bad-assetlocktx-type");
@@ -175,13 +176,13 @@ BOOST_FIXTURE_TEST_CASE(evo_assetlock, TestChain100Setup)
         BOOST_CHECK(inSum == outSum);
 
         // Outputs should not be bigger than inputs
-        CMutableTransaction txBigOutput = tx;
+        CMutableTransaction txBigOutput(tx);
         txBigOutput.vout[0].nValue += 1;
         BOOST_CHECK(!CheckAssetLockTx(CTransaction(txBigOutput), tx_state));
         BOOST_CHECK(tx_state.GetRejectReason() == "bad-assetlocktx-creditamount");
 
         // Smaller outputs are allown
-        CMutableTransaction txSmallOutput = tx;
+        CMutableTransaction txSmallOutput(tx);
         txSmallOutput.vout[1].nValue -= 1;
         BOOST_CHECK(CheckAssetLockTx(CTransaction(txSmallOutput), tx_state));
     }
@@ -195,7 +196,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetlock, TestChain100Setup)
         wrongOutput[0].nValue += CENT;
         CAssetLockPayload greaterCreditsPayload(wrongOutput);
 
-        CMutableTransaction txGreaterCredits = tx;
+        CMutableTransaction txGreaterCredits(tx);
         SetTxPayload(txGreaterCredits, greaterCreditsPayload);
 
         BOOST_CHECK(!CheckAssetLockTx(CTransaction(txGreaterCredits), tx_state));
@@ -205,7 +206,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetlock, TestChain100Setup)
         wrongOutput[1].nValue -= 2 * CENT;
         CAssetLockPayload lessCreditsPayload(wrongOutput);
 
-        CMutableTransaction txLessCredits = tx;
+        CMutableTransaction txLessCredits(tx);
         SetTxPayload(txLessCredits, lessCreditsPayload);
 
         BOOST_CHECK(!CheckAssetLockTx(CTransaction(txLessCredits), tx_state));
@@ -218,7 +219,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetlock, TestChain100Setup)
         creditOutputsOutOfRange[0].nValue = 0;
         CAssetLockPayload invalidOutputsPayload(creditOutputsOutOfRange);
 
-        CMutableTransaction txInvalidOutputs = tx;
+        CMutableTransaction txInvalidOutputs(tx);
         SetTxPayload(txInvalidOutputs, invalidOutputsPayload);
 
         BOOST_CHECK(!CheckAssetLockTx(CTransaction(txInvalidOutputs), tx_state));
@@ -243,7 +244,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetlock, TestChain100Setup)
         creditOutputsNotPubkey[0].scriptPubKey = CScript() << OP_1;
         CAssetLockPayload notPubkeyPayload(creditOutputsNotPubkey);
 
-        CMutableTransaction txNotPubkey = tx;
+        CMutableTransaction txNotPubkey(tx);
         SetTxPayload(txNotPubkey, notPubkeyPayload);
 
         BOOST_CHECK(!CheckAssetLockTx(CTransaction(txNotPubkey), tx_state));
@@ -253,7 +254,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetlock, TestChain100Setup)
 
     {
         // OP_RETURN must be only one, not more
-        CMutableTransaction txMultipleReturn = tx;
+        CMutableTransaction txMultipleReturn(tx);
         txMultipleReturn.vout[1].scriptPubKey = CScript() << OP_RETURN << ParseHex("");
 
         BOOST_CHECK(!CheckAssetLockTx(CTransaction(txMultipleReturn), tx_state));
@@ -263,7 +264,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetlock, TestChain100Setup)
 
     {
         // zero/negative OP_RETURN
-        CMutableTransaction txReturnOutOfRange = tx;
+        CMutableTransaction txReturnOutOfRange(tx);
         txReturnOutOfRange.vout[0].nValue = 0;
 
         BOOST_CHECK(!CheckAssetLockTx(CTransaction(txReturnOutOfRange), tx_state));
@@ -278,7 +279,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetlock, TestChain100Setup)
 
     {
         // OP_RETURN is missing
-        CMutableTransaction txNoReturn = tx;
+        CMutableTransaction txNoReturn(tx);
         txNoReturn.vout[0].scriptPubKey = GetScriptForDestination(PKHash(key.GetPubKey()));
 
         BOOST_CHECK(!CheckAssetLockTx(CTransaction(txNoReturn), tx_state));
@@ -287,7 +288,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetlock, TestChain100Setup)
 
     {
         // OP_RETURN should not have any data
-        CMutableTransaction txReturnData = tx;
+        CMutableTransaction txReturnData(tx);
         txReturnData.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("abc");
 
         BOOST_CHECK(!CheckAssetLockTx(CTransaction(txReturnData), tx_state));
@@ -303,7 +304,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetunlock, TestChain100Setup)
     CKey key;
     key.MakeNewKey(true);
 
-    const CMutableTransaction tx = CreateAssetUnlockTx(keystore, key);
+    const CTransaction tx = CreateAssetUnlockTx(keystore, key);
     std::string reason;
     BOOST_CHECK(IsStandardTx(CTransaction(tx), reason));
 
@@ -312,8 +313,11 @@ BOOST_FIXTURE_TEST_CASE(evo_assetunlock, TestChain100Setup)
     BOOST_CHECK_MESSAGE(CheckTransaction(CTransaction(tx), tx_state), strTest);
     BOOST_CHECK(tx_state.IsValid());
 
-    const CBlockIndex *block_index = ::ChainActive().Tip();
-    BOOST_CHECK(!CheckAssetUnlockTx(CTransaction(tx), block_index, std::nullopt, tx_state));
+    auto& blockman = Assert(m_node.chainman)->m_blockman;
+    auto& qman = *Assert(m_node.llmq_ctx)->qman;
+
+    const CBlockIndex *block_index = m_node.chainman->ActiveChain().Tip();
+    BOOST_CHECK(!CheckAssetUnlockTx(blockman, qman, CTransaction(tx), block_index, std::nullopt, tx_state));
     BOOST_CHECK(tx_state.GetRejectReason() == "bad-assetunlock-quorum-hash");
 
     {
@@ -322,7 +326,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetunlock, TestChain100Setup)
         CCoinsViewCache coins(&coinsDummy);
         std::vector<CMutableTransaction> dummyTransactions = SetupDummyInputs(keystore, coins);
 
-        CMutableTransaction txNonemptyInput = tx;
+        CMutableTransaction txNonemptyInput(tx);
         txNonemptyInput.vin.resize(1);
         txNonemptyInput.vin[0].prevout.hash = dummyTransactions[0].GetHash();
         txNonemptyInput.vin[0].prevout.n = 1;
@@ -331,7 +335,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetunlock, TestChain100Setup)
         std::string reason;
         BOOST_CHECK(IsStandardTx(CTransaction(tx), reason));
 
-        BOOST_CHECK(!CheckAssetUnlockTx(CTransaction(txNonemptyInput), block_index, std::nullopt, tx_state));
+        BOOST_CHECK(!CheckAssetUnlockTx(blockman, qman, CTransaction(txNonemptyInput), block_index, std::nullopt, tx_state));
         BOOST_CHECK(tx_state.GetRejectReason() == "bad-assetunlocktx-have-input");
     }
 
@@ -344,13 +348,13 @@ BOOST_FIXTURE_TEST_CASE(evo_assetunlock, TestChain100Setup)
         BOOST_CHECK(unlockPayload->getIndex() == 0x001122334455667788L);
 
         // Wrong type "Asset Lock TX" instead "Asset Unlock TX"
-        CMutableTransaction txWrongType = tx;
+        CMutableTransaction txWrongType(tx);
         txWrongType.nType = TRANSACTION_ASSET_LOCK;
-        BOOST_CHECK(!CheckAssetUnlockTx(CTransaction(txWrongType), block_index, std::nullopt, tx_state));
+        BOOST_CHECK(!CheckAssetUnlockTx(blockman, qman, CTransaction(txWrongType), block_index, std::nullopt, tx_state));
         BOOST_CHECK(tx_state.GetRejectReason() == "bad-assetunlocktx-type");
 
         // Check version of tx and payload
-        BOOST_CHECK(tx.nVersion == 3);
+        BOOST_CHECK(tx.IsSpecialTxVersion());
         for (uint8_t payload_version : {0, 1, 2, 255}) {
             CAssetUnlockPayload unlockPayload_tmp{payload_version,
                 unlockPayload->getIndex(),
@@ -358,13 +362,13 @@ BOOST_FIXTURE_TEST_CASE(evo_assetunlock, TestChain100Setup)
                 unlockPayload->getRequestedHeight(),
                 unlockPayload->getQuorumHash(),
                 unlockPayload->getQuorumSig()};
-            CMutableTransaction txWrongVersion = tx;
+            CMutableTransaction txWrongVersion(tx);
             SetTxPayload(txWrongVersion, unlockPayload_tmp);
             if (payload_version != 1) {
-                BOOST_CHECK(!CheckAssetUnlockTx(CTransaction(txWrongVersion), block_index, std::nullopt, tx_state));
+                BOOST_CHECK(!CheckAssetUnlockTx(blockman, qman, CTransaction(txWrongVersion), block_index, std::nullopt, tx_state));
                 BOOST_CHECK(tx_state.GetRejectReason() == "bad-assetunlocktx-version");
             } else {
-                BOOST_CHECK(!CheckAssetUnlockTx(CTransaction(txWrongVersion), block_index, std::nullopt, tx_state));
+                BOOST_CHECK(!CheckAssetUnlockTx(blockman, qman, CTransaction(txWrongVersion), block_index, std::nullopt, tx_state));
                 BOOST_CHECK(tx_state.GetRejectReason() == "bad-assetunlock-quorum-hash");
             }
         }
@@ -372,7 +376,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetunlock, TestChain100Setup)
 
     {
         // Exactly 32 withdrawal is fine
-        CMutableTransaction txManyOutputs = tx;
+        CMutableTransaction txManyOutputs(tx);
         int outputsLimit = 32;
         txManyOutputs.vout.resize(outputsLimit);
         for (auto& out : txManyOutputs.vout) {
@@ -380,15 +384,15 @@ BOOST_FIXTURE_TEST_CASE(evo_assetunlock, TestChain100Setup)
             out.scriptPubKey = GetScriptForDestination(PKHash(key.GetPubKey()));
         }
 
-        BOOST_CHECK(!CheckAssetUnlockTx(CTransaction(txManyOutputs), block_index, std::nullopt, tx_state));
+        BOOST_CHECK(!CheckAssetUnlockTx(blockman, qman, CTransaction(txManyOutputs), block_index, std::nullopt, tx_state));
         BOOST_CHECK(tx_state.GetRejectReason() == "bad-assetunlock-quorum-hash");
 
         // Basic checks for CRangesSet
         CRangesSet indexes;
-        BOOST_CHECK(!CheckAssetUnlockTx(CTransaction(txManyOutputs), block_index, indexes, tx_state));
+        BOOST_CHECK(!CheckAssetUnlockTx(blockman, qman, CTransaction(txManyOutputs), block_index, indexes, tx_state));
         BOOST_CHECK(tx_state.GetRejectReason() == "bad-assetunlock-quorum-hash");
         BOOST_CHECK(indexes.Add(0x001122334455667788L));
-        BOOST_CHECK(!CheckAssetUnlockTx(CTransaction(txManyOutputs), block_index, indexes, tx_state));
+        BOOST_CHECK(!CheckAssetUnlockTx(blockman, qman, CTransaction(txManyOutputs), block_index, indexes, tx_state));
         BOOST_CHECK(tx_state.GetRejectReason() == "bad-assetunlock-duplicated-index");
 
 
@@ -396,7 +400,7 @@ BOOST_FIXTURE_TEST_CASE(evo_assetunlock, TestChain100Setup)
         txManyOutputs.vout.resize(outputsLimit + 1);
         txManyOutputs.vout.back().nValue = CENT;
         txManyOutputs.vout.back().scriptPubKey = GetScriptForDestination(PKHash(key.GetPubKey()));
-        BOOST_CHECK(!CheckAssetUnlockTx(CTransaction(txManyOutputs), block_index, std::nullopt, tx_state));
+        BOOST_CHECK(!CheckAssetUnlockTx(blockman, qman, CTransaction(txManyOutputs), block_index, std::nullopt, tx_state));
         BOOST_CHECK(tx_state.GetRejectReason() == "bad-assetunlocktx-too-many-outs");
     }
 

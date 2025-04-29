@@ -7,20 +7,28 @@
 
 #include <validationinterface.h>
 
+class CActiveMasternodeManager;
 class CConnman;
 class CDeterministicMNManager;
 class CGovernanceManager;
+class ChainstateManager;
 class CMasternodeSync;
+class PeerManager;
 struct CJContext;
 struct LLMQContext;
 
 class CDSNotificationInterface : public CValidationInterface
 {
 public:
-    explicit CDSNotificationInterface(CConnman& _connman,
-                                      CMasternodeSync& _mn_sync, const std::unique_ptr<CDeterministicMNManager>& _dmnman,
-                                      CGovernanceManager& _govman, const std::unique_ptr<LLMQContext>& _llmq_ctx,
-                                      const std::unique_ptr<CJContext>& _cj_ctx);
+    explicit CDSNotificationInterface(CConnman& connman,
+                                      CMasternodeSync& mn_sync,
+                                      CGovernanceManager& govman,
+                                      PeerManager& peerman,
+                                      const ChainstateManager& chainman,
+                                      const CActiveMasternodeManager* const mn_activeman,
+                                      const std::unique_ptr<CDeterministicMNManager>& dmnman,
+                                      const std::unique_ptr<LLMQContext>& llmq_ctx,
+                                      const std::unique_ptr<CJContext>& cj_ctx);
     virtual ~CDSNotificationInterface() = default;
 
     // a small helper to initialize current block height in sub-modules on startup
@@ -40,14 +48,15 @@ protected:
     void NotifyChainLock(const CBlockIndex* pindex, const std::shared_ptr<const llmq::CChainLockSig>& clsig) override;
 
 private:
-    CConnman& connman;
-
+    CConnman& m_connman;
     CMasternodeSync& m_mn_sync;
-    const std::unique_ptr<CDeterministicMNManager>& dmnman;
-    CGovernanceManager& govman;
-
-    const std::unique_ptr<LLMQContext>& llmq_ctx;
-    const std::unique_ptr<CJContext>& cj_ctx;
+    CGovernanceManager& m_govman;
+    PeerManager& m_peerman;
+    const ChainstateManager& m_chainman;
+    const CActiveMasternodeManager* const m_mn_activeman;
+    const std::unique_ptr<CDeterministicMNManager>& m_dmnman;
+    const std::unique_ptr<LLMQContext>& m_llmq_ctx;
+    const std::unique_ptr<CJContext>& m_cj_ctx;
 };
 
 #endif // BITCOIN_DSNOTIFICATIONINTERFACE_H

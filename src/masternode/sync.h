@@ -8,12 +8,13 @@
 #include <memory>
 #include <string>
 
-class CMasternodeSync;
-class CBlockIndex;
 class CConnman;
-class CNode;
+class CBlockIndex;
 class CDataStream;
 class CGovernanceManager;
+class CMasternodeSync;
+class CNetFulfilledRequestManager;
+class CNode;
 
 static constexpr int MASTERNODE_SYNC_BLOCKCHAIN      = 1;
 static constexpr int MASTERNODE_SYNC_GOVERNANCE      = 4;
@@ -24,8 +25,6 @@ static constexpr int MASTERNODE_SYNC_FINISHED        = 999;
 static constexpr int MASTERNODE_SYNC_TICK_SECONDS    = 6;
 static constexpr int MASTERNODE_SYNC_TIMEOUT_SECONDS = 30; // our blocks are 2.5 minutes so 30 seconds should be fine
 static constexpr int MASTERNODE_SYNC_RESET_SECONDS   = 900; // Reset fReachedBestHeader in CMasternodeSync::Reset if UpdateBlockTip hasn't been called for this seconds
-
-extern std::unique_ptr<CMasternodeSync> masternodeSync;
 
 //
 // CMasternodeSync : Sync masternode assets in stages
@@ -50,10 +49,11 @@ private:
     std::atomic<int64_t> nTimeLastUpdateBlockTip{0};
 
     CConnman& connman;
+    CNetFulfilledRequestManager& m_netfulfilledman;
     const CGovernanceManager& m_govman;
 
 public:
-    explicit CMasternodeSync(CConnman& _connman, const CGovernanceManager& govman);
+    explicit CMasternodeSync(CConnman& _connman, CNetFulfilledRequestManager& netfulfilledman, const CGovernanceManager& govman);
 
     void SendGovernanceSyncRequest(CNode* pnode) const;
 

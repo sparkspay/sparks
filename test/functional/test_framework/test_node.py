@@ -22,6 +22,7 @@ import sys
 import collections
 
 from .authproxy import JSONRPCException
+from .descriptors import descsum_create
 from .messages import MY_SUBVERSION
 from .util import (
     MAX_NODES,
@@ -30,7 +31,7 @@ from .util import (
     get_auth_cookie,
     get_rpc_proxy,
     rpc_url,
-    wait_until,
+    wait_until_helper,
     p2p_port,
     get_chain_folder,
     EncodeDecimal,
@@ -63,7 +64,7 @@ class TestNode():
     To make things easier for the test writer, any unrecognised messages will
     be dispatched to the RPC connection."""
 
-    def __init__(self, i, datadir, extra_args_from_options, *, chain, rpchost, timewait, timeout_factor, bitcoind, bitcoin_cli, mocktime, coverage_dir, cwd, extra_conf=None, extra_args=None, use_cli=False, start_perf=False, use_valgrind=False, version=None):
+    def __init__(self, i, datadir, extra_args_from_options, *, chain, rpchost, timewait, timeout_factor, bitcoind, bitcoin_cli, mocktime, coverage_dir, cwd, extra_conf=None, extra_args=None, use_cli=False, start_perf=False, use_valgrind=False, version=None, descriptors=False):
         """
         Kwargs:
             start_perf (bool): If True, begin profiling the node with `perf` as soon as
@@ -71,6 +72,7 @@ class TestNode():
         """
 
         self.index = i
+        self.p2p_conn_index = 1
         self.datadir = datadir
         self.chain = chain
         self.bitcoinconf = os.path.join(self.datadir, "sparks.conf")
@@ -82,6 +84,7 @@ class TestNode():
         self.coverage_dir = coverage_dir
         self.cwd = cwd
         self.mocktime = mocktime
+        self.descriptors = descriptors
         if extra_conf is not None:
             append_config(datadir, extra_conf)
         # Most callers will just need to add extra args to the standard list below.
@@ -113,8 +116,10 @@ class TestNode():
                          "--gen-suppressions=all", "--exit-on-first-error=yes",
                          "--error-exitcode=1", "--quiet"] + self.args
 
-        if self.version_is_at_least(190000):
+        if self.version_is_at_least(120100):
             self.args.append("-logthreadnames")
+        if self.version_is_at_least(21000000):
+            self.args.append("-logsourcelocations")
 
         self.cli = TestNodeCLI(bitcoin_cli, self.datadir)
         self.use_cli = use_cli
@@ -187,10 +192,10 @@ class TestNode():
     def __getattr__(self, name):
         """Dispatches any unrecognised messages to the RPC connection or a CLI instance."""
         if self.use_cli:
-            return getattr(self.cli, name)
+            return getattr(RPCOverloadWrapper(self.cli, True, self.descriptors), name)
         else:
             assert self.rpc_connected and self.rpc is not None, self._node_msg("Error: no RPC connection")
-            return getattr(self.rpc, name)
+            return getattr(RPCOverloadWrapper(self.rpc, descriptors=self.descriptors), name)
 
     def start(self, extra_args=None, *, cwd=None, stdout=None, stderr=None, **kwargs):
         """Start the node."""
@@ -248,7 +253,7 @@ class TestNode():
                 if self.version_is_at_least(180000):
                     # getmempoolinfo.loaded is available since commit
                     # 71e38b9ebcb78b3a264a4c25c7c4e373317f2a40 (version 0.18.0)
-                    wait_until(lambda: rpc.getmempoolinfo()['loaded'])
+                    wait_until_helper(lambda: rpc.getmempoolinfo()['loaded'])
                     # Wait for the node to finish reindex, block import, and
                     # loading the mempool. Usually importing happens fast or
                     # even "immediate" when the node is started. However, there
@@ -316,11 +321,11 @@ class TestNode():
 
     def get_wallet_rpc(self, wallet_name):
         if self.use_cli:
-            return self.cli("-rpcwallet={}".format(wallet_name))
+            return RPCOverloadWrapper(self.cli("-rpcwallet={}".format(wallet_name)), True, self.descriptors)
         else:
             assert self.rpc_connected and self.rpc, self._node_msg("RPC not connected")
             wallet_path = "wallet/{}".format(urllib.parse.quote(wallet_name))
-            return self.rpc / wallet_path
+            return RPCOverloadWrapper(self.rpc / wallet_path, descriptors=self.descriptors)
 
     def version_is_at_least(self, ver):
         return self.version is None or self.version >= ver
@@ -379,7 +384,7 @@ class TestNode():
         return True
 
     def wait_until_stopped(self, timeout=BITCOIND_PROC_WAIT_TIMEOUT):
-        wait_until(self.is_node_stopped, timeout=timeout, timeout_factor=self.timeout_factor)
+        wait_until_helper(self.is_node_stopped, timeout=timeout, timeout_factor=self.timeout_factor)
 
     @contextlib.contextmanager
     def assert_debug_log(self, expected_msgs, unexpected_msgs=None, timeout=2):
@@ -414,14 +419,14 @@ class TestNode():
         self._raise_assertion_error('Expected messages "{}" does not partially match log:\n\n{}\n\n'.format(str(expected_msgs), print_log))
 
     @contextlib.contextmanager
-    def profile_with_perf(self, profile_name):
+    def profile_with_perf(self, profile_name: str):
         """
         Context manager that allows easy profiling of node activity using `perf`.
 
         See `test/functional/README.md` for details on perf usage.
 
         Args:
-            profile_name (str): This string will be appended to the
+            profile_name: This string will be appended to the
                 profile data filename generated by perf.
         """
         subp = self._start_perf(profile_name)
@@ -505,6 +510,7 @@ class TestNode():
                 self.start(extra_args, stdout=log_stdout, stderr=log_stderr, *args, **kwargs)
                 ret = self.process.wait(timeout=self.rpc_timeout)
                 self.log.debug(self._node_msg(f'sparksd exited with status {ret} during initialization'))
+                assert ret != 0  # Exit code must indicate failure
                 self.running = False
                 self.process = None
                 # Check stderr for expected message
@@ -535,7 +541,7 @@ class TestNode():
                 self._raise_assertion_error(assert_msg)
 
     def add_p2p_connection(self, p2p_conn, *, wait_for_verack=True, **kwargs):
-        """Add a p2p connection to the node.
+        """Add an inbound p2p connection to the node.
 
         This method adds the p2p connection to the self.p2ps list and also
         returns the connection to the caller."""
@@ -546,6 +552,7 @@ class TestNode():
 
         p2p_conn.peer_connect(**kwargs, net=self.chain, timeout_factor=self.timeout_factor)()
         self.p2ps.append(p2p_conn)
+        p2p_conn.wait_until(lambda: p2p_conn.is_connected, check_connected=False)
         if wait_for_verack:
             # Wait for the node to send us the version and verack
             p2p_conn.wait_for_verack()
@@ -563,9 +570,31 @@ class TestNode():
 
         return p2p_conn
 
+    def add_outbound_p2p_connection(self, p2p_conn, *, p2p_idx, connection_type="outbound-full-relay", **kwargs):
+        """Add an outbound p2p connection from node. Must be an
+        "outbound-full-relay", "block-relay-only" or "addr-fetch" connection.
+
+        This method adds the p2p connection to the self.p2ps list and returns
+        the connection to the caller.
+        """
+
+        def addconnection_callback(address, port):
+            self.log.debug("Connecting to %s:%d %s" % (address, port, connection_type))
+            self.addconnection('%s:%d' % (address, port), connection_type)
+
+        p2p_conn.peer_accept_connection(connect_cb=addconnection_callback, connect_id=p2p_idx + 1, net=self.chain, timeout_factor=self.timeout_factor, **kwargs)()
+
+        p2p_conn.wait_for_connect()
+        self.p2ps.append(p2p_conn)
+
+        p2p_conn.wait_for_verack()
+        p2p_conn.sync_with_ping()
+
+        return p2p_conn
+
     def num_test_p2p_connections(self):
         """Return number of test framework p2p connections to the node."""
-        return len([peer for peer in self.getpeerinfo() if peer['subver'] == MY_SUBVERSION.decode("utf-8")])
+        return len([peer for peer in self.getpeerinfo() if peer['subver'] == MY_SUBVERSION])
 
     def disconnect_p2ps(self):
         """Close all p2p connections to the node."""
@@ -576,13 +605,14 @@ class TestNode():
         def check_peers():
             for p in self.getpeerinfo():
                 for p2p in self.p2ps:
-                    if p['subver'] == p2p.strSubVer.decode():
+                    if p['subver'] == p2p.strSubVer:
                         return False
             return True
-        wait_until(check_peers, timeout=5)
+        wait_until_helper(check_peers, timeout=5)
 
         del self.p2ps[:]
-        wait_until(lambda: self.num_test_p2p_connections() == 0)
+
+        wait_until_helper(lambda: self.num_test_p2p_connections() == 0, timeout_factor=self.timeout_factor)
 
 
 class TestNodeCLIAttr:
@@ -600,6 +630,8 @@ class TestNodeCLIAttr:
 def arg_to_cli(arg):
     if isinstance(arg, bool):
         return str(arg).lower()
+    elif arg is None:
+        return 'null'
     elif isinstance(arg, dict) or isinstance(arg, list):
         return json.dumps(arg, default=EncodeDecimal)
     else:
@@ -659,3 +691,89 @@ class TestNodeCLI():
             return json.loads(cli_stdout, parse_float=decimal.Decimal)
         except (json.JSONDecodeError, decimal.InvalidOperation):
             return cli_stdout.rstrip("\n")
+
+class RPCOverloadWrapper():
+    def __init__(self, rpc, cli=False, descriptors=False):
+        self.rpc = rpc
+        self.is_cli = cli
+        self.descriptors = descriptors
+
+    def __getattr__(self, name):
+        return getattr(self.rpc, name)
+
+    def createwallet(self, wallet_name, disable_private_keys=None, blank=None, passphrase='', avoid_reuse=None, descriptors=None, load_on_startup=None):
+        if descriptors is None:
+            descriptors = self.descriptors
+        if descriptors is not None and load_on_startup is None:
+            load_on_startup = False
+        return self.__getattr__('createwallet')(wallet_name, disable_private_keys, blank, passphrase, avoid_reuse, descriptors, load_on_startup)
+
+    def importprivkey(self, privkey, label=None, rescan=None):
+        wallet_info = self.getwalletinfo()
+        if 'descriptors' not in wallet_info or ('descriptors' in wallet_info and not wallet_info['descriptors']):
+            return self.__getattr__('importprivkey')(privkey, label, rescan)
+        desc = descsum_create('combo(' + privkey + ')')
+        req = [{
+            'desc': desc,
+            'timestamp': 0 if rescan else 'now',
+            'label': label if label else ''
+        }]
+        import_res = self.importdescriptors(req)
+        if not import_res[0]['success']:
+            raise JSONRPCException(import_res[0]['error'])
+
+    def addmultisigaddress(self, nrequired, keys, label=None):
+        wallet_info = self.getwalletinfo()
+        if 'descriptors' not in wallet_info or ('descriptors' in wallet_info and not wallet_info['descriptors']):
+            return self.__getattr__('addmultisigaddress')(nrequired, keys, label)
+        cms = self.createmultisig(nrequired, keys)
+        req = [{
+            'desc': cms['descriptor'],
+            'timestamp': 0,
+            'label': label if label else ''
+        }]
+        import_res = self.importdescriptors(req)
+        if not import_res[0]['success']:
+            raise JSONRPCException(import_res[0]['error'])
+        return cms
+
+    def importpubkey(self, pubkey, label=None, rescan=None):
+        wallet_info = self.getwalletinfo()
+        if 'descriptors' not in wallet_info or ('descriptors' in wallet_info and not wallet_info['descriptors']):
+            return self.__getattr__('importpubkey')(pubkey, label, rescan)
+        desc = descsum_create('combo(' + pubkey + ')')
+        req = [{
+            'desc': desc,
+            'timestamp': 0 if rescan else 'now',
+            'label': label if label else ''
+        }]
+        import_res = self.importdescriptors(req)
+        if not import_res[0]['success']:
+            raise JSONRPCException(import_res[0]['error'])
+
+    def importaddress(self, address, label=None, rescan=None, p2sh=None):
+        wallet_info = self.getwalletinfo()
+        if 'descriptors' not in wallet_info or ('descriptors' in wallet_info and not wallet_info['descriptors']):
+            return self.__getattr__('importaddress')(address, label, rescan, p2sh)
+        is_hex = False
+        try:
+            int(address ,16)
+            is_hex = True
+            desc = descsum_create('raw(' + address + ')')
+        except:
+            desc = descsum_create('addr(' + address + ')')
+        reqs = [{
+            'desc': desc,
+            'timestamp': 0 if rescan else 'now',
+            'label': label if label else ''
+        }]
+        if is_hex and p2sh:
+            reqs.append({
+                'desc': descsum_create('p2sh(raw(' + address + '))'),
+                'timestamp': 0 if rescan else 'now',
+                'label': label if label else ''
+            })
+        import_res = self.importdescriptors(reqs)
+        for res in import_res:
+            if not res['success']:
+                raise JSONRPCException(res['error'])

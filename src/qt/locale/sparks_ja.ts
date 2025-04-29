@@ -236,6 +236,13 @@
 </context>
 <context>
     <name>BitcoinAmountField</name>
+    <message>
+        <source>Amount in %1</source>
+        <translation>%1にある金額</translation>
+    </message>
+</context>
+<context>
+    <name>BitcoinApplication</name>
     </context>
 <context>
     <name>BitcoinGUI</name>
@@ -260,8 +267,80 @@
         <translation>受取 (&amp;R)</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and sparks: URIs)</source>
-        <translation>送金を要求 (QRコードとsparks:URIを生成)</translation>
+        <source>Request payments (generates QR codes and dash: URIs)</source>
+        <translation>送金を要求 (QRコードとdash:URIを生成)</translation>
+    </message>
+    <message>
+        <source>&amp;Options…</source>
+        <translation>オプション… (&amp;O)</translation>
+    </message>
+    <message>
+        <source>&amp;Encrypt Wallet…</source>
+        <translation>ウォレットの暗号化… (&amp;E)</translation>
+    </message>
+    <message>
+        <source>&amp;Backup Wallet…</source>
+        <translation>ウォレットのバックアップ… (&amp;B)</translation>
+    </message>
+    <message>
+        <source>&amp;Change Passphrase…</source>
+        <translation>パスフレーズの変更… (&amp;C)</translation>
+    </message>
+    <message>
+        <source>&amp;Unlock Wallet…</source>
+        <translation>ウォレットをアンロック…(&amp;U)</translation>
+    </message>
+    <message>
+        <source>Sign &amp;message…</source>
+        <translation>メッセージの署名… (&amp;M)</translation>
+    </message>
+    <message>
+        <source>&amp;Verify message…</source>
+        <translation>メッセージの検証… (&amp;V)</translation>
+    </message>
+    <message>
+        <source>&amp;Sending addresses</source>
+        <translation>アドレスを送信 (&amp;S)</translation>
+    </message>
+    <message>
+        <source>&amp;Receiving addresses</source>
+        <translation>アドレスを受信 (&amp;R)</translation>
+    </message>
+    <message>
+        <source>Open &amp;URI…</source>
+        <translation>URIを開く… (&amp;U)</translation>
+    </message>
+    <message>
+        <source>Open Wallet</source>
+        <translation>ウォレットを開く</translation>
+    </message>
+    <message>
+        <source>Open a wallet</source>
+        <translation>ウォレットを開く</translation>
+    </message>
+    <message>
+        <source>Close wallet</source>
+        <translation>ウォレットを閉じる</translation>
+    </message>
+    <message>
+        <source>No wallets available</source>
+        <translation>利用可能なウォレットはありません</translation>
+    </message>
+    <message>
+        <source>&amp;Window</source>
+        <translation>ウインドウ (&amp;W)</translation>
+    </message>
+    <message>
+        <source>Minimize</source>
+        <translation>最小化する</translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation>ズーム</translation>
+    </message>
+    <message>
+        <source>Main Window</source>
+        <translation>メインウィンドウ</translation>
     </message>
     <message>
         <source>&amp;Transactions</source>
@@ -300,10 +379,6 @@
         <translation>Qt についての情報を表示</translation>
     </message>
     <message>
-        <source>&amp;Options...</source>
-        <translation>オプション… (&amp;O)</translation>
-    </message>
-    <message>
         <source>&amp;About %1</source>
         <translation>%1 について (&amp;A)</translation>
     </message>
@@ -320,32 +395,16 @@
         <translation>メインウインドウを表示または非表示</translation>
     </message>
     <message>
-        <source>&amp;Encrypt Wallet...</source>
-        <translation>ウォレットの暗号化… (&amp;E)</translation>
-    </message>
-    <message>
         <source>Encrypt the private keys that belong to your wallet</source>
         <translation>あなたのウォレットの秘密鍵を暗号化</translation>
-    </message>
-    <message>
-        <source>&amp;Backup Wallet...</source>
-        <translation>ウォレットのバックアップ… (&amp;B)</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
         <translation>ウォレットを他の場所にバックアップ</translation>
     </message>
     <message>
-        <source>&amp;Change Passphrase...</source>
-        <translation>パスフレーズの変更… (&amp;C)</translation>
-    </message>
-    <message>
         <source>Change the passphrase used for wallet encryption</source>
         <translation>ウォレット暗号化のためのパスフレーズを変更</translation>
-    </message>
-    <message>
-        <source>&amp;Unlock Wallet...</source>
-        <translation>ウォレットをアンロック...(&amp;U)</translation>
     </message>
     <message>
         <source>Unlock wallet</source>
@@ -356,20 +415,12 @@
         <translation>ウォレットをロック(&amp;L)</translation>
     </message>
     <message>
-        <source>Sign &amp;message...</source>
-        <translation>メッセージの署名… (&amp;M)</translation>
+        <source>Sign messages with your Dash addresses to prove you own them</source>
+        <translation>あなたがDash アドレスを所有していることを証明するために、あなたのDashアドレスでメッセージに署名してください。</translation>
     </message>
     <message>
-        <source>Sign messages with your Sparks addresses to prove you own them</source>
-        <translation>あなたがSparks アドレスを所有していることを証明するために、あなたのSparksアドレスでメッセージに署名してください。</translation>
-    </message>
-    <message>
-        <source>&amp;Verify message...</source>
-        <translation>メッセージの検証… (&amp;V)</translation>
-    </message>
-    <message>
-        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
-        <translation>指定されたSparksアドレスで署名されたことを確認するためにメッセージを検証してください。</translation>
+        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
+        <translation>指定されたDashアドレスで署名されたことを確認するためにメッセージを検証してください。</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -440,10 +491,6 @@
         <translation>過去に使用した受取先アドレスとラベルの一覧を表示</translation>
     </message>
     <message>
-        <source>Open &amp;URI...</source>
-        <translation>URIを開く… (&amp;U)</translation>
-    </message>
-    <message>
         <source>&amp;Command-line options</source>
         <translation>コマンドラインオプション (&amp;C)</translation>
     </message>
@@ -458,6 +505,22 @@
     <message>
         <source>&amp;File</source>
         <translation>ファイル(&amp;F)</translation>
+    </message>
+    <message>
+        <source>Show information about %1</source>
+        <translation>%1の情報を表示する</translation>
+    </message>
+    <message>
+        <source>Create a new wallet</source>
+        <translation>新しいウォレットを作成する</translation>
+    </message>
+    <message>
+        <source>%1 &amp;information</source>
+        <translation>%1と情報</translation>
+    </message>
+    <message>
+        <source>Show the %1 basic information</source>
+        <translation>%1の基本情報を表示する</translation>
     </message>
     <message>
         <source>&amp;Settings</source>
@@ -483,30 +546,6 @@
         <source>Network activity disabled</source>
         <translation>ネットワークアクティビティは無効化されました</translation>
     </message>
-    <message>
-        <source>Syncing Headers (%1%)...</source>
-        <translation>ヘッダーを同期しています (%1%)...</translation>
-    </message>
-    <message>
-        <source>Synchronizing with network...</source>
-        <translation>ネットワークに同期中…</translation>
-    </message>
-    <message>
-        <source>Indexing blocks on disk...</source>
-        <translation>ディスク上のブロックのインデックスを作成中...</translation>
-    </message>
-    <message>
-        <source>Processing blocks on disk...</source>
-        <translation>ディスク上のブロックを処理中...</translation>
-    </message>
-    <message>
-        <source>Reindexing blocks on disk...</source>
-        <translation>ディスク上のブロックのインデックスを再作成中…</translation>
-    </message>
-    <message>
-        <source>Connecting to peers...</source>
-        <translation>ピアに接続中...</translation>
-    </message>
     <message numerus="yes">
         <source>Processed %n block(s) of transaction history.</source>
         <translation><numerusform>%n ブロックのトランザクション履歴を処理</numerusform></translation>
@@ -516,7 +555,39 @@
         <translation>%1 遅延</translation>
     </message>
     <message>
-        <source>Catching up...</source>
+        <source>Close Wallet…</source>
+        <translation>ウォレットを閉じる…</translation>
+    </message>
+    <message>
+        <source>Create Wallet…</source>
+        <translation>ウォレットを作成する…</translation>
+    </message>
+    <message>
+        <source>Syncing Headers (%1%)…</source>
+        <translation>ヘッダーを同期しています (%1%)…</translation>
+    </message>
+    <message>
+        <source>Synchronizing with network…</source>
+        <translation>ネットワークに同期中…</translation>
+    </message>
+    <message>
+        <source>Indexing blocks on disk…</source>
+        <translation>ディスク上のブロックのインデックスを作成中…</translation>
+    </message>
+    <message>
+        <source>Processing blocks on disk…</source>
+        <translation>ディスク上のブロックを処理中…</translation>
+    </message>
+    <message>
+        <source>Reindexing blocks on disk…</source>
+        <translation>ディスク上のブロックのインデックスを再作成中…</translation>
+    </message>
+    <message>
+        <source>Connecting to peers…</source>
+        <translation>ピアに接続中…</translation>
+    </message>
+    <message>
+        <source>Catching up…</source>
         <translation>追跡中…</translation>
     </message>
     <message>
@@ -609,7 +680,7 @@
         <source>Original message:</source>
         <translation>元のメッセージ：</translation>
     </message>
-    </context>
+</context>
 <context>
     <name>CoinControlDialog</name>
     <message>
@@ -798,6 +869,60 @@
     </message>
 </context>
 <context>
+    <name>CreateWalletActivity</name>
+    <message>
+        <source>Creating Wallet &lt;b&gt;%1&lt;/b&gt;…</source>
+        <translation>ウォレット&lt;b&gt;%1&lt;/b&gt;を作成…</translation>
+    </message>
+    <message>
+        <source>Create wallet failed</source>
+        <translation>ウォレットの作成に失敗しました</translation>
+    </message>
+    <message>
+        <source>Create wallet warning</source>
+        <translation>ウォレット作成の警告</translation>
+    </message>
+</context>
+<context>
+    <name>CreateWalletDialog</name>
+    <message>
+        <source>Create Wallet</source>
+        <translation>ウォレットを作成する</translation>
+    </message>
+    <message>
+        <source>Wallet Name</source>
+        <translation>ウォレット名</translation>
+    </message>
+    <message>
+        <source>Encrypt the wallet. The wallet will be encrypted with a passphrase of your choice.</source>
+        <translation>ウォレットを暗号化します。ウォレットは、お客様が選んだパスフレーズで暗号化されます。</translation>
+    </message>
+    <message>
+        <source>Encrypt Wallet</source>
+        <translation>ウォレットを暗号化する</translation>
+    </message>
+    <message>
+        <source>Disable private keys for this wallet. Wallets with private keys disabled will have no private keys and cannot have an HD seed or imported private keys. This is ideal for watch-only wallets.</source>
+        <translation>このウォレットのプライベートキーを無効にします。プライベートキーを無効にしたウォレットは、プライベートキーを持たず、HDシードやインポートされたプライベートキーを持つことができなくなります。これは時計専用のウォレットに最適です。</translation>
+    </message>
+    <message>
+        <source>Disable Private Keys</source>
+        <translation>プライベートキーを無効化する</translation>
+    </message>
+    <message>
+        <source>Make a blank wallet. Blank wallets do not initially have private keys or scripts. Private keys and addresses can be imported, or an HD seed can be set, at a later time.</source>
+        <translation>ブランクウォレットを作成します。ブランクウォレットは、初期状態ではプライベートキーやスクリプトを持ちません。プライベートキーやアドレスは、後からインポートしたり、HDシードを設定したりすることができます。</translation>
+    </message>
+    <message>
+        <source>Make Blank Wallet</source>
+        <translation>ブランクウォレットを作成する</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>作成</translation>
+    </message>
+    </context>
+<context>
     <name>EditAddressDialog</name>
     <message>
         <source>Edit Address</source>
@@ -929,10 +1054,6 @@
         <translation>これは本プログラムの最初の起動です。%1 がデータを保存する場所を選択して下さい。</translation>
     </message>
     <message>
-        <source>When you click OK, %1 will begin to download and process the full %4 block chain (%2GB) starting with the earliest transactions in %3 when %4 initially launched.</source>
-        <translation>OKをクリックすると、%1は完全な%4ブロックチェーン (%2GB) のダウンロードおよび処理を%4が開始された時点の%3から開始します。</translation>
-    </message>
-    <message>
         <source>This initial synchronisation is very demanding, and may expose hardware problems with your computer that had previously gone unnoticed. Each time you run %1, it will continue downloading where it left off.</source>
         <translation>この初期同期には多大なリソースを消費し、あなたのコンピュータでこれまで見つからなかったハードウェア上の問題が発生する場合があります。%1 を実行する度に、中断された時点からダウンロードを再開します。</translation>
     </message>
@@ -1033,7 +1154,15 @@
     </message>
     <message>
         <source>Copy Collateral Outpoint</source>
-        <translation>Collateral Outpointをコピー</translation>
+        <translation>担保のアウトポイントをコピー</translation>
+    </message>
+    <message>
+        <source>Please wait…</source>
+        <translation>お待ちください…</translation>
+    </message>
+    <message>
+        <source>Updating…</source>
+        <translation>更新中…</translation>
     </message>
     <message>
         <source>ENABLED</source>
@@ -1061,7 +1190,11 @@
     </message>
     <message>
         <source>NONE</source>
-        <translation>無し</translation>
+        <translation>なし</translation>
+    </message>
+    <message>
+        <source>Filter by any property (e.g. address or protx hash)</source>
+        <translation>プロパティでのフィルタリング（例：アドレスやProTxハッシュなど）</translation>
     </message>
     <message>
         <source>Additional information for DIP3 Masternode %1</source>
@@ -1087,8 +1220,12 @@
         <translation>残りのブロック数</translation>
     </message>
     <message>
-        <source>Unknown...</source>
-        <translation>不明...</translation>
+        <source>Unknown…</source>
+        <translation>不明…</translation>
+    </message>
+    <message>
+        <source>calculating…</source>
+        <translation>計算中…</translation>
     </message>
     <message>
         <source>Last block time</source>
@@ -1103,10 +1240,6 @@
         <translation>一時間毎の進捗の変化</translation>
     </message>
     <message>
-        <source>calculating...</source>
-        <translation>計算中...</translation>
-    </message>
-    <message>
         <source>Estimated time left until synced</source>
         <translation>同期が完了するまでの推定残り時間</translation>
     </message>
@@ -1115,8 +1248,8 @@
         <translation>非表示</translation>
     </message>
     <message>
-        <source>Unknown. Syncing Headers (%1)...</source>
-        <translation>不明。ヘッダーを同期中 (%1)...</translation>
+        <source>Unknown. Syncing Headers (%1, %2%)…</source>
+        <translation>不明。ヘッダー(%1、%2%)を同期中…</translation>
     </message>
 </context>
 <context>
@@ -1145,8 +1278,8 @@
         <translation>デフォルトのウォレット</translation>
     </message>
     <message>
-        <source>Opening Wallet &lt;b&gt;%1&lt;/b&gt;...</source>
-        <translation>&lt;b&gt;%1&lt;/b&gt;のウォレットを開封中...</translation>
+        <source>Opening Wallet &lt;b&gt;%1&lt;/b&gt;…</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt;のウォレットを開封中…</translation>
     </message>
 </context>
 <context>
@@ -1272,14 +1405,6 @@
         <translation>このダイアログで設定されたオプションは、コマンドラインまたは設定ファイルによって上書きされます。</translation>
     </message>
     <message>
-        <source>Hide the icon from the system tray.</source>
-        <translation>システムトレイからアイコンを非表示にします。</translation>
-    </message>
-    <message>
-        <source>&amp;Hide tray icon</source>
-        <translation>トレイアイコンを非表示にする(&amp;H)</translation>
-    </message>
-    <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Exit in the menu.</source>
         <translation>ウィンドウを閉じる際にアプリケーションを終了するのではなく最小化します。このオプションが有効の場合、メニューから終了を選択した場合にのみアプリケーションは閉じられます。</translation>
     </message>
@@ -1370,12 +1495,6 @@
     <message>
         <source>The user interface language can be set here. This setting will take effect after restarting %1.</source>
         <translation>ここでユーザーインターフェースの言語を設定できます。設定を反映するには %1 を再起動します。</translation>
-    </message>
-    <message>
-        <source>Language missing or translation incomplete? Help contributing translations here:
-https://www.transifex.com/projects/p/sparks/</source>
-        <translation>希望の言語がない場合または翻訳に問題がある場合はこちらで翻訳にご協力ください。:
-https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>&amp;Unit to show amounts in:</source>
@@ -1639,12 +1758,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>「sparks://」は有効なURIではありません。代わりに「sparks:」を使ってください。</translation>
     </message>
     <message>
-        <source>Invalid payment address %1</source>
-        <translation>支払いのアドレス　%1　は無効です</translation>
-    </message>
-    <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
-        <translation>URI を解析できません! これは無効な Sparks アドレスあるいは不正な形式の URI パラメーターによって引き起こされた可能性があります。</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
+        <translation>URI を解析できません! これは無効な Dash アドレスあるいは不正な形式の URI パラメーターによって引き起こされた可能性があります。</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -1655,18 +1770,22 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <name>PeerTableModel</name>
     <message>
         <source>User Agent</source>
+        <extracomment>Title of Peers Table column which contains the peer's User Agent string.</extracomment>
         <translation>ユーザーエージェント</translation>
     </message>
     <message>
         <source>Ping</source>
+        <extracomment>Title of Peers Table column which indicates the current latency of the connection with the peer.</extracomment>
         <translation>Ping</translation>
     </message>
     <message>
         <source>Sent</source>
+        <extracomment>Title of Peers Table column which indicates the total amount of network information we have sent to the peer.</extracomment>
         <translation>送金しました</translation>
     </message>
     <message>
         <source>Received</source>
+        <extracomment>Title of Peers Table column which indicates the total amount of network information we have received from the peer.</extracomment>
         <translation>受け取りました</translation>
     </message>
     </context>
@@ -1799,7 +1918,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>エラー：%1のCSSファイルが-custom-css-dirパスにありません。</translation>
     </message>
     <message>
-        <source>%1 didn't yet exit safely...</source>
+        <source>%1 didn't yet exit safely…</source>
         <translation>%1 はまだ安全に終了していません</translation>
     </message>
     <message>
@@ -1897,14 +2016,14 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>QRコード</translation>
     </message>
     <message>
-        <source>&amp;Save Image...</source>
-        <translation>画像を保存...(&amp;S)</translation>
+        <source>&amp;Save Image…</source>
+        <translation>画像を保存…(&amp;S)</translation>
     </message>
 </context>
 <context>
     <name>QRImageWidget</name>
     <message>
-        <source>&amp;Save Image...</source>
+        <source>&amp;Save Image…</source>
         <translation>画像を保存… (&amp;S)</translation>
     </message>
     <message>
@@ -2023,10 +2142,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>詳細を確認したいピアを選択してください。</translation>
     </message>
     <message>
-        <source>Direction</source>
-        <translation>ディレクション</translation>
-    </message>
-    <message>
         <source>Version</source>
         <translation>バージョン</translation>
     </message>
@@ -2093,10 +2208,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Services</source>
         <translation>サービス</translation>
-    </message>
-    <message>
-        <source>Ban Score</source>
-        <translation>Banスコア</translation>
     </message>
     <message>
         <source>Connection Time</source>
@@ -2215,18 +2326,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>%1経由</translation>
     </message>
     <message>
-        <source>never</source>
-        <translation>一度もなし</translation>
-    </message>
-    <message>
-        <source>Inbound</source>
-        <translation>インバウンド</translation>
-    </message>
-    <message>
-        <source>Outbound</source>
-        <translation>アウトバウンド</translation>
-    </message>
-    <message>
         <source>Regular</source>
         <translation>通常</translation>
     </message>
@@ -2242,7 +2341,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Unknown</source>
         <translation>未知</translation>
     </message>
-</context>
+    </context>
 <context>
     <name>ReceiveCoinsDialog</name>
     <message>
@@ -2325,7 +2424,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Copy amount</source>
         <translation>総額のコピー</translation>
     </message>
-</context>
+    </context>
 <context>
     <name>ReceiveRequestDialog</name>
     <message>
@@ -2337,7 +2436,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>アドレスをコピー(&amp;A)</translation>
     </message>
     <message>
-        <source>&amp;Save Image...</source>
+        <source>&amp;Save Image…</source>
         <translation>画像を保存… (&amp;S)</translation>
     </message>
     <message>
@@ -2391,10 +2490,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>コインコントロール機能</translation>
     </message>
     <message>
-        <source>Inputs...</source>
-        <translation>インプット…</translation>
-    </message>
-    <message>
         <source>automatically selected</source>
         <translation>自動選択</translation>
     </message>
@@ -2423,6 +2518,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>ダスト：</translation>
     </message>
     <message>
+        <source>Inputs…</source>
+        <translation>インプット…</translation>
+    </message>
+    <message>
         <source>After Fee:</source>
         <translation>手数料差引後：</translation>
     </message>
@@ -2443,12 +2542,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>トランザクション手数料：</translation>
     </message>
     <message>
-        <source>Choose...</source>
-        <translation>選択…</translation>
-    </message>
-    <message>
-        <source>collapse fee-settings</source>
-        <translation>手数料設定を非表示</translation>
+        <source>(Smart fee not initialized yet. This usually takes a few blocks…)</source>
+        <translation>（スマート手数料はまだ初期化されていません。これには約数ブロックほどかかります…）</translation>
     </message>
     <message>
         <source>Confirmation time target:</source>
@@ -2467,6 +2562,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>フォールバックフィーを使用すると、承認に数時間から数日かかる（あるいは承認されない）トランザクションが送信される可能性があります。手数料を手動で選択するか、ブロックチェーン全体の検証が完了するまで待ってください。</translation>
     </message>
     <message>
+        <source>Choose…</source>
+        <translation>選択…</translation>
+    </message>
+    <message>
         <source>Note: Not enough data for fee estimation, using the fallback fee instead.</source>
         <translation>注：フォールバックフィーを代わりに使用しているので、手数料の見積もりに十分なデータがありません。</translation>
     </message>
@@ -2481,10 +2580,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Custom:</source>
         <translation>カスタム：</translation>
-    </message>
-    <message>
-        <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
-        <translation>（スマート手数料はまだ初期化されていません。これには約数ブロックほどかかります…）</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
@@ -2717,8 +2812,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
 <context>
     <name>ShutdownWindow</name>
     <message>
-        <source>%1 is shutting down...</source>
-        <translation>%1 をシャットダウンしています...</translation>
+        <source>%1 is shutting down…</source>
+        <translation>%1 をシャットダウンしています…</translation>
     </message>
     <message>
         <source>Do not shut down the computer until this window disappears.</source>
@@ -3175,7 +3270,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>今年</translation>
     </message>
     <message>
-        <source>Range...</source>
+        <source>Range…</source>
         <translation>期間…</translation>
     </message>
     <message>
@@ -3469,26 +3564,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>リクエストキャッシュの読み込み失敗：</translation>
     </message>
     <message>
-        <source>Failed to load governance cache from</source>
-        <translation>ガバナンスキャッシュの読み込み失敗：</translation>
-    </message>
-    <message>
-        <source>Failed to load masternode cache from</source>
-        <translation>マスターノードキャッシュの読み込み失敗：</translation>
-    </message>
-    <message>
-        <source>Found enough users, signing ( waiting %s )</source>
-        <translation>充分なユーザーを発見しました、サインしています ( 待機中 %s )</translation>
-    </message>
-    <message>
-        <source>Found enough users, signing ...</source>
-        <translation>充分なユーザーを発見しました、サインしています </translation>
-    </message>
-    <message>
-        <source>Importing...</source>
-        <translation>インポートしています…</translation>
-    </message>
-    <message>
         <source>Incompatible mode.</source>
         <translation>非互換性モード</translation>
     </message>
@@ -3525,16 +3600,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>-minsporkkeysで指定されたスポーク署名者の最小数が無効です</translation>
     </message>
     <message>
-        <source>Loading banlist...</source>
-        <translation>banリストを読み込んでいます...</translation>
-    </message>
-    <message>
         <source>Lock is already in place.</source>
         <translation>すでにロックされています</translation>
-    </message>
-    <message>
-        <source>Mixing in progress...</source>
-        <translation>ミキシング中...</translation>
     </message>
     <message>
         <source>Need to specify a port with -whitebind: '%s'</source>
@@ -3553,12 +3620,36 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>マスターノードリストにありません</translation>
     </message>
     <message>
+        <source>Pruning blockstore…</source>
+        <translation>ブロックストアを剪定しています…</translation>
+    </message>
+    <message>
+        <source>Replaying blocks…</source>
+        <translation>ブロックをリプレイ中…</translation>
+    </message>
+    <message>
+        <source>Rescanning…</source>
+        <translation>再スキャン中…</translation>
+    </message>
+    <message>
+        <source>Starting network threads…</source>
+        <translation>ネットワークのスレッドを起動しています…</translation>
+    </message>
+    <message>
         <source>Submitted to masternode, waiting in queue %s</source>
         <translation>マスターノードにサブミット、待機中 %s</translation>
     </message>
     <message>
         <source>Synchronization finished</source>
         <translation>同期完了</translation>
+    </message>
+    <message>
+        <source>Synchronizing blockchain…</source>
+        <translation>ブロックチェーンの同期中…</translation>
+    </message>
+    <message>
+        <source>Synchronizing governance objects…</source>
+        <translation>ガバナンスオブジェクトを同期中…</translation>
     </message>
     <message>
         <source>Unable to start HTTP server. See debug log for details.</source>
@@ -3571,26 +3662,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Unsupported argument -benchmark ignored, use -debug=bench.</source>
         <translation>サポートされていない引数 -benchmark は無視されました。-debug=bench を使用してください。</translation>
-    </message>
-    <message>
-        <source>Unsupported argument -debugnet ignored, use -debug=net.</source>
-        <translation>サポートされていない引数 -debugnet は無視されました。-debug=net を使用してください。</translation>
-    </message>
-    <message>
-        <source>Unsupported argument -tor found, use -onion.</source>
-        <translation>サポートされていない引数 -tor が見つかりました。-onion を使用してください。</translation>
-    </message>
-    <message>
-        <source>User Agent comment (%s) contains unsafe characters.</source>
-        <translation>ユーザーエージェントのコメント (%s) には安全でない文字が含まれています。</translation>
-    </message>
-    <message>
-        <source>Verifying wallet(s)...</source>
-        <translation>ウォレットを検証中…</translation>
-    </message>
-    <message>
-        <source>Will retry...</source>
-        <translation>再試行...</translation>
     </message>
     <message>
         <source>Can't find random Masternode.</source>
@@ -3685,10 +3756,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>エラー：%sのディスク容量が不足しています</translation>
     </message>
     <message>
-        <source>Error: failed to add socket to epollfd (epoll_ctl returned error %s)</source>
-        <translation>エラー：epollfdへのソケットの追加に失敗しました（epoll_ctlは、%sのエラーを返しました）</translation>
-    </message>
-    <message>
         <source>Exceeded max tries.</source>
         <translation>最大試行回数を超えました。</translation>
     </message>
@@ -3709,8 +3776,16 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>バックアップ削除失敗、エラー: %s</translation>
     </message>
     <message>
-        <source>Failed to load sporks cache from</source>
-        <translation>スポークキャッシュの読み込み失敗：</translation>
+        <source>Failed to rescan the wallet during initialization</source>
+        <translation>初期化中にウォレットの再スキャンに失敗しました</translation>
+    </message>
+    <message>
+        <source>Found enough users, signing…</source>
+        <translation>充分なユーザーを発見しました、サインしています </translation>
+    </message>
+    <message>
+        <source>Invalid P2P permission: '%s'</source>
+        <translation>無効なP2P許可：「%s」</translation>
     </message>
     <message>
         <source>Invalid amount for -fallbackfee=&lt;amount&gt;: '%s'</source>
@@ -3719,14 +3794,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Invalid masternodeblsprivkey. Please see documentation.</source>
         <translation>マスターノードBLS秘密鍵が無効です。ドキュメントをお読み下さい。</translation>
-    </message>
-    <message>
-        <source>Loading block index...</source>
-        <translation>ブロックインデックスを読み込んでいます…</translation>
-    </message>
-    <message>
-        <source>Loading wallet...</source>
-        <translation>ウォレットを読み込んでいます…</translation>
     </message>
     <message>
         <source>Masternode queue is full.</source>
@@ -3739,6 +3806,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Missing input transaction information.</source>
         <translation>不明なインプットトランザクション情報</translation>
+    </message>
+    <message>
+        <source>Mixing in progress…</source>
+        <translation>ミキシング中…</translation>
     </message>
     <message>
         <source>No errors detected.</source>
@@ -3769,12 +3840,20 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>剪定モードは-txindexと互換性がありません。</translation>
     </message>
     <message>
-        <source>Pruning blockstore...</source>
-        <translation>ブロックストアを剪定しています…</translation>
+        <source>Section [%s] is not recognized.</source>
+        <translation>[%s]のセクションは認識されません。</translation>
     </message>
     <message>
-        <source>Synchronizing blockchain...</source>
-        <translation>ブロックチェーンの同期中…</translation>
+        <source>Specified -walletdir "%s" does not exist</source>
+        <translation>指定された-walletdirの「%s」は存在しません</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" is a relative path</source>
+        <translation>指定された-walletdirの「%s」は相対パスです</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" is not a directory</source>
+        <translation>指定された-walletdirの「%s」はディレクトリではありません</translation>
     </message>
     <message>
         <source>The wallet will avoid paying less than the minimum relay fee.</source>
@@ -3805,16 +3884,32 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>トランザクション量が大きすぎます。</translation>
     </message>
     <message>
-        <source>Trying to connect...</source>
-        <translation>接続中です...</translation>
-    </message>
-    <message>
         <source>Unable to bind to %s on this computer. %s is probably already running.</source>
         <translation>このコンピュータの %s にバインドすることができません。おそらく %s は既に実行されています。</translation>
     </message>
     <message>
+        <source>Unable to create the PID file '%s': %s</source>
+        <translation>PIDファイルの「%s」を作成できません：%s</translation>
+    </message>
+    <message>
+        <source>Unable to generate initial keys</source>
+        <translation>初期キーが生成できません</translation>
+    </message>
+    <message>
+        <source>Unknown -blockfilterindex value %s.</source>
+        <translation>%sは、不明な-blockfilterindexの値です。</translation>
+    </message>
+    <message>
         <source>Upgrading UTXO database</source>
         <translation>UTXOデータベースを更新しています</translation>
+    </message>
+    <message>
+        <source>Verifying blocks…</source>
+        <translation>ブロックの検証中…</translation>
+    </message>
+    <message>
+        <source>Verifying wallet(s)…</source>
+        <translation>ウォレットを検証中…</translation>
     </message>
     <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
@@ -3945,12 +4040,48 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>チェーンステートデータベースのアップグレードエラー</translation>
     </message>
     <message>
+        <source>Loading P2P addresses…</source>
+        <translation>P2Pアドレスを読み込んでいます…</translation>
+    </message>
+    <message>
+        <source>Loading banlist…</source>
+        <translation>banリストを読み込んでいます…</translation>
+    </message>
+    <message>
+        <source>Loading block index…</source>
+        <translation>ブロックインデックスを読み込んでいます…</translation>
+    </message>
+    <message>
+        <source>Loading wallet…</source>
+        <translation>ウォレットを読み込んでいます…</translation>
+    </message>
+    <message>
+        <source>Failed to clear fulfilled requests cache at %s</source>
+        <translation>%sで、完了したリクエストのキャッシュの削除に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to clear governance cache at %s</source>
+        <translation>%sで、ガバナンスのキャッシュの削除に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to clear masternode cache at %s</source>
+        <translation>%sで、マスタノードのキャッシュの削除に失敗しました</translation>
+    </message>
+    <message>
         <source>Failed to find mixing queue to join</source>
         <translation>ミキシングキューの検出に失敗</translation>
     </message>
     <message>
         <source>Failed to start a new mixing queue</source>
         <translation>新しいミキシングキューの開始に失敗</translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation>インポートしています…</translation>
+    </message>
+    <message>
+        <source>Incorrect -rescan mode, falling back to default value</source>
+        <translation>再スキャンモードが正しくないため、デフォルト値に戻ります</translation>
     </message>
     <message>
         <source>Initialization sanity check failed. %s is shutting down.</source>
@@ -3977,20 +4108,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>-sporkaddrに指定された無効なスポークアドレスI</translation>
     </message>
     <message>
-        <source>Loading P2P addresses...</source>
-        <translation>P2Pアドレスを読み込んでいます...</translation>
-    </message>
-    <message>
         <source>Reducing -maxconnections from %d to %d, because of system limitations.</source>
         <translation>システム上の制約から、-maxconnections を %d から %d に削減します。</translation>
-    </message>
-    <message>
-        <source>Replaying blocks...</source>
-        <translation>ブロックをリプレイ中…</translation>
-    </message>
-    <message>
-        <source>Rescanning...</source>
-        <translation>再スキャン中…</translation>
     </message>
     <message>
         <source>Session not complete!</source>
@@ -4021,14 +4140,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>直近の成功したアクションが最新過ぎでした。</translation>
     </message>
     <message>
-        <source>Starting network threads...</source>
-        <translation>ネットワークのスレッドを起動しています...</translation>
-    </message>
-    <message>
-        <source>Synchronizing governance objects...</source>
-        <translation>ガバナンスオブジェクトを同期中...</translation>
-    </message>
-    <message>
         <source>The source code is available from %s.</source>
         <translation>ソースコードは %s より入手可能です。</translation>
     </message>
@@ -4057,8 +4168,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>トランザクションが無効です</translation>
     </message>
     <message>
-        <source>Transaction too large for fee policy</source>
-        <translation>手数料ポリシーに対してトランザクションが大きすぎます</translation>
+        <source>Trying to connect…</source>
+        <translation>接続中です…</translation>
     </message>
     <message>
         <source>Unable to bind to %s on this computer (bind returned error %s)</source>
@@ -4081,8 +4192,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>サポートされていないロギングカテゴリ %s=%s.</translation>
     </message>
     <message>
-        <source>Verifying blocks...</source>
-        <translation>ブロックの検証中…</translation>
+        <source>Upgrading txindex database</source>
+        <translation>txindexデータベースのアップグレード</translation>
     </message>
     <message>
         <source>Very low number of keys left: %d</source>
@@ -4093,8 +4204,24 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>ウォレットはロックされています。</translation>
     </message>
     <message>
-        <source>Warning</source>
-        <translation>警告</translation>
+        <source>Warning: can't use %s and %s together, will prefer %s</source>
+        <translation>警告：%sと%sを一緒に使うことはできません。%sを優先します。</translation>
+    </message>
+    <message>
+        <source>Warning: incorrect parameter %s, path must exist! Using default path.</source>
+        <translation>警告：パラメータの%sが正しくありません。パスは必須となります。デフォルトのパスを使用しています。</translation>
+    </message>
+    <message>
+        <source>Will retry…</source>
+        <translation>再試行…</translation>
+    </message>
+    <message>
+        <source>You are starting with governance validation disabled.</source>
+        <translation>お客様はガバナンスの検証を無効にした状態で開始しています。</translation>
+    </message>
+    <message>
+        <source>You can not disable governance validation on a masternode.</source>
+        <translation>マスターノードでガバナンスの検証を無効化することはできません。</translation>
     </message>
     <message>
         <source>Your entries added successfully.</source>

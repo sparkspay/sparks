@@ -13,12 +13,17 @@
 
 #include <univalue.h>
 
-class CBLSSecretKey;
+class CActiveMasternodeManager;
 class CBLSPublicKey;
-class CNode;
-
+class CDeterministicMNList;
+class CGovernanceManager;
 class CGovernanceObject;
 class CGovernanceVote;
+class ChainstateManager;
+class CMasternodeMetaMan;
+class CMasternodeSync;
+class CNode;
+class PeerManager;
 
 extern RecursiveMutex cs_main;
 
@@ -216,23 +221,23 @@ public:
     // Signature related functions
 
     void SetMasternodeOutpoint(const COutPoint& outpoint);
-    bool Sign(const CBLSSecretKey& key);
+    bool Sign(const CActiveMasternodeManager& mn_activeman);
     bool CheckSignature(const CBLSPublicKey& pubKey) const;
 
     uint256 GetSignatureHash() const;
 
     // CORE OBJECT FUNCTIONS
 
-    bool IsValidLocally(std::string& strError, bool fCheckCollateral) const EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+    bool IsValidLocally(const CDeterministicMNList& tip_mn_list, const ChainstateManager& chainman, std::string& strError, bool fCheckCollateral) const EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
-    bool IsValidLocally(std::string& strError, bool& fMissingConfirmations, bool fCheckCollateral) const EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+    bool IsValidLocally(const CDeterministicMNList& tip_mn_list, const ChainstateManager& chainman, std::string& strError, bool& fMissingConfirmations, bool fCheckCollateral) const EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
     /// Check the collateral transaction for the budget proposal/finalized budget
-    bool IsCollateralValid(std::string& strError, bool& fMissingConfirmations) const EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+    bool IsCollateralValid(const ChainstateManager& chainman, std::string& strError, bool& fMissingConfirmations) const EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
-    void UpdateLocalValidity();
+    void UpdateLocalValidity(const CDeterministicMNList& tip_mn_list, const ChainstateManager& chainman);
 
-    void UpdateSentinelVariables();
+    void UpdateSentinelVariables(const CDeterministicMNList& tip_mn_list);
 
     void PrepareDeletion(int64_t nDeletionTime_)
     {
@@ -246,20 +251,20 @@ public:
 
     UniValue GetJSONObject() const;
 
-    void Relay(CConnman& connman) const;
+    void Relay(PeerManager& peerman, const CMasternodeSync& mn_sync) const;
 
     uint256 GetHash() const;
     uint256 GetDataHash() const;
 
     // GET VOTE COUNT FOR SIGNAL
 
-    int CountMatchingVotes(vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn) const;
+    int CountMatchingVotes(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn) const;
 
-    int GetAbsoluteYesCount(vote_signal_enum_t eVoteSignalIn) const;
-    int GetAbsoluteNoCount(vote_signal_enum_t eVoteSignalIn) const;
-    int GetYesCount(vote_signal_enum_t eVoteSignalIn) const;
-    int GetNoCount(vote_signal_enum_t eVoteSignalIn) const;
-    int GetAbstainCount(vote_signal_enum_t eVoteSignalIn) const;
+    int GetAbsoluteYesCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const;
+    int GetAbsoluteNoCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const;
+    int GetYesCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const;
+    int GetNoCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const;
+    int GetAbstainCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const;
 
     bool GetCurrentMNVotes(const COutPoint& mnCollateralOutpoint, vote_rec_t& voteRecord) const;
 
@@ -288,16 +293,17 @@ public:
     void LoadData();
     void GetData(UniValue& objResult) const;
 
-    bool ProcessVote(const CGovernanceVote& vote, CGovernanceException& exception);
+    bool ProcessVote(CMasternodeMetaMan& mn_metaman, CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list,
+                     const CGovernanceVote& vote, CGovernanceException& exception);
 
     /// Called when MN's which have voted on this object have been removed
-    void ClearMasternodeVotes();
+    void ClearMasternodeVotes(const CDeterministicMNList& tip_mn_list);
 
     // Revalidate all votes from this MN and delete them if validation fails.
     // This is the case for DIP3 MNs that changed voting or operator keys and
     // also for MNs that were removed from the list completely.
     // Returns deleted vote hashes.
-    std::set<uint256> RemoveInvalidVotes(const COutPoint& mnOutpoint);
+    std::set<uint256> RemoveInvalidVotes(const CDeterministicMNList& tip_mn_list, const COutPoint& mnOutpoint);
 };
 
 

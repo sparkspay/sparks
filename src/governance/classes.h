@@ -10,44 +10,16 @@
 #include <script/standard.h>
 #include <uint256.h>
 
+class CChain;
+class CGovernanceManager;
+class CSuperblock;
+class CSuperblockManager;
 class CTxOut;
 class CTransaction;
 
-class CSuperblock;
-class CGovernanceManager;
-class CGovernanceTriggerManager;
-class CSuperblockManager;
-
 using CSuperblock_sptr = std::shared_ptr<CSuperblock>;
 
-// DECLARE GLOBAL VARIABLES FOR GOVERNANCE CLASSES
-extern CGovernanceTriggerManager triggerman;
-
 CAmount ParsePaymentAmount(const std::string& strAmount);
-
-/**
-*   Trigger Manager
-*
-*   - Track governance objects which are triggers
-*   - After triggers are activated and executed, they can be removed
-*/
-
-class CGovernanceTriggerManager
-{
-    friend class CSuperblockManager;
-    friend class CGovernanceManager;
-
-private:
-    std::map<uint256, CSuperblock_sptr> mapTrigger;
-
-    std::vector<CSuperblock_sptr> GetActiveTriggers();
-    bool AddNewTrigger(uint256 nHash);
-    void CleanAndRemove();
-
-public:
-    CGovernanceTriggerManager() :
-        mapTrigger() {}
-};
 
 /**
 *   Superblock Manager
@@ -58,15 +30,15 @@ public:
 class CSuperblockManager
 {
 private:
-    static bool GetBestSuperblock(CGovernanceManager& governanceManager, CSuperblock_sptr& pSuperblockRet, int nBlockHeight);
+    static bool GetBestSuperblock(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, CSuperblock_sptr& pSuperblockRet, int nBlockHeight);
 
 public:
-    static bool IsSuperblockTriggered(CGovernanceManager& governanceManager, int nBlockHeight);
+    static bool IsSuperblockTriggered(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight);
 
-    static bool GetSuperblockPayments(CGovernanceManager& governanceManager, int nBlockHeight, std::vector<CTxOut>& voutSuperblockRet);
-    static void ExecuteBestSuperblock(CGovernanceManager& governanceManager, int nBlockHeight);
+    static bool GetSuperblockPayments(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight, std::vector<CTxOut>& voutSuperblockRet);
+    static void ExecuteBestSuperblock(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight);
 
-    static bool IsValid(CGovernanceManager& governanceManager, const CTransaction& txNew, int nBlockHeight, CAmount blockReward);
+    static bool IsValid(CGovernanceManager& govman, const CChain& active_chain, const CDeterministicMNList& tip_mn_list, const CTransaction& txNew, int nBlockHeight, CAmount blockReward);
 };
 
 /**
@@ -129,11 +101,11 @@ private:
 public:
     CSuperblock();
     CSuperblock(int nBlockHeight, std::vector<CGovernancePayment> vecPayments);
-    explicit CSuperblock(uint256& nHash);
+    explicit CSuperblock(CGovernanceManager& govman, uint256& nHash);
 
     static bool IsValidBlockHeight(int nBlockHeight);
     static void GetNearestSuperblocksHeights(int nBlockHeight, int& nLastSuperblockRet, int& nNextSuperblockRet);
-    static CAmount GetPaymentsLimit(int nBlockHeight);
+    static CAmount GetPaymentsLimit(const CChain& active_chain, int nBlockHeight);
 
     SeenObjectStatus GetStatus() const { return nStatus; }
     void SetStatus(SeenObjectStatus nStatusIn) { nStatus = nStatusIn; }
@@ -143,7 +115,7 @@ public:
     // TELL THE ENGINE WE EXECUTED THIS EVENT
     void SetExecuted() { nStatus = SeenObjectStatus::Executed; }
 
-    CGovernanceObject* GetGovernanceObject(CGovernanceManager& governanceManager);
+    CGovernanceObject* GetGovernanceObject(CGovernanceManager& govman);
 
     int GetBlockHeight() const
     {
@@ -154,8 +126,8 @@ public:
     bool GetPayment(int nPaymentIndex, CGovernancePayment& paymentRet);
     CAmount GetPaymentsTotalAmount();
 
-    bool IsValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward);
-    bool IsExpired(const CGovernanceManager& governanceManager) const;
+    bool IsValid(CGovernanceManager& govman, const CChain& active_chain, const CTransaction& txNew, int nBlockHeight, CAmount blockReward);
+    bool IsExpired(const CGovernanceManager& govman) const;
 
     std::vector<uint256> GetProposalHashes() const;
 };

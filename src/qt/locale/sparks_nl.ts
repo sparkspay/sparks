@@ -286,6 +286,9 @@
     </message>
 </context>
 <context>
+    <name>BitcoinApplication</name>
+    </context>
+<context>
     <name>BitcoinGUI</name>
     <message>
         <source>&amp;Overview</source>
@@ -308,8 +311,80 @@
         <translation>&amp;Ontvangen</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and sparks: URIs)</source>
-        <translation>Vraag betaling aan (genereert QR-codes en Sparks: URI's)</translation>
+        <source>Request payments (generates QR codes and dash: URIs)</source>
+        <translation>Vraag betaling aan (genereert QR-codes en Dash: URI's)</translation>
+    </message>
+    <message>
+        <source>&amp;Options…</source>
+        <translation>&amp;Opties…</translation>
+    </message>
+    <message>
+        <source>&amp;Encrypt Wallet…</source>
+        <translation>&amp;Versleutel portemonnee…</translation>
+    </message>
+    <message>
+        <source>&amp;Backup Wallet…</source>
+        <translation>&amp;Backup portemonnee…</translation>
+    </message>
+    <message>
+        <source>&amp;Change Passphrase…</source>
+        <translation>&amp;Wijzig wachtwoordzin…</translation>
+    </message>
+    <message>
+        <source>&amp;Unlock Wallet…</source>
+        <translation>&amp;Ontgrendel portemonnee…</translation>
+    </message>
+    <message>
+        <source>Sign &amp;message…</source>
+        <translation>Onderteken &amp;bericht</translation>
+    </message>
+    <message>
+        <source>&amp;Verify message…</source>
+        <translation>&amp;Verifieer handtekening</translation>
+    </message>
+    <message>
+        <source>&amp;Sending addresses</source>
+        <translation>&amp;Verzendadressen</translation>
+    </message>
+    <message>
+        <source>&amp;Receiving addresses</source>
+        <translation>&amp;Ontvangstadressen</translation>
+    </message>
+    <message>
+        <source>Open &amp;URI…</source>
+        <translation>Open &amp;URI</translation>
+    </message>
+    <message>
+        <source>Open Wallet</source>
+        <translation>portemonnee openen</translation>
+    </message>
+    <message>
+        <source>Open a wallet</source>
+        <translation>Open een portemonnee</translation>
+    </message>
+    <message>
+        <source>Close wallet</source>
+        <translation>Portemonnee sluiten</translation>
+    </message>
+    <message>
+        <source>No wallets available</source>
+        <translation>Geen portemonnees beschikbaar</translation>
+    </message>
+    <message>
+        <source>&amp;Window</source>
+        <translation>&amp;Scherm</translation>
+    </message>
+    <message>
+        <source>Minimize</source>
+        <translation>Minimaliseer </translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation>Zoom</translation>
+    </message>
+    <message>
+        <source>Main Window</source>
+        <translation>Hoofd venster</translation>
     </message>
     <message>
         <source>&amp;Transactions</source>
@@ -348,10 +423,6 @@
         <translation>Toon informatie over Qt</translation>
     </message>
     <message>
-        <source>&amp;Options...</source>
-        <translation>&amp;Opties...</translation>
-    </message>
-    <message>
         <source>&amp;About %1</source>
         <translation>&amp;Over %1</translation>
     </message>
@@ -372,32 +443,16 @@
         <translation>Toon of verberg het hoofdscherm</translation>
     </message>
     <message>
-        <source>&amp;Encrypt Wallet...</source>
-        <translation>&amp;Versleutel portemonnee...</translation>
-    </message>
-    <message>
         <source>Encrypt the private keys that belong to your wallet</source>
         <translation>Versleutel de geheime sleutels die behoren tot uw portemonnee</translation>
-    </message>
-    <message>
-        <source>&amp;Backup Wallet...</source>
-        <translation>&amp;Backup portemonnee...</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
         <translation>Backup portemonnee naar een andere locatie</translation>
     </message>
     <message>
-        <source>&amp;Change Passphrase...</source>
-        <translation>&amp;Wijzig wachtwoordzin...</translation>
-    </message>
-    <message>
         <source>Change the passphrase used for wallet encryption</source>
         <translation>Wijzig de wachtwoordzin die wordt gebruikt voor portemonneeversleuteling</translation>
-    </message>
-    <message>
-        <source>&amp;Unlock Wallet...</source>
-        <translation>&amp;Ontgrendel portemonnee...</translation>
     </message>
     <message>
         <source>Unlock wallet</source>
@@ -408,20 +463,12 @@
         <translation>&amp;Portemonnee vergrendelen</translation>
     </message>
     <message>
-        <source>Sign &amp;message...</source>
-        <translation>Onderteken &amp;bericht</translation>
+        <source>Sign messages with your Dash addresses to prove you own them</source>
+        <translation>Onderteken berichten met uw Dashadressen om te bewijzen dat u deze adressen bezit.</translation>
     </message>
     <message>
-        <source>Sign messages with your Sparks addresses to prove you own them</source>
-        <translation>Onderteken berichten met uw Sparksadressen om te bewijzen dat u deze adressen bezit.</translation>
-    </message>
-    <message>
-        <source>&amp;Verify message...</source>
-        <translation>&amp;Verifieer handtekening</translation>
-    </message>
-    <message>
-        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
-        <translation>Verifieer handtekeningen om zeker te zijn dat de berichten zijn ondertekend met de gespecificeerde Sparksadressen.</translation>
+        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
+        <translation>Verifieer handtekeningen om zeker te zijn dat de berichten zijn ondertekend met de gespecificeerde Dashadressen.</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -492,10 +539,6 @@
         <translation>Toon de lijst met gebruikte ontvangstadressen en labels</translation>
     </message>
     <message>
-        <source>Open &amp;URI...</source>
-        <translation>Open &amp;URI</translation>
-    </message>
-    <message>
         <source>&amp;Command-line options</source>
         <translation>&amp;Command-line opties</translation>
     </message>
@@ -522,6 +565,14 @@
         <translation>&amp;Bestand</translation>
     </message>
     <message>
+        <source>Show information about %1</source>
+        <translation>Toon informatie over %1</translation>
+    </message>
+    <message>
+        <source>Create a new wallet</source>
+        <translation>Maak een nieuwe portemonnee aan</translation>
+    </message>
+    <message>
         <source>%1 &amp;information</source>
         <translation>%1 &amp;Informatie</translation>
     </message>
@@ -545,37 +596,21 @@
         <source>Tabs toolbar</source>
         <translation>Tab-werkbalk</translation>
     </message>
+    <message>
+        <source>&amp;Governance</source>
+        <translation>&amp;Governance</translation>
+    </message>
+    <message>
+        <source>View Governance Proposals</source>
+        <translation>Governance voorstellen bekijken</translation>
+    </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Sparks network</source>
-        <translation><numerusform>%n actieve verbinding met het Sparks netwerk</numerusform><numerusform>%n actieve verbindingen met het Sparks netwerk</numerusform></translation>
+        <source>%n active connection(s) to Dash network</source>
+        <translation><numerusform>%n actieve verbinding met het Dash netwerk</numerusform><numerusform>%n actieve verbindingen met het Dash netwerk</numerusform></translation>
     </message>
     <message>
         <source>Network activity disabled</source>
-        <translation>Netwerk activiteit uitgeschakeld</translation>
-    </message>
-    <message>
-        <source>Syncing Headers (%1%)...</source>
-        <translation>Kopteksten synchroniseren (%1%)...</translation>
-    </message>
-    <message>
-        <source>Synchronizing with network...</source>
-        <translation>Synchroniseren met het netwerk...</translation>
-    </message>
-    <message>
-        <source>Indexing blocks on disk...</source>
-        <translation>Bezig met indexeren van blocks op harde schijf...</translation>
-    </message>
-    <message>
-        <source>Processing blocks on disk...</source>
-        <translation>Bezig met verwerken van blocks op harde schijf...</translation>
-    </message>
-    <message>
-        <source>Reindexing blocks on disk...</source>
-        <translation>Bezig met herindexeren van blocks op harde schijf...</translation>
-    </message>
-    <message>
-        <source>Connecting to peers...</source>
-        <translation>Verbinden met peers...</translation>
+        <translation>Netwerkactiviteit is uitgeschakeld</translation>
     </message>
     <message numerus="yes">
         <source>Processed %n block(s) of transaction history.</source>
@@ -586,8 +621,40 @@
         <translation>%1 achter</translation>
     </message>
     <message>
-        <source>Catching up...</source>
-        <translation>Aan het bijwerken...</translation>
+        <source>Close Wallet…</source>
+        <translation>Portemonnee sluiten…</translation>
+    </message>
+    <message>
+        <source>Create Wallet…</source>
+        <translation>Portemonnee aanmaken…</translation>
+    </message>
+    <message>
+        <source>Syncing Headers (%1%)…</source>
+        <translation>Kopteksten synchroniseren (%1%)…</translation>
+    </message>
+    <message>
+        <source>Synchronizing with network…</source>
+        <translation>Synchroniseren met het netwerk…</translation>
+    </message>
+    <message>
+        <source>Indexing blocks on disk…</source>
+        <translation>Bezig met indexeren van blocks op harde schijf…</translation>
+    </message>
+    <message>
+        <source>Processing blocks on disk…</source>
+        <translation>Bezig met verwerken van blocks op harde schijf…</translation>
+    </message>
+    <message>
+        <source>Reindexing blocks on disk…</source>
+        <translation>Bezig met herindexeren van blocks op harde schijf…</translation>
+    </message>
+    <message>
+        <source>Connecting to peers…</source>
+        <translation>Verbinden met peers…</translation>
+    </message>
+    <message>
+        <source>Catching up…</source>
+        <translation>Aan het bijwerken…</translation>
     </message>
     <message>
         <source>Last received block was generated %1 ago.</source>
@@ -703,7 +770,7 @@
         <source>Original message:</source>
         <translation>Originele bericht:</translation>
     </message>
-    </context>
+</context>
 <context>
     <name>CoinControlDialog</name>
     <message>
@@ -896,6 +963,60 @@
     </message>
 </context>
 <context>
+    <name>CreateWalletActivity</name>
+    <message>
+        <source>Creating Wallet &lt;b&gt;%1&lt;/b&gt;…</source>
+        <translation>Portemonnee &lt;b&gt;%1&lt;/b&gt; wordt aangemaakt…</translation>
+    </message>
+    <message>
+        <source>Create wallet failed</source>
+        <translation>Portemonnee aanmaken mislukt</translation>
+    </message>
+    <message>
+        <source>Create wallet warning</source>
+        <translation>Waarschuwing portemonnee aanmaken</translation>
+    </message>
+</context>
+<context>
+    <name>CreateWalletDialog</name>
+    <message>
+        <source>Create Wallet</source>
+        <translation>Portemonnee aanmaken</translation>
+    </message>
+    <message>
+        <source>Wallet Name</source>
+        <translation>Portemonnee naam</translation>
+    </message>
+    <message>
+        <source>Encrypt the wallet. The wallet will be encrypted with a passphrase of your choice.</source>
+        <translation>Versleutel de portemonnee. De portemonnee wordt versleuteld met een wachtwoordzin naar keuze.</translation>
+    </message>
+    <message>
+        <source>Encrypt Wallet</source>
+        <translation>Portemonnee versleutelen</translation>
+    </message>
+    <message>
+        <source>Disable private keys for this wallet. Wallets with private keys disabled will have no private keys and cannot have an HD seed or imported private keys. This is ideal for watch-only wallets.</source>
+        <translation>Schakel privésleutels voor deze portemonnee uit. Portemonnees met uitgeschakelde privésleutels hebben geen privésleutels en kunnen geen HD-seed of geïmporteerde privésleutels hebben. Dit is ideaal voor watch-only portemonnees.</translation>
+    </message>
+    <message>
+        <source>Disable Private Keys</source>
+        <translation>Privésleutels uitschakelen</translation>
+    </message>
+    <message>
+        <source>Make a blank wallet. Blank wallets do not initially have private keys or scripts. Private keys and addresses can be imported, or an HD seed can be set, at a later time.</source>
+        <translation>Maak een lege portemonnee. Lege portemonnees hebben in eerste instantie geen privésleutels of scripts. Deze kunnen op een later tijdstip worden geïmporteerd of er kan een HD-seed worden ingesteld.</translation>
+    </message>
+    <message>
+        <source>Make Blank Wallet</source>
+        <translation>Maak lege portemonnee</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Aanmaken</translation>
+    </message>
+    </context>
+<context>
     <name>EditAddressDialog</name>
     <message>
         <source>Edit Address</source>
@@ -1034,10 +1155,6 @@
         <translation>Omdat dit de eerste keer is dat het programma gestart is, kunt u nu kiezen waar %1 de data moet opslaan.</translation>
     </message>
     <message>
-        <source>When you click OK, %1 will begin to download and process the full %4 block chain (%2GB) starting with the earliest transactions in %3 when %4 initially launched.</source>
-        <translation>Als u op OK klikt, dan zal %1 beginnen met downloaden en verwerken van de volledige %4 blokketen (%2GB) startend met de eerste transacties in %3 toen %4 initeel werd gestart.</translation>
-    </message>
-    <message>
         <source>This initial synchronisation is very demanding, and may expose hardware problems with your computer that had previously gone unnoticed. Each time you run %1, it will continue downloading where it left off.</source>
         <translation>Deze initiële synchronisatie is heel veeleisend, en kan hardware problemen met uw computer blootleggen die voorheen onopgemerkt bleven. Elke keer dat %1 gebruikt word, zal verdergegaan worden waar gebleven is.</translation>
     </message>
@@ -1161,8 +1278,12 @@
         <translation>Kopieer Onderpand Outpoint</translation>
     </message>
     <message>
-        <source>Updating...</source>
-        <translation>Bezig met bijwerken...</translation>
+        <source>Please wait…</source>
+        <translation>Wachten aub…</translation>
+    </message>
+    <message>
+        <source>Updating…</source>
+        <translation>Bezig met bijwerken…</translation>
     </message>
     <message>
         <source>ENABLED</source>
@@ -1197,10 +1318,6 @@
         <translation>Filter op elke eigenschap (bv. adres of protx hash)</translation>
     </message>
     <message>
-        <source>Please wait...</source>
-        <translation>Wachten aub...</translation>
-    </message>
-    <message>
         <source>Additional information for DIP3 Masternode %1</source>
         <translation>Extra informatie voor DIP3 Masternode %1</translation>
     </message>
@@ -1224,8 +1341,12 @@
         <translation>Aantal blocks resterend.</translation>
     </message>
     <message>
-        <source>Unknown...</source>
-        <translation>Onbekend...</translation>
+        <source>Unknown…</source>
+        <translation>Onbekend…</translation>
+    </message>
+    <message>
+        <source>calculating…</source>
+        <translation>Berekenen…</translation>
     </message>
     <message>
         <source>Last block time</source>
@@ -1240,10 +1361,6 @@
         <translation>Vooruitgang per uur</translation>
     </message>
     <message>
-        <source>calculating...</source>
-        <translation>Berekenen...</translation>
-    </message>
-    <message>
         <source>Estimated time left until synced</source>
         <translation>Geschatte tijd tot volledig synchroon</translation>
     </message>
@@ -1252,8 +1369,8 @@
         <translation>Verbergen</translation>
     </message>
     <message>
-        <source>Unknown. Syncing Headers (%1)...</source>
-        <translation>Onbekend. Kopteksten synchroniseren (%1%)...</translation>
+        <source>Unknown. Syncing Headers (%1, %2%)…</source>
+        <translation>Onbekend. Kopteksten synchroniseren (%1, %2%)…</translation>
     </message>
 </context>
 <context>
@@ -1282,8 +1399,8 @@
         <translation>standaard portemonnee</translation>
     </message>
     <message>
-        <source>Opening Wallet &lt;b&gt;%1&lt;/b&gt;...</source>
-        <translation>Portemonnee &lt;b&gt;%1&lt;/b&gt; wordt geopend...</translation>
+        <source>Opening Wallet &lt;b&gt;%1&lt;/b&gt;…</source>
+        <translation>Portemonnee &lt;b&gt;%1&lt;/b&gt; wordt geopend…</translation>
     </message>
 </context>
 <context>
@@ -1413,14 +1530,6 @@
         <translation>Opties die in dit dialoogvenster worden ingesteld, worden overschreven door de opdrachtregel(CLI) of in het configuratiebestand:</translation>
     </message>
     <message>
-        <source>Hide the icon from the system tray.</source>
-        <translation>Verberg het pictogram in het systeemvak.</translation>
-    </message>
-    <message>
-        <source>&amp;Hide tray icon</source>
-        <translation>&amp;Verberg het pictogram in het systeemvak</translation>
-    </message>
-    <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Exit in the menu.</source>
         <translation>Minimaliseren in plaats van de applicatie af te sluiten wanneer het venster is afgesloten. Als deze optie is ingeschakeld, zal de toepassing pas worden afgesloten na het selecteren van Exit in het menu.</translation>
     </message>
@@ -1519,12 +1628,6 @@
     <message>
         <source>The user interface language can be set here. This setting will take effect after restarting %1.</source>
         <translation>De taal van de gebruikersinterface kan hier ingesteld worden. Deze instelling zal pas van kracht worden nadat %1 herstart wordt.</translation>
-    </message>
-    <message>
-        <source>Language missing or translation incomplete? Help contributing translations here:
-https://www.transifex.com/projects/p/sparks/</source>
-        <translation>Is een een taal te kort of een vertaling onvolledig ? Help de vertaling hier: 
-https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>&amp;Unit to show amounts in:</source>
@@ -1833,12 +1936,8 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
         <translation>'sparks://' is geen geldige URI. Gebruik in plaats daarvan 'sparks:'.</translation>
     </message>
     <message>
-        <source>Invalid payment address %1</source>
-        <translation>Ongeldig betalingsadres %1</translation>
-    </message>
-    <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
-        <translation>URI kan niet verwerkt worden! Dit kan het gevolg zijn van een ongeldig Sparks adres of misvormde URI parameters.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
+        <translation>URI kan niet verwerkt worden! Dit kan het gevolg zijn van een ongeldig Dash adres of misvormde URI parameters.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -1849,18 +1948,22 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
     <name>PeerTableModel</name>
     <message>
         <source>User Agent</source>
+        <extracomment>Title of Peers Table column which contains the peer's User Agent string.</extracomment>
         <translation>User Agent</translation>
     </message>
     <message>
         <source>Ping</source>
+        <extracomment>Title of Peers Table column which indicates the current latency of the connection with the peer.</extracomment>
         <translation>Ping</translation>
     </message>
     <message>
         <source>Sent</source>
+        <extracomment>Title of Peers Table column which indicates the total amount of network information we have sent to the peer.</extracomment>
         <translation>Verstuurd</translation>
     </message>
     <message>
         <source>Received</source>
+        <extracomment>Title of Peers Table column which indicates the total amount of network information we have received from the peer.</extracomment>
         <translation>Ontvangen</translation>
     </message>
     </context>
@@ -1953,8 +2056,48 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
         <translation>Toon splash-scherm bij opstarten (standaard: %u)</translation>
     </message>
     <message>
-        <source>%1 didn't yet exit safely...</source>
-        <translation>%1 sloot nog niet veilig af...</translation>
+        <source>Error: Specified data directory "%1" does not exist.</source>
+        <translation>Fout: Opgegeven gegevensmap "%1" bestaat niet.</translation>
+    </message>
+    <message>
+        <source>Error: Cannot parse configuration file: %1.</source>
+        <translation>Fout: Kan configuratiebestand niet verwerken: %1.</translation>
+    </message>
+    <message>
+        <source>Error: %1</source>
+        <translation>Fout: %1</translation>
+    </message>
+    <message>
+        <source>Error: Failed to load application fonts.</source>
+        <translation>Fout: kan lettertypen niet laden.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-family invalid. Valid values: %1.</source>
+        <translation>Fout: opgegeven lettertypefamilie ongeldig. Geldige waarden: %1.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-weight-normal invalid. Valid range %1 to %2.</source>
+        <translation>Fout: opgegeven lettertypegewicht normaal ongeldig. Geldig bereik %1 tot %2.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-weight-bold invalid. Valid range %1 to %2.</source>
+        <translation>Fout: opgegeven lettertypegewicht vet is ongeldig. Geldig bereik %1 tot %2.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-scale invalid. Valid range %1 to %2.</source>
+        <translation>Fout: opgegeven lettertype grootte is ongeldig. Geldig bereik %1 tot %2.</translation>
+    </message>
+    <message>
+        <source>Error: Invalid -custom-css-dir path.</source>
+        <translation>Fout: ongeldig pad van -custom-css-dir.</translation>
+    </message>
+    <message>
+        <source>Error: %1 CSS file(s) missing in -custom-css-dir path.</source>
+        <translation>Fout: %1 CSS-bestand(en) ontbreken in het pad -custom-css-dir.</translation>
+    </message>
+    <message>
+        <source>%1 didn't yet exit safely…</source>
+        <translation>%1 sloot nog niet veilig af…</translation>
     </message>
     <message>
         <source>Amount</source>
@@ -2064,15 +2207,15 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
         <translation>Fout: Kan configuratiebestand niet verwerken: %1. Gebruik enkel de key=value syntax.</translation>
     </message>
     <message>
-        <source>Error: %1</source>
-        <translation>Fout: %1</translation>
+        <source>&amp;Save Image…</source>
+        <translation>&amp;Sla afbeelding op…</translation>
     </message>
 </context>
 <context>
     <name>QRDialog</name>
     <message>
-        <source>QR-Code Title</source>
-        <translation>QR-Code titel</translation>
+        <source>&amp;Save Image…</source>
+        <translation>&amp;Sla afbeelding op…</translation>
     </message>
     <message>
         <source>QR Code</source>
@@ -2206,10 +2349,6 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
         <translation>Selecteer een peer om details te bekijken</translation>
     </message>
     <message>
-        <source>Direction</source>
-        <translation>Richting</translation>
-    </message>
-    <message>
         <source>Version</source>
         <translation>Versie</translation>
     </message>
@@ -2288,10 +2427,6 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
     <message>
         <source>Services</source>
         <translation>Services</translation>
-    </message>
-    <message>
-        <source>Ban Score</source>
-        <translation>Verbanningscore</translation>
     </message>
     <message>
         <source>Connection Time</source>
@@ -2418,18 +2553,6 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
         <translation>via %1</translation>
     </message>
     <message>
-        <source>never</source>
-        <translation>nooit</translation>
-    </message>
-    <message>
-        <source>Inbound</source>
-        <translation>Inkomend</translation>
-    </message>
-    <message>
-        <source>Outbound</source>
-        <translation>Uitgaand</translation>
-    </message>
-    <message>
         <source>Regular</source>
         <translation>Regulier</translation>
     </message>
@@ -2445,7 +2568,7 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
         <source>Unknown</source>
         <translation>onbekend</translation>
     </message>
-</context>
+    </context>
 <context>
     <name>ReceiveCoinsDialog</name>
     <message>
@@ -2537,7 +2660,7 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <source>Copy amount</source>
         <translation>Kopieer bedrag</translation>
     </message>
-</context>
+    </context>
 <context>
     <name>ReceiveRequestDialog</name>
     <message>
@@ -2549,8 +2672,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Kopieer &amp;adres</translation>
     </message>
     <message>
-        <source>&amp;Save Image...</source>
-        <translation>&amp;Sla afbeelding op...</translation>
+        <source>&amp;Save Image…</source>
+        <translation>&amp;Sla afbeelding op…</translation>
     </message>
     <message>
         <source>Request payment to %1</source>
@@ -2603,10 +2726,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Coin controleopties</translation>
     </message>
     <message>
-        <source>Inputs...</source>
-        <translation>Inputs...</translation>
-    </message>
-    <message>
         <source>automatically selected</source>
         <translation>automatisch geselecteerd</translation>
     </message>
@@ -2635,6 +2754,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Stof:</translation>
     </message>
     <message>
+        <source>Inputs…</source>
+        <translation>Inputs…</translation>
+    </message>
+    <message>
         <source>After Fee:</source>
         <translation>Na vergoeding:</translation>
     </message>
@@ -2655,12 +2778,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Transactiekosten</translation>
     </message>
     <message>
-        <source>Choose...</source>
-        <translation>Kies...</translation>
-    </message>
-    <message>
-        <source>collapse fee-settings</source>
-        <translation>Klap de vergoedinginstellingen dicht</translation>
+        <source>(Smart fee not initialized yet. This usually takes a few blocks…)</source>
+        <translation>(Slimme kosten zijn nog niet geïnitialiseerd Dit duurt meestal een paar blocks …)</translation>
     </message>
     <message>
         <source>Confirmation time target:</source>
@@ -2679,6 +2798,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Het gebruik van de terugval vergoeding kan resulteren in het verzenden van een transactie die enkele uren of dagen (of nooit) duurt om te bevestigen. Overweeg uw tarief handmatig te kiezen of wacht tot u de volledige keten hebt gevalideerd.</translation>
     </message>
     <message>
+        <source>Choose…</source>
+        <translation>Kies…</translation>
+    </message>
+    <message>
         <source>Note: Not enough data for fee estimation, using the fallback fee instead.</source>
         <translation>Opmerking: niet genoeg gegevens voor het schatten van de transactievergoeding, in plaats daarvan wordt de terugval vergoeding gebruikte.</translation>
     </message>
@@ -2693,10 +2816,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Custom:</source>
         <translation>Aangepast:</translation>
-    </message>
-    <message>
-        <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
-        <translation>(Slimme kosten zijn nog niet geïnitialiseerd Dit duurt meestal een paar blocks ...)</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
@@ -2965,8 +3084,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
 <context>
     <name>ShutdownWindow</name>
     <message>
-        <source>%1 is shutting down...</source>
-        <translation>%1 is aan het afsluiten...</translation>
+        <source>%1 is shutting down…</source>
+        <translation>%1 is aan het afsluiten…</translation>
     </message>
     <message>
         <source>Do not shut down the computer until this window disappears.</source>
@@ -3487,8 +3606,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Dit jaar</translation>
     </message>
     <message>
-        <source>Range...</source>
-        <translation>Bereik...</translation>
+        <source>Range…</source>
+        <translation>Bereik…</translation>
     </message>
     <message>
         <source>Most Common</source>
@@ -3821,26 +3940,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Fout bij het inladen van de fulfilled requests cache uit</translation>
     </message>
     <message>
-        <source>Failed to load governance cache from</source>
-        <translation>Fout bij het inladen van de governance cache uit</translation>
-    </message>
-    <message>
-        <source>Failed to load masternode cache from</source>
-        <translation>Fout bij het inladen van de masternode cache uit</translation>
-    </message>
-    <message>
-        <source>Found enough users, signing ( waiting %s )</source>
-        <translation>Voldoende gebruikers gevonden, aan het ondertekenen ( wacht %s )</translation>
-    </message>
-    <message>
-        <source>Found enough users, signing ...</source>
-        <translation>Voldoende gebruikers gevonden, aan het ondertekenen ...</translation>
-    </message>
-    <message>
-        <source>Importing...</source>
-        <translation>Importeren...</translation>
-    </message>
-    <message>
         <source>Incompatible mode.</source>
         <translation>Incompatibele modus.</translation>
     </message>
@@ -3877,16 +3976,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Ongeldig minumum aantal spork ondertekenaars zoals ingesteld met -minsporkkeys</translation>
     </message>
     <message>
-        <source>Loading banlist...</source>
-        <translation>Verbanningslijst aan het laden...</translation>
-    </message>
-    <message>
         <source>Lock is already in place.</source>
         <translation>Vergrendeling is al op zijn plaats.</translation>
-    </message>
-    <message>
-        <source>Mixing in progress...</source>
-        <translation>Bezig met mixen...</translation>
     </message>
     <message>
         <source>Need to specify a port with -whitebind: '%s'</source>
@@ -3909,12 +4000,36 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Niet in de Masternode lijst.</translation>
     </message>
     <message>
+        <source>Pruning blockstore…</source>
+        <translation>Terugsnoeien blockstore…</translation>
+    </message>
+    <message>
+        <source>Replaying blocks…</source>
+        <translation>Replaying blocks…</translation>
+    </message>
+    <message>
+        <source>Rescanning…</source>
+        <translation>Opnieuw scannen…</translation>
+    </message>
+    <message>
+        <source>Starting network threads…</source>
+        <translation>Netwerkthread starten…</translation>
+    </message>
+    <message>
         <source>Submitted to masternode, waiting in queue %s</source>
         <translation>Ingediend bij masternode, wachten in de wachtrij %s</translation>
     </message>
     <message>
         <source>Synchronization finished</source>
         <translation>Synchronisatie voltooid</translation>
+    </message>
+    <message>
+        <source>Synchronizing blockchain…</source>
+        <translation>Blokketen aan het synchronizeren…</translation>
+    </message>
+    <message>
+        <source>Synchronizing governance objects…</source>
+        <translation>Synchroniseren governance objecten…</translation>
     </message>
     <message>
         <source>Unable to start HTTP server. See debug log for details.</source>
@@ -3927,26 +4042,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Unsupported argument -benchmark ignored, use -debug=bench.</source>
         <translation>Niet-ondersteund argument -benchmark genegeerd, gebruik -debug=bench.</translation>
-    </message>
-    <message>
-        <source>Unsupported argument -debugnet ignored, use -debug=net.</source>
-        <translation>Niet-ondersteund argument -debugnet genegeerd, gebruik -debug=net</translation>
-    </message>
-    <message>
-        <source>Unsupported argument -tor found, use -onion.</source>
-        <translation>Niet-ondersteund argument -tor gevonden, gebruik -onion.</translation>
-    </message>
-    <message>
-        <source>User Agent comment (%s) contains unsafe characters.</source>
-        <translation>User Agentcommentaar (%s) bevat onveilige karakters.</translation>
-    </message>
-    <message>
-        <source>Verifying wallet(s)...</source>
-        <translation>Portemonnee(s) verifiëren..... </translation>
-    </message>
-    <message>
-        <source>Will retry...</source>
-        <translation>Opnieuw aan het proberen...</translation>
     </message>
     <message>
         <source>Can't find random Masternode.</source>
@@ -4065,10 +4160,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Fout: Schijfruimte is laag voor %s</translation>
     </message>
     <message>
-        <source>Error: failed to add socket to epollfd (epoll_ctl returned error %s)</source>
-        <translation>Fout: kan geen socket toevoegen aan epollfd (epoll_ctl geeft fout %s)</translation>
-    </message>
-    <message>
         <source>Exceeded max tries.</source>
         <translation>Maximum aantal pogingen overschreden.</translation>
     </message>
@@ -4109,20 +4200,20 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Het herscannen van de portemonnee is mislukt tijdens het initialiseren</translation>
     </message>
     <message>
+        <source>Found enough users, signing…</source>
+        <translation>Voldoende gebruikers gevonden, aan het ondertekenen…</translation>
+    </message>
+    <message>
+        <source>Invalid P2P permission: '%s'</source>
+        <translation>Ongeldige P2P machtiging: '%s'</translation>
+    </message>
+    <message>
         <source>Invalid amount for -fallbackfee=&lt;amount&gt;: '%s'</source>
         <translation>Ongeldig bedrag voor -fallbackfee=&lt;bedrag&gt;: '%s'</translation>
     </message>
     <message>
         <source>Invalid masternodeblsprivkey. Please see documentation.</source>
         <translation>Ongeldige masternodeblsprivkey. Zie documentatie.</translation>
-    </message>
-    <message>
-        <source>It has been replaced by -disablegovernance.</source>
-        <translation>Het is vervangen door -disablegovernance.</translation>
-    </message>
-    <message>
-        <source>Loading wallet...</source>
-        <translation>Laden portemonnee...</translation>
     </message>
     <message>
         <source>Masternode queue is full.</source>
@@ -4135,6 +4226,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Missing input transaction information.</source>
         <translation>De input transactieinformatie ontbreekt.</translation>
+    </message>
+    <message>
+        <source>Mixing in progress…</source>
+        <translation>Bezig met mixen…</translation>
     </message>
     <message>
         <source>No errors detected.</source>
@@ -4165,8 +4260,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Terugsnoeimodus is niet compatibel met -txindex.</translation>
     </message>
     <message>
-        <source>Pruning blockstore...</source>
-        <translation>Terugsnoeien blockstore...</translation>
+        <source>Section [%s] is not recognized.</source>
+        <translation>Sectie [%s] wordt niet herkend.</translation>
     </message>
     <message>
         <source>Specified -walletdir "%s" does not exist</source>
@@ -4179,10 +4274,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Specified -walletdir "%s" is not a directory</source>
         <translation>Opgegeven -walletdir "%s" is geen map</translation>
-    </message>
-    <message>
-        <source>Synchronizing blockchain...</source>
-        <translation>Blokketen aan het synchronizeren...</translation>
     </message>
     <message>
         <source>The wallet will avoid paying less than the minimum relay fee.</source>
@@ -4217,10 +4308,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Transactie te groot</translation>
     </message>
     <message>
-        <source>Trying to connect...</source>
-        <translation>Proberen te verbinden...</translation>
-    </message>
-    <message>
         <source>Unable to bind to %s on this computer. %s is probably already running.</source>
         <translation>Niet in staat om %s te verbinden op deze computer. %s draait waarschijnlijk al.</translation>
     </message>
@@ -4233,8 +4320,12 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Upgraden UTXO-database</translation>
     </message>
     <message>
-        <source>Wallet %s resides outside wallet directory %s</source>
-        <translation>Portemonnee %s bevindt zich buiten de portemonnee map %s</translation>
+        <source>Verifying blocks…</source>
+        <translation>blocks aan het controleren…</translation>
+    </message>
+    <message>
+        <source>Verifying wallet(s)…</source>
+        <translation>Portemonnee(s) verifiëren….. </translation>
     </message>
     <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
@@ -4381,8 +4472,32 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Fout bij het upgraden van de ketenstaat database</translation>
     </message>
     <message>
-        <source>Error: failed to add socket to kqueuefd (kevent returned error %s)</source>
-        <translation>Fout: kan socket niet toevoegen aan kqueuefd (kevent geeft fout %s)</translation>
+        <source>Loading P2P addresses…</source>
+        <translation>P2P-adressen aan het laden…</translation>
+    </message>
+    <message>
+        <source>Loading banlist…</source>
+        <translation>Verbanningslijst aan het laden…</translation>
+    </message>
+    <message>
+        <source>Loading block index…</source>
+        <translation>Laden blokindex…</translation>
+    </message>
+    <message>
+        <source>Loading wallet…</source>
+        <translation>Laden portemonnee…</translation>
+    </message>
+    <message>
+        <source>Failed to clear fulfilled requests cache at %s</source>
+        <translation>Fout bij het wissen van de fulfilled requests cache %s</translation>
+    </message>
+    <message>
+        <source>Failed to clear governance cache at %s</source>
+        <translation>Fout bij het wissen van de governance cache %s</translation>
+    </message>
+    <message>
+        <source>Failed to clear masternode cache at %s</source>
+        <translation>Fout bij het wissen van de masternode cache %s</translation>
     </message>
     <message>
         <source>Failed to find mixing queue to join</source>
@@ -4391,6 +4506,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Failed to start a new mixing queue</source>
         <translation>Het is niet gelukt om een nieuwe mixwachtrij te starten</translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation>Importeren…</translation>
     </message>
     <message>
         <source>Incorrect -rescan mode, falling back to default value</source>
@@ -4421,20 +4540,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Ongeldig sporkadres opgegeven met -sporkaddr</translation>
     </message>
     <message>
-        <source>Loading P2P addresses...</source>
-        <translation>P2P-adressen aan het laden...</translation>
-    </message>
-    <message>
         <source>Reducing -maxconnections from %d to %d, because of system limitations.</source>
         <translation>Verminder -maxconnections van %d naar %d, vanwege systeembeperkingen.</translation>
-    </message>
-    <message>
-        <source>Replaying blocks...</source>
-        <translation>Replaying blocks...</translation>
-    </message>
-    <message>
-        <source>Rescanning...</source>
-        <translation>Opnieuw scannen...</translation>
     </message>
     <message>
         <source>Session not complete!</source>
@@ -4465,14 +4572,6 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Vorige succesvolle actie is te recent.</translation>
     </message>
     <message>
-        <source>Starting network threads...</source>
-        <translation>Netwerkthread starten...</translation>
-    </message>
-    <message>
-        <source>Synchronizing governance objects...</source>
-        <translation>Synchroniseren governance objecten...</translation>
-    </message>
-    <message>
         <source>The source code is available from %s.</source>
         <translation>De broncode is beschikbaar van %s.</translation>
     </message>
@@ -4501,8 +4600,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Transactie is niet geldig.</translation>
     </message>
     <message>
-        <source>Transaction too large for fee policy</source>
-        <translation>De transactie is te groot voor het transactiekostenbeleid</translation>
+        <source>Trying to connect…</source>
+        <translation>Proberen te verbinden…</translation>
     </message>
     <message>
         <source>Unable to bind to %s on this computer (bind returned error %s)</source>
@@ -4533,8 +4632,8 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
         <translation>Niet-ondersteunde logboekcategorie %s=%s.</translation>
     </message>
     <message>
-        <source>Verifying blocks...</source>
-        <translation>blocks aan het controleren...</translation>
+        <source>Upgrading txindex database</source>
+        <translation>Upgraden txindex database</translation>
     </message>
     <message>
         <source>Very low number of keys left: %d</source>
@@ -4559,6 +4658,10 @@ Nota: Het bericht zal niet verzonden worden met de betaling over het Sparks netw
     <message>
         <source>Warning: incorrect parameter %s, path must exist! Using default path.</source>
         <translation>Waarschuwing: onjuiste parameter %s, pad moet bestaan! Standaard pad wordt gebruikt</translation>
+    </message>
+    <message>
+        <source>Will retry…</source>
+        <translation>Opnieuw aan het proberen…</translation>
     </message>
     <message>
         <source>You are starting with governance validation disabled.</source>
