@@ -111,7 +111,7 @@ bool CGovernanceManager::AddNewTrigger(uint256 nHash)
 
     CSuperblock_sptr pSuperblock;
     try {
-        auto pSuperblockTmp = std::make_shared<CSuperblock>(*this, nHash);
+        auto pSuperblockTmp = std::make_shared<CSuperblock>(*this, nHash, m_spork_manager);
         pSuperblock = pSuperblockTmp;
     } catch (std::exception& e) {
         LogPrintf("CGovernanceManager::%s -- Error creating superblock: %s\n", __func__, e.what());
@@ -224,7 +224,7 @@ std::vector<CSuperblock_sptr> CGovernanceManager::GetActiveTriggers()
 *   - Does this block have a non-executed and activated trigger?
 */
 
-bool CSuperblockManager::IsSuperblockTriggered(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight)
+bool CSuperblockManager::IsSuperblockTriggered(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight, const CChain& chain)
 {
     LogPrint(BCLog::GOBJECT, "CSuperblockManager::IsSuperblockTriggered -- Start nBlockHeight = %d\n", nBlockHeight);
     if (!CSuperblock::IsValidBlockHeight(nBlockHeight)) {
@@ -263,7 +263,7 @@ bool CSuperblockManager::IsSuperblockTriggered(CGovernanceManager& govman, const
 
         // MAKE SURE THIS TRIGGER IS ACTIVE VIA FUNDING CACHE FLAG
 
-        pObj->UpdateSentinelVariables(tip_mn_list);
+        pObj->UpdateSentinelVariables(tip_mn_list, chain);
 
         if (pObj->IsSetCachedFunding()) {
             LogPrint(BCLog::GOBJECT, "CSuperblockManager::IsSuperblockTriggered -- fCacheFunding = true, returning true\n");
@@ -277,7 +277,7 @@ bool CSuperblockManager::IsSuperblockTriggered(CGovernanceManager& govman, const
 }
 
 
-bool CSuperblockManager::GetBestSuperblock(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, CSuperblock_sptr& pSuperblockRet, int nBlockHeight)
+bool CSuperblockManager::GetBestSuperblock(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, CSuperblock_sptr& pSuperblockRet, int nBlockHeight, const CBlockIndex& pindex)
 {
     if (!CSuperblock::IsValidBlockHeight(nBlockHeight)) {
         return false;
@@ -300,7 +300,7 @@ bool CSuperblockManager::GetBestSuperblock(CGovernanceManager& govman, const CDe
 
         // DO WE HAVE A NEW WINNER?
 
-        int nTempYesCount = pObj->GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_FUNDING);
+        int nTempYesCount = pObj->GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_FUNDING, pindex);
         if (nTempYesCount > nYesCount) {
             nYesCount = nTempYesCount;
             pSuperblockRet = pSuperblock;
@@ -316,14 +316,14 @@ bool CSuperblockManager::GetBestSuperblock(CGovernanceManager& govman, const CDe
 *   - Returns payments for superblock
 */
 
-bool CSuperblockManager::GetSuperblockPayments(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight, std::vector<CTxOut>& voutSuperblockRet)
+bool CSuperblockManager::GetSuperblockPayments(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight, std::vector<CTxOut>& voutSuperblockRet, const CBlockIndex& pindex)
 {
     LOCK(govman.cs);
 
     // GET THE BEST SUPERBLOCK FOR THIS BLOCK HEIGHT
 
     CSuperblock_sptr pSuperblock;
-    if (!CSuperblockManager::GetBestSuperblock(govman, tip_mn_list, pSuperblock, nBlockHeight)) {
+    if (!CSuperblockManager::GetBestSuperblock(govman, tip_mn_list, pSuperblock, nBlockHeight, pindex)) {
         LogPrint(BCLog::GOBJECT, "CSuperblockManager::GetSuperblockPayments -- Can't find superblock for height %d\n", nBlockHeight);
         return false;
     }
@@ -368,19 +368,19 @@ bool CSuperblockManager::IsValid(CGovernanceManager& govman, const CChain& activ
     LOCK(govman.cs);
 
     CSuperblock_sptr pSuperblock;
-    if (CSuperblockManager::GetBestSuperblock(govman, tip_mn_list, pSuperblock, nBlockHeight)) {
+    if (CSuperblockManager::GetBestSuperblock(govman, tip_mn_list, pSuperblock, nBlockHeight, *active_chain.Tip())) {
         return pSuperblock->IsValid(govman, active_chain, txNew, nBlockHeight, blockReward);
     }
 
     return false;
 }
 
-void CSuperblockManager::ExecuteBestSuperblock(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight)
+void CSuperblockManager::ExecuteBestSuperblock(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight, const CBlockIndex& pindex)
 {
     LOCK(govman.cs);
 
     CSuperblock_sptr pSuperblock;
-    if (GetBestSuperblock(govman, tip_mn_list, pSuperblock, nBlockHeight)) {
+    if (GetBestSuperblock(govman, tip_mn_list, pSuperblock, nBlockHeight, pindex)) {
         // All checks are done in CSuperblock::IsValid via IsBlockValueValid and IsBlockPayeeValid,
         // tip wouldn't be updated if anything was wrong. Mark this trigger as executed.
         pSuperblock->SetExecuted();
@@ -393,16 +393,18 @@ CSuperblock::
     nGovObjHash(),
     nBlockHeight(0),
     nStatus(SeenObjectStatus::Unknown),
-    vecPayments()
+    vecPayments(),
+    m_spork_manager{}
 {
 }
 
 CSuperblock::
-    CSuperblock(CGovernanceManager& govman, uint256& nHash) :
+    CSuperblock(CGovernanceManager& govman, uint256& nHash, CSporkManager& spork_manager) :
     nGovObjHash(nHash),
     nBlockHeight(0),
     nStatus(SeenObjectStatus::Unknown),
-    vecPayments()
+    vecPayments(),
+    m_spork_manager{spork_manager}
 {
     const CGovernanceObject* pGovObj = GetGovernanceObject(govman);
 
@@ -436,7 +438,7 @@ CSuperblock::
         nBlockHeight, strAddresses, strAmounts, vecPayments.size());
 }
 
-CSuperblock::CSuperblock(int nBlockHeight, std::vector<CGovernancePayment> vecPayments) : nBlockHeight(nBlockHeight), vecPayments(std::move(vecPayments))
+CSuperblock::CSuperblock(int nBlockHeight, std::vector<CGovernancePayment> vecPayments) : nBlockHeight(nBlockHeight), vecPayments(std::move(vecPayments)), m_spork_manager{}
 {
     nStatus = SeenObjectStatus::Valid; //TODO: Investigate this
     nGovObjHash = GetHash();
@@ -482,7 +484,7 @@ void CSuperblock::GetNearestSuperblocksHeights(int nBlockHeight, int& nLastSuper
     }
 }
 
-CAmount CSuperblock::GetPaymentsLimit(const CChain& active_chain, int nBlockHeight)
+CAmount CSuperblock::GetPaymentsLimit(const CChain& active_chain, int nBlockHeight, const CSporkManager& spork_manager)
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
 
@@ -509,7 +511,7 @@ CAmount CSuperblock::GetPaymentsLimit(const CChain& active_chain, int nBlockHeig
     // min subsidy for high diff networks and vice versa
     int nBits = consensusParams.fPowAllowMinDifficultyBlocks ? UintToArith256(consensusParams.powLimit).GetCompact() : 1;
     // some part of all blocks issued during the cycle goes to superblock, see GetBlockSubsidy
-    CAmount nSuperblockPartOfSubsidy = GetSuperblockSubsidyInner(nBits, nBlockHeight - 1, consensusParams, fV20Active);
+    CAmount nSuperblockPartOfSubsidy = GetSuperblockSubsidyInner(nBits, nBlockHeight - 1, consensusParams, fV20Active, spork_manager);
     CAmount nPaymentsLimit = nSuperblockPartOfSubsidy * consensusParams.nSuperblockCycle;
     LogPrint(BCLog::GOBJECT, "CSuperblock::GetPaymentsLimit -- Valid superblock height %d, payments max %lld\n", nBlockHeight, nPaymentsLimit);
 
@@ -646,7 +648,7 @@ bool CSuperblock::IsValid(CGovernanceManager& govman, const CChain& active_chain
 
     // payments should not exceed limit
     CAmount nPaymentsTotalAmount = GetPaymentsTotalAmount();
-    CAmount nPaymentsLimit = GetPaymentsLimit(active_chain, nBlockHeight);
+    CAmount nPaymentsLimit = GetPaymentsLimit(active_chain, nBlockHeight, m_spork_manager);
     if (nPaymentsTotalAmount > nPaymentsLimit) {
         LogPrintf("CSuperblock::IsValid -- ERROR: Block invalid, payments limit exceeded: payments %lld, limit %lld\n", nPaymentsTotalAmount, nPaymentsLimit);
         return false;

@@ -7,6 +7,8 @@
 
 #include <primitives/transaction.h>
 #include <uint256.h>
+#include <chain.h>
+#include <validation.h>
 
 class CActiveMasternodeManager;
 class CBLSPublicKey;
@@ -71,6 +73,7 @@ private:
     int nVoteOutcome; // see VOTE_OUTCOMES above
     int64_t nTime;
     std::vector<unsigned char> vchSig;
+    const ChainstateManager& m_chainman;
 
     /** Memory only. */
     const uint256 hash;
@@ -78,7 +81,7 @@ private:
 
 public:
     CGovernanceVote();
-    CGovernanceVote(const COutPoint& outpointMasternodeIn, const uint256& nParentHashIn, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn);
+    CGovernanceVote(const COutPoint& outpointMasternodeIn, const uint256& nParentHashIn, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn, const ChainstateManager& chainman);
 
     bool IsValid() const { return fValid; }
 

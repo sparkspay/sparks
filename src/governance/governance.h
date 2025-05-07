@@ -264,6 +264,7 @@ private:
     const ChainstateManager& m_chainman;
     const std::unique_ptr<CDeterministicMNManager>& m_dmnman;
     const std::unique_ptr<CMasternodeSync>& m_mn_sync;
+    CSporkManager& m_spork_manager;
 
     int64_t nTimeLastDiff;
     // keep track of current block height
@@ -279,7 +280,7 @@ private:
 public:
     explicit CGovernanceManager(CMasternodeMetaMan& mn_metaman, CNetFulfilledRequestManager& netfulfilledman, const ChainstateManager& chainman,
                                 const std::unique_ptr<CDeterministicMNManager>& dmnman,
-                                const std::unique_ptr<CMasternodeSync>& mn_sync);
+                                const std::unique_ptr<CMasternodeSync>& mn_sync, CSporkManager& spork_manager);
     ~CGovernanceManager();
 
     bool LoadCache(bool load_cache);
@@ -371,7 +372,7 @@ public:
     void CleanAndRemoveTriggers();
 
 private:
-    std::optional<const CSuperblock> CreateSuperblockCandidate(int nHeight) const;
+    std::optional<const CSuperblock> CreateSuperblockCandidate(int nHeight, const CBlockIndex& pindex, const CChain& chain) const;
     std::optional<const CGovernanceObject> CreateGovernanceTrigger(const std::optional<const CSuperblock>& sb_opt, PeerManager& peerman,
                                                                    const CActiveMasternodeManager& mn_activeman);
     void VoteGovernanceTriggers(const std::optional<const CGovernanceObject>& trigger_opt, CConnman& connman, PeerManager& peerman,

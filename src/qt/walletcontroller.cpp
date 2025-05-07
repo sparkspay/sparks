@@ -351,7 +351,7 @@ void OpenWalletActivity::open(const std::string& path)
             }
 
             //Lock masternode collatarels
-            auto mnList = deterministicMNManager->GetListAtChainTip();
+            auto [mnList, tip] = node().evo().getListAtChainTip();
             // Iterate through the masternode list using a for loop
             mnList.ForEachMN(false, [&](auto& dmn) {
                 //Check is my masternode

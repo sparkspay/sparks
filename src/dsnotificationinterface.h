@@ -6,6 +6,7 @@
 #define BITCOIN_DSNOTIFICATIONINTERFACE_H
 
 #include <validationinterface.h>
+#include <spork.h>
 
 class CActiveMasternodeManager;
 class CConnman;
@@ -28,7 +29,8 @@ public:
                                       const CActiveMasternodeManager* const mn_activeman,
                                       const std::unique_ptr<CDeterministicMNManager>& dmnman,
                                       const std::unique_ptr<LLMQContext>& llmq_ctx,
-                                      const std::unique_ptr<CJContext>& cj_ctx);
+                                      const std::unique_ptr<CJContext>& cj_ctx,
+                                      CSporkManager& spork_manager);
     virtual ~CDSNotificationInterface() = default;
 
     // a small helper to initialize current block height in sub-modules on startup
@@ -57,6 +59,7 @@ private:
     const std::unique_ptr<CDeterministicMNManager>& m_dmnman;
     const std::unique_ptr<LLMQContext>& m_llmq_ctx;
     const std::unique_ptr<CJContext>& m_cj_ctx;
+    CSporkManager& m_spork_manager;
 };
 
 #endif // BITCOIN_DSNOTIFICATIONINTERFACE_H

@@ -40,12 +40,12 @@ std::string CDeterministicMN::ToString() const
     return strprintf("CDeterministicMN(proTxHash=%s, collateralOutpoint=%s, nOperatorReward=%f, state=%s", proTxHash.ToString(), collateralOutpoint.ToStringShort(), (double)nOperatorReward / 100, pdmnState->ToString());
 }
 
-UniValue CDeterministicMN::ToJson() const
+UniValue CDeterministicMN::ToJson(CChain& chain) const
 {
     UniValue obj;
     obj.setObject();
 
-    obj.pushKV("type", std::string(GetMnType(nType, ActiveChain()[pdmnState->nRegisteredHeight]).description));
+    obj.pushKV("type", std::string(GetMnType(nType, chain[pdmnState->nRegisteredHeight]).description));
     obj.pushKV("proTxHash", proTxHash.ToString());
     obj.pushKV("collateralHash", collateralOutpoint.hash.ToString());
     obj.pushKV("collateralIndex", (int)collateralOutpoint.n);
@@ -211,14 +211,14 @@ CDeterministicMNCPtr CDeterministicMNList::GetMNPayee(gsl::not_null<const CBlock
     return best;
 }
 
-std::vector<CDeterministicMNCPtr> CDeterministicMNList::GetProjectedMNPayees(gsl::not_null<const CBlockIndex* const> pindexPrev, int nCount) const
+std::vector<CDeterministicMNCPtr> CDeterministicMNList::GetProjectedMNPayees(gsl::not_null<const CBlockIndex* const> pindexPrev, const CChain& chain, int nCount) const
 {
     if (nCount < 0 ) {
         return {};
     }
     const bool isMNRewardReallocation = DeploymentActiveAfter(pindexPrev, Params().GetConsensus(),
                                                               Consensus::DEPLOYMENT_MN_RR);
-    const auto weighted_count = isMNRewardReallocation ? GetValidMNsCount() : GetValidWeightedMNsCount();
+    const auto weighted_count = isMNRewardReallocation ? GetValidMNsCount() : GetValidWeightedMNsCount(chain);
     nCount = std::min(nCount, int(weighted_count));
 
     std::vector<CDeterministicMNCPtr> result;
@@ -1098,7 +1098,7 @@ CDeterministicMNList CDeterministicMNManager::GetListAtChainTip()
     return GetListForBlockInternal(tipIndex);
 }
 
-bool CDeterministicMNManager::IsProTxWithCollateral(const CTransactionRef& tx, uint32_t n)
+bool CDeterministicMNManager::IsProTxWithCollateral(const CTransactionRef& tx, uint32_t n, const CBlockIndex& pindex)
 {
     if (!tx->IsSpecialTxVersion() || tx->nType != TRANSACTION_PROVIDER_REGISTER) {
         return false;
@@ -1117,17 +1117,16 @@ bool CDeterministicMNManager::IsProTxWithCollateral(const CTransactionRef& tx, u
     }
 
     CAmount expectedCollateral;
-    CBlockIndex *pindexPrev = ActiveTip();
-    const bool isV19Active{DeploymentActiveAfter(pindexPrev, Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
+    const bool isV19Active{DeploymentActiveAt(pindex, Params().GetConsensus(), Consensus::DEPLOYMENT_V19)};
     if (!isV19Active) {
         expectedCollateral = 25000 * COIN; //Old regular masternode collateral
-    } else if (isV19Active && ActiveChain().Height() < Params().GetConsensus().V19Height && proTx.nType == MnType::Regular){
+    } else if (isV19Active && pindex.nHeight < Params().GetConsensus().V19Height && proTx.nType == MnType::Regular){
         expectedCollateral = 25000 * COIN; //Old regular masternode collateral
     } else {
-        expectedCollateral = GetMnType(proTx.nType, pindexPrev).collat_amount;
+        expectedCollateral = GetMnType(proTx.nType, &pindex).collat_amount;
     }
   
-    if (const CAmount expectedCollateral = GetMnType(proTx.nType, pindexPrev).collat_amount; tx->vout[n].nValue != expectedCollateral) {
+    if (const CAmount expectedCollateral = GetMnType(proTx.nType, &pindex).collat_amount; tx->vout[n].nValue != expectedCollateral) {
         return false;
     }
     return true;

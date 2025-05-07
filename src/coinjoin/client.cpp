@@ -953,12 +953,12 @@ bool CCoinJoinClientSession::DoAutomaticDenominating(CChainState& active_chainst
     } // LOCK(m_wallet.cs_wallet);
 
     // Always attempt to join an existing queue
-    if (JoinExistingQueue(nBalanceNeedsAnonymized, connman)) {
+    if (JoinExistingQueue(nBalanceNeedsAnonymized, connman, active_chainstate.m_chain)) {
         return true;
     }
 
     // If we were unable to find/join an existing queue then start a new one.
-    if (StartNewQueue(nBalanceNeedsAnonymized, connman)) return true;
+    if (StartNewQueue(nBalanceNeedsAnonymized, connman, active_chainstate.m_chain)) return true;
 
     strAutoDenomResult = _("No compatible Masternode found.");
     return false;
@@ -1062,13 +1062,13 @@ static int WinnersToSkip()
             ? 1 : 8;
 }
 
-bool CCoinJoinClientSession::JoinExistingQueue(CAmount nBalanceNeedsAnonymized, CConnman& connman)
+bool CCoinJoinClientSession::JoinExistingQueue(CAmount nBalanceNeedsAnonymized, CConnman& connman, CChain& chain)
 {
     if (!CCoinJoinClientOptions::IsEnabled()) return false;
     if (m_queueman == nullptr) return false;
 
     const auto mnList = m_dmnman.GetListAtChainTip();
-    const int nWeightedMnCount = mnList.GetValidWeightedMNsCount();
+    const int nWeightedMnCount = mnList.GetValidWeightedMNsCount(chain);
 
     // Look through the queues and see if anything matches
     CCoinJoinQueue dsq;
@@ -1122,7 +1122,7 @@ bool CCoinJoinClientSession::JoinExistingQueue(CAmount nBalanceNeedsAnonymized, 
     return false;
 }
 
-bool CCoinJoinClientSession::StartNewQueue(CAmount nBalanceNeedsAnonymized, CConnman& connman)
+bool CCoinJoinClientSession::StartNewQueue(CAmount nBalanceNeedsAnonymized, CConnman& connman, CChain& chain)
 {
     assert(m_mn_metaman.IsValid());
 
@@ -1132,7 +1132,7 @@ bool CCoinJoinClientSession::StartNewQueue(CAmount nBalanceNeedsAnonymized, CCon
     int nTries = 0;
     const auto mnList = m_dmnman.GetListAtChainTip();
     const int nMnCount = mnList.GetValidMNsCount();
-    const int nWeightedMnCount = mnList.GetValidWeightedMNsCount();
+    const int nWeightedMnCount = mnList.GetValidWeightedMNsCount(chain);
 
     // find available denominated amounts
     std::set<CAmount> setAmounts;

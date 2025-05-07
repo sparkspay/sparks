@@ -257,35 +257,3 @@ template bool CActiveMasternodeManager::Decrypt(const CBLSIESMultiRecipientObjec
     READ_LOCK(cs);
     return m_info.blsPubKeyOperator;
 }
-
-template <template <typename> class EncryptedObj, typename Obj>
-[[nodiscard]] bool CActiveMasternodeManager::Decrypt(const EncryptedObj<Obj>& obj, size_t idx, Obj& ret_obj,
-                                                     int version) const
-{
-    AssertLockNotHeld(cs);
-    return WITH_READ_LOCK(cs, return obj.Decrypt(idx, m_info.blsKeyOperator, ret_obj, version));
-}
-template bool CActiveMasternodeManager::Decrypt(const CBLSIESEncryptedObject<CBLSSecretKey>& obj, size_t idx,
-                                                CBLSSecretKey& ret_obj, int version) const;
-template bool CActiveMasternodeManager::Decrypt(const CBLSIESMultiRecipientObjects<CBLSSecretKey>& obj, size_t idx,
-                                                CBLSSecretKey& ret_obj, int version) const;
-
-[[nodiscard]] CBLSSignature CActiveMasternodeManager::Sign(const uint256& hash) const
-{
-    AssertLockNotHeld(cs);
-    return WITH_READ_LOCK(cs, return m_info.blsKeyOperator.Sign(hash));
-}
-
-[[nodiscard]] CBLSSignature CActiveMasternodeManager::Sign(const uint256& hash, const bool is_legacy) const
-{
-    AssertLockNotHeld(cs);
-    return WITH_READ_LOCK(cs, return m_info.blsKeyOperator.Sign(hash, is_legacy));
-}
-
-// We need to pass a copy as opposed to a const ref because CBLSPublicKeyVersionWrapper
-// does not accept a const ref in its construction args
-[[nodiscard]] CBLSPublicKey CActiveMasternodeManager::GetPubKey() const
-{
-    READ_LOCK(cs);
-    return m_info.blsPubKeyOperator;
-}

@@ -1736,7 +1736,7 @@ bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::Bloc
      */
     const bool is_governance_enabled{!args.GetBoolArg("-disablegovernance", !DEFAULT_GOVERNANCE_ENABLE)};
     assert(!node.govman);
-    node.govman = std::make_unique<CGovernanceManager>(*node.mn_metaman, *node.netfulfilledman, *node.chainman, node.dmnman, node.mn_sync);
+    node.govman = std::make_unique<CGovernanceManager>(*node.mn_metaman, *node.netfulfilledman, *node.chainman, node.dmnman, node.mn_sync, *node.sporkman);
 
     assert(!node.sporkman);
     node.sporkman = std::make_unique<CSporkManager>();
@@ -1914,7 +1914,7 @@ bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::Bloc
 #endif
 
     pdsNotificationInterface = new CDSNotificationInterface(
-        *node.connman, *node.mn_sync, *node.govman, *node.peerman, chainman, node.mn_activeman.get(), node.dmnman, node.llmq_ctx, node.cj_ctx
+        *node.connman, *node.mn_sync, *node.govman, *node.peerman, chainman, node.mn_activeman.get(), node.dmnman, node.llmq_ctx, node.cj_ctx, *node.sporkman
     );
     RegisterValidationInterface(pdsNotificationInterface);
 
@@ -2190,7 +2190,7 @@ bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::Bloc
                                 *chainstate, chainparams, chainstate->CoinsDB(),
                                 *node.evodb,
                                 args.GetArg("-checklevel", DEFAULT_CHECKLEVEL),
-                                args.GetArg("-checkblocks", DEFAULT_CHECKBLOCKS))) {
+                                args.GetArg("-checkblocks", DEFAULT_CHECKBLOCKS), *node.sporkman)) {
                             strLoadError = _("Corrupted block database detected");
                             failed_verification = true;
                             break;
@@ -2316,7 +2316,7 @@ bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::Bloc
     }
 
     if (args.GetBoolArg("-coinstatsindex", DEFAULT_COINSTATSINDEX)) {
-        g_coin_stats_index = std::make_unique<CoinStatsIndex>(/* cache size */ 0, false, fReindex);
+        g_coin_stats_index = std::make_unique<CoinStatsIndex>(/* cache size */ 0, *node.sporkman, false, fReindex);
         if (!g_coin_stats_index->Start(chainman.ActiveChainstate())) {
             return false;
         }
@@ -2435,7 +2435,7 @@ bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::Bloc
     }
 
     chainman.m_load_block = std::thread(&util::TraceThread, "loadblk", [=, &args, &chainman, &node] {
-        ThreadImport(chainman, *node.dmnman, *pdsNotificationInterface, vImportFiles, node.mn_activeman.get(), args);
+        ThreadImport(chainman, *node.dmnman, *pdsNotificationInterface, vImportFiles, node.mn_activeman.get(), args, *node.sporkman);
     });
 
     // Wait for genesis block to be processed

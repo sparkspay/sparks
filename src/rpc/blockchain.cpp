@@ -1602,7 +1602,7 @@ static RPCHelpMan verifychain()
 
     CChainState& active_chainstate = chainman.ActiveChainstate();
     return CVerifyDB().VerifyDB(
-        active_chainstate, Params(), active_chainstate.CoinsTip(), *node.evodb, check_level, check_depth);
+        active_chainstate, Params(), active_chainstate.CoinsTip(), *node.evodb, check_level, check_depth, *node.sporkman);
 },
     };
 }
@@ -2023,6 +2023,7 @@ static RPCHelpMan preciousblock()
     uint256 hash(ParseHashV(request.params[0], "blockhash"));
     CBlockIndex* pblockindex;
 
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
     ChainstateManager& chainman = EnsureAnyChainman(request.context);
     {
         LOCK(cs_main);
@@ -2033,7 +2034,7 @@ static RPCHelpMan preciousblock()
     }
 
     BlockValidationState state;
-    chainman.ActiveChainstate().PreciousBlock(state, pblockindex);
+    chainman.ActiveChainstate().PreciousBlock(state, pblockindex, *node.sporkman);
 
     if (!state.IsValid()) {
         throw JSONRPCError(RPC_DATABASE_ERROR, state.ToString());
@@ -2075,7 +2076,8 @@ static RPCHelpMan invalidateblock()
     active_chainstate.InvalidateBlock(state, pblockindex);
 
     if (state.IsValid()) {
-        active_chainstate.ActivateBestChain(state);
+        const NodeContext& node = EnsureAnyNodeContext(request.context);
+        active_chainstate.ActivateBestChain(state, *node.sporkman);
     }
 
     if (!state.IsValid()) {
@@ -2118,7 +2120,8 @@ static RPCHelpMan reconsiderblock()
     }
 
     BlockValidationState state;
-    active_chainstate.ActivateBestChain(state);
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
+    active_chainstate.ActivateBestChain(state, *node.sporkman);
 
     if (!state.IsValid()) {
         throw JSONRPCError(RPC_DATABASE_ERROR, state.ToString());
@@ -2340,6 +2343,7 @@ static RPCHelpMan getblockstats()
     }
 
     ChainstateManager& chainman = EnsureAnyChainman(request.context);
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
     LOCK(cs_main);
     CBlockIndex* pindex{ParseHashOrHeight(request.params[0], chainman)};
     CHECK_NONFATAL(pindex != nullptr);
@@ -2474,7 +2478,7 @@ static RPCHelpMan getblockstats()
     ret_all.pushKV("minfeerate", (minfeerate == MAX_MONEY) ? 0 : minfeerate);
     ret_all.pushKV("mintxsize", mintxsize == MaxBlockSize() ? 0 : mintxsize);
     ret_all.pushKV("outs", outputs);
-    ret_all.pushKV("subsidy", GetBlockSubsidy(pindex, Params().GetConsensus()));
+    ret_all.pushKV("subsidy", GetBlockSubsidy(pindex, Params().GetConsensus(), *node.sporkman));
     ret_all.pushKV("time", pindex->GetBlockTime());
     ret_all.pushKV("total_out", total_out);
     ret_all.pushKV("total_size", total_size);

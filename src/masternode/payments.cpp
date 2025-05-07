@@ -201,8 +201,8 @@ bool CMNPaymentsProcessor::IsBlockValueValid(const CBlock& block, const int nBlo
     }
 
     LogPrint(BCLog::MNPAYMENTS, "block.vtx[0]->GetValueOut() %lld <= blockReward %lld\n", block.vtx[0]->GetValueOut(), blockReward);
-
-    CAmount nSuperblockMaxValue =  blockReward + CSuperblock::GetPaymentsLimit(m_chainman.ActiveChain(), nBlockHeight);
+    CSporkManager& nonConstSporkman = const_cast<CSporkManager &>(m_sporkman);
+    CAmount nSuperblockMaxValue =  blockReward + CSuperblock::GetPaymentsLimit(m_chainman.ActiveChain(), nBlockHeight, m_sporkman);
     bool isSuperblockMaxValueMet = (block.vtx[0]->GetValueOut() <= nSuperblockMaxValue);
 
     LogPrint(BCLog::GOBJECT, "block.vtx[0]->GetValueOut() %lld <= nSuperblockMaxValue %lld\n", block.vtx[0]->GetValueOut(), nSuperblockMaxValue);
@@ -247,7 +247,7 @@ bool CMNPaymentsProcessor::IsBlockValueValid(const CBlock& block, const int nBlo
 
     const auto tip_mn_list = m_dmnman.GetListAtChainTip();
 
-    if (!CSuperblockManager::IsSuperblockTriggered(m_govman, tip_mn_list, nBlockHeight)) {
+    if (!CSuperblockManager::IsSuperblockTriggered(m_govman, tip_mn_list, nBlockHeight, m_chainman.ActiveChain())) {
         // we are on a valid superblock height but a superblock was not triggered
         // revert to block reward limits in this case
         if(!isBlockRewardValueMet) {
@@ -303,7 +303,7 @@ bool CMNPaymentsProcessor::IsBlockPayeeValid(const CTransaction& txNew, const CB
     if (AreSuperblocksEnabled(m_sporkman)) {
         if (!check_superblock) return true;
         const auto tip_mn_list = m_dmnman.GetListAtChainTip();
-        if (CSuperblockManager::IsSuperblockTriggered(m_govman, tip_mn_list, nBlockHeight)) {
+        if (CSuperblockManager::IsSuperblockTriggered(m_govman, tip_mn_list, nBlockHeight, m_chainman.ActiveChain())) {
             if (CSuperblockManager::IsValid(m_govman, m_chainman.ActiveChain(), tip_mn_list, txNew, nBlockHeight, blockSubsidy + feeReward)) {
                 LogPrint(BCLog::GOBJECT, "CMNPaymentsProcessor::%s -- Valid superblock at height %d: %s", __func__, nBlockHeight, txNew.ToString()); /* Continued */
                 // continue validation, should also pay MN
@@ -324,16 +324,16 @@ bool CMNPaymentsProcessor::IsBlockPayeeValid(const CTransaction& txNew, const CB
 }
 
 void CMNPaymentsProcessor::FillBlockPayments(CMutableTransaction& txNew, const CBlockIndex* pindexPrev, const CAmount blockSubsidy, const CAmount feeReward,
-                                             std::vector<CTxOut>& voutMasternodePaymentsRet, std::vector<CTxOut>& voutSuperblockPaymentsRet)
+                                             std::vector<CTxOut>& voutMasternodePaymentsRet, std::vector<CTxOut>& voutSuperblockPaymentsRet, const CChain& chain)
 {
     int nBlockHeight = pindexPrev == nullptr ? 0 : pindexPrev->nHeight + 1;
 
     // only create superblocks if spork is enabled AND if superblock is actually triggered
     // (height should be validated inside)
     const auto tip_mn_list = m_dmnman.GetListAtChainTip();
-    if(AreSuperblocksEnabled(m_sporkman) && CSuperblockManager::IsSuperblockTriggered(m_govman, tip_mn_list, nBlockHeight)) {
+    if(AreSuperblocksEnabled(m_sporkman) && CSuperblockManager::IsSuperblockTriggered(m_govman, tip_mn_list, nBlockHeight, chain)) {
         LogPrint(BCLog::GOBJECT, "CMNPaymentsProcessor::%s -- Triggered superblock creation at height %d\n", __func__, nBlockHeight);
-        CSuperblockManager::GetSuperblockPayments(m_govman, tip_mn_list, nBlockHeight, voutSuperblockPaymentsRet);
+        CSuperblockManager::GetSuperblockPayments(m_govman, tip_mn_list, nBlockHeight, voutSuperblockPaymentsRet, *pindexPrev);
     }
 
     if (!GetMasternodeTxOuts(pindexPrev, blockSubsidy, feeReward, voutMasternodePaymentsRet)) {

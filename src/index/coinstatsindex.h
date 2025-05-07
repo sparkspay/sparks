@@ -10,6 +10,7 @@
 #include <flatfile.h>
 #include <index/base.h>
 #include <node/coinstats.h>
+#include <spork.h>
 
 /**
  * CoinStatsIndex maintains statistics on the UTXO set.
@@ -21,6 +22,7 @@ private:
     std::unique_ptr<BaseIndex::DB> m_db;
 
     MuHash3072 m_muhash;
+    CSporkManager& m_spork_manager;
     uint64_t m_transaction_output_count{0};
     uint64_t m_bogo_size{0};
     CAmount m_total_amount{0};
@@ -51,7 +53,7 @@ protected:
 
 public:
     // Constructs the index, which becomes available to be queried.
-    explicit CoinStatsIndex(size_t n_cache_size, bool f_memory = false, bool f_wipe = false);
+    explicit CoinStatsIndex(size_t n_cache_size, CSporkManager& spork_manager, bool f_memory = false, bool f_wipe = false);
 
     // Look up stats for a specific block using CBlockIndex
     bool LookUpStats(const CBlockIndex* block_index, CCoinsStats& coins_stats) const;

@@ -46,7 +46,7 @@ GovernanceStore::GovernanceStore() :
 
 CGovernanceManager::CGovernanceManager(CMasternodeMetaMan& mn_metaman, CNetFulfilledRequestManager& netfulfilledman,
                                        const ChainstateManager& chainman, const std::unique_ptr<CDeterministicMNManager>& dmnman,
-                                       const std::unique_ptr<CMasternodeSync>& mn_sync) :
+                                       const std::unique_ptr<CMasternodeSync>& mn_sync, CSporkManager& spork_manager) :
     m_db{std::make_unique<db_type>("governance.dat", "magicGovernanceCache")},
     m_mn_metaman{mn_metaman},
     m_netfulfilledman{netfulfilledman},
@@ -58,7 +58,8 @@ CGovernanceManager::CGovernanceManager(CMasternodeMetaMan& mn_metaman, CNetFulfi
     setRequestedObjects(),
     fRateChecksEnabled(true),
     votedFundingYesTriggerHash(std::nullopt),
-    mapTrigger{}
+    mapTrigger{},
+    m_spork_manager(spork_manager)
 {
 }
 
@@ -297,7 +298,7 @@ void CGovernanceManager::AddGovernanceObject(CGovernanceObject& govobj, PeerMana
 
     // UPDATE CACHED VARIABLES FOR THIS OBJECT AND ADD IT TO OUR MANAGED DATA
 
-    govobj.UpdateSentinelVariables(tip_mn_list); //this sets local vars in object
+    govobj.UpdateSentinelVariables(tip_mn_list, m_chainman.ActiveChain()); //this sets local vars in object
 
     LOCK2(cs_main, cs);
     std::string strError;
@@ -391,7 +392,7 @@ void CGovernanceManager::CheckAndRemove()
             pObj->UpdateLocalValidity(tip_mn_list, m_chainman);
 
             // UPDATE SENTINEL SIGNALING VARIABLES
-            pObj->UpdateSentinelVariables(tip_mn_list);
+            pObj->UpdateSentinelVariables(tip_mn_list, m_chainman.ActiveChain());
         }
 
         // IF DELETE=TRUE, THEN CLEAN THE MESS UP!
@@ -529,7 +530,7 @@ std::vector<CGovernanceVote> CGovernanceManager::GetCurrentVotes(const uint256& 
             int outcome = voteInstancePair.second.eOutcome;
             int64_t nCreationTime = voteInstancePair.second.nCreationTime;
 
-            CGovernanceVote vote = CGovernanceVote(mnpair.first, nParentHash, (vote_signal_enum_t)signal, (vote_outcome_enum_t)outcome);
+            CGovernanceVote vote = CGovernanceVote(mnpair.first, nParentHash, (vote_signal_enum_t)signal, (vote_outcome_enum_t)outcome, m_chainman);
             vote.SetTime(nCreationTime);
 
             vecResult.push_back(vote);
@@ -565,7 +566,7 @@ struct sortProposalsByVotes {
     }
 };
 
-std::optional<const CSuperblock> CGovernanceManager::CreateSuperblockCandidate(int nHeight) const
+std::optional<const CSuperblock> CGovernanceManager::CreateSuperblockCandidate(int nHeight, const CBlockIndex& pindex, const CChain& chain) const
 {
     if (!IsValid()) return std::nullopt;
     if (m_mn_sync == nullptr || !m_mn_sync->IsSynced()) return std::nullopt;
@@ -575,7 +576,7 @@ std::optional<const CSuperblock> CGovernanceManager::CreateSuperblockCandidate(i
     // A proposal is considered passing if (YES votes) >= (Total Weight of Masternodes / 10),
     // count total valid (ENABLED) masternodes to determine passing threshold.
     const auto tip_mn_list = Assert(m_dmnman)->GetListAtChainTip();
-    const int nWeightedMnCount = tip_mn_list.GetValidWeightedMNsCount();
+    const int nWeightedMnCount = tip_mn_list.GetValidWeightedMNsCount(chain);
     const int nAbsVoteReq = std::max(Params().GetConsensus().nGovernanceMinQuorum, nWeightedMnCount / 10);
 
     // Use std::vector of std::shared_ptr<const CGovernanceObject> because CGovernanceObject doesn't support move operations (needed for sorting the vector later)
@@ -587,7 +588,7 @@ std::optional<const CSuperblock> CGovernanceManager::CreateSuperblockCandidate(i
             // Skip all non-proposals objects
             if (object.GetObjectType() != GovernanceObject::PROPOSAL) continue;
 
-            const int absYesCount = object.GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_FUNDING);
+            const int absYesCount = object.GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_FUNDING, pindex);
             // Skip non-passing proposals
             if (absYesCount < nAbsVoteReq) continue;
 
@@ -596,9 +597,9 @@ std::optional<const CSuperblock> CGovernanceManager::CreateSuperblockCandidate(i
     } // cs
 
     // Sort approved proposals by absolute Yes votes descending
-    std::sort(approvedProposals.begin(), approvedProposals.end(), [tip_mn_list](std::shared_ptr<const CGovernanceObject> a, std::shared_ptr<const CGovernanceObject> b) {
-        const auto a_yes = a->GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_FUNDING);
-        const auto b_yes = b->GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_FUNDING);
+    std::sort(approvedProposals.begin(), approvedProposals.end(), [tip_mn_list, &pindex](std::shared_ptr<const CGovernanceObject> a, std::shared_ptr<const CGovernanceObject> b) {
+        const auto a_yes = a->GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_FUNDING, pindex);
+        const auto b_yes = b->GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_FUNDING, pindex);
         return a_yes == b_yes ? UintToArith256(a->GetHash()) > UintToArith256(b->GetHash()) : a_yes > b_yes;
     });
 
@@ -613,7 +614,7 @@ std::optional<const CSuperblock> CGovernanceManager::CreateSuperblockCandidate(i
 
     CSuperblock::GetNearestSuperblocksHeights(nHeight, nLastSuperblock, nNextSuperblock);
     auto SBEpochTime = static_cast<int64_t>(GetTime<std::chrono::seconds>().count() + (nNextSuperblock - nHeight) * 2.62 * 60);
-    auto governanceBudget = CSuperblock::GetPaymentsLimit(m_chainman.ActiveChain(), nNextSuperblock);
+    auto governanceBudget = CSuperblock::GetPaymentsLimit(m_chainman.ActiveChain(), nNextSuperblock, m_spork_manager);
 
     CAmount budgetAllocated{};
     for (const auto& proposal : approvedProposals) {
@@ -693,7 +694,7 @@ std::optional<const CGovernanceObject> CGovernanceManager::CreateGovernanceTrigg
     // Nobody submitted a trigger we'd like to see, so let's do it but only if we are the payee
     const CBlockIndex *tip = WITH_LOCK(::cs_main, return m_chainman.ActiveChain().Tip());
     const auto mnList = Assert(m_dmnman)->GetListForBlock(tip);
-    const auto mn_payees = mnList.GetProjectedMNPayees(tip);
+    const auto mn_payees = mnList.GetProjectedMNPayees(tip, m_chainman.ActiveChain());
 
     if (mn_payees.empty()) {
         LogPrint(BCLog::GOBJECT, "CGovernanceManager::%s payee list is empty\n", __func__);
@@ -770,7 +771,7 @@ void CGovernanceManager::VoteGovernanceTriggers(const std::optional<const CGover
 bool CGovernanceManager::VoteFundingTrigger(const uint256& nHash, const vote_outcome_enum_t outcome, CConnman& connman, PeerManager& peerman,
                                             const CActiveMasternodeManager& mn_activeman)
 {
-    CGovernanceVote vote(mn_activeman.GetOutPoint(), nHash, VOTE_SIGNAL_FUNDING, outcome);
+    CGovernanceVote vote(mn_activeman.GetOutPoint(), nHash, VOTE_SIGNAL_FUNDING, outcome, m_chainman);
     vote.SetTime(GetAdjustedTime());
     vote.Sign(mn_activeman);
 
@@ -1483,7 +1484,7 @@ void CGovernanceManager::UpdatedBlockTip(const CBlockIndex* pindex, CConnman& co
     }
 
     if (mn_activeman) {
-        const auto sb_opt = CreateSuperblockCandidate(pindex->nHeight);
+        const auto sb_opt = CreateSuperblockCandidate(pindex->nHeight, *pindex, m_chainman.ActiveChain());
         const auto trigger_opt = CreateGovernanceTrigger(sb_opt, peerman, *mn_activeman);
         VoteGovernanceTriggers(trigger_opt, connman, peerman, *mn_activeman);
     }
@@ -1497,7 +1498,7 @@ void CGovernanceManager::UpdatedBlockTip(const CBlockIndex* pindex, CConnman& co
 
     CheckPostponedObjects(peerman);
 
-    CSuperblockManager::ExecuteBestSuperblock(*this, Assert(m_dmnman)->GetListAtChainTip(), pindex->nHeight);
+    CSuperblockManager::ExecuteBestSuperblock(*this, Assert(m_dmnman)->GetListAtChainTip(), pindex->nHeight, *pindex);
 }
 
 void CGovernanceManager::RequestOrphanObjects(CConnman& connman)
@@ -1572,7 +1573,7 @@ void CGovernanceManager::RemoveInvalidVotes()
 
     for (const auto& outpoint : changedKeyMNs) {
         for (auto& p : mapObjects) {
-            auto removed = p.second.RemoveInvalidVotes(tip_mn_list, outpoint);
+            auto removed = p.second.RemoveInvalidVotes(tip_mn_list, outpoint, m_chainman);
             if (removed.empty()) {
                 continue;
             }

@@ -25,6 +25,7 @@
 #include <numeric>
 #include <unordered_map>
 #include <utility>
+#include <validation.h>
 
 class CBlock;
 class CBlockIndex;
@@ -118,7 +119,7 @@ public:
     [[nodiscard]] uint64_t GetInternalId() const;
 
     [[nodiscard]] std::string ToString() const;
-    [[nodiscard]] UniValue ToJson() const;
+    [[nodiscard]] UniValue ToJson(CChain& activeChain) const;
 };
 using CDeterministicMNCPtr = std::shared_ptr<const CDeterministicMN>;
 
@@ -273,11 +274,12 @@ public:
         return ranges::count_if(mnMap, [this](const auto& p) { return p.second->nType == MnType::Evo && IsMNValid(*p.second); });
     }
 
-    [[nodiscard]] size_t GetValidWeightedMNsCount() const
+    [[nodiscard]] size_t GetValidWeightedMNsCount(const CChain& chain) const
     {
-        return std::accumulate(mnMap.begin(), mnMap.end(), 0, [this](auto res, const auto& p) {
+        return std::accumulate(mnMap.begin(), mnMap.end(), 0, [this, &chain](auto res, const auto& p) {
+                                                                const CBlockIndex* pindex = chain[p.second->pdmnState->nRegisteredHeight];
                                                                 if (!IsMNValid(*p.second)) return res;
-                                                                return res + GetMnType(p.second->nType, ActiveTip()).voting_weight;
+                                                                return res + GetMnType(p.second->nType, pindex).voting_weight;
                                                             });
     }
 
@@ -369,7 +371,7 @@ public:
      * @param nCount the number of payees to return. "nCount = max()"" means "all", use it to avoid calling GetValidWeightedMNsCount twice.
      * @return
      */
-    [[nodiscard]] std::vector<CDeterministicMNCPtr> GetProjectedMNPayees(gsl::not_null<const CBlockIndex* const> pindexPrev, int nCount = std::numeric_limits<int>::max()) const;
+    [[nodiscard]] std::vector<CDeterministicMNCPtr> GetProjectedMNPayees(gsl::not_null<const CBlockIndex* const> pindexPrev, const CChain& chain, int nCount = std::numeric_limits<int>::max()) const;
 
     /**
      * Calculate a quorum based on the modifier. The resulting list is deterministically sorted by score
@@ -641,7 +643,7 @@ public:
     CDeterministicMNList GetListAtChainTip() EXCLUSIVE_LOCKS_REQUIRED(!cs);
 
     // Test if given TX is a ProRegTx which also contains the collateral at index n
-    static bool IsProTxWithCollateral(const CTransactionRef& tx, uint32_t n);
+    static bool IsProTxWithCollateral(const CTransactionRef& tx, uint32_t n, const CBlockIndex& pindex);
 
     bool MigrateDBIfNeeded();
     bool MigrateDBIfNeeded2();

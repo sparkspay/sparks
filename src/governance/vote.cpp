@@ -5,6 +5,7 @@
 #include <evo/dmn_types.h>
 #include <governance/vote.h>
 
+#include <chain.h>
 #include <bls/bls.h>
 #include <chainparams.h>
 #include <key.h>
@@ -92,11 +93,12 @@ CGovernanceVote::CGovernanceVote() :
     nParentHash(),
     nVoteOutcome(int(VOTE_OUTCOME_NONE)),
     nTime(0),
-    vchSig()
+    vchSig(),
+    m_chainman{}
 {
 }
 
-CGovernanceVote::CGovernanceVote(const COutPoint& outpointMasternodeIn, const uint256& nParentHashIn, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn) :
+CGovernanceVote::CGovernanceVote(const COutPoint& outpointMasternodeIn, const uint256& nParentHashIn, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn, const ChainstateManager& chainman) :
     fValid(true),
     fSynced(false),
     nVoteSignal(eVoteSignalIn),
@@ -104,7 +106,8 @@ CGovernanceVote::CGovernanceVote(const COutPoint& outpointMasternodeIn, const ui
     nParentHash(nParentHashIn),
     nVoteOutcome(eVoteOutcomeIn),
     nTime(GetAdjustedTime()),
-    vchSig()
+    vchSig(),
+    m_chainman{chainman}
 {
     UpdateHash();
 }
@@ -112,7 +115,7 @@ CGovernanceVote::CGovernanceVote(const COutPoint& outpointMasternodeIn, const ui
 std::string CGovernanceVote::ToString(const CDeterministicMNList& tip_mn_list) const
 {
     auto dmn = tip_mn_list.GetMNByCollateral(masternodeOutpoint);
-    int voteWeight = dmn != nullptr ? GetMnType(dmn->nType, ActiveTip()).voting_weight : 0;
+    int voteWeight = dmn != nullptr ? GetMnType(dmn->nType, m_chainman.ActiveTip()).voting_weight : 0;
     std::ostringstream ostr;
     ostr << masternodeOutpoint.ToStringShort() << ":"
          << nTime << ":"

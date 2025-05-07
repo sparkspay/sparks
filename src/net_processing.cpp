@@ -2416,7 +2416,7 @@ void PeerManagerImpl::ProcessGetBlockData(CNode& pfrom, Peer& peer, const CInv& 
     } // release cs_main before calling ActivateBestChain
     if (need_activate_chain) {
         BlockValidationState state;
-        if (!m_chainman.ActiveChainstate().ActivateBestChain(state, a_recent_block)) {
+        if (!m_chainman.ActiveChainstate().ActivateBestChain(state, m_sporkman, a_recent_block)) {
             LogPrint(BCLog::NET, "failed to activate chain (%s)\n", state.ToString());
         }
     }
@@ -3281,7 +3281,7 @@ std::pair<bool /*ret*/, bool /*do_return*/> static ValidateDSTX(CDeterministicMN
 void PeerManagerImpl::ProcessBlock(CNode& pfrom, const std::shared_ptr<const CBlock>& pblock, bool fForceProcessing)
 {
     bool fNewBlock = false;
-    m_chainman.ProcessNewBlock(m_chainparams, pblock, fForceProcessing, &fNewBlock);
+    m_chainman.ProcessNewBlock(m_chainparams, pblock, m_sporkman, fForceProcessing, &fNewBlock);
     if (fNewBlock) {
         pfrom.m_last_block_time = GetTime<std::chrono::seconds>();
     } else {
@@ -3930,7 +3930,7 @@ void PeerManagerImpl::ProcessMessage(
                 a_recent_block = most_recent_block;
             }
             BlockValidationState state;
-            if (!m_chainman.ActiveChainstate().ActivateBestChain(state, a_recent_block)) {
+            if (!m_chainman.ActiveChainstate().ActivateBestChain(state, m_sporkman, a_recent_block)) {
                 LogPrint(BCLog::NET, "failed to activate chain (%s)\n", state.ToString());
             }
         }

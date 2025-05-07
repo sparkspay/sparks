@@ -32,7 +32,8 @@ CDSNotificationInterface::CDSNotificationInterface(CConnman& connman,
                                                    const CActiveMasternodeManager* const mn_activeman,
                                                    const std::unique_ptr<CDeterministicMNManager>& dmnman,
                                                    const std::unique_ptr<LLMQContext>& llmq_ctx,
-                                                   const std::unique_ptr<CJContext>& cj_ctx)
+                                                   const std::unique_ptr<CJContext>& cj_ctx,
+                                                   CSporkManager& spork_manager)
   : m_connman(connman),
     m_mn_sync(mn_sync),
     m_govman(govman),
@@ -41,7 +42,8 @@ CDSNotificationInterface::CDSNotificationInterface(CConnman& connman,
     m_mn_activeman(mn_activeman),
     m_dmnman(dmnman),
     m_llmq_ctx(llmq_ctx),
-    m_cj_ctx(cj_ctx) {}
+    m_cj_ctx(cj_ctx),
+    m_spork_manager(spork_manager) {}
 
 void CDSNotificationInterface::InitializeCurrentBlockTip()
 {

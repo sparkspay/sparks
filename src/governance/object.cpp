@@ -215,7 +215,7 @@ void CGovernanceObject::ClearMasternodeVotes(const CDeterministicMNList& tip_mn_
     }
 }
 
-std::set<uint256> CGovernanceObject::RemoveInvalidVotes(const CDeterministicMNList& tip_mn_list, const COutPoint& mnOutpoint)
+std::set<uint256> CGovernanceObject::RemoveInvalidVotes(const CDeterministicMNList& tip_mn_list, const COutPoint& mnOutpoint, const ChainstateManager& chainman)
 {
     LOCK(cs);
 
@@ -232,7 +232,7 @@ std::set<uint256> CGovernanceObject::RemoveInvalidVotes(const CDeterministicMNLi
 
     auto nParentHash = GetHash();
     for (auto jt = it->second.mapInstances.begin(); jt != it->second.mapInstances.end(); ) {
-        CGovernanceVote tmpVote(mnOutpoint, nParentHash, (vote_signal_enum_t)jt->first, jt->second.eOutcome);
+        CGovernanceVote tmpVote(mnOutpoint, nParentHash, (vote_signal_enum_t)jt->first, jt->second.eOutcome, chainman);
         tmpVote.SetTime(jt->second.nCreationTime);
         if (removedVotes.count(tmpVote.GetHash())) {
             jt = it->second.mapInstances.erase(jt);
@@ -570,7 +570,7 @@ bool CGovernanceObject::IsCollateralValid(const ChainstateManager& chainman, std
     return true;
 }
 
-int CGovernanceObject::CountMatchingVotes(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn) const
+int CGovernanceObject::CountMatchingVotes(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn, const CBlockIndex& pindex) const
 {
     LOCK(cs);
 
@@ -584,7 +584,7 @@ int CGovernanceObject::CountMatchingVotes(const CDeterministicMNList& tip_mn_lis
             // will be 5x times weight vote for EvoNode owners after enabling 5000 colleteral regular masternode
             // No need to check if v19 is active since no EvoNode are allowed to register before v19s
             auto dmn = tip_mn_list.GetMNByCollateral(votepair.first);
-            if (dmn != nullptr) nCount += GetMnType(dmn->nType, ActiveTip()).voting_weight;
+            if (dmn != nullptr) nCount += GetMnType(dmn->nType, &pindex).voting_weight;
         }
     }
     return nCount;
@@ -594,29 +594,29 @@ int CGovernanceObject::CountMatchingVotes(const CDeterministicMNList& tip_mn_lis
 *   Get specific vote counts for each outcome (funding, validity, etc)
 */
 
-int CGovernanceObject::GetAbsoluteYesCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const
+int CGovernanceObject::GetAbsoluteYesCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, const CBlockIndex& pindex) const
 {
-    return GetYesCount(tip_mn_list, eVoteSignalIn) - GetNoCount(tip_mn_list, eVoteSignalIn);
+    return GetYesCount(tip_mn_list, eVoteSignalIn, pindex) - GetNoCount(tip_mn_list, eVoteSignalIn, pindex);
 }
 
-int CGovernanceObject::GetAbsoluteNoCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const
+int CGovernanceObject::GetAbsoluteNoCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, const CBlockIndex& pindex) const
 {
-    return GetNoCount(tip_mn_list, eVoteSignalIn) - GetYesCount(tip_mn_list, eVoteSignalIn);
+    return GetNoCount(tip_mn_list, eVoteSignalIn, pindex) - GetYesCount(tip_mn_list, eVoteSignalIn, pindex);
 }
 
-int CGovernanceObject::GetYesCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const
+int CGovernanceObject::GetYesCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, const CBlockIndex& pindex) const
 {
-    return CountMatchingVotes(tip_mn_list, eVoteSignalIn, VOTE_OUTCOME_YES);
+    return CountMatchingVotes(tip_mn_list, eVoteSignalIn, VOTE_OUTCOME_YES, pindex);
 }
 
-int CGovernanceObject::GetNoCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const
+int CGovernanceObject::GetNoCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, const CBlockIndex& pindex) const
 {
-    return CountMatchingVotes(tip_mn_list, eVoteSignalIn, VOTE_OUTCOME_NO);
+    return CountMatchingVotes(tip_mn_list, eVoteSignalIn, VOTE_OUTCOME_NO, pindex);
 }
 
-int CGovernanceObject::GetAbstainCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const
+int CGovernanceObject::GetAbstainCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, const CBlockIndex& pindex) const
 {
-    return CountMatchingVotes(tip_mn_list, eVoteSignalIn, VOTE_OUTCOME_ABSTAIN);
+    return CountMatchingVotes(tip_mn_list, eVoteSignalIn, VOTE_OUTCOME_ABSTAIN, pindex);
 }
 
 bool CGovernanceObject::GetCurrentMNVotes(const COutPoint& mnCollateralOutpoint, vote_rec_t& voteRecord) const
@@ -656,11 +656,11 @@ void CGovernanceObject::Relay(PeerManager& peerman, const CMasternodeSync& mn_sy
     peerman.RelayInv(inv, minProtoVersion);
 }
 
-void CGovernanceObject::UpdateSentinelVariables(const CDeterministicMNList& tip_mn_list)
+void CGovernanceObject::UpdateSentinelVariables(const CDeterministicMNList& tip_mn_list, const CChain& chain)
 {
     // CALCULATE MINIMUM SUPPORT LEVELS REQUIRED
 
-    int nWeightedMnCount = (int)tip_mn_list.GetValidWeightedMNsCount();
+    int nWeightedMnCount = (int)tip_mn_list.GetValidWeightedMNsCount(chain);
     if (nWeightedMnCount == 0) return;
 
     // CALCULATE THE MINIMUM VOTE COUNT REQUIRED FOR FULL SIGNAL
@@ -678,14 +678,14 @@ void CGovernanceObject::UpdateSentinelVariables(const CDeterministicMNList& tip_
     // SET SENTINEL FLAGS TO TRUE IF MINIMUM SUPPORT LEVELS ARE REACHED
     // ARE ANY OF THESE FLAGS CURRENTLY ACTIVATED?
 
-    if (GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_FUNDING) >= nAbsVoteReq) fCachedFunding = true;
-    if ((GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_DELETE) >= nAbsDeleteReq) && !fCachedDelete) {
+    if (GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_FUNDING, *chain.Tip()) >= nAbsVoteReq) fCachedFunding = true;
+    if ((GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_DELETE, *chain.Tip()) >= nAbsDeleteReq) && !fCachedDelete) {
         fCachedDelete = true;
         if (nDeletionTime == 0) {
             nDeletionTime = GetTime<std::chrono::seconds>().count();
         }
     }
-    if (GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_ENDORSED) >= nAbsVoteReq) fCachedEndorsed = true;
+    if (GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_ENDORSED, *chain.Tip()) >= nAbsVoteReq) fCachedEndorsed = true;
 
-    if (GetAbsoluteNoCount(tip_mn_list, VOTE_SIGNAL_VALID) >= nAbsVoteReq) fCachedValid = false;
+    if (GetAbsoluteNoCount(tip_mn_list, VOTE_SIGNAL_VALID, *chain.Tip()) >= nAbsVoteReq) fCachedValid = false;
 }

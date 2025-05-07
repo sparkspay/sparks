@@ -6,6 +6,7 @@
 #define BITCOIN_MASTERNODE_PAYMENTS_H
 
 #include <amount.h>
+#include <chain.h>
 
 #include <string>
 #include <vector>
@@ -58,7 +59,7 @@ public:
     bool IsBlockValueValid(const CBlock& block, const int nBlockHeight, const CAmount blockReward, std::string& strErrorRet, const bool check_superblock);
     bool IsBlockPayeeValid(const CTransaction& txNew, const CBlockIndex* pindexPrev, const CAmount blockSubsidy, const CAmount feeReward, const bool check_superblock);
     void FillBlockPayments(CMutableTransaction& txNew, const CBlockIndex* pindexPrev, const CAmount blockSubsidy, const CAmount feeReward,
-                           std::vector<CTxOut>& voutMasternodePaymentsRet, std::vector<CTxOut>& voutSuperblockPaymentsRet);
+                           std::vector<CTxOut>& voutMasternodePaymentsRet, std::vector<CTxOut>& voutSuperblockPaymentsRet, const CChain& chain);
 };
 
 #endif // BITCOIN_MASTERNODE_PAYMENTS_H

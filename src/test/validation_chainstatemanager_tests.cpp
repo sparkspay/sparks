@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(chainstatemanager)
     // Unlike c1, which doesn't have any blocks. Gets us different tip, height.
     c2.LoadGenesisBlock();
     BlockValidationState dummy_state;
-    BOOST_CHECK(c2.ActivateBestChain(dummy_state, nullptr));
+    BOOST_CHECK(c2.ActivateBestChain(dummy_state, *m_node.sporkman, nullptr));
 
     BOOST_CHECK(manager.IsSnapshotActive());
     BOOST_CHECK(!manager.IsSnapshotValidated());

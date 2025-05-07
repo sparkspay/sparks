@@ -501,7 +501,7 @@ void CChainLocksHandler::EnforceBestChainLock()
 
 
     if (/*activateNeeded =*/ WITH_LOCK(::cs_main, return m_chainstate.m_chain.Tip()->GetAncestor(currentBestChainLockBlockIndex->nHeight)) != currentBestChainLockBlockIndex) {
-        if (!m_chainstate.ActivateBestChain(dummy_state)) {
+        if (!m_chainstate.ActivateBestChain(dummy_state, spork_manager)) {
             LogPrintf("CChainLocksHandler::%s -- ActivateBestChain failed: %s\n", __func__, dummy_state.ToString());
             return;
         }

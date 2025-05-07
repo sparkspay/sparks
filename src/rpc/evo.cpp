@@ -217,7 +217,7 @@ static bool ValidatePlatformPort(const int32_t port)
 #ifdef ENABLE_WALLET
 
 template<typename SpecialTxPayload>
-static void FundSpecialTx(CWallet* pwallet, CMutableTransaction& tx, const SpecialTxPayload& payload, const CTxDestination& fundDest)
+static void FundSpecialTx(CWallet* pwallet, CMutableTransaction& tx, const SpecialTxPayload& payload, const CTxDestination& fundDest, const NodeContext& node)
 {
     CHECK_NONFATAL(pwallet != nullptr);
 
@@ -272,7 +272,7 @@ static void FundSpecialTx(CWallet* pwallet, CMutableTransaction& tx, const Speci
     CTransactionRef newTx;
     CAmount nFee;
     if(tx.nType == TRANSACTION_DATA){
-        CAmount nSporkDataTxFee = sporkManager->GetSporkValue(SPORK_24_DATATX_FEE);
+        CAmount nSporkDataTxFee = node.sporkman->GetSporkValue(SPORK_24_DATATX_FEE);
         CAmount nDataTxFeeRate = nSporkDataTxFee > 0 ? nSporkDataTxFee : DEFAULT_DATA_TRANSACTION_MINFEE;
         coinControl.fOverrideFeeRate = true;
         coinControl.m_feerate = CFeeRate(nDataTxFeeRate);
@@ -805,7 +805,7 @@ static UniValue protx_register_common_wrapper(const JSONRPCRequest& request,
     }
 
     if (action == ProTxRegisterAction::Fund) {
-        FundSpecialTx(wallet.get(), tx, ptx, fundDest);
+        FundSpecialTx(wallet.get(), tx, ptx, fundDest, node);
         UpdateSpecialTxInputsHash(tx, ptx);
         CAmount fundCollateral = GetMnType(mnType, chainman.ActiveChain().Tip()).collat_amount;
         uint32_t collateralIndex = (uint32_t) -1;
@@ -831,7 +831,7 @@ static UniValue protx_register_common_wrapper(const JSONRPCRequest& request,
             return false;
         }();
         try {
-            FundSpecialTx(wallet.get(), tx, ptx, fundDest);
+            FundSpecialTx(wallet.get(), tx, ptx, fundDest, node);
             UpdateSpecialTxInputsHash(tx, ptx);
             Coin coin;
             if (!GetUTXOCoin(chainman.ActiveChainstate(), ptx.collateralOutpoint, coin)) {
@@ -1119,7 +1119,7 @@ static UniValue protx_update_service_common_wrapper(const JSONRPCRequest& reques
         }
     }
 
-    FundSpecialTx(wallet.get(), tx, ptx, feeSource);
+    FundSpecialTx(wallet.get(), tx, ptx, feeSource, node);
 
     SignSpecialTxPayloadByHash(tx, ptx, keyOperator);
     SetTxPayload(tx, ptx);
@@ -1227,7 +1227,7 @@ static RPCHelpMan protx_update_registrar_wrapper(bool specific_legacy_bls_scheme
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Sparks address: ") + request.params[4].get_str());
     }
 
-    FundSpecialTx(wallet.get(), tx, ptx, feeSourceDest);
+    FundSpecialTx(wallet.get(), tx, ptx, feeSourceDest, node);
     SignSpecialTxPayloadByHash(tx, ptx, dmn->pdmnState->keyIDOwner, *wallet);
     SetTxPayload(tx, ptx);
 
@@ -1316,17 +1316,17 @@ static RPCHelpMan protx_revoke()
         CTxDestination feeSourceDest = DecodeDestination(request.params[3].get_str());
         if (!IsValidDestination(feeSourceDest))
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Sparks address: ") + request.params[3].get_str());
-        FundSpecialTx(wallet.get(), tx, ptx, feeSourceDest);
+        FundSpecialTx(wallet.get(), tx, ptx, feeSourceDest, node);
     } else if (dmn->pdmnState->scriptOperatorPayout != CScript()) {
         // Using funds from previousely specified operator payout address
         CTxDestination txDest;
         ExtractDestination(dmn->pdmnState->scriptOperatorPayout, txDest);
-        FundSpecialTx(wallet.get(), tx, ptx, txDest);
+        FundSpecialTx(wallet.get(), tx, ptx, txDest, node);
     } else if (dmn->pdmnState->scriptPayout != CScript()) {
         // Using funds from previousely specified masternode payout address
         CTxDestination txDest;
         ExtractDestination(dmn->pdmnState->scriptPayout, txDest);
-        FundSpecialTx(wallet.get(), tx, ptx, txDest);
+        FundSpecialTx(wallet.get(), tx, ptx, txDest, node);
     } else {
         throw JSONRPCError(RPC_INTERNAL_ERROR, "No payout or fee source addresses found, can't revoke");
     }
@@ -1360,7 +1360,7 @@ static UniValue BuildDMNListEntry(const CWallet* const pwallet, const CDetermini
         return dmn.proTxHash.ToString();
     }
 
-    UniValue o = dmn.ToJson();
+    UniValue o = dmn.ToJson(chainman.ActiveChain());
 
     CTransactionRef collateralTx{nullptr};
     int confirmations = GetUTXOConfirmations(chainman.ActiveChainstate(), dmn.collateralOutpoint);
@@ -1715,7 +1715,7 @@ static RPCHelpMan protx_listdiff()
 
     UniValue jaddedMNs(UniValue::VARR);
     for(const auto& mn : mnDiff.addedMNs) {
-        jaddedMNs.push_back(mn->ToJson());
+        jaddedMNs.push_back(mn->ToJson(chainman.ActiveChain()));
     }
     ret.pushKV("addedMNs", jaddedMNs);
 
@@ -1878,49 +1878,6 @@ static RPCHelpMan bls_help()
     };
 }
 
-void RegisterEvoRPCCommands(CRPCTable &tableRPC)
-{
-// clang-format off
-static const CRPCCommand commands[] =
-{ //  category              name                      actor (function)
-  //  --------------------- ------------------------  -----------------------
-    { "evo",                "bls",                              &bls_help,                      {"command"}  },
-    { "evo",                "bls", "generate",                  &bls_generate,                  {"legacy"}  },
-    { "evo",                "bls", "fromsecret",                &bls_fromsecret,                {"secret", "legacy"}  },
-    { "evo",                "protx",                            &protx_help,                    {"command"}  },
-    { "evo",                "datatx",                           &datatx,                        {}  },
-#ifdef ENABLE_WALLET
-    // { "evo",                "protx", "register",                &protx_register,                {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "feeSourceAddress", "submit"}  },
-    { "evo",                "protx", "register_evo",            &protx_register_evo,            {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "platformNodeID", "platformP2PPort", "platformHTTPPort", "feeSourceAddress", "submit"}  },
-    { "evo",                "protx", "register_hpmn",           &protx_register_hpmn,           {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "platformNodeID", "platformP2PPort", "platformHTTPPort", "feeSourceAddress", "submit"}  },
-    { "evo",                "protx", "register_legacy",         &protx_register_legacy,         {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "feeSourceAddress", "submit"}  },
-    // { "evo",                "protx", "register_fund",           &protx_register_fund,           {"collateralAddress", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "fundAddress", "submit"}  },
-    { "evo",                "protx", "register_fund_legacy",    &protx_register_fund_legacy,    {"collateralAddress", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "fundAddress", "submit"}  },
-    { "evo",                "protx", "register_fund_evo",       &protx_register_fund_evo,       {"collateralAddress", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "platformNodeID", "platformP2PPort", "platformHTTPPort", "fundAddress", "submit"}  },
-    { "evo",                "protx", "register_fund_hpmn",       &protx_register_fund_hpmn,     {"collateralAddress", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "platformNodeID", "platformP2PPort", "platformHTTPPort", "fundAddress", "submit"}  },
-    // { "evo",                "protx", "register_prepare",        &protx_register_prepare,        {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "feeSourceAddress"}  },
-    { "evo",                "protx", "register_prepare_evo",    &protx_register_prepare_evo,    {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "platformNodeID", "platformP2PPort", "platformHTTPPort", "feeSourceAddress"}  },
-    { "evo",                "protx", "register_prepare_hpmn",   &protx_register_prepare_hpmn,   {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "platformNodeID", "platformP2PPort", "platformHTTPPort", "feeSourceAddress"}  },
-    { "evo",                "protx", "register_prepare_legacy", &protx_register_prepare_legacy, {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "feeSourceAddress"}  },
-    // { "evo",                "protx", "update_service",          &protx_update_service,          {"proTxHash", "ipAndPort", "operatorKey", "operatorPayoutAddress", "feeSourceAddress"}  },
-    { "evo",                "protx", "update_service_evo",      &protx_update_service_evo,      {"proTxHash", "ipAndPort", "operatorKey", "platformNodeID", "platformP2PPort", "platformHTTPPort", "operatorPayoutAddress", "feeSourceAddress"}  },
-    { "evo",                "protx", "update_service_hpmn",     &protx_update_service_hpmn,     {"proTxHash", "ipAndPort", "operatorKey", "platformNodeID", "platformP2PPort", "platformHTTPPort", "operatorPayoutAddress", "feeSourceAddress"}  },
-    { "evo",                "protx", "register_submit",         &protx_register_submit,         {"tx", "sig"}  },
-    { "evo",                "protx", "update_registrar",        &protx_update_registrar,        {"proTxHash", "operatorPubKey", "votingAddress", "payoutAddress", "feeSourceAddress"}  },
-    { "evo",                "protx", "update_registrar_legacy", &protx_update_registrar_legacy, {"proTxHash", "operatorPubKey", "votingAddress", "payoutAddress", "feeSourceAddress"}  },
-    { "evo",                "protx", "revoke",                  &protx_revoke,                  {"proTxHash", "operatorKey", "reason", "feeSourceAddress"}  },
-#endif
-    { "evo",                "protx", "list",                    &protx_list,                    {"type", "detailed", "height"}  },
-    { "evo",                "protx", "info",                    &protx_info,                    {"proTxHash", "blockHash"}  },
-    { "evo",                "protx", "diff",                    &protx_diff,                    {"baseBlock", "block", "extended"}  },
-    { "evo",                "protx", "listdiff",                &protx_listdiff,                {"baseBlock", "block"}  },
-};
-// clang-format on
-    for (const auto& command : commands) {
-        tableRPC.appendCommand(command.name, command.subname, &command);
-    }
-}
-
 #ifdef ENABLE_WALLET
 void datatx_publish_help(CWallet* const pwallet)
 {
@@ -1941,6 +1898,10 @@ UniValue datatx_publish(const JSONRPCRequest& request, const ChainstateManager& 
 {
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
     CWallet* const pwallet = wallet.get();
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
+    
+    CHECK_NONFATAL(node.chain_helper);
+    CChainstateHelper& chain_helper = *node.chain_helper;
 
     if (request.fHelp || request.params.size() != 3) {
         datatx_publish_help(pwallet);
@@ -1961,9 +1922,9 @@ UniValue datatx_publish(const JSONRPCRequest& request, const ChainstateManager& 
     if (!IsValidDestination(feeSourceDest))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Sparks address: ") + request.params[2].get_str());
 
-    FundSpecialTx(pwallet, tx, dtx, feeSourceDest);
+    FundSpecialTx(pwallet, tx, dtx, feeSourceDest, node);
     SetTxPayload(tx, dtx);
-    return SignAndSendSpecialTx(request, chainman, tx);
+    return SignAndSendSpecialTx(request, chain_helper, chainman, tx);
 }
 #endif
 
@@ -2059,4 +2020,47 @@ UniValue datatx(const JSONRPCRequest& request)
         return datatx_get(request);
     }
     datatx_help();
+}
+
+void RegisterEvoRPCCommands(CRPCTable &tableRPC)
+{
+// clang-format off
+static const CRPCCommand commands[] =
+{ //  category              name                      actor (function)
+  //  --------------------- ------------------------  -----------------------
+    { "evo",                "bls",                              &bls_help,                      {"command"}  },
+    { "evo",                "bls", "generate",                  &bls_generate,                  {"legacy"}  },
+    { "evo",                "bls", "fromsecret",                &bls_fromsecret,                {"secret", "legacy"}  },
+    { "evo",                "protx",                            &protx_help,                    {"command"}  },
+    { "evo",                "datatx",                           &datatx,                        {}  },
+#ifdef ENABLE_WALLET
+    // { "evo",                "protx", "register",                &protx_register,                {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "feeSourceAddress", "submit"}  },
+    { "evo",                "protx", "register_evo",            &protx_register_evo,            {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "platformNodeID", "platformP2PPort", "platformHTTPPort", "feeSourceAddress", "submit"}  },
+    { "evo",                "protx", "register_hpmn",           &protx_register_hpmn,           {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "platformNodeID", "platformP2PPort", "platformHTTPPort", "feeSourceAddress", "submit"}  },
+    { "evo",                "protx", "register_legacy",         &protx_register_legacy,         {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "feeSourceAddress", "submit"}  },
+    // { "evo",                "protx", "register_fund",           &protx_register_fund,           {"collateralAddress", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "fundAddress", "submit"}  },
+    { "evo",                "protx", "register_fund_legacy",    &protx_register_fund_legacy,    {"collateralAddress", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "fundAddress", "submit"}  },
+    { "evo",                "protx", "register_fund_evo",       &protx_register_fund_evo,       {"collateralAddress", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "platformNodeID", "platformP2PPort", "platformHTTPPort", "fundAddress", "submit"}  },
+    { "evo",                "protx", "register_fund_hpmn",       &protx_register_fund_hpmn,     {"collateralAddress", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "platformNodeID", "platformP2PPort", "platformHTTPPort", "fundAddress", "submit"}  },
+    // { "evo",                "protx", "register_prepare",        &protx_register_prepare,        {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "feeSourceAddress"}  },
+    { "evo",                "protx", "register_prepare_evo",    &protx_register_prepare_evo,    {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "platformNodeID", "platformP2PPort", "platformHTTPPort", "feeSourceAddress"}  },
+    { "evo",                "protx", "register_prepare_hpmn",   &protx_register_prepare_hpmn,   {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "platformNodeID", "platformP2PPort", "platformHTTPPort", "feeSourceAddress"}  },
+    { "evo",                "protx", "register_prepare_legacy", &protx_register_prepare_legacy, {"collateralHash", "collateralIndex", "ipAndPort", "ownerAddress", "operatorPubKey", "votingAddress", "operatorReward", "payoutAddress", "feeSourceAddress"}  },
+    // { "evo",                "protx", "update_service",          &protx_update_service,          {"proTxHash", "ipAndPort", "operatorKey", "operatorPayoutAddress", "feeSourceAddress"}  },
+    { "evo",                "protx", "update_service_evo",      &protx_update_service_evo,      {"proTxHash", "ipAndPort", "operatorKey", "platformNodeID", "platformP2PPort", "platformHTTPPort", "operatorPayoutAddress", "feeSourceAddress"}  },
+    { "evo",                "protx", "update_service_hpmn",     &protx_update_service_hpmn,     {"proTxHash", "ipAndPort", "operatorKey", "platformNodeID", "platformP2PPort", "platformHTTPPort", "operatorPayoutAddress", "feeSourceAddress"}  },
+    { "evo",                "protx", "register_submit",         &protx_register_submit,         {"tx", "sig"}  },
+    { "evo",                "protx", "update_registrar",        &protx_update_registrar,        {"proTxHash", "operatorPubKey", "votingAddress", "payoutAddress", "feeSourceAddress"}  },
+    { "evo",                "protx", "update_registrar_legacy", &protx_update_registrar_legacy, {"proTxHash", "operatorPubKey", "votingAddress", "payoutAddress", "feeSourceAddress"}  },
+    { "evo",                "protx", "revoke",                  &protx_revoke,                  {"proTxHash", "operatorKey", "reason", "feeSourceAddress"}  },
+#endif
+    { "evo",                "protx", "list",                    &protx_list,                    {"type", "detailed", "height"}  },
+    { "evo",                "protx", "info",                    &protx_info,                    {"proTxHash", "blockHash"}  },
+    { "evo",                "protx", "diff",                    &protx_diff,                    {"baseBlock", "block", "extended"}  },
+    { "evo",                "protx", "listdiff",                &protx_listdiff,                {"baseBlock", "block"}  },
+};
+// clang-format on
+    for (const auto& command : commands) {
+        tableRPC.appendCommand(command.name, command.subname, &command);
+    }
 }

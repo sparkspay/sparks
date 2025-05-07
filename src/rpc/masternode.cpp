@@ -109,7 +109,7 @@ static UniValue GetNextMasternodeForPayment(const CChain& active_chain, CDetermi
 {
     const CBlockIndex *tip = WITH_LOCK(::cs_main, return active_chain.Tip());
     auto mnList = dmnman.GetListForBlock(tip);
-    auto payees = mnList.GetProjectedMNPayees(tip, heightShift);
+    auto payees = mnList.GetProjectedMNPayees(tip, active_chain, heightShift);
     if (payees.empty())
         return "unknown";
     auto payee = payees.back();
@@ -217,6 +217,7 @@ static RPCHelpMan masternode_status()
         [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
 {
     const NodeContext& node = EnsureAnyNodeContext(request.context);
+    const ChainstateManager& chainman = EnsureChainman(node);
     CHECK_NONFATAL(node.dmnman);
     if (!node.mn_activeman) {
         throw JSONRPCError(RPC_INTERNAL_ERROR, "This node does not run an active masternode.");
@@ -229,7 +230,7 @@ static RPCHelpMan masternode_status()
     CDeterministicMNCPtr dmn = node.dmnman->GetListAtChainTip().GetMN(node.mn_activeman->GetProTxHash());
     if (dmn) {
         mnObj.pushKV("proTxHash", dmn->proTxHash.ToString());
-        mnObj.pushKV("type", std::string(GetMnType(dmn->nType, ActiveChain()[dmn->pdmnState->nRegisteredHeight]).description));
+        mnObj.pushKV("type", std::string(GetMnType(dmn->nType, chainman.ActiveChain()[dmn->pdmnState->nRegisteredHeight]).description));
         mnObj.pushKV("collateralHash", dmn->collateralOutpoint.hash.ToString());
         mnObj.pushKV("collateralIndex", (int)dmn->collateralOutpoint.n);
         mnObj.pushKV("dmnState", dmn->pdmnState->ToJson(dmn->nType));
@@ -242,7 +243,7 @@ static RPCHelpMan masternode_status()
     };
 }
 
-static std::string GetRequiredPaymentsString(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight, const CDeterministicMNCPtr &payee)
+static std::string GetRequiredPaymentsString(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight, const CDeterministicMNCPtr &payee, const CChain& chain)
 {
     std::string strPayments = "Unknown";
     if (payee) {
@@ -258,9 +259,9 @@ static std::string GetRequiredPaymentsString(CGovernanceManager& govman, const C
             strPayments += ", " + EncodeDestination(dest);
         }
     }
-    if (CSuperblockManager::IsSuperblockTriggered(govman, tip_mn_list, nBlockHeight)) {
+    if (CSuperblockManager::IsSuperblockTriggered(govman, tip_mn_list, nBlockHeight, chain)) {
         std::vector<CTxOut> voutSuperblock;
-        if (!CSuperblockManager::GetSuperblockPayments(govman, tip_mn_list, nBlockHeight, voutSuperblock)) {
+        if (!CSuperblockManager::GetSuperblockPayments(govman, tip_mn_list, nBlockHeight, voutSuperblock, *chain.Tip())) {
             return strPayments + ", error";
         }
         std::string strSBPayees = "Unknown";
@@ -322,15 +323,15 @@ static RPCHelpMan masternode_winners()
     for (int h = nStartHeight; h <= nChainTipHeight; h++) {
         const CBlockIndex* pIndex = pindexTip->GetAncestor(h - 1);
         auto payee = node.dmnman->GetListForBlock(pIndex).GetMNPayee(pIndex);
-        std::string strPayments = GetRequiredPaymentsString(*node.govman, tip_mn_list, h, payee);
+        std::string strPayments = GetRequiredPaymentsString(*node.govman, tip_mn_list, h, payee, node.chainman->ActiveChain());
         if (strFilter != "" && strPayments.find(strFilter) == std::string::npos) continue;
         obj.pushKV(strprintf("%d", h), strPayments);
     }
 
-    auto projection = node.dmnman->GetListForBlock(pindexTip).GetProjectedMNPayees(pindexTip, 20);
+    auto projection = node.dmnman->GetListForBlock(pindexTip).GetProjectedMNPayees(pindexTip, node.chainman->ActiveChain(), 20);
     for (size_t i = 0; i < projection.size(); i++) {
         int h = nChainTipHeight + 1 + i;
-        std::string strPayments = GetRequiredPaymentsString(*node.govman, tip_mn_list, h, projection[i]);
+        std::string strPayments = GetRequiredPaymentsString(*node.govman, tip_mn_list, h, projection[i], node.chainman->ActiveChain());
         if (strFilter != "" && strPayments.find(strFilter) == std::string::npos) continue;
         obj.pushKV(strprintf("%d", h), strPayments);
     }
@@ -433,8 +434,8 @@ static RPCHelpMan masternode_payments()
 
         std::vector<CTxOut> voutMasternodePayments, voutDummy;
         CMutableTransaction dummyTx;
-        CAmount blockSubsidy = GetBlockSubsidy(pindex, Params().GetConsensus());
-        node.chain_helper->mn_payments->FillBlockPayments(dummyTx, pindex->pprev, blockSubsidy, nBlockFees, voutMasternodePayments, voutDummy);
+        CAmount blockSubsidy = GetBlockSubsidy(pindex, Params().GetConsensus(), *node.sporkman);
+        node.chain_helper->mn_payments->FillBlockPayments(dummyTx, pindex->pprev, blockSubsidy, nBlockFees, voutMasternodePayments, voutDummy, chainman.ActiveChain());
 
         UniValue blockObj(UniValue::VOBJ);
         CAmount payedPerBlock{0};

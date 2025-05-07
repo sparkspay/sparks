@@ -10,6 +10,7 @@
 #include <governance/vote.h>
 #include <governance/votedb.h>
 #include <sync.h>
+#include <chain.h>
 
 #include <univalue.h>
 
@@ -237,7 +238,7 @@ public:
 
     void UpdateLocalValidity(const CDeterministicMNList& tip_mn_list, const ChainstateManager& chainman);
 
-    void UpdateSentinelVariables(const CDeterministicMNList& tip_mn_list);
+    void UpdateSentinelVariables(const CDeterministicMNList& tip_mn_list, const CChain& chain);
 
     void PrepareDeletion(int64_t nDeletionTime_)
     {
@@ -258,13 +259,13 @@ public:
 
     // GET VOTE COUNT FOR SIGNAL
 
-    int CountMatchingVotes(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn) const;
+    int CountMatchingVotes(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn, const CBlockIndex& pindex) const;
 
-    int GetAbsoluteYesCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const;
-    int GetAbsoluteNoCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const;
-    int GetYesCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const;
-    int GetNoCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const;
-    int GetAbstainCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn) const;
+    int GetAbsoluteYesCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, const CBlockIndex& pindex) const;
+    int GetAbsoluteNoCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, const CBlockIndex& pindex) const;
+    int GetYesCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, const CBlockIndex& pindex) const;
+    int GetNoCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, const CBlockIndex& pindex) const;
+    int GetAbstainCount(const CDeterministicMNList& tip_mn_list, vote_signal_enum_t eVoteSignalIn, const CBlockIndex& pindex) const;
 
     bool GetCurrentMNVotes(const COutPoint& mnCollateralOutpoint, vote_rec_t& voteRecord) const;
 
@@ -303,7 +304,7 @@ public:
     // This is the case for DIP3 MNs that changed voting or operator keys and
     // also for MNs that were removed from the list completely.
     // Returns deleted vote hashes.
-    std::set<uint256> RemoveInvalidVotes(const CDeterministicMNList& tip_mn_list, const COutPoint& mnOutpoint);
+    std::set<uint256> RemoveInvalidVotes(const CDeterministicMNList& tip_mn_list, const COutPoint& mnOutpoint, const ChainstateManager& chainman);
 };
 
 

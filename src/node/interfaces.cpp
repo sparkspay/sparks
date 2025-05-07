@@ -121,7 +121,7 @@ public:
     int32_t getObjAbsYesCount(const CGovernanceObject& obj, vote_signal_enum_t vote_signal) override
     {
         if (context().govman != nullptr && context().dmnman != nullptr) {
-            return obj.GetAbsoluteYesCount(context().dmnman->GetListAtChainTip(), vote_signal);
+            return obj.GetAbsoluteYesCount(context().dmnman->GetListAtChainTip(), vote_signal, *context().chainman->ActiveTip());
         }
         return 0;
     }
@@ -793,7 +793,7 @@ public:
         std::vector<COutPoint> listRet;
         for (const auto& [tx, index]: outputs) {
             COutPoint nextOut{tx->GetHash(), index};
-            if (CDeterministicMNManager::IsProTxWithCollateral(tx, index) || mnList.HasMNByCollateral(nextOut)) {
+            if (CDeterministicMNManager::IsProTxWithCollateral(tx, index, *m_node.chainman->ActiveTip()) || mnList.HasMNByCollateral(nextOut)) {
                 listRet.emplace_back(nextOut);
             }
         }

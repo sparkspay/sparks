@@ -15,6 +15,7 @@
 #include <deque>
 #include <memory>
 #include <utility>
+#include <chain.h>
 
 class CCoinJoinClientManager;
 class CCoinJoinClientQueueManager;
@@ -143,8 +144,8 @@ private:
 
     bool CreateCollateralTransaction(CMutableTransaction& txCollateral, std::string& strReason);
 
-    bool JoinExistingQueue(CAmount nBalanceNeedsAnonymized, CConnman& connman);
-    bool StartNewQueue(CAmount nBalanceNeedsAnonymized, CConnman& connman);
+    bool JoinExistingQueue(CAmount nBalanceNeedsAnonymized, CConnman& connman, CChain& chain);
+    bool StartNewQueue(CAmount nBalanceNeedsAnonymized, CConnman& connman, CChain& chain);
 
     /// step 0: select denominated inputs and txouts
     bool SelectDenominate(std::string& strErrorRet, std::vector<CTxDSIn>& vecTxDSInRet);

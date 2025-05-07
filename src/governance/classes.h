@@ -9,6 +9,7 @@
 #include <script/script.h>
 #include <script/standard.h>
 #include <uint256.h>
+#include <spork.h>
 
 class CChain;
 class CGovernanceManager;
@@ -30,13 +31,13 @@ CAmount ParsePaymentAmount(const std::string& strAmount);
 class CSuperblockManager
 {
 private:
-    static bool GetBestSuperblock(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, CSuperblock_sptr& pSuperblockRet, int nBlockHeight);
+    static bool GetBestSuperblock(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, CSuperblock_sptr& pSuperblockRet, int nBlockHeight, const CBlockIndex& pindex);
 
 public:
-    static bool IsSuperblockTriggered(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight);
+    static bool IsSuperblockTriggered(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight, const CChain& chain);
 
-    static bool GetSuperblockPayments(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight, std::vector<CTxOut>& voutSuperblockRet);
-    static void ExecuteBestSuperblock(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight);
+    static bool GetSuperblockPayments(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight, std::vector<CTxOut>& voutSuperblockRet, const CBlockIndex& pindex);
+    static void ExecuteBestSuperblock(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight, const CBlockIndex& pindex);
 
     static bool IsValid(CGovernanceManager& govman, const CChain& active_chain, const CDeterministicMNList& tip_mn_list, const CTransaction& txNew, int nBlockHeight, CAmount blockReward);
 };
@@ -95,17 +96,18 @@ private:
     int nBlockHeight;
     SeenObjectStatus nStatus;
     std::vector<CGovernancePayment> vecPayments;
+    const CSporkManager& m_spork_manager;
 
     void ParsePaymentSchedule(const std::string& strPaymentAddresses, const std::string& strPaymentAmounts, const std::string& strProposalHashes);
 
 public:
     CSuperblock();
     CSuperblock(int nBlockHeight, std::vector<CGovernancePayment> vecPayments);
-    explicit CSuperblock(CGovernanceManager& govman, uint256& nHash);
+    explicit CSuperblock(CGovernanceManager& govman, uint256& nHash, CSporkManager& spork_manager);
 
     static bool IsValidBlockHeight(int nBlockHeight);
     static void GetNearestSuperblocksHeights(int nBlockHeight, int& nLastSuperblockRet, int& nNextSuperblockRet);
-    static CAmount GetPaymentsLimit(const CChain& active_chain, int nBlockHeight);
+    static CAmount GetPaymentsLimit(const CChain& active_chain, int nBlockHeight, const CSporkManager& spork_manager);
 
     SeenObjectStatus GetStatus() const { return nStatus; }
     void SetStatus(SeenObjectStatus nStatusIn) { nStatus = nStatusIn; }

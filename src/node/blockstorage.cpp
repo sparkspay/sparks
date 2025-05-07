@@ -18,6 +18,7 @@
 #include <util/system.h>
 #include <validation.h>
 #include <walletinitinterface.h>
+#include <spork.h>
 
 // From validation. TODO move here
 bool FindBlockPos(FlatFilePos& pos, unsigned int nAddSize, unsigned int nHeight, CChain& active_chain, uint64_t nTime, bool fKnown = false);
@@ -120,7 +121,7 @@ struct CImportingNow {
 };
 
 void ThreadImport(ChainstateManager& chainman, CDeterministicMNManager& dmnman, CDSNotificationInterface& dsnfi,
-                  std::vector<fs::path> vImportFiles, CActiveMasternodeManager* const mn_activeman, const ArgsManager& args)
+                  std::vector<fs::path> vImportFiles, CActiveMasternodeManager* const mn_activeman, const ArgsManager& args, CSporkManager& spork_manager)
 {
     ScheduleBatchPriority();
 
@@ -140,7 +141,7 @@ void ThreadImport(ChainstateManager& chainman, CDeterministicMNManager& dmnman, 
                     break; // This error is logged in OpenBlockFile
                 }
                 LogPrintf("Reindexing block file blk%05u.dat...\n", (unsigned int)nFile);
-                chainman.ActiveChainstate().LoadExternalBlockFile(file, &pos);
+                chainman.ActiveChainstate().LoadExternalBlockFile(file, spork_manager, &pos);
                 if (ShutdownRequested()) {
                     LogPrintf("Shutdown requested. Exit %s\n", __func__);
                     return;
@@ -159,7 +160,7 @@ void ThreadImport(ChainstateManager& chainman, CDeterministicMNManager& dmnman, 
             FILE *file = fsbridge::fopen(path, "rb");
             if (file) {
                 LogPrintf("Importing blocks file %s...\n", path.string());
-                chainman.ActiveChainstate().LoadExternalBlockFile(file);
+                chainman.ActiveChainstate().LoadExternalBlockFile(file, spork_manager);
                 if (ShutdownRequested()) {
                     LogPrintf("Shutdown requested. Exit %s\n", __func__);
                     return;
@@ -176,7 +177,7 @@ void ThreadImport(ChainstateManager& chainman, CDeterministicMNManager& dmnman, 
         // the relevant pointers before the ABC call.
         for (CChainState* chainstate : WITH_LOCK(::cs_main, return chainman.GetAll())) {
             BlockValidationState state;
-            if (!chainstate->ActivateBestChain(state, nullptr)) {
+            if (!chainstate->ActivateBestChain(state, spork_manager, nullptr)) {
                 LogPrintf("Failed to connect best block (%s)\n", state.ToString());
                 StartShutdown();
                 return;
@@ -215,5 +216,5 @@ void ThreadImport(ChainstateManager& chainman, CDeterministicMNManager& dmnman, 
 
     g_wallet_init_interface.AutoLockMasternodeCollaterals();
 
-    chainman.ActiveChainstate().LoadMempool(args);
+    chainman.ActiveChainstate().LoadMempool(args, spork_manager);
 }

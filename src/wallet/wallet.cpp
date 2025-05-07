@@ -2711,7 +2711,7 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, const CCoinControl* c
 std::map<CTxDestination , std::vector<COutput> > CWallet::AvailableCoinsByAddress(bool fOnlySafe, CAmount maxCoinValue)
 {
     std::vector<COutput> vCoins;
-    AvailableCoins(vCoins, true, nullptr, 1, maxCoinValue);
+    AvailableCoins(vCoins, nullptr, 1, maxCoinValue);
 
     std::map<CTxDestination, std::vector<COutput> > mapCoins;
     for (const COutput& out : vCoins) {
@@ -4688,8 +4688,9 @@ void CWallet::AutoCombineDust()
         {
 
             LOCK(cs_wallet);
+            FeeCalculation fee_calc_out;
             if (!CreateTransaction(vecSend, wtx, nFeeRet, nChangePosInOut, strErr, *coinControl,
-                                   true, CAmount(0))) {
+                                fee_calc_out, true, CAmount(0))) {
                 LogPrintf("AutoCombineDust createtransaction failed, reason: %s\n", strErr.original);
                 continue;
             }

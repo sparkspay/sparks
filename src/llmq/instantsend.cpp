@@ -1424,7 +1424,7 @@ void CInstantSendManager::ResolveBlockConflicts(const uint256& islockHash, const
 
     if (activateBestChain) {
         BlockValidationState state;
-        if (!m_chainstate.ActivateBestChain(state)) {
+        if (!m_chainstate.ActivateBestChain(state, spork_manager)) {
             LogPrintf("CChainLocksHandler::%s -- ActivateBestChain failed: %s\n", __func__, state.ToString());
             // This should not have happened and we are in a state were it's not safe to continue anymore
             assert(false);
