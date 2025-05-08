@@ -2209,9 +2209,9 @@
     <message>
         <location line="+169"/>
         <source>Language missing or translation incomplete? Help contributing translations here:
-https://mainnet.sparkspay.io/</source>
+https://explore.transifex.com/sparks/sparks/</source>
         <translation>Language missing or translation incomplete? Help contributing translations here:
-https://mainnet.sparkspay.io/</translation>
+https://explore.transifex.com/sparks/sparks/</translation>
     </message>
     <message>
         <location line="+131"/>
