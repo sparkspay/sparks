@@ -450,7 +450,7 @@ void CChainState::MaybeUpdateMempoolForReorg(
     while (it != disconnectpool.queuedTx.get<insertion_order>().rend()) {
         // ignore validation errors in resurrected transactions
         if (!fAddToMempool || (*it)->IsCoinBase() ||
-            AcceptToMemoryPool(*this, *m_mempool, *it, true /* bypass_limits */).m_result_type != MempoolAcceptResult::ResultType::VALID) {
+            AcceptToMemoryPool(*this, *m_mempool, *it, m_spork_manager, true /* bypass_limits */).m_result_type != MempoolAcceptResult::ResultType::VALID) {
             // If the transaction doesn't make it in to the mempool, remove any
             // transactions that depend on it (which would now be orphans).
             m_mempool->removeRecursive(**it, MemPoolRemovalReason::REORG);
@@ -524,7 +524,7 @@ namespace {
 class MemPoolAccept
 {
 public:
-    explicit MemPoolAccept(CTxMemPool& mempool, CChainState& active_chainstate, CSporkManager& spork_manager) :
+    explicit MemPoolAccept(CTxMemPool& mempool, CChainState& active_chainstate, const CSporkManager& spork_manager) :
         m_pool(mempool),
         m_view(&m_dummy),
         m_viewmempool(&active_chainstate.CoinsTip(), m_pool),
@@ -534,7 +534,7 @@ public:
         m_limit_ancestor_size(gArgs.GetArg("-limitancestorsize", DEFAULT_ANCESTOR_SIZE_LIMIT)*1000),
         m_limit_descendants(gArgs.GetArg("-limitdescendantcount", DEFAULT_DESCENDANT_LIMIT)),
         m_limit_descendant_size(gArgs.GetArg("-limitdescendantsize", DEFAULT_DESCENDANT_SIZE_LIMIT)*1000),
-        m_spork_manager(spork_manager) {
+        m_spork_manager{spork_manager} {
     }
 
     // We put the arguments we're handed into a struct, so we can pass them
@@ -622,7 +622,7 @@ private:
     CCoinsView m_dummy;
     CChainState& m_active_chainstate;
     CChainstateHelper& m_chain_helper;
-    CSporkManager& m_spork_manager;
+    const CSporkManager& m_spork_manager;
 
     // The package limits in effect at the time of invocation.
     const size_t m_limit_ancestors;
@@ -1030,7 +1030,7 @@ PackageMempoolAcceptResult MemPoolAccept::AcceptMultipleTransactions(const std::
 /** (try to) add transaction to memory pool with a specified acceptance time **/
 static MempoolAcceptResult AcceptToMemoryPoolWithTime(const CChainParams& chainparams, CTxMemPool& pool, CChainState& active_chainstate,
                                                       const CTransactionRef &tx, int64_t nAcceptTime,
-                                                      bool bypass_limits, bool test_accept, CSporkManager& spork_manager)
+                                                      const CSporkManager& spork_manager, bool bypass_limits, bool test_accept)
                                                       EXCLUSIVE_LOCKS_REQUIRED(cs_main)
 {
     std::vector<COutPoint> coins_to_uncache;
@@ -1056,13 +1056,13 @@ static MempoolAcceptResult AcceptToMemoryPoolWithTime(const CChainParams& chainp
     return result;
 }
 
-MempoolAcceptResult AcceptToMemoryPool(CChainState& active_chainstate, CTxMemPool& pool, const CTransactionRef &tx, bool bypass_limits, bool test_accept, CSporkManager& spork_manager)
+MempoolAcceptResult AcceptToMemoryPool(CChainState& active_chainstate, CTxMemPool& pool, const CTransactionRef &tx, const CSporkManager& spork_manager, bool bypass_limits, bool test_accept)
 {
-    return AcceptToMemoryPoolWithTime(Params(), pool, active_chainstate, tx, GetTime(), bypass_limits, test_accept, spork_manager);
+    return AcceptToMemoryPoolWithTime(Params(), pool, active_chainstate, tx, GetTime(), spork_manager, bypass_limits, test_accept);
 }
 
 PackageMempoolAcceptResult ProcessNewPackage(CChainState& active_chainstate, CTxMemPool& pool,
-                                             const Package& package, bool test_accept, CSporkManager& spork_manager)
+                                             const Package& package, CSporkManager& spork_manager, bool test_accept)
 {
     AssertLockHeld(cs_main);
     assert(test_accept); // Only allow package accept dry-runs (testmempoolaccept RPC).
@@ -1302,6 +1302,7 @@ CChainState::CChainState(CTxMemPool* mempool,
                          const std::unique_ptr<CChainstateHelper>& chain_helper,
                          const std::unique_ptr<llmq::CChainLocksHandler>& clhandler,
                          const std::unique_ptr<llmq::CInstantSendManager>& isman,
+                         CSporkManager& spork_manager,
                          std::optional<uint256> from_snapshot_blockhash)
     : m_mempool(mempool),
       m_params(::Params()),
@@ -1310,6 +1311,7 @@ CChainState::CChainState(CTxMemPool* mempool,
       m_isman(isman),
       m_evoDb(evoDb),
       m_blockman(blockman),
+      m_spork_manager(spork_manager),
       m_from_snapshot_blockhash(from_snapshot_blockhash) {}
 
 void CChainState::InitCoinsDB(
@@ -4328,9 +4330,9 @@ bool TestBlockValidity(BlockValidationState& state,
                        CChainState& chainstate,
                        const CBlock& block,
                        CBlockIndex* pindexPrev,
+                       CSporkManager& spork_manager,
                        bool fCheckPOW,
-                       bool fCheckMerkleRoot,
-                       CSporkManager& spork_manager)
+                       bool fCheckMerkleRoot)
 {
     AssertLockHeld(cs_main);
     assert(pindexPrev && pindexPrev == chainstate.m_chain.Tip());
@@ -5559,8 +5561,8 @@ bool LoadMempool(CTxMemPool& pool, CChainState& active_chainstate, CSporkManager
             }
             if (nTime > nNow - nExpiryTimeout) {
                 LOCK(cs_main);
-                if (AcceptToMemoryPoolWithTime(chainparams, pool, active_chainstate, tx, nTime, false /* bypass_limits */,
-                                               false /* test_accept */, spork_manager).m_result_type == MempoolAcceptResult::ResultType::VALID) {
+                if (AcceptToMemoryPoolWithTime(chainparams, pool, active_chainstate, tx, nTime, spork_manager, false /* bypass_limits */,
+                                               false /* test_accept */).m_result_type == MempoolAcceptResult::ResultType::VALID) {
                     ++count;
                 } else {
                     // mempool may contain the transaction already, e.g. from
@@ -5714,6 +5716,7 @@ CChainState& ChainstateManager::InitializeChainstate(CTxMemPool* mempool,
                                                      const std::unique_ptr<CChainstateHelper>& chain_helper,
                                                      const std::unique_ptr<llmq::CChainLocksHandler>& clhandler,
                                                      const std::unique_ptr<llmq::CInstantSendManager>& isman,
+                                                     CSporkManager& spork_manager,
                                                      const std::optional<uint256>& snapshot_blockhash)
 {
     bool is_snapshot = snapshot_blockhash.has_value();
@@ -5724,7 +5727,7 @@ CChainState& ChainstateManager::InitializeChainstate(CTxMemPool* mempool,
         throw std::logic_error("should not be overwriting a chainstate");
     }
 
-    to_modify.reset(new CChainState(mempool, m_blockman, evoDb, chain_helper, clhandler, isman, snapshot_blockhash));
+    to_modify.reset(new CChainState(mempool, m_blockman, evoDb, chain_helper, clhandler, isman, spork_manager, snapshot_blockhash));
 
     // Snapshot chainstates and initial IBD chaintates always become active.
     if (is_snapshot || (!is_snapshot && !m_active_chainstate)) {
@@ -5799,6 +5802,7 @@ bool ChainstateManager::ActivateSnapshot(
             this->ActiveChainstate().m_chain_helper,
             this->ActiveChainstate().m_clhandler,
             this->ActiveChainstate().m_isman,
+            this->ActiveChainstate().m_spork_manager,
             base_blockhash
         )
     );

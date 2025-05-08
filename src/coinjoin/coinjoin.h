@@ -11,6 +11,7 @@
 #include <netaddress.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
+#include <spork.h>
 #include <sync.h>
 #include <timedata.h>
 #include <univalue.h>
@@ -354,7 +355,7 @@ namespace CoinJoin
     constexpr CAmount GetMaxPoolAmount() { return COINJOIN_ENTRY_MAX_SIZE * vecStandardDenominations.front(); }
 
     /// If the collateral is valid given by a client
-    bool IsCollateralValid(CChainState& active_chainstate, CTxMemPool& mempool, const CTransaction& txCollateral);
+    bool IsCollateralValid(CChainState& active_chainstate, CTxMemPool& mempool, const CTransaction& txCollateral, CSporkManager& spork_manager);
 
 }
 
@@ -389,6 +390,6 @@ private:
 };
 
 bool ATMPIfSaneFee(CChainState& active_chainstate, CTxMemPool& pool,
-                   const CTransactionRef &tx, bool test_accept = false) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+                   const CTransactionRef &tx, CSporkManager& spork_manager, bool test_accept = false) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 #endif // BITCOIN_COINJOIN_COINJOIN_H

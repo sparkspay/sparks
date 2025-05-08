@@ -73,7 +73,7 @@ static RPCHelpMan coinjoin()
         ChainstateManager& chainman = EnsureChainman(node);
         CTxMemPool& mempool = EnsureMemPool(node);
         CConnman& connman = EnsureConnman(node);
-        bool result = cj_clientman->DoAutomaticDenominating(chainman.ActiveChainstate(), connman, mempool);
+        bool result = cj_clientman->DoAutomaticDenominating(chainman.ActiveChainstate(), connman, mempool, *node.sporkman);
         return "Mixing " + (result ? "started successfully" : ("start failed: " + cj_clientman->GetStatuses().original + ", will retry"));
     }
 

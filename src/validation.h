@@ -294,7 +294,7 @@ struct PackageMempoolAcceptResult
  * @param[in]  test_accept     When true, run validation checks but don't submit to mempool.
  */
 MempoolAcceptResult AcceptToMemoryPool(CChainState& active_chainstate, CTxMemPool& pool, const CTransactionRef& tx,
-                                       bool bypass_limits, bool test_accept=false) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+                        const CSporkManager& spork_manager, bool bypass_limits, bool test_accept=false) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 /**
 * Atomically test acceptance of a package. If the package only contains one tx, package rules still
@@ -307,7 +307,7 @@ MempoolAcceptResult AcceptToMemoryPool(CChainState& active_chainstate, CTxMemPoo
 * If a transaction fails, validation will exit early and some results may be missing.
 */
 PackageMempoolAcceptResult ProcessNewPackage(CChainState& active_chainstate, CTxMemPool& pool,
-                                             const Package& txns, bool test_accept)
+                                             const Package& txns, CSporkManager& spork_manager, bool test_accept)
                                              EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 bool GetUTXOCoin(CChainState& active_chainstate, const COutPoint& outpoint, Coin& coin);
@@ -411,6 +411,7 @@ bool TestBlockValidity(BlockValidationState& state,
                        CChainState& chainstate,
                        const CBlock& block,
                        CBlockIndex* pindexPrev,
+                       CSporkManager& spork_manager,
                        bool fCheckPOW = true,
                        bool fCheckMerkleRoot = true) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
@@ -664,6 +665,7 @@ protected:
     const std::unique_ptr<CChainstateHelper>& m_chain_helper;
     const std::unique_ptr<llmq::CChainLocksHandler>& m_clhandler;
     const std::unique_ptr<llmq::CInstantSendManager>& m_isman;
+    CSporkManager& m_spork_manager;
     CEvoDB& m_evoDb;
 
 public:
@@ -677,6 +679,7 @@ public:
                          const std::unique_ptr<CChainstateHelper>& chain_helper,
                          const std::unique_ptr<llmq::CChainLocksHandler>& clhandler,
                          const std::unique_ptr<llmq::CInstantSendManager>& isman,
+                         CSporkManager& spork_manager,
                          std::optional<uint256> from_snapshot_blockhash = std::nullopt);
 
     /**
@@ -1026,6 +1029,7 @@ public:
                                       const std::unique_ptr<CChainstateHelper>& chain_helper,
                                       const std::unique_ptr<llmq::CChainLocksHandler>& clhandler,
                                       const std::unique_ptr<llmq::CInstantSendManager>& isman,
+                                      CSporkManager& spork_manager,
                                       const std::optional<uint256>& snapshot_blockhash = std::nullopt)
         EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
 

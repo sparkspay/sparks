@@ -37,7 +37,7 @@ BOOST_FIXTURE_TEST_CASE(tx_mempool_reject_coinbase, TestChain100Setup)
     LOCK(cs_main);
 
     unsigned int initialPoolSize = m_node.mempool->size();
-    const MempoolAcceptResult result = AcceptToMemoryPool(m_node.chainman->ActiveChainstate(), *m_node.mempool, MakeTransactionRef(coinbaseTx), true /* bypass_limits */);
+    const MempoolAcceptResult result = AcceptToMemoryPool(m_node.chainman->ActiveChainstate(), *m_node.mempool, MakeTransactionRef(coinbaseTx), *m_node.sporkman, true /* bypass_limits */);
 
     BOOST_CHECK(result.m_result_type == MempoolAcceptResult::ResultType::INVALID);
 
@@ -92,7 +92,7 @@ BOOST_FIXTURE_TEST_CASE(package_tests, TestChain100Setup)
                                                    /* output_destination */ child_locking_script,
                                                    /* output_amount */ CAmount(48 * COIN), /* submit */ false);
     CTransactionRef tx_child = MakeTransactionRef(mtx_child);
-    const auto result_parent_child = ProcessNewPackage(m_node.chainman->ActiveChainstate(), *m_node.mempool, {tx_parent, tx_child}, /* test_accept */ true);
+    const auto result_parent_child = ProcessNewPackage(m_node.chainman->ActiveChainstate(), *m_node.mempool, {tx_parent, tx_child}, *m_node.sporkman, /* test_accept */ true);
     BOOST_CHECK_MESSAGE(result_parent_child.m_state.IsValid(),
                         "Package validation unexpectedly failed: " << result_parent_child.m_state.GetRejectReason());
     auto it_parent = result_parent_child.m_tx_results.find(tx_parent->GetHash());
@@ -110,7 +110,7 @@ BOOST_FIXTURE_TEST_CASE(package_tests, TestChain100Setup)
     for (size_t i{0}; i < MAX_PACKAGE_COUNT + 1; ++i) {
         package_too_many.emplace_back(create_placeholder_tx(1, 1));
     }
-    auto result_too_many = ProcessNewPackage(m_node.chainman->ActiveChainstate(), *m_node.mempool, package_too_many, /* test_accept */ true);
+    auto result_too_many = ProcessNewPackage(m_node.chainman->ActiveChainstate(), *m_node.mempool, package_too_many, *m_node.sporkman, /* test_accept */ true);
     BOOST_CHECK(result_too_many.m_state.IsInvalid());
     BOOST_CHECK_EQUAL(result_too_many.m_state.GetResult(), PackageValidationResult::PCKG_POLICY);
     BOOST_CHECK_EQUAL(result_too_many.m_state.GetRejectReason(), "package-too-many-transactions");
@@ -125,7 +125,7 @@ BOOST_FIXTURE_TEST_CASE(package_tests, TestChain100Setup)
         total_size += size_large;
     }
     BOOST_CHECK(package_too_large.size() <= MAX_PACKAGE_COUNT);
-    auto result_too_large = ProcessNewPackage(m_node.chainman->ActiveChainstate(), *m_node.mempool, package_too_large, /* test_accept */ true);
+    auto result_too_large = ProcessNewPackage(m_node.chainman->ActiveChainstate(), *m_node.mempool, package_too_large, *m_node.sporkman, /* test_accept */ true);
     BOOST_CHECK(result_too_large.m_state.IsInvalid());
     BOOST_CHECK_EQUAL(result_too_large.m_state.GetResult(), PackageValidationResult::PCKG_POLICY);
     BOOST_CHECK_EQUAL(result_too_large.m_state.GetRejectReason(), "package-too-large");
@@ -133,7 +133,7 @@ BOOST_FIXTURE_TEST_CASE(package_tests, TestChain100Setup)
     // A single, giant transaction submitted through ProcessNewPackage fails on single tx policy.
     CTransactionRef giant_ptx = create_placeholder_tx(999, 999);
     BOOST_CHECK(GetVirtualTransactionSize(*giant_ptx) > MAX_PACKAGE_SIZE * 1000);
-    auto result_single_large = ProcessNewPackage(m_node.chainman->ActiveChainstate(), *m_node.mempool, {giant_ptx}, /* test_accept */ true);
+    auto result_single_large = ProcessNewPackage(m_node.chainman->ActiveChainstate(), *m_node.mempool, {giant_ptx}, *m_node.sporkman, /* test_accept */ true);
     BOOST_CHECK(result_single_large.m_state.IsInvalid());
     BOOST_CHECK_EQUAL(result_single_large.m_state.GetResult(), PackageValidationResult::PCKG_TX);
     BOOST_CHECK_EQUAL(result_single_large.m_state.GetRejectReason(), "transaction failed");

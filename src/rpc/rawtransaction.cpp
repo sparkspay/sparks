@@ -1257,9 +1257,9 @@ static RPCHelpMan testmempoolaccept()
     CChainState& chainstate = EnsureChainman(node).ActiveChainstate();
     const PackageMempoolAcceptResult package_result = [&] {
         LOCK(::cs_main);
-        if (txns.size() > 1) return ProcessNewPackage(chainstate, mempool, txns, /* test_accept */ true);
+        if (txns.size() > 1) return ProcessNewPackage(chainstate, mempool, txns, *node.sporkman, /* test_accept */ true);
         return PackageMempoolAcceptResult(txns[0]->GetHash(),
-               AcceptToMemoryPool(chainstate, mempool, txns[0], /* bypass_limits */ false, /* test_accept*/ true));
+               AcceptToMemoryPool(chainstate, mempool, txns[0], *node.sporkman, /* bypass_limits */ false, /* test_accept*/ true));
     }();
 
     UniValue rpc_result(UniValue::VARR);

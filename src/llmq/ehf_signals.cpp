@@ -130,7 +130,7 @@ void CEHFSignalsHandler::HandleNewRecoveredSig(const CRecoveredSig& recoveredSig
             CTransactionRef tx_to_sent = MakeTransactionRef(std::move(tx));
             LogPrintf("CEHFSignalsHandler::HandleNewRecoveredSig Special EHF TX is created hash=%s\n", tx_to_sent->GetHash().ToString());
             LOCK(cs_main);
-            const MempoolAcceptResult result = AcceptToMemoryPool(chainstate, mempool, tx_to_sent, /* bypass_limits */ false);
+            const MempoolAcceptResult result = AcceptToMemoryPool(chainstate, mempool, tx_to_sent, sporkman, /* bypass_limits */ false);
             if (result.m_result_type == MempoolAcceptResult::ResultType::VALID) {
                 Assert(m_peerman)->RelayTransaction(tx_to_sent->GetHash());
             } else {

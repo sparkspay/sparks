@@ -8,6 +8,7 @@
 #include <coinjoin/coinjoin.h>
 
 #include <net_types.h>
+#include <spork.h>
 
 class CActiveMasternodeManager;
 class CChainState;
@@ -33,6 +34,7 @@ private:
     CDSTXManager& m_dstxman;
     CMasternodeMetaMan& m_mn_metaman;
     CTxMemPool& mempool;
+    CSporkManager& m_spork_manager;
     const CActiveMasternodeManager* const m_mn_activeman;
     const CMasternodeSync& m_mn_sync;
     const std::unique_ptr<PeerManager>& m_peerman;
@@ -92,7 +94,7 @@ private:
 public:
     explicit CCoinJoinServer(CChainState& chainstate, CConnman& _connman, CDeterministicMNManager& dmnman, CDSTXManager& dstxman,
                              CMasternodeMetaMan& mn_metaman, CTxMemPool& mempool, const CActiveMasternodeManager* const mn_activeman,
-                             const CMasternodeSync& mn_sync, const std::unique_ptr<PeerManager>& peerman) :
+                             CSporkManager& spork_manager, const CMasternodeSync& mn_sync, const std::unique_ptr<PeerManager>& peerman) :
         m_chainstate(chainstate),
         connman(_connman),
         m_dmnman(dmnman),
@@ -100,6 +102,7 @@ public:
         m_mn_metaman(mn_metaman),
         mempool(mempool),
         m_mn_activeman(mn_activeman),
+        m_spork_manager(spork_manager),
         m_mn_sync(mn_sync),
         m_peerman(peerman),
         vecSessionCollaterals(),

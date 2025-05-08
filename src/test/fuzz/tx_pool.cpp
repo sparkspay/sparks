@@ -197,13 +197,13 @@ FUZZ_TARGET_INIT(tx_pool_standard, initialize_tx_pool)
         // Make sure ProcessNewPackage on one transaction works and always fully validates the transaction.
         // The result is not guaranteed to be the same as what is returned by ATMP.
         const auto result_package = WITH_LOCK(::cs_main,
-                                    return ProcessNewPackage(node.chainman->ActiveChainstate(), tx_pool, {tx}, true));
+                                    return ProcessNewPackage(node.chainman->ActiveChainstate(), tx_pool, {tx}, *node.sporkman, true));
         auto it = result_package.m_tx_results.find(tx->GetHash());
         Assert(it != result_package.m_tx_results.end());
         Assert(it->second.m_result_type == MempoolAcceptResult::ResultType::VALID ||
                it->second.m_result_type == MempoolAcceptResult::ResultType::INVALID);
 
-        const auto res = WITH_LOCK(::cs_main, return AcceptToMemoryPool(chainstate, tx_pool, tx, bypass_limits));
+        const auto res = WITH_LOCK(::cs_main, return AcceptToMemoryPool(chainstate, tx_pool, tx, *node.sporkman, bypass_limits));
         const bool accepted = res.m_result_type == MempoolAcceptResult::ResultType::VALID;
         SyncWithValidationInterfaceQueue();
         UnregisterSharedValidationInterface(txr);
@@ -313,7 +313,7 @@ FUZZ_TARGET_INIT(tx_pool, initialize_tx_pool)
         const auto tx = MakeTransactionRef(mut_tx);
         const bool bypass_limits = fuzzed_data_provider.ConsumeBool();
         ::fRequireStandard = fuzzed_data_provider.ConsumeBool();
-        const auto res = WITH_LOCK(::cs_main, return AcceptToMemoryPool(node.chainman->ActiveChainstate(), tx_pool, tx, bypass_limits));
+        const auto res = WITH_LOCK(::cs_main, return AcceptToMemoryPool(node.chainman->ActiveChainstate(), tx_pool, tx, *node.sporkman, bypass_limits));
         const bool accepted = res.m_result_type == MempoolAcceptResult::ResultType::VALID;
         if (accepted) {
             txids.push_back(tx->GetHash());

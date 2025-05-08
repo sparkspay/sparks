@@ -304,10 +304,10 @@ bool CCoinJoinBaseSession::IsValidInOuts(CChainState& active_chainstate, const C
 
 // Responsibility for checking fee sanity is moved from the mempool to the client (BroadcastTransaction)
 // but CoinJoin still requires ATMP with fee sanity checks so we need to implement them separately
-bool ATMPIfSaneFee(CChainState& active_chainstate, CTxMemPool& pool, const CTransactionRef &tx, bool test_accept) {
+bool ATMPIfSaneFee(CChainState& active_chainstate, CTxMemPool& pool, const CTransactionRef &tx, CSporkManager& spork_manager, bool test_accept) {
     AssertLockHeld(cs_main);
 
-    const MempoolAcceptResult result = AcceptToMemoryPool(active_chainstate, pool, tx, /* bypass_limits */ false, /* test_accept */ true);
+    const MempoolAcceptResult result = AcceptToMemoryPool(active_chainstate, pool, tx, spork_manager, /* bypass_limits */ false, /* test_accept */ true);
     if (result.m_result_type != MempoolAcceptResult::ResultType::VALID) {
         /* Fetch fee and fast-fail if ATMP fails regardless */
         return false;
@@ -318,11 +318,11 @@ bool ATMPIfSaneFee(CChainState& active_chainstate, CTxMemPool& pool, const CTran
         /* Don't re-run ATMP if only doing test run */
         return true;
     }
-    return AcceptToMemoryPool(active_chainstate, pool, tx, /* bypass_limits */ false, test_accept).m_result_type == MempoolAcceptResult::ResultType::VALID;
+    return AcceptToMemoryPool(active_chainstate, pool, tx, spork_manager, /* bypass_limits */ false, test_accept).m_result_type == MempoolAcceptResult::ResultType::VALID;
 }
 
 // check to make sure the collateral provided by the client is valid
-bool CoinJoin::IsCollateralValid(CChainState& active_chainstate, CTxMemPool& mempool, const CTransaction& txCollateral)
+bool CoinJoin::IsCollateralValid(CChainState& active_chainstate, CTxMemPool& mempool, const CTransaction& txCollateral, CSporkManager& spork_manager)
 {
     if (txCollateral.vout.empty()) return false;
     if (txCollateral.nLockTime != 0) return false;
@@ -366,7 +366,7 @@ bool CoinJoin::IsCollateralValid(CChainState& active_chainstate, CTxMemPool& mem
 
     {
         LOCK(cs_main);
-        if (!ATMPIfSaneFee(active_chainstate, mempool, MakeTransactionRef(txCollateral), /*test_accept=*/true)) {
+        if (!ATMPIfSaneFee(active_chainstate, mempool, MakeTransactionRef(txCollateral), spork_manager, /*test_accept=*/true)) {
             LogPrint(BCLog::COINJOIN, "CoinJoin::IsCollateralValid -- didn't pass AcceptToMemoryPool()\n");
             return false;
         }
