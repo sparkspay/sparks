@@ -345,8 +345,8 @@
         <translation>&amp;Ricevi</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and dash: URIs)</source>
-        <translation>Richieste di pagamenti (genera codici QR e dash: URLs)</translation>
+        <source>Request payments (generates QR codes and sparks: URIs)</source>
+        <translation>Richieste di pagamenti (genera codici QR e sparks: URLs)</translation>
     </message>
     <message>
         <source>&amp;Options…</source>
@@ -505,12 +505,12 @@
         <translation>&amp;Blocca Wallet</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>Firma i messaggi con il tuo indirizzo Dash per dimostrare che li possiedi</translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>Firma i messaggi con il tuo indirizzo Sparks per dimostrare che li possiedi</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>Verificare i messaggi per assicurarsi che sono firmati con gli indirizzi specificati di Dash</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>Verificare i messaggi per assicurarsi che sono firmati con gli indirizzi specificati di Sparks</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -675,8 +675,8 @@
         <translation>Visualizza le Proposte di Governance</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Dash network</source>
-        <translation><numerusform>%n connessione attiva alla rete Dash</numerusform><numerusform>%n connessioni attive alla rete Dash</numerusform><numerusform>%n connessioni attive alla rete Dash</numerusform></translation>
+        <source>%n active connection(s) to Sparks network</source>
+        <translation><numerusform>%n connessione attiva alla rete Sparks</numerusform><numerusform>%n connessioni attive alla rete Sparks</numerusform><numerusform>%n connessioni attive alla rete Sparks</numerusform></translation>
     </message>
     <message>
         <source>%1 behind</source>
@@ -2252,8 +2252,8 @@
         <translation>A causa dell'interruzione del supporto, dovresti richiedere al commerciante di fornirti un URI compatibile con BIP21 o utilizzare un portafoglio che continui a supportare BIP70.</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>Impossibile interpretare l'URI! La causa puó essere un indirizzo Dash non valido o parametri URI non corretti.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
+        <translation>Impossibile interpretare l'URI! La causa puó essere un indirizzo Sparks non valido o parametri URI non corretti.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -3194,7 +3194,7 @@
         <translation>Commissione della transazione:</translation>
     </message>
     <message>
-        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for dash transactions than the network can process.</source>
+        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
         <translation>Quando il volume delle transazioni è inferiore allo spazio nei blocchi, i miner e i nodi di inoltro possono applicare una commissione minima. Pagare solo questa tariffa minima va bene, ma tieni presente che ciò può comportare una transazione mai confermata una volta che c'è più richiesta di transazioni precipitose di quanto la rete possa elaborare.</translation>
     </message>
     <message>

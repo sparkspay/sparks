@@ -327,8 +327,8 @@
         <translation>&amp;Получаване</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and dash: URIs)</source>
-        <translation>Заявка за плащане (генерира QR кодове и Dash: URI)</translation>
+        <source>Request payments (generates QR codes and sparks: URIs)</source>
+        <translation>Заявка за плащане (генерира QR кодове и Sparks: URI)</translation>
     </message>
     <message>
         <source>&amp;Options…</source>
@@ -475,12 +475,12 @@
         <translation>&amp;Заключи Портфейл</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>Подпиши съобщения с твоите Dash адреси за да докажеш че ги притежаваш</translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>Подпиши съобщения с твоите Sparks адреси за да докажеш че ги притежаваш</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>Проверете съобщенията, за да сте сигурни че са подписани с определен Dash адрес</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>Проверете съобщенията, за да сте сигурни че са подписани с определен Sparks адрес</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -1867,8 +1867,8 @@
         <translation>'sparks://' не е валиден URI. Използвайте 'sparks:' вместо това.</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>Грешка при анализ на URI! Това може да е следствие от неправилен Dash адрес или неправилно зададени URI параметри.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
+        <translation>Грешка при анализ на URI! Това може да е следствие от неправилен Sparks адрес или неправилно зададени URI параметри.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>

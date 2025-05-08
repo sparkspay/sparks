@@ -311,8 +311,8 @@
         <translation>&amp;Prijať</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and dash: URIs)</source>
-        <translation>Vyžiadať platby (vygeneruje QR kódy a Dash: URI)</translation>
+        <source>Request payments (generates QR codes and sparks: URIs)</source>
+        <translation>Vyžiadať platby (vygeneruje QR kódy a Sparks: URI)</translation>
     </message>
     <message>
         <source>&amp;Options…</source>
@@ -463,12 +463,12 @@
         <translation>&amp;Zamknúť peňaženku</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>Podpísať správy s vašimi Dash adresami ako dôkaz že ich vlastníte</translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>Podpísať správy s vašimi Sparks adresami ako dôkaz že ich vlastníte</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>Overiť správy pre uistenie, že boli podpísané zadanými Dash adresami</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>Overiť správy pre uistenie, že boli podpísané zadanými Sparks adresami</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -605,8 +605,8 @@
         <translation>Zobraziť návrhy dozoru</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Dash network</source>
-        <translation><numerusform>%n aktívne spojenie so sieťou Dash</numerusform><numerusform>%n aktívne spojenia so sieťou Dash</numerusform><numerusform>%n aktívnych spojení so sieťou Dash</numerusform><numerusform>%n aktívnych spojení so sieťou Dash</numerusform></translation>
+        <source>%n active connection(s) to Sparks network</source>
+        <translation><numerusform>%n aktívne spojenie so sieťou Sparks</numerusform><numerusform>%n aktívne spojenia so sieťou Sparks</numerusform><numerusform>%n aktívnych spojení so sieťou Sparks</numerusform><numerusform>%n aktívnych spojení so sieťou Sparks</numerusform></translation>
     </message>
     <message>
         <source>%1 behind</source>
@@ -1935,8 +1935,8 @@
         <translation>„sparks://“ nie je platný URI. Namiesto toho použite „sparks:“.</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>URI sa nedá analyzovať! Toto môže byť spôsobené neplatnou Dash adresou, alebo nesprávnym tvarom URI parametrov.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
+        <translation>URI sa nedá analyzovať! Toto môže byť spôsobené neplatnou Sparks adresou, alebo nesprávnym tvarom URI parametrov.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>

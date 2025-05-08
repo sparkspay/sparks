@@ -43,7 +43,7 @@ global_task_template: &GLOBAL_TASK_TEMPLATE
 compute_credits_template: &CREDITS_TEMPLATE
   # https://cirrus-ci.org/pricing/#compute-credits
   # Only use credits for pull requests to the main repo
-  use_compute_credits: $CIRRUS_REPO_FULL_NAME == 'dashpay/dash' && $CIRRUS_PR != ""
+  use_compute_credits: $CIRRUS_REPO_FULL_NAME == 'sparkspay/sparks' && $CIRRUS_PR != ""
 
 
 task:
@@ -78,7 +78,7 @@ task:
     FILE_ENV: "./ci/test/00_setup_env_win64.sh"
 
 task:
-  name: '32-bit + dash [gui] [CentOS 8]'
+  name: '32-bit + sparks [gui] [CentOS 8]'
   << : *GLOBAL_TASK_TEMPLATE
   container:
     image: centos:8

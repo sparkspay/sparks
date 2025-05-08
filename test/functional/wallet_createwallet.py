@@ -144,7 +144,7 @@ class CreateWalletTest(BitcoinTestFramework):
         w6.walletpassphrase('thisisapassphrase', 60)
         w6.signmessage(w6.getnewaddress(), "test")
         w6.keypoolrefill(1)
-        # There should only be 1 key for legacy, 1 for descriptors (dash has only one type of addresses)
+        # There should only be 1 key for legacy, 1 for descriptors (sparks has only one type of addresses)
         walletinfo = w6.getwalletinfo()
         keys = 1 if self.options.descriptors else 1
         assert_equal(walletinfo['keypoolsize'], keys)

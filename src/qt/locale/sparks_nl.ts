@@ -311,8 +311,8 @@
         <translation>&amp;Ontvangen</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and dash: URIs)</source>
-        <translation>Vraag betaling aan (genereert QR-codes en Dash: URI's)</translation>
+        <source>Request payments (generates QR codes and sparks: URIs)</source>
+        <translation>Vraag betaling aan (genereert QR-codes en Sparks: URI's)</translation>
     </message>
     <message>
         <source>&amp;Options…</source>
@@ -463,12 +463,12 @@
         <translation>&amp;Portemonnee vergrendelen</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>Onderteken berichten met uw Dashadressen om te bewijzen dat u deze adressen bezit.</translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>Onderteken berichten met uw Sparksadressen om te bewijzen dat u deze adressen bezit.</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>Verifieer handtekeningen om zeker te zijn dat de berichten zijn ondertekend met de gespecificeerde Dashadressen.</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>Verifieer handtekeningen om zeker te zijn dat de berichten zijn ondertekend met de gespecificeerde Sparksadressen.</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -605,8 +605,8 @@
         <translation>Governance voorstellen bekijken</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Dash network</source>
-        <translation><numerusform>%n actieve verbinding met het Dash netwerk</numerusform><numerusform>%n actieve verbindingen met het Dash netwerk</numerusform></translation>
+        <source>%n active connection(s) to Sparks network</source>
+        <translation><numerusform>%n actieve verbinding met het Sparks netwerk</numerusform><numerusform>%n actieve verbindingen met het Sparks netwerk</numerusform></translation>
     </message>
     <message>
         <source>Network activity disabled</source>
@@ -1936,8 +1936,8 @@ Om te mixen moeten andere gebruikers exact dezelfde denominaties inbrengen.</tra
         <translation>'sparks://' is geen geldige URI. Gebruik in plaats daarvan 'sparks:'.</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>URI kan niet verwerkt worden! Dit kan het gevolg zijn van een ongeldig Dash adres of misvormde URI parameters.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
+        <translation>URI kan niet verwerkt worden! Dit kan het gevolg zijn van een ongeldig Sparks adres of misvormde URI parameters.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>

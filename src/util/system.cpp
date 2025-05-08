@@ -351,7 +351,7 @@ bool ArgsManager::ParseParameters(int argc, const char* const argv[], std::strin
 
         if (key[0] != '-') {
             if (!m_accept_any_command && m_command.empty()) {
-                // The first non-dash arg is a registered command
+                // The first non-sparks arg is a registered command
                 std::optional<unsigned int> flags = GetArgFlags(key);
                 if (!flags || !(*flags & ArgsManager::COMMAND)) {
                     error = strprintf("Invalid command '%s'", argv[i]);
@@ -1455,9 +1455,9 @@ std::string CopyrightHolders(const std::string& strPrefix, unsigned int nStartYe
     if (copyright_devs.find("Sparks Core") == std::string::npos) {
         strCopyrightHolders += "\n" + strPrefix + strprintf(" %u-%u ", 2014, nEndYear) + "The Sparks Core developers";
     }
-    // Check for untranslated substitution to make sure Dash Core copyright is not removed by accident
-    if (copyright_devs.find("Dash Core") == std::string::npos) {
-        strCopyrightHolders += "\n" + strPrefix + strprintf(" %u-%u ", 2014, nEndYear) + "The Dash Core developers";
+    // Check for untranslated substitution to make sure Sparks Core copyright is not removed by accident
+    if (copyright_devs.find("Sparks Core") == std::string::npos) {
+        strCopyrightHolders += "\n" + strPrefix + strprintf(" %u-%u ", 2014, nEndYear) + "The Sparks Core developers";
     }
     // Check for untranslated substitution to make sure Bitcoin Core copyright is not removed by accident
     if (copyright_devs.find("Bitcoin Core") == std::string::npos) {

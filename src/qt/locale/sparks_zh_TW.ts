@@ -463,11 +463,11 @@
         <translation>鎖定錢包(&amp;L)</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
         <translation>用達世幣位址簽署訊息來證明位址是你的</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
         <translation>驗證訊息是用來確定訊息是用指定的達世幣位址簽署的</translation>
     </message>
     <message>
@@ -1927,7 +1927,7 @@
         <translation>'sparks://' 不是有效的URI。請用'sparks:' 來代替。</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
         <translation>沒辦法解析 URI 位址！可能是因為達世幣位址無效，或是 URI 參數格式錯誤。</translation>
     </message>
     <message>

@@ -311,8 +311,8 @@
         <translation>&amp;Receber</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and dash: URIs)</source>
-        <translation>Solicitações de pagamentos (gera códigos QR e Dash: URIs)</translation>
+        <source>Request payments (generates QR codes and sparks: URIs)</source>
+        <translation>Solicitações de pagamentos (gera códigos QR e Sparks: URIs)</translation>
     </message>
     <message>
         <source>&amp;Options…</source>
@@ -463,12 +463,12 @@
         <translation>Bloquear carteira</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>Assine mensagens com seus endereços Dash para provar que você é dono delas</translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>Assine mensagens com seus endereços Sparks para provar que você é dono delas</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>Verifique as mensagens para ter certeza de que elas foram assinadas com o endereço da Dash especificado</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>Verifique as mensagens para ter certeza de que elas foram assinadas com o endereço da Sparks especificado</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -605,8 +605,8 @@
         <translation>Ver Propostas de Governança</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Dash network</source>
-        <translation><numerusform>%n conexões ativas com a rede Dash</numerusform><numerusform>%n conexões ativas com a rede Dash</numerusform><numerusform>%n conexões ativas com a rede Dash</numerusform></translation>
+        <source>%n active connection(s) to Sparks network</source>
+        <translation><numerusform>%n conexões ativas com a rede Sparks</numerusform><numerusform>%n conexões ativas com a rede Sparks</numerusform><numerusform>%n conexões ativas com a rede Sparks</numerusform></translation>
     </message>
     <message>
         <source>%1 behind</source>
@@ -1935,7 +1935,7 @@
         <translation>'sparks://' não é uma URL válida. Use 'sparks:' como alternativa.</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
         <translation>A URI não pode ser analisada! Isto pode ser causado por um endereço inválido ou um parâmetro URI malformado.</translation>
     </message>
     <message>

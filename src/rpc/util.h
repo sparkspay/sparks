@@ -358,7 +358,7 @@ public:
         }
     }
 
-    // TODO: drop it, that's dash specific workaround
+    // TODO: drop it, that's sparks specific workaround
     [[ noreturn ]] inline void Throw() const {
         throw std::runtime_error(ToString());
     }

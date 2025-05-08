@@ -296,8 +296,8 @@
         <translation>&amp;Nhận</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and dash: URIs)</source>
-        <translation>Yêu cầu thanh toán (sinh mã QR và dash: URIs)</translation>
+        <source>Request payments (generates QR codes and sparks: URIs)</source>
+        <translation>Yêu cầu thanh toán (sinh mã QR và sparks: URIs)</translation>
     </message>
     <message>
         <source>&amp;Options…</source>
@@ -400,12 +400,12 @@
         <translation>&amp;Khoá Ví</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>Ký vào thông điệp với địa chỉ Dash để chứng minh bạn là chủ của chúng</translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>Ký vào thông điệp với địa chỉ Sparks để chứng minh bạn là chủ của chúng</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>Kiểm tra thông điệp để đảm bảo rằng nó đã được ký bằng địa chỉ Dash nhất định</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>Kiểm tra thông điệp để đảm bảo rằng nó đã được ký bằng địa chỉ Sparks nhất định</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -1610,8 +1610,8 @@
         <translation>xử lý URI</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>URI không thể phân tích. Nó có thể bởi địa chỉ Dash không hợp lệ hoặc thông số URI dị hình.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
+        <translation>URI không thể phân tích. Nó có thể bởi địa chỉ Sparks không hợp lệ hoặc thông số URI dị hình.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>

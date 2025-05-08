@@ -256,8 +256,8 @@
         <translation>P&amp;rimeşte</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and dash: URIs)</source>
-        <translation>Cereţi plăţi (generează coduri QR şi Dash-uri: URls)</translation>
+        <source>Request payments (generates QR codes and sparks: URIs)</source>
+        <translation>Cereţi plăţi (generează coduri QR şi Sparks-uri: URls)</translation>
     </message>
     <message>
         <source>&amp;Options…</source>
@@ -360,12 +360,12 @@
         <translation>Blochează portofelul</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>Semnaţi mesaje cu adresa dvs. Dash pentru a dovedi că vă aparţin</translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>Semnaţi mesaje cu adresa dvs. Sparks pentru a dovedi că vă aparţin</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>Verificaţi mesaje pentru a vă asigura că au fost semnate cu adresa Dash specificată</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>Verificaţi mesaje pentru a vă asigura că au fost semnate cu adresa Sparks specificată</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -1514,8 +1514,8 @@
         <translation>Gestionare URI</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>URI nu poate fi analizat! Acest lucru poate fi cauzat de o adresă Dash invalidă sau parametri URI deformaţi.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
+        <translation>URI nu poate fi analizat! Acest lucru poate fi cauzat de o adresă Sparks invalidă sau parametri URI deformaţi.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>

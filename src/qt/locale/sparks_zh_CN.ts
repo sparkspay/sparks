@@ -311,8 +311,8 @@
         <translation>接收(&amp;R)</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and dash: URIs)</source>
-        <translation>请求付款(生成二维码和Dash付款协议的URI)</translation>
+        <source>Request payments (generates QR codes and sparks: URIs)</source>
+        <translation>请求付款(生成二维码和Sparks付款协议的URI)</translation>
     </message>
     <message>
         <source>&amp;Options…</source>
@@ -463,12 +463,12 @@
         <translation>锁定钱包(&amp;L)</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>使用您的Dash地址进行消息签名以证明对此地址的所有权</translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>使用您的Sparks地址进行消息签名以证明对此地址的所有权</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>验证消息是用来确定此消息是用指定的Dash地址签发的</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>验证消息是用来确定此消息是用指定的Sparks地址签发的</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -613,8 +613,8 @@
         <translation>查看治理提案</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Dash network</source>
-        <translation><numerusform>%n个有效的Dash网络连接</numerusform></translation>
+        <source>%n active connection(s) to Sparks network</source>
+        <translation><numerusform>%n个有效的Sparks网络连接</numerusform></translation>
     </message>
     <message>
         <source>%1 behind</source>
@@ -1987,8 +1987,8 @@
         <translation>由于终止支持, 您应当要求商家为您提供一个兼容BIP21的URI, 或使用仍支持BIP70的钱包.</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>URI不能被解析! 原因可能是无效的Dash地址或URI参数格式错误。</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
+        <translation>URI不能被解析! 原因可能是无效的Sparks地址或URI参数格式错误。</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -2832,8 +2832,8 @@
         <translation>交易手续费：</translation>
     </message>
     <message>
-        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for dash transactions than the network can process.</source>
-        <translation>当交易量小于区块空间时, 矿工和中继节点或许会强制收取最低费用. 仅支付最低费用也可以, 但请注意, 一旦Dash交易的需求超出了网络的处理能力, 则会导致这笔交易永远无法被确认.</translation>
+        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
+        <translation>当交易量小于区块空间时, 矿工和中继节点或许会强制收取最低费用. 仅支付最低费用也可以, 但请注意, 一旦Sparks交易的需求超出了网络的处理能力, 则会导致这笔交易永远无法被确认.</translation>
     </message>
     <message>
         <source>A too low fee might result in a never confirming transaction (read the tooltip)</source>

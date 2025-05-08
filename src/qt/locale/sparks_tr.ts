@@ -311,8 +311,8 @@
         <translation>&amp;Al</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and dash: URIs)</source>
-        <translation>Ödeme talep et (QR kodu ve Dash URI'si oluşturur)</translation>
+        <source>Request payments (generates QR codes and sparks: URIs)</source>
+        <translation>Ödeme talep et (QR kodu ve Sparks URI'si oluşturur)</translation>
     </message>
     <message>
         <source>&amp;Options…</source>
@@ -463,12 +463,12 @@
         <translation>Cüzdanı &amp;Kilitle</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>İletileri adreslerin size ait olduğunu ispatlamak için Dash adresleri ile imzala</translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>İletileri adreslerin size ait olduğunu ispatlamak için Sparks adresleri ile imzala</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>Belirtilen Dash adresleri ile imzalandıklarından emin olmak için iletileri kontrol et</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>Belirtilen Sparks adresleri ile imzalandıklarından emin olmak için iletileri kontrol et</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -605,8 +605,8 @@
         <translation>Yönetim Tekliflerini Görüntüle</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Dash network</source>
-        <translation><numerusform>Dash ağına %n aktif bağlantı</numerusform><numerusform>Dash ağına %n aktif bağlantı</numerusform></translation>
+        <source>%n active connection(s) to Sparks network</source>
+        <translation><numerusform>Sparks ağına %n aktif bağlantı</numerusform><numerusform>Sparks ağına %n aktif bağlantı</numerusform></translation>
     </message>
     <message>
         <source>%1 behind</source>
@@ -1935,8 +1935,8 @@
         <translation>'sparks://' geçerli bir URI değil. Bunun yerine 'sparks:' kullanın.</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>URI ayrıştırılamıyor! Bunun nedeni geçersiz bir Dash adresi veya hatalı biçimlendirilmiş URI değişkenleri olabilir.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
+        <translation>URI ayrıştırılamıyor! Bunun nedeni geçersiz bir Sparks adresi veya hatalı biçimlendirilmiş URI değişkenleri olabilir.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>

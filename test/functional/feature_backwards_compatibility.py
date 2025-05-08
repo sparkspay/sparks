@@ -298,9 +298,9 @@ class BackwardsCompatibilityTest(BitcoinTestFramework):
             # assert info['keypoolsize'] == 0
         else:
             # Descriptor wallets appear to be corrupted wallets to old software
-            assert_raises_rpc_error(-4, "Wallet requires newer version of Dash Core", node_v19.loadwallet, "w1")
-            assert_raises_rpc_error(-4, "Wallet requires newer version of Dash Core", node_v19.loadwallet, "w2")
-            assert_raises_rpc_error(-4, "Wallet requires newer version of Dash Core", node_v19.loadwallet, "w3")
+            assert_raises_rpc_error(-4, "Wallet requires newer version of Sparks Core", node_v19.loadwallet, "w1")
+            assert_raises_rpc_error(-4, "Wallet requires newer version of Sparks Core", node_v19.loadwallet, "w2")
+            assert_raises_rpc_error(-4, "Wallet requires newer version of Sparks Core", node_v19.loadwallet, "w3")
             assert_raises_rpc_error(-18, "Data is not in recognized format", node_v18.loadwallet, "w1")
             assert_raises_rpc_error(-18, "Data is not in recognized format", node_v18.loadwallet, "w2")
             assert_raises_rpc_error(-18, "Data is not in recognized format", node_v18.loadwallet, "w3")

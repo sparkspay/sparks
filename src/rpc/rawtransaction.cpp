@@ -172,8 +172,8 @@ static RPCHelpMan getrawtransaction()
                                         {RPCResult::Type::STR, "hex", "the hex"},
                                         {RPCResult::Type::NUM, "reqSigs", /* optional */ true, "(DEPRECATED, returned only if config option -deprecatedrpc=addresses is passed) Number of required signatures"},
                                         {RPCResult::Type::STR, "type", "The type, eg 'pubkeyhash'"},
-                                        {RPCResult::Type::STR, "address", /* optional */ true, "Dash address (only if a well-defined address exists)"},
-                                        {RPCResult::Type::ARR, "addresses", /* optional */ true, "(DEPRECATED, returned only if config option -deprecatedrpc=addresses is passed) Array of Dash addresses",
+                                        {RPCResult::Type::STR, "address", /* optional */ true, "Sparks address (only if a well-defined address exists)"},
+                                        {RPCResult::Type::ARR, "addresses", /* optional */ true, "(DEPRECATED, returned only if config option -deprecatedrpc=addresses is passed) Array of Sparks addresses",
                                         {
                                             {RPCResult::Type::STR, "address", "Sparks address"},
                                         }},
@@ -832,8 +832,8 @@ static RPCHelpMan decoderawtransaction()
                                     {RPCResult::Type::STR_HEX, "hex", "the hex"},
                                     {RPCResult::Type::NUM, "reqSigs", /* optional */ true, "(DEPRECATED, returned only if config option -deprecatedrpc=addresses is passed) Number of required signatures"},
                                     {RPCResult::Type::STR, "type", "The type, eg 'pubkeyhash'"},
-                                    {RPCResult::Type::STR, "address", /* optional */ true, "Dash address (only if a well-defined address exists)"},
-                                    {RPCResult::Type::ARR, "addresses", /* optional */ true, "(DEPRECATED, returned only if config option -deprecatedrpc=addresses is passed) Array of Dash addresses",
+                                    {RPCResult::Type::STR, "address", /* optional */ true, "Sparks address (only if a well-defined address exists)"},
+                                    {RPCResult::Type::ARR, "addresses", /* optional */ true, "(DEPRECATED, returned only if config option -deprecatedrpc=addresses is passed) Array of Sparks addresses",
                                     {
                                         {RPCResult::Type::STR, "address", "Sparks address"},
                                     }},
@@ -887,9 +887,9 @@ static RPCHelpMan decodescript()
                     {
                         {RPCResult::Type::STR, "asm", "Script public key"},
                         {RPCResult::Type::STR, "type", "The output type (e.g. "+GetAllOutputTypes()+")"},
-                        {RPCResult::Type::STR, "address", /* optional */ true, "Dash address (only if a well-defined address exists)"},
+                        {RPCResult::Type::STR, "address", /* optional */ true, "Sparks address (only if a well-defined address exists)"},
                         {RPCResult::Type::NUM, "reqSigs", /* optional */ true, "(DEPRECATED, returned only if config option -deprecatedrpc=addresses is passed) Number of required signatures"},
-                        {RPCResult::Type::ARR, "addresses", /* optional */ true, "(DEPRECATED, returned only if config option -deprecatedrpc=addresses is passed) Array of Dash addresses",
+                        {RPCResult::Type::ARR, "addresses", /* optional */ true, "(DEPRECATED, returned only if config option -deprecatedrpc=addresses is passed) Array of Sparks addresses",
                         {
                             {RPCResult::Type::STR, "address", "Sparks address"},
                         }},

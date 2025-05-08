@@ -7,12 +7,12 @@
 import json
 
 from test_framework.messages import uint256_to_string
-from test_framework.test_framework import DashTestFramework
+from test_framework.test_framework import SparksTestFramework
 from test_framework.util import assert_equal, force_finish_mnsync, satoshi_round
 
-class DashGovernanceTest (DashTestFramework):
+class SparksGovernanceTest (SparksTestFramework):
     def set_test_params(self):
-        self.set_dash_test_params(6, 5, [["-budgetparams=10:10:10"]] * 6, fast_dip3_enforcement=True)
+        self.set_sparks_test_params(6, 5, [["-budgetparams=10:10:10"]] * 6, fast_dip3_enforcement=True)
 
     def prepare_object(self, object_type, parent_hash, creation_time, revision, name, amount, payment_address):
         proposal_rev = revision
@@ -24,7 +24,7 @@ class DashGovernanceTest (DashTestFramework):
             "end_epoch": proposal_time + 24 * 60 * 60,
             "payment_amount": float(amount),
             "payment_address": payment_address,
-            "url": "https://dash.org"
+            "url": "https://sparkspay.io"
         }
         proposal_hex = ''.join(format(x, '02x') for x in json.dumps(proposal_template).encode())
         collateral_hash = self.nodes[0].gobject("prepare", parent_hash, proposal_rev, proposal_time, proposal_hex)
@@ -141,4 +141,4 @@ class DashGovernanceTest (DashTestFramework):
 
 
 if __name__ == '__main__':
-    DashGovernanceTest().main()
+    SparksGovernanceTest().main()

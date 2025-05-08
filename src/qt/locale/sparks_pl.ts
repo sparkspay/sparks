@@ -311,8 +311,8 @@
         <translation>Odbie&amp;rz</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and dash: URIs)</source>
-        <translation>Poproś o płatności (generuje kod QR oraz dash: link)</translation>
+        <source>Request payments (generates QR codes and sparks: URIs)</source>
+        <translation>Poproś o płatności (generuje kod QR oraz sparks: link)</translation>
     </message>
     <message>
         <source>&amp;Options…</source>
@@ -463,12 +463,12 @@
         <translation>Zab&amp;lokuj Porftel</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>Podpisz wiadomości swoim adresem Dash, aby udowodnić, że jesteś ich właścicielem. </translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>Podpisz wiadomości swoim adresem Sparks, aby udowodnić, że jesteś ich właścicielem. </translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>Zweryfikuj wiadomości, aby upewnić się, że zostały one podpisane wybranym adresem Dash</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>Zweryfikuj wiadomości, aby upewnić się, że zostały one podpisane wybranym adresem Sparks</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -613,8 +613,8 @@
         <translation>Zobacz wnioski dla nad którymi masternody mogą głosować</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Dash network</source>
-        <translation><numerusform>%n aktywne połączenie z siecią Dash</numerusform><numerusform>%n aktywne połączenia z siecią Dash</numerusform><numerusform>%n aktywnych połączeń z siecią Dash</numerusform><numerusform>%n aktywne połączenia z siecią Dash</numerusform></translation>
+        <source>%n active connection(s) to Sparks network</source>
+        <translation><numerusform>%n aktywne połączenie z siecią Sparks</numerusform><numerusform>%n aktywne połączenia z siecią Sparks</numerusform><numerusform>%n aktywnych połączeń z siecią Sparks</numerusform><numerusform>%n aktywne połączenia z siecią Sparks</numerusform></translation>
     </message>
     <message>
         <source>%1 behind</source>
@@ -1987,8 +1987,8 @@
         <translation>Ze względu na wycofanie wsparcia należy poprosić sprzedawcę o dostarczenie identyfikatora URI zgodnego z BIP21 lub skorzystać z portfela, który nadal obsługuje BIP70.</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>URI nie może zostać przeanalizowany! Mogło to być spowodowane przez niewłaściwy adres Dash lub niewłaściwe parametry URI</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
+        <translation>URI nie może zostać przeanalizowany! Mogło to być spowodowane przez niewłaściwy adres Sparks lub niewłaściwe parametry URI</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -2832,8 +2832,8 @@
         <translation>Opłata za transakcję:</translation>
     </message>
     <message>
-        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for dash transactions than the network can process.</source>
-        <translation>Gdy wolumen transakcji jest mniejszy niż miejsce w blokach, górnicy oraz węzły przekazujące mogą narzucić minimalną opłatę. Płacenie tylko tej minimalnej opłaty jest w porządku, ale należy pamiętać, że może to spowodować, że transakcja nigdy nie zostanie potwierdzone gdy pojawi się większe zapotrzebowanie na transakcje Dash, niż sieć może przetworzyć.</translation>
+        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
+        <translation>Gdy wolumen transakcji jest mniejszy niż miejsce w blokach, górnicy oraz węzły przekazujące mogą narzucić minimalną opłatę. Płacenie tylko tej minimalnej opłaty jest w porządku, ale należy pamiętać, że może to spowodować, że transakcja nigdy nie zostanie potwierdzone gdy pojawi się większe zapotrzebowanie na transakcje Sparks, niż sieć może przetworzyć.</translation>
     </message>
     <message>
         <source>A too low fee might result in a never confirming transaction (read the tooltip)</source>

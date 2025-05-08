@@ -463,11 +463,11 @@
         <translation>지갑 잠금(&amp;L)</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
         <translation>본인의 대시 주소임을 증명하기 위하여 메시지에 서명합니다.</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
         <translation>특정 대시 주소에 서명된 것인지 확인하기 위하여 메시지를 검증합니다.</translation>
     </message>
     <message>
@@ -1927,7 +1927,7 @@
         <translation>'sparks://' 는 유효하지 않은 URI 입니다. 'sparks:' 를 사용하세요.</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
         <translation>URI를 분석할 수 없습니다! 대시 주소가 유효하지 않거나 URI 파라미터 구성에 오류가 존재할 수 있습니다.</translation>
     </message>
     <message>

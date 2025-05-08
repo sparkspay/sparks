@@ -459,11 +459,11 @@
         <translation>غلق المحفظة</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
         <translation>وقَع الرسائل بواسطة اداش الخاص بك لإثبات امتلاكك لهم</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
         <translation>تحقق من الرسائل للتأكد من أنَها وُقعت برسائل داش محدَدة</translation>
     </message>
     <message>
@@ -1879,7 +1879,7 @@
         <translation>'sparks: //' ليس URI صالحًا. استخدم "شرطة:" بدلاً من ذلك.</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
         <translation>لا يمكن تحليل العنوان! يمكن أن يكون ذلك بسبب عنوان داش غير صالح أو معلمات العنوان غير صحيحة.</translation>
     </message>
     <message>

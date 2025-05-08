@@ -204,7 +204,7 @@ std::string HelpExampleCli(const std::string& methodname, const std::string& arg
 
 std::string HelpExampleCliNamed(const std::string& methodname, const RPCArgList& args)
 {
-    std::string result = "> dash-cli -named " + methodname;
+    std::string result = "> sparks-cli -named " + methodname;
     for (const auto& argpair: args) {
         const auto& value = argpair.second.isStr()
                 ? argpair.second.get_str()

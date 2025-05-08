@@ -333,8 +333,8 @@
         <translation>&amp;Получить</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and dash: URIs)</source>
-        <translation>Запросить платежи (создать QR-коды и dash: URI)</translation>
+        <source>Request payments (generates QR codes and sparks: URIs)</source>
+        <translation>Запросить платежи (создать QR-коды и sparks: URI)</translation>
     </message>
     <message>
         <source>&amp;Options…</source>
@@ -493,12 +493,12 @@
         <translation>За&amp;блокировать кошелёк</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>Подписать сообщения вашими адресами Dash, чтобы доказать, что вы ими владеете</translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>Подписать сообщения вашими адресами Sparks, чтобы доказать, что вы ими владеете</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>Проверить сообщения, чтобы удостовериться, что они были подписаны определёнными адресами Dash</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>Проверить сообщения, чтобы удостовериться, что они были подписаны определёнными адресами Sparks</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -667,8 +667,8 @@
         <translation>Посмотреть предложения по Управлению</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Dash network</source>
-        <translation><numerusform>%n активное соединение с сетью Dash</numerusform><numerusform>%n активных соединения с сетью Dash</numerusform><numerusform>%n активных соединений с сетью Dash</numerusform><numerusform>%n активных соединений с сетью Dash</numerusform></translation>
+        <source>%n active connection(s) to Sparks network</source>
+        <translation><numerusform>%n активное соединение с сетью Sparks</numerusform><numerusform>%n активных соединения с сетью Sparks</numerusform><numerusform>%n активных соединений с сетью Sparks</numerusform><numerusform>%n активных соединений с сетью Sparks</numerusform></translation>
     </message>
     <message>
         <source>%1 behind</source>
@@ -1720,9 +1720,9 @@
     </message>
     <message>
         <source>Language missing or translation incomplete? Help contributing translations here:
-https://explore.transifex.com/dash/dash/</source>
+https://explore.transifex.com/sparks/sparks/</source>
         <translation>Нет Вашего языка или перевод неполон? Помогите нам сделать перевод лучше:
-https://explore.transifex.com/dash/dash/</translation>
+https://explore.transifex.com/sparks/sparks/</translation>
     </message>
     <message>
         <source>Options set in this dialog are overridden by the command line or in the configuration file:</source>
@@ -2279,8 +2279,8 @@ https://explore.transifex.com/dash/dash/</translation>
         <translation>В связи с прекращением поддержки следует запросить у мерчанта URI, совместимый с BIP21, или использовать кошелек, который продолжает поддерживать BIP70.</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>Не удалось разобрать URI! Возможно указан некорректный адрес Dash либо параметры URI сформированы неверно.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
+        <translation>Не удалось разобрать URI! Возможно указан некорректный адрес Sparks либо параметры URI сформированы неверно.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -3277,8 +3277,8 @@ https://explore.transifex.com/dash/dash/</translation>
         <translation>Комиссия транзакции:</translation>
     </message>
     <message>
-        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for dash transactions than the network can process.</source>
-        <translation>Когда объем транзакций меньше, чем место в блоках, майнеры, а также узлы ретрансляции могут установить минимальную комиссию. Платить минимальную комиссию вполне нормально, но следует учитывать, что это может привести к тому, что транзакция никогда не будет подтверждена. В случае, если спрос на Dash-транзакции будет превышать спрос, который может обработать сеть.</translation>
+        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
+        <translation>Когда объем транзакций меньше, чем место в блоках, майнеры, а также узлы ретрансляции могут установить минимальную комиссию. Платить минимальную комиссию вполне нормально, но следует учитывать, что это может привести к тому, что транзакция никогда не будет подтверждена. В случае, если спрос на Sparks-транзакции будет превышать спрос, который может обработать сеть.</translation>
     </message>
     <message>
         <source>A too low fee might result in a never confirming transaction (read the tooltip)</source>

@@ -140,7 +140,7 @@ class TestBitcoinCli(BitcoinTestFramework):
         assert_equal(Decimal(cli_get_info['Difficulty']), blockchain_info['difficulty'])
         assert_equal(cli_get_info['Chain'], blockchain_info['chain'])
 
-        self.log.info("Test -getinfo and dash-cli return all proxies")
+        self.log.info("Test -getinfo and sparks-cli return all proxies")
         self.restart_node(0, extra_args=["-proxy=127.0.0.1:9050", "-i2psam=127.0.0.1:7656"])
         network_info = self.nodes[0].getnetworkinfo()
         cli_get_info_string = self.nodes[0].cli('-getinfo').send_cli()
@@ -155,8 +155,8 @@ class TestBitcoinCli(BitcoinTestFramework):
             assert_equal(Decimal(cli_get_info['CoinJoin balance']), wallet_info['coinjoin_balance'])
             assert_equal(int(cli_get_info['Keypool size']), wallet_info['keypoolsize'])
             assert_equal(int(cli_get_info['Unlocked until']), wallet_info['unlocked_until'])
-            assert_equal(Decimal(cli_get_info['Transaction fee rate (-paytxfee) (DASH/kB)']), wallet_info['paytxfee'])
-            assert_equal(Decimal(cli_get_info['Min tx relay fee rate (DASH/kB)']), network_info['relayfee'])
+            assert_equal(Decimal(cli_get_info['Transaction fee rate (-paytxfee) (SPK/kB)']), wallet_info['paytxfee'])
+            assert_equal(Decimal(cli_get_info['Min tx relay fee rate (SPK/kB)']), network_info['relayfee'])
             assert_equal(self.nodes[0].cli.getwalletinfo(), wallet_info)
 
             # Setup to test -getinfo, -generate, and -rpcwallet= with multiple wallets.

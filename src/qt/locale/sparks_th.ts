@@ -311,8 +311,8 @@
         <translation>&amp;รับ</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and dash: URIs)</source>
-        <translation>เรียกเก็บการชำระเงิน (สร้างคิว อาร์ โค้ด QR codes และแหล่งที่มาของ Dash: URIs)</translation>
+        <source>Request payments (generates QR codes and sparks: URIs)</source>
+        <translation>เรียกเก็บการชำระเงิน (สร้างคิว อาร์ โค้ด QR codes และแหล่งที่มาของ Sparks: URIs)</translation>
     </message>
     <message>
         <source>&amp;Options…</source>
@@ -463,12 +463,12 @@
         <translation>ล็อคกระเป๋าสตางค์</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>ลงชื่อด้วยที่อยู่ Dash ของคุณเพื่อแสดงว่าคุณคือเจ้าของบัญชีนี้จริง</translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>ลงชื่อด้วยที่อยู่ Sparks ของคุณเพื่อแสดงว่าคุณคือเจ้าของบัญชีนี้จริง</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>ตรวจสอบข้อความเพื่อให้แน่ใจว่าถูกเซ็นกำกำกับไว้ด้วยที่อยู่ของ Dash โดยเฉพาะ</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>ตรวจสอบข้อความเพื่อให้แน่ใจว่าถูกเซ็นกำกำกับไว้ด้วยที่อยู่ของ Sparks โดยเฉพาะ</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -613,8 +613,8 @@
         <translation>ดูข้อเสนอการกำกับดูแล</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Dash network</source>
-        <translation><numerusform>%n เชื่อมต่อใช้งานกับเครือข่าย Dash</numerusform></translation>
+        <source>%n active connection(s) to Sparks network</source>
+        <translation><numerusform>%n เชื่อมต่อใช้งานกับเครือข่าย Sparks</numerusform></translation>
     </message>
     <message>
         <source>%1 behind</source>
@@ -1987,8 +1987,8 @@
         <translation>เนื่องจากการสนับสนุนถูกยกเลิก คุณควรขอให้ผู้ค้าจัดเตรียม URI ที่เข้ากันได้กับ BIP21 หรือใช้กระเป๋าเงินที่รองรับ BIP70 ต่อไป</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>ไม่สามารถประมวลผล URI ได้สำเร็จ ! ซึ่งอาจเกิดจากที่อยู่ Dash ไม่ถูกต้องหรือพารามิเตอร์ URI ที่มีรูปแบบไม่ถูกต้อง</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
+        <translation>ไม่สามารถประมวลผล URI ได้สำเร็จ ! ซึ่งอาจเกิดจากที่อยู่ Sparks ไม่ถูกต้องหรือพารามิเตอร์ URI ที่มีรูปแบบไม่ถูกต้อง</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -2832,8 +2832,8 @@
         <translation>ค่าธรรมเนียมการทำธุรกรรม:</translation>
     </message>
     <message>
-        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for dash transactions than the network can process.</source>
-        <translation>เมื่อมีปริมาณธุรกรรมน้อยกว่าพื้นที่ในบล็อก นักขุดและโหนดรีเลย์อาจบังคับใช้ค่าธรรมเนียมขั้นต่ำ การจ่ายเฉพาะค่าธรรมเนียมขั้นต่ำนี้ถือว่าใช้ได้ แต่โปรดทราบว่าสิ่งนี้อาจส่งผลให้ธุรกรรมไม่ได้รับการยืนยันเมื่อมีความต้องการธุรกรรม Dash มากกว่าที่เครือข่ายจะสามารถดำเนินการได้</translation>
+        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
+        <translation>เมื่อมีปริมาณธุรกรรมน้อยกว่าพื้นที่ในบล็อก นักขุดและโหนดรีเลย์อาจบังคับใช้ค่าธรรมเนียมขั้นต่ำ การจ่ายเฉพาะค่าธรรมเนียมขั้นต่ำนี้ถือว่าใช้ได้ แต่โปรดทราบว่าสิ่งนี้อาจส่งผลให้ธุรกรรมไม่ได้รับการยืนยันเมื่อมีความต้องการธุรกรรม Sparks มากกว่าที่เครือข่ายจะสามารถดำเนินการได้</translation>
     </message>
     <message>
         <source>A too low fee might result in a never confirming transaction (read the tooltip)</source>

@@ -998,7 +998,7 @@ AC_CHECK_DECLS([getifaddrs, freeifaddrs],[CHECK_SOCKET],,
 )
 AC_CHECK_DECLS([strnlen])
 
-dnl These are used for daemonization in dashd
+dnl These are used for daemonization in sparksd
 AC_CHECK_DECLS([fork])
 AC_CHECK_DECLS([setsid])
 

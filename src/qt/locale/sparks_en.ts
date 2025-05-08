@@ -661,13 +661,13 @@
     </message>
     <message>
         <location line="+2"/>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>Sign messages with your Dash addresses to prove you own them</translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>Sign messages with your Sparks addresses to prove you own them</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>Verify messages to ensure they were signed with specified Dash addresses</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>Verify messages to ensure they were signed with specified Sparks addresses</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -2209,9 +2209,9 @@
     <message>
         <location line="+169"/>
         <source>Language missing or translation incomplete? Help contributing translations here:
-https://explore.transifex.com/dash/dash/</source>
+https://mainnet.sparkspay.io/</source>
         <translation>Language missing or translation incomplete? Help contributing translations here:
-https://explore.transifex.com/dash/dash/</translation>
+https://mainnet.sparkspay.io/</translation>
     </message>
     <message>
         <location line="+131"/>
@@ -2350,8 +2350,8 @@ https://explore.transifex.com/dash/dash/</translation>
     </message>
     <message>
         <location line="+731"/>
-        <source>Connect to the Dash network through a separate SOCKS5 proxy for Tor onion services.</source>
-        <translation>Connect to the Dash network through a separate SOCKS5 proxy for Tor onion services.</translation>
+        <source>Connect to the Sparks network through a separate SOCKS5 proxy for Tor onion services.</source>
+        <translation>Connect to the Sparks network through a separate SOCKS5 proxy for Tor onion services.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -2456,8 +2456,8 @@ https://explore.transifex.com/dash/dash/</translation>
         <location line="+44"/>
         <location line="+298"/>
         <location line="+224"/>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Dash network after a connection is established, but this process has not completed yet.</source>
-        <translation>The displayed information may be out of date. Your wallet automatically synchronizes with the Dash network after a connection is established, but this process has not completed yet.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Sparks network after a connection is established, but this process has not completed yet.</source>
+        <translation>The displayed information may be out of date. Your wallet automatically synchronizes with the Sparks network after a connection is established, but this process has not completed yet.</translation>
     </message>
     <message>
         <location line="-312"/>
@@ -2923,8 +2923,8 @@ https://explore.transifex.com/dash/dash/</translation>
     </message>
     <message>
         <location line="-29"/>
-        <source>&apos;dash://&apos; is not a valid URI. Use &apos;dash:&apos; instead.</source>
-        <translation>&apos;dash://&apos; is not a valid URI. Use &apos;dash:&apos; instead.</translation>
+        <source>&apos;sparks://&apos; is not a valid URI. Use &apos;sparks:&apos; instead.</source>
+        <translation>&apos;sparks://&apos; is not a valid URI. Use &apos;sparks:&apos; instead.</translation>
     </message>
     <message>
         <location line="+17"/>
@@ -2940,8 +2940,8 @@ https://explore.transifex.com/dash/dash/</translation>
     </message>
     <message>
         <location line="-11"/>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
+        <translation>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -3204,8 +3204,8 @@ https://explore.transifex.com/dash/dash/</translation>
     </message>
     <message>
         <location filename="../guiutil.cpp" line="+295"/>
-        <source>Enter a Dash address (e.g. %1)</source>
-        <translation>Enter a Dash address (e.g. %1)</translation>
+        <source>Enter a Sparks address (e.g. %1)</source>
+        <translation>Enter a Sparks address (e.g. %1)</translation>
     </message>
     <message>
         <location line="+29"/>
@@ -4508,8 +4508,8 @@ https://explore.transifex.com/dash/dash/</translation>
     </message>
     <message>
         <location line="+164"/>
-        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for dash transactions than the network can process.</source>
-        <translation>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for dash transactions than the network can process.</translation>
+        <source>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for sparks transactions than the network can process.</source>
+        <translation>When there is less transaction volume than space in the blocks, miners as well as relaying nodes may enforce a minimum fee. Paying only this minimum fee is just fine, but be aware that this can result in a never confirming transaction once there is more demand for sparks transactions than the network can process.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -6062,7 +6062,7 @@ Go to File &gt; Open Wallet to load a wallet.
 <context>
     <name>sparks-core</name>
     <message>
-        <location filename="../dashstrings.cpp" line="+51"/>
+        <location filename="../sparksstrings.cpp" line="+51"/>
         <source>Error: Listening for incoming connections failed (listen returned error %s)</source>
         <translation>Error: Listening for incoming connections failed (listen returned error %s)</translation>
     </message>
@@ -7203,8 +7203,8 @@ Go to File &gt; Open Wallet to load a wallet.
     </message>
     <message>
         <location line="-256"/>
-        <source>%s corrupt. Try using the wallet tool dash-wallet to salvage or restoring a backup.</source>
-        <translation>%s corrupt. Try using the wallet tool dash-wallet to salvage or restoring a backup.</translation>
+        <source>%s corrupt. Try using the wallet tool sparks-wallet to salvage or restoring a backup.</source>
+        <translation>%s corrupt. Try using the wallet tool sparks-wallet to salvage or restoring a backup.</translation>
     </message>
     <message>
         <location line="+257"/>

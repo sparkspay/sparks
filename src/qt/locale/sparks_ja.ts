@@ -267,8 +267,8 @@
         <translation>受取 (&amp;R)</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and dash: URIs)</source>
-        <translation>送金を要求 (QRコードとdash:URIを生成)</translation>
+        <source>Request payments (generates QR codes and sparks: URIs)</source>
+        <translation>送金を要求 (QRコードとsparks:URIを生成)</translation>
     </message>
     <message>
         <source>&amp;Options…</source>
@@ -415,12 +415,12 @@
         <translation>ウォレットをロック(&amp;L)</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>あなたがDash アドレスを所有していることを証明するために、あなたのDashアドレスでメッセージに署名してください。</translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>あなたがSparks アドレスを所有していることを証明するために、あなたのSparksアドレスでメッセージに署名してください。</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>指定されたDashアドレスで署名されたことを確認するためにメッセージを検証してください。</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>指定されたSparksアドレスで署名されたことを確認するためにメッセージを検証してください。</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -1758,8 +1758,8 @@
         <translation>「sparks://」は有効なURIではありません。代わりに「sparks:」を使ってください。</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>URI を解析できません! これは無効な Dash アドレスあるいは不正な形式の URI パラメーターによって引き起こされた可能性があります。</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
+        <translation>URI を解析できません! これは無効な Sparks アドレスあるいは不正な形式の URI パラメーターによって引き起こされた可能性があります。</translation>
     </message>
     <message>
         <source>Payment request file handling</source>

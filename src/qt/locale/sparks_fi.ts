@@ -315,8 +315,8 @@
         <translation>&amp;Vastaanota</translation>
     </message>
     <message>
-        <source>Request payments (generates QR codes and dash: URIs)</source>
-        <translation>Pyydä maksuja (Luo QR koodit ja Dash: URIt)</translation>
+        <source>Request payments (generates QR codes and sparks: URIs)</source>
+        <translation>Pyydä maksuja (Luo QR koodit ja Sparks: URIt)</translation>
     </message>
     <message>
         <source>&amp;Options…</source>
@@ -467,12 +467,12 @@
         <translation>&amp;Lukitse Lompakko</translation>
     </message>
     <message>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>Allekirjoita viestit Dash osoitteillasi todistaaksesi että omistat ne</translation>
+        <source>Sign messages with your Sparks addresses to prove you own them</source>
+        <translation>Allekirjoita viestit Sparks osoitteillasi todistaaksesi että omistat ne</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>Tarkista viestit ollaksesi varma että ne on allekirjoitettu määritetyillä Dash osoitteilla</translation>
+        <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
+        <translation>Tarkista viestit ollaksesi varma että ne on allekirjoitettu määritetyillä Sparks osoitteilla</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -613,8 +613,8 @@
         <translation>Näytä hallinnon ehdotukset</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Dash network</source>
-        <translation><numerusform>%n aktiivinen yhteys Dash verkkoon</numerusform><numerusform>%n aktiivista yhteyttä Dash verkkoon</numerusform></translation>
+        <source>%n active connection(s) to Sparks network</source>
+        <translation><numerusform>%n aktiivinen yhteys Sparks verkkoon</numerusform><numerusform>%n aktiivista yhteyttä Sparks verkkoon</numerusform></translation>
     </message>
     <message>
         <source>%1 behind</source>
@@ -1959,8 +1959,8 @@
         <translation>'sparks://' ei ole validi URI. Käytä sen sijaan 'sparks:'.</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>URI:a ei voida jäsentää! Tämä voi johtua virheellisestä Dash osoitteesta tai virheellisestä URI:n muuttujasta. </translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
+        <translation>URI:a ei voida jäsentää! Tämä voi johtua virheellisestä Sparks osoitteesta tai virheellisestä URI:n muuttujasta. </translation>
     </message>
     <message>
         <source>Payment request file handling</source>

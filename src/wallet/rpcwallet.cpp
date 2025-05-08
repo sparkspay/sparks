@@ -362,7 +362,7 @@ void ParseRecipients(const UniValue& address_amounts, const UniValue& subtract_f
     for (const std::string& address: address_amounts.getKeys()) {
         CTxDestination dest = DecodeDestination(address);
         if (!IsValidDestination(dest)) {
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Dash address: ") + address);
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Sparks address: ") + address);
         }
 
         if (destinations.count(dest)) {
@@ -3051,7 +3051,7 @@ static RPCHelpMan createwallet()
         throw JSONRPCError(RPC_WALLET_ERROR, "Compiled without sqlite support (required for descriptor wallets)");
 #endif
         if (request.params[6].isNull()) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "The createwallet RPC requires specifying the 'load_on_startup' flag when creating descriptor wallets. Dash Core v21 introduced this requirement due to breaking changes in the createwallet RPC.");
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "The createwallet RPC requires specifying the 'load_on_startup' flag when creating descriptor wallets. Sparks Core v21 introduced this requirement due to breaking changes in the createwallet RPC.");
         }
         flags |= WALLET_FLAG_DESCRIPTORS;
         warnings.emplace_back(Untranslated("Wallet is an experimental descriptor wallet"));
@@ -4212,7 +4212,7 @@ static RPCHelpMan send()
                 {
                     {"", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED, "",
                         {
-                            {"address", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "A key-value pair. The key (string) is the Dash address, the value (float or string) is the amount in " + CURRENCY_UNIT + ""},
+                            {"address", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "A key-value pair. The key (string) is the Sparks address, the value (float or string) is the amount in " + CURRENCY_UNIT + ""},
                         },
                         },
                     {"", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED, "",
@@ -4232,7 +4232,7 @@ static RPCHelpMan send()
                                                           "Warning: the resulting transaction may become invalid if one of the unsafe inputs disappears.\n"
                                                           "If that happens, you will need to fund the transaction with different inputs and republish it."},
                     {"add_to_wallet", RPCArg::Type::BOOL, /* default */ "true", "When false, returns a serialized transaction which will not be added to the wallet or broadcast"},
-                    {"change_address", RPCArg::Type::STR_HEX, /* default */ "pool address", "The Dash address to receive the change"},
+                    {"change_address", RPCArg::Type::STR_HEX, /* default */ "pool address", "The Sparks address to receive the change"},
                     {"change_position", RPCArg::Type::NUM, /* default */ "random", "The index of the change output"},
                     {"conf_target", RPCArg::Type::NUM, /* default */ "wallet default", "Confirmation target (in blocks), or fee rate (for " + CURRENCY_UNIT + "/kB or " + CURRENCY_ATOM + "/B estimate modes)"},
                     {"estimate_mode", RPCArg::Type::STR, /* default */ "unset", std::string() + "The fee estimate mode, must be one of (case insensitive):\n"
