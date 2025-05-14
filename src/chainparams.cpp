@@ -214,7 +214,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].nThresholdStart = 60;       // 60% of 100
 
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].bit = 13;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = 0; //Never activate
+        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = -2; //Never activate
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nTimeout = 0;
         // NOTE: nWindowSize for MN_RR __MUST__ be greater than or equal to nSuperblockMaturityWindow for CSuperblock::GetPaymentsLimit() to work correctly
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nWindowSize = 0;
@@ -435,7 +435,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_V20].nFalloffCoeff = 5;            // this corresponds to 10 periods
 
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].bit = 13;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = 0; //Never activate
+        consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = -2; //Never activate
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nTimeout = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nWindowSize = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdStart = 0;       // 80% of 10
