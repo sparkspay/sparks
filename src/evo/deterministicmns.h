@@ -277,7 +277,7 @@ public:
     [[nodiscard]] size_t GetValidWeightedMNsCount(const CChain& chain) const
     {
         return std::accumulate(mnMap.begin(), mnMap.end(), 0, [this, &chain](auto res, const auto& p) {
-                                                                const CBlockIndex* pindex = chain[p.second->pdmnState->nRegisteredHeight];
+                                                                const CBlockIndex* pindex = chain.Tip();
                                                                 if (!IsMNValid(*p.second)) return res;
                                                                 return res + GetMnType(p.second->nType, pindex).voting_weight;
                                                             });
