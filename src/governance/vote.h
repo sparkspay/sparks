@@ -7,13 +7,17 @@
 
 #include <primitives/transaction.h>
 #include <uint256.h>
+#include <chain.h>
+#include <validation.h>
 
-class CGovernanceVote;
+class CActiveMasternodeManager;
 class CBLSPublicKey;
-class CBLSSecretKey;
-class CConnman;
+class CDeterministicMNList;
+class CGovernanceVote;
+class CMasternodeSync;
 class CKey;
 class CKeyID;
+class PeerManager;
 
 // INTENTION OF MASTERNODES REGARDING ITEM
 enum vote_outcome_enum_t : uint8_t {
@@ -69,6 +73,7 @@ private:
     int nVoteOutcome; // see VOTE_OUTCOMES above
     int64_t nTime;
     std::vector<unsigned char> vchSig;
+    const ChainstateManager& m_chainman;
 
     /** Memory only. */
     const uint256 hash;
@@ -76,7 +81,7 @@ private:
 
 public:
     CGovernanceVote();
-    CGovernanceVote(const COutPoint& outpointMasternodeIn, const uint256& nParentHashIn, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn);
+    CGovernanceVote(const COutPoint& outpointMasternodeIn, const uint256& nParentHashIn, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn, const ChainstateManager& chainman);
 
     bool IsValid() const { return fValid; }
 
@@ -100,10 +105,10 @@ public:
 
     bool Sign(const CKey& key, const CKeyID& keyID);
     bool CheckSignature(const CKeyID& keyID) const;
-    bool Sign(const CBLSSecretKey& key);
+    bool Sign(const CActiveMasternodeManager& mn_activeman);
     bool CheckSignature(const CBLSPublicKey& pubKey) const;
-    bool IsValid(bool useVotingKey) const;
-    void Relay(CConnman& connman) const;
+    bool IsValid(const CDeterministicMNList& tip_mn_list, bool useVotingKey) const;
+    void Relay(PeerManager& peerman, const CMasternodeSync& mn_sync, const CDeterministicMNList& tip_mn_list) const;
 
     const COutPoint& GetMasternodeOutpoint() const { return masternodeOutpoint; }
 
@@ -116,7 +121,7 @@ public:
     uint256 GetHash() const;
     uint256 GetSignatureHash() const;
 
-    std::string ToString() const;
+    std::string ToString(const CDeterministicMNList& tip_mn_list) const;
 
     SERIALIZE_METHODS(CGovernanceVote, obj)
     {

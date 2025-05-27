@@ -24,6 +24,7 @@
 #include <script/script.h>
 #include <script/standard.h>
 #include <util/system.h>
+#include <util/time.h>
 
 #include <cmath>
 
@@ -51,12 +52,16 @@
 #include <QFontDatabase>
 #include <QFontMetrics>
 #include <QGuiApplication>
+#include <QJsonObject>
 #include <QKeyEvent>
+#include <QKeySequence>
+#include <QLatin1String>
 #include <QLineEdit>
 #include <QList>
 #include <QLocale>
 #include <QMenu>
 #include <QMouseEvent>
+#include <QPluginLoader>
 #include <QPointer>
 #include <QProgressDialog>
 #include <QScreen>
@@ -64,12 +69,15 @@
 #include <QShortcut>
 #include <QSize>
 #include <QString>
+#include <QStringBuilder>
 #include <QTextDocument> // for Qt::mightBeRichText
 #include <QThread>
 #include <QTimer>
 #include <QUrlQuery>
 #include <QVBoxLayout>
 #include <QtGlobal>
+
+#include <chrono>
 
 #if defined(Q_OS_MAC)
 
@@ -249,6 +257,14 @@ QString dateTimeStr(const QDateTime &date)
 QString dateTimeStr(qint64 nTime)
 {
     return dateTimeStr(QDateTime::fromTime_t((qint32)nTime));
+}
+
+QFont fixedPitchFont(bool use_embedded_font)
+{
+    if (use_embedded_font) {
+        return {"Roboto Mono"};
+    }
+    return QFontDatabase::systemFont(QFontDatabase::FixedFont);
 }
 
 // Just some dummy data to generate a convincing random-looking (but consistent) address
@@ -476,9 +492,15 @@ bool hasEntryData(const QAbstractItemView *view, int column, int role)
     return !selection.at(0).data(role).toString().isEmpty();
 }
 
+void LoadFont(const QString& file_name)
+{
+    const int id = QFontDatabase::addApplicationFont(file_name);
+    assert(id != -1);
+}
+
 QString getDefaultDataDirectory()
 {
-    return boostPathToQString(GetDefaultDataDir());
+    return PathToQString(GetDefaultDataDir());
 }
 
 QString getSaveFileName(QWidget *parent, const QString &caption, const QString &dir,
@@ -606,7 +628,7 @@ void bringToFront(QWidget* w)
 
 void handleCloseWindowShortcut(QWidget* w)
 {
-    QObject::connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_W), w), &QShortcut::activated, w, &QWidget::close);
+    QObject::connect(new QShortcut(QKeySequence(QObject::tr("Ctrl+W")), w), &QShortcut::activated, w, &QWidget::close);
 }
 
 void openDebugLogfile()
@@ -615,7 +637,7 @@ void openDebugLogfile()
 
     /* Open debug.log with the associated application */
     if (fs::exists(pathDebug))
-        QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(pathDebug)));
+        QDesktopServices::openUrl(QUrl::fromLocalFile(PathToQString(pathDebug)));
 }
 
 void openConfigfile()
@@ -625,9 +647,9 @@ void openConfigfile()
     /* Open sparks.conf with the associated application */
     if (fs::exists(pathConfig)) {
         // Workaround for macOS-specific behavior; see #15409.
-        if (!QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(pathConfig)))) {
+        if (!QDesktopServices::openUrl(QUrl::fromLocalFile(PathToQString(pathConfig)))) {
 #ifdef Q_OS_MAC
-            QProcess::startDetached("/usr/bin/open", QStringList{"-t", boostPathToQString(pathConfig)});
+            QProcess::startDetached("/usr/bin/open", QStringList{"-t", PathToQString(pathConfig)});
 #endif
             return;
         }
@@ -636,11 +658,11 @@ void openConfigfile()
 
 void showBackups()
 {
-    fs::path backupsDir = GetBackupsDir();
+    fs::path backupsDir = gArgs.GetBackupsDirPath();
 
     /* Open folder with default browser */
     if (fs::exists(backupsDir))
-        QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(backupsDir)));
+        QDesktopServices::openUrl(QUrl::fromLocalFile(PathToQString(backupsDir)));
 }
 
 ToolTipToRichTextFilter::ToolTipToRichTextFilter(int _size_threshold, QObject *parent) :
@@ -811,9 +833,10 @@ bool SetStartOnSystemStartup(bool fAutoStart)
     else
     {
         char pszExePath[MAX_PATH+1];
-        ssize_t r = readlink("/proc/self/exe", pszExePath, sizeof(pszExePath) - 1);
-        if (r == -1)
+        ssize_t r = readlink("/proc/self/exe", pszExePath, sizeof(pszExePath));
+        if (r == -1 || r > MAX_PATH) {
             return false;
+        }
         pszExePath[r] = '\0';
 
         fs::create_directories(GetAutostartDir());
@@ -1603,14 +1626,14 @@ void updateButtonGroupShortcuts(QButtonGroup* buttonGroup)
         return;
     }
 #ifdef Q_OS_MAC
-    auto modifier = Qt::CTRL;
+    auto modifier = "Ctrl";
 #else
-    auto modifier = Qt::ALT;
+    auto modifier = "Alt";
 #endif
-    int nKey = 0;
+    int nKey = 1;
     for (auto button : buttonGroup->buttons()) {
         if (button->isVisible()) {
-            button->setShortcut(QKeySequence(modifier + Qt::Key_1 + nKey++));
+            button->setShortcut(QKeySequence(QString("%1+%2").arg(modifier).arg(nKey++)));
         } else {
             button->setShortcut(QKeySequence());
         }
@@ -1626,12 +1649,12 @@ void setClipboard(const QString& str)
     }
 }
 
-fs::path qstringToBoostPath(const QString &path)
+fs::path QStringToPath(const QString &path)
 {
     return fs::path(path.toStdString());
 }
 
-QString boostPathToQString(const fs::path &path)
+QString PathToQString(const fs::path &path)
 {
     return QString::fromStdString(path.string());
 }
@@ -1651,24 +1674,49 @@ QString NetworkToQString(Network net)
     assert(false);
 }
 
-QString formatDurationStr(int secs)
+QString ConnectionTypeToQString(ConnectionType conn_type, bool prepend_direction)
 {
-    QStringList strList;
-    int days = secs / 86400;
-    int hours = (secs % 86400) / 3600;
-    int mins = (secs % 3600) / 60;
-    int seconds = secs % 60;
+    QString prefix;
+    if (prepend_direction) {
+        prefix = (conn_type == ConnectionType::INBOUND) ?
+                     /*: An inbound connection from a peer. An inbound connection
+                         is a connection initiated by a peer. */
+                     QObject::tr("Inbound") :
+                     /*: An outbound connection to a peer. An outbound connection
+                         is a connection initiated by us. */
+                     QObject::tr("Outbound") + " ";
+    }
+    switch (conn_type) {
+    case ConnectionType::INBOUND: return prefix;
+    //: Peer connection type that relays all network information.
+    case ConnectionType::OUTBOUND_FULL_RELAY: return prefix + QObject::tr("Full Relay");
+    /*: Peer connection type that relays network information about
+        blocks and not transactions or addresses. */
+    case ConnectionType::BLOCK_RELAY: return prefix + QObject::tr("Block Relay");
+    //: Peer connection type established manually through one of several methods.
+    case ConnectionType::MANUAL: return prefix + QObject::tr("Manual");
+    //: Short-lived peer connection type that tests the aliveness of known addresses.
+    case ConnectionType::FEELER: return prefix + QObject::tr("Feeler");
+    //: Short-lived peer connection type that solicits known addresses from a peer.
+    case ConnectionType::ADDR_FETCH: return prefix + QObject::tr("Address Fetch");
+    } // no default case, so the compiler can warn about missing cases
+    assert(false);
+}
 
-    if (days)
-        strList.append(QString(QObject::tr("%1 d")).arg(days));
-    if (hours)
-        strList.append(QString(QObject::tr("%1 h")).arg(hours));
-    if (mins)
-        strList.append(QString(QObject::tr("%1 m")).arg(mins));
-    if (seconds || (!days && !hours && !mins))
-        strList.append(QString(QObject::tr("%1 s")).arg(seconds));
-
-    return strList.join(" ");
+QString formatDurationStr(std::chrono::seconds dur)
+{
+    using days = std::chrono::duration<int, std::ratio<86400>>; // can remove this line after C++20
+    const auto d{std::chrono::duration_cast<days>(dur)};
+    const auto h{std::chrono::duration_cast<std::chrono::hours>(dur - d)};
+    const auto m{std::chrono::duration_cast<std::chrono::minutes>(dur - d - h)};
+    const auto s{std::chrono::duration_cast<std::chrono::seconds>(dur - d - h - m)};
+    QStringList str_list;
+    if (auto d2{d.count()}) str_list.append(QObject::tr("%1 d").arg(d2));
+    if (auto h2{h.count()}) str_list.append(QObject::tr("%1 h").arg(h2));
+    if (auto m2{m.count()}) str_list.append(QObject::tr("%1 m").arg(m2));
+    const auto s2{s.count()};
+    if (s2 || str_list.empty()) str_list.append(QObject::tr("%1 s").arg(s2));
+    return str_list.join(" ");
 }
 
 QString formatServicesStr(quint64 mask)
@@ -1685,14 +1733,16 @@ QString formatServicesStr(quint64 mask)
         return QObject::tr("None");
 }
 
-QString formatPingTime(int64_t ping_usec)
+QString formatPingTime(std::chrono::microseconds ping_time)
 {
-    return (ping_usec == std::numeric_limits<int64_t>::max() || ping_usec == 0) ? QObject::tr("N/A") : QString(QObject::tr("%1 ms")).arg(QString::number((int)(ping_usec / 1000), 10));
+    return (ping_time == std::chrono::microseconds::max() || ping_time == 0us) ?
+        QObject::tr("N/A") :
+        QObject::tr("%1 ms").arg(QString::number((int)(count_microseconds(ping_time) / 1000), 10));
 }
 
 QString formatTimeOffset(int64_t nTimeOffset)
 {
-  return QString(QObject::tr("%1 s")).arg(QString::number((int)nTimeOffset, 10));
+  return QObject::tr("%1 s").arg(QString::number((int)nTimeOffset, 10));
 }
 
 QString formatNiceTimeOffset(qint64 secs)
@@ -1735,13 +1785,13 @@ QString formatNiceTimeOffset(qint64 secs)
 QString formatBytes(uint64_t bytes)
 {
     if(bytes < 1024)
-        return QString(QObject::tr("%1 B")).arg(bytes);
+        return QObject::tr("%1 B").arg(bytes);
     if(bytes < 1024 * 1024)
-        return QString(QObject::tr("%1 KB")).arg(bytes / 1024);
+        return QObject::tr("%1 KB").arg(bytes / 1024);
     if(bytes < 1024 * 1024 * 1024)
-        return QString(QObject::tr("%1 MB")).arg(bytes / 1024 / 1024);
+        return QObject::tr("%1 MB").arg(bytes / 1024 / 1024);
 
-    return QString(QObject::tr("%1 GB")).arg(bytes / 1024 / 1024 / 1024);
+    return QObject::tr("%1 GB").arg(bytes / 1024 / 1024 / 1024);
 }
 
 qreal calculateIdealFontSize(int width, const QString& text, QFont font, qreal minPointSize, qreal font_size) {
@@ -1808,6 +1858,20 @@ void LogQtInfo()
     const std::string plugin_link{"dynamic"};
 #endif
     LogPrintf("Qt %s (%s), plugin=%s (%s)\n", qVersion(), qt_link, QGuiApplication::platformName().toStdString(), plugin_link);
+    const auto static_plugins = QPluginLoader::staticPlugins();
+    if (static_plugins.empty()) {
+        LogPrintf("No static plugins.\n");
+    } else {
+        LogPrintf("Static plugins:\n");
+        for (const QStaticPlugin& p : static_plugins) {
+            QJsonObject meta_data = p.metaData();
+            const std::string plugin_class = meta_data.take(QString("className")).toString().toStdString();
+            const int plugin_version = meta_data.take(QString("version")).toInt();
+            LogPrintf(" %s, version %d\n", plugin_class, plugin_version);
+        }
+    }
+
+    LogPrintf("Style: %s / %s\n", QApplication::style()->objectName().toStdString(), QApplication::style()->metaObject()->className());
     LogPrintf("System: %s, %s\n", QSysInfo::prettyProductName().toStdString(), QSysInfo::buildAbi().toStdString());
     for (const QScreen* s : QGuiApplication::screens()) {
         LogPrintf("Screen: %s %dx%d, pixel ratio=%.1f\n", s->name().toStdString(), s->size().width(), s->size().height(), s->devicePixelRatio());
@@ -1850,6 +1914,24 @@ QImage GetImage(const QLabel* label)
 #else
     return label->pixmap()->toImage();
 #endif
+}
+
+QString MakeHtmlLink(const QString& source, const QString& link)
+{
+    return QString(source).replace(
+        link,
+        QLatin1String("<a href=\"") % link % QLatin1String("\">") % link % QLatin1String("</a>"));
+}
+
+void PrintSlotException(
+    const std::exception* exception,
+    const QObject* sender,
+    const QObject* receiver)
+{
+    std::string description = sender->metaObject()->className();
+    description += "->";
+    description += receiver->metaObject()->className();
+    PrintExceptionContinue(std::make_exception_ptr(exception), description.c_str());
 }
 
 } // namespace GUIUtil

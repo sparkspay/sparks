@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2014 The Bitcoin Core developers
+// Copyright (c) 2012-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -43,8 +43,6 @@ const std::string CLIENT_NAME("Sparks Core");
     #endif
 #endif
 
-const std::string CLIENT_BUILD(BUILD_DESC BUILD_SUFFIX);
-
 std::string FormatVersion(int nVersion)
 {
     return strprintf("%d.%d.%d", nVersion / 10000, (nVersion / 100) % 100, nVersion % 100);
@@ -52,6 +50,7 @@ std::string FormatVersion(int nVersion)
 
 std::string FormatFullVersion()
 {
+    static const std::string CLIENT_BUILD(BUILD_DESC BUILD_SUFFIX);
     return CLIENT_BUILD;
 }
 

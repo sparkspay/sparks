@@ -58,10 +58,10 @@ class WalletUpgradeToHDTest(BitcoinTestFramework):
             outs = node.decoderawtransaction(node.gettransaction(txid)['hex'])['vout']
             for out in outs:
                 if out['value'] == 1:
-                    keypath = node.getaddressinfo(out['scriptPubKey']['addresses'][0])['hdkeypath']
+                    keypath = node.getaddressinfo(out['scriptPubKey']['address'])['hdkeypath']
                     assert_equal(keypath, "m/44'/1'/0'/0/%d" % i)
                 else:
-                    keypath = node.getaddressinfo(out['scriptPubKey']['addresses'][0])['hdkeypath']
+                    keypath = node.getaddressinfo(out['scriptPubKey']['address'])['hdkeypath']
                     assert_equal(keypath, "m/44'/1'/0'/1/%d" % i)
 
         self.bump_mocktime(1)
@@ -190,8 +190,8 @@ class WalletUpgradeToHDTest(BitcoinTestFramework):
         node.stop()
         node.wait_until_stopped()
         self.start_node(0, extra_args=['-rescan'])
-        assert_raises_rpc_error(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.", node.upgradetohd, mnemonic)
-        assert_raises_rpc_error(-14, "The wallet passphrase entered was incorrect", node.upgradetohd, mnemonic, "", "wrongpass")
+        assert_raises_rpc_error(-13, "Error: Wallet encrypted but passphrase not supplied to RPC.", node.upgradetohd, mnemonic)
+        assert_raises_rpc_error(-1,  "Error: The wallet passphrase entered was incorrect", node.upgradetohd, mnemonic, "", "wrongpass")
         assert node.upgradetohd(mnemonic, "", walletpass)
         assert_raises_rpc_error(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.", node.dumphdinfo)
         node.walletpassphrase(walletpass, 100)

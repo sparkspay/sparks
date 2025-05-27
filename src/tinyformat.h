@@ -508,9 +508,9 @@ class FormatArg
 {
     public:
         FormatArg()
-            : m_value(NULL),
-            m_formatImpl(NULL),
-            m_toIntImpl(NULL)
+            : m_value(nullptr),
+            m_formatImpl(nullptr),
+            m_toIntImpl(nullptr)
         { }
 
         template<typename T>
@@ -797,27 +797,27 @@ inline const char* streamStateFromFormat(std::ostream& out, bool& positionalMode
             break;
         case 'X':
             out.setf(std::ios::uppercase);
-            // Falls through
+            [[fallthrough]];
         case 'x': case 'p':
             out.setf(std::ios::hex, std::ios::basefield);
             intConversion = true;
             break;
         case 'E':
             out.setf(std::ios::uppercase);
-            // Falls through
+            [[fallthrough]];
         case 'e':
             out.setf(std::ios::scientific, std::ios::floatfield);
             out.setf(std::ios::dec, std::ios::basefield);
             break;
         case 'F':
             out.setf(std::ios::uppercase);
-            // Falls through
+            [[fallthrough]];
         case 'f':
             out.setf(std::ios::fixed, std::ios::floatfield);
             break;
         case 'A':
             out.setf(std::ios::uppercase);
-            // Falls through
+            [[fallthrough]];
         case 'a':
 #           ifdef _MSC_VER
             // Workaround https://developercommunity.visualstudio.com/content/problem/520472/hexfloat-stream-output-does-not-ignore-precision-a.html
@@ -829,7 +829,7 @@ inline const char* streamStateFromFormat(std::ostream& out, bool& positionalMode
             break;
         case 'G':
             out.setf(std::ios::uppercase);
-            // Falls through
+            [[fallthrough]];
         case 'g':
             out.setf(std::ios::dec, std::ios::basefield);
             // As in boost::format, let stream decide float format.
@@ -1005,7 +1005,8 @@ class FormatListN : public FormatList
 // Special 0-arg version - MSVC says zero-sized C array in struct is nonstandard
 template<> class FormatListN<0> : public FormatList
 {
-    public: FormatListN() : FormatList(0, 0) {}
+public:
+    FormatListN() : FormatList(nullptr, 0) {}
 };
 
 } // namespace detail

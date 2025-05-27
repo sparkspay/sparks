@@ -1,8 +1,8 @@
-# Sparks Core version v20.1.1
+# Sparks Core version v21.1.1
 
-This is a new patch version release, including bug fixes.
+This is a new patch version release, bringing important bugfixes.
 
-This release is optional but recommended for all nodes.
+This release is **optional** but recommended for all nodes.
 
 Please report bugs using the issue tracker at GitHub:
 
@@ -20,6 +20,11 @@ sparksd/sparks-qt (on Linux).
 
 ## Downgrade warning
 
+### Downgrade to a version < v21.0.0
+
+Downgrading to a version older than v21.0.0 may not be supported due to changes
+if you are using descriptor wallets.
+
 ### Downgrade to a version < v19.2.0
 
 Downgrading to a version older than v19.2.0 is not supported due to changes
@@ -28,12 +33,15 @@ reindex or re-sync the whole chain.
 
 # Notable changes
 
-## Work Queue RPC Fix / Deadlock Fix
+- Core now categorizes asset unlock transactions as "Platform Transfers" on the Transactions tab in Sparks-Qt and in the output of the `gettransaction` RPC (#6131)
+- Persist Coinjoin Denoms options changes made via GUI over restarts (#6208)
+- Fix incorrect payment predictions for evonodes in Sparks-Qt and in RPC `masternode winners` (#6222)
+- `creditOutputs` entries in various RPCs that output transaction JSON are shown as objects now instead of being shown as strings (#6229)
+- Updated PGP key for builder 'pasta' to reflect new subkeys. You may need to reimport this key to validate signatures. (#6290)
+- Build failures on Ubuntu 24.10 / clang 19.1.1 resolved (#6328)
+- RPC errors in `masternode payments`, `getblock`, `getblockstats` related to Asset Unlock parsing have been fixed (#6336)
 
-A deadlock caused nodes to become non-responsive and RPC to report "Work depth queue exceeded".
-Thanks to Konstantin Akimov (knst) who discovered the cause. This previously caused masternodes to become PoSe banned.
-
-# v20.1.1 Change log
+# v21.1.0 Change log
 
 See detailed [set of changes][set-of-changes].
 
@@ -41,9 +49,10 @@ See detailed [set of changes][set-of-changes].
 
 Thanks to everyone who directly contributed to this release:
 
+- Kittywhiskers Van Gogh
 - Konstantin Akimov
 - PastaPastaPasta
-- thephez
+- UdjinM6
 
 As well as everyone that submitted issues, reviewed pull requests and helped
 debug the release candidates.
@@ -52,6 +61,10 @@ debug the release candidates.
 
 These release are considered obsolete. Old release notes can be found here:
 
+- [v21.1.0](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-21.1.0.md) released Aug/8/2024
+- [v21.0.2](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-21.0.2.md) released Aug/1/2024
+- [v21.0.0](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-21.0.0.md) released Jul/25/2024
+- [v20.1.1](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-20.1.1.md) released April/3/2024
 - [v20.1.0](https://github.com/Sparkspay/Sparks/blob/master/doc/release-notes/Sparks/release-notes-20.1.0.md) released March/5/2024
 - [v20.0.4](https://github.com/Sparkspay/Sparks/blob/master/doc/release-notes/Sparks/release-notes-20.0.4.md) released Jan/13/2024
 - [v20.0.3](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-20.0.3.md) released December/26/2023
@@ -96,4 +109,4 @@ These release are considered obsolete. Old release notes can be found here:
 - [v0.10.x](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-0.10.0.md) released Sep/25/2014
 - [v0.9.x](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-0.9.0.md) released Mar/13/2014
 
-[set-of-changes]: https://github.com/sparkspay/sparks/compare/v20.1.0...sparkspay:v20.1.1
+[set-of-changes]: https://github.com/sparkspay/sparks/compare/v21.1.0...sparkspay:v21.1.1

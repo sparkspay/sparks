@@ -82,7 +82,11 @@ from test_framework.messages import (
     NODE_NETWORK,
     sha256,
 )
-from test_framework.util import wait_until
+from test_framework.util import (
+    MAX_NODES,
+    p2p_port,
+    wait_until_helper,
+)
 
 logger = logging.getLogger("TestFramework.p2p")
 
@@ -168,7 +172,7 @@ class P2PConnection(asyncio.Protocol):
     def is_connected(self):
         return self._transport is not None
 
-    def peer_connect(self, dstaddr, dstport, *, net, timeout_factor, uacomment=None):
+    def peer_connect_helper(self, dstaddr, dstport, net, timeout_factor, uacomment):
         assert not self.is_connected
         self.timeout_factor = timeout_factor
         self.dstaddr = dstaddr
@@ -182,20 +186,27 @@ class P2PConnection(asyncio.Protocol):
         if net == "devnet":
             devnet_name = "devnet1"  # see initialize_datadir()
             if self.uacomment is None:
-                self.strSubVer = MY_SUBVERSION % ("(devnet.devnet-%s)" % devnet_name).encode()
+                self.strSubVer = MY_SUBVERSION % ("(devnet.devnet-%s)" % devnet_name)
             else:
-                self.strSubVer = MY_SUBVERSION % ("(devnet.devnet-%s,%s)" % (devnet_name, self.uacomment)).encode()
+                self.strSubVer = MY_SUBVERSION % ("(devnet.devnet-%s,%s)" % (devnet_name, self.uacomment))
         elif self.uacomment is not None:
-            self.strSubVer = MY_SUBVERSION % ("(%s)" % self.uacomment).encode()
+            self.strSubVer = MY_SUBVERSION % ("(%s)" % self.uacomment)
         else:
-            self.strSubVer = MY_SUBVERSION % b""
+            self.strSubVer = MY_SUBVERSION % ""
 
-        logger.debug('Connecting to Sparks Node: %s:%d' % (self.dstaddr, self.dstport))
+    def peer_connect(self, dstaddr, dstport, *, net, timeout_factor, uacomment=None):
+        self.peer_connect_helper(dstaddr, dstport, net, timeout_factor, uacomment)
 
         loop = NetworkThread.network_event_loop
-        conn_gen_unsafe = loop.create_connection(lambda: self, host=self.dstaddr, port=self.dstport)
-        conn_gen = lambda: loop.call_soon_threadsafe(loop.create_task, conn_gen_unsafe)
-        return conn_gen
+        logger.debug('Connecting to Sparks Node: %s:%d' % (self.dstaddr, self.dstport))
+        coroutine = loop.create_connection(lambda: self, host=self.dstaddr, port=self.dstport)
+        return lambda: loop.call_soon_threadsafe(loop.create_task, coroutine)
+
+    def peer_accept_connection(self, connect_id, connect_cb=lambda: None, *, net, timeout_factor, uacomment=None):
+        self.peer_connect_helper('0', 0, net, timeout_factor, uacomment)
+
+        logger.debug('Listening for Sparks Node with id: {}'.format(connect_id))
+        return lambda: NetworkThread.listen(self, connect_cb, idx=connect_id)
 
     def peer_disconnect(self):
         # Connection could have already been closed by other end.
@@ -343,7 +354,7 @@ class P2PInterface(P2PConnection):
 
         # Track the most recent message of each type.
         # To wait for a message to be received, pop that message from
-        # this and use wait_until.
+        # this and use self.wait_until.
         self.last_message = {}
 
         # A count of the number of ping messages we've sent to the node
@@ -354,19 +365,28 @@ class P2PInterface(P2PConnection):
 
         self.support_addrv2 = support_addrv2
 
+    def peer_connect_send_version(self, services):
+        # Send a version msg
+        vt = msg_version()
+        vt.nServices = services
+        vt.addrTo.ip = self.dstaddr
+        vt.addrTo.port = self.dstport
+        vt.addrFrom.ip = "0.0.0.0"
+        vt.addrFrom.port = 0
+        vt.strSubVer = self.strSubVer
+        self.on_connection_send_msg = vt  # Will be sent soon after connection_made
+
     def peer_connect(self, *args, services=NODE_NETWORK | NODE_HEADERS_COMPRESSED, send_version=True, **kwargs):
         create_conn = super().peer_connect(*args, **kwargs)
 
         if send_version:
-            # Send a version msg
-            vt = msg_version()
-            vt.nServices = services
-            vt.addrTo.ip = self.dstaddr
-            vt.addrTo.port = self.dstport
-            vt.addrFrom.ip = "0.0.0.0"
-            vt.addrFrom.port = 0
-            vt.strSubVer = self.strSubVer
-            self.on_connection_send_msg = vt  # Will be sent soon after connection_made
+            self.peer_connect_send_version(services)
+
+        return create_conn
+
+    def peer_accept_connection(self, *args, services=NODE_NETWORK | NODE_HEADERS_COMPRESSED, **kwargs):
+        create_conn = super().peer_accept_connection(*args, **kwargs)
+        self.peer_connect_send_version(services)
 
         return create_conn
 
@@ -454,21 +474,30 @@ class P2PInterface(P2PConnection):
             self.send_message(msg_sendaddrv2())
         self.send_message(msg_verack())
         self.nServices = message.nServices
+        self.send_message(msg_getaddr())
 
     # Connection helper methods
 
-    def wait_until(self, test_function, timeout=60):
-        wait_until(test_function, timeout=timeout, lock=p2p_lock, timeout_factor=self.timeout_factor)
+    def wait_until(self, test_function_in, *, timeout=60, check_connected=True):
+        def test_function():
+            if check_connected:
+                assert self.is_connected
+            return test_function_in()
+
+        wait_until_helper(test_function, timeout=timeout, lock=p2p_lock, timeout_factor=self.timeout_factor)
+
+    def wait_for_connect(self, timeout=60):
+        test_function = lambda: self.is_connected
+        wait_until_helper(test_function, timeout=timeout, lock=p2p_lock)
 
     def wait_for_disconnect(self, timeout=60):
         test_function = lambda: not self.is_connected
-        self.wait_until(test_function, timeout=timeout)
+        self.wait_until(test_function, timeout=timeout, check_connected=False)
 
     # Message receiving helper methods
 
     def wait_for_tx(self, txid, timeout=60):
         def test_function():
-            assert self.is_connected
             if not self.last_message.get('tx'):
                 return False
             return self.last_message['tx'].tx.rehash() == txid
@@ -477,14 +506,12 @@ class P2PInterface(P2PConnection):
 
     def wait_for_block(self, blockhash, timeout=60):
         def test_function():
-            assert self.is_connected
             return self.last_message.get("block") and self.last_message["block"].block.rehash() == blockhash
 
         self.wait_until(test_function, timeout=timeout)
 
     def wait_for_header(self, blockhash, timeout=60):
         def test_function():
-            assert self.is_connected
             last_headers = self.last_message.get('headers')
             if not last_headers:
                 return False
@@ -494,22 +521,19 @@ class P2PInterface(P2PConnection):
 
     def wait_for_merkleblock(self, blockhash, timeout=60):
         def test_function():
-            assert self.is_connected
             last_filtered_block = self.last_message.get('merkleblock')
             if not last_filtered_block:
                 return False
             return last_filtered_block.merkleblock.header.rehash() == int(blockhash, 16)
 
-        wait_until(test_function, timeout=timeout, lock=p2p_lock)
+        self.wait_until(test_function, timeout=timeout)
 
 
     def wait_for_getdata(self, hash_list, timeout=60):
         """Waits for a getdata message.
 
         The object hashes in the inventory vector must match the provided hash_list."""
-
         def test_function():
-            assert self.is_connected
             last_data = self.last_message.get("getdata")
             if not last_data:
                 return False
@@ -524,9 +548,7 @@ class P2PInterface(P2PConnection):
         value must be explicitly cleared before calling this method, or this will return
         immediately with success. TODO: change this method to take a hash value and only
         return true if the correct block header has been requested."""
-
         def test_function():
-            assert self.is_connected
             return self.last_message.get("getheaders2") if self.nServices & NODE_HEADERS_COMPRESSED \
                 else self.last_message.get("getheaders")
 
@@ -538,7 +560,6 @@ class P2PInterface(P2PConnection):
             raise NotImplementedError("wait_for_inv() will only verify the first inv object")
 
         def test_function():
-            assert self.is_connected
             return self.last_message.get("inv") and \
                                 self.last_message["inv"].inv[0].type == expected_inv[0].type and \
                                 self.last_message["inv"].inv[0].hash == expected_inv[0].hash
@@ -557,12 +578,19 @@ class P2PInterface(P2PConnection):
         self.send_message(message)
         self.sync_with_ping(timeout=timeout)
 
-    # Sync up with the node
+    def sync_send_with_ping(self, timeout=60):
+        """Ensure SendMessages is called on this connection"""
+        # Calling sync_with_ping twice requires that the node calls
+        # `ProcessMessage` twice, and thus ensures `SendMessages` must have
+        # been called at least once
+        self.sync_with_ping()
+        self.sync_with_ping()
+
     def sync_with_ping(self, timeout=60):
+        """Ensure ProcessMessages is called on this connection"""
         self.send_message(msg_ping(nonce=self.ping_counter))
 
         def test_function():
-            assert self.is_connected
             return self.last_message.get("pong") and self.last_message["pong"].nonce == self.ping_counter
 
         self.wait_until(test_function, timeout=timeout)
@@ -585,6 +613,8 @@ class NetworkThread(threading.Thread):
         # There is only one event loop and no more than one thread must be created
         assert not self.network_event_loop
 
+        NetworkThread.listeners = {}
+        NetworkThread.protos = {}
         NetworkThread.network_event_loop = asyncio.new_event_loop()
 
     def run(self):
@@ -594,11 +624,53 @@ class NetworkThread(threading.Thread):
     def close(self, timeout=10):
         """Close the connections and network event loop."""
         self.network_event_loop.call_soon_threadsafe(self.network_event_loop.stop)
-        wait_until(lambda: not self.network_event_loop.is_running(), timeout=timeout)
+        wait_until_helper(lambda: not self.network_event_loop.is_running(), timeout=timeout)
         self.network_event_loop.close()
         self.join(timeout)
         # Safe to remove event loop.
         NetworkThread.network_event_loop = None
+
+    @classmethod
+    def listen(cls, p2p, callback, port=None, addr=None, idx=1):
+        """ Ensure a listening server is running on the given port, and run the
+        protocol specified by `p2p` on the next connection to it. Once ready
+        for connections, call `callback`."""
+
+        if port is None:
+            assert 0 < idx <= MAX_NODES
+            port = p2p_port(MAX_NODES - idx)
+        if addr is None:
+            addr = '127.0.0.1'
+
+        coroutine = cls.create_listen_server(addr, port, callback, p2p)
+        cls.network_event_loop.call_soon_threadsafe(cls.network_event_loop.create_task, coroutine)
+
+    @classmethod
+    async def create_listen_server(cls, addr, port, callback, proto):
+        def peer_protocol():
+            """Returns a function that does the protocol handling for a new
+            connection. To allow different connections to have different
+            behaviors, the protocol function is first put in the cls.protos
+            dict. When the connection is made, the function removes the
+            protocol function from that dict, and returns it so the event loop
+            can start executing it."""
+            response = cls.protos.get((addr, port))
+            cls.protos[(addr, port)] = None
+            return response
+
+        if (addr, port) not in cls.listeners:
+            # When creating a listener on a given (addr, port) we only need to
+            # do it once. If we want different behaviors for different
+            # connections, we can accomplish this by providing different
+            # `proto` functions
+
+            listener = await cls.network_event_loop.create_server(peer_protocol, addr, port)
+            logger.debug("Listening server on %s:%d should be started" % (addr, port))
+            cls.listeners[(addr, port)] = listener
+
+        cls.protos[(addr, port)] = proto
+        callback(addr, port)
+
 
 class P2PDataStore(P2PInterface):
     """A P2P data store class.
@@ -693,7 +765,11 @@ class P2PDataStore(P2PInterface):
                     self.send_message(msg_block(block=b))
             else:
                 self.send_message(msg_headers([CBlockHeader(block) for block in blocks]))
-                self.wait_until(lambda: blocks[-1].sha256 in self.getdata_requests, timeout=timeout)
+                self.wait_until(
+                    lambda: blocks[-1].sha256 in self.getdata_requests,
+                    timeout=timeout,
+                    check_connected=success,
+                )
 
             if expect_disconnect:
                 self.wait_for_disconnect()
@@ -761,6 +837,6 @@ class P2PTxInvStore(P2PInterface):
         The mempool should mark unbroadcast=False for these transactions.
         """
         # Wait until invs have been received (and getdatas sent) for each txid.
-        self.wait_until(lambda: set(self.tx_invs_received.keys()) == set([int(tx, 16) for tx in txns]), timeout)
+        self.wait_until(lambda: set(self.tx_invs_received.keys()) == set([int(tx, 16) for tx in txns]), timeout=timeout)
         # Flush messages and wait for the getdatas to be processed
         self.sync_with_ping()

@@ -61,14 +61,15 @@ void OptionsModel::Init(bool resetSettings)
     // These are Qt-only settings:
 
     // Window
-    if (!settings.contains("fHideTrayIcon"))
+    if (!settings.contains("fHideTrayIcon")) {
         settings.setValue("fHideTrayIcon", false);
-    fHideTrayIcon = settings.value("fHideTrayIcon").toBool();
-    Q_EMIT hideTrayIconChanged(fHideTrayIcon);
+    }
+    m_show_tray_icon = !settings.value("fHideTrayIcon").toBool();
+    Q_EMIT showTrayIconChanged(m_show_tray_icon);
 
     if (!settings.contains("fMinimizeToTray"))
         settings.setValue("fMinimizeToTray", false);
-    fMinimizeToTray = settings.value("fMinimizeToTray").toBool() && !fHideTrayIcon;
+    fMinimizeToTray = settings.value("fMinimizeToTray").toBool() && m_show_tray_icon;
 
     if (!settings.contains("fMinimizeOnClose"))
         settings.setValue("fMinimizeOnClose", false);
@@ -224,6 +225,8 @@ void OptionsModel::Init(bool resetSettings)
     // CoinJoin
     if (!settings.contains("nCoinJoinSessions"))
         settings.setValue("nCoinJoinSessions", DEFAULT_COINJOIN_SESSIONS);
+    if (!gArgs.SoftSetArg("-coinjoinsessions", settings.value("nCoinJoinSessions").toString().toStdString()))
+        addOverriddenOption("-coinjoinsessions");
 
     if (!settings.contains("nCoinJoinRounds"))
         settings.setValue("nCoinJoinRounds", DEFAULT_COINJOIN_ROUNDS);
@@ -247,9 +250,13 @@ void OptionsModel::Init(bool resetSettings)
 
     if (!settings.contains("nCoinJoinDenomsGoal"))
         settings.setValue("nCoinJoinDenomsGoal", DEFAULT_COINJOIN_DENOMS_GOAL);
+    if (!gArgs.SoftSetArg("-coinjoindenomsgoal", settings.value("nCoinJoinDenomsGoal").toString().toStdString()))
+        addOverriddenOption("-coinjoindenomsgoal");
 
     if (!settings.contains("nCoinJoinDenomsHardCap"))
         settings.setValue("nCoinJoinDenomsHardCap", DEFAULT_COINJOIN_DENOMS_HARDCAP);
+    if (!gArgs.SoftSetArg("-coinjoindenomshardcap", settings.value("nCoinJoinDenomsHardCap").toString().toStdString()))
+        addOverriddenOption("-coinjoindenomshardcap");
 #endif
 
     // Network
@@ -315,8 +322,8 @@ static void CopySettings(QSettings& dst, const QSettings& src)
 /** Back up a QSettings to an ini-formatted file. */
 static void BackupSettings(const fs::path& filename, const QSettings& src)
 {
-    qInfo() << "Backing up GUI settings to" << GUIUtil::boostPathToQString(filename);
-    QSettings dst(GUIUtil::boostPathToQString(filename), QSettings::IniFormat);
+    qInfo() << "Backing up GUI settings to" << GUIUtil::PathToQString(filename);
+    QSettings dst(GUIUtil::PathToQString(filename), QSettings::IniFormat);
     dst.clear();
     CopySettings(dst, src);
 }
@@ -418,8 +425,8 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
         {
         case StartAtStartup:
             return GUIUtil::GetStartOnSystemStartup();
-        case HideTrayIcon:
-            return fHideTrayIcon;
+        case ShowTrayIcon:
+            return m_show_tray_icon;
         case MinimizeToTray:
             return fMinimizeToTray;
         case MapPortUPnP:
@@ -546,10 +553,10 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
         case StartAtStartup:
             successful = GUIUtil::SetStartOnSystemStartup(value.toBool());
             break;
-        case HideTrayIcon:
-            fHideTrayIcon = value.toBool();
-            settings.setValue("fHideTrayIcon", fHideTrayIcon);
-    		Q_EMIT hideTrayIconChanged(fHideTrayIcon);
+        case ShowTrayIcon:
+            m_show_tray_icon = value.toBool();
+            settings.setValue("fHideTrayIcon", !m_show_tray_icon);
+            Q_EMIT showTrayIconChanged(m_show_tray_icon);
             break;
         case MinimizeToTray:
             fMinimizeToTray = value.toBool();

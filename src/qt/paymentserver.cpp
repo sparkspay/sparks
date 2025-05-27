@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2019 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -52,7 +52,7 @@ static QString ipcServerName()
     // Append a simple hash of the datadir
     // Note that GetDataDir(true) returns a different path
     // for -testnet versus main net
-    QString ddir(GUIUtil::boostPathToQString(GetDataDir(true)));
+    QString ddir(GUIUtil::PathToQString(GetDataDir(true)));
     name.append(QString::number(qHash(ddir)));
 
     return name;
@@ -233,14 +233,17 @@ void PaymentServer::handleURIOrFile(const QString& s)
             SendCoinsRecipient recipient;
             if (GUIUtil::parseBitcoinURI(s, &recipient))
             {
-                if (!IsValidDestinationString(recipient.address.toStdString())) {
+                std::string error_msg;
+                const CTxDestination dest = DecodeDestination(recipient.address.toStdString(), error_msg);
+
+                if (!IsValidDestination(dest)) {
                     if (uri.hasQueryItem("r")) {  // payment request
                         Q_EMIT message(tr("URI handling"),
                             tr("Cannot process payment request as BIP70 is no longer supported.")+
                             tr("Due to discontinued support, you should request the merchant to provide you with a BIP21 compatible URI or use a wallet that does continue to support BIP70."),
                             CClientUIInterface::ICON_WARNING);
                     } else {
-                        Q_EMIT message(tr("URI handling"), tr("Invalid payment address %1").arg(recipient.address),
+                        Q_EMIT message(tr("URI handling"), QString::fromStdString(error_msg),
                             CClientUIInterface::MSG_ERROR);
                     }
                 }

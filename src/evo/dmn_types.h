@@ -65,11 +65,11 @@ constexpr auto Invalid = mntype_struct{
     .description = "Invalid",
 };
 
-[[nodiscard]] inline const dmn_types::mntype_struct GetEvoVersion(gsl::not_null<const CBlockIndex*> pindexPrev)
+[[nodiscard]] inline const dmn_types::mntype_struct GetEvoVersion(gsl::not_null<const CBlockIndex*> pindex)
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    const bool isV20Active{DeploymentActiveAt(*pindexPrev, consensusParams, Consensus::DEPLOYMENT_V20)};
-    if (pindexPrev->nHeight >= consensusParams.V19Height && !isV20Active) {
+    const bool isV20Active{DeploymentActiveAt(*pindex, consensusParams, Consensus::DEPLOYMENT_V20)};
+    if (pindex->nHeight >= consensusParams.V19Height && !isV20Active) {
         return dmn_types::Evo4;
     } else if (isV20Active){
         return dmn_types::Evo1;
@@ -87,11 +87,11 @@ constexpr auto Invalid = mntype_struct{
 
 } // namespace dmn_types
 
-[[nodiscard]] constexpr const dmn_types::mntype_struct GetMnType(MnType type, gsl::not_null<const CBlockIndex*> pindexPrev)
+[[nodiscard]] constexpr const dmn_types::mntype_struct GetMnType(MnType type, gsl::not_null<const CBlockIndex*> pindex)
 {
     switch (type) {
         case MnType::Regular: return dmn_types::Regular;
-        case MnType::Evo: return dmn_types::GetEvoVersion(pindexPrev);
+        case MnType::Evo: return dmn_types::GetEvoVersion(pindex);
         default: return dmn_types::Invalid;
     }
 }

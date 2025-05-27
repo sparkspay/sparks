@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Bitcoin Core developers
+// Copyright (c) 2019-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -39,7 +39,7 @@ CTxIn MineBlock(const NodeContext& node, const CScript& coinbase_scriptPubKey)
         assert(block->nNonce);
     }
 
-    bool processed{Assert(node.chainman)->ProcessNewBlock(Params(), block, true, nullptr)};
+    bool processed{Assert(node.chainman)->ProcessNewBlock(Params(), block, *node.sporkman, true, nullptr)};
     assert(processed);
 
     return CTxIn{block->vtx[0]->GetHash(), 0};
@@ -49,11 +49,11 @@ std::shared_ptr<CBlock> PrepareBlock(const NodeContext& node, const CScript& coi
 {
     assert(node.mempool);
     auto block = std::make_shared<CBlock>(
-        BlockAssembler{*node.sporkman, *node.govman, *node.llmq_ctx, *node.evodb, ::ChainstateActive(), *node.mempool, Params()}
-            .CreateNewBlock(coinbase_scriptPubKey)
+        BlockAssembler{node.chainman->ActiveChainstate(), node, *node.mempool, Params()}
+            .CreateNewBlock(coinbase_scriptPubKey, *node.sporkman)
             ->block);
 
-    block->nTime = ::ChainActive().Tip()->GetMedianTimePast() + 1;
+    block->nTime = Assert(node.chainman)->ActiveChain().Tip()->GetMedianTimePast() + 1;
     block->hashMerkleRoot = BlockMerkleRoot(*block);
 
     return block;

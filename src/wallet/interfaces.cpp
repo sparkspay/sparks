@@ -81,6 +81,7 @@ WalletTx MakeWalletTx(CWallet& wallet, const CWalletTx& wtx)
     result.time = wtx.GetTxTime();
     result.value_map = wtx.mapValue;
     result.is_coinbase = wtx.IsCoinBase();
+    result.is_platform_transfer = wtx.IsPlatformTransfer();
     // The determination of is_denominate is based on simplified checks here because in this part of the code
     // we only want to know about mixing transactions belonging to this specific wallet.
     result.is_denominate = wtx.tx->vin.size() == wtx.tx->vout.size() && // Number of inputs is same as number of outputs
@@ -154,10 +155,7 @@ public:
     std::string getWalletName() override { return m_wallet->GetName(); }
     bool getNewDestination(const std::string label, CTxDestination& dest) override
     {
-        auto spk_man = m_wallet->GetLegacyScriptPubKeyMan();
-        if (!spk_man) {
-            return false;
-        }
+        LOCK(m_wallet->cs_wallet);
         std::string error;
         return m_wallet->GetNewDestination(label, dest, error);
     }
@@ -230,22 +228,14 @@ public:
         }
         return result;
     }
-    bool addDestData(const CTxDestination& dest, const std::string& key, const std::string& value) override
-    {
+    std::vector<std::string> getAddressReceiveRequests() override {
+        LOCK(m_wallet->cs_wallet);
+        return m_wallet->GetAddressReceiveRequests();
+    }
+    bool setAddressReceiveRequest(const CTxDestination& dest, const std::string& id, const std::string& value) override {
         LOCK(m_wallet->cs_wallet);
         WalletBatch batch{m_wallet->GetDatabase()};
-        return m_wallet->AddDestData(batch, dest, key, value);
-    }
-    bool eraseDestData(const CTxDestination& dest, const std::string& key) override
-    {
-        LOCK(m_wallet->cs_wallet);
-        WalletBatch batch{m_wallet->GetDatabase()};
-        return m_wallet->EraseDestData(batch, dest, key);
-    }
-    std::vector<std::string> getDestValues(const std::string& prefix) override
-    {
-        LOCK(m_wallet->cs_wallet);
-        return m_wallet->GetDestValues(prefix);
+        return m_wallet->SetAddressReceiveRequest(batch, dest, id, value);
     }
     void lockCoin(const COutPoint& output) override
     {
@@ -282,8 +272,9 @@ public:
         LOCK(m_wallet->cs_wallet);
         ReserveDestination m_dest(m_wallet.get());
         CTransactionRef tx;
+        FeeCalculation fee_calc_out;
         if (!m_wallet->CreateTransaction(recipients, tx, fee, change_pos,
-                fail_reason, coin_control, sign)) {
+                fail_reason, coin_control, fee_calc_out, sign)) {
             return {};
         }
         return tx;
@@ -378,9 +369,9 @@ public:
     TransactionError fillPSBT(int sighash_type,
         bool sign,
         bool bip32derivs,
+        size_t* n_signed,
         PartiallySignedTransaction& psbtx,
-        bool& complete,
-        size_t* n_signed) override
+        bool& complete) override
     {
         return m_wallet->FillPSBT(psbtx, complete, sighash_type, sign, bip32derivs, n_signed);
     }
@@ -519,6 +510,7 @@ public:
     {
         RemoveWallet(m_wallet, false /* load_on_start */);
     }
+    bool isLegacy() override { return m_wallet->IsLegacy(); }
     std::unique_ptr<Handler> handleUnload(UnloadFn fn) override
     {
         return MakeHandler(m_wallet->NotifyUnload.connect(fn));
@@ -534,13 +526,13 @@ public:
     std::unique_ptr<Handler> handleAddressBookChanged(AddressBookChangedFn fn) override
     {
         return MakeHandler(m_wallet->NotifyAddressBookChanged.connect(
-            [fn](CWallet*, const CTxDestination& address, const std::string& label, bool is_mine,
-                const std::string& purpose, ChangeType status) { fn(address, label, is_mine, purpose, status); }));
+            [fn](const CTxDestination& address, const std::string& label, bool is_mine,
+                 const std::string& purpose, ChangeType status) { fn(address, label, is_mine, purpose, status); }));
     }
     std::unique_ptr<Handler> handleTransactionChanged(TransactionChangedFn fn) override
     {
         return MakeHandler(m_wallet->NotifyTransactionChanged.connect(
-            [fn](CWallet*, const uint256& txid, ChangeType status) { fn(txid, status); }));
+            [fn](const uint256& txid, ChangeType status) { fn(txid, status); }));
     }
     std::unique_ptr<Handler> handleInstantLockReceived(InstantLockReceivedFn fn) override
     {
@@ -581,7 +573,7 @@ public:
     void registerRpcs() override
     {
         for (const CRPCCommand& command : GetWalletRPCCommands()) {
-            m_rpc_commands.emplace_back(command.category, command.name, [this, &command](const JSONRPCRequest& request, UniValue& result, bool last_handler) {
+            m_rpc_commands.emplace_back(command.category, command.name, command.subname, [this, &command](const JSONRPCRequest& request, UniValue& result, bool last_handler) {
                 return command.actor({request, m_context}, result, last_handler);
             }, command.argNames, command.unique_id);
             m_rpc_handlers.emplace_back(m_context.chain->handleRpc(m_rpc_commands.back()));

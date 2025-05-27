@@ -11,13 +11,16 @@ Supporting RPCs are:
   addresses.
 - `listunspent` outputs a specialized descriptor for the reported unspent outputs.
 - `getaddressinfo` outputs a descriptor for solvable addresses (since v0.18).
-- `importmulti` takes as input descriptors to import into the wallet
+- `importmulti` takes as input descriptors to import into a legacy wallet
   (since v0.18).
 - `generatetodescriptor` takes as input a descriptor and generates coins to it
   (`regtest` only, since v0.19).
 - `utxoupdatepsbt` takes as input descriptors to add information to the psbt
   (since v0.19).
-- `createmultisig` and `addmultisigaddress` return descriptors as well (since v0.20)
+- `createmultisig` and `addmultisigaddress` return descriptors as well (since v0.20).
+- `importdescriptors` takes as input descriptors to import into a descriptor wallet
+  (since v0.21).
+- `listdescriptors` outputs descriptors imported into a descriptor wallet (since v22).
 
 This document describes the language. For the specifics on usage, see the RPC
 documentation for the functions mentioned above.
@@ -40,7 +43,7 @@ Output descriptors currently support:
 - `combo(0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798)` describes any P2PK, P2PKH with the specified public key.
 - `multi(1,022f8bde4d1a07209355b4a7250a5c5128e88b84bddc619ab7cba8d569b240efe4,025cbdf0646e5db4eaa398f365f2ea7a0e3d419b7e0330e39ce92bddedcac4f9bc)` describes a bare *1-of-2* multisig with the specified public key.
 - `sortedmulti(1,022f8bde4d1a07209355b4a7250a5c5128e88b84bddc619ab7cba8d569b240efe4,025cbdf0646e5db4eaa398f365f2ea7a0e3d419b7e0330e39ce92bddedcac4f9bc)` describes a bare *1-of-2* multisig with keys sorted lexicographically in the resulting redeemScript.
-- `pkh(xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw/1'/2)` describes a P2PKH output with child key *1'/2* of the specified xpub.
+- `pkh(xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw/1/2)` describes a P2PKH output with child key *1/2* of the specified xpub.
 - `pkh([d34db33f/44'/0'/0']xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL/1/*)` describes a set of P2PKH outputs, but additionally specifies that the specified xpub is a child of a master with fingerprint `d34db33f`, and derived using path `44'/0'/0'`.
 
 ## Reference

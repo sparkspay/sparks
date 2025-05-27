@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
 dnl Don't forget to push a corresponding tag when updating any of _CLIENT_VERSION_* numbers
-define(_CLIENT_VERSION_MAJOR, 20)
+define(_CLIENT_VERSION_MAJOR, 21)
 define(_CLIENT_VERSION_MINOR, 1)
 define(_CLIENT_VERSION_BUILD, 1)
 define(_CLIENT_VERSION_IS_RELEASE, true)
@@ -184,12 +184,6 @@ AC_ARG_ENABLE([fuzz-binary],
     [enable building of fuzz binary (default yes).]),
     [enable_fuzz_binary=$enableval],
     [enable_fuzz_binary=yes])
-
-AC_ARG_ENABLE([danger_fuzz_link_all],
-    AS_HELP_STRING([--enable-danger-fuzz-link-all],
-    [Danger! Modifies source code. Needs git and gnu sed installed. Link each fuzz target (default no).]),
-    [enable_danger_fuzz_link_all=$enableval],
-    [enable_danger_fuzz_link_all=no])
 
 AC_ARG_WITH([qrencode],
   [AS_HELP_STRING([--with-qrencode],
@@ -474,6 +468,7 @@ if test "x$enable_werror" = "xyes"; then
                         [AC_LANG_SOURCE([[struct A { virtual void f(); }; struct B : A { void f() final; };]])])
   AX_CHECK_COMPILE_FLAG([-Werror=unreachable-code-loop-increment],[ERROR_CXXFLAGS="$ERROR_CXXFLAGS -Werror=unreachable-code-loop-increment"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Werror=mismatched-tags], [ERROR_CXXFLAGS="$ERROR_CXXFLAGS -Werror=mismatched-tags"], [], [$CXXFLAG_WERROR])
+  AX_CHECK_COMPILE_FLAG([-Werror=implicit-fallthrough], [ERROR_CXXFLAGS="$ERROR_CXXFLAGS -Werror=implicit-fallthrough"], [], [$CXXFLAG_WERROR])
 fi
 
 if test "x$CXXFLAGS_overridden" = "xno"; then
@@ -484,15 +479,12 @@ if test "x$CXXFLAGS_overridden" = "xno"; then
   AX_CHECK_COMPILE_FLAG([-Wformat -Wformat-security],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wformat -Wformat-security"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wvla],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wvla"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wshadow-field],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wshadow-field"],,[[$CXXFLAG_WERROR]])
-  AX_CHECK_COMPILE_FLAG([-Wswitch],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wswitch"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wthread-safety],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wthread-safety"],,[[$CXXFLAG_WERROR]])
-  AX_CHECK_COMPILE_FLAG([-Wrange-loop-analysis],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wrange-loop-analysis"],,[[$CXXFLAG_WERROR]])
+  AX_CHECK_COMPILE_FLAG([-Wloop-analysis],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wloop-analysis"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wredundant-decls],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wredundant-decls"],,[[$CXXFLAG_WERROR]])
-  AX_CHECK_COMPILE_FLAG([-Wunused-variable],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wunused-variable"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wunused-member-function],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wunused-member-function"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wdate-time],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wdate-time"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wconditional-uninitialized],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wconditional-uninitialized"],,[[$CXXFLAG_WERROR]])
-  AX_CHECK_COMPILE_FLAG([-Wsign-compare],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wsign-compare"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wduplicated-branches],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wduplicated-branches"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wduplicated-cond],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wduplicated-cond"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wlogical-op],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wlogical-op"],,[[$CXXFLAG_WERROR]])
@@ -500,14 +492,13 @@ if test "x$CXXFLAGS_overridden" = "xno"; then
   AX_CHECK_COMPILE_FLAG([-Wsuggest-override],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wsuggest-override"],,[[$CXXFLAG_WERROR]],
                         [AC_LANG_SOURCE([[struct A { virtual void f(); }; struct B : A { void f() final; };]])])
   AX_CHECK_COMPILE_FLAG([-Wunreachable-code-loop-increment],[WARN_CXXFLAGS="$WARN_CXXFLAGS -Wunreachable-code-loop-increment"],,[[$CXXFLAG_WERROR]])
+  AX_CHECK_COMPILE_FLAG([-Wimplicit-fallthrough], [WARN_CXXFLAGS="$WARN_CXXFLAGS -Wimplicit-fallthrough"], [], [$CXXFLAG_WERROR])
 
   dnl Some compilers (gcc) ignore unknown -Wno-* options, but warn about all
   dnl unknown options if any other warning is produced. Test the -Wfoo case, and
   dnl set the -Wno-foo case if it works.
   AX_CHECK_COMPILE_FLAG([-Wunused-parameter],[NOWARN_CXXFLAGS="$NOWARN_CXXFLAGS -Wno-unused-parameter"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wself-assign],[NOWARN_CXXFLAGS="$NOWARN_CXXFLAGS -Wno-self-assign"],,[[$CXXFLAG_WERROR]])
-  AX_CHECK_COMPILE_FLAG([-Wunused-local-typedef],[NOWARN_CXXFLAGS="$NOWARN_CXXFLAGS -Wno-unused-local-typedef"],,[[$CXXFLAG_WERROR]])
-  AX_CHECK_COMPILE_FLAG([-Wimplicit-fallthrough],[NOWARN_CXXFLAGS="$NOWARN_CXXFLAGS -Wno-implicit-fallthrough"],,[[$CXXFLAG_WERROR]])
   if test x$suppress_external_warnings != xyes ; then
     AX_CHECK_COMPILE_FLAG([-Wdeprecated-copy],[NOWARN_CXXFLAGS="$NOWARN_CXXFLAGS -Wno-deprecated-copy"],,[[$CXXFLAG_WERROR]])
   fi
@@ -913,10 +904,6 @@ if test x$ac_cv_sys_large_files != x &&
   CPPFLAGS="$CPPFLAGS -D_LARGE_FILES=$ac_cv_sys_large_files"
 fi
 
-AX_GCC_FUNC_ATTRIBUTE([visibility])
-AX_GCC_FUNC_ATTRIBUTE([dllexport])
-AX_GCC_FUNC_ATTRIBUTE([dllimport])
-
 AC_SEARCH_LIBS([clock_gettime],[rt])
 
 if test "x$enable_gprof" = xyes; then
@@ -1011,8 +998,9 @@ AC_CHECK_DECLS([getifaddrs, freeifaddrs],[CHECK_SOCKET],,
 )
 AC_CHECK_DECLS([strnlen])
 
-dnl Check for daemon(3), unrelated to --with-daemon (although used by it)
-AC_CHECK_DECLS([daemon])
+dnl These are used for daemonization in sparksd
+AC_CHECK_DECLS([fork])
+AC_CHECK_DECLS([setsid])
 
 AC_CHECK_DECLS([pipe2])
 
@@ -1078,13 +1066,13 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
  [ AC_MSG_RESULT(no)]
 )
 
-AC_MSG_CHECKING([for visibility attribute])
-AC_LINK_IFELSE([AC_LANG_SOURCE([
-  int foo_def( void ) __attribute__((visibility("default")));
+AC_MSG_CHECKING([for default visibility attribute])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+  int foo(void) __attribute__((visibility("default")));
   int main(){}
   ])],
   [
-    AC_DEFINE(HAVE_VISIBILITY_ATTRIBUTE,1,[Define if the visibility attribute is supported.])
+    AC_DEFINE(HAVE_DEFAULT_VISIBILITY_ATTRIBUTE,1,[Define if the visibility attribute is supported.])
     AC_MSG_RESULT(yes)
   ],
   [
@@ -1093,6 +1081,18 @@ AC_LINK_IFELSE([AC_LANG_SOURCE([
       AC_MSG_ERROR([Cannot find a working visibility attribute. Use --disable-reduce-exports.])
     fi
   ]
+)
+
+AC_MSG_CHECKING([for dllexport attribute])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+  __declspec(dllexport) int foo(void);
+  int main(){}
+  ])],
+  [
+    AC_DEFINE(HAVE_DLLEXPORT_ATTRIBUTE,1,[Define if the dllexport attribute is supported.])
+    AC_MSG_RESULT(yes)
+  ],
+  [AC_MSG_RESULT(no)]
 )
 
 if test "x$use_thread_local" = xyes || test "x$use_thread_local" = xauto; then
@@ -1269,19 +1269,14 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
  [ AC_MSG_RESULT(no); HAVE_STRONG_GETAUXVAL=0 ]
 )
 
-dnl Check for reduced exports
-if test x$use_reduce_exports = xyes; then
-  AX_CHECK_COMPILE_FLAG([-fvisibility=hidden],[RE_CXXFLAGS="-fvisibility=hidden"],
-  [AC_MSG_ERROR([Cannot set default symbol visibility. Use --disable-reduce-exports.])])
-fi
-
+have_any_system=no
 AC_MSG_CHECKING([for std::system])
 AC_LINK_IFELSE(
     [ AC_LANG_PROGRAM(
         [[ #include <cstdlib> ]],
         [[ int nErr = std::system(""); ]]
     )],
-    [ AC_MSG_RESULT(yes); AC_DEFINE(HAVE_STD__SYSTEM, 1, Define to 1 if you have the `std::system' function.)],
+    [ AC_MSG_RESULT(yes); have_any_system=yes],
     [ AC_MSG_RESULT(no) ]
 )
 
@@ -1291,12 +1286,13 @@ AC_LINK_IFELSE(
         [[ #include <stdlib.h> ]],
         [[ int nErr = ::_wsystem(NULL); ]]
     )],
-    [ AC_MSG_RESULT(yes); AC_DEFINE(HAVE_WSYSTEM, 1, Define to 1 if you have the `::wsystem' function.)],
+    [ AC_MSG_RESULT(yes); have_any_system=yes],
     [ AC_MSG_RESULT(no) ]
 )
 
-# Define to 1 if std::system or ::wsystem (Windows) is available
-AC_DEFINE([HAVE_SYSTEM], [HAVE_STD__SYSTEM || HAVE_WSYSTEM], [std::system or ::wsystem])
+if test "x$have_any_system" != "xno"; then
+  AC_DEFINE(HAVE_SYSTEM, 1, Define to 1 if std::system or ::wsystem is available.)
+fi
 
 dnl SUPPRESSED_CPPFLAGS=SUPPRESS_WARNINGS([$SOME_CPPFLAGS])
 dnl Replace -I with -isystem in $SOME_CPPFLAGS to suppress warnings from
@@ -1486,9 +1482,11 @@ fi
 BOOST_LIBS="$BOOST_LDFLAGS $BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB"
 fi
 
+dnl Check for reduced exports
 if test x$use_reduce_exports = xyes; then
-    CXXFLAGS="$CXXFLAGS $RE_CXXFLAGS"
-    AX_CHECK_LINK_FLAG([[-Wl,--exclude-libs,ALL]], [RELDFLAGS="-Wl,--exclude-libs,ALL"],, [[$LDFLAG_WERROR]])
+    AX_CHECK_COMPILE_FLAG([-fvisibility=hidden],[CXXFLAGS="$CXXFLAGS -fvisibility=hidden"],
+    [AC_MSG_ERROR([Cannot set hidden symbol visibility. Use --disable-reduce-exports.])],[[$CXXFLAG_WERROR]])
+    AX_CHECK_LINK_FLAG([[-Wl,--exclude-libs,ALL]],[RELDFLAGS="-Wl,--exclude-libs,ALL"],,[[$LDFLAG_WERROR]])
 fi
 
 if test x$use_tests = xyes; then
@@ -1586,15 +1584,13 @@ dnl libmultiprocess library check
 
 libmultiprocess_found=no
 if test "x$with_libmultiprocess" = xyes || test "x$with_libmultiprocess" = xauto; then
-  m4_ifdef([PKG_CHECK_MODULES], [PKG_CHECK_MODULES([LIBMULTIPROCESS], [libmultiprocess], [
+  PKG_CHECK_MODULES([LIBMULTIPROCESS], [libmultiprocess], [
      libmultiprocess_found=yes;
      libmultiprocess_prefix=`$PKG_CONFIG --variable=prefix libmultiprocess`;
-  ], [true])])
+  ], [true])
 elif test "x$with_libmultiprocess" != xno; then
   AC_MSG_ERROR([--with-libmultiprocess=$with_libmultiprocess value is not yes, auto, or no])
 fi
-AC_SUBST(LIBMULTIPROCESS_CFLAGS)
-AC_SUBST(LIBMULTIPROCESS_LIBS)
 
 dnl Enable multiprocess check
 
@@ -1855,7 +1851,6 @@ AM_CONDITIONAL([ENABLE_TRACING],[test x$have_sdt = xyes])
 AM_CONDITIONAL([ENABLE_TESTS],[test x$BUILD_TEST = xyes])
 AM_CONDITIONAL([ENABLE_FUZZ],[test x$enable_fuzz = xyes])
 AM_CONDITIONAL([ENABLE_FUZZ_BINARY],[test x$enable_fuzz_binary = xyes])
-AM_CONDITIONAL([ENABLE_FUZZ_LINK_ALL],[test x$enable_danger_fuzz_link_all = xyes])
 AM_CONDITIONAL([ENABLE_QT],[test x$bitcoin_enable_qt = xyes])
 AM_CONDITIONAL([ENABLE_QT_TESTS],[test x$BUILD_TEST_QT = xyes])
 AM_CONDITIONAL([ENABLE_BENCH],[test x$use_bench = xyes])
@@ -1926,17 +1921,12 @@ AC_SUBST(USE_BDB)
 AC_SUBST(USE_UPNP)
 AC_SUBST(USE_QRCODE)
 AC_SUBST(BOOST_LIBS)
-AC_SUBST(SQLITE_LIBS)
 AC_SUBST(TESTDEFS)
 AC_SUBST(MINIUPNPC_CPPFLAGS)
 AC_SUBST(MINIUPNPC_LIBS)
 AC_SUBST(GMP_LIBS)
 AC_SUBST(NATPMP_CPPFLAGS)
 AC_SUBST(NATPMP_LIBS)
-AC_SUBST(EVENT_LIBS)
-AC_SUBST(EVENT_PTHREADS_LIBS)
-AC_SUBST(ZMQ_LIBS)
-AC_SUBST(QR_LIBS)
 AC_SUBST(DSYMUTIL_FLAT)
 AC_SUBST(HAVE_FDATASYNC)
 AC_SUBST(HAVE_FULLFSYNC)
@@ -1991,8 +1981,9 @@ esac
 
 echo
 echo "Options used to compile and link:"
-echo "  boost process = $with_boost_process"
-echo "  multiprocess  = $build_multiprocess"
+echo "  boost process       = $with_boost_process"
+echo "  multiprocess        = $build_multiprocess"
+echo "  with libs           = $build_bitcoin_libs"
 echo "  with wallet         = $enable_wallet"
 echo "  with gui / qt       = $bitcoin_enable_qt"
 if test "x$enable_wallet" != "xno"; then
@@ -2022,7 +2013,7 @@ echo "  miner enabled       = $enable_miner"
 echo "  gprof enabled       = $enable_gprof"
 echo "  werror              = $enable_werror"
 echo
-echo "  target os           = $TARGET_OS"
+echo "  target os           = $host_os"
 echo "  build os            = $build_os"
 echo
 echo "  CC                  = $CC"

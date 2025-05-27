@@ -6,28 +6,44 @@
 #define BITCOIN_TEST_UTIL_NET_H
 
 #include <compat.h>
+#include <netaddress.h>
 #include <net.h>
 #include <util/sock.h>
 
+#include <array>
 #include <cassert>
 #include <cstring>
+#include <memory>
 #include <string>
 
 struct ConnmanTestMsg : public CConnman {
     using CConnman::CConnman;
+
+    void SetPeerConnectTimeout(std::chrono::seconds timeout)
+    {
+        m_peer_connect_timeout = timeout;
+    }
+
     void AddTestNode(CNode& node)
     {
-        LOCK(cs_vNodes);
-        vNodes.push_back(&node);
+        LOCK(m_nodes_mutex);
+        m_nodes.push_back(&node);
     }
     void ClearTestNodes()
     {
-        LOCK(cs_vNodes);
-        for (CNode* node : vNodes) {
+        LOCK(m_nodes_mutex);
+        for (CNode* node : m_nodes) {
             delete node;
         }
-        vNodes.clear();
+        m_nodes.clear();
     }
+
+    void Handshake(CNode& node,
+                   bool successfully_connected,
+                   ServiceFlags remote_services,
+                   NetPermissionFlags permission_flags,
+                   int32_t version,
+                   bool relay_txs);
 
     void ProcessMessagesOnce(CNode& node) { m_msgproc->ProcessMessages(&node, flagInterruptMsgProc); }
 
@@ -46,16 +62,35 @@ constexpr ServiceFlags ALL_SERVICE_FLAGS[]{
 };
 
 constexpr NetPermissionFlags ALL_NET_PERMISSION_FLAGS[]{
-    NetPermissionFlags::PF_NONE,
-    NetPermissionFlags::PF_BLOOMFILTER,
-    NetPermissionFlags::PF_RELAY,
-    NetPermissionFlags::PF_FORCERELAY,
-    NetPermissionFlags::PF_NOBAN,
-    NetPermissionFlags::PF_MEMPOOL,
-    NetPermissionFlags::PF_ADDR,
-    NetPermissionFlags::PF_DOWNLOAD,
-    NetPermissionFlags::PF_ISIMPLICIT,
-    NetPermissionFlags::PF_ALL,
+    NetPermissionFlags::None,
+    NetPermissionFlags::BloomFilter,
+    NetPermissionFlags::Relay,
+    NetPermissionFlags::ForceRelay,
+    NetPermissionFlags::NoBan,
+    NetPermissionFlags::Mempool,
+    NetPermissionFlags::Addr,
+    NetPermissionFlags::Download,
+    NetPermissionFlags::Implicit,
+    NetPermissionFlags::All,
+};
+
+constexpr ConnectionType ALL_CONNECTION_TYPES[]{
+    ConnectionType::INBOUND,
+    ConnectionType::OUTBOUND_FULL_RELAY,
+    ConnectionType::MANUAL,
+    ConnectionType::FEELER,
+    ConnectionType::BLOCK_RELAY,
+    ConnectionType::ADDR_FETCH,
+};
+
+constexpr auto ALL_NETWORKS = std::array{
+    Network::NET_UNROUTABLE,
+    Network::NET_IPV4,
+    Network::NET_IPV6,
+    Network::NET_ONION,
+    Network::NET_I2P,
+    Network::NET_CJDNS,
+    Network::NET_INTERNAL,
 };
 
 /**
@@ -99,9 +134,38 @@ public:
 
     int Connect(const sockaddr*, socklen_t) const override { return 0; }
 
+    int Bind(const sockaddr*, socklen_t) const override { return 0; }
+
+    int Listen(int) const override { return 0; }
+
+    std::unique_ptr<Sock> Accept(sockaddr* addr, socklen_t* addr_len) const override
+    {
+        if (addr != nullptr) {
+            // Pretend all connections come from 5.5.5.5:6789
+            memset(addr, 0x00, *addr_len);
+            const socklen_t write_len = static_cast<socklen_t>(sizeof(sockaddr_in));
+            if (*addr_len >= write_len) {
+                *addr_len = write_len;
+                sockaddr_in* addr_in = reinterpret_cast<sockaddr_in*>(addr);
+                addr_in->sin_family = AF_INET;
+                memset(&addr_in->sin_addr, 0x05, sizeof(addr_in->sin_addr));
+                addr_in->sin_port = htons(6789);
+            }
+        }
+        return std::make_unique<StaticContentsSock>("");
+    };
+
     int GetSockOpt(int level, int opt_name, void* opt_val, socklen_t* opt_len) const override
     {
         std::memset(opt_val, 0x0, *opt_len);
+        return 0;
+    }
+
+    int SetSockOpt(int, int, const void*, socklen_t) const override { return 0; }
+
+    int GetSockName(sockaddr* name, socklen_t* name_len) const override
+    {
+        std::memset(name, 0x0, *name_len);
         return 0;
     }
 
@@ -119,5 +183,7 @@ private:
     const std::string m_contents;
     mutable size_t m_consumed;
 };
+
+std::vector<NodeEvictionCandidate> GetRandomNodeEvictionCandidates(int n_candidates, FastRandomContext& random_context);
 
 #endif // BITCOIN_TEST_UTIL_NET_H

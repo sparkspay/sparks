@@ -1,6 +1,6 @@
 FROM phusion/baseimage:focal-1.0.0
 LABEL maintainer="Sparks Developers <dev@sparkspay.io>"
-LABEL description="Dockerised SparksCore, built from Travis"
+LABEL description="Dockerised SparksCore, built from CI"
 
 ARG USER_ID
 ARG GROUP_ID

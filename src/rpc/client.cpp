@@ -44,7 +44,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "sendtoaddress", 6, "use_cj" },
     { "sendtoaddress", 7, "conf_target" },
     { "sendtoaddress", 9, "avoid_reuse" },
+    { "sendtoaddress", 10, "verbose"},
     { "settxfee", 0, "amount" },
+    { "sethdseed", 0, "newkeypool" },
     { "getreceivedbyaddress", 1, "minconf" },
     { "getreceivedbyaddress", 2, "addlocked" },
     { "getreceivedbylabel", 1, "minconf" },
@@ -64,6 +66,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "getbalance", 2, "addlocked" },
     { "getbalance", 3, "include_watchonly" },
     { "getbalance", 4, "avoid_reuse" },
+    { "getblockfrompeer", 1, "peer_id" },
     { "getchaintips", 0, "count" },
     { "getchaintips", 1, "branchlen" },
     { "getblockhash", 0, "height" },
@@ -88,6 +91,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "sendmany", 6, "use_is" },
     { "sendmany", 7, "use_cj" },
     { "sendmany", 8, "conf_target" },
+    { "sendmany", 10, "verbose" },
     { "deriveaddresses", 1, "range" },
     { "scantxoutset", 1, "scanobjects" },
     { "addmultisigaddress", 0, "nrequired" },
@@ -109,7 +113,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "gettransaction", 1, "include_watchonly" },
     { "gettransaction", 2, "verbose" },
     { "getrawtransaction", 1, "verbose" },
-    { "getrawtransactionmulti", 0, "txid_map" },
+    { "getrawtransactionmulti", 0, "transactions" },
     { "getrawtransactionmulti", 1, "verbose" },
     { "gettxchainlocks", 0, "txids" },
     { "createrawtransaction", 0, "inputs" },
@@ -146,6 +150,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "gettxoutsetinfo", 2, "use_index"},
     { "lockunspent", 0, "unlock" },
     { "lockunspent", 1, "transactions" },
+    { "send", 0, "outputs" },
+    { "send", 1, "conf_target" },
+    { "send", 3, "options" },
     { "importprivkey", 2, "rescan" },
     { "importelectrumwallet", 1, "index" },
     { "importaddress", 2, "rescan" },
@@ -153,6 +160,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "importpubkey", 2, "rescan" },
     { "importmulti", 0, "requests" },
     { "importmulti", 1, "options" },
+    { "importdescriptors", 0, "requests" },
     { "verifychain", 0, "checklevel" },
     { "verifychain", 1, "nblocks" },
     { "getblockstats", 0, "hash_or_height" },
@@ -175,11 +183,11 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "logging", 0, "include" },
     { "logging", 1, "exclude" },
     { "sporkupdate", 1, "value" },
-    { "voteraw", 1, "tx_index" },
+    { "voteraw", 1, "mn-collateral-tx-index" },
     { "voteraw", 5, "time" },
     { "getblockhashes", 0, "high"},
     { "getblockhashes", 1, "low" },
-    { "getspentinfo", 0, "json" },
+    { "getspentinfo", 0, "request" },
     { "getaddresstxids", 0, "addresses" },
     { "getaddressbalance", 0, "addresses" },
     { "getaddressdeltas", 0, "addresses" },
@@ -208,7 +216,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "createwallet", 1, "disable_private_keys"},
     { "createwallet", 2, "blank"},
     { "createwallet", 4, "avoid_reuse"},
-    { "createwallet", 5, "load_on_startup"},
+    { "createwallet", 5, "descriptors"},
+    { "createwallet", 6, "load_on_startup"},
+    { "restorewallet", 2, "load_on_startup"},
     { "loadwallet", 1, "load_on_startup"},
     { "unloadwallet", 1, "load_on_startup"},
     { "upgradetohd", 3, "rescan"},
@@ -296,6 +306,9 @@ UniValue RPCConvertNamedValues(const std::string &strMethod, const std::vector<s
         std::string name = s.substr(0, pos);
         std::string value = s.substr(pos+1);
 
+        // Intentionally overwrite earlier named values with later ones as a
+        // convenience for scripts and command line users that want to merge
+        // options.
         if (!rpcCvtTable.convert(strMethod, name)) {
             // insert string value directly
             params.pushKV(name, value);
@@ -306,7 +319,10 @@ UniValue RPCConvertNamedValues(const std::string &strMethod, const std::vector<s
     }
 
     if (!positional_args.empty()) {
-        params.pushKV("args", positional_args);
+        // Use __pushKV instead of pushKV to avoid overwriting an explicit
+        // "args" value with an implicit one. Let the RPC server handle the
+        // request as given.
+        params.__pushKV("args", positional_args);
     }
 
     return params;

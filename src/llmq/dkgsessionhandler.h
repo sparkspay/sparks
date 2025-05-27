@@ -14,9 +14,13 @@
 #include <map>
 #include <optional>
 
+class CActiveMasternodeManager;
 class CBlockIndex;
 class CBLSWorker;
 class CChainState;
+class CDeterministicMNManager;
+class CMasternodeMetaMan;
+class CSporkManager;
 class PeerManager;
 
 namespace llmq
@@ -50,13 +54,13 @@ public:
     using BinaryMessage = std::pair<NodeId, std::shared_ptr<CDataStream>>;
 
 private:
-    mutable RecursiveMutex cs;
     std::atomic<PeerManager*> m_peerman{nullptr};
     const int invType;
-    size_t maxMessagesPerNode GUARDED_BY(cs);
-    std::list<BinaryMessage> pendingMessages GUARDED_BY(cs);
-    std::map<NodeId, size_t> messagesPerNode GUARDED_BY(cs);
-    std::set<uint256> seenMessages GUARDED_BY(cs);
+    const size_t maxMessagesPerNode;
+    mutable Mutex cs_messages;
+    std::list<BinaryMessage> pendingMessages GUARDED_BY(cs_messages);
+    std::map<NodeId, size_t> messagesPerNode GUARDED_BY(cs_messages);
+    std::set<uint256> seenMessages GUARDED_BY(cs_messages);
 
 public:
     explicit CDKGPendingMessages(size_t _maxMessagesPerNode, int _invType) :
@@ -113,21 +117,26 @@ private:
     friend class CDKGSessionManager;
 
 private:
-    mutable RecursiveMutex cs;
     std::atomic<bool> stopRequested{false};
 
     CBLSWorker& blsWorker;
     CChainState& m_chainstate;
     CConnman& connman;
+    CDeterministicMNManager& m_dmnman;
     CDKGDebugManager& dkgDebugManager;
     CDKGSessionManager& dkgManager;
+    CMasternodeMetaMan& m_mn_metaman;
     CQuorumBlockProcessor& quorumBlockProcessor;
+    const CActiveMasternodeManager* const m_mn_activeman;
+    const CSporkManager& m_sporkman;
+    const std::unique_ptr<PeerManager>& m_peerman;
     const Consensus::LLMQParams params;
     const int quorumIndex;
 
-    QuorumPhase phase GUARDED_BY(cs) {QuorumPhase::Idle};
-    int currentHeight GUARDED_BY(cs) {-1};
-    uint256 quorumHash GUARDED_BY(cs);
+    std::atomic<int> currentHeight {-1};
+    mutable Mutex cs_phase_qhash;
+    QuorumPhase phase GUARDED_BY(cs_phase_qhash) {QuorumPhase::Idle};
+    uint256 quorumHash GUARDED_BY(cs_phase_qhash);
 
     std::unique_ptr<CDKGSession> curSession;
     std::thread phaseHandlerThread;
@@ -140,9 +149,10 @@ private:
     CDKGPendingMessages pendingPrematureCommitments;
 
 public:
-    CDKGSessionHandler(CBLSWorker& _blsWorker, CChainState& chainstate, CConnman& _connman, CDKGDebugManager& _dkgDebugManager,
-                       CDKGSessionManager& _dkgManager, CQuorumBlockProcessor& _quorumBlockProcessor,
-                       const Consensus::LLMQParams& _params, int _quorumIndex);
+    CDKGSessionHandler(CBLSWorker& _blsWorker, CChainState& chainstate, CConnman& _connman, CDeterministicMNManager& dmnman,
+                       CDKGDebugManager& _dkgDebugManager, CDKGSessionManager& _dkgManager, CMasternodeMetaMan& mn_metaman,
+                       CQuorumBlockProcessor& _quorumBlockProcessor, const CActiveMasternodeManager* const mn_activeman,
+                       const CSporkManager& sporkman, const std::unique_ptr<PeerManager>& peerman, const Consensus::LLMQParams& _params, int _quorumIndex);
     ~CDKGSessionHandler() = default;
 
     void UpdatedBlockTip(const CBlockIndex *pindexNew);

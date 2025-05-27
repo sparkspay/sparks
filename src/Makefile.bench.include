@@ -31,7 +31,6 @@ bench_bench_sparks_SOURCES = \
   bench/examples.cpp \
   bench/rollingbloom.cpp \
   bench/chacha20.cpp \
-  bench/chacha_poly_aead.cpp \
   bench/crypto_hash.cpp \
   bench/ccoins_caching.cpp \
   bench/gcs_filter.cpp \
@@ -41,6 +40,7 @@ bench_bench_sparks_SOURCES = \
   bench/mempool_stress.cpp \
   bench/nanobench.h \
   bench/nanobench.cpp \
+  bench/peer_eviction.cpp \
   bench/rpc_blockchain.cpp \
   bench/rpc_mempool.cpp \
   bench/util_time.cpp \

@@ -10,7 +10,7 @@
 #include <tinyformat.h>
 #include <util/thread.h>
 #include <util/translation.h>
-#include <validation.h> // For g_chainman
+#include <validation.h>
 #include <warnings.h>
 
 constexpr uint8_t DB_BEST_BLOCK{'B'};
@@ -328,7 +328,7 @@ bool BaseIndex::BlockUntilSyncedToCurrentChain() const
 
     {
         // Skip the queue-draining stuff if we know we're caught up with
-        // ::ChainActive().Tip().
+        // m_chain.Tip().
         LOCK(cs_main);
         const CBlockIndex* chain_tip = m_chainstate->m_chain.Tip();
         const CBlockIndex* best_block_index = m_best_block_index.load();
@@ -349,7 +349,6 @@ void BaseIndex::Interrupt()
 
 bool BaseIndex::Start(CChainState& active_chainstate)
 {
-    assert(std::addressof(::ChainstateActive()) == std::addressof(active_chainstate));
     m_chainstate = &active_chainstate;
     // Need to register this ValidationInterface before running Init(), so that
     // callbacks are not missed if Init sets m_synced to true.
