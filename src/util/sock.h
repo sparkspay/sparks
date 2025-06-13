@@ -10,6 +10,7 @@
 #include <util/time.h>
 
 #include <chrono>
+#include <memory>
 #include <string>
 
 /**
@@ -17,6 +18,54 @@
  * It will take up until this time to break off in case of an interruption.
  */
 static constexpr auto MAX_WAIT_FOR_IO = 1s;
+
+enum class SocketEventsMode : int8_t {
+    Select = 0,
+    Poll = 1,
+    EPoll = 2,
+    KQueue = 3,
+
+    Unknown = -1
+};
+
+/* Converts SocketEventsMode value to string with additional check to report modes not compiled for as unknown */
+static std::string SEMToString(const SocketEventsMode val)
+{
+    switch (val) {
+        case (SocketEventsMode::Select):
+            return "select";
+#ifdef USE_POLL
+        case (SocketEventsMode::Poll):
+            return "poll";
+#endif /* USE_POLL */
+#ifdef USE_EPOLL
+        case (SocketEventsMode::EPoll):
+            return "epoll";
+#endif /* USE_EPOLL */
+#ifdef USE_KQUEUE
+        case (SocketEventsMode::KQueue):
+            return "kqueue";
+#endif /* USE_KQUEUE */
+        default:
+            return "unknown";
+    };
+}
+
+/* Converts string to SocketEventsMode value with additional check to report modes not compiled for as unknown */
+static SocketEventsMode SEMFromString(const std::string str)
+{
+    if (str == "select") { return SocketEventsMode::Select; }
+#ifdef USE_POLL
+    else if (str == "poll")   { return SocketEventsMode::Poll;   }
+#endif /* USE_POLL */
+#ifdef USE_EPOLL
+    else if (str == "epoll")  { return SocketEventsMode::EPoll;  }
+#endif /* USE_EPOLL */
+#ifdef USE_KQUEUE
+    else if (str == "kqueue") { return SocketEventsMode::KQueue; }
+#endif /* USE_KQUEUE */
+    else { return SocketEventsMode::Unknown; }
+}
 
 /**
  * RAII helper class that manages a socket. Mimics `std::unique_ptr`, but instead of a pointer it
@@ -97,6 +146,26 @@ public:
     [[nodiscard]] virtual int Connect(const sockaddr* addr, socklen_t addr_len) const;
 
     /**
+     * bind(2) wrapper. Equivalent to `bind(this->Get(), addr, addr_len)`. Code that uses this
+     * wrapper can be unit tested if this method is overridden by a mock Sock implementation.
+     */
+    [[nodiscard]] virtual int Bind(const sockaddr* addr, socklen_t addr_len) const;
+
+    /**
+     * listen(2) wrapper. Equivalent to `listen(this->Get(), backlog)`. Code that uses this
+     * wrapper can be unit tested if this method is overridden by a mock Sock implementation.
+     */
+    [[nodiscard]] virtual int Listen(int backlog) const;
+
+    /**
+     * accept(2) wrapper. Equivalent to `std::make_unique<Sock>(accept(this->Get(), addr, addr_len))`.
+     * Code that uses this wrapper can be unit tested if this method is overridden by a mock Sock
+     * implementation.
+     * The returned unique_ptr is empty if `accept()` failed in which case errno will be set.
+     */
+    [[nodiscard]] virtual std::unique_ptr<Sock> Accept(sockaddr* addr, socklen_t* addr_len) const;
+
+    /**
      * getsockopt(2) wrapper. Equivalent to
      * `getsockopt(this->Get(), level, opt_name, opt_val, opt_len)`. Code that uses this
      * wrapper can be unit tested if this method is overridden by a mock Sock implementation.
@@ -105,6 +174,23 @@ public:
                                          int opt_name,
                                          void* opt_val,
                                          socklen_t* opt_len) const;
+
+    /**
+     * setsockopt(2) wrapper. Equivalent to
+     * `setsockopt(this->Get(), level, opt_name, opt_val, opt_len)`. Code that uses this
+     * wrapper can be unit tested if this method is overridden by a mock Sock implementation.
+     */
+    [[nodiscard]] virtual int SetSockOpt(int level,
+                                         int opt_name,
+                                         const void* opt_val,
+                                         socklen_t opt_len) const;
+
+    /**
+     * getsockname(2) wrapper. Equivalent to
+     * `getsockname(this->Get(), name, name_len)`. Code that uses this
+     * wrapper can be unit tested if this method is overridden by a mock Sock implementation.
+     */
+    [[nodiscard]] virtual int GetSockName(sockaddr* name, socklen_t* name_len) const;
 
     using Event = uint8_t;
 

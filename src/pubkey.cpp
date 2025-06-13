@@ -1,14 +1,20 @@
-// Copyright (c) 2009-2019 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Copyright (c) 2017 The Zcash developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <pubkey.h>
 
+#include <hash.h>
 #include <secp256k1.h>
+#include <secp256k1_extrakeys.h>
 #include <secp256k1_ellswift.h>
 #include <secp256k1_recovery.h>
+#include <span.h>
+#include <uint256.h>
 
+#include <algorithm>
+#include <cassert>
 namespace {
 
 struct Secp256k1SelfTester

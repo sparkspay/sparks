@@ -128,14 +128,11 @@ public:
     //! Get wallet address list.
     virtual std::vector<WalletAddress> getAddresses() = 0;
 
-    //! Add dest data.
-    virtual bool addDestData(const CTxDestination& dest, const std::string& key, const std::string& value) = 0;
+    //! Get receive requests.
+    virtual std::vector<std::string> getAddressReceiveRequests() = 0;
 
-    //! Erase dest data.
-    virtual bool eraseDestData(const CTxDestination& dest, const std::string& key) = 0;
-
-    //! Get dest values with prefix.
-    virtual std::vector<std::string> getDestValues(const std::string& prefix) = 0;
+    //! Save or remove receive request.
+    virtual bool setAddressReceiveRequest(const CTxDestination& dest, const std::string& id, const std::string& value) = 0;
 
     //! Lock coin.
     virtual void lockCoin(const COutPoint& output) = 0;
@@ -209,9 +206,9 @@ public:
     virtual TransactionError fillPSBT(int sighash_type,
         bool sign,
         bool bip32derivs,
+        size_t* n_signed,
         PartiallySignedTransaction& psbtx,
-        bool& complete,
-        size_t* n_signed) = 0;
+        bool& complete) = 0;
 
     //! Get balances.
     virtual WalletBalances getBalances() = 0;
@@ -286,6 +283,9 @@ public:
 
     // Remove wallet.
     virtual void remove() = 0;
+
+    //! Return whether is a legacy wallet
+    virtual bool isLegacy() = 0;
 
     //! Register handler for unload message.
     using UnloadFn = std::function<void()>;
@@ -408,6 +408,7 @@ struct WalletTx
     int64_t time;
     std::map<std::string, std::string> value_map;
     bool is_coinbase;
+    bool is_platform_transfer{false};
     bool is_denominate;
 };
 

@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:jammy
 LABEL maintainer="Sparks Developers <dev@sparkspay.io>"
 LABEL description="Dockerised SparksCore"
 
@@ -32,6 +32,14 @@ RUN mach=$(uname -m) \
       && find /tmp/sparkscore*/bin -type f ! -name 'sparks-qt' -exec cp {} /usr/local/bin \; \
       && rm -rf /tmp/sparkscore* \
       && chmod a+x /usr/local/bin/*
+
+RUN apt-get update && \
+    apt list --installed && \
+    apt-get -y purge \
+    wget \
+    ca-certificates \
+    && apt-get -y autoremove \
+    && rm -rf /var/lib/apt/lists/*
 
 USER sparks
 

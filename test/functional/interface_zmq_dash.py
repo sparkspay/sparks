@@ -23,7 +23,7 @@ from test_framework.messages import (
     COutPoint,
     CRecoveredSig,
     CTransaction,
-    FromHex,
+    from_hex,
     hash256,
     msg_clsig,
     msg_inv,
@@ -100,7 +100,7 @@ class TestP2PConn(P2PInterface):
 class SparksZMQTest (SparksTestFramework):
     def set_test_params(self):
         # That's where the zmq publisher will listen for subscriber
-        self.address = "tcp://127.0.0.1:28333"
+        self.address = "tcp://127.0.0.1:28331"
         # node0 creates all available ZMQ publisher
         node0_extra_args = ["-zmqpub%s=%s" % (pub.value, self.address) for pub in ZMQPublisher]
         node0_extra_args.append("-whitelist=127.0.0.1")
@@ -341,7 +341,7 @@ class SparksZMQTest (SparksTestFramework):
             # this is expected
             pass
         # Now send the tx itself
-        self.test_node.send_tx(FromHex(msg_tx(), rpc_raw_tx_3['hex']))
+        self.test_node.send_tx(from_hex(msg_tx(),rpc_raw_tx_3['hex']))
         self.wait_for_instantlock(rpc_raw_tx_3['txid'], self.nodes[0])
         # Validate hashtxlock
         zmq_tx_lock_hash = self.subscribers[ZMQPublisher.hash_tx_lock].receive().read(32).hex()

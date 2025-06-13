@@ -6,6 +6,7 @@
 #include <logging.h>
 #include <util/system.h>
 #include <util/threadnames.h>
+#include <util/string.h>
 #include <util/time.h>
 
 #include <algorithm>
@@ -97,15 +98,7 @@ void BCLog::Logger::EnableCategory(BCLog::LogFlags flag)
 bool BCLog::Logger::EnableCategory(const std::string& str)
 {
     BCLog::LogFlags flag;
-    if (!GetLogCategory(flag, str)) {
-        if (str == "db") {
-            // DEPRECATION: Added in 0.20, should start returning an error in 0.21
-            LogPrintf("Warning: logging category 'db' is deprecated, use 'walletdb' instead\n");
-            EnableCategory(BCLog::WALLETDB);
-            return true;
-        }
-        return false;
-    }
+    if (!GetLogCategory(flag, str)) return false;
     EnableCategory(flag);
     return true;
 }
@@ -165,6 +158,7 @@ const CLogCategoryDesc LogCategories[] =
     {BCLog::LEVELDB, "leveldb"},
     {BCLog::VALIDATION, "validation"},
     {BCLog::I2P, "i2p"},
+    {BCLog::LOCK, "lock"},
     {BCLog::ALL, "1"},
     {BCLog::ALL, "all"},
 
@@ -268,10 +262,14 @@ namespace BCLog {
     }
 } // namespace BCLog
 
-void BCLog::Logger::LogPrintStr(const std::string& str)
+void BCLog::Logger::LogPrintStr(const std::string& str, const std::string& logging_function, const std::string& source_file, const int source_line)
 {
     StdLockGuard scoped_lock(m_cs);
     std::string str_prefixed = LogEscapeMessage(str);
+
+    if (m_log_sourcelocations && m_started_new_line) {
+        str_prefixed.insert(0, "[" + RemovePrefix(source_file, "./") + ":" + ToString(source_line) + "] [" + logging_function + "] ");
+    }
 
     if (m_log_threadnames && m_started_new_line) {
         // 16 chars total, "sparks-" is 5 of them and another 1 is a NUL terminator

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2014-2016 The Bitcoin Core developers
+# Copyright (c) 2014-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test longpolling with getblocktemplate."""
@@ -9,7 +9,7 @@ import random
 import threading
 
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import get_rpc_proxy, wait_until
+from test_framework.util import get_rpc_proxy
 from test_framework.wallet import MiniWallet
 
 
@@ -78,7 +78,7 @@ class GetBlockTemplateLPTest(BitcoinTestFramework):
         def check():
             self.bump_mocktime(1)
             return not thr.is_alive()
-        wait_until(check, timeout=60 + 20, sleep=1)
+        self.wait_until(check, timeout=60 + 20)
 
 if __name__ == '__main__':
     GetBlockTemplateLPTest().main()

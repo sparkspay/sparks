@@ -9,8 +9,7 @@ Test that permissions are correctly calculated and applied
 
 from test_framework.address import ADDRESS_BCRT1_P2SH_OP_TRUE
 from test_framework.messages import (
-    CTransaction,
-    FromHex,
+    tx_from_hex,
 )
 from test_framework.p2p import P2PDataStore
 from test_framework.script import (
@@ -39,6 +38,13 @@ class P2PPermissionsTests(BitcoinTestFramework):
             # Make sure the default values in the command line documentation match the ones here
             ["relay", "noban", "mempool", "download"],
             True)
+
+        self.checkpermission(
+            # check without deprecatedrpc=whitelisted
+            ["-whitelist=127.0.0.1"],
+            # Make sure the default values in the command line documentation match the ones here
+            ["relay", "noban", "mempool", "download"],
+            None)
 
         self.checkpermission(
             # no permission (even with forcerelay)
@@ -79,6 +85,12 @@ class P2PPermissionsTests(BitcoinTestFramework):
             False)
 
         self.checkpermission(
+            # check without deprecatedrpc=whitelisted
+            ["-whitelist=noban,mempool@127.0.0.1", "-whitelistrelay"],
+            ["noban", "mempool", "download"],
+            None)
+
+        self.checkpermission(
             # legacy whitelistforcerelay should be ignored
             ["-whitelist=noban,mempool@127.0.0.1", "-whitelistforcerelay"],
             ["noban", "mempool", "download"],
@@ -114,8 +126,7 @@ class P2PPermissionsTests(BitcoinTestFramework):
         p2p_rebroadcast_wallet = self.nodes[1].add_p2p_connection(P2PDataStore())
 
         self.log.debug("Send a tx from the wallet initially")
-        tx = FromHex(
-            CTransaction(),
+        tx = tx_from_hex(
             self.nodes[0].createrawtransaction(
                 inputs=[{
                     'txid': block_op_true['tx'][0],
@@ -161,10 +172,15 @@ class P2PPermissionsTests(BitcoinTestFramework):
         )
 
     def checkpermission(self, args, expectedPermissions, whitelisted):
+        if whitelisted is not None:
+            args = [*args, '-deprecatedrpc=whitelisted']
         self.restart_node(1, args)
         self.connect_nodes(0, 1)
         peerinfo = self.nodes[1].getpeerinfo()[0]
-        assert_equal(peerinfo['whitelisted'], whitelisted)
+        if whitelisted is None:
+            assert 'whitelisted' not in peerinfo
+        else:
+            assert_equal(peerinfo['whitelisted'], whitelisted)
         assert_equal(len(expectedPermissions), len(peerinfo['permissions']))
         for p in expectedPermissions:
             if not p in peerinfo['permissions']:

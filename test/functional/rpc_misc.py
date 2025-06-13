@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2019 The Bitcoin Core developers
+# Copyright (c) 2019-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test RPC misc output."""
@@ -27,8 +27,8 @@ class RpcMiscTest(BitcoinTestFramework):
         self.log.info("test CHECK_NONFATAL")
         assert_raises_rpc_error(
             -1,
-            "Internal bug detected: 'request.params.size() != 100'",
-            lambda: node.echo(*[0] * 100),
+            'Internal bug detected: \'request.params[9].get_str() != "trigger_internal_bug"\'',
+            lambda: node.echo(arg9='trigger_internal_bug'),
         )
 
         self.log.info("test getmemoryinfo")
@@ -57,7 +57,7 @@ class RpcMiscTest(BitcoinTestFramework):
         self.log.info("test logging rpc and help")
 
         # Test logging RPC returns the expected number of logging categories.
-        assert_equal(len(node.logging()), 36)
+        assert_equal(len(node.logging()), 37)
 
         # Test toggling a logging category on/off/on with the logging RPC.
         assert_equal(node.logging()['qt'], True)

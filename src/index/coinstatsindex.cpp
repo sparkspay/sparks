@@ -96,7 +96,8 @@ struct DBHashKey {
 
 std::unique_ptr<CoinStatsIndex> g_coin_stats_index;
 
-CoinStatsIndex::CoinStatsIndex(size_t n_cache_size, bool f_memory, bool f_wipe)
+CoinStatsIndex::CoinStatsIndex(size_t n_cache_size, CSporkManager& spork_manager, bool f_memory, bool f_wipe)
+    : m_spork_manager(spork_manager)
 {
     fs::path path{GetDataDir() / "indexes" / "coinstats"};
     fs::create_directories(path);
@@ -107,7 +108,7 @@ CoinStatsIndex::CoinStatsIndex(size_t n_cache_size, bool f_memory, bool f_wipe)
 bool CoinStatsIndex::WriteBlock(const CBlock& block, const CBlockIndex* pindex)
 {
     CBlockUndo block_undo;
-    const CAmount block_subsidy{GetBlockSubsidy(pindex, Params().GetConsensus())};
+    const CAmount block_subsidy{GetBlockSubsidy(pindex, Params().GetConsensus(), m_spork_manager)};
     m_total_subsidy += block_subsidy;
 
     // Ignore genesis block
@@ -394,7 +395,7 @@ bool CoinStatsIndex::ReverseBlock(const CBlock& block, const CBlockIndex* pindex
     CBlockUndo block_undo;
     std::pair<uint256, DBVal> read_out;
 
-    const CAmount block_subsidy{GetBlockSubsidy(pindex, Params().GetConsensus())};
+    const CAmount block_subsidy{GetBlockSubsidy(pindex, Params().GetConsensus(), m_spork_manager)};
     m_total_subsidy -= block_subsidy;
 
     // Ignore genesis block

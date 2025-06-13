@@ -85,14 +85,15 @@ UniValue CQuorumRotationInfo::ToJson() const
     return obj;
 }
 
-bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotationInfo& response,
-                             const CQuorumManager& qman, const CQuorumBlockProcessor& quorumBlockProcessor, std::string& errorRet)
+bool BuildQuorumRotationInfo(CDeterministicMNManager& dmnman, const ChainstateManager& chainman, const CQuorumManager& qman,
+                             const CQuorumBlockProcessor& qblockman, const CGetQuorumRotationInfo& request,
+                             CQuorumRotationInfo& response, std::string& errorRet)
 {
     AssertLockHeld(cs_main);
 
     std::vector<const CBlockIndex*> baseBlockIndexes;
     if (request.baseBlockHashes.size() == 0) {
-        const CBlockIndex* blockIndex = ::ChainActive().Genesis();
+        const CBlockIndex* blockIndex = chainman.ActiveChain().Genesis();
         if (!blockIndex) {
             errorRet = strprintf("genesis block not found");
             return false;
@@ -100,12 +101,12 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
         baseBlockIndexes.push_back(blockIndex);
     } else {
         for (const auto& blockHash : request.baseBlockHashes) {
-            const CBlockIndex* blockIndex = g_chainman.m_blockman.LookupBlockIndex(blockHash);
+            const CBlockIndex* blockIndex = chainman.m_blockman.LookupBlockIndex(blockHash);
             if (!blockIndex) {
                 errorRet = strprintf("block %s not found", blockHash.ToString());
                 return false;
             }
-            if (!::ChainActive().Contains(blockIndex)) {
+            if (!chainman.ActiveChain().Contains(blockIndex)) {
                 errorRet = strprintf("block %s is not in the active chain", blockHash.ToString());
                 return false;
             }
@@ -116,17 +117,17 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
         });
     }
 
-    const CBlockIndex* tipBlockIndex = ::ChainActive().Tip();
+    const CBlockIndex* tipBlockIndex = chainman.ActiveChain().Tip();
     if (!tipBlockIndex) {
         errorRet = strprintf("tip block not found");
         return false;
     }
     //Build MN list Diff always with highest baseblock
-    if (!BuildSimplifiedMNListDiff(baseBlockIndexes.back()->GetBlockHash(), tipBlockIndex->GetBlockHash(), response.mnListDiffTip, quorumBlockProcessor, errorRet)) {
+    if (!BuildSimplifiedMNListDiff(dmnman, chainman, qblockman, qman, baseBlockIndexes.back()->GetBlockHash(), tipBlockIndex->GetBlockHash(), response.mnListDiffTip, errorRet)) {
         return false;
     }
 
-    const CBlockIndex* blockIndex = g_chainman.m_blockman.LookupBlockIndex(request.blockRequestHash);
+    const CBlockIndex* blockIndex = chainman.m_blockman.LookupBlockIndex(request.blockRequestHash);
     if (!blockIndex) {
         errorRet = strprintf("block not found");
         return false;
@@ -155,7 +156,7 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
     }
 
     //Build MN list Diff always with highest baseblock
-    if (!BuildSimplifiedMNListDiff(GetLastBaseBlockHash(baseBlockIndexes, pWorkBlockIndex), pWorkBlockIndex->GetBlockHash(), response.mnListDiffH, quorumBlockProcessor, errorRet)) {
+    if (!BuildSimplifiedMNListDiff(dmnman, chainman, qblockman, qman, GetLastBaseBlockHash(baseBlockIndexes, pWorkBlockIndex), pWorkBlockIndex->GetBlockHash(), response.mnListDiffH, errorRet)) {
         return false;
     }
 
@@ -201,7 +202,7 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
     const CBlockIndex* pWorkBlockHMinus4CIndex = pBlockHMinus4CIndex->GetAncestor(pBlockHMinus4CIndex->nHeight - workDiff);
     //Checked later if extraShare is on
 
-    if (!BuildSimplifiedMNListDiff(GetLastBaseBlockHash(baseBlockIndexes, pWorkBlockHMinusCIndex), pWorkBlockHMinusCIndex->GetBlockHash(), response.mnListDiffAtHMinusC, quorumBlockProcessor, errorRet)) {
+    if (!BuildSimplifiedMNListDiff(dmnman, chainman, qblockman, qman, GetLastBaseBlockHash(baseBlockIndexes, pWorkBlockHMinusCIndex), pWorkBlockHMinusCIndex->GetBlockHash(), response.mnListDiffAtHMinusC, errorRet)) {
         return false;
     }
 
@@ -213,7 +214,7 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
         response.quorumSnapshotAtHMinusC = std::move(snapshotHMinusC.value());
     }
 
-    if (!BuildSimplifiedMNListDiff(GetLastBaseBlockHash(baseBlockIndexes, pWorkBlockHMinus2CIndex), pWorkBlockHMinus2CIndex->GetBlockHash(), response.mnListDiffAtHMinus2C, quorumBlockProcessor, errorRet)) {
+    if (!BuildSimplifiedMNListDiff(dmnman, chainman, qblockman, qman, GetLastBaseBlockHash(baseBlockIndexes, pWorkBlockHMinus2CIndex), pWorkBlockHMinus2CIndex->GetBlockHash(), response.mnListDiffAtHMinus2C, errorRet)) {
         return false;
     }
 
@@ -225,7 +226,7 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
         response.quorumSnapshotAtHMinus2C = std::move(snapshotHMinus2C.value());
     }
 
-    if (!BuildSimplifiedMNListDiff(GetLastBaseBlockHash(baseBlockIndexes, pWorkBlockHMinus3CIndex), pWorkBlockHMinus3CIndex->GetBlockHash(), response.mnListDiffAtHMinus3C, quorumBlockProcessor, errorRet)) {
+    if (!BuildSimplifiedMNListDiff(dmnman, chainman, qblockman, qman, GetLastBaseBlockHash(baseBlockIndexes, pWorkBlockHMinus3CIndex), pWorkBlockHMinus3CIndex->GetBlockHash(), response.mnListDiffAtHMinus3C, errorRet)) {
         return false;
     }
 
@@ -254,7 +255,7 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
         }
 
         CSimplifiedMNListDiff mn4c;
-        if (!BuildSimplifiedMNListDiff(GetLastBaseBlockHash(baseBlockIndexes, pWorkBlockHMinus4CIndex), pWorkBlockHMinus4CIndex->GetBlockHash(), mn4c, quorumBlockProcessor, errorRet)) {
+        if (!BuildSimplifiedMNListDiff(dmnman, chainman, qblockman, qman, GetLastBaseBlockHash(baseBlockIndexes, pWorkBlockHMinus4CIndex), pWorkBlockHMinus4CIndex->GetBlockHash(), mn4c, errorRet)) {
             return false;
         }
 
@@ -267,11 +268,11 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
 
     std::set<int> snapshotHeightsNeeded;
 
-    std::vector<std::pair<int, const CBlockIndex*>> qdata = quorumBlockProcessor.GetLastMinedCommitmentsPerQuorumIndexUntilBlock(llmqType, blockIndex, 0);
+    std::vector<std::pair<int, const CBlockIndex*>> qdata = qblockman.GetLastMinedCommitmentsPerQuorumIndexUntilBlock(llmqType, blockIndex, 0);
 
     for (const auto& obj : qdata) {
         uint256 minedBlockHash;
-        llmq::CFinalCommitmentPtr qc = quorumBlockProcessor.GetMinedCommitment(llmqType, obj.second->GetBlockHash(), minedBlockHash);
+        llmq::CFinalCommitmentPtr qc = qblockman.GetMinedCommitment(llmqType, obj.second->GetBlockHash(), minedBlockHash);
         if (qc == nullptr) {
             return false;
         }
@@ -310,7 +311,7 @@ bool BuildQuorumRotationInfo(const CGetQuorumRotationInfo& request, CQuorumRotat
         }
 
         CSimplifiedMNListDiff mnhneeded;
-        if (!BuildSimplifiedMNListDiff(GetLastBaseBlockHash(baseBlockIndexes, pNeededWorkBlockIndex), pNeededWorkBlockIndex->GetBlockHash(), mnhneeded, quorumBlockProcessor, errorRet)) {
+        if (!BuildSimplifiedMNListDiff(dmnman, chainman, qblockman, qman, GetLastBaseBlockHash(baseBlockIndexes, pNeededWorkBlockIndex), pNeededWorkBlockIndex->GetBlockHash(), mnhneeded, errorRet)) {
             return false;
         }
 

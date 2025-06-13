@@ -158,9 +158,61 @@ bool ParseBoolV(const UniValue& v, const std::string &strName)
     throw JSONRPCError(RPC_INVALID_PARAMETER, strName+" must be true, false, yes, no, 1 or 0 (not '"+strBool+"')");
 }
 
+namespace {
+
+/**
+ * Quote an argument for shell.
+ *
+ * @note This is intended for help, not for security-sensitive purposes.
+ */
+std::string ShellQuote(const std::string& s)
+{
+    std::string result;
+    result.reserve(s.size() * 2);
+    for (const char ch: s) {
+        if (ch == '\'') {
+            result += "'\''";
+        } else {
+            result += ch;
+        }
+    }
+    return "'" + result + "'";
+}
+
+/**
+ * Shell-quotes the argument if it needs quoting, else returns it literally, to save typing.
+ *
+ * @note This is intended for help, not for security-sensitive purposes.
+ */
+std::string ShellQuoteIfNeeded(const std::string& s)
+{
+    for (const char ch: s) {
+        if (ch == ' ' || ch == '\'' || ch == '"') {
+            return ShellQuote(s);
+        }
+    }
+
+    return s;
+}
+
+}
+
 std::string HelpExampleCli(const std::string& methodname, const std::string& args)
 {
     return "> sparks-cli " + methodname + " " + args + "\n";
+}
+
+std::string HelpExampleCliNamed(const std::string& methodname, const RPCArgList& args)
+{
+    std::string result = "> sparks-cli -named " + methodname;
+    for (const auto& argpair: args) {
+        const auto& value = argpair.second.isStr()
+                ? argpair.second.get_str()
+                : argpair.second.write();
+        result += " " + argpair.first + "=" + ShellQuoteIfNeeded(value);
+    }
+    result += "\n";
+    return result;
 }
 
 std::string HelpExampleRpc(const std::string& methodname, const std::string& args)
@@ -168,6 +220,17 @@ std::string HelpExampleRpc(const std::string& methodname, const std::string& arg
     return "> curl --user myusername --data-binary '{\"jsonrpc\": \"1.0\", \"id\": \"curltest\", "
         "\"method\": \"" + methodname + "\", \"params\": [" + args + "]}' -H 'content-type: text/plain;'"
         " http://127.0.0.1:9998/\n";
+}
+
+std::string HelpExampleRpcNamed(const std::string& methodname, const RPCArgList& args)
+{
+    UniValue params(UniValue::VOBJ);
+    for (const auto& param: args) {
+        params.pushKV(param.first, param.second);
+    }
+
+    return "> curl --user myusername --data-binary '{\"jsonrpc\": \"1.0\", \"id\": \"curltest\", "
+           "\"method\": \"" + methodname + "\", \"params\": " + params.write() + "}' -H 'content-type: text/plain;' http://127.0.0.1:8332/\n";
 }
 
 // Converts a hex string to a public key if possible
@@ -214,8 +277,8 @@ CTxDestination AddAndGetMultisigDestination(const int required, const std::vecto
     if ((int)pubkeys.size() < required) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("not enough keys supplied (got %u keys, but need at least %d to redeem)", pubkeys.size(), required));
     }
-    if (pubkeys.size() > 16) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Number of keys involved in the multisignature address creation > 16\nReduce the number");
+    if (pubkeys.size() > MAX_PUBKEYS_PER_MULTISIG) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Number of keys involved in the multisignature address creation > %d\nReduce the number", MAX_PUBKEYS_PER_MULTISIG));
     }
 
     script_out = GetScriptForMultisig(required, pubkeys);
@@ -459,7 +522,7 @@ std::string RPCHelpMan::ToString() const
     ret += m_name;
     bool was_optional{false};
     for (const auto& arg : m_args) {
-        if (arg.m_hidden) continue;
+        if (arg.m_hidden) break; // Any arg that follows is also hidden
         const bool optional = arg.IsOptional();
         ret += " ";
         if (optional) {
@@ -481,7 +544,7 @@ std::string RPCHelpMan::ToString() const
     Sections sections;
     for (size_t i{0}; i < m_args.size(); ++i) {
         const auto& arg = m_args.at(i);
-        if (arg.m_hidden) continue;
+        if (arg.m_hidden) break; // Any arg that follows is also hidden
 
         if (i == 0) ret += "\nArguments:\n";
 

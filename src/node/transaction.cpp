@@ -1,5 +1,5 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2019 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -42,7 +42,6 @@ TransactionError BroadcastTransaction(NodeContext& node, const CTransactionRef t
     { // cs_main scope
     assert(node.chainman);
     LOCK(cs_main);
-    assert(std::addressof(::ChainstateActive()) == std::addressof(node.chainman->ActiveChainstate()));
     // If the transaction is already confirmed in the chain, don't do anything
     // and return early.
     CCoinsViewCache &view = node.chainman->ActiveChainstate().CoinsTip();
@@ -58,7 +57,7 @@ TransactionError BroadcastTransaction(NodeContext& node, const CTransactionRef t
             // First, call ATMP with test_accept and check the fee. If ATMP
             // fails here, return error immediately.
             const MempoolAcceptResult result = AcceptToMemoryPool(node.chainman->ActiveChainstate(), *node.mempool, tx,
-                                                                  bypass_limits, true /* test_accept */);
+                                                                  *node.sporkman, bypass_limits, true /* test_accept */);
             if (result.m_result_type != MempoolAcceptResult::ResultType::VALID) {
                 return HandleATMPError(result.m_state, err_string);
             } else if (result.m_base_fees.value() > max_tx_fee) {
@@ -67,7 +66,7 @@ TransactionError BroadcastTransaction(NodeContext& node, const CTransactionRef t
         }
         // Try to submit the transaction to the mempool.
         const MempoolAcceptResult result = AcceptToMemoryPool(node.chainman->ActiveChainstate(), *node.mempool, tx,
-                                                              bypass_limits, false /* test_accept */);
+                                                              *node.sporkman, bypass_limits, false /* test_accept */);
         if (result.m_result_type != MempoolAcceptResult::ResultType::VALID) {
             return HandleATMPError(result.m_state, err_string);
         }

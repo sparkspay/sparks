@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2019 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -34,9 +34,9 @@ ReceiveCoinsDialog::ReceiveCoinsDialog(QWidget* parent) :
     // context menu actions
     QAction *copyURIAction = new QAction(tr("Copy URI"), this);
     QAction* copyAddressAction = new QAction(tr("Copy address"), this);
-    QAction *copyLabelAction = new QAction(tr("Copy label"), this);
-    QAction *copyMessageAction = new QAction(tr("Copy message"), this);
-    QAction *copyAmountAction = new QAction(tr("Copy amount"), this);
+    copyLabelAction = new QAction(tr("Copy label"), this);
+    copyMessageAction = new QAction(tr("Copy message"), this);
+    copyAmountAction = new QAction(tr("Copy amount"), this);
 
     // context menu
     contextMenu = new QMenu(this);
@@ -137,17 +137,40 @@ void ReceiveCoinsDialog::on_receiveButton_clicked()
     QString label = ui->reqLabel->text();
     /* Generate new receiving address */
     address = model->getAddressTableModel()->addRow(AddressTableModel::Receive, label, "");
-    SendCoinsRecipient info(address, label,
-        ui->reqAmount->value(), ui->reqMessage->text());
-    ReceiveRequestDialog *dialog = new ReceiveRequestDialog(this);
-    dialog->setAttribute(Qt::WA_DeleteOnClose);
-    dialog->setModel(model);
-    dialog->setInfo(info);
-    dialog->show();
-    clear();
 
-    /* Store request for later reference */
-    model->getRecentRequestsTableModel()->addNewRequest(info);
+    switch(model->getAddressTableModel()->getEditStatus())
+    {
+    case AddressTableModel::EditStatus::OK: {
+        // Success
+        SendCoinsRecipient info(address, label,
+            ui->reqAmount->value(), ui->reqMessage->text());
+        ReceiveRequestDialog *dialog = new ReceiveRequestDialog(this);
+        dialog->setAttribute(Qt::WA_DeleteOnClose);
+        dialog->setModel(model);
+        dialog->setInfo(info);
+        dialog->show();
+
+        /* Store request for later reference */
+        model->getRecentRequestsTableModel()->addNewRequest(info);
+        break;
+    }
+    case AddressTableModel::EditStatus::WALLET_UNLOCK_FAILURE:
+        QMessageBox::critical(this, windowTitle(),
+            tr("Could not unlock wallet."),
+            QMessageBox::Ok, QMessageBox::Ok);
+        break;
+    case AddressTableModel::EditStatus::KEY_GENERATION_FAILURE:
+        QMessageBox::critical(this, windowTitle(),
+            tr("Could not generate new address"),
+            QMessageBox::Ok, QMessageBox::Ok);
+        break;
+    // These aren't valid return values for our action
+    case AddressTableModel::EditStatus::INVALID_ADDRESS:
+    case AddressTableModel::EditStatus::DUPLICATE_ADDRESS:
+    case AddressTableModel::EditStatus::NO_CHANGES:
+        assert(false);
+    }
+    clear();
 }
 
 void ReceiveCoinsDialog::on_recentRequestsView_doubleClicked(const QModelIndex &index)
@@ -216,9 +239,18 @@ void ReceiveCoinsDialog::copyColumnToClipboard(int column)
 // context menu
 void ReceiveCoinsDialog::showMenu(const QPoint &point)
 {
-    if (!selectedRow().isValid()) {
+    const QModelIndex sel = selectedRow();
+    if (!sel.isValid()) {
         return;
     }
+
+    // disable context menu actions when appropriate
+    const RecentRequestsTableModel* const submodel = model->getRecentRequestsTableModel();
+    const RecentRequestEntry& req = submodel->entry(sel.row());
+    copyLabelAction->setDisabled(req.recipient.label.isEmpty());
+    copyMessageAction->setDisabled(req.recipient.message.isEmpty());
+    copyAmountAction->setDisabled(req.recipient.amount == 0);
+
     contextMenu->exec(QCursor::pos());
 }
 

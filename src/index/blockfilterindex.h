@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Bitcoin Core developers
+// Copyright (c) 2018-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -63,7 +63,7 @@ public:
     bool LookupFilter(const CBlockIndex* block_index, BlockFilter& filter_out) const;
 
     /** Get a single filter header by block. */
-    bool LookupFilterHeader(const CBlockIndex* block_index, uint256& header_out);
+    bool LookupFilterHeader(const CBlockIndex* block_index, uint256& header_out) EXCLUSIVE_LOCKS_REQUIRED(!m_cs_headers_cache);
 
     /** Get a range of filters between two heights on a chain. */
     bool LookupFilterRange(int start_height, const CBlockIndex* stop_index,

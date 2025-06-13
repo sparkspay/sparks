@@ -8,13 +8,13 @@ import json
 
 from test_framework.messages import uint256_to_string
 from test_framework.test_framework import SparksTestFramework
-from test_framework.util import assert_equal, satoshi_round, set_node_times, wait_until
+from test_framework.util import assert_equal, satoshi_round, set_node_times, wait_until_helper
 
 class SparksGovernanceTest (SparksTestFramework):
     def set_test_params(self):
         self.v20_start_time = 1417713500
         # using adjusted v20 deployment params to test an edge case where superblock maturity window is equal to deployment window size
-        self.set_sparks_test_params(6, 5, [["-budgetparams=10:10:10", f"-vbparams=v20:{self.v20_start_time}:999999999999:10:8:6:5:0"]] * 6, fast_dip3_enforcement=True)
+        self.set_sparks_test_params(6, 5, [["-budgetparams=10:10:10", f"-vbparams=v20:{self.v20_start_time}:999999999999:0:10:8:6:5:0"]] * 6, fast_dip3_enforcement=True)
 
     def prepare_object(self, object_type, parent_hash, creation_time, revision, name, amount, payment_address):
         proposal_rev = revision
@@ -62,14 +62,14 @@ class SparksGovernanceTest (SparksTestFramework):
         coinbase_outputs = self.nodes[0].getblock(self.nodes[0].getbestblockhash(), 2)["tx"][0]["vout"]
         payments_found = 0
         for txout in coinbase_outputs:
-            if txout["value"] == self.p0_amount and txout["scriptPubKey"]["addresses"][0] == self.p0_payout_address:
+            if txout["value"] == self.p0_amount and txout["scriptPubKey"]["address"] == self.p0_payout_address:
                 payments_found += 1
-            if txout["value"] == self.p1_amount and txout["scriptPubKey"]["addresses"][0] == self.p1_payout_address:
+            if txout["value"] == self.p1_amount and txout["scriptPubKey"]["address"] == self.p1_payout_address:
                 if self.p1_hash > self.p2_hash:
                     payments_found += 1
                 else:
                     assert False
-            if txout["value"] == self.p2_amount and txout["scriptPubKey"]["addresses"][0] == self.p2_payout_address:
+            if txout["value"] == self.p2_amount and txout["scriptPubKey"]["address"] == self.p2_payout_address:
                 if self.p2_hash > self.p1_hash:
                     payments_found += 1
                 else:
@@ -90,6 +90,15 @@ class SparksGovernanceTest (SparksTestFramework):
         return count == len(self.nodes)
 
     def run_test(self):
+        governance_info = self.nodes[0].getgovernanceinfo()
+        assert_equal(governance_info['governanceminquorum'], 1)
+        assert_equal(governance_info['proposalfee'], 1)
+        assert_equal(governance_info['superblockcycle'], 20)
+        assert_equal(governance_info['superblockmaturitywindow'], 10)
+        assert_equal(governance_info['lastsuperblock'], 120)
+        assert_equal(governance_info['nextsuperblock'], governance_info['lastsuperblock'] + governance_info['superblockcycle'])
+        assert_equal(governance_info['governancebudget'], 1000)
+
         map_vote_outcomes = {
             0: "none",
             1: "yes",
@@ -229,7 +238,7 @@ class SparksGovernanceTest (SparksTestFramework):
         self.wait_until(lambda: len(isolated.gobject("list", "valid", "triggers")) == 1, timeout=5)
         isolated_trigger_hash = list(isolated.gobject("list", "valid", "triggers").keys())[0]
         self.wait_until(lambda: list(isolated.gobject("list", "valid", "triggers").values())[0]['YesCount'] == 1, timeout=5)
-        more_votes = wait_until(lambda: list(isolated.gobject("list", "valid", "triggers").values())[0]['YesCount'] > 1, timeout=5, do_assert=False)
+        more_votes = wait_until_helper(lambda: list(isolated.gobject("list", "valid", "triggers").values())[0]['YesCount'] > 1, timeout=5, do_assert=False)
         assert_equal(more_votes, False)
 
         # Move 1 block enabling the Superblock maturity window on non-isolated nodes
@@ -240,7 +249,7 @@ class SparksGovernanceTest (SparksTestFramework):
         self.check_superblockbudget(False)
 
         # The "winner" should submit new trigger and vote for it, but it's isolated so no triggers should be found
-        has_trigger = wait_until(lambda: len(self.nodes[0].gobject("list", "valid", "triggers")) >= 1, timeout=5, do_assert=False)
+        has_trigger = wait_until_helper(lambda: len(self.nodes[0].gobject("list", "valid", "triggers")) >= 1, timeout=5, do_assert=False)
         assert_equal(has_trigger, False)
 
         # Move 1 block inside the Superblock maturity window on non-isolated nodes
@@ -251,7 +260,7 @@ class SparksGovernanceTest (SparksTestFramework):
         self.wait_until(lambda: len(self.nodes[0].gobject("list", "valid", "triggers")) == 1, timeout=5)
         winning_trigger_hash = list(self.nodes[0].gobject("list", "valid", "triggers").keys())[0]
         self.wait_until(lambda: list(self.nodes[0].gobject("list", "valid", "triggers").values())[0]['YesCount'] == 1, timeout=5)
-        more_votes = wait_until(lambda: list(self.nodes[0].gobject("list", "valid", "triggers").values())[0]['YesCount'] > 1, timeout=5, do_assert=False)
+        more_votes = wait_until_helper(lambda: list(self.nodes[0].gobject("list", "valid", "triggers").values())[0]['YesCount'] > 1, timeout=5, do_assert=False)
         assert_equal(more_votes, False)
 
         # Make sure amounts aren't trimmed
@@ -267,7 +276,7 @@ class SparksGovernanceTest (SparksTestFramework):
 
         # Every non-isolated MN should vote for the same trigger now, no new triggers should be created
         self.wait_until(lambda: list(self.nodes[0].gobject("list", "valid", "triggers").values())[0]['YesCount'] == self.mn_count - 1, timeout=5)
-        more_triggers = wait_until(lambda: len(self.nodes[0].gobject("list", "valid", "triggers")) > 1, timeout=5, do_assert=False)
+        more_triggers = wait_until_helper(lambda: len(self.nodes[0].gobject("list", "valid", "triggers")) > 1, timeout=5, do_assert=False)
         assert_equal(more_triggers, False)
 
         self.reconnect_isolated_node(payee_idx, 0)
@@ -294,7 +303,7 @@ class SparksGovernanceTest (SparksTestFramework):
         # Should see two triggers now
         self.wait_until(lambda: len(isolated.gobject("list", "valid", "triggers")) == 2, timeout=5)
         self.wait_until(lambda: len(self.nodes[0].gobject("list", "valid", "triggers")) == 2, timeout=5)
-        more_triggers = wait_until(lambda: len(self.nodes[0].gobject("list", "valid", "triggers")) > 2, timeout=5, do_assert=False)
+        more_triggers = wait_until_helper(lambda: len(self.nodes[0].gobject("list", "valid", "triggers")) > 2, timeout=5, do_assert=False)
         assert_equal(more_triggers, False)
 
         # Move another block inside the Superblock maturity window

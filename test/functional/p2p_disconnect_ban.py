@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2014-2019 The Bitcoin Core developers
+# Copyright (c) 2014-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test node disconnect and ban behavior"""
@@ -17,8 +17,11 @@ class DisconnectBanTest(BitcoinTestFramework):
 
     def run_test(self):
         self.log.info("Connect nodes both way")
+        # By default, the test framework sets up an addnode connection from
+        # node 1 --> node0. By connecting node0 --> node 1, we're left with
+        # the two nodes being connected both ways.
+        # Topology will look like: node0 <--> node1
         self.connect_nodes(0, 1)
-        self.connect_nodes(1, 0)
 
         self.log.info("Test setban and listbanned RPCs")
 

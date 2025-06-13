@@ -9,6 +9,7 @@ from base64 import b64encode
 from binascii import unhexlify
 from decimal import Decimal, ROUND_DOWN
 from subprocess import CalledProcessError
+import hashlib
 import inspect
 import json
 import logging
@@ -19,7 +20,7 @@ import time
 
 from . import coverage
 from .authproxy import AuthServiceProxy, JSONRPCException
-from io import BytesIO
+from typing import Callable, Optional
 
 logger = logging.getLogger("TestFramework.utils")
 
@@ -80,7 +81,7 @@ def assert_raises_message(exc, message, fun, *args, **kwds):
         raise AssertionError("No exception raised")
 
 
-def assert_raises_process_error(returncode, output, fun, *args, **kwds):
+def assert_raises_process_error(returncode: int, output: str, fun: Callable, *args, **kwds):
     """Execute a process and asserts the process return code and output.
 
     Calls function `fun` with arguments `args` and `kwds`. Catches a CalledProcessError
@@ -88,9 +89,9 @@ def assert_raises_process_error(returncode, output, fun, *args, **kwds):
     no CalledProcessError was raised or if the return code and output are not as expected.
 
     Args:
-        returncode (int): the process return code.
-        output (string): [a substring of] the process output.
-        fun (function): the function to call. This should execute a process.
+        returncode: the process return code.
+        output: [a substring of] the process output.
+        fun: the function to call. This should execute a process.
         args*: positional arguments for the function.
         kwds**: named arguments for the function.
     """
@@ -105,7 +106,7 @@ def assert_raises_process_error(returncode, output, fun, *args, **kwds):
         raise AssertionError("No exception raised")
 
 
-def assert_raises_rpc_error(code, message, fun, *args, **kwds):
+def assert_raises_rpc_error(code: Optional[int], message: Optional[str], fun: Callable, *args, **kwds):
     """Run an RPC and verify that a specific JSONRPC exception code and message is raised.
 
     Calls function `fun` with arguments `args` and `kwds`. Catches a JSONRPCException
@@ -113,11 +114,11 @@ def assert_raises_rpc_error(code, message, fun, *args, **kwds):
     no JSONRPCException was raised or if the error code/message are not as expected.
 
     Args:
-        code (int), optional: the error code returned by the RPC call (defined
-            in src/rpc/protocol.h). Set to None if checking the error code is not required.
-        message (string), optional: [a substring of] the error string returned by the
-            RPC call. Set to None if checking the error string is not required.
-        fun (function): the function to call. This should be the name of an RPC.
+        code: the error code returned by the RPC call (defined in src/rpc/protocol.h).
+            Set to None if checking the error code is not required.
+        message: [a substring of] the error string returned by the RPC call.
+            Set to None if checking the error string is not required.
+        fun: the function to call. This should be the name of an RPC.
         args*: positional arguments for the function.
         kwds**: named arguments for the function.
     """
@@ -226,14 +227,14 @@ def satoshi_round(amount):
     return Decimal(amount).quantize(Decimal('0.00000001'), rounding=ROUND_DOWN)
 
 
-def wait_until(predicate, *, attempts=float('inf'), timeout=float('inf'), sleep=0.5, timeout_factor=1.0, lock=None, do_assert=True, allow_exception=False):
+def wait_until_helper(predicate, *, attempts=float('inf'), timeout=float('inf'), sleep=0.5, timeout_factor=1.0, lock=None, do_assert=True, allow_exception=False):
     """Sleep until the predicate resolves to be True.
 
     Warning: Note that this method is not recommended to be used in tests as it is
-    not aware of the context of the test framework. Using `wait_until()` counterpart
-    from `BitcoinTestFramework` or `P2PInterface` class ensures an understandable
-    amount of timeout and a common shared timeout_factor. Furthermore, `wait_until()`
-    from `P2PInterface` class in `mininode.py` has a preset lock.
+    not aware of the context of the test framework. Using the `wait_until()` members
+    from `BitcoinTestFramework` or `P2PInterface` class ensures the timeout is
+    properly scaled. Furthermore, `wait_until()` from `P2PInterface` class in
+    `p2p.py` has a preset lock.
     """
     if attempts == float('inf') and timeout == float('inf'):
         timeout = 60
@@ -268,6 +269,14 @@ def wait_until(predicate, *, attempts=float('inf'), timeout=float('inf'), sleep=
     else:
         return False
 
+def sha256sum_file(filename):
+    h = hashlib.sha256()
+    with open(filename, 'rb') as f:
+        d = f.read(4096)
+        while len(d) > 0:
+            h.update(d)
+            d = f.read(4096)
+    return h.digest()
 
 # RPC/P2P connection constants and functions
 ############################################
@@ -371,7 +380,14 @@ def write_config(config_path, *, n, chain, extra_config=""):
         f.write("server=1\n")
         f.write("keypool=1\n")
         f.write("discover=0\n")
+        f.write("dnsseed=0\n")
+        f.write("fixedseeds=0\n")
         f.write("listenonion=0\n")
+        # Increase peertimeout to avoid disconnects while using mocktime.
+        # peertimeout is measured in mock time, so setting it large enough to
+        # cover any duration in mock time is sufficient. It can be overridden
+        # in tests.
+        f.write("peertimeout=999999999\n")
         f.write("printtoconsole=0\n")
         f.write("upnp=0\n")
         f.write("natpmp=0\n")
@@ -553,7 +569,7 @@ def gen_return_txouts():
 def create_lots_of_big_transactions(node, txouts, utxos, num, fee):
     addr = node.getnewaddress()
     txids = []
-    from .messages import CTransaction
+    from .messages import tx_from_hex
     for _ in range(num):
         t = utxos.pop()
         inputs = [{"txid": t["txid"], "vout": t["vout"]}]
@@ -561,8 +577,7 @@ def create_lots_of_big_transactions(node, txouts, utxos, num, fee):
         change = t['amount'] - fee
         outputs[addr] = satoshi_round(change)
         rawtx = node.createrawtransaction(inputs, outputs)
-        tx = CTransaction()
-        tx.deserialize(BytesIO(hex_str_to_bytes(rawtx)))
+        tx = tx_from_hex(rawtx)
         for txout in txouts:
             tx.vout.append(txout)
         newtx = tx.serialize().hex()
@@ -593,6 +608,6 @@ def find_vout_for_address(node, txid, addr):
     """
     tx = node.getrawtransaction(txid, True)
     for i in range(len(tx["vout"])):
-        if any([addr == a for a in tx["vout"][i]["scriptPubKey"]["addresses"]]):
+        if addr == tx["vout"][i]["scriptPubKey"]["address"]:
             return i
     raise RuntimeError("Vout not found for address: txid=%s, addr=%s" % (txid, addr))

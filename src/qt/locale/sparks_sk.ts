@@ -286,6 +286,9 @@
     </message>
 </context>
 <context>
+    <name>BitcoinApplication</name>
+    </context>
+<context>
     <name>BitcoinGUI</name>
     <message>
         <source>&amp;Overview</source>
@@ -310,6 +313,78 @@
     <message>
         <source>Request payments (generates QR codes and sparks: URIs)</source>
         <translation>Vyžiadať platby (vygeneruje QR kódy a Sparks: URI)</translation>
+    </message>
+    <message>
+        <source>&amp;Options…</source>
+        <translation>&amp;Možnosti…</translation>
+    </message>
+    <message>
+        <source>&amp;Encrypt Wallet…</source>
+        <translation>&amp;Zašifrovať peňaženku…</translation>
+    </message>
+    <message>
+        <source>&amp;Backup Wallet…</source>
+        <translation>&amp;Zálohovať peňaženku…</translation>
+    </message>
+    <message>
+        <source>&amp;Change Passphrase…</source>
+        <translation>&amp;Zmena hesla…</translation>
+    </message>
+    <message>
+        <source>&amp;Unlock Wallet…</source>
+        <translation>&amp;Odomknúť peňaženku</translation>
+    </message>
+    <message>
+        <source>Sign &amp;message…</source>
+        <translation>Podpísať &amp;správu…</translation>
+    </message>
+    <message>
+        <source>&amp;Verify message…</source>
+        <translation>&amp;Overiť správu…</translation>
+    </message>
+    <message>
+        <source>&amp;Sending addresses</source>
+        <translation>&amp;Odosielacie adresy</translation>
+    </message>
+    <message>
+        <source>&amp;Receiving addresses</source>
+        <translation>&amp;Prijímacie adresy</translation>
+    </message>
+    <message>
+        <source>Open &amp;URI…</source>
+        <translation>Otvoriť &amp;URI…</translation>
+    </message>
+    <message>
+        <source>Open Wallet</source>
+        <translation>Otvoriť Peňaženku</translation>
+    </message>
+    <message>
+        <source>Open a wallet</source>
+        <translation>Otvoriť peňaženku</translation>
+    </message>
+    <message>
+        <source>Close wallet</source>
+        <translation>Zatvoriť peňaženku…</translation>
+    </message>
+    <message>
+        <source>No wallets available</source>
+        <translation>Nie je k dispozícii žiadna peňaženka</translation>
+    </message>
+    <message>
+        <source>&amp;Window</source>
+        <translation>&amp;Okno</translation>
+    </message>
+    <message>
+        <source>Minimize</source>
+        <translation>Minimalizovať</translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation>Priblížiť</translation>
+    </message>
+    <message>
+        <source>Main Window</source>
+        <translation>Hlavné okno</translation>
     </message>
     <message>
         <source>&amp;Transactions</source>
@@ -348,10 +423,6 @@
         <translation>Zobrazit informácie o Qt</translation>
     </message>
     <message>
-        <source>&amp;Options...</source>
-        <translation>&amp;Možnosti...</translation>
-    </message>
-    <message>
         <source>&amp;About %1</source>
         <translation>&amp;O %1</translation>
     </message>
@@ -372,32 +443,16 @@
         <translation>Zobraziť alebo skryť hlavné okno</translation>
     </message>
     <message>
-        <source>&amp;Encrypt Wallet...</source>
-        <translation>&amp;Zašifrovať peňaženku...</translation>
-    </message>
-    <message>
         <source>Encrypt the private keys that belong to your wallet</source>
         <translation>Zašifruj súkromné kľúče ktoré patria do vašej peňaženky</translation>
-    </message>
-    <message>
-        <source>&amp;Backup Wallet...</source>
-        <translation>&amp;Zálohovať peňaženku...</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
         <translation>Zálohovať peňaženku na iné miesto</translation>
     </message>
     <message>
-        <source>&amp;Change Passphrase...</source>
-        <translation>&amp;Zmena hesla...</translation>
-    </message>
-    <message>
         <source>Change the passphrase used for wallet encryption</source>
         <translation>Zmeniť heslo použité na šifrovanie peňaženky</translation>
-    </message>
-    <message>
-        <source>&amp;Unlock Wallet...</source>
-        <translation>&amp;Odomknúť peňaženku</translation>
     </message>
     <message>
         <source>Unlock wallet</source>
@@ -408,16 +463,8 @@
         <translation>&amp;Zamknúť peňaženku</translation>
     </message>
     <message>
-        <source>Sign &amp;message...</source>
-        <translation>Podpísať &amp;správu...</translation>
-    </message>
-    <message>
         <source>Sign messages with your Sparks addresses to prove you own them</source>
         <translation>Podpísať správy s vašimi Sparks adresami ako dôkaz že ich vlastníte</translation>
-    </message>
-    <message>
-        <source>&amp;Verify message...</source>
-        <translation>&amp;Overiť správu...</translation>
     </message>
     <message>
         <source>Verify messages to ensure they were signed with specified Sparks addresses</source>
@@ -492,10 +539,6 @@
         <translation>Zobraziť zoznam použitých prijímacích adries a ich popisov</translation>
     </message>
     <message>
-        <source>Open &amp;URI...</source>
-        <translation>Otvoriť &amp;URI...</translation>
-    </message>
-    <message>
         <source>&amp;Command-line options</source>
         <translation>&amp;Možnosti príkazového riadku</translation>
     </message>
@@ -522,6 +565,14 @@
         <translation>&amp;Súbor</translation>
     </message>
     <message>
+        <source>Show information about %1</source>
+        <translation>Zobraziť informácie o %1</translation>
+    </message>
+    <message>
+        <source>Create a new wallet</source>
+        <translation>Vytvoriť novú peňaženku</translation>
+    </message>
+    <message>
         <source>%1 &amp;information</source>
         <translation>%1 &amp;Informácie</translation>
     </message>
@@ -545,37 +596,21 @@
         <source>Tabs toolbar</source>
         <translation>Lišta záložiek</translation>
     </message>
+    <message>
+        <source>&amp;Governance</source>
+        <translation>&amp;Dozor</translation>
+    </message>
+    <message>
+        <source>View Governance Proposals</source>
+        <translation>Zobraziť návrhy dozoru</translation>
+    </message>
     <message numerus="yes">
         <source>%n active connection(s) to Sparks network</source>
         <translation><numerusform>%n aktívne spojenie so sieťou Sparks</numerusform><numerusform>%n aktívne spojenia so sieťou Sparks</numerusform><numerusform>%n aktívnych spojení so sieťou Sparks</numerusform><numerusform>%n aktívnych spojení so sieťou Sparks</numerusform></translation>
     </message>
     <message>
-        <source>Network activity disabled</source>
-        <translation>Sieťová aktivita zakázaná</translation>
-    </message>
-    <message>
-        <source>Syncing Headers (%1%)...</source>
-        <translation>Synchronizujú sa hlavičky (%1%)...</translation>
-    </message>
-    <message>
-        <source>Synchronizing with network...</source>
-        <translation>Synchronizácia so sieťou...</translation>
-    </message>
-    <message>
-        <source>Indexing blocks on disk...</source>
-        <translation>Indexujem bloky na disku...</translation>
-    </message>
-    <message>
-        <source>Processing blocks on disk...</source>
-        <translation>Spracovávam bloky na disku...</translation>
-    </message>
-    <message>
-        <source>Reindexing blocks on disk...</source>
-        <translation>Reindexujú sa bloky na disku...</translation>
-    </message>
-    <message>
-        <source>Connecting to peers...</source>
-        <translation>Pripája sa k partnerom...</translation>
+        <source>%1 behind</source>
+        <translation>%1 pozadu</translation>
     </message>
     <message numerus="yes">
         <source>Processed %n block(s) of transaction history.</source>
@@ -586,8 +621,40 @@
         <translation>%1 pozadu</translation>
     </message>
     <message>
-        <source>Catching up...</source>
-        <translation>Sťahujem...</translation>
+        <source>Close Wallet…</source>
+        <translation>Zatvoriť Peňaženku…</translation>
+    </message>
+    <message>
+        <source>Create Wallet…</source>
+        <translation>Vytvoriť peňaženku…</translation>
+    </message>
+    <message>
+        <source>Syncing Headers (%1%)…</source>
+        <translation>Synchronizujú sa hlavičky (%1%)…</translation>
+    </message>
+    <message>
+        <source>Synchronizing with network…</source>
+        <translation>Synchronizácia so sieťou…</translation>
+    </message>
+    <message>
+        <source>Indexing blocks on disk…</source>
+        <translation>Indexujem bloky na disku…</translation>
+    </message>
+    <message>
+        <source>Processing blocks on disk…</source>
+        <translation>Spracovávam bloky na disku…</translation>
+    </message>
+    <message>
+        <source>Reindexing blocks on disk…</source>
+        <translation>Reindexujú sa bloky na disku…</translation>
+    </message>
+    <message>
+        <source>Connecting to peers…</source>
+        <translation>Pripája sa k partnerom…</translation>
+    </message>
+    <message>
+        <source>Catching up…</source>
+        <translation>Sťahujem…</translation>
     </message>
     <message>
         <source>Last received block was generated %1 ago.</source>
@@ -703,7 +770,7 @@
         <source>Original message:</source>
         <translation>Pôvodná správa:</translation>
     </message>
-    </context>
+</context>
 <context>
     <name>CoinControlDialog</name>
     <message>
@@ -896,6 +963,60 @@
     </message>
 </context>
 <context>
+    <name>CreateWalletActivity</name>
+    <message>
+        <source>Creating Wallet &lt;b&gt;%1&lt;/b&gt;…</source>
+        <translation>Vytvára sa peňaženka &lt;b&gt;%1&lt;/b&gt;…</translation>
+    </message>
+    <message>
+        <source>Create wallet failed</source>
+        <translation>Vytvorenie peňaženky zlyhalo</translation>
+    </message>
+    <message>
+        <source>Create wallet warning</source>
+        <translation>Vytvorenie peňaženky s upozornením</translation>
+    </message>
+</context>
+<context>
+    <name>CreateWalletDialog</name>
+    <message>
+        <source>Create Wallet</source>
+        <translation>Vytvoriť peňaženku</translation>
+    </message>
+    <message>
+        <source>Wallet Name</source>
+        <translation>Názov peňaženky</translation>
+    </message>
+    <message>
+        <source>Encrypt the wallet. The wallet will be encrypted with a passphrase of your choice.</source>
+        <translation>Zašifruje peňaženku. Peňaženka bude zašifrovaná pomocou prístupovej frázy podľa vášho výberu.</translation>
+    </message>
+    <message>
+        <source>Encrypt Wallet</source>
+        <translation>Zašifrovať peňaženku</translation>
+    </message>
+    <message>
+        <source>Disable private keys for this wallet. Wallets with private keys disabled will have no private keys and cannot have an HD seed or imported private keys. This is ideal for watch-only wallets.</source>
+        <translation>Zakázať súkromné kľúče pre túto peňaženku. Peňaženky so zakázanými súkromnými kľúčmi nebudú mať žiadne súkromné kľúče a nemôžu mať HD pôvod ani importované súkromné kľúče. Toto je ideálne pre peňaženky, ktoré len sledujete.</translation>
+    </message>
+    <message>
+        <source>Disable Private Keys</source>
+        <translation>Zakázať súkromné kľúče</translation>
+    </message>
+    <message>
+        <source>Make a blank wallet. Blank wallets do not initially have private keys or scripts. Private keys and addresses can be imported, or an HD seed can be set, at a later time.</source>
+        <translation>Vytvorí prázdnu peňaženku. Prázdne peňaženky pôvodne nemajú súkromné kľúče ani skripty. Súkromné kľúče a adresy je možné importovať, HD zdroj je možný nastaviť neskôr.</translation>
+    </message>
+    <message>
+        <source>Make Blank Wallet</source>
+        <translation>Vytvoriť prázdnu peňaženku</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Vytvoriť</translation>
+    </message>
+    </context>
+<context>
     <name>EditAddressDialog</name>
     <message>
         <source>Edit Address</source>
@@ -1034,10 +1155,6 @@
         <translation>Keďže toto je prvé spustenie programu, môžete si vybrať, kam %1 bude ukladať vaše údaje.</translation>
     </message>
     <message>
-        <source>When you click OK, %1 will begin to download and process the full %4 block chain (%2GB) starting with the earliest transactions in %3 when %4 initially launched.</source>
-        <translation>Keď kliknete na OK tak %1 začne sťahovanie a spracuje celý %4 blockchain (%2GB) počnúc najmladšími transakciami v %3 keď sa %4 prvý krát spustil.</translation>
-    </message>
-    <message>
         <source>This initial synchronisation is very demanding, and may expose hardware problems with your computer that had previously gone unnoticed. Each time you run %1, it will continue downloading where it left off.</source>
         <translation>Počiatočná synchronizácia je veľmi náročná a môže odhaliť hardvérové problémy vo vašom počítači o ktorých ste do teraz nevedeli. Vždy keď zapnete %1 tak sa sťahovanie začne presne tam kde bolo pred vypnutím.</translation>
     </message>
@@ -1161,8 +1278,12 @@
         <translation>Kopírovať zábezpeku Outpoint</translation>
     </message>
     <message>
-        <source>Updating...</source>
-        <translation>Aktualizuje sa...</translation>
+        <source>Please wait…</source>
+        <translation>Prosím čakajte…</translation>
+    </message>
+    <message>
+        <source>Updating…</source>
+        <translation>Aktualizuje sa…</translation>
     </message>
     <message>
         <source>ENABLED</source>
@@ -1197,10 +1318,6 @@
         <translation>Filtrovať podľa ľubovoľnej vlastnosti (napr. adresa alebo protx hash)</translation>
     </message>
     <message>
-        <source>Please wait...</source>
-        <translation>Prosím čakajte...</translation>
-    </message>
-    <message>
         <source>Additional information for DIP3 Masternode %1</source>
         <translation>Ďalšie informácie pre DIP3 Masternode %1</translation>
     </message>
@@ -1224,8 +1341,12 @@
         <translation>Počet zostávajúcich blokov</translation>
     </message>
     <message>
-        <source>Unknown...</source>
-        <translation>Neznáme...</translation>
+        <source>Unknown…</source>
+        <translation>Neznáme…</translation>
+    </message>
+    <message>
+        <source>calculating…</source>
+        <translation>počíta sa…</translation>
     </message>
     <message>
         <source>Last block time</source>
@@ -1240,10 +1361,6 @@
         <translation>Prírastok postupu za hodinu</translation>
     </message>
     <message>
-        <source>calculating...</source>
-        <translation>počíta sa...</translation>
-    </message>
-    <message>
         <source>Estimated time left until synced</source>
         <translation>Odhad času pre dokončenie synchronizácie</translation>
     </message>
@@ -1252,8 +1369,8 @@
         <translation>Skryť</translation>
     </message>
     <message>
-        <source>Unknown. Syncing Headers (%1)...</source>
-        <translation>Neznámy. Synchronizujú sa hlavičky (%1)...</translation>
+        <source>Unknown. Syncing Headers (%1, %2%)…</source>
+        <translation>Neznáme. Synchronizujú sa hlavičky (%1, %2%)…</translation>
     </message>
 </context>
 <context>
@@ -1282,8 +1399,8 @@
         <translation>predvolená peňaženka</translation>
     </message>
     <message>
-        <source>Opening Wallet &lt;b&gt;%1&lt;/b&gt;...</source>
-        <translation>Otvára sa peňaženka &lt;b&gt;%1&lt;/b&gt;...</translation>
+        <source>Opening Wallet &lt;b&gt;%1&lt;/b&gt;…</source>
+        <translation>Otvára sa peňaženka &lt;b&gt;%1&lt;/b&gt;…</translation>
     </message>
 </context>
 <context>
@@ -1413,14 +1530,6 @@
         <translation>Možnosti nastavené v tomto dialógovom okne sú prepísané príkazovým riadkom alebo v konfiguračnom súbore:</translation>
     </message>
     <message>
-        <source>Hide the icon from the system tray.</source>
-        <translation>Skryť ikonu zo systémovej lišty.</translation>
-    </message>
-    <message>
-        <source>&amp;Hide tray icon</source>
-        <translation>&amp;Skryť ikonu v oblasti oznámení</translation>
-    </message>
-    <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Exit in the menu.</source>
         <translation>Minimalizovať namiesto ukončenia aplikácie keď sa okno zavrie. Keď je zvolená táto možnosť, aplikácia sa zavrie len po zvolení Ukončiť v menu.</translation>
     </message>
@@ -1519,12 +1628,6 @@
     <message>
         <source>The user interface language can be set here. This setting will take effect after restarting %1.</source>
         <translation>Jazyk uživateľského rozhrania sa dá nastaviť tu. Toto nastavenie sa uplatní až po reštarte %1.</translation>
-    </message>
-    <message>
-        <source>Language missing or translation incomplete? Help contributing translations here:
-https://www.transifex.com/projects/p/sparks/</source>
-        <translation>Chýbajúci alebo nekompletný preklad? Pomôžte nám tu:
-https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>&amp;Unit to show amounts in:</source>
@@ -1832,10 +1935,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>„sparks://“ nie je platný URI. Namiesto toho použite „sparks:“.</translation>
     </message>
     <message>
-        <source>Invalid payment address %1</source>
-        <translation>Neplatná adresa platby %1</translation>
-    </message>
-    <message>
         <source>URI cannot be parsed! This can be caused by an invalid Sparks address or malformed URI parameters.</source>
         <translation>URI sa nedá analyzovať! Toto môže byť spôsobené neplatnou Sparks adresou, alebo nesprávnym tvarom URI parametrov.</translation>
     </message>
@@ -1848,18 +1947,22 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <name>PeerTableModel</name>
     <message>
         <source>User Agent</source>
+        <extracomment>Title of Peers Table column which contains the peer's User Agent string.</extracomment>
         <translation>Agent používateľa</translation>
     </message>
     <message>
         <source>Ping</source>
+        <extracomment>Title of Peers Table column which indicates the current latency of the connection with the peer.</extracomment>
         <translation>Odozva</translation>
     </message>
     <message>
         <source>Sent</source>
+        <extracomment>Title of Peers Table column which indicates the total amount of network information we have sent to the peer.</extracomment>
         <translation>Odoslané</translation>
     </message>
     <message>
         <source>Received</source>
+        <extracomment>Title of Peers Table column which indicates the total amount of network information we have received from the peer.</extracomment>
         <translation>Prijaté</translation>
     </message>
     </context>
@@ -1952,8 +2055,48 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Zobraziť uvítaciu obrazovku pri spustení (predvolené: %u)</translation>
     </message>
     <message>
-        <source>%1 didn't yet exit safely...</source>
-        <translation>%1 nebol ešte bezpečne ukončený...</translation>
+        <source>Error: Specified data directory "%1" does not exist.</source>
+        <translation>Chyba: Zadaný dátový adresár "%1" neexistuje.</translation>
+    </message>
+    <message>
+        <source>Error: Cannot parse configuration file: %1.</source>
+        <translation>Chyba: Nie je možné načítať konfiguračný súbor: %1.</translation>
+    </message>
+    <message>
+        <source>Error: %1</source>
+        <translation>Chyba: %1</translation>
+    </message>
+    <message>
+        <source>Error: Failed to load application fonts.</source>
+        <translation>Chyba: Nepodarilo sa načítať písma aplikácie.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-family invalid. Valid values: %1.</source>
+        <translation>Chyba: Zadaná rodina fontov je neplatná. Platné hodnoty: %1.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-weight-normal invalid. Valid range %1 to %2.</source>
+        <translation>Chyba: Zadaná hodnota normálnej váhy fontu je neplatná. Platný rozsah %1 až %2.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-weight-bold invalid. Valid range %1 to %2.</source>
+        <translation>Chyba: Zadaná hodnota tučnej váhy fontu je neplatná. Platný rozsah %1 až %2.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-scale invalid. Valid range %1 to %2.</source>
+        <translation>Chyba: Zadaná hodnota škálovania fontu je neplatná. Platný rozsah %1 až %2.</translation>
+    </message>
+    <message>
+        <source>Error: Invalid -custom-css-dir path.</source>
+        <translation>Chyba: Neplatná cesta -custom-css-dir.</translation>
+    </message>
+    <message>
+        <source>Error: %1 CSS file(s) missing in -custom-css-dir path.</source>
+        <translation>Chyba: %1 CSS súbor(ov) chýba v ceste -custom-css-dir.</translation>
+    </message>
+    <message>
+        <source>%1 didn't yet exit safely…</source>
+        <translation>%1 nebol ešte bezpečne ukončený…</translation>
     </message>
     <message>
         <source>Amount</source>
@@ -2063,15 +2206,15 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Chyba: Nedá sa spracovať konfiguračný súbor: %1. Používajte iba syntax kľúč=hodnota.</translation>
     </message>
     <message>
-        <source>Error: %1</source>
-        <translation>Chyba: %1</translation>
+        <source>&amp;Save Image…</source>
+        <translation>&amp;Uložiť obrázok…</translation>
     </message>
 </context>
 <context>
     <name>QRDialog</name>
     <message>
-        <source>QR-Code Title</source>
-        <translation>Názov QR-kódu</translation>
+        <source>&amp;Save Image…</source>
+        <translation>&amp;Uložiť obrázok…</translation>
     </message>
     <message>
         <source>QR Code</source>
@@ -2205,10 +2348,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Pre detailné informácie vyberte partnerský uzol.</translation>
     </message>
     <message>
-        <source>Direction</source>
-        <translation>Smer</translation>
-    </message>
-    <message>
         <source>Version</source>
         <translation>Verzia</translation>
     </message>
@@ -2287,10 +2426,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Services</source>
         <translation>Služby</translation>
-    </message>
-    <message>
-        <source>Ban Score</source>
-        <translation>Skóre zákazu</translation>
     </message>
     <message>
         <source>Connection Time</source>
@@ -2417,18 +2552,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>cez %1</translation>
     </message>
     <message>
-        <source>never</source>
-        <translation>nikdy</translation>
-    </message>
-    <message>
-        <source>Inbound</source>
-        <translation>Vstupné</translation>
-    </message>
-    <message>
-        <source>Outbound</source>
-        <translation>Výstupné</translation>
-    </message>
-    <message>
         <source>Regular</source>
         <translation>Pravidelné</translation>
     </message>
@@ -2444,7 +2567,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Unknown</source>
         <translation>Neznáme</translation>
     </message>
-</context>
+    </context>
 <context>
     <name>ReceiveCoinsDialog</name>
     <message>
@@ -2535,7 +2658,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <source>Copy amount</source>
         <translation>Kopírovať sumu</translation>
     </message>
-</context>
+    </context>
 <context>
     <name>ReceiveRequestDialog</name>
     <message>
@@ -2547,8 +2670,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Kopírovať &amp;adresu</translation>
     </message>
     <message>
-        <source>&amp;Save Image...</source>
-        <translation>&amp;Uložiť obrázok...</translation>
+        <source>&amp;Save Image…</source>
+        <translation>&amp;Uložiť obrázok…</translation>
     </message>
     <message>
         <source>Request payment to %1</source>
@@ -2601,10 +2724,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Možnosti "Kontroly mincí"</translation>
     </message>
     <message>
-        <source>Inputs...</source>
-        <translation>Vstupy...</translation>
-    </message>
-    <message>
         <source>automatically selected</source>
         <translation>automaticky vybraté</translation>
     </message>
@@ -2633,6 +2752,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Prach:</translation>
     </message>
     <message>
+        <source>Inputs…</source>
+        <translation>Vstupy…</translation>
+    </message>
+    <message>
         <source>After Fee:</source>
         <translation>Po poplatku:</translation>
     </message>
@@ -2653,12 +2776,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Transakčný poplatok</translation>
     </message>
     <message>
-        <source>Choose...</source>
-        <translation>Vybrať...</translation>
-    </message>
-    <message>
-        <source>collapse fee-settings</source>
-        <translation>skryť nastavenia poplatkov</translation>
+        <source>(Smart fee not initialized yet. This usually takes a few blocks…)</source>
+        <translation>(Inteligentný poplatok nebol ešte inicializovaný. Obvykle to trvá nekoľko blokov…)</translation>
     </message>
     <message>
         <source>Confirmation time target:</source>
@@ -2677,6 +2796,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Používanie fallbackfee môže mať za následok odoslanie transakcie, ktorá sa bude potvrdzovať niekoľko hodín alebo dní (prípadne nikdy). Zvážte možnosť výberu poplatku ručne alebo počkajte, než potvrdíte kompletný reťazec blokov.</translation>
     </message>
     <message>
+        <source>Choose…</source>
+        <translation>Vybrať…</translation>
+    </message>
+    <message>
         <source>Note: Not enough data for fee estimation, using the fallback fee instead.</source>
         <translation>Poznámka: Nedostatok údajov na odhad poplatku, použije sa preddefinovaná hodnota.</translation>
     </message>
@@ -2691,10 +2814,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Custom:</source>
         <translation>Vlastné:</translation>
-    </message>
-    <message>
-        <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
-        <translation>(Inteligentný poplatok nebol ešte inicializovaný. Obvykle to trvá nekoľko blokov...)</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
@@ -2963,8 +3082,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
 <context>
     <name>ShutdownWindow</name>
     <message>
-        <source>%1 is shutting down...</source>
-        <translation>%1 sa vypína...</translation>
+        <source>%1 is shutting down…</source>
+        <translation>%1 sa vypína…</translation>
     </message>
     <message>
         <source>Do not shut down the computer until this window disappears.</source>
@@ -3035,7 +3154,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
     </message>
     <message>
         <source>&amp;Verify Message</source>
-        <translation>&amp;Overiť správu...</translation>
+        <translation>&amp;Overiť správu…</translation>
     </message>
     <message>
         <source>Enter the receiver's address, message (ensure you copy line breaks, spaces, tabs, etc. exactly) and signature below to verify the message. Be careful not to read more into the signature than what is in the signed message itself, to avoid being tricked by a man-in-the-middle attack. Note that this only proves the signing party receives with the address, it cannot prove sendership of any transaction!</source>
@@ -3485,8 +3604,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Tento rok</translation>
     </message>
     <message>
-        <source>Range...</source>
-        <translation>Rozsah...</translation>
+        <source>Range…</source>
+        <translation>Rozsah…</translation>
     </message>
     <message>
         <source>Most Common</source>
@@ -3652,7 +3771,7 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <name>WalletController</name>
     <message>
         <source>Close wallet</source>
-        <translation>Zatvoriť peňaženku...</translation>
+        <translation>Zatvoriť peňaženku…</translation>
     </message>
     <message>
         <source>Are you sure you wish to close the wallet &lt;i&gt;%1&lt;/i&gt;?</source>
@@ -3819,26 +3938,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Chyba pri načítaní vyrovnávajúcej pamäti splnených zadaní z</translation>
     </message>
     <message>
-        <source>Failed to load governance cache from</source>
-        <translation>Chyba pri načítaní vyrovnávajúcej pamäti správy z</translation>
-    </message>
-    <message>
-        <source>Failed to load masternode cache from</source>
-        <translation>Chyba pri načítaní vyrovnávajúcej pamäti masternode z</translation>
-    </message>
-    <message>
-        <source>Found enough users, signing ( waiting %s )</source>
-        <translation>Nájdený dostatok používateľov, pospisuje sa ( čakanie %s )</translation>
-    </message>
-    <message>
-        <source>Found enough users, signing ...</source>
-        <translation>Nájdený dostatok používateľov, pospisuje sa ...</translation>
-    </message>
-    <message>
-        <source>Importing...</source>
-        <translation>Importuje sa...</translation>
-    </message>
-    <message>
         <source>Incompatible mode.</source>
         <translation>Nekompatibilný mód.</translation>
     </message>
@@ -3875,16 +3974,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Neplatný minimálny počet spork podpisovateľov určených pomocou -minsporkkeys</translation>
     </message>
     <message>
-        <source>Loading banlist...</source>
-        <translation>Načítavam banlist...</translation>
-    </message>
-    <message>
         <source>Lock is already in place.</source>
         <translation>Zámok je už na mieste.</translation>
-    </message>
-    <message>
-        <source>Mixing in progress...</source>
-        <translation>Prebieha miešanie...</translation>
     </message>
     <message>
         <source>Need to specify a port with -whitebind: '%s'</source>
@@ -3907,12 +3998,36 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Nie je v zozname Masternode.</translation>
     </message>
     <message>
+        <source>Pruning blockstore…</source>
+        <translation>Redukovanie blockstore…</translation>
+    </message>
+    <message>
+        <source>Replaying blocks…</source>
+        <translation>Prebieha nahratie blokov …</translation>
+    </message>
+    <message>
+        <source>Rescanning…</source>
+        <translation>Znova prehľadávam…</translation>
+    </message>
+    <message>
+        <source>Starting network threads…</source>
+        <translation>Spúšťajú sa sieťové vlákna…</translation>
+    </message>
+    <message>
         <source>Submitted to masternode, waiting in queue %s</source>
         <translation>Odoslané na masternode, čaká vo fronte %s</translation>
     </message>
     <message>
         <source>Synchronization finished</source>
         <translation>Synchronizácia dokončená</translation>
+    </message>
+    <message>
+        <source>Synchronizing blockchain…</source>
+        <translation>Synchronizuje sa blockchain…</translation>
+    </message>
+    <message>
+        <source>Synchronizing governance objects…</source>
+        <translation>Synchronizujú sa objekty správy…</translation>
     </message>
     <message>
         <source>Unable to start HTTP server. See debug log for details.</source>
@@ -3925,26 +4040,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Unsupported argument -benchmark ignored, use -debug=bench.</source>
         <translation>Nepodporovaný argument -benchmark bol ignorovaný, použite -debug=bench.</translation>
-    </message>
-    <message>
-        <source>Unsupported argument -debugnet ignored, use -debug=net.</source>
-        <translation>Nepodporovaný argument -debugnet bol ignorovaný, použite -debug=net.</translation>
-    </message>
-    <message>
-        <source>Unsupported argument -tor found, use -onion.</source>
-        <translation>Nepodporovaný argument -tor, použite -onion.</translation>
-    </message>
-    <message>
-        <source>User Agent comment (%s) contains unsafe characters.</source>
-        <translation>Komentár u typu klienta (%s) obsahuje riskantné znaky.</translation>
-    </message>
-    <message>
-        <source>Verifying wallet(s)...</source>
-        <translation>Overuje sa peňaženka(y)...</translation>
-    </message>
-    <message>
-        <source>Will retry...</source>
-        <translation>Skúsime znovu...</translation>
     </message>
     <message>
         <source>Can't find random Masternode.</source>
@@ -4063,10 +4158,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Chyba: Miesta na disku pre %s je málo</translation>
     </message>
     <message>
-        <source>Error: failed to add socket to epollfd (epoll_ctl returned error %s)</source>
-        <translation>Chyba: Nepodaril sa pridať soket do epollfd (epoll_ctl vrátil chybu %s)</translation>
-    </message>
-    <message>
         <source>Exceeded max tries.</source>
         <translation>Prekročený maximálny počet pokusov.</translation>
     </message>
@@ -4107,20 +4198,20 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Počas inicializácie sa nepodarilo znova naskenovať peňaženku</translation>
     </message>
     <message>
+        <source>Found enough users, signing…</source>
+        <translation>Nájdený dostatok používateľov, pospisuje sa…</translation>
+    </message>
+    <message>
+        <source>Invalid P2P permission: '%s'</source>
+        <translation>Neplatné povolenie P2P: '%s'</translation>
+    </message>
+    <message>
         <source>Invalid amount for -fallbackfee=&lt;amount&gt;: '%s'</source>
         <translation>Neplatná suma pre -fallbackfee=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
         <source>Invalid masternodeblsprivkey. Please see documentation.</source>
         <translation>Neplatný masternodeblsprivkey. Pozrite si dokumentáciu.</translation>
-    </message>
-    <message>
-        <source>It has been replaced by -disablegovernance.</source>
-        <translation>Bol nahradený -disablegovernance.</translation>
-    </message>
-    <message>
-        <source>Loading wallet...</source>
-        <translation>Načítavanie peňaženky...</translation>
     </message>
     <message>
         <source>Masternode queue is full.</source>
@@ -4133,6 +4224,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Missing input transaction information.</source>
         <translation>Chýbajú vstupy transakčnej informácie.</translation>
+    </message>
+    <message>
+        <source>Mixing in progress…</source>
+        <translation>Prebieha miešanie…</translation>
     </message>
     <message>
         <source>No errors detected.</source>
@@ -4163,8 +4258,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Orezávanie nie je kompatibilné s -txindex.</translation>
     </message>
     <message>
-        <source>Pruning blockstore...</source>
-        <translation>Redukovanie blockstore...</translation>
+        <source>Section [%s] is not recognized.</source>
+        <translation>Sekcia [%s] nie je rozpoznaná.</translation>
     </message>
     <message>
         <source>Specified -walletdir "%s" does not exist</source>
@@ -4177,10 +4272,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Specified -walletdir "%s" is not a directory</source>
         <translation>Zadaný -walletdir "%s" nie je adresár</translation>
-    </message>
-    <message>
-        <source>Synchronizing blockchain...</source>
-        <translation>Synchronizuje sa blockchain...</translation>
     </message>
     <message>
         <source>The wallet will avoid paying less than the minimum relay fee.</source>
@@ -4215,10 +4306,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Transakcia je príliš veľká</translation>
     </message>
     <message>
-        <source>Trying to connect...</source>
-        <translation>Pokúšame sa pripojiť...</translation>
-    </message>
-    <message>
         <source>Unable to bind to %s on this computer. %s is probably already running.</source>
         <translation>Nedá sa pripojiť k %s na tomto počítači. %s už pravdepodobne beží.</translation>
     </message>
@@ -4231,8 +4318,12 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Vylepšuje sa databáza neminutých výstupov (UTXO)</translation>
     </message>
     <message>
-        <source>Wallet %s resides outside wallet directory %s</source>
-        <translation>Peňaženka %s sa nachádza mimo adresára peňaženky %s</translation>
+        <source>Verifying blocks…</source>
+        <translation>Overovanie blokov…</translation>
+    </message>
+    <message>
+        <source>Verifying wallet(s)…</source>
+        <translation>Overuje sa peňaženka(y)…</translation>
     </message>
     <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
@@ -4379,8 +4470,32 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Chyba pri vylepšení databáze reťzcov blokov</translation>
     </message>
     <message>
-        <source>Error: failed to add socket to kqueuefd (kevent returned error %s)</source>
-        <translation>Chyba: Nepodaril sa pridať soket do kqueuefd (kevent vrátil chybu %s)</translation>
+        <source>Loading P2P addresses…</source>
+        <translation>Načítavam P2P adresy…</translation>
+    </message>
+    <message>
+        <source>Loading banlist…</source>
+        <translation>Načítavam banlist…</translation>
+    </message>
+    <message>
+        <source>Loading block index…</source>
+        <translation>Načítavanie zoznamu blokov…</translation>
+    </message>
+    <message>
+        <source>Loading wallet…</source>
+        <translation>Načítavanie peňaženky…</translation>
+    </message>
+    <message>
+        <source>Failed to clear fulfilled requests cache at %s</source>
+        <translation>Nepodarilo sa vymazať vyrovnávaciu pamäť splnených požiadaviek o %s</translation>
+    </message>
+    <message>
+        <source>Failed to clear governance cache at %s</source>
+        <translation>Nepodarilo sa vymazať vyrovnávaciu pamäť dozoru o %s</translation>
+    </message>
+    <message>
+        <source>Failed to clear masternode cache at %s</source>
+        <translation>Vymazanie vyrovnávacej pamäte masternode sa nepodarilo o %s</translation>
     </message>
     <message>
         <source>Failed to find mixing queue to join</source>
@@ -4389,6 +4504,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Failed to start a new mixing queue</source>
         <translation>Nepodarilo sa spustiť novú frontu miešania</translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation>Importuje sa…</translation>
     </message>
     <message>
         <source>Incorrect -rescan mode, falling back to default value</source>
@@ -4419,20 +4538,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Neplatná spork adresa určená pomocou -sporkaddr</translation>
     </message>
     <message>
-        <source>Loading P2P addresses...</source>
-        <translation>Načítavam P2P adresy…</translation>
-    </message>
-    <message>
         <source>Reducing -maxconnections from %d to %d, because of system limitations.</source>
         <translation>Obmedzuje sa -maxconnections z %d na %d kvôli systémovým obmedzeniam.</translation>
-    </message>
-    <message>
-        <source>Replaying blocks...</source>
-        <translation>Prebieha nahratie blokov ...</translation>
-    </message>
-    <message>
-        <source>Rescanning...</source>
-        <translation>Znova prehľadávam...</translation>
     </message>
     <message>
         <source>Session not complete!</source>
@@ -4463,14 +4570,6 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Posledná akcia bola pred chvíľou.</translation>
     </message>
     <message>
-        <source>Starting network threads...</source>
-        <translation>Spúšťajú sa sieťové vlákna...</translation>
-    </message>
-    <message>
-        <source>Synchronizing governance objects...</source>
-        <translation>Synchronizujú sa objekty správy...</translation>
-    </message>
-    <message>
         <source>The source code is available from %s.</source>
         <translation>Zdrojový kód je dostupný z %s</translation>
     </message>
@@ -4499,8 +4598,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Neplatná transakcia.</translation>
     </message>
     <message>
-        <source>Transaction too large for fee policy</source>
-        <translation>Transakcia je príliš veľká pre aktuálne podmienky poplatkov</translation>
+        <source>Trying to connect…</source>
+        <translation>Pokúšame sa pripojiť…</translation>
     </message>
     <message>
         <source>Unable to bind to %s on this computer (bind returned error %s)</source>
@@ -4531,8 +4630,8 @@ https://www.transifex.com/projects/p/sparks/</translation>
         <translation>Nepodporovaná záznamová kategória %s =%s.</translation>
     </message>
     <message>
-        <source>Verifying blocks...</source>
-        <translation>Overovanie blokov...</translation>
+        <source>Upgrading txindex database</source>
+        <translation>Aktualizácia databázy txindex</translation>
     </message>
     <message>
         <source>Very low number of keys left: %d</source>
@@ -4557,6 +4656,10 @@ https://www.transifex.com/projects/p/sparks/</translation>
     <message>
         <source>Warning: incorrect parameter %s, path must exist! Using default path.</source>
         <translation>Upozornenie: nesprávny parameter %s, cesta musí existovať! Použije sa predvolené cesta.</translation>
+    </message>
+    <message>
+        <source>Will retry…</source>
+        <translation>Skúsime znovu…</translation>
     </message>
     <message>
         <source>You are starting with governance validation disabled.</source>

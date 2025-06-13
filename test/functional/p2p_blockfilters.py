@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2019 The Bitcoin Core developers
+# Copyright (c) 2019-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Tests NODE_COMPACT_FILTERS (BIP 157/158).
@@ -244,6 +244,12 @@ class CompactFiltersTest(BitcoinTestFramework):
             peer_0 = self.nodes[0].add_p2p_connection(P2PInterface())
             peer_0.send_message(request)
             peer_0.wait_for_disconnect()
+
+        self.log.info("Test -peerblockfilters without -blockfilterindex raises an error")
+        self.stop_node(0)
+        self.nodes[0].extra_args = ["-peerblockfilters"]
+        msg = "Error: Cannot set -peerblockfilters without -blockfilterindex."
+        self.nodes[0].assert_start_raises_init_error(expected_msg=msg)
 
 
 def compute_last_header(prev_header, hashes):

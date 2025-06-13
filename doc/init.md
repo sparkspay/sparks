@@ -53,11 +53,11 @@ Paths
 
 All three configurations assume several paths that might need to be adjusted.
 
-Binary:              `/usr/bin/sparksd`
-Configuration file:  `/etc/sparkscore/sparks.conf`
-Data directory:      `/var/lib/sparksd`
-PID file:            `/var/run/sparksd/sparksd.pid` (OpenRC and Upstart) or `/run/sparksd/sparksd.pid` (systemd)
-Lock file:           `/var/lock/subsys/sparksd` (CentOS)
+    Binary:              /usr/bin/sparksd
+    Configuration file:  /etc/sparkscore/sparks.conf
+    Data directory:      /var/lib/sparksd
+    PID file:            /var/run/sparksd/sparksd.pid (OpenRC and Upstart) or /run/sparksd/sparksd.pid (systemd)
+    Lock file:           /var/lock/subsys/sparksd (CentOS)
 
 The PID directory (if applicable) and data directory should both be owned by the
 sparkscore user and group. It is advised for security reasons to make the
@@ -83,10 +83,10 @@ OpenRC).
 
 ### macOS
 
-Binary:              `/usr/local/bin/sparksd`
-Configuration file:  `~/Library/Application Support/SparksCore/sparks.conf`
-Data directory:      `~/Library/Application Support/SparksCore`
-Lock file:           `~/Library/Application Support/SparksCore/.lock`
+    Binary:              /usr/local/bin/sparksd
+    Configuration file:  ~/Library/Application Support/SparksCore/sparks.conf
+    Data directory:      ~/Library/Application Support/SparksCore
+    Lock file:           ~/Library/Application Support/SparksCore/.lock
 
 Installing Service Configuration
 -----------------------------------

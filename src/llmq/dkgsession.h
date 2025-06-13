@@ -15,10 +15,15 @@
 
 #include <optional>
 
-class UniValue;
+class CActiveMasternodeManager;
 class CInv;
 class CConnman;
 class CDeterministicMN;
+class CMasternodeMetaMan;
+class CSporkManager;
+class UniValue;
+class PeerManager;
+
 using CDeterministicMNCPtr = std::shared_ptr<const CDeterministicMN>;
 
 namespace llmq
@@ -269,8 +274,14 @@ private:
 
     CBLSWorker& blsWorker;
     CBLSWorkerCache cache;
+    CConnman& connman;
+    CDeterministicMNManager& m_dmnman;
     CDKGSessionManager& dkgManager;
     CDKGDebugManager& dkgDebugManager;
+    CMasternodeMetaMan& m_mn_metaman;
+    const CActiveMasternodeManager* const m_mn_activeman;
+    const CSporkManager& m_sporkman;
+    const std::unique_ptr<PeerManager>& m_peerman;
 
     const CBlockIndex* m_quorum_base_block_index{nullptr};
     int quorumIndex{0};
@@ -291,28 +302,32 @@ private:
 
     uint256 myProTxHash;
     CBLSId myId;
-    CConnman& connman;
     std::optional<size_t> myIdx;
 
     // all indexed by msg hash
     // we expect to only receive a single vvec and contribution per member, but we must also be able to relay
     // conflicting messages as otherwise an attacker might be able to broadcast conflicting (valid+invalid) messages
     // and thus split the quorum. Such members are later removed from the quorum.
-    mutable RecursiveMutex invCs;
+    mutable Mutex invCs;
     std::map<uint256, CDKGContribution> contributions GUARDED_BY(invCs);
     std::map<uint256, CDKGComplaint> complaints GUARDED_BY(invCs);
     std::map<uint256, CDKGJustification> justifications GUARDED_BY(invCs);
     std::map<uint256, CDKGPrematureCommitment> prematureCommitments GUARDED_BY(invCs);
 
-    mutable RecursiveMutex cs_pending;
+    mutable Mutex cs_pending;
     std::vector<size_t> pendingContributionVerifications GUARDED_BY(cs_pending);
 
     // filled by ReceivePrematureCommitment and used by FinalizeCommitments
     std::set<uint256> validCommitments GUARDED_BY(invCs);
 
 public:
-    CDKGSession(const Consensus::LLMQParams& _params, CBLSWorker& _blsWorker, CDKGSessionManager& _dkgManager, CDKGDebugManager& _dkgDebugManager, CConnman& _connman) :
-        params(_params), blsWorker(_blsWorker), cache(_blsWorker), dkgManager(_dkgManager), dkgDebugManager(_dkgDebugManager), connman(_connman) {}
+    CDKGSession(const Consensus::LLMQParams& _params, CBLSWorker& _blsWorker, CConnman& _connman,
+                CDeterministicMNManager& dmnman, CDKGSessionManager& _dkgManager, CDKGDebugManager& _dkgDebugManager,
+                CMasternodeMetaMan& mn_metaman, const CActiveMasternodeManager* const mn_activeman,
+                const CSporkManager& sporkman, const std::unique_ptr<PeerManager>& peerman) :
+        params(_params), blsWorker(_blsWorker), cache(_blsWorker), connman(_connman), m_dmnman(dmnman), dkgManager(_dkgManager),
+        dkgDebugManager(_dkgDebugManager), m_mn_metaman(mn_metaman), m_mn_activeman(mn_activeman), m_sporkman(sporkman),
+        m_peerman(peerman) {}
 
     bool Init(gsl::not_null<const CBlockIndex*> pQuorumBaseBlockIndex, Span<CDeterministicMNCPtr> mns, const uint256& _myProTxHash, int _quorumIndex);
 
