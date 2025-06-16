@@ -1796,6 +1796,8 @@ RPCHelpMan getblockchaininfo()
     SoftForkDescPushBack(tip, softforks, consensusParams, Consensus::DEPLOYMENT_DIP0003);
     SoftForkDescPushBack(tip, softforks, consensusParams, Consensus::DEPLOYMENT_DIP0008);
     SoftForkDescPushBack(tip, softforks, consensusParams, Consensus::DEPLOYMENT_DIP0020);
+    SoftForkDescPushBack(tip, softforks, consensusParams, Consensus::DEPLOYMENT_IPV6_MN);
+    SoftForkDescPushBack(tip, softforks, consensusParams, Consensus::DEPLOYMENT_DATATX);
     SoftForkDescPushBack(tip, softforks, consensusParams, Consensus::DEPLOYMENT_DIP0024);
     SoftForkDescPushBack(tip, softforks, consensusParams, Consensus::DEPLOYMENT_BRR);
     SoftForkDescPushBack(tip, softforks, consensusParams, Consensus::DEPLOYMENT_V19);
