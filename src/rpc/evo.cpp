@@ -30,6 +30,7 @@
 #include <util/translation.h>
 #include <validation.h>
 #include <spork.h>
+#include <governance/governance.h>
 
 #ifdef ENABLE_WALLET
 #include <wallet/coincontrol.h>
@@ -1930,6 +1931,12 @@ UniValue datatx_publish(const JSONRPCRequest& request, const ChainstateManager& 
 
 UniValue datatx_get(const JSONRPCRequest& request)
 {
+    const NodeContext& node = EnsureAnyNodeContext(request.context);
+    const ArgsManager& m_args = *node.args;
+    if (m_args.GetBoolArg("-disablegovernance", !DEFAULT_GOVERNANCE_ENABLE)) {
+        throw JSONRPCError(RPC_INVALID_REQUEST, "Your wallet is being ran with governance validation disabled. Can't use this command.\nThis is expected because you are running a pruned node.");
+    }
+
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
         throw std::runtime_error(
             "datatx get \"txid\"\n"
