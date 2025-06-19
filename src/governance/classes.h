@@ -102,7 +102,7 @@ private:
 
 public:
     CSuperblock();
-    CSuperblock(int nBlockHeight, std::vector<CGovernancePayment> vecPayments);
+    CSuperblock(int nBlockHeight, std::vector<CGovernancePayment> vecPayments, CSporkManager& spork_manager);
     explicit CSuperblock(CGovernanceManager& govman, uint256& nHash, CSporkManager& spork_manager);
 
     static bool IsValidBlockHeight(int nBlockHeight);
