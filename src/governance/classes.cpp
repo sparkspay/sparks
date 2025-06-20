@@ -404,7 +404,7 @@ CSuperblock::
     nBlockHeight(0),
     nStatus(SeenObjectStatus::Unknown),
     vecPayments(),
-    m_spork_manager{spork_manager}
+    m_spork_manager(spork_manager)
 {
     const CGovernanceObject* pGovObj = GetGovernanceObject(govman);
 
@@ -438,7 +438,7 @@ CSuperblock::
         nBlockHeight, strAddresses, strAmounts, vecPayments.size());
 }
 
-CSuperblock::CSuperblock(int nBlockHeight, std::vector<CGovernancePayment> vecPayments, CSporkManager& spork_manager) : nBlockHeight(nBlockHeight), vecPayments(std::move(vecPayments)), m_spork_manager{}
+CSuperblock::CSuperblock(int nBlockHeight, std::vector<CGovernancePayment> vecPayments, CSporkManager& spork_manager) : nBlockHeight(nBlockHeight), vecPayments(std::move(vecPayments)), m_spork_manager(spork_manager)
 {
     nStatus = SeenObjectStatus::Valid; //TODO: Investigate this
     nGovObjHash = GetHash();
