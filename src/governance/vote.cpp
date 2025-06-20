@@ -94,7 +94,7 @@ CGovernanceVote::CGovernanceVote() :
     nVoteOutcome(int(VOTE_OUTCOME_NONE)),
     nTime(0),
     vchSig(),
-    m_chainman{}
+    m_chainman(nullptr)
 {
 }
 
@@ -107,7 +107,7 @@ CGovernanceVote::CGovernanceVote(const COutPoint& outpointMasternodeIn, const ui
     nVoteOutcome(eVoteOutcomeIn),
     nTime(GetAdjustedTime()),
     vchSig(),
-    m_chainman{chainman}
+    m_chainman(&chainman)
 {
     UpdateHash();
 }
@@ -115,7 +115,7 @@ CGovernanceVote::CGovernanceVote(const COutPoint& outpointMasternodeIn, const ui
 std::string CGovernanceVote::ToString(const CDeterministicMNList& tip_mn_list) const
 {
     auto dmn = tip_mn_list.GetMNByCollateral(masternodeOutpoint);
-    int voteWeight = dmn != nullptr ? GetMnType(dmn->nType, m_chainman.ActiveTip()).voting_weight : 0;
+    int voteWeight = dmn != nullptr ? GetMnType(dmn->nType, m_chainman->ActiveTip()).voting_weight : 0;
     std::ostringstream ostr;
     ostr << masternodeOutpoint.ToStringShort() << ":"
          << nTime << ":"

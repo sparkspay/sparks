@@ -96,12 +96,12 @@ private:
     int nBlockHeight;
     SeenObjectStatus nStatus;
     std::vector<CGovernancePayment> vecPayments;
-    const CSporkManager& m_spork_manager;
+    const CSporkManager* m_spork_manager;
 
     void ParsePaymentSchedule(const std::string& strPaymentAddresses, const std::string& strPaymentAmounts, const std::string& strProposalHashes);
 
 public:
-    CSuperblock(CSporkManager& spork_manager);
+    CSuperblock();
     CSuperblock(int nBlockHeight, std::vector<CGovernancePayment> vecPayments, CSporkManager& spork_manager);
     explicit CSuperblock(CGovernanceManager& govman, uint256& nHash, CSporkManager& spork_manager);
 

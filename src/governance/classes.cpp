@@ -389,12 +389,12 @@ void CSuperblockManager::ExecuteBestSuperblock(CGovernanceManager& govman, const
 }
 
 CSuperblock::
-    CSuperblock(CSporkManager& spork_manager) :
+    CSuperblock() :
     nGovObjHash(),
     nBlockHeight(0),
     nStatus(SeenObjectStatus::Unknown),
     vecPayments(),
-    m_spork_manager(spork_manager)
+    m_spork_manager(nullptr)
 {
 }
 
@@ -404,7 +404,7 @@ CSuperblock::
     nBlockHeight(0),
     nStatus(SeenObjectStatus::Unknown),
     vecPayments(),
-    m_spork_manager(spork_manager)
+    m_spork_manager(&spork_manager)
 {
     const CGovernanceObject* pGovObj = GetGovernanceObject(govman);
 
@@ -438,7 +438,7 @@ CSuperblock::
         nBlockHeight, strAddresses, strAmounts, vecPayments.size());
 }
 
-CSuperblock::CSuperblock(int nBlockHeight, std::vector<CGovernancePayment> vecPayments, CSporkManager& spork_manager) : nBlockHeight(nBlockHeight), vecPayments(std::move(vecPayments)), m_spork_manager(spork_manager)
+CSuperblock::CSuperblock(int nBlockHeight, std::vector<CGovernancePayment> vecPayments, CSporkManager& spork_manager) : nBlockHeight(nBlockHeight), vecPayments(std::move(vecPayments)), m_spork_manager(&spork_manager)
 {
     nStatus = SeenObjectStatus::Valid; //TODO: Investigate this
     nGovObjHash = GetHash();
@@ -648,7 +648,7 @@ bool CSuperblock::IsValid(CGovernanceManager& govman, const CChain& active_chain
 
     // payments should not exceed limit
     CAmount nPaymentsTotalAmount = GetPaymentsTotalAmount();
-    CAmount nPaymentsLimit = GetPaymentsLimit(active_chain, nBlockHeight, m_spork_manager);
+    CAmount nPaymentsLimit = GetPaymentsLimit(active_chain, nBlockHeight, *m_spork_manager);
     if (nPaymentsTotalAmount > nPaymentsLimit) {
         LogPrintf("CSuperblock::IsValid -- ERROR: Block invalid, payments limit exceeded: payments %lld, limit %lld\n", nPaymentsTotalAmount, nPaymentsLimit);
         return false;
