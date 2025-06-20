@@ -101,7 +101,7 @@ private:
     void ParsePaymentSchedule(const std::string& strPaymentAddresses, const std::string& strPaymentAmounts, const std::string& strProposalHashes);
 
 public:
-    CSuperblock();
+    CSuperblock(CSporkManager& spork_manager);
     CSuperblock(int nBlockHeight, std::vector<CGovernancePayment> vecPayments, CSporkManager& spork_manager);
     explicit CSuperblock(CGovernanceManager& govman, uint256& nHash, CSporkManager& spork_manager);
 

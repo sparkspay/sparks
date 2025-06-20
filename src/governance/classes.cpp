@@ -389,12 +389,12 @@ void CSuperblockManager::ExecuteBestSuperblock(CGovernanceManager& govman, const
 }
 
 CSuperblock::
-    CSuperblock() :
+    CSuperblock(CSporkManager& spork_manager) :
     nGovObjHash(),
     nBlockHeight(0),
     nStatus(SeenObjectStatus::Unknown),
     vecPayments(),
-    m_spork_manager{}
+    m_spork_manager(spork_manager)
 {
 }
 
