@@ -73,7 +73,7 @@ private:
     int nVoteOutcome; // see VOTE_OUTCOMES above
     int64_t nTime;
     std::vector<unsigned char> vchSig;
-    const ChainstateManager& m_chainman;
+    const ChainstateManager* m_chainman;
 
     /** Memory only. */
     const uint256 hash;

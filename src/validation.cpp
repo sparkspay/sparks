@@ -534,7 +534,7 @@ public:
         m_limit_ancestor_size(gArgs.GetArg("-limitancestorsize", DEFAULT_ANCESTOR_SIZE_LIMIT)*1000),
         m_limit_descendants(gArgs.GetArg("-limitdescendantcount", DEFAULT_DESCENDANT_LIMIT)),
         m_limit_descendant_size(gArgs.GetArg("-limitdescendantsize", DEFAULT_DESCENDANT_SIZE_LIMIT)*1000),
-        m_spork_manager{spork_manager} {
+        m_spork_manager(spork_manager) {
     }
 
     // We put the arguments we're handed into a struct, so we can pass them
