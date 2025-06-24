@@ -672,7 +672,7 @@ std::optional<const CSuperblock> CGovernanceManager::CreateSuperblockCandidate(i
     });
 
     // Create Superblock
-    return CSuperblock(nNextSuperblock, std::move(payments));
+    return CSuperblock(nNextSuperblock, std::move(payments), m_spork_manager);
 }
 
 std::optional<const CGovernanceObject> CGovernanceManager::CreateGovernanceTrigger(const std::optional<const CSuperblock>& sb_opt, PeerManager& peerman,
