@@ -64,7 +64,7 @@ enum Network {
     NET_CJDNS,
 
     /// A set of addresses that represent the hash of a string or FQDN. We use
-    /// them in CAddrMan to keep track of which DNS seeds were used.
+    /// them in AddrMan to keep track of which DNS seeds were used.
     NET_INTERNAL,
 
     /// Dummy value to indicate the number of NET_* constants.
@@ -202,7 +202,7 @@ public:
 
     enum Network GetNetwork() const;
     std::string ToString() const;
-    std::string ToStringIP(bool fUseGetnameinfo = true) const;
+    std::string ToStringIP() const;
     uint64_t GetHash() const;
     bool GetInAddr(struct in_addr* pipv4Addr) const;
     Network GetNetClass() const;
@@ -233,7 +233,7 @@ public:
      */
     bool IsRelayable() const
     {
-        return IsIPv4() || IsIPv6() || IsTor();
+        return IsIPv4() || IsIPv6() || IsTor() || IsI2P() || IsCJDNS();
     }
 
     /**
@@ -262,7 +262,6 @@ public:
         }
     }
 
-    friend class CNetAddrHash;
     friend class CSubNet;
 
 private:
@@ -483,22 +482,6 @@ public:
     }
 };
 
-class CNetAddrHash
-{
-public:
-    size_t operator()(const CNetAddr& a) const noexcept
-    {
-        CSipHasher hasher(m_salt_k0, m_salt_k1);
-        hasher.Write(a.m_net);
-        hasher.Write(a.m_addr.data(), a.m_addr.size());
-        return static_cast<size_t>(hasher.Finalize());
-    }
-
-private:
-    const uint64_t m_salt_k0 = GetRand(std::numeric_limits<uint64_t>::max());
-    const uint64_t m_salt_k1 = GetRand(std::numeric_limits<uint64_t>::max());
-};
-
 class CSubNet
 {
 protected:
@@ -562,7 +545,6 @@ public:
     CService(const CNetAddr& ip, uint16_t port);
     CService(const struct in_addr& ipv4Addr, uint16_t port);
     explicit CService(const struct sockaddr_in& addr);
-    void SetPort(uint16_t portIn);
     uint16_t GetPort() const;
     bool GetSockAddr(struct sockaddr* paddr, socklen_t *addrlen) const;
     bool SetSockAddr(const struct sockaddr* paddr);
@@ -570,9 +552,9 @@ public:
     friend bool operator!=(const CService& a, const CService& b) { return !(a == b); }
     friend bool operator<(const CService& a, const CService& b);
     std::vector<unsigned char> GetKey() const;
-    std::string ToString(bool fUseGetnameinfo = true) const;
+    std::string ToString() const;
     std::string ToStringPort() const;
-    std::string ToStringIPPort(bool fUseGetnameinfo = true) const;
+    std::string ToStringIPPort() const;
 
     CService(const struct in6_addr& ipv6Addr, uint16_t port);
     explicit CService(const struct sockaddr_in6& addr);
@@ -582,8 +564,26 @@ public:
         READWRITEAS(CNetAddr, obj);
         READWRITE(Using<BigEndianFormatter<2>>(obj.port));
     }
+
+    friend class CServiceHash;
+    friend CService MaybeFlipIPv6toCJDNS(const CService& service);
 };
 
-bool SanityCheckASMap(const std::vector<bool>& asmap);
+class CServiceHash
+{
+public:
+    size_t operator()(const CService& a) const noexcept
+    {
+        CSipHasher hasher(m_salt_k0, m_salt_k1);
+        hasher.Write(a.m_net);
+        hasher.Write(a.port);
+        hasher.Write(a.m_addr.data(), a.m_addr.size());
+        return static_cast<size_t>(hasher.Finalize());
+    }
+
+private:
+    const uint64_t m_salt_k0 = GetRand(std::numeric_limits<uint64_t>::max());
+    const uint64_t m_salt_k1 = GetRand(std::numeric_limits<uint64_t>::max());
+};
 
 #endif // BITCOIN_NETADDRESS_H

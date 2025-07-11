@@ -13,11 +13,11 @@ from _decimal import Decimal
 from io import BytesIO
 
 from test_framework.p2p import P2PInterface
-from test_framework.messages import CBlock, CBlockHeader, CCbTx, CMerkleBlock, FromHex, hash256, msg_getmnlistd, \
+from test_framework.messages import CBlock, CBlockHeader, CCbTx, CMerkleBlock, from_hex, hash256, msg_getmnlistd, \
     QuorumId, ser_uint256
 from test_framework.test_framework import SparksTestFramework
 from test_framework.util import (
-    assert_equal, p2p_port
+    assert_equal, assert_greater_than_or_equal, p2p_port
 )
 
 
@@ -46,7 +46,7 @@ class TestP2PConn(P2PInterface):
 
 class LLMQEvoNodesTest(SparksTestFramework):
     def set_test_params(self):
-        self.set_sparks_test_params(5, 4, fast_dip3_enforcement=True, evo_count=7)
+        self.set_sparks_test_params(5, 4, fast_dip3_enforcement=True, evo_count=5)
         self.set_sparks_llmq_test_params(4, 4)
 
     def run_test(self):
@@ -92,7 +92,7 @@ class LLMQEvoNodesTest(SparksTestFramework):
         self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
 
         evo_protxhash_list = list()
-        for i in range(5):
+        for i in range(self.evo_count):
             evo_info = self.dynamically_add_masternode(evo=True)
             evo_protxhash_list.append(evo_info.proTxHash)
             self.nodes[0].generate(8)
@@ -115,6 +115,7 @@ class LLMQEvoNodesTest(SparksTestFramework):
 
         self.log.info("Test that EvoNodes are paid 4x blocks in a row")
         self.test_evo_payments(window_analysis=48)
+        self.test_masternode_winners()
 
         self.activate_v20()
         self.activate_mn_rr()
@@ -127,6 +128,7 @@ class LLMQEvoNodesTest(SparksTestFramework):
 
         self.log.info("Test that EvoNodes are paid 1 block in a row after MN RewardReallocation activation")
         self.test_evo_payments(window_analysis=48, v20active=True)
+        self.test_masternode_winners(mn_rr_active=True)
 
         self.log.info(self.nodes[0].masternodelist())
 
@@ -248,6 +250,40 @@ class LLMQEvoNodesTest(SparksTestFramework):
         assert_equal(detailed_count['regular']['total'], expected_mns_count)
         assert_equal(detailed_count['evo']['total'], expected_evo_count)
 
+    def test_masternode_winners(self, mn_rr_active=False):
+        # ignore recent winners, test future ones only
+        # we get up to 21 entries here: tip + up to 20 future payees
+        winners = self.nodes[0].masternode('winners', '0')
+        weighted_count = self.mn_count + self.evo_count * (1 if mn_rr_active else 4)
+        assert_equal(len(winners.keys()) - 1, 20 if weighted_count > 20 else weighted_count)
+        consecutive_payments = 0
+        full_consecutive_payments_found = 0
+        payment_cycles = 0
+        first_payee = None
+        prev_winner = None
+        for height in winners.keys():
+            winner = winners[height]
+            if mn_rr_active:
+                assert_equal(prev_winner == winner, False)
+            else:
+                if prev_winner == winner:
+                    consecutive_payments += 1
+                else:
+                    if consecutive_payments == 3:
+                        full_consecutive_payments_found += 1
+                    consecutive_payments = 0
+                assert_greater_than_or_equal(3, consecutive_payments)
+            if consecutive_payments == 0 and winner == first_payee:
+                payment_cycles += 1
+            if first_payee is None:
+                first_payee = winner
+            prev_winner = winner
+        if mn_rr_active:
+            assert_equal(full_consecutive_payments_found, 0)
+        else:
+            assert_greater_than_or_equal(full_consecutive_payments_found, (len(winners.keys()) - 1 - self.mn_count) // 4 - 1)
+        assert_equal(payment_cycles, (len(winners.keys()) - 1) // weighted_count)
+
     def test_getmnlistdiff(self, baseBlockHash, blockHash, baseMNList, expectedDeleted, expectedUpdated):
         d = self.test_getmnlistdiff_base(baseBlockHash, blockHash)
 
@@ -276,7 +312,7 @@ class LLMQEvoNodesTest(SparksTestFramework):
 
     def test_getmnlistdiff_base(self, baseBlockHash, blockHash):
         hexstr = self.nodes[0].getblockheader(blockHash, False)
-        header = FromHex(CBlockHeader(), hexstr)
+        header = from_hex(CBlockHeader(), hexstr)
 
         d = self.test_node.getmnlistdiff(int(baseBlockHash, 16), int(blockHash, 16))
         assert_equal(d.baseBlockHash, int(baseBlockHash, 16))

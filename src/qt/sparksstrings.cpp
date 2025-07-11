@@ -23,10 +23,16 @@ QT_TRANSLATE_NOOP("sparks-core", ""
 "-maxtxfee is set very high! Fees this large could be paid on a single "
 "transaction."),
 QT_TRANSLATE_NOOP("sparks-core", ""
+"Cannot downgrade wallet from version %i to version %i. Wallet version "
+"unchanged."),
+QT_TRANSLATE_NOOP("sparks-core", ""
 "Cannot obtain a lock on data directory %s. %s is probably already running."),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "Cannot provide specific connections and have addrman find outgoing "
 "connections at the same."),
+QT_TRANSLATE_NOOP("sparks-core", ""
+"Cannot upgrade a non HD wallet from version %i to version %i which is non-HD "
+"wallet. Use upgradetohd RPC"),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "Distributed under the MIT software license, see the accompanying file %s or "
 "%s"),
@@ -36,6 +42,13 @@ QT_TRANSLATE_NOOP("sparks-core", ""
 "Error reading %s! All keys read correctly, but transaction data or address "
 "book entries might be missing or incorrect."),
 QT_TRANSLATE_NOOP("sparks-core", ""
+"Error: Dumpfile format record is incorrect. Got \"%s\", expected \"format\"."),
+QT_TRANSLATE_NOOP("sparks-core", ""
+"Error: Dumpfile identifier record is incorrect. Got \"%s\", expected \"%s\"."),
+QT_TRANSLATE_NOOP("sparks-core", ""
+"Error: Dumpfile version is not supported. This version of bitcoin-wallet "
+"only supports version 1 dumpfiles. Got dumpfile with version %s"),
+QT_TRANSLATE_NOOP("sparks-core", ""
 "Error: Listening for incoming connections failed (listen returned error %s)"),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "Failed to create backup, file already exists! This could happen if you "
@@ -44,6 +57,9 @@ QT_TRANSLATE_NOOP("sparks-core", ""
 QT_TRANSLATE_NOOP("sparks-core", ""
 "Fee estimation failed. Fallbackfee is disabled. Wait a few blocks or enable -"
 "fallbackfee."),
+QT_TRANSLATE_NOOP("sparks-core", ""
+"File %s already exists. If you are sure this is what you want, move it out "
+"of the way first."),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "Found unconfirmed denominated outputs, will wait till they confirm to "
 "continue."),
@@ -56,11 +72,30 @@ QT_TRANSLATE_NOOP("sparks-core", ""
 "Invalid amount for -maxtxfee=<amount>: '%s' (must be at least the minrelay "
 "fee of %s to prevent stuck transactions)"),
 QT_TRANSLATE_NOOP("sparks-core", ""
+"Invalid or corrupt peers.dat (%s). If you believe this is a bug, please "
+"report it to %s. As a workaround, you can move the file (%s) out of the way "
+"(rename, move, or delete) to have a new one created on the next start."),
+QT_TRANSLATE_NOOP("sparks-core", ""
 "Make sure to encrypt your wallet and delete all non-encrypted backups after "
 "you have verified that the wallet works!"),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "More than one onion bind address is provided. Using %s for the automatically "
 "created Tor onion service."),
+QT_TRANSLATE_NOOP("sparks-core", ""
+"No dump file provided. To use createfromdump, -dumpfile=<filename> must be "
+"provided."),
+QT_TRANSLATE_NOOP("sparks-core", ""
+"No dump file provided. To use dump, -dumpfile=<filename> must be provided."),
+QT_TRANSLATE_NOOP("sparks-core", ""
+"No wallet file format provided. To use createfromdump, -format=<format> must "
+"be provided."),
+QT_TRANSLATE_NOOP("sparks-core", ""
+"Outbound connections restricted to Tor (-onlynet=onion) but the proxy for "
+"reaching the Tor network is explicitly forbidden: -onion=0"),
+QT_TRANSLATE_NOOP("sparks-core", ""
+"Outbound connections restricted to Tor (-onlynet=onion) but the proxy for "
+"reaching the Tor network is not provided: none of -proxy, -onion or -"
+"listenonion is given"),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "Please check that your computer's date and time are correct! If your clock "
 "is wrong, %s will not work properly."),
@@ -90,6 +125,9 @@ QT_TRANSLATE_NOOP("sparks-core", ""
 "This is a pre-release test build - use at your own risk - do not use for "
 "mining or merchant applications"),
 QT_TRANSLATE_NOOP("sparks-core", ""
+"This is the maximum transaction fee you pay (in addition to the normal fee) "
+"to prioritize partial spend avoidance over regular coin selection."),
+QT_TRANSLATE_NOOP("sparks-core", ""
 "This is the transaction fee you may discard if change is smaller than dust "
 "at this level"),
 QT_TRANSLATE_NOOP("sparks-core", ""
@@ -108,10 +146,16 @@ QT_TRANSLATE_NOOP("sparks-core", ""
 "Unable to replay blocks. You will need to rebuild the database using -"
 "reindex-chainstate."),
 QT_TRANSLATE_NOOP("sparks-core", ""
+"Unknown wallet file format \"%s\" provided. Please provide one of \"bdb\" or "
+"\"sqlite\"."),
+QT_TRANSLATE_NOOP("sparks-core", ""
 "WARNING! Failed to replenish keypool, please unlock your wallet to do so."),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "Wallet is locked, can't replenish keypool! Automatic backups and mixing are "
 "disabled, please unlock your wallet to replenish keypool."),
+QT_TRANSLATE_NOOP("sparks-core", ""
+"Warning: Dumpfile wallet format \"%s\" does not match command line specified "
+"format \"%s\"."),
 QT_TRANSLATE_NOOP("sparks-core", ""
 "Warning: Private keys detected in wallet {%s} with disabled private keys"),
 QT_TRANSLATE_NOOP("sparks-core", ""
@@ -122,6 +166,7 @@ QT_TRANSLATE_NOOP("sparks-core", ""
 QT_TRANSLATE_NOOP("sparks-core", ""
 "You need to rebuild the database using -reindex to go back to unpruned "
 "mode.  This will redownload the entire blockchain"),
+QT_TRANSLATE_NOOP("sparks-core", "%s -- Incorrect seed, it should be a hex string"),
 QT_TRANSLATE_NOOP("sparks-core", "%s can't be lower than %s"),
 QT_TRANSLATE_NOOP("sparks-core", "%s failed"),
 QT_TRANSLATE_NOOP("sparks-core", "%s is idle."),
@@ -151,9 +196,11 @@ QT_TRANSLATE_NOOP("sparks-core", "Could not parse asmap file %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Disk space is too low!"),
 QT_TRANSLATE_NOOP("sparks-core", "Do you want to rebuild the block database now?"),
 QT_TRANSLATE_NOOP("sparks-core", "Done loading"),
+QT_TRANSLATE_NOOP("sparks-core", "Dump file %s does not exist."),
 QT_TRANSLATE_NOOP("sparks-core", "ERROR! Failed to create automatic backup"),
 QT_TRANSLATE_NOOP("sparks-core", "Entries are full."),
 QT_TRANSLATE_NOOP("sparks-core", "Entry exceeds maximum size."),
+QT_TRANSLATE_NOOP("sparks-core", "Error creating %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Error initializing block database"),
 QT_TRANSLATE_NOOP("sparks-core", "Error initializing wallet database environment %s!"),
 QT_TRANSLATE_NOOP("sparks-core", "Error loading %s"),
@@ -164,12 +211,18 @@ QT_TRANSLATE_NOOP("sparks-core", "Error loading %s: You can't disable HD on an a
 QT_TRANSLATE_NOOP("sparks-core", "Error loading block database"),
 QT_TRANSLATE_NOOP("sparks-core", "Error opening block database"),
 QT_TRANSLATE_NOOP("sparks-core", "Error reading from database, shutting down."),
+QT_TRANSLATE_NOOP("sparks-core", "Error reading next record from wallet database"),
 QT_TRANSLATE_NOOP("sparks-core", "Error upgrading chainstate database"),
 QT_TRANSLATE_NOOP("sparks-core", "Error upgrading evo database"),
+QT_TRANSLATE_NOOP("sparks-core", "Error: Couldn't create cursor into database"),
 QT_TRANSLATE_NOOP("sparks-core", "Error: Disk space is low for %s"),
+QT_TRANSLATE_NOOP("sparks-core", "Error: Dumpfile checksum does not match. Computed %s, expected %s"),
+QT_TRANSLATE_NOOP("sparks-core", "Error: Got key that was not hex: %s"),
+QT_TRANSLATE_NOOP("sparks-core", "Error: Got value that was not hex: %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Error: Keypool ran out, please call keypoolrefill first"),
-QT_TRANSLATE_NOOP("sparks-core", "Error: failed to add socket to epollfd (epoll_ctl returned error %s)"),
-QT_TRANSLATE_NOOP("sparks-core", "Error: failed to add socket to kqueuefd (kevent returned error %s)"),
+QT_TRANSLATE_NOOP("sparks-core", "Error: Missing checksum"),
+QT_TRANSLATE_NOOP("sparks-core", "Error: Unable to parse version %u as a uint32_t"),
+QT_TRANSLATE_NOOP("sparks-core", "Error: Unable to write record to new wallet"),
 QT_TRANSLATE_NOOP("sparks-core", "Exceeded max tries."),
 QT_TRANSLATE_NOOP("sparks-core", "Failed to clear fulfilled requests cache at %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Failed to clear governance cache at %s"),
@@ -188,9 +241,9 @@ QT_TRANSLATE_NOOP("sparks-core", "Failed to rescan the wallet during initializat
 QT_TRANSLATE_NOOP("sparks-core", "Failed to start a new mixing queue"),
 QT_TRANSLATE_NOOP("sparks-core", "Failed to verify database"),
 QT_TRANSLATE_NOOP("sparks-core", "Found enough users, signing ( waiting %s )"),
-QT_TRANSLATE_NOOP("sparks-core", "Found enough users, signing ..."),
+QT_TRANSLATE_NOOP("sparks-core", "Found enough users, signing…"),
 QT_TRANSLATE_NOOP("sparks-core", "Ignoring duplicate -wallet %s."),
-QT_TRANSLATE_NOOP("sparks-core", "Importing..."),
+QT_TRANSLATE_NOOP("sparks-core", "Importing…"),
 QT_TRANSLATE_NOOP("sparks-core", "Incompatible mode."),
 QT_TRANSLATE_NOOP("sparks-core", "Incompatible version."),
 QT_TRANSLATE_NOOP("sparks-core", "Incorrect -rescan mode, falling back to default value"),
@@ -215,15 +268,15 @@ QT_TRANSLATE_NOOP("sparks-core", "Invalid script detected."),
 QT_TRANSLATE_NOOP("sparks-core", "Invalid spork address specified with -sporkaddr"),
 QT_TRANSLATE_NOOP("sparks-core", "Last queue was created too recently."),
 QT_TRANSLATE_NOOP("sparks-core", "Last successful action was too recent."),
-QT_TRANSLATE_NOOP("sparks-core", "Loading P2P addresses..."),
-QT_TRANSLATE_NOOP("sparks-core", "Loading banlist..."),
-QT_TRANSLATE_NOOP("sparks-core", "Loading block index..."),
-QT_TRANSLATE_NOOP("sparks-core", "Loading wallet..."),
+QT_TRANSLATE_NOOP("sparks-core", "Loading P2P addresses…"),
+QT_TRANSLATE_NOOP("sparks-core", "Loading banlist…"),
+QT_TRANSLATE_NOOP("sparks-core", "Loading block index…"),
+QT_TRANSLATE_NOOP("sparks-core", "Loading wallet…"),
 QT_TRANSLATE_NOOP("sparks-core", "Lock is already in place."),
 QT_TRANSLATE_NOOP("sparks-core", "Masternode queue is full."),
 QT_TRANSLATE_NOOP("sparks-core", "Masternode:"),
 QT_TRANSLATE_NOOP("sparks-core", "Missing input transaction information."),
-QT_TRANSLATE_NOOP("sparks-core", "Mixing in progress..."),
+QT_TRANSLATE_NOOP("sparks-core", "Mixing in progress…"),
 QT_TRANSLATE_NOOP("sparks-core", "Need to specify a port with -whitebind: '%s'"),
 QT_TRANSLATE_NOOP("sparks-core", "No Masternodes detected."),
 QT_TRANSLATE_NOOP("sparks-core", "No compatible Masternode found."),
@@ -238,10 +291,10 @@ QT_TRANSLATE_NOOP("sparks-core", "Prune cannot be configured with a negative val
 QT_TRANSLATE_NOOP("sparks-core", "Prune mode is incompatible with -coinstatsindex."),
 QT_TRANSLATE_NOOP("sparks-core", "Prune mode is incompatible with -disablegovernance=false."),
 QT_TRANSLATE_NOOP("sparks-core", "Prune mode is incompatible with -txindex."),
-QT_TRANSLATE_NOOP("sparks-core", "Pruning blockstore..."),
+QT_TRANSLATE_NOOP("sparks-core", "Pruning blockstore…"),
 QT_TRANSLATE_NOOP("sparks-core", "Reducing -maxconnections from %d to %d, because of system limitations."),
-QT_TRANSLATE_NOOP("sparks-core", "Replaying blocks..."),
-QT_TRANSLATE_NOOP("sparks-core", "Rescanning..."),
+QT_TRANSLATE_NOOP("sparks-core", "Replaying blocks…"),
+QT_TRANSLATE_NOOP("sparks-core", "Rescanning…"),
 QT_TRANSLATE_NOOP("sparks-core", "SQLiteDatabase: Failed to execute statement to verify database: %s"),
 QT_TRANSLATE_NOOP("sparks-core", "SQLiteDatabase: Failed to prepare statement to verify database: %s"),
 QT_TRANSLATE_NOOP("sparks-core", "SQLiteDatabase: Failed to read database verification error: %s"),
@@ -254,11 +307,11 @@ QT_TRANSLATE_NOOP("sparks-core", "Specified -walletdir \"%s\" does not exist"),
 QT_TRANSLATE_NOOP("sparks-core", "Specified -walletdir \"%s\" is a relative path"),
 QT_TRANSLATE_NOOP("sparks-core", "Specified -walletdir \"%s\" is not a directory"),
 QT_TRANSLATE_NOOP("sparks-core", "Specified blocks directory \"%s\" does not exist."),
-QT_TRANSLATE_NOOP("sparks-core", "Starting network threads..."),
+QT_TRANSLATE_NOOP("sparks-core", "Starting network threads…"),
 QT_TRANSLATE_NOOP("sparks-core", "Submitted to masternode, waiting in queue %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Synchronization finished"),
-QT_TRANSLATE_NOOP("sparks-core", "Synchronizing blockchain..."),
-QT_TRANSLATE_NOOP("sparks-core", "Synchronizing governance objects..."),
+QT_TRANSLATE_NOOP("sparks-core", "Synchronizing blockchain…"),
+QT_TRANSLATE_NOOP("sparks-core", "Synchronizing governance objects…"),
 QT_TRANSLATE_NOOP("sparks-core", "The source code is available from %s."),
 QT_TRANSLATE_NOOP("sparks-core", "The specified config file %s does not exist"),
 QT_TRANSLATE_NOOP("sparks-core", "The transaction amount is too small to pay the fee"),
@@ -267,7 +320,7 @@ QT_TRANSLATE_NOOP("sparks-core", "This is expected because you are running a pru
 QT_TRANSLATE_NOOP("sparks-core", "This is experimental software."),
 QT_TRANSLATE_NOOP("sparks-core", "This is the minimum transaction fee you pay on every transaction."),
 QT_TRANSLATE_NOOP("sparks-core", "This is the transaction fee you will pay if you send a transaction."),
-QT_TRANSLATE_NOOP("sparks-core", "Topping up keypool..."),
+QT_TRANSLATE_NOOP("sparks-core", "Topping up keypool…"),
 QT_TRANSLATE_NOOP("sparks-core", "Transaction amount too small"),
 QT_TRANSLATE_NOOP("sparks-core", "Transaction amounts must not be negative"),
 QT_TRANSLATE_NOOP("sparks-core", "Transaction created successfully."),
@@ -276,13 +329,14 @@ QT_TRANSLATE_NOOP("sparks-core", "Transaction has too long of a mempool chain"),
 QT_TRANSLATE_NOOP("sparks-core", "Transaction must have at least one recipient"),
 QT_TRANSLATE_NOOP("sparks-core", "Transaction not valid."),
 QT_TRANSLATE_NOOP("sparks-core", "Transaction too large"),
-QT_TRANSLATE_NOOP("sparks-core", "Trying to connect..."),
+QT_TRANSLATE_NOOP("sparks-core", "Trying to connect…"),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to bind to %s on this computer (bind returned error %s)"),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to bind to %s on this computer. %s is probably already running."),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to create the PID file '%s': %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to generate initial keys"),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to locate enough mixed funds for this transaction."),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to locate enough non-denominated funds for this transaction."),
+QT_TRANSLATE_NOOP("sparks-core", "Unable to open %s for writing"),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to sign spork message, wrong key?"),
 QT_TRANSLATE_NOOP("sparks-core", "Unable to start HTTP server. See debug log for details."),
 QT_TRANSLATE_NOOP("sparks-core", "Unknown -blockfilterindex value %s."),
@@ -294,16 +348,16 @@ QT_TRANSLATE_NOOP("sparks-core", "Unsupported logging category %s=%s."),
 QT_TRANSLATE_NOOP("sparks-core", "Upgrading UTXO database"),
 QT_TRANSLATE_NOOP("sparks-core", "Upgrading txindex database"),
 QT_TRANSLATE_NOOP("sparks-core", "User Agent comment (%s) contains unsafe characters."),
-QT_TRANSLATE_NOOP("sparks-core", "Verifying blocks..."),
-QT_TRANSLATE_NOOP("sparks-core", "Verifying wallet(s)..."),
+QT_TRANSLATE_NOOP("sparks-core", "Verifying blocks…"),
+QT_TRANSLATE_NOOP("sparks-core", "Verifying wallet(s)…"),
 QT_TRANSLATE_NOOP("sparks-core", "Very low number of keys left: %d"),
 QT_TRANSLATE_NOOP("sparks-core", "Wallet is locked."),
 QT_TRANSLATE_NOOP("sparks-core", "Wallet needed to be rewritten: restart %s to complete"),
 QT_TRANSLATE_NOOP("sparks-core", "Warning: can't use %s and %s together, will prefer %s"),
 QT_TRANSLATE_NOOP("sparks-core", "Warning: incorrect parameter %s, path must exist! Using default path."),
 QT_TRANSLATE_NOOP("sparks-core", "Wasn't able to create wallet backup folder %s!"),
-QT_TRANSLATE_NOOP("sparks-core", "Will retry..."),
-QT_TRANSLATE_NOOP("sparks-core", "Wiping wallet transactions..."),
+QT_TRANSLATE_NOOP("sparks-core", "Will retry…"),
+QT_TRANSLATE_NOOP("sparks-core", "Wiping wallet transactions…"),
 QT_TRANSLATE_NOOP("sparks-core", "You are starting with governance validation disabled."),
 QT_TRANSLATE_NOOP("sparks-core", "You can not disable governance validation on a masternode."),
 QT_TRANSLATE_NOOP("sparks-core", "You can not start a masternode with wallet enabled."),

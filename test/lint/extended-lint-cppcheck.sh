@@ -39,8 +39,6 @@ IGNORED_WARNINGS=(
     "src/script/descriptor.cpp:.* Class 'PKHDescriptor' has a constructor with 1 argument that is not explicit."
     "src/script/descriptor.cpp:.* Class 'RawDescriptor' has a constructor with 1 argument that is not explicit."
     "src/script/descriptor.cpp:.* Class 'SHDescriptor' has a constructor with 1 argument that is not explicit."
-    "src/script/descriptor.cpp:.* Class 'WPKHDescriptor' has a constructor with 1 argument that is not explicit."
-    "src/script/descriptor.cpp:.* Class 'WSHDescriptor' has a constructor with 1 argument that is not explicit."
     "src/script/script.h:.* Class 'CScript' has a constructor with 1 argument that is not explicit."
     "src/script/standard.h:.* Class 'CScriptID' has a constructor with 1 argument that is not explicit."
     "src/span.h:.* Class 'Span < const CRPCCommand >' has a constructor with 1 argument that is not explicit."
@@ -57,7 +55,6 @@ IGNORED_WARNINGS=(
     "src/test/checkqueue_tests.cpp:.* Struct 'UniqueCheck' has a constructor with 1 argument that is not explicit."
     "src/test/fuzz/util.h:.* Class 'FuzzedFileProvider' has a constructor with 1 argument that is not explicit."
     "src/test/fuzz/util.h:.* Class 'FuzzedAutoFileProvider' has a constructor with 1 argument that is not explicit."
-    "src/util/ref.h:.* Class 'Ref' has a constructor with 1 argument that is not explicit."
     "src/wallet/db.h:.* Class 'BerkeleyEnvironment' has a constructor with 1 argument that is not explicit."
 )
 

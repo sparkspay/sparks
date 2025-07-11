@@ -6,8 +6,23 @@
 from decimal import Decimal
 import random
 
-from test_framework.messages import CTransaction, CTxIn, CTxOut, COutPoint, ToHex, COIN
-from test_framework.script import CScript, OP_1, OP_DROP, OP_2, OP_HASH160, OP_EQUAL, hash160, OP_TRUE
+from test_framework.messages import (
+    COIN,
+    COutPoint,
+    CTransaction,
+    CTxIn,
+    CTxOut,
+)
+from test_framework.script import (
+    CScript,
+    OP_1,
+    OP_2,
+    OP_DROP,
+    OP_EQUAL,
+    OP_HASH160,
+    OP_TRUE,
+    hash160,
+)
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import (
     assert_equal,
@@ -64,11 +79,11 @@ def small_txpuzzle_randfee(from_node, conflist, unconflist, amount, min_fee, fee
     # the ScriptSig that will satisfy the ScriptPubKey.
     for inp in tx.vin:
         inp.scriptSig = SCRIPT_SIG[inp.prevout.n]
-    txid = from_node.sendrawtransaction(hexstring=ToHex(tx), maxfeerate=0)
+    txid = from_node.sendrawtransaction(hexstring=tx.serialize().hex(), maxfeerate=0)
     unconflist.append({"txid": txid, "vout": 0, "amount": total_in - amount - fee})
     unconflist.append({"txid": txid, "vout": 1, "amount": amount})
 
-    return (ToHex(tx), fee)
+    return (tx.serialize().hex(), fee)
 
 
 def split_inputs(from_node, txins, txouts, initial_split=False):
@@ -91,10 +106,10 @@ def split_inputs(from_node, txins, txouts, initial_split=False):
     # If this is the initial split we actually need to sign the transaction
     # Otherwise we just need to insert the proper ScriptSig
     if (initial_split):
-        completetx = from_node.signrawtransactionwithwallet(ToHex(tx))["hex"]
+        completetx = from_node.signrawtransactionwithwallet(tx.serialize().hex())["hex"]
     else:
         tx.vin[0].scriptSig = SCRIPT_SIG[prevtxout["vout"]]
-        completetx = ToHex(tx)
+        completetx = tx.serialize().hex()
     txid = from_node.sendrawtransaction(hexstring=completetx, maxfeerate=0)
     txouts.append({"txid": txid, "vout": 0, "amount": half_change})
     txouts.append({"txid": txid, "vout": 1, "amount": rem_change})
@@ -120,9 +135,13 @@ def check_smart_estimates(node, fees_seen):
     delta = 1.0e-6  # account for rounding error
     last_feerate = float(max(fees_seen))
     all_smart_estimates = [node.estimatesmartfee(i) for i in range(1, 26)]
+    mempoolMinFee = node.getmempoolinfo()['mempoolminfee']
+    minRelaytxFee = node.getmempoolinfo()['minrelaytxfee']
     for i, e in enumerate(all_smart_estimates):  # estimate is for i+1
         feerate = float(e["feerate"])
         assert_greater_than(feerate, 0)
+        assert_greater_than_or_equal(feerate, float(mempoolMinFee))
+        assert_greater_than_or_equal(feerate, float(minRelaytxFee))
 
         if feerate + delta < min(fees_seen) or feerate - delta > max(fees_seen):
             raise AssertionError("Estimated fee (%f) out of range (%f,%f)"
@@ -265,6 +284,13 @@ class EstimateFeeTest(BitcoinTestFramework):
         self.sync_blocks(self.nodes[0:3], wait=.1)
         self.log.info("Final estimates after emptying mempools")
         check_estimates(self.nodes[1], self.fees_per_kb)
+
+        # check that the effective feerate is greater than or equal to the mempoolminfee even for high mempoolminfee
+        self.log.info("Test fee rate estimation after restarting node with high MempoolMinFee")
+        high_val = 3*self.nodes[1].estimatesmartfee(1)['feerate']
+        self.restart_node(1, extra_args=[f'-minrelaytxfee={high_val}'])
+        check_estimates(self.nodes[1], self.fees_per_kb)
+        self.stop_node(1, expected_stderr="Warning: -minrelaytxfee is set very high! The wallet will avoid paying less than the minimum relay fee.")
 
         self.log.info("Testing that fee estimation is disabled in blocksonly.")
         self.restart_node(0, ["-blocksonly"])

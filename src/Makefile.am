@@ -134,13 +134,13 @@ BITCOIN_CORE_H = \
   addressindex.h \
   spentindex.h \
   addrman.h \
+  addrman_impl.h \
   attributes.h \
   banman.h \
   base58.h \
   batchedlogger.h \
   bech32.h \
-  bip39.h \
-  bip39_english.h \
+  bip324.h \
   blockencodings.h \
   bloom.h \
   cachemap.h \
@@ -182,6 +182,7 @@ BITCOIN_CORE_H = \
   evo/assetlocktx.h \
   evo/dmn_types.h \
   evo/cbtx.h \
+  evo/chainhelper.h \
   evo/creditpool.h \
   evo/deterministicmns.h \
   evo/dmnstate.h \
@@ -205,7 +206,6 @@ BITCOIN_CORE_H = \
   gsl/assert.h \
   gsl/pointers.h \
   flat-database.h \
-  hdchain.h \
   flatfile.h \
   fs.h \
   httprpc.h \
@@ -288,12 +288,14 @@ BITCOIN_CORE_H = \
   reverse_iterator.h \
   rpc/blockchain.h \
   rpc/client.h \
+  rpc/index_util.h \
   rpc/mining.h \
   rpc/protocol.h \
   rpc/rawtransaction_util.h \
   rpc/register.h \
   rpc/request.h \
   rpc/server.h \
+  rpc/server_util.h \
   rpc/util.h \
   saltedhasher.h \
   scheduler.h \
@@ -329,6 +331,7 @@ BITCOIN_CORE_H = \
   util/bip32.h \
   util/bytevectorhash.h \
   util/check.h \
+  util/edge.h \
   util/enumerate.h \
   util/epochguard.h \
   util/error.h \
@@ -358,21 +361,28 @@ BITCOIN_CORE_H = \
   util/time.h \
   util/thread.h \
   util/threadnames.h \
+  util/tokenpipe.h \
   util/trace.h \
   util/translation.h \
+  util/types.h \
   util/ui_change_type.h \
   util/url.h \
   util/vector.h \
+  util/wpipe.h \
   validation.h \
   validationinterface.h \
   versionbits.h \
   wallet/bdb.h \
+  wallet/bip39.h \
+  wallet/bip39_english.h \
   wallet/coincontrol.h \
   wallet/coinselection.h \
   wallet/context.h \
   wallet/crypter.h \
   wallet/db.h \
+  wallet/dump.h \
   wallet/fees.h \
+  wallet/hdchain.h \
   wallet/ismine.h \
   wallet/load.h \
   wallet/rpcwallet.h \
@@ -410,6 +420,7 @@ libbitcoin_server_a_SOURCES = \
   addrman.cpp \
   banman.cpp \
   batchedlogger.cpp \
+  bip324.cpp \
   blockencodings.cpp \
   blockfilter.cpp \
   chain.cpp \
@@ -423,6 +434,7 @@ libbitcoin_server_a_SOURCES = \
   evo/assetlocktx.cpp \
   evo/cbtx.cpp \
   evo/creditpool.cpp \
+  evo/chainhelper.cpp \
   evo/deterministicmns.cpp \
   evo/dmnstate.cpp \
   evo/evodb.cpp \
@@ -472,7 +484,6 @@ libbitcoin_server_a_SOURCES = \
   masternode/payments.cpp \
   masternode/sync.cpp \
   masternode/utils.cpp \
-  messagesigner.cpp \
   miner.cpp \
   net.cpp \
   netfulfilledman.cpp \
@@ -495,6 +506,7 @@ libbitcoin_server_a_SOURCES = \
   rpc/blockchain.cpp \
   rpc/coinjoin.cpp \
   rpc/evo.cpp \
+  rpc/index_util.cpp \
   rpc/masternode.cpp \
   rpc/governance.cpp \
   rpc/mining.cpp \
@@ -503,6 +515,7 @@ libbitcoin_server_a_SOURCES = \
   rpc/quorums.cpp \
   rpc/rawtransaction.cpp \
   rpc/server.cpp \
+  rpc/server_util.cpp \
   script/sigcache.cpp \
   shutdown.cpp \
   spork.cpp \
@@ -543,12 +556,14 @@ libbitcoin_wallet_a_SOURCES = \
   coinjoin/client.cpp \
   coinjoin/interfaces.cpp \
   coinjoin/util.cpp \
-  hdchain.cpp \
+  wallet/bip39.cpp \
   wallet/coincontrol.cpp \
   wallet/context.cpp \
   wallet/crypter.cpp \
   wallet/db.cpp \
+  wallet/dump.cpp \
   wallet/fees.cpp \
+  wallet/hdchain.cpp \
   wallet/interfaces.cpp \
   wallet/load.cpp \
   wallet/rpcdump.cpp \
@@ -580,10 +595,10 @@ crypto_libbitcoin_crypto_base_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS) $(PIC_FLA
 crypto_libbitcoin_crypto_base_a_SOURCES = \
   crypto/aes.cpp \
   crypto/aes.h \
-  crypto/chacha_poly_aead.h \
-  crypto/chacha_poly_aead.cpp \
   crypto/chacha20.h \
   crypto/chacha20.cpp \
+  crypto/chacha20poly1305.h \
+  crypto/chacha20poly1305.cpp \
   crypto/common.h \
   crypto/hkdf_sha256_32.cpp \
   crypto/hkdf_sha256_32.h \
@@ -714,7 +729,6 @@ libbitcoin_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libbitcoin_common_a_SOURCES = \
   base58.cpp \
   bech32.cpp \
-  bip39.cpp \
   bloom.cpp \
   chainparams.cpp \
   coins.cpp \
@@ -727,6 +741,7 @@ libbitcoin_common_a_SOURCES = \
   key_io.cpp \
   llmq/utils.cpp \
   merkleblock.cpp \
+  net_types.cpp \
   netaddress.cpp \
   netbase.cpp \
   net_permissions.cpp \
@@ -764,6 +779,7 @@ libbitcoin_util_a_SOURCES = \
   fs.cpp \
   interfaces/handler.cpp \
   logging.cpp \
+  messagesigner.cpp \
   random.cpp \
   randomenv.cpp \
   rpc/request.cpp \
@@ -775,6 +791,7 @@ libbitcoin_util_a_SOURCES = \
   util/bip32.cpp \
   util/bytevectorhash.cpp \
   util/check.cpp \
+  util/edge.cpp \
   util/error.cpp \
   util/fees.cpp \
   util/hasher.cpp \
@@ -793,6 +810,8 @@ libbitcoin_util_a_SOURCES = \
   util/string.cpp \
   util/thread.cpp \
   util/threadnames.cpp \
+  util/tokenpipe.cpp \
+  util/wpipe.cpp \
   $(BITCOIN_CORE_H)
 
 if USE_LIBEVENT

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2019 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Copyright (c) 2014-2023 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -39,7 +39,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(interfaces::Wal
     auto node = interfaces::MakeNode();
     auto& coinJoinOptions = node->coinJoinOptions();
 
-    if (nNet > 0 || wtx.is_coinbase)
+    if (nNet > 0 || wtx.is_coinbase || wtx.is_platform_transfer)
     {
         //
         // Credit
@@ -73,6 +73,11 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(interfaces::Wal
                 {
                     // Generated
                     sub.type = TransactionRecord::Generated;
+                }
+                if (wtx.is_platform_transfer)
+                {
+                    // Withdrawal from platform
+                    sub.type = TransactionRecord::PlatformTransfer;
                 }
 
                 parts.append(sub);

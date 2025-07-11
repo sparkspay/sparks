@@ -104,9 +104,7 @@ RUN apt-get update && apt-get install $APT_ARGS \
     g++-arm-linux-gnueabihf \
     g++-mingw-w64-x86-64 \
     jq \
-    libcap-dev \
     libz-dev \
-    libbz2-dev \
     libncurses5 \
     nsis \
     python3-zmq \
@@ -116,7 +114,7 @@ RUN apt-get update && apt-get install $APT_ARGS \
     wine64 \
     xorriso
 
-ARG CPPCHECK_VERSION=2.10
+ARG CPPCHECK_VERSION=2.13.0
 RUN curl -sL "https://github.com/danmar/cppcheck/archive/${CPPCHECK_VERSION}.tar.gz" | tar -xvzf - --directory /tmp/
 RUN cd /tmp/cppcheck-${CPPCHECK_VERSION} && mkdir build && cd build && cmake .. && cmake --build . -j 8
 ENV PATH "/tmp/cppcheck-${CPPCHECK_VERSION}/build/bin:${PATH}"

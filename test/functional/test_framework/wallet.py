@@ -6,6 +6,7 @@
 
 from decimal import Decimal
 from test_framework.address import ADDRESS_BCRT1_P2SH_OP_TRUE
+from typing import Optional
 from test_framework.messages import (
     COIN,
     COutPoint,
@@ -31,6 +32,15 @@ class MiniWallet:
         self._address = ADDRESS_BCRT1_P2SH_OP_TRUE
         self._scriptPubKey = hex_str_to_bytes(self._test_node.validateaddress(self._address)['scriptPubKey'])
 
+    def scan_blocks(self, *, start=1, num):
+        """Scan the blocks for self._address outputs and add them to self._utxos"""
+        for i in range(start, start + num):
+            block = self._test_node.getblock(blockhash=self._test_node.getblockhash(i), verbosity=2)
+            for tx in block['tx']:
+                for out in tx['vout']:
+                    if out['scriptPubKey']['hex'] == self._scriptPubKey.hex():
+                        self._utxos.append({'txid': tx['txid'], 'vout': out['n'], 'value': out['value']})
+
     def generate(self, num_blocks):
         """Generate blocks with coinbase outputs to the internal address, and append the outputs to the internal list"""
         blocks = self._test_node.generatetoaddress(num_blocks, self._address)
@@ -39,12 +49,15 @@ class MiniWallet:
             self._utxos.append({'txid': cb_tx['txid'], 'vout': 0, 'value': cb_tx['vout'][0]['value']})
         return blocks
 
-    def get_utxo(self, *, txid=''):
+    def get_address(self):
+        return self._address
+
+    def get_utxo(self, *, txid: Optional[str]=''):
         """
         Returns a utxo and marks it as spent (pops it from the internal list)
 
         Args:
-        txid (string), optional: get the first utxo we find from a specific transaction
+        txid: get the first utxo we find from a specific transaction
 
         Note: Can be used to get the change output immediately after a send_self_transfer
         """
@@ -73,9 +86,5 @@ class MiniWallet:
         self._utxos.append({'txid': tx_info['txid'], 'vout': 0, 'value': send_value})
         from_node.sendrawtransaction(tx_hex)
         assert_equal(len(tx_hex) // 2, vsize)
-        # Sparks doesn't have `fees` in this RPC result
-        # TODO drop this variable after 19940
-        b19940_done = False
-        if b19940_done:
-            assert_equal(tx_info['fees']['base'], fee)
+        assert_equal(tx_info['fees']['base'], fee)
         return {'txid': tx_info['txid'], 'hex': tx_hex}

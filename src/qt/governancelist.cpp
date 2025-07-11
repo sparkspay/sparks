@@ -10,6 +10,7 @@
 #include <coins.h>
 #include <evo/deterministicmns.h>
 #include <netbase.h>
+#include <node/context.h>
 #include <qt/clientmodel.h>
 #include <qt/guiutil.h>
 
@@ -348,7 +349,8 @@ void GovernanceList::updateProposalList()
         // A proposal is considered passing if (YES votes - NO votes) >= (Total Weight of Masternodes / 10),
         // count total valid (ENABLED) masternodes to determine passing threshold.
         // Need to query number of masternodes here with access to clientModel.
-        const int nWeightedMnCount = clientModel->getMasternodeList().first.GetValidWeightedMNsCount();
+        NodeContext& node = *clientModel->node().context();
+        const int nWeightedMnCount = clientModel->getMasternodeList().first.GetValidWeightedMNsCount(node.chainman->ActiveChain());
         const int nAbsVoteReq = std::max(Params().GetConsensus().nGovernanceMinQuorum, nWeightedMnCount / 10);
         proposalModel->setVotingParams(nAbsVoteReq);
 

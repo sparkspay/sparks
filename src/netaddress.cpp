@@ -166,7 +166,7 @@ void CNetAddr::SetLegacyIPv6(Span<const uint8_t> ipv6)
 }
 
 /**
- * Create an "internal" address that represents a name or FQDN. CAddrMan uses
+ * Create an "internal" address that represents a name or FQDN. AddrMan uses
  * these fake addresses to keep track of which DNS seeds were used.
  * @returns Whether or not the operation was successful.
  * @see NET_INTERNAL, INTERNAL_IN_IPV6_PREFIX, CNetAddr::IsInternal(), CNetAddr::IsRFC4193()
@@ -542,23 +542,64 @@ static std::string IPv4ToString(Span<const uint8_t> a)
     return strprintf("%u.%u.%u.%u", a[0], a[1], a[2], a[3]);
 }
 
-static std::string IPv6ToString(Span<const uint8_t> a)
+// Return an IPv6 address text representation with zero compression as described in RFC 5952
+// ("A Recommendation for IPv6 Address Text Representation").
+static std::string IPv6ToString(Span<const uint8_t> a, uint32_t scope_id)
 {
     assert(a.size() == ADDR_IPV6_SIZE);
-    // clang-format off
-    return strprintf("%x:%x:%x:%x:%x:%x:%x:%x",
-                     ReadBE16(&a[0]),
-                     ReadBE16(&a[2]),
-                     ReadBE16(&a[4]),
-                     ReadBE16(&a[6]),
-                     ReadBE16(&a[8]),
-                     ReadBE16(&a[10]),
-                     ReadBE16(&a[12]),
-                     ReadBE16(&a[14]));
-    // clang-format on
+    const std::array groups{
+        ReadBE16(&a[0]),
+        ReadBE16(&a[2]),
+        ReadBE16(&a[4]),
+        ReadBE16(&a[6]),
+        ReadBE16(&a[8]),
+        ReadBE16(&a[10]),
+        ReadBE16(&a[12]),
+        ReadBE16(&a[14]),
+    };
+
+    // The zero compression implementation is inspired by Rust's std::net::Ipv6Addr, see
+    // https://github.com/rust-lang/rust/blob/cc4103089f40a163f6d143f06359cba7043da29b/library/std/src/net/ip.rs#L1635-L1683
+    struct ZeroSpan {
+        size_t start_index{0};
+        size_t len{0};
+    };
+
+    // Find longest sequence of consecutive all-zero fields. Use first zero sequence if two or more
+    // zero sequences of equal length are found.
+    ZeroSpan longest, current;
+    for (size_t i{0}; i < groups.size(); ++i) {
+        if (groups[i] != 0) {
+            current = {i + 1, 0};
+            continue;
+        }
+        current.len += 1;
+        if (current.len > longest.len) {
+            longest = current;
+        }
+    }
+
+    std::string r;
+    r.reserve(39);
+    for (size_t i{0}; i < groups.size(); ++i) {
+        // Replace the longest sequence of consecutive all-zero fields with two colons ("::").
+        if (longest.len >= 2 && i >= longest.start_index && i < longest.start_index + longest.len) {
+            if (i == longest.start_index) {
+                r += "::";
+            }
+            continue;
+        }
+        r += strprintf("%s%x", ((!r.empty() && r.back() != ':') ? ":" : ""), groups[i]);
+    }
+
+    if (scope_id != 0) {
+        r += strprintf("%%%u", scope_id);
+    }
+
+    return r;
 }
 
-static std::string OnionToString(const Span<const uint8_t>& addr)
+static std::string OnionToString(Span<const uint8_t> addr)
 {
     uint8_t checksum[torv3::CHECKSUM_LEN];
     torv3::Checksum(addr, checksum);
@@ -569,31 +610,20 @@ static std::string OnionToString(const Span<const uint8_t>& addr)
     return EncodeBase32(address) + ".onion";
 }
 
-std::string CNetAddr::ToStringIP(bool fUseGetnameinfo) const
+std::string CNetAddr::ToStringIP() const
 {
     switch (m_net) {
     case NET_IPV4:
         return IPv4ToString(m_addr);
     case NET_IPV6: {
-        if (fUseGetnameinfo) {
-            CService serv(*this, 0);
-            struct sockaddr_storage sockaddr;
-            socklen_t socklen = sizeof(sockaddr);
-            if (serv.GetSockAddr((struct sockaddr*)&sockaddr, &socklen)) {
-                char name[1025] = "";
-                if (!getnameinfo((const struct sockaddr*)&sockaddr, socklen, name,
-                                 sizeof(name), nullptr, 0, NI_NUMERICHOST))
-                    return std::string(name);
-            }
-        }
-        return IPv6ToString(m_addr);
+        return IPv6ToString(m_addr, m_scope_id);
     }
     case NET_ONION:
         return OnionToString(m_addr);
     case NET_I2P:
         return EncodeBase32(m_addr, false /* don't pad with = */) + ".b32.i2p";
     case NET_CJDNS:
-        return IPv6ToString(m_addr);
+        return IPv6ToString(m_addr, 0);
     case NET_INTERNAL:
         return EncodeBase32(m_addr) + ".internal";
     case NET_UNROUTABLE: // m_net is never and should not be set to NET_UNROUTABLE
@@ -650,7 +680,7 @@ bool CNetAddr::GetInAddr(struct in_addr* pipv4Addr) const
  */
 bool CNetAddr::GetIn6Addr(struct in6_addr* pipv6Addr) const
 {
-    if (!IsIPv6()) {
+    if (!IsIPv6() && !IsCJDNS()) {
         return false;
     }
     assert(sizeof(*pipv6Addr) == m_addr.size());
@@ -770,8 +800,14 @@ std::vector<unsigned char> CNetAddr::GetGroup(const std::vector<bool> &asmap) co
         vchRet.push_back((ipv4 >> 24) & 0xFF);
         vchRet.push_back((ipv4 >> 16) & 0xFF);
         return vchRet;
-    } else if (IsTor() || IsI2P() || IsCJDNS()) {
+    } else if (IsTor() || IsI2P()) {
         nBits = 4;
+    } else if (IsCJDNS()) {
+        // Treat in the same way as Tor and I2P because the address in all of
+        // them is "random" bytes (derived from a public key). However in CJDNS
+        // the first byte is a constant 0xfc, so the random bytes come after it.
+        // Thus skip the constant 8 bits at the start.
+        nBits = 12;
     } else if (IsHeNet()) {
         // for he.net, use /36 groups
         nBits = 36;
@@ -866,6 +902,11 @@ int CNetAddr::GetReachabilityFrom(const CNetAddr *paddrPartner) const
     case NET_I2P:
         switch (ourNet) {
         case NET_I2P: return REACH_PRIVATE;
+        default: return REACH_DEFAULT;
+        }
+    case NET_CJDNS:
+        switch (ourNet) {
+        case NET_CJDNS: return REACH_PRIVATE;
         default: return REACH_DEFAULT;
         }
     case NET_TEREDO:
@@ -969,7 +1010,7 @@ bool CService::GetSockAddr(struct sockaddr* paddr, socklen_t *addrlen) const
         paddrin->sin_port = htons(port);
         return true;
     }
-    if (IsIPv6()) {
+    if (IsIPv6() || IsCJDNS()) {
         if (*addrlen < (socklen_t)sizeof(struct sockaddr_in6))
             return false;
         *addrlen = sizeof(struct sockaddr_in6);
@@ -1001,23 +1042,18 @@ std::string CService::ToStringPort() const
     return strprintf("%u", port);
 }
 
-std::string CService::ToStringIPPort(bool fUseGetnameinfo) const
+std::string CService::ToStringIPPort() const
 {
     if (IsIPv4() || IsTor() || IsI2P() || IsInternal()) {
-        return ToStringIP(fUseGetnameinfo) + ":" + ToStringPort();
+        return ToStringIP() + ":" + ToStringPort();
     } else {
-        return "[" + ToStringIP(fUseGetnameinfo) + "]:" + ToStringPort();
+        return "[" + ToStringIP() + "]:" + ToStringPort();
     }
 }
 
-std::string CService::ToString(bool fUseGetnameinfo) const
+std::string CService::ToString() const
 {
-    return ToStringIPPort(fUseGetnameinfo);
-}
-
-void CService::SetPort(uint16_t portIn)
-{
-    port = portIn;
+    return ToStringIPPort();
 }
 
 CSubNet::CSubNet():
@@ -1222,9 +1258,4 @@ bool operator==(const CSubNet& a, const CSubNet& b)
 bool operator<(const CSubNet& a, const CSubNet& b)
 {
     return (a.network < b.network || (a.network == b.network && memcmp(a.netmask, b.netmask, 16) < 0));
-}
-
-bool SanityCheckASMap(const std::vector<bool>& asmap)
-{
-    return SanityCheckASMap(asmap, 128); // For IP address lookups, the input is 128 bits
 }

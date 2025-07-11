@@ -9,7 +9,7 @@ Test that the CHECKLOCKTIMEVERIFY soft-fork activates at (regtest) block height
 """
 
 from test_framework.blocktools import create_coinbase, create_block, create_transaction
-from test_framework.messages import CTransaction, msg_block, ToHex
+from test_framework.messages import CTransaction, msg_block
 from test_framework.p2p import P2PInterface
 from test_framework.script import CScript, OP_1NEGATE, OP_CHECKLOCKTIMEVERIFY, OP_DROP, CScriptNum
 from test_framework.test_framework import BitcoinTestFramework
@@ -43,7 +43,7 @@ def cltv_validate(node, tx, height):
     tx.nLockTime = height
 
     # Need to re-sign, since nSequence and nLockTime changed
-    signed_result = node.signrawtransactionwithwallet(ToHex(tx))
+    signed_result = node.signrawtransactionwithwallet(tx.serialize().hex())
     new_tx = CTransaction()
     new_tx.deserialize(BytesIO(hex_str_to_bytes(signed_result['hex'])))
 
@@ -60,7 +60,7 @@ class BIP65Test(BitcoinTestFramework):
             '-dip3params=9000:9000',
             '-par=1',  # Use only one script thread to get the exact reject reason for testing
             '-acceptnonstdtxn=1',  # cltv_invalidate is nonstandard
-            '-vbparams=v20:0:999999999999:480:384:288:5:0' # Delay v20 for this test as we don't need it
+            '-vbparams=v20:0:999999999999:0:480:384:288:5:0' # Delay v20 for this test as we don't need it
         ]]
         self.setup_clean_chain = True
         self.rpc_timeout = 480

@@ -19,11 +19,14 @@
 #include <optional>
 
 class BlockValidationState;
+class CChain;
 class CChainState;
 class CConnman;
 class CDataStream;
+class CDeterministicMNManager;
 class CEvoDB;
 class CNode;
+class PeerManager;
 
 extern RecursiveMutex cs_main;
 
@@ -37,17 +40,19 @@ class CQuorumBlockProcessor
 {
 private:
     CChainState& m_chainstate;
-    CConnman& connman;
+    CDeterministicMNManager& m_dmnman;
     CEvoDB& m_evoDb;
+    const std::unique_ptr<PeerManager>& m_peerman;
 
-    mutable RecursiveMutex minableCommitmentsCs;
+    mutable Mutex minableCommitmentsCs;
     std::map<std::pair<Consensus::LLMQType, uint256>, uint256> minableCommitmentsByQuorum GUARDED_BY(minableCommitmentsCs);
     std::map<uint256, CFinalCommitment> minableCommitments GUARDED_BY(minableCommitmentsCs);
 
     mutable std::map<Consensus::LLMQType, unordered_lru_cache<uint256, bool, StaticSaltedHasher>> mapHasMinedCommitmentCache GUARDED_BY(minableCommitmentsCs);
 
 public:
-    explicit CQuorumBlockProcessor(CChainState& chainstate, CConnman& _connman, CEvoDB& evoDb);
+    explicit CQuorumBlockProcessor(CChainState& chainstate, CDeterministicMNManager& dmnman, CEvoDB& evoDb,
+                                   const std::unique_ptr<PeerManager>& peerman);
 
     PeerMsgRet ProcessMessage(const CNode& peer, std::string_view msg_type, CDataStream& vRecv);
 
@@ -71,13 +76,10 @@ public:
 private:
     static bool GetCommitmentsFromBlock(const CBlock& block, gsl::not_null<const CBlockIndex*> pindex, std::multimap<Consensus::LLMQType, CFinalCommitment>& ret, BlockValidationState& state) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
     bool ProcessCommitment(int nHeight, const uint256& blockHash, const CFinalCommitment& qc, BlockValidationState& state, bool fJustCheck, bool fBLSChecks) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
-    static bool IsMiningPhase(const Consensus::LLMQParams& llmqParams, int nHeight) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+    static bool IsMiningPhase(const Consensus::LLMQParams& llmqParams, const CChain& active_chain, int nHeight) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
     size_t GetNumCommitmentsRequired(const Consensus::LLMQParams& llmqParams, int nHeight) const EXCLUSIVE_LOCKS_REQUIRED(cs_main);
-    static uint256 GetQuorumBlockHash(const Consensus::LLMQParams& llmqParams, int nHeight, int quorumIndex) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+    static uint256 GetQuorumBlockHash(const Consensus::LLMQParams& llmqParams, const CChain& active_chain, int nHeight, int quorumIndex) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 };
-
-extern std::unique_ptr<CQuorumBlockProcessor> quorumBlockProcessor;
-
 } // namespace llmq
 
 #endif // BITCOIN_LLMQ_BLOCKPROCESSOR_H

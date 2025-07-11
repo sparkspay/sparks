@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2015 The Bitcoin Core developers
+// Copyright (c) 2012-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -436,6 +436,20 @@ BOOST_AUTO_TEST_CASE(streams_buffered_file_rand)
         }
     }
     fs::remove("streams_test_tmp");
+}
+
+BOOST_AUTO_TEST_CASE(streams_hashed)
+{
+    CDataStream stream(SER_NETWORK, INIT_PROTO_VERSION);
+    HashedSourceWriter hash_writer{stream};
+    const std::string data{"bitcoin"};
+    hash_writer << data;
+
+    CHashVerifier hash_verifier{&stream};
+    std::string result;
+    hash_verifier >> result;
+    BOOST_CHECK_EQUAL(data, result);
+    BOOST_CHECK_EQUAL(hash_writer.GetHash(), hash_verifier.GetHash());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

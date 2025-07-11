@@ -18,7 +18,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-ExecStart=/usr/bin/sparksd -daemon \
+ExecStart=/usr/bin/sparksd -daemonwait \
                                                             -pid=/run/sparksd/sparksd.pid \
                                                             -conf=/etc/sparks/sparks.conf  \
                                                             -datadir=/var/lib/sparksd
@@ -33,6 +33,7 @@ ExecStartPre=/bin/chgrp sparkscore /etc/sparks
 Type=forking
 PIDFile=/run/sparksd/sparksd.pid
 Restart=on-failure
+TimeoutStartSec=infinity
 TimeoutStopSec=600
 
 # Directory creation and permissions

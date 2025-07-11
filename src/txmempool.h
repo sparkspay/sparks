@@ -18,6 +18,7 @@
 #include <spentindex.h>
 #include <amount.h>
 #include <coins.h>
+#include <gsl/pointers.h>
 #include <indirectmap.h>
 #include <policy/feerate.h>
 #include <primitives/transaction.h>
@@ -28,7 +29,6 @@
 #include <util/epochguard.h>
 #include <util/hasher.h>
 
-#include <boost/optional.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -61,6 +61,20 @@ struct LockPoints
     LockPoints() : height(0), time(0), maxInputBlock(nullptr) { }
 };
 
+struct CompareIteratorByHash {
+    // SFINAE for T where T is either a pointer type (e.g., a txiter) or a reference_wrapper<T>
+    // (e.g. a wrapped CTxMemPoolEntry&)
+    template <typename T>
+    bool operator()(const std::reference_wrapper<T>& a, const std::reference_wrapper<T>& b) const
+    {
+        return a.get().GetTx().GetHash() < b.get().GetTx().GetHash();
+    }
+    template <typename T>
+    bool operator()(const T& a, const T& b) const
+    {
+        return a->GetTx().GetHash() < b->GetTx().GetHash();
+    }
+};
 /** \class CTxMemPoolEntry
  *
  * CTxMemPoolEntry stores data about the corresponding transaction, as well
@@ -75,8 +89,16 @@ struct LockPoints
 
 class CTxMemPoolEntry
 {
+public:
+    typedef std::reference_wrapper<const CTxMemPoolEntry> CTxMemPoolEntryRef;
+    // two aliases, should the types ever diverge
+    typedef std::set<CTxMemPoolEntryRef, CompareIteratorByHash> Parents;
+    typedef std::set<CTxMemPoolEntryRef, CompareIteratorByHash> Children;
+
 private:
     const CTransactionRef tx;
+    mutable Parents m_parents;
+    mutable Children m_children;
     const CAmount nFee;             //!< Cached to avoid expensive parent-transaction lookups
     const size_t nTxSize;           //!< ... and avoid recomputing tx size
     const size_t nUsageSize;        //!< ... and total memory usage
@@ -137,6 +159,11 @@ public:
     uint64_t GetSizeWithAncestors() const { return nSizeWithAncestors; }
     CAmount GetModFeesWithAncestors() const { return nModFeesWithAncestors; }
     unsigned int GetSigOpCountWithAncestors() const { return nSigOpCountWithAncestors; }
+
+    const Parents& GetMemPoolParentsConst() const { return m_parents; }
+    const Children& GetMemPoolChildrenConst() const { return m_children; }
+    Parents& GetMemPoolParents() const { return m_parents; }
+    Children& GetMemPoolChildren() const { return m_children; }
 
     mutable size_t vTxHashesIdx; //!< Index in mempool's vTxHashes
 
@@ -335,6 +362,7 @@ struct entry_time {};
 struct ancestor_score {};
 
 class CBlockPolicyEstimator;
+class CDeterministicMNManager;
 
 /**
  * Information about a mempool transaction.
@@ -445,15 +473,16 @@ class CTxMemPool
 protected:
     const int m_check_ratio; //!< Value n means that 1 times in n we check.
     std::atomic<unsigned int> nTransactionsUpdated{0}; //!< Used by getblocktemplate to trigger CreateNewBlock() invocation
-    CBlockPolicyEstimator* minerPolicyEstimator;
+    CBlockPolicyEstimator* const minerPolicyEstimator;
+    CDeterministicMNManager* m_dmnman{nullptr};
 
     uint64_t totalTxSize GUARDED_BY(cs);      //!< sum of all mempool tx' byte sizes
     CAmount m_total_fee GUARDED_BY(cs);       //!< sum of all mempool tx's fees (NOT modified fee)
     uint64_t cachedInnerUsage GUARDED_BY(cs); //!< sum of dynamic memory usage of all the map elements (NOT the maps themselves)
 
-    mutable int64_t lastRollingFeeUpdate;
-    mutable bool blockSinceLastRollingFeeBump;
-    mutable double rollingMinimumFeeRate; //!< minimum fee to get into the pool, decreases exponentially
+    mutable int64_t lastRollingFeeUpdate GUARDED_BY(cs);
+    mutable bool blockSinceLastRollingFeeBump GUARDED_BY(cs);
+    mutable double rollingMinimumFeeRate GUARDED_BY(cs); //!< minimum fee to get into the pool, decreases exponentially
     mutable Epoch m_epoch GUARDED_BY(cs);
 
     void trackPackageRemoved(const CFeeRate& rate) EXCLUSIVE_LOCKS_REQUIRED(cs);
@@ -495,17 +524,14 @@ public:
      * that are guarded by it.
      *
      * @par Consistency guarantees
-     *
      * By design, it is guaranteed that:
-     *
      * 1. Locking both `cs_main` and `mempool.cs` will give a view of mempool
-     *    that is consistent with current chain tip (`::ChainActive()` and
+     *    that is consistent with current chain tip (`ActiveChain()` and
      *    `CoinsTip()`) and is fully populated. Fully populated means that if the
      *    current active chain is missing transactions that were present in a
      *    previously active chain, all the missing transactions will have been
      *    re-added to the mempool and should be present if they meet size and
      *    consistency constraints.
-     *
      * 2. Locking `mempool.cs` without `cs_main` will give a view of a mempool
      *    consistent with some chain that was active since `cs_main` was last
      *    locked, and that is fully populated as described above. It is ok for
@@ -523,26 +549,12 @@ public:
     using txiter = indexed_transaction_set::nth_index<0>::type::const_iterator;
     std::vector<std::pair<uint256, txiter> > vTxHashes GUARDED_BY(cs); //!< All tx hashes/entries in mapTx, in random order
 
-    struct CompareIteratorByHash {
-        bool operator()(const txiter &a, const txiter &b) const {
-            return a->GetTx().GetHash() < b->GetTx().GetHash();
-        }
-    };
     typedef std::set<txiter, CompareIteratorByHash> setEntries;
 
-    const setEntries & GetMemPoolParents(txiter entry) const EXCLUSIVE_LOCKS_REQUIRED(cs);
-    const setEntries & GetMemPoolChildren(txiter entry) const EXCLUSIVE_LOCKS_REQUIRED(cs);
     uint64_t CalculateDescendantMaximum(txiter entry) const EXCLUSIVE_LOCKS_REQUIRED(cs);
 private:
     typedef std::map<txiter, setEntries, CompareIteratorByHash> cacheMap;
 
-    struct TxLinks {
-        setEntries parents;
-        setEntries children;
-    };
-
-    typedef std::map<txiter, TxLinks, CompareIteratorByHash> txlinksMap;
-    txlinksMap mapLinks;
 
     typedef std::map<CMempoolAddressDeltaKey, CMempoolAddressDelta, CMempoolAddressDeltaKeyCompare> addressDeltaMap;
     addressDeltaMap mapAddress;
@@ -575,7 +587,7 @@ private:
 
 public:
     indirectmap<COutPoint, const CTransaction*> mapNextTx GUARDED_BY(cs);
-    std::map<uint256, CAmount> mapDeltas;
+    std::map<uint256, CAmount> mapDeltas GUARDED_BY(cs);
 
     /** Create a new CTxMemPool.
      * Sanity checks will be off by default for performance, because otherwise
@@ -586,6 +598,21 @@ public:
      * @param[in] check_ratio is the ratio used to determine how often sanity checks will run.
      */
     explicit CTxMemPool(CBlockPolicyEstimator* estimator = nullptr, int check_ratio = 0);
+
+    /**
+     * Set CDeterministicMNManager pointer.
+     *
+     * Separated from constructor as it's initialized after CTxMemPool
+     * is created. Required for ProTx processing.
+     */
+    void ConnectManagers(gsl::not_null<CDeterministicMNManager*> dmnman);
+
+    /**
+     * Reset CDeterministicMNManager pointer.
+     *
+     * @pre Must be called before CDeterministicMNManager is destroyed.
+     */
+    void DisconnectManagers() { m_dmnman = nullptr; }
 
     /**
      * If sanity-checking is turned on, check makes sure the pool is
@@ -605,13 +632,13 @@ public:
     void addUnchecked(const CTxMemPoolEntry& entry, bool validFeeEstimate = true) EXCLUSIVE_LOCKS_REQUIRED(cs, cs_main);
     void addUnchecked(const CTxMemPoolEntry& entry, setEntries& setAncestors, bool validFeeEstimate = true) EXCLUSIVE_LOCKS_REQUIRED(cs, cs_main);
 
-    void addAddressIndex(const CTxMemPoolEntry &entry, const CCoinsViewCache &view);
-    bool getAddressIndex(std::vector<std::pair<uint160, AddressType> > &addresses,
-                         std::vector<std::pair<CMempoolAddressDeltaKey, CMempoolAddressDelta> > &results);
+    void addAddressIndex(const CTxMemPoolEntry& entry, const CCoinsViewCache& view);
+    bool getAddressIndex(const std::vector<CMempoolAddressDeltaKey>& addresses,
+                         std::vector<CMempoolAddressDeltaEntry>& results) const;
     bool removeAddressIndex(const uint256 txhash);
 
-    void addSpentIndex(const CTxMemPoolEntry &entry, const CCoinsViewCache &view);
-    bool getSpentIndex(CSpentIndexKey &key, CSpentIndexValue &value);
+    void addSpentIndex(const CTxMemPoolEntry& entry, const CCoinsViewCache& view);
+    bool getSpentIndex(const CSpentIndexKey& key, CSpentIndexValue& value) const;
     bool removeSpentIndex(const uint256 txhash);
 
     void removeRecursive(const CTransaction& tx, MemPoolRemovalReason reason) EXCLUSIVE_LOCKS_REQUIRED(cs);
@@ -747,6 +774,10 @@ public:
     TxMempoolInfo info(const uint256& hash) const;
     std::vector<TxMempoolInfo> infoAll() const;
 
+    /**
+     * @pre Caller must ensure that CDeterministicMNManager exists and has been
+     *      set using ConnectManagers() for the CTxMemPool instance.
+     */
     bool existsProviderTxConflict(const CTransaction &tx) const;
 
     size_t DynamicMemoryUsage() const;
@@ -804,6 +835,12 @@ private:
     /** Sever link between specified transaction and direct children. */
     void UpdateChildrenForRemoval(txiter entry) EXCLUSIVE_LOCKS_REQUIRED(cs);
 
+    /**
+     * addUnchecked extension for Dash-specific transactions (ProTx).
+     * Depends on CDeterministicMNManager.
+     */
+    void addUncheckedProTx(indexed_transaction_set::iterator& newit, const CTransaction& tx);
+
     /** Before calling removeUnchecked for a given transaction,
      *  UpdateForRemoveFromMempool must be called on the entire (dependent) set
      *  of transactions being removed at the same time.  We use each
@@ -813,6 +850,8 @@ private:
      *  removal.
      */
     void removeUnchecked(txiter entry, MemPoolRemovalReason reason) EXCLUSIVE_LOCKS_REQUIRED(cs);
+    void removeUncheckedProTx(const CTransaction& tx);
+
 public:
     /** visited marks a CTxMemPoolEntry as having been traversed
      * during the lifetime of the most recently created Epoch::Guard
@@ -827,7 +866,7 @@ public:
         return m_epoch.visited(it->m_epoch_marker);
     }
 
-    bool visited(boost::optional<txiter> it) const EXCLUSIVE_LOCKS_REQUIRED(cs, m_epoch) {
+    bool visited(std::optional<txiter> it) const EXCLUSIVE_LOCKS_REQUIRED(cs, m_epoch) {
         assert(m_epoch.guarded());
         return !it || visited(*it);
     }

@@ -25,7 +25,6 @@ static void DuplicateInputs(benchmark::Bench& bench)
     CMutableTransaction coinbaseTx{};
     CMutableTransaction naughtyTx{};
 
-    assert(std::addressof(::ChainActive()) == std::addressof(testing_setup->m_node.chainman->ActiveChain()));
     CBlockIndex* pindexPrev = testing_setup->m_node.chainman->ActiveChain().Tip();
     assert(pindexPrev != nullptr);
     block.nBits = GetNextWorkRequired(pindexPrev, &block, chainparams.GetConsensus());
@@ -37,14 +36,14 @@ static void DuplicateInputs(benchmark::Bench& bench)
     coinbaseTx.vin[0].prevout.SetNull();
     coinbaseTx.vout.resize(1);
     coinbaseTx.vout[0].scriptPubKey = SCRIPT_PUB;
-    coinbaseTx.vout[0].nValue = GetBlockSubsidyInner(block.nBits, nHeight, chainparams.GetConsensus(), /*fV20Active=*/ false);
+    coinbaseTx.vout[0].nValue = GetBlockSubsidyInner(block.nBits, nHeight, chainparams.GetConsensus(), /*fV20Active=*/ false, *testing_setup->m_node.sporkman);
     coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
 
     naughtyTx.vout.resize(1);
     naughtyTx.vout[0].nValue = 0;
     naughtyTx.vout[0].scriptPubKey = SCRIPT_PUB;
 
-    uint64_t n_inputs = (((MaxBlockSize() / ::GetSerializeSize(CTransaction(), PROTOCOL_VERSION)) - (CTransaction(coinbaseTx).GetTotalSize() + CTransaction(naughtyTx).GetTotalSize())) / 41) - 100;
+    uint64_t n_inputs = (((MaxBlockSize() / ::GetSerializeSize(CMutableTransaction(), PROTOCOL_VERSION)) - (CTransaction(coinbaseTx).GetTotalSize() + CTransaction(naughtyTx).GetTotalSize())) / 41) - 100;
     for (uint64_t x = 0; x < (n_inputs - 1); ++x) {
         naughtyTx.vin.emplace_back(GetRandHash(), 0, CScript(), 0);
     }

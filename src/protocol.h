@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2019 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -39,7 +39,7 @@ public:
     static constexpr size_t HEADER_SIZE = MESSAGE_START_SIZE + COMMAND_SIZE + MESSAGE_SIZE_SIZE + CHECKSUM_SIZE;
     typedef unsigned char MessageStartChars[MESSAGE_START_SIZE];
 
-    explicit CMessageHeader();
+    explicit CMessageHeader() = default;
 
     /** Construct a P2P message header from message-start characters, a command and the size of the message.
      * @note Passing in a `pszCommand` longer than COMMAND_SIZE will result in a run-time assertion error.
@@ -51,10 +51,10 @@ public:
 
     SERIALIZE_METHODS(CMessageHeader, obj) { READWRITE(obj.pchMessageStart, obj.pchCommand, obj.nMessageSize, obj.pchChecksum); }
 
-    char pchMessageStart[MESSAGE_START_SIZE];
-    char pchCommand[COMMAND_SIZE];
+    char pchMessageStart[MESSAGE_START_SIZE]{};
+    char pchCommand[COMMAND_SIZE]{};
     uint32_t nMessageSize{std::numeric_limits<uint32_t>::max()};
-    uint8_t pchChecksum[CHECKSUM_SIZE];
+    uint8_t pchChecksum[CHECKSUM_SIZE]{};
 };
 
 /**
@@ -431,7 +431,6 @@ public:
         // ambiguous what that would mean. Make sure no code relying on that is introduced:
         assert(!(s.GetType() & SER_GETHASH));
         bool use_v2;
-        bool store_time;
         if (s.GetType() & SER_DISK) {
             // In the disk serialization format, the encoding (v1 or v2) is determined by a flag version
             // that's part of the serialization itself. ADDRV2_FORMAT in the stream version only determines
@@ -448,24 +447,16 @@ public:
             } else {
                 throw std::ios_base::failure("Unsupported CAddress disk format version");
             }
-            store_time = true;
         } else {
             // In the network serialization format, the encoding (v1 or v2) is determined directly by
             // the value of ADDRV2_FORMAT in the stream version, as no explicitly encoded version
             // exists in the stream.
             assert(s.GetType() & SER_NETWORK);
             use_v2 = s.GetVersion() & ADDRV2_FORMAT;
-            // The only time we serialize a CAddress object without nTime is in
-            // the initial VERSION messages which contain two CAddress records.
-            // At that point, the serialization version is INIT_PROTO_VERSION.
-            // After the version handshake, serialization version is >=
-            // MIN_PEER_PROTO_VERSION and all ADDR messages are serialized with
-            // nTime.
-            store_time = s.GetVersion() != INIT_PROTO_VERSION;
         }
 
         SER_READ(obj, obj.nTime = TIME_INIT);
-        if (store_time) READWRITE(obj.nTime);
+        READWRITE(obj.nTime);
         // nServices is serialized as CompactSize in V2; as uint64_t in V1.
         if (use_v2) {
             uint64_t services_tmp;
