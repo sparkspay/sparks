@@ -27,7 +27,7 @@ class RpcMiscTest(BitcoinTestFramework):
         self.log.info("test CHECK_NONFATAL")
         assert_raises_rpc_error(
             -1,
-            'Internal bug detected: \'request.params[9].get_str() != "trigger_internal_bug"\'',
+            'Internal bug detected: "request.params[9].get_str() != "trigger_internal_bug""',
             lambda: node.echo(arg9='trigger_internal_bug'),
         )
 
@@ -56,9 +56,6 @@ class RpcMiscTest(BitcoinTestFramework):
 
         self.log.info("test logging rpc and help")
 
-        # Test logging RPC returns the expected number of logging categories.
-        assert_equal(len(node.logging()), 37)
-
         # Test toggling a logging category on/off/on with the logging RPC.
         assert_equal(node.logging()['qt'], True)
         node.logging(exclude=['qt'])
@@ -74,6 +71,9 @@ class RpcMiscTest(BitcoinTestFramework):
         categories = ', '.join(sorted_logging_categories)
         logging_help = self.nodes[0].help('logging')
         assert f"valid logging categories are: {categories}" in logging_help
+
+        self.log.info("test echoipc (testing spawned process in multiprocess build)")
+        assert_equal(node.echoipc("hello"), "hello")
 
         self.log.info("test getindexinfo")
         self.restart_node(0, ["-txindex=0"])

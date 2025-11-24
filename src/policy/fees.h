@@ -5,22 +5,22 @@
 #ifndef BITCOIN_POLICY_FEES_H
 #define BITCOIN_POLICY_FEES_H
 
-#include <amount.h>
+#include <consensus/amount.h>
 #include <policy/feerate.h>
-#include <uint256.h>
 #include <random.h>
 #include <sync.h>
+#include <threadsafety.h>
+#include <uint256.h>
 
 #include <array>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
 class CAutoFile;
-class CFeeRate;
 class CTxMemPoolEntry;
-class CTxMemPool;
 class TxConfirmStats;
 
 /* Identifier for each of the 3 different TxConfirmStats which will track

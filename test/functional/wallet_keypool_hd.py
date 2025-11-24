@@ -70,7 +70,7 @@ class KeyPoolTest(BitcoinTestFramework):
         addr_data = nodes[0].getaddressinfo(addr)
         wallet_info = nodes[0].getwalletinfo()
 
-        # TODO: enable this assert after bitcoin#17681 is backported
+        # we don't have feature of replacing seed due to bitcoin#17681 is DNM, no need to check if masterfingerprint is changed
         # assert addr_before_encrypting_data['hdmasterfingerprint'] != addr_data['hdmasterfingerprint']
         if not self.options.descriptors:
             assert addr_data['hdchainid'] == wallet_info['hdchainid']
@@ -179,7 +179,7 @@ class KeyPoolTest(BitcoinTestFramework):
         w1.walletpassphrase('test', 100)
 
         res = w1.sendtoaddress(address=address, amount=0.00010000)
-        nodes[0].generate(1)
+        self.generate(nodes[0], 1)
         destination = addr.pop()
 
         # Using a fee rate (10 sat / byte) well above the minimum relay rate

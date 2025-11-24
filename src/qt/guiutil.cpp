@@ -1,5 +1,5 @@
 // Copyright (c) 2011-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -16,6 +16,7 @@
 
 #include <base58.h>
 #include <chainparams.h>
+#include <fs.h>
 #include <interfaces/node.h>
 #include <key_io.h>
 #include <policy/policy.h>
@@ -29,9 +30,6 @@
 #include <cmath>
 
 #ifdef WIN32
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
 #include <shellapi.h>
 #include <shlobj.h>
 #include <shlwapi.h>
@@ -69,7 +67,6 @@
 #include <QShortcut>
 #include <QSize>
 #include <QString>
-#include <QStringBuilder>
 #include <QTextDocument> // for Qt::mightBeRichText
 #include <QThread>
 #include <QTimer>
@@ -78,6 +75,10 @@
 #include <QtGlobal>
 
 #include <chrono>
+#include <exception>
+#include <fstream>
+#include <string>
+#include <vector>
 
 #if defined(Q_OS_MAC)
 
@@ -85,6 +86,8 @@
 
 void ForceActivation();
 #endif
+
+using namespace std::chrono_literals;
 
 namespace GUIUtil {
 
@@ -256,7 +259,7 @@ QString dateTimeStr(const QDateTime &date)
 
 QString dateTimeStr(qint64 nTime)
 {
-    return dateTimeStr(QDateTime::fromTime_t((qint32)nTime));
+    return dateTimeStr(QDateTime::fromSecsSinceEpoch((qint32)nTime));
 }
 
 QFont fixedPitchFont(bool use_embedded_font)
@@ -337,6 +340,11 @@ void setupAppearance(QWidget* parent, OptionsModel* model)
         // And fire it!
         dlg.exec();
     }
+}
+
+void AddButtonShortcut(QAbstractButton* button, const QKeySequence& shortcut)
+{
+    QObject::connect(new QShortcut(shortcut, button), &QShortcut::activated, [button]() { button->animateClick(); });
 }
 
 bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out)
@@ -633,7 +641,7 @@ void handleCloseWindowShortcut(QWidget* w)
 
 void openDebugLogfile()
 {
-    fs::path pathDebug = GetDataDir() / "debug.log";
+    fs::path pathDebug = gArgs.GetDataDirNet() / "debug.log";
 
     /* Open debug.log with the associated application */
     if (fs::exists(pathDebug))
@@ -809,7 +817,7 @@ fs::path static GetAutostartFilePath()
 
 bool GetStartOnSystemStartup()
 {
-    fsbridge::ifstream optionFile(GetAutostartFilePath());
+    std::ifstream optionFile{GetAutostartFilePath()};
     if (!optionFile.good())
         return false;
     // Scan through file for "Hidden=true":
@@ -841,7 +849,7 @@ bool SetStartOnSystemStartup(bool fAutoStart)
 
         fs::create_directories(GetAutostartDir());
 
-        fsbridge::ofstream optionFile(GetAutostartFilePath(), std::ios_base::out | std::ios_base::trunc);
+        std::ofstream optionFile{GetAutostartFilePath(), std::ios_base::out | std::ios_base::trunc};
         if (!optionFile.good())
             return false;
         std::string chain = gArgs.GetChainName();
@@ -1651,12 +1659,12 @@ void setClipboard(const QString& str)
 
 fs::path QStringToPath(const QString &path)
 {
-    return fs::path(path.toStdString());
+    return fs::u8path(path.toStdString());
 }
 
 QString PathToQString(const fs::path &path)
 {
-    return QString::fromStdString(path.string());
+    return QString::fromStdString(path.u8string());
 }
 
 QString NetworkToQString(Network net)
@@ -1717,6 +1725,16 @@ QString formatDurationStr(std::chrono::seconds dur)
     const auto s2{s.count()};
     if (s2 || str_list.empty()) str_list.append(QObject::tr("%1 s").arg(s2));
     return str_list.join(" ");
+}
+
+QString FormatPeerAge(std::chrono::seconds time_connected)
+{
+    const auto time_now{GetTime<std::chrono::seconds>()};
+    const auto age{time_now - time_connected};
+    if (age >= 24h) return QObject::tr("%1 d").arg(age / 24h);
+    if (age >= 1h) return QObject::tr("%1 h").arg(age / 1h);
+    if (age >= 1min) return QObject::tr("%1 m").arg(age / 1min);
+    return QObject::tr("%1 s").arg(age / 1s);
 }
 
 QString formatServicesStr(quint64 mask)
@@ -1784,14 +1802,14 @@ QString formatNiceTimeOffset(qint64 secs)
 
 QString formatBytes(uint64_t bytes)
 {
-    if(bytes < 1024)
+    if (bytes < 1'000)
         return QObject::tr("%1 B").arg(bytes);
-    if(bytes < 1024 * 1024)
-        return QObject::tr("%1 KB").arg(bytes / 1024);
-    if(bytes < 1024 * 1024 * 1024)
-        return QObject::tr("%1 MB").arg(bytes / 1024 / 1024);
+    if (bytes < 1'000'000)
+        return QObject::tr("%1 kB").arg(bytes / 1'000);
+    if (bytes < 1'000'000'000)
+        return QObject::tr("%1 MB").arg(bytes / 1'000'000);
 
-    return QObject::tr("%1 GB").arg(bytes / 1024 / 1024 / 1024);
+    return QObject::tr("%1 GB").arg(bytes / 1'000'000'000);
 }
 
 qreal calculateIdealFontSize(int width, const QString& text, QFont font, qreal minPointSize, qreal font_size) {
@@ -1852,12 +1870,8 @@ void LogQtInfo()
 #else
     const std::string qt_link{"dynamic"};
 #endif
-#ifdef QT_STATICPLUGIN
-    const std::string plugin_link{"static"};
-#else
-    const std::string plugin_link{"dynamic"};
-#endif
-    LogPrintf("Qt %s (%s), plugin=%s (%s)\n", qVersion(), qt_link, QGuiApplication::platformName().toStdString(), plugin_link);
+    // TODO replace instances of LogPrintf with LogInfo once 28318 is merged
+    LogPrintf("Qt %s (%s), plugin=%s\n", qVersion(), qt_link, QGuiApplication::platformName().toStdString());
     const auto static_plugins = QPluginLoader::staticPlugins();
     if (static_plugins.empty()) {
         LogPrintf("No static plugins.\n");
@@ -1920,7 +1934,7 @@ QString MakeHtmlLink(const QString& source, const QString& link)
 {
     return QString(source).replace(
         link,
-        QLatin1String("<a href=\"") % link % QLatin1String("\">") % link % QLatin1String("</a>"));
+        QLatin1String("<a href=\"") + link + QLatin1String("\">") + link + QLatin1String("</a>"));
 }
 
 void PrintSlotException(

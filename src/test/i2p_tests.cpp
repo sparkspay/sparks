@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <i2p.h>
+#include <logging.h>
 #include <netaddress.h>
 #include <netbase.h>
 #include <test/util/logging.h>
@@ -20,6 +21,8 @@ BOOST_FIXTURE_TEST_SUITE(i2p_tests, BasicTestingSetup)
 
 BOOST_AUTO_TEST_CASE(unlimited_recv)
 {
+    const auto prev_log_level{LogInstance().LogLevel()};
+    LogInstance().SetLogLevel(BCLog::Level::Trace);
     auto CreateSockOrig = CreateSock;
 
     // Mock CreateSock() to create MockSock.
@@ -28,7 +31,7 @@ BOOST_AUTO_TEST_CASE(unlimited_recv)
     };
 
     CThreadInterrupt interrupt;
-    i2p::sam::Session session(GetDataDir() / "test_i2p_private_key", CService{}, &interrupt);
+    i2p::sam::Session session(gArgs.GetDataDirNet() / "test_i2p_private_key", CService{}, &interrupt);
 
     {
         ASSERT_DEBUG_LOG("Creating persistent SAM session");
@@ -40,6 +43,7 @@ BOOST_AUTO_TEST_CASE(unlimited_recv)
     }
 
     CreateSock = CreateSockOrig;
+    LogInstance().SetLogLevel(prev_log_level);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

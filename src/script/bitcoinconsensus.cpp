@@ -90,7 +90,7 @@ int sparksconsensus_verify_script(const unsigned char *scriptPubKey, unsigned in
 
         PrecomputedTransactionData txdata(tx);
 		CAmount am(0);
-        return VerifyScript(tx.vin[nIn].scriptSig, CScript(scriptPubKey, scriptPubKey + scriptPubKeyLen), flags, TransactionSignatureChecker(&tx, nIn, am, txdata), nullptr);
+        return VerifyScript(tx.vin[nIn].scriptSig, CScript(scriptPubKey, scriptPubKey + scriptPubKeyLen), flags, TransactionSignatureChecker(&tx, nIn, am, txdata, MissingDataBehavior::FAIL), nullptr);
     } catch (const std::exception&) {
         return set_error(err, sparksconsensus_ERR_TX_DESERIALIZE); // Error deserializing
     }

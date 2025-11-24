@@ -10,6 +10,7 @@ Tests correspond to code in rpc/net.cpp.
 from test_framework.p2p import P2PInterface
 import test_framework.messages
 from test_framework.messages import (
+    MAX_PROTOCOL_MESSAGE_LENGTH,
     NODE_NETWORK,
 )
 
@@ -41,19 +42,16 @@ def assert_net_servicesnames(servicesflag, servicenames):
 
 class NetTest(SparksTestFramework):
     def set_test_params(self):
-        self.set_sparks_test_params(3, 1, fast_dip3_enforcement=True)
+        self.set_sparks_test_params(3, 1)
         self.supports_cli = False
 
     def run_test(self):
         # We need miniwallet to make a transaction
         self.wallet = MiniWallet(self.nodes[0])
-        self.wallet.generate(1)
+        self.generate(self.wallet, 1)
         # Get out of IBD for the getpeerinfo tests.
-        self.nodes[0].generate(101)
-        # Wait for one ping/pong to finish so that we can be sure that there is no chatter between nodes for some time
-        # Especially the exchange of messages like getheaders and friends causes test failures here
-        self.nodes[0].ping()
-        self.wait_until(lambda: all(['pingtime' in n for n in self.nodes[0].getpeerinfo()]))
+        self.generate(self.nodes[0], 101)
+
         # By default, the test framework sets up an addnode connection from
         # node 1 --> node0. By connecting node0 --> node 1, we're left with
         # the two nodes being connected both ways.
@@ -69,6 +67,7 @@ class NetTest(SparksTestFramework):
         self.test_service_flags()
         self.test_getnodeaddresses()
         self.test_addpeeraddress()
+        self.test_sendmsgtopeer()
 
     def test_connection_count(self):
         self.log.info("Test getconnectioncount")
@@ -81,8 +80,7 @@ class NetTest(SparksTestFramework):
         self.log.info("Test getpeerinfo")
         # Create a few getpeerinfo last_block/last_transaction values.
         self.wallet.send_self_transfer(from_node=self.nodes[0]) # Make a transaction so we can see it in the getpeerinfo results
-        self.nodes[1].generate(1)
-        self.sync_all()
+        self.generate(self.nodes[1], 1)
         time_now = self.mocktime
         peer_info = [x.getpeerinfo() for x in self.nodes]
         # Verify last_block and last_transaction keys/values.
@@ -112,22 +110,77 @@ class NetTest(SparksTestFramework):
         assert_equal(peer_info[2][0]['connection_type'], 'manual')
 
 
+        self.log.info("Check getpeerinfo output before a version message was sent")
+        no_version_peer_id = 3
+        no_version_peer_conntime = self.mocktime
+        with self.nodes[0].assert_debug_log([f"Added connection peer={no_version_peer_id}"]):
+            no_version_peer = self.nodes[0].add_p2p_connection(P2PInterface(), send_version=False, wait_for_verack=False)
+        if self.options.v2transport:
+            self.wait_until(lambda: self.nodes[0].getpeerinfo()[no_version_peer_id]["transport_protocol_type"] == "v2")
+        peer_info = self.nodes[0].getpeerinfo()[no_version_peer_id]
+        peer_info.pop("addr")
+        peer_info.pop("addrbind")
+        # The next two fields will vary for v2 connections because we send a rng-based number of decoy messages
+        peer_info.pop("bytesrecv")
+        peer_info.pop("bytessent")
+        assert_equal(
+            peer_info,
+            {
+                "addr_processed": 0,
+                "addr_rate_limited": 0,
+                "addr_relay_enabled": False,
+                "bip152_hb_from": False,
+                "bip152_hb_to": False,
+                "bytesrecv_per_msg": {},
+                "bytessent_per_msg": {},
+                "connection_type": "inbound",
+                "conntime": no_version_peer_conntime,
+                "id": no_version_peer_id,
+                "inbound": True,
+                "inflight": [],
+                "last_block": 0,
+                "last_transaction": 0,
+                "lastrecv": 0 if not self.options.v2transport else no_version_peer_conntime,
+                "lastsend": 0 if not self.options.v2transport else no_version_peer_conntime,
+                "masternode": False,
+                "network": "not_publicly_routable",
+                "permissions": [],
+                "relaytxes": False,
+                "services": "0000000000000000",
+                "servicesnames": [],
+                "session_id": "" if not self.options.v2transport else no_version_peer.v2_state.peer['session_id'].hex(),
+                "startingheight": -1,
+                "subver": "",
+                "synced_blocks": -1,
+                "synced_headers": -1,
+                "timeoffset": 0,
+                "transport_protocol_type": "v1" if not self.options.v2transport else "v2",
+                "version": 0,
+            },
+        )
+        no_version_peer.peer_disconnect()
+        self.wait_until(lambda: len(self.nodes[0].getpeerinfo()) == 3)
+
     def test_getnettotals(self):
         self.log.info("Test getnettotals")
         # Test getnettotals and getpeerinfo by doing a ping. The bytes
-        # sent/received should increase by at least the size of one ping (32
-        # bytes) and one pong (32 bytes).
+        # sent/received should increase by at least the size of one ping
+        # and one pong. Both have a payload size of 8 bytes, but the total
+        # size depends on the used p2p version:
+        #   - p2p v1: 24 bytes (header) + 8 bytes (payload) = 32 bytes
+        #   - p2p v2: 21 bytes (header/tag with short-id) + 8 bytes (payload) = 29 bytes
+        ping_size = 32 if not self.options.v2transport else 29
         net_totals_before = self.nodes[0].getnettotals()
         peer_info_before = self.nodes[0].getpeerinfo()
 
         self.nodes[0].ping()
-        self.wait_until(lambda: (self.nodes[0].getnettotals()['totalbytessent'] >= net_totals_before['totalbytessent'] + 32 * 2), timeout=1)
-        self.wait_until(lambda: (self.nodes[0].getnettotals()['totalbytesrecv'] >= net_totals_before['totalbytesrecv'] + 32 * 2), timeout=1)
+        self.wait_until(lambda: (self.nodes[0].getnettotals()['totalbytessent'] >= net_totals_before['totalbytessent'] + ping_size * 2), timeout=1)
+        self.wait_until(lambda: (self.nodes[0].getnettotals()['totalbytesrecv'] >= net_totals_before['totalbytesrecv'] + ping_size * 2), timeout=1)
 
         for peer_before in peer_info_before:
             peer_after = lambda: next(p for p in self.nodes[0].getpeerinfo() if p['id'] == peer_before['id'])
-            self.wait_until(lambda: peer_after()['bytesrecv_per_msg'].get('pong', 0) >= peer_before['bytesrecv_per_msg'].get('pong', 0) + 32, timeout=1)
-            self.wait_until(lambda: peer_after()['bytessent_per_msg'].get('ping', 0) >= peer_before['bytessent_per_msg'].get('ping', 0) + 32, timeout=1)
+            self.wait_until(lambda: peer_after()['bytesrecv_per_msg'].get('pong', 0) >= peer_before['bytesrecv_per_msg'].get('pong', 0) + ping_size, timeout=1)
+            self.wait_until(lambda: peer_after()['bytessent_per_msg'].get('ping', 0) >= peer_before['bytessent_per_msg'].get('ping', 0) + ping_size, timeout=1)
 
     def test_getnetworkinfo(self):
         self.log.info("Test getnetworkinfo")
@@ -171,10 +224,8 @@ class NetTest(SparksTestFramework):
 
         self.log.info('Test extended connections info')
         # Connect nodes both ways.
-        self.connect_nodes(0, 1)
         self.connect_nodes(1, 0)
-        self.nodes[1].ping()
-        self.wait_until(lambda: all(['pingtime' in n for n in self.nodes[1].getpeerinfo()]))
+
         assert_equal(self.nodes[1].getnetworkinfo()['connections'], 2)
         assert_equal(self.nodes[1].getnetworkinfo()['connections_in'], 1)
         assert_equal(self.nodes[1].getnetworkinfo()['connections_out'], 1)
@@ -188,8 +239,11 @@ class NetTest(SparksTestFramework):
         # add a node (node2) to node0
         ip_port = "127.0.0.1:{}".format(p2p_port(2))
         self.nodes[0].addnode(node=ip_port, command='add')
+        # try to add an equivalent ip
+        ip_port2 = "127.1:{}".format(p2p_port(2))
+        assert_raises_rpc_error(-23, "Node already added", self.nodes[0].addnode, node=ip_port2, command='add')
         # check that the node has indeed been added
-        added_nodes = self.nodes[0].getaddednodeinfo(ip_port)
+        added_nodes = self.nodes[0].getaddednodeinfo()
         assert_equal(len(added_nodes), 1)
         assert_equal(added_nodes[0]['addednode'], ip_port)
         # check that node cannot be added again
@@ -205,7 +259,10 @@ class NetTest(SparksTestFramework):
     def test_service_flags(self):
         self.log.info("Test service flags")
         self.nodes[0].add_p2p_connection(P2PInterface(), services=(1 << 4) | (1 << 63))
-        assert_equal(['UNKNOWN[2^4]', 'UNKNOWN[2^63]'], self.nodes[0].getpeerinfo()[-1]['servicesnames'])
+        if self.options.v2transport:
+            assert_equal(['UNKNOWN[2^4]', 'P2P_V2', 'UNKNOWN[2^63]'], self.nodes[0].getpeerinfo()[-1]['servicesnames'])
+        else:
+            assert_equal(['UNKNOWN[2^4]', 'UNKNOWN[2^63]'], self.nodes[0].getpeerinfo()[-1]['servicesnames'])
         self.nodes[0].disconnect_p2ps()
 
     def test_getnodeaddresses(self):
@@ -261,7 +318,16 @@ class NetTest(SparksTestFramework):
         assert_raises_rpc_error(-8, "Network not recognized: Foo", self.nodes[0].getnodeaddresses, 1, "Foo")
 
     def test_addpeeraddress(self):
+        """RPC addpeeraddress sets the source address equal to the destination address.
+        If an address with the same /16 as an existing new entry is passed, it will be
+        placed in the same new bucket and have a 1/64 chance of the bucket positions
+        colliding (depending on the value of nKey in the addrman), in which case the
+        new address won't be added.  The probability of collision can be reduced to
+        1/2^16 = 1/65536 by using an address from a different /16.  We avoid this here
+        by first testing adding a tried table entry before testing adding a new table one.
+        """
         self.log.info("Test addpeeraddress")
+        self.restart_node(1, ["-checkaddrman=1"])
         node = self.nodes[1]
 
         self.log.debug("Test that addpeerinfo is a hidden RPC")
@@ -273,16 +339,58 @@ class NetTest(SparksTestFramework):
         assert_equal(node.addpeeraddress(address="", port=8333), {"success": False})
         assert_equal(node.getnodeaddresses(count=0), [])
 
-        self.log.debug("Test that adding a valid address succeeds")
-        assert_equal(node.addpeeraddress(address="1.2.3.4", port=8333), {"success": True})
-        addrs = node.getnodeaddresses(count=0)
-        assert_equal(len(addrs), 1)
-        assert_equal(addrs[0]["address"], "1.2.3.4")
-        assert_equal(addrs[0]["port"], 8333)
+        self.log.debug("Test that adding a valid address to the tried table succeeds")
+        assert_equal(node.addpeeraddress(address="1.2.3.4", tried=True, port=8333), {"success": True})
+        with node.assert_debug_log(expected_msgs=["CheckAddrman: new 0, tried 1, total 1 started"]):
+            addrs = node.getnodeaddresses(count=0)  # getnodeaddresses re-runs the addrman checks
+            assert_equal(len(addrs), 1)
+            assert_equal(addrs[0]["address"], "1.2.3.4")
+            assert_equal(addrs[0]["port"], 8333)
 
-        self.log.debug("Test that adding the same address again when already present fails")
-        assert_equal(node.addpeeraddress(address="1.2.3.4", port=8333), {"success": False})
+        self.log.debug("Test that adding an already-present tried address to the new and tried tables fails")
+        for value in [True, False]:
+            assert_equal(node.addpeeraddress(address="1.2.3.4", tried=value, port=8333), {"success": False})
         assert_equal(len(node.getnodeaddresses(count=0)), 1)
+
+        self.log.debug("Test that adding a second address, this time to the new table, succeeds")
+        assert_equal(node.addpeeraddress(address="2.0.0.0", port=8333), {"success": True})
+        with node.assert_debug_log(expected_msgs=["CheckAddrman: new 1, tried 1, total 2 started"]):
+            addrs = node.getnodeaddresses(count=0)  # getnodeaddresses re-runs the addrman checks
+            assert_equal(len(addrs), 2)
+
+    def test_sendmsgtopeer(self):
+        node = self.nodes[0]
+
+        self.restart_node(0)
+        # we want to use a p2p v1 connection here in order to ensure
+        # a peer id of zero (a downgrade from v2 to v1 would lead
+        # to an increase of the peer id)
+        self.connect_nodes(0, 1, peer_advertises_v2=False)
+
+        self.log.info("Test sendmsgtopeer")
+        self.log.debug("Send a valid message")
+        with self.nodes[1].assert_debug_log(expected_msgs=["received: addr"]):
+            node.sendmsgtopeer(peer_id=0, msg_type="addr", msg="FFFFFF")
+
+        self.log.debug("Test error for sending to non-existing peer")
+        assert_raises_rpc_error(-1, "Error: Could not send message to peer", node.sendmsgtopeer, peer_id=100, msg_type="addr", msg="FF")
+
+        self.log.debug("Test that zero-length msg_type is allowed")
+        node.sendmsgtopeer(peer_id=0, msg_type="addr", msg="")
+
+        self.log.debug("Test error for msg_type that is too long")
+        assert_raises_rpc_error(-8, "Error: msg_type too long, max length is 12", node.sendmsgtopeer, peer_id=0, msg_type="long_msg_type", msg="FF")
+
+        self.log.debug("Test that unknown msg_type is allowed")
+        node.sendmsgtopeer(peer_id=0, msg_type="unknown", msg="FF")
+
+        self.log.debug("Test that empty msg is allowed")
+        node.sendmsgtopeer(peer_id=0, msg_type="addr", msg="FF")
+
+        self.log.debug("Test that oversized messages are allowed, but get us disconnected")
+        zero_byte_string = b'\x00' * int(MAX_PROTOCOL_MESSAGE_LENGTH + 1)
+        node.sendmsgtopeer(peer_id=0, msg_type="addr", msg=zero_byte_string.hex())
+        self.wait_until(lambda: len(self.nodes[0].getpeerinfo()) == 0, timeout=10)
 
 
 if __name__ == '__main__':

@@ -5,7 +5,8 @@
 
 #include <txdb.h>
 
-#include <node/ui_interface.h>
+#include <chain.h>
+#include <node/interface_ui.h>
 #include <pow.h>
 #include <random.h>
 #include <shutdown.h>
@@ -30,6 +31,28 @@ static constexpr uint8_t DB_HEAD_BLOCKS{'H'};
 static constexpr uint8_t DB_FLAG{'F'};
 static constexpr uint8_t DB_REINDEX_FLAG{'R'};
 static constexpr uint8_t DB_LAST_BLOCK{'l'};
+
+// Keys used in previous version that might still be found in the DB:
+static constexpr uint8_t DB_TXINDEX_BLOCK{'T'};
+//               uint8_t DB_TXINDEX{'t'}
+
+std::optional<bilingual_str> CheckLegacyTxindex(CBlockTreeDB& block_tree_db)
+{
+    CBlockLocator ignored{};
+    if (block_tree_db.Read(DB_TXINDEX_BLOCK, ignored)) {
+        return _("The -txindex upgrade started by a previous version cannot be completed. Restart with the previous version or run a full -reindex.");
+    }
+    bool txindex_legacy_flag{false};
+    block_tree_db.ReadFlag("txindex", txindex_legacy_flag);
+    if (txindex_legacy_flag) {
+        // Disable legacy txindex and warn once about occupied disk space
+        if (!block_tree_db.WriteFlag("txindex", false)) {
+            return Untranslated("Failed to write block index db flag 'txindex'='0'");
+        }
+        return _("The block index db contains a legacy 'txindex'. To clear the occupied disk space, run a full -reindex, otherwise ignore this error. This error message will not be displayed again.");
+    }
+    return std::nullopt;
+}
 
 namespace {
 
@@ -84,7 +107,7 @@ std::vector<uint256> CCoinsViewDB::GetHeadBlocks() const {
     return vhashHeadBlocks;
 }
 
-bool CCoinsViewDB::BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock) {
+bool CCoinsViewDB::BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock, bool erase) {
     CDBBatch batch(*m_db);
     size_t count = 0;
     size_t changed = 0;
@@ -119,8 +142,7 @@ bool CCoinsViewDB::BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock) {
             changed++;
         }
         count++;
-        CCoinsMap::iterator itOld = it++;
-        mapCoins.erase(itOld);
+        it = erase ? mapCoins.erase(it) : std::next(it);
         if (batch.SizeEstimate() > batch_size) {
             LogPrint(BCLog::COINDB, "Writing partial batch of %.2f MiB\n", batch.SizeEstimate() * (1.0 / 1048576.0));
             m_db->WriteBatch(batch);
@@ -150,7 +172,7 @@ size_t CCoinsViewDB::EstimateSize() const
     return m_db->EstimateSize(DB_COIN, uint8_t(DB_COIN + 1));
 }
 
-CBlockTreeDB::CBlockTreeDB(size_t nCacheSize, bool fMemory, bool fWipe) : CDBWrapper(GetDataDir() / "blocks" / "index", nCacheSize, fMemory, fWipe) {
+CBlockTreeDB::CBlockTreeDB(size_t nCacheSize, bool fMemory, bool fWipe) : CDBWrapper(gArgs.GetDataDirNet() / "blocks" / "index", nCacheSize, fMemory, fWipe) {
 }
 
 bool CBlockTreeDB::ReadBlockFileInfo(int nFile, CBlockFileInfo &info) {
@@ -408,8 +430,8 @@ bool CBlockTreeDB::ReadFlag(const std::string &name, bool &fValue) {
 
 bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, std::function<CBlockIndex*(const uint256&)> insertBlockIndex)
 {
+    AssertLockHeld(::cs_main);
     std::unique_ptr<CDBIterator> pcursor(NewIterator());
-
     pcursor->Seek(std::make_pair(DB_BLOCK_INDEX, uint256()));
 
     // Load m_block_index
@@ -420,7 +442,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
             CDiskBlockIndex diskindex;
             if (pcursor->GetValue(diskindex)) {
                 // Construct block index object
-                CBlockIndex* pindexNew = insertBlockIndex(diskindex.GetBlockHash());
+                CBlockIndex* pindexNew = insertBlockIndex(diskindex.ConstructBlockHash());
                 pindexNew->pprev          = insertBlockIndex(diskindex.hashPrev);
                 pindexNew->nHeight        = diskindex.nHeight;
                 pindexNew->nFile          = diskindex.nFile;
@@ -434,8 +456,9 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                 pindexNew->nStatus        = diskindex.nStatus;
                 pindexNew->nTx            = diskindex.nTx;
 
-                if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, consensusParams))
+                if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, consensusParams)) {
                     return error("%s: CheckProofOfWork failed: %s", __func__, pindexNew->ToString());
+                }
 
                 pcursor->Next();
             } else {

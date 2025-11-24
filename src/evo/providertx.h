@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2023 The Dash Core developers
+// Copyright (c) 2018-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -17,8 +17,6 @@
 #include <univalue.h>
 #include <util/underlying.h>
 
-class CBlockIndex;
-class CCoinsViewCache;
 class TxValidationState;
 
 class CProRegTx
@@ -96,7 +94,7 @@ public:
         obj.pushKV("type", ToUnderlying(nType));
         obj.pushKV("collateralHash", collateralOutpoint.hash.ToString());
         obj.pushKV("collateralIndex", (int)collateralOutpoint.n);
-        obj.pushKV("service", addr.ToString());
+        obj.pushKV("service", addr.ToStringAddrPort());
         obj.pushKV("ownerAddress", EncodeDestination(PKHash(keyIDOwner)));
         obj.pushKV("votingAddress", EncodeDestination(PKHash(keyIDVoting)));
 
@@ -114,7 +112,7 @@ public:
         return obj;
     }
 
-    bool IsTriviallyValid(bool is_bls_legacy_scheme, TxValidationState& state) const;
+    bool IsTriviallyValid(bool is_basic_scheme_active, TxValidationState& state) const;
 };
 
 class CProUpServTx
@@ -181,7 +179,7 @@ public:
         obj.pushKV("version", nVersion);
         obj.pushKV("type", ToUnderlying(nType));
         obj.pushKV("proTxHash", proTxHash.ToString());
-        obj.pushKV("service", addr.ToString());
+        obj.pushKV("service", addr.ToStringAddrPort());
         if (CTxDestination dest; ExtractDestination(scriptOperatorPayout, dest)) {
             obj.pushKV("operatorPayoutAddress", EncodeDestination(dest));
         }
@@ -194,7 +192,7 @@ public:
         return obj;
     }
 
-    bool IsTriviallyValid(bool is_bls_legacy_scheme, TxValidationState& state) const;
+    bool IsTriviallyValid(bool is_basic_scheme_active, TxValidationState& state) const;
 };
 
 class CProUpRegTx
@@ -259,7 +257,7 @@ public:
         return obj;
     }
 
-    bool IsTriviallyValid(bool is_bls_legacy_scheme, TxValidationState& state) const;
+    bool IsTriviallyValid(bool is_basic_scheme_active, TxValidationState& state) const;
 };
 
 class CProUpRevTx
@@ -323,7 +321,7 @@ public:
         return obj;
     }
 
-    bool IsTriviallyValid(bool is_bls_legacy_scheme, TxValidationState& state) const;
+    bool IsTriviallyValid(bool is_basic_scheme_active, TxValidationState& state) const;
 };
 
 template <typename ProTx>

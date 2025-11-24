@@ -7,6 +7,7 @@
 #include <consensus/validation.h>
 #include <script/standard.h>
 #include <test/util/mining.h>
+#include <test/util/script.h>
 #include <test/util/setup_common.h>
 #include <test/util/wallet.h>
 #include <txmempool.h>
@@ -38,10 +39,10 @@ static void AssembleBlock(benchmark::Bench& bench)
             txs.at(b) = MakeTransactionRef(tx);
     }
     {
-        LOCK(::cs_main); // Required for ::AcceptToMemoryPool.
+        LOCK(::cs_main);
 
         for (const auto& txr : txs) {
-            const MempoolAcceptResult res = ::AcceptToMemoryPool(test_setup->m_node.chainman->ActiveChainstate(), *test_setup->m_node.mempool, txr, *test_setup->m_node.sporkman, false /* bypass_limits */);
+            const MempoolAcceptResult res = test_setup->m_node.chainman->ProcessTransaction(txr, *test_setup->m_node.sporkman.get());
             assert(res.m_result_type == MempoolAcceptResult::ResultType::VALID);
         }
     }

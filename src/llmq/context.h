@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2023 The Dash Core developers
+// Copyright (c) 2018-2025 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,10 +9,9 @@
 
 class CActiveMasternodeManager;
 class CBLSWorker;
-class CChainState;
 class CConnman;
+class ChainstateManager;
 class CDeterministicMNManager;
-class CDBWrapper;
 class CEvoDB;
 class CMasternodeMetaMan;
 class CMasternodeSync;
@@ -29,6 +28,7 @@ class CEHFSignalsHandler;
 class CInstantSendManager;
 class CQuorumBlockProcessor;
 class CQuorumManager;
+class CQuorumSnapshotManager;
 class CSigSharesManager;
 class CSigningManager;
 }
@@ -40,14 +40,14 @@ private:
 public:
     LLMQContext() = delete;
     LLMQContext(const LLMQContext&) = delete;
-    LLMQContext(CChainState& chainstate, CConnman& connman, CDeterministicMNManager& dmnman, CEvoDB& evo_db,
+    LLMQContext(ChainstateManager& chainman, CDeterministicMNManager& dmnman, CEvoDB& evo_db,
                 CMasternodeMetaMan& mn_metaman, CMNHFManager& mnhfman, CSporkManager& sporkman, CTxMemPool& mempool,
-                const CActiveMasternodeManager* const mn_activeman, const CMasternodeSync& mn_sync,
-                const std::unique_ptr<PeerManager>& peerman, bool unit_tests, bool wipe);
+                const CActiveMasternodeManager* const mn_activeman, const CMasternodeSync& mn_sync, bool unit_tests,
+                bool wipe);
     ~LLMQContext();
 
     void Interrupt();
-    void Start();
+    void Start(CConnman& connman, PeerManager& peerman);
     void Stop();
 
     /** Guaranteed if LLMQContext is initialized then all members are valid too
@@ -62,13 +62,14 @@ public:
      */
     const std::shared_ptr<CBLSWorker> bls_worker;
     const std::unique_ptr<llmq::CDKGDebugManager> dkg_debugman;
+    const std::unique_ptr<llmq::CQuorumSnapshotManager> qsnapman;
     const std::unique_ptr<llmq::CQuorumBlockProcessor> quorum_block_processor;
     const std::unique_ptr<llmq::CDKGSessionManager> qdkgsman;
     const std::unique_ptr<llmq::CQuorumManager> qman;
     const std::unique_ptr<llmq::CSigningManager> sigman;
     const std::unique_ptr<llmq::CSigSharesManager> shareman;
-    llmq::CChainLocksHandler* const clhandler;
-    llmq::CInstantSendManager* const isman;
+    const std::unique_ptr<llmq::CChainLocksHandler> clhandler;
+    const std::unique_ptr<llmq::CInstantSendManager> isman; // TODO: split CInstantSendManager and CInstantSendLock to 2 files
     const std::unique_ptr<llmq::CEHFSignalsHandler> ehfSignalsHandler;
 };
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2021-2023 The Dash Core developers
+# Copyright (c) 2021-2024 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
@@ -29,8 +29,8 @@ if [ "$DIRECT_WINE_EXEC_TESTS" = "true" ]; then
   wine ./src/test/test_sparks.exe
 else
   if [ "$RUN_UNIT_TESTS_SEQUENTIAL" = "true" ]; then
-    ${TEST_RUNNER_ENV} ./src/test/test_sparks --catch_system_errors=no -l test_suite
+    ./src/test/test_sparks --catch_system_errors=no -l test_suite
   else
-      ${TEST_RUNNER_ENV} make $MAKEJOBS check VERBOSE=1
+      make $MAKEJOBS check VERBOSE=1
   fi
 fi

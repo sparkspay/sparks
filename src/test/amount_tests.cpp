@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <amount.h>
+#include <consensus/amount.h>
 #include <policy/feerate.h>
 
 #include <limits>
@@ -109,6 +109,8 @@ BOOST_AUTO_TEST_CASE(ToStringTest)
     CFeeRate feeRate;
     feeRate = CFeeRate(1);
     BOOST_CHECK_EQUAL(feeRate.ToString(), "0.00000001 SPARKS/kB");
+    BOOST_CHECK_EQUAL(feeRate.ToString(FeeEstimateMode::SPARKS_KB), "0.00000001 SPARKS/kB");
+    BOOST_CHECK_EQUAL(feeRate.ToString(FeeEstimateMode::DUFF_B), "0.001 duff/B");
 }
 
 BOOST_AUTO_TEST_SUITE_END()

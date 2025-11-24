@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -43,7 +43,7 @@ enum SporkId : int32_t {
     SPORK_21_QUORUM_ALL_CONNECTED                          = 10020,
     SPORK_23_QUORUM_POSE                                   = 10022,
     SPORK_24_DATATX_FEE                                    = 10023,
-    SPORK_25_TEST_EHF                                      = 10024,
+    // SPORK_25_DEPRECATED                                    = 10024,
 
     SPORK_INVALID                                          = -1,
 };
@@ -69,7 +69,7 @@ struct CSporkDef
 };
 
 #define MAKE_SPORK_DEF(name, defaultValue) CSporkDef{name, defaultValue, #name}
-[[maybe_unused]] static constexpr std::array<CSporkDef, 9> sporkDefs = {
+[[maybe_unused]] static constexpr std::array<CSporkDef, 8> sporkDefs = {
     MAKE_SPORK_DEF(SPORK_2_INSTANTSEND_ENABLED,            4070908800ULL), // OFF
     MAKE_SPORK_DEF(SPORK_3_INSTANTSEND_BLOCK_FILTERING,    4070908800ULL), // OFF
     MAKE_SPORK_DEF(SPORK_9_SUPERBLOCKS_ENABLED,            4070908800ULL), // OFF
@@ -78,7 +78,6 @@ struct CSporkDef
     MAKE_SPORK_DEF(SPORK_21_QUORUM_ALL_CONNECTED,          4070908800ULL), // OFF
     MAKE_SPORK_DEF(SPORK_23_QUORUM_POSE,                   4070908800ULL), // OFF
     MAKE_SPORK_DEF(SPORK_24_DATATX_FEE,                    1000000), // default datatx min fee rate
-    MAKE_SPORK_DEF(SPORK_25_TEST_EHF,                      4070908800ULL), // OFF
 };
 #undef MAKE_SPORK_DEF
 

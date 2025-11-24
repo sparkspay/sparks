@@ -1,25 +1,25 @@
-// Copyright (c) 2021-2023 The Dash Core developers
+// Copyright (c) 2021-2025 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_LLMQ_SNAPSHOT_H
 #define BITCOIN_LLMQ_SNAPSHOT_H
 
-#include <evo/evodb.h>
 #include <evo/simplifiedmns.h>
 #include <llmq/commitment.h>
 #include <llmq/params.h>
 #include <saltedhasher.h>
 #include <serialize.h>
-#include <univalue.h>
+#include <sync.h>
+#include <threadsafety.h>
 #include <unordered_lru_cache.h>
 #include <util/irange.h>
 
 #include <optional>
 
 class CBlockIndex;
-class CDeterministicMN;
-class CDeterministicMNList;
+class CEvoDB;
+class UniValue;
 
 namespace llmq {
 class CQuorumBlockProcessor;
@@ -207,10 +207,13 @@ public:
     [[nodiscard]] UniValue ToJson() const;
 };
 
-bool BuildQuorumRotationInfo(CDeterministicMNManager& dmnman, const ChainstateManager& chainman, const CQuorumManager& qman,
+bool BuildQuorumRotationInfo(CDeterministicMNManager& dmnman, CQuorumSnapshotManager& qsnapman,
+                             const ChainstateManager& chainman, const CQuorumManager& qman,
                              const CQuorumBlockProcessor& qblockman, const CGetQuorumRotationInfo& request,
-                             CQuorumRotationInfo& response, std::string& errorRet);
-uint256 GetLastBaseBlockHash(Span<const CBlockIndex*> baseBlockIndexes, const CBlockIndex* blockIndex);
+                             bool use_legacy_construction, CQuorumRotationInfo& response, std::string& errorRet)
+    EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
+uint256 GetLastBaseBlockHash(Span<const CBlockIndex*> baseBlockIndexes, const CBlockIndex* blockIndex,
+                             bool use_legacy_construction);
 
 class CQuorumSnapshotManager
 {
@@ -228,9 +231,6 @@ public:
     std::optional<CQuorumSnapshot> GetSnapshotForBlock(Consensus::LLMQType llmqType, const CBlockIndex* pindex);
     void StoreSnapshotForBlock(Consensus::LLMQType llmqType, const CBlockIndex* pindex, const CQuorumSnapshot& snapshot);
 };
-
-extern std::unique_ptr<CQuorumSnapshotManager> quorumSnapshotManager;
-
 } // namespace llmq
 
-#endif //BITCOIN_LLMQ_SNAPSHOT_H
+#endif // BITCOIN_LLMQ_SNAPSHOT_H

@@ -12,13 +12,17 @@ const struct VBDeploymentInfo VersionBitsDeploymentInfo[Consensus::MAX_VERSION_B
         /*.gbt_force =*/ true,
     },
     {
-        /*.name =*/"v20",
+        /*.name =*/"mn_rr",
+        /*.gbt_force =*/false,
+    },
+    {
+        /*.name =*/"withdrawals",
         /*.gbt_force =*/true,
     },
     {
-        /*.name =*/"mn_rr",
-        /*.gbt_force =*/true,
-    },
+        /*.name =*/"mn_v22",
+        /*.gbt_force =*/false,
+    }
 };
 
 std::string DeploymentName(Consensus::BuriedDeployment dep)
@@ -53,6 +57,8 @@ std::string DeploymentName(Consensus::BuriedDeployment dep)
         return "realloc";
     case Consensus::DEPLOYMENT_V19:
         return "v19";
+    case Consensus::DEPLOYMENT_V20:
+        return "v20";
     } // no default case, so the compiler can warn about missing cases
     return "";
 }

@@ -5,7 +5,7 @@
 #ifndef BITCOIN_UTIL_EDGE_H
 #define BITCOIN_UTIL_EDGE_H
 
-#include <compat.h>
+#include <compat/compat.h>
 
 #include <assert.h>
 #include <cstdint>
@@ -17,6 +17,7 @@ enum class SocketEventsMode : int8_t;
  * A manager for abstracting logic surrounding edge-triggered socket events
  * modes like kqueue and epoll.
  */
+// TODO: simplify this class to 2-3 flags; kick out everything else to Sock/~Sock and inherited classes
 class EdgeTriggeredEvents
 {
 public:
@@ -58,4 +59,4 @@ private:
     int m_fd{-1};
 };
 
-#endif /* BITCOIN_UTIL_EDGE_H */
+#endif // BITCOIN_UTIL_EDGE_H

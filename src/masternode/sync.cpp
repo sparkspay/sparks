@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,20 +8,19 @@
 #include <governance/governance.h>
 #include <netfulfilledman.h>
 #include <netmessagemaker.h>
-#include <node/ui_interface.h>
+#include <node/interface_ui.h>
 #include <shutdown.h>
-#include <validation.h>
 #include <util/time.h>
 #include <util/translation.h>
+#include <validation.h>
 
 class CMasternodeSync;
 
-CMasternodeSync::CMasternodeSync(CConnman& _connman, CNetFulfilledRequestManager& netfulfilledman, const CGovernanceManager& govman) :
+CMasternodeSync::CMasternodeSync(CConnman& _connman, CNetFulfilledRequestManager& netfulfilledman) :
     nTimeAssetSyncStarted(GetTime()),
     nTimeLastBumped(GetTime()),
     connman(_connman),
-    m_netfulfilledman(netfulfilledman),
-    m_govman(govman)
+    m_netfulfilledman(netfulfilledman)
 {
 }
 
@@ -115,7 +114,7 @@ void CMasternodeSync::ProcessMessage(const CNode& peer, std::string_view msg_typ
     LogPrint(BCLog::MNSYNC, "SYNCSTATUSCOUNT -- got inventory count: nItemID=%d  nCount=%d  peer=%d\n", nItemID, nCount, peer.GetId());
 }
 
-void CMasternodeSync::ProcessTick()
+void CMasternodeSync::ProcessTick(const PeerManager& peerman, const CGovernanceManager& govman)
 {
     assert(m_netfulfilledman.IsValid());
 
@@ -127,7 +126,7 @@ void CMasternodeSync::ProcessTick()
 
     // reset the sync process if the last call to this function was more than 60 minutes ago (client was in sleep mode)
     static int64_t nTimeLastProcess = GetTime();
-    if(GetTime() - nTimeLastProcess > 60*60 && !fMasternodeMode) {
+    if (!Params().IsMockableChain() && GetTime() - nTimeLastProcess > 60 * 60 && !fMasternodeMode) {
         LogPrintf("CMasternodeSync::ProcessTick -- WARNING: no actions for too long, restarting sync...\n");
         Reset(true);
         nTimeLastProcess = GetTime();
@@ -144,7 +143,7 @@ void CMasternodeSync::ProcessTick()
 
     // gradually request the rest of the votes after sync finished
     if(IsSynced()) {
-        m_govman.RequestGovernanceObjectVotes(snap.Nodes(), connman);
+        govman.RequestGovernanceObjectVotes(snap.Nodes(), connman, peerman);
         return;
     }
 
@@ -206,7 +205,7 @@ void CMasternodeSync::ProcessTick()
                         // Now that the blockchain is synced request the mempool from the connected outbound nodes if possible
                         for (auto pNodeTmp : snap.Nodes()) {
                             bool fRequestedEarlier = m_netfulfilledman.HasFulfilledRequest(pNodeTmp->addr, "mempool-sync");
-                            if (pNodeTmp->nVersion >= 70216 && !pNodeTmp->IsInboundConn() && !fRequestedEarlier && !pNodeTmp->IsBlockRelayOnly()) {
+                            if (!pNodeTmp->IsInboundConn() && !fRequestedEarlier && !pNodeTmp->IsBlockRelayOnly()) {
                                 m_netfulfilledman.AddFulfilledRequest(pNodeTmp->addr, "mempool-sync");
                                 connman.PushMessage(pNodeTmp, msgMaker.Make(NetMsgType::MEMPOOL));
                                 LogPrint(BCLog::MNSYNC, "CMasternodeSync::ProcessTick -- nTick %d nCurrentAsset %d -- syncing mempool from peer=%d\n", nTick, nCurrentAsset, pNodeTmp->GetId());
@@ -219,7 +218,7 @@ void CMasternodeSync::ProcessTick()
             // GOVOBJ : SYNC GOVERNANCE ITEMS FROM OUR PEERS
 
             if(nCurrentAsset == MASTERNODE_SYNC_GOVERNANCE) {
-                if (!m_govman.IsValid()) {
+                if (!govman.IsValid()) {
                     SwitchToNextAsset();
                     return;
                 }
@@ -264,7 +263,7 @@ void CMasternodeSync::ProcessTick()
         if(!m_netfulfilledman.HasFulfilledRequest(pnode->addr, "governance-sync")) {
             continue; // to early for this node
         }
-        int nObjsLeftToAsk = m_govman.RequestGovernanceObjectVotes(*pnode, connman);
+        int nObjsLeftToAsk = govman.RequestGovernanceObjectVotes(*pnode, connman, peerman);
         // check for data
         if(nObjsLeftToAsk == 0) {
             static int64_t nTimeNoObjectsLeft = 0;
@@ -276,9 +275,8 @@ void CMasternodeSync::ProcessTick()
             }
             // make sure the condition below is checked only once per tick
             if(nLastTick == nTick) continue;
-            if(GetTime() - nTimeNoObjectsLeft > MASTERNODE_SYNC_TIMEOUT_SECONDS &&
-                m_govman.GetVoteCount() - nLastVotes < std::max(int(0.0001 * nLastVotes), MASTERNODE_SYNC_TICK_SECONDS)
-            ) {
+            if (GetTime() - nTimeNoObjectsLeft > MASTERNODE_SYNC_TIMEOUT_SECONDS &&
+                govman.GetVoteCount() - nLastVotes < std::max(int(0.0001 * nLastVotes), MASTERNODE_SYNC_TICK_SECONDS)) {
                 // We already asked for all objects, waited for MASTERNODE_SYNC_TIMEOUT_SECONDS
                 // after that and less then 0.01% or MASTERNODE_SYNC_TICK_SECONDS
                 // (i.e. 1 per second) votes were received during the last tick.
@@ -290,7 +288,7 @@ void CMasternodeSync::ProcessTick()
                 return;
             }
             nLastTick = nTick;
-            nLastVotes = m_govman.GetVoteCount();
+            nLastVotes = govman.GetVoteCount();
         }
     }
 }
@@ -329,7 +327,7 @@ void CMasternodeSync::NotifyHeaderTip(const CBlockIndex *pindexNew, bool fInitia
     }
 }
 
-void CMasternodeSync::UpdatedBlockTip(const CBlockIndex *pindexNew, bool fInitialDownload)
+void CMasternodeSync::UpdatedBlockTip(const CBlockIndex *pindexTip, const CBlockIndex *pindexNew, bool fInitialDownload)
 {
     LogPrint(BCLog::MNSYNC, "CMasternodeSync::UpdatedBlockTip -- pindexNew->nHeight: %d fInitialDownload=%d\n", pindexNew->nHeight, fInitialDownload);
     nTimeLastUpdateBlockTip = GetTime<std::chrono::seconds>().count();
@@ -353,7 +351,6 @@ void CMasternodeSync::UpdatedBlockTip(const CBlockIndex *pindexNew, bool fInitia
     }
 
     // Note: since we sync headers first, it should be ok to use this
-    CBlockIndex* pindexTip = WITH_LOCK(cs_main, return pindexBestHeader);
     if (pindexTip == nullptr) return;
     bool fReachedBestHeaderNew = pindexNew->GetBlockHash() == pindexTip->GetBlockHash();
 
@@ -369,9 +366,9 @@ void CMasternodeSync::UpdatedBlockTip(const CBlockIndex *pindexNew, bool fInitia
                 pindexNew->nHeight, pindexTip->nHeight, fInitialDownload, fReachedBestHeader);
 }
 
-void CMasternodeSync::DoMaintenance()
+void CMasternodeSync::DoMaintenance(const PeerManager& peerman, const CGovernanceManager& govman)
 {
     if (ShutdownRequested()) return;
 
-    ProcessTick();
+    ProcessTick(peerman, govman);
 }

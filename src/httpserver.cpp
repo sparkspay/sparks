@@ -10,7 +10,7 @@
 
 #include <chainparamsbase.h>
 #include <netbase.h>
-#include <node/ui_interface.h>
+#include <node/interface_ui.h>
 #include <rpc/protocol.h> // For HTTP status codes
 #include <shutdown.h>
 #include <sync.h>
@@ -176,12 +176,8 @@ static bool ClientAllowed(const CNetAddr& netaddr)
 static bool InitHTTPAllowList()
 {
     rpc_allow_subnets.clear();
-    CNetAddr localv4;
-    CNetAddr localv6;
-    LookupHost("127.0.0.1", localv4, false);
-    LookupHost("::1", localv6, false);
-    rpc_allow_subnets.push_back(CSubNet(localv4, 8));      // always allow IPv4 local subnet
-    rpc_allow_subnets.push_back(CSubNet(localv6));         // always allow IPv6 localhost
+    rpc_allow_subnets.push_back(CSubNet{LookupHost("127.0.0.1", false).value(), 8});  // always allow IPv4 local subnet
+    rpc_allow_subnets.push_back(CSubNet{LookupHost("::1", false).value()});  // always allow IPv6 localhost
     for (const std::string& strAllow : gArgs.GetArgs("-rpcallowip")) {
         CSubNet subnet;
         LookupSubNet(strAllow, subnet);
@@ -236,7 +232,7 @@ static void http_request_cb(struct evhttp_request* req, void* arg)
     // Early address-based allow check
     if (!ClientAllowed(hreq->GetPeer())) {
         LogPrint(BCLog::HTTP, "HTTP request from %s rejected: Client network is not allowed RPC access\n",
-                 hreq->GetPeer().ToString());
+                 hreq->GetPeer().ToStringAddrPort());
         hreq->WriteReply(HTTP_FORBIDDEN);
         return;
     }
@@ -244,13 +240,13 @@ static void http_request_cb(struct evhttp_request* req, void* arg)
     // Early reject unknown HTTP methods
     if (hreq->GetRequestMethod() == HTTPRequest::UNKNOWN) {
         LogPrint(BCLog::HTTP, "HTTP request from %s rejected: Unknown HTTP request method\n",
-                 hreq->GetPeer().ToString());
+                 hreq->GetPeer().ToStringAddrPort());
         hreq->WriteReply(HTTP_BAD_METHOD);
         return;
     }
 
     LogPrint(BCLog::HTTP, "Received a %s request for %s from %s\n",
-             RequestMethodString(hreq->GetRequestMethod()), SanitizeString(hreq->GetURI(), SAFE_CHARS_URI).substr(0, 100), hreq->GetPeer().ToString());
+             RequestMethodString(hreq->GetRequestMethod()), SanitizeString(hreq->GetURI(), SAFE_CHARS_URI).substr(0, 100), hreq->GetPeer().ToStringAddrPort());
 
     // Find registered handler for prefix
     std::string strURI = hreq->GetURI();
@@ -276,12 +272,11 @@ static void http_request_cb(struct evhttp_request* req, void* arg)
             return false;
 
         std::string strUserPass64 = TrimString(strAuth.substr(6));
-        bool invalid;
-        std::string strUserPass = DecodeBase64(strUserPass64, &invalid);
-        if (invalid) return false;
-
-        if (strUserPass.find(':') == std::string::npos) return false;
-        const std::string username{strUserPass.substr(0, strUserPass.find(':'))};
+        auto opt_strUserPass = DecodeBase64(strUserPass64);
+        if (!opt_strUserPass.has_value()) return false;
+        auto it = std::find(opt_strUserPass->begin(), opt_strUserPass->end(), ':');
+        if (it == opt_strUserPass->end()) return false;
+        const std::string username = std::string(opt_strUserPass->begin(), it);
         return find(g_external_usernames.begin(), g_external_usernames.end(), username) != g_external_usernames.end();
     }();
 
@@ -315,14 +310,13 @@ static void http_reject_request_cb(struct evhttp_request* req, void*)
 }
 
 /** Event dispatcher thread */
-static bool ThreadHTTP(struct event_base* base)
+static void ThreadHTTP(struct event_base* base)
 {
     util::ThreadRename("http");
     LogPrint(BCLog::HTTP, "Entering http event loop\n");
     event_base_dispatch(base);
     // Event loop will be interrupted by InterruptHTTPServer()
     LogPrint(BCLog::HTTP, "Exited http event loop\n");
-    return event_base_got_break(base) == 0;
 }
 
 /** Bind HTTP server to specified addresses */
@@ -358,8 +352,8 @@ static bool HTTPBindAddresses(struct evhttp* http)
         LogPrintf("Binding RPC on address %s port %i\n", i->first, i->second);
         evhttp_bound_socket *bind_handle = evhttp_bind_socket_with_handle(http, i->first.empty() ? nullptr : i->first.c_str(), i->second);
         if (bind_handle) {
-            CNetAddr addr;
-            if (i->first.empty() || (LookupHost(i->first, addr, false) && addr.IsBindAny())) {
+            const std::optional<CNetAddr> addr{LookupHost(i->first, false)};
+            if (i->first.empty() || (addr.has_value() && addr->IsBindAny())) {
                 LogPrintf("WARNING: the RPC server is not safe to expose to untrusted networks such as the public internet\n");
             }
             boundSockets.push_back(bind_handle);
@@ -380,11 +374,22 @@ static void HTTPWorkQueueRun(WorkQueue<HTTPClosure>* queue, int worker_num)
 /** libevent event log callback */
 static void libevent_log_cb(int severity, const char *msg)
 {
-    if (severity >= EVENT_LOG_WARN) // Log warn messages and higher without debug category
-        LogPrintf("libevent: %s\n", msg);
-    // The below code causes log spam on Travis and the output of these logs has never been of any use so far
-    //else
-    //    LogPrint(BCLog::LIBEVENT, "libevent: %s\n", msg);
+    BCLog::Level level;
+    switch (severity) {
+    case EVENT_LOG_DEBUG:
+        level = BCLog::Level::Debug;
+        break;
+    case EVENT_LOG_MSG:
+        level = BCLog::Level::Info;
+        break;
+    case EVENT_LOG_WARN:
+        level = BCLog::Level::Warning;
+        break;
+    default: // EVENT_LOG_ERR and others are mapped to error
+        level = BCLog::Level::Error;
+        break;
+    }
+    LogPrintLevel(BCLog::LIBEVENT, level, "%s\n", msg);
 }
 
 bool InitHTTPServer()

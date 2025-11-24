@@ -3,7 +3,6 @@
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test multisig RPCs"""
-import binascii
 import decimal
 import itertools
 import json
@@ -45,8 +44,7 @@ class RpcCreateMultiSigTest(BitcoinTestFramework):
         self.check_addmultisigaddress_errors()
 
         self.log.info('Generating blocks ...')
-        node0.generate(149)
-        self.sync_all()
+        self.generate(node0, 149)
 
         self.moved = 0
         for self.nkeys in [3, 5]:
@@ -64,9 +62,9 @@ class RpcCreateMultiSigTest(BitcoinTestFramework):
 
         # decompress pk2
         pk_obj = ECPubKey()
-        pk_obj.set(binascii.unhexlify(pk2))
+        pk_obj.set(bytes.fromhex(pk2))
         pk_obj.compressed = False
-        pk2 = binascii.hexlify(pk_obj.get_bytes()).decode()
+        pk2 = pk_obj.get_bytes().hex()
 
         node0.createwallet(wallet_name='wmulti0', disable_private_keys=True)
         wmulti0 = node0.get_wallet_rpc('wmulti0')
@@ -102,8 +100,7 @@ class RpcCreateMultiSigTest(BitcoinTestFramework):
 
     def checkbalances(self):
         node0, node1, node2 = self.nodes
-        node0.generate(1)
-        self.sync_all()
+        self.generate(node0, 1)
 
         bal0 = node0.getbalance()
         bal1 = node1.getbalance()
@@ -159,7 +156,7 @@ class RpcCreateMultiSigTest(BitcoinTestFramework):
         value = tx["vout"][vout]["value"]
         prevtxs = [{"txid": txid, "vout": vout, "scriptPubKey": scriptPubKey, "redeemScript": mredeem, "amount": value}]
 
-        node0.generate(1)
+        self.generate(node0, 1)
 
         outval = value - decimal.Decimal("0.00001000")
         rawtx = node2.createrawtransaction([{"txid": txid, "vout": vout}], [{self.final: outval}])
@@ -182,7 +179,7 @@ class RpcCreateMultiSigTest(BitcoinTestFramework):
 
         self.moved += outval
         tx = node0.sendrawtransaction(rawtx3["hex"], 0)
-        blk = node0.generate(1)[0]
+        blk = self.generate(node0, 1)[0]
         assert tx in node0.getblock(blk)["tx"]
 
         txinfo = node0.getrawtransaction(tx, True, blk)

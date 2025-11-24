@@ -13,6 +13,7 @@
 #include <masternode/sync.h>
 #include <messagesigner.h>
 #include <net_processing.h>
+#include <timedata.h>
 #include <util/string.h>
 #include <util/system.h>
 #include <validation.h>
@@ -85,28 +86,12 @@ vote_signal_enum_t CGovernanceVoting::ConvertVoteSignal(const std::string& strVo
     return it->second;
 }
 
-CGovernanceVote::CGovernanceVote() :
-    fValid(true),
-    fSynced(false),
-    nVoteSignal(int(VOTE_SIGNAL_NONE)),
-    masternodeOutpoint(),
-    nParentHash(),
-    nVoteOutcome(int(VOTE_OUTCOME_NONE)),
-    nTime(0),
-    vchSig(),
-    m_chainman(nullptr)
-{
-}
-
-CGovernanceVote::CGovernanceVote(const COutPoint& outpointMasternodeIn, const uint256& nParentHashIn, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn, const ChainstateManager& chainman) :
-    fValid(true),
-    fSynced(false),
-    nVoteSignal(eVoteSignalIn),
+CGovernanceVote::CGovernanceVote(const COutPoint& outpointMasternodeIn, const uint256& nParentHashIn,
+                                 vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn, const ChainstateManager& chainman) :
     masternodeOutpoint(outpointMasternodeIn),
     nParentHash(nParentHashIn),
     nVoteOutcome(eVoteOutcomeIn),
     nTime(GetAdjustedTime()),
-    vchSig(),
     m_chainman(&chainman)
 {
     UpdateHash();
@@ -165,41 +150,6 @@ uint256 CGovernanceVote::GetSignatureHash() const
     return SerializeHash(*this);
 }
 
-bool CGovernanceVote::Sign(const CKey& key, const CKeyID& keyID)
-{
-    std::string strError;
-
-    // Harden Spork6 so that it is active on testnet and no other networks
-    if (Params().NetworkIDString() == CBaseChainParams::TESTNET) {
-        uint256 signatureHash = GetSignatureHash();
-
-        if (!CHashSigner::SignHash(signatureHash, key, vchSig)) {
-            LogPrintf("CGovernanceVote::Sign -- SignHash() failed\n");
-            return false;
-        }
-
-        if (!CHashSigner::VerifyHash(signatureHash, keyID, vchSig, strError)) {
-            LogPrintf("CGovernanceVote::Sign -- VerifyHash() failed, error: %s\n", strError);
-            return false;
-        }
-    } else {
-        std::string strMessage = masternodeOutpoint.ToStringShort() + "|" + nParentHash.ToString() + "|" +
-                                 ::ToString(nVoteSignal) + "|" + ::ToString(nVoteOutcome) + "|" + ::ToString(nTime);
-
-        if (!CMessageSigner::SignMessage(strMessage, vchSig, key)) {
-            LogPrintf("CGovernanceVote::Sign -- SignMessage() failed\n");
-            return false;
-        }
-
-        if (!CMessageSigner::VerifyMessage(keyID, vchSig, strMessage, strError)) {
-            LogPrintf("CGovernanceVote::Sign -- VerifyMessage() failed, error: %s\n", strError);
-            return false;
-        }
-    }
-
-    return true;
-}
-
 bool CGovernanceVote::CheckSignature(const CKeyID& keyID) const
 {
     std::string strError;
@@ -211,12 +161,7 @@ bool CGovernanceVote::CheckSignature(const CKeyID& keyID) const
             return false;
         }
     } else {
-        std::string strMessage = masternodeOutpoint.ToStringShort() + "|" + nParentHash.ToString() + "|" +
-                                 ::ToString(nVoteSignal) + "|" +
-                                 ::ToString(nVoteOutcome) + "|" +
-                                 ::ToString(nTime);
-
-        if (!CMessageSigner::VerifyMessage(keyID, vchSig, strMessage, strError)) {
+        if (!CMessageSigner::VerifyMessage(keyID, vchSig, GetSignatureString(), strError)) {
             LogPrint(BCLog::GOBJECT, "CGovernanceVote::IsValid -- VerifyMessage() failed, error: %s\n", strError);
             return false;
         }
@@ -238,7 +183,7 @@ bool CGovernanceVote::Sign(const CActiveMasternodeManager& mn_activeman)
 bool CGovernanceVote::CheckSignature(const CBLSPublicKey& pubKey) const
 {
     CBLSSignature sig;
-    sig.SetByteVector(vchSig, false);
+    sig.SetBytes(vchSig, false);
     if (!sig.VerifyInsecure(pubKey, GetSignatureHash(), false)) {
         LogPrintf("CGovernanceVote::CheckSignature -- VerifyInsecure() failed\n");
         return false;
@@ -253,15 +198,15 @@ bool CGovernanceVote::IsValid(const CDeterministicMNList& tip_mn_list, bool useV
         return false;
     }
 
-    // support up to MAX_SUPPORTED_VOTE_SIGNAL, can be extended
-    if (nVoteSignal > MAX_SUPPORTED_VOTE_SIGNAL) {
-        LogPrint(BCLog::GOBJECT, "CGovernanceVote::IsValid -- Client attempted to vote on invalid signal(%d) - %s\n", nVoteSignal, GetHash().ToString());
+    if (nVoteSignal < VOTE_SIGNAL_NONE || nVoteSignal >= VOTE_SIGNAL_UNKNOWN) {
+        LogPrint(BCLog::GOBJECT, "CGovernanceVote::IsValid -- Client attempted to vote on invalid signal(%d) - %s\n",
+                 nVoteSignal, GetHash().ToString());
         return false;
     }
 
-    // 0=none, 1=yes, 2=no, 3=abstain. Beyond that reject votes
-    if (nVoteOutcome > 3) {
-        LogPrint(BCLog::GOBJECT, "CGovernanceVote::IsValid -- Client attempted to vote on invalid outcome(%d) - %s\n", nVoteSignal, GetHash().ToString());
+    if (nVoteOutcome < VOTE_OUTCOME_NONE || nVoteOutcome >= VOTE_OUTCOME_UNKNOWN) {
+        LogPrint(BCLog::GOBJECT, "CGovernanceVote::IsValid -- Client attempted to vote on invalid outcome(%d) - %s\n",
+                 nVoteOutcome, GetHash().ToString());
         return false;
     }
 
@@ -276,6 +221,14 @@ bool CGovernanceVote::IsValid(const CDeterministicMNList& tip_mn_list, bool useV
     } else {
         return CheckSignature(dmn->pdmnState->pubKeyOperator.Get());
     }
+}
+
+std::string CGovernanceVote::GetSignatureString() const
+{
+    return masternodeOutpoint.ToStringShort() + "|" + nParentHash.ToString() + "|" +
+                             ::ToString(nVoteSignal) + "|" +
+                             ::ToString(nVoteOutcome) + "|" +
+                             ::ToString(nTime);
 }
 
 bool operator==(const CGovernanceVote& vote1, const CGovernanceVote& vote2)

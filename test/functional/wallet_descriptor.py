@@ -63,7 +63,7 @@ class WalletDescriptorTest(BitcoinTestFramework):
         send_wrpc = self.nodes[0].get_wallet_rpc("desc1")
 
         # Generate some coins
-        send_wrpc.generatetoaddress(101, send_wrpc.getnewaddress())
+        self.generatetoaddress(self.nodes[0], 101, send_wrpc.getnewaddress())
 
         # Make transactions
         self.log.info("Test sending and receiving")
@@ -80,8 +80,7 @@ class WalletDescriptorTest(BitcoinTestFramework):
         assert_raises_rpc_error(-4, "This type of wallet does not support this command", recv_wrpc.rpc.dumpprivkey, recv_wrpc.getnewaddress())
         assert_raises_rpc_error(-4, "This type of wallet does not support this command", recv_wrpc.rpc.dumpwallet, 'wallet.dump')
         assert_raises_rpc_error(-4, "This type of wallet does not support this command", recv_wrpc.rpc.importwallet, 'wallet.dump')
-        # TODO: there is not RPC `sethdseed`
-        # assert_raises_rpc_error(-4, "This type of wallet does not support this command", recv_wrpc.rpc.sethdseed)
+        assert_raises_rpc_error(-4, "This type of wallet does not support this command", recv_wrpc.rpc.sethdseed)
 
         self.log.info("Test encryption")
         # Get the master fingerprint before encrypt

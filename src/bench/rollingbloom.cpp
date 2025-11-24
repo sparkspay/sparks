@@ -4,7 +4,10 @@
 
 
 #include <bench/bench.h>
-#include <bloom.h>
+#include <common/bloom.h>
+#include <crypto/common.h>
+
+#include <vector>
 
 static void RollingBloom(benchmark::Bench& bench)
 {
@@ -13,16 +16,10 @@ static void RollingBloom(benchmark::Bench& bench)
     uint32_t count = 0;
     bench.run([&] {
         count++;
-        data[0] = count;
-        data[1] = count >> 8;
-        data[2] = count >> 16;
-        data[3] = count >> 24;
+        WriteLE32(data.data(), count);
         filter.insert(data);
 
-        data[0] = count >> 24;
-        data[1] = count >> 16;
-        data[2] = count >> 8;
-        data[3] = count;
+        WriteBE32(data.data(), count);
         filter.contains(data);
     });
 }

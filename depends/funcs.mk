@@ -6,7 +6,6 @@ $(1)_objc=$$($$($(1)_type)_OBJC)
 $(1)_objcxx=$$($$($(1)_type)_OBJCXX)
 $(1)_ar=$$($$($(1)_type)_AR)
 $(1)_ranlib=$$($$($(1)_type)_RANLIB)
-$(1)_libtool=$$($$($(1)_type)_LIBTOOL)
 $(1)_nm=$$($$($(1)_type)_NM)
 $(1)_cflags=$$($$($(1)_type)_CFLAGS) \
             $$($$($(1)_type)_$$(release_type)_CFLAGS)
@@ -37,8 +36,6 @@ endef
 define fetch_file
     ( test -f $$($(1)_source_dir)/$(4) || \
     ( $(call fetch_file_inner,$(1),$(2),$(3),$(4),$(5)) || \
-      (sleep 5 && $(call fetch_file_inner,$(1),$(2),$(3),$(4),$(5))) || \
-      (sleep 10 && $(call fetch_file_inner,$(1),$(2),$(3),$(4),$(5))) || \
       $(call fetch_file_inner,$(1),$(FALLBACK_DOWNLOAD_PATH),$(3),$(4),$(5))))
 endef
 
@@ -49,7 +46,7 @@ endef
 
 define int_get_build_id
 $(eval $(1)_dependencies += $($(1)_$(host_arch)_$(host_os)_dependencies) $($(1)_$(host_os)_dependencies))
-$(eval $(1)_all_dependencies:=$(call int_get_all_dependencies,$(1),$($($(1)_type)_native_toolchain) $($($(1)_type)_native_binutils) $($(1)_dependencies)))
+$(eval $(1)_all_dependencies:=$(call int_get_all_dependencies,$(1),$($(1)_dependencies)))
 $(foreach dep,$($(1)_all_dependencies),$(eval $(1)_build_id_deps+=$(dep)-$($(dep)_version)-$($(dep)_recipe_hash)))
 $(eval $(1)_build_id_long:=$(1)-$($(1)_version)-$($(1)_recipe_hash)-$(release_type) $($(1)_build_id_deps) $($($(1)_type)_id))
 $(eval $(1)_build_id:=$(shell echo -n "$($(1)_build_id_long)" | $(build_SHA256SUM) | cut -c-$(HASH_LENGTH)))
@@ -69,6 +66,7 @@ $(1)_cached_checksum:=$(BASE_CACHE)/$(host)/$(1)/$(1)-$($(1)_version)-$($(1)_bui
 $(1)_patch_dir:=$(base_build_dir)/$(host)/$(1)/$($(1)_version)-$($(1)_build_id)/.patches-$($(1)_build_id)
 $(1)_prefixbin:=$($($(1)_type)_prefix)/bin/
 $(1)_cached:=$(BASE_CACHE)/$(host)/$(1)/$(1)-$($(1)_version)-$($(1)_build_id).tar.gz
+$(1)_build_log:=$(BASEDIR)/$(1)-$($(1)_version)-$($(1)_build_id).log
 $(1)_all_sources=$($(1)_file_name) $($(1)_extra_sources)
 
 #stamps
@@ -77,7 +75,7 @@ $(1)_extracted=$$($(1)_extract_dir)/.stamp_extracted
 $(1)_preprocessed=$$($(1)_extract_dir)/.stamp_preprocessed
 $(1)_cleaned=$$($(1)_extract_dir)/.stamp_cleaned
 $(1)_built=$$($(1)_build_dir)/.stamp_built
-$(1)_configured=$$($(1)_build_dir)/.stamp_configured
+$(1)_configured=$(host_prefix)/.$(1)_stamp_configured
 $(1)_staged=$$($(1)_staging_dir)/.stamp_staged
 $(1)_postprocessed=$$($(1)_staging_prefix_dir)/.stamp_postprocessed
 $(1)_download_path_fixed=$(subst :,\:,$$($(1)_download_path))
@@ -87,10 +85,10 @@ $(1)_download_path_fixed=$(subst :,\:,$$($(1)_download_path))
 # The default behavior for tar will try to set ownership when running as uid 0 and may not succeed, --no-same-owner disables this behavior
 $(1)_fetch_cmds ?= $(call fetch_file,$(1),$(subst \:,:,$$($(1)_download_path_fixed)),$$($(1)_download_file),$($(1)_file_name),$($(1)_sha256_hash))
 $(1)_extract_cmds ?= mkdir -p $$($(1)_extract_dir) && echo "$$($(1)_sha256_hash)  $$($(1)_source)" > $$($(1)_extract_dir)/.$$($(1)_file_name).hash &&  $(build_SHA256SUM) -c $$($(1)_extract_dir)/.$$($(1)_file_name).hash && $(build_TAR) --no-same-owner --strip-components=1 -xf $$($(1)_source)
-$(1)_preprocess_cmds ?=
-$(1)_build_cmds ?=
-$(1)_config_cmds ?=
-$(1)_stage_cmds ?=
+$(1)_preprocess_cmds ?= true
+$(1)_build_cmds ?= true
+$(1)_config_cmds ?= true
+$(1)_stage_cmds ?= true
 $(1)_set_vars ?=
 
 
@@ -138,6 +136,7 @@ $(1)_config_env+=$($(1)_config_env_$(host_arch)_$(host_os)) $($(1)_config_env_$(
 
 $(1)_config_env+=PKG_CONFIG_LIBDIR=$($($(1)_type)_prefix)/lib/pkgconfig
 $(1)_config_env+=PKG_CONFIG_PATH=$($($(1)_type)_prefix)/share/pkgconfig
+$(1)_config_env+=PKG_CONFIG_SYSROOT_DIR=/
 $(1)_config_env+=CMAKE_MODULE_PATH=$($($(1)_type)_prefix)/lib/cmake
 $(1)_config_env+=PATH=$(build_prefix)/bin:$(PATH)
 $(1)_build_env+=PATH=$(build_prefix)/bin:$(PATH)
@@ -148,7 +147,7 @@ $(1)_stage_env+=PATH=$(build_prefix)/bin:$(PATH)
 # config.guess, which is what we set it too here. This also quells autoconf
 # warnings, "If you wanted to set the --build type, don't use --host.",
 # when using versions older than 2.70.
-$(1)_autoconf=./configure --build=$(BUILD) --host=$($($(1)_type)_host) --prefix=$($($(1)_type)_prefix) $$($(1)_config_opts) CC="$$($(1)_cc)" CXX="$$($(1)_cxx)"
+$(1)_autoconf=./configure --build=$(BUILD) --host=$($($(1)_type)_host) --prefix=$($($(1)_type)_prefix) --with-pic $$($(1)_config_opts) CC="$$($(1)_cc)" CXX="$$($(1)_cxx)"
 ifneq ($($(1)_nm),)
 $(1)_autoconf += NM="$$($(1)_nm)"
 endif
@@ -171,12 +170,23 @@ ifneq ($($(1)_ldflags),)
 $(1)_autoconf += LDFLAGS="$$($(1)_ldflags)"
 endif
 
+# We hardcode the library install path to "lib" to match the PKG_CONFIG_PATH
+# setting in depends/config.site.in, which also hardcodes "lib".
+# Without this setting, CMake by default would use the OS library
+# directory, which might be "lib64" or something else, not "lib", on multiarch systems.
 $(1)_cmake=env CC="$$($(1)_cc)" \
                CFLAGS="$$($(1)_cppflags) $$($(1)_cflags)" \
                CXX="$$($(1)_cxx)" \
                CXXFLAGS="$$($(1)_cppflags) $$($(1)_cxxflags)" \
                LDFLAGS="$$($(1)_ldflags)" \
-             cmake -DCMAKE_INSTALL_PREFIX:PATH="$$($($(1)_type)_prefix)" $$($(1)_cmake_opts)
+               cmake -DCMAKE_INSTALL_PREFIX:PATH="$$($($(1)_type)_prefix)" \
+               -DCMAKE_AR=`which $$($(1)_ar)` \
+               -DCMAKE_NM=`which $$($(1)_nm)` \
+               -DCMAKE_RANLIB=`which $$($(1)_ranlib)` \
+               -DCMAKE_INSTALL_LIBDIR=lib/ \
+               -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+               -DCMAKE_VERBOSE_MAKEFILE:BOOL=$(V) \
+               $$($(1)_config_opts)
 ifeq ($($(1)_type),build)
 $(1)_cmake += -DCMAKE_INSTALL_RPATH:PATH="$$($($(1)_type)_prefix)/lib"
 else
@@ -189,6 +199,10 @@ endif
 endef
 
 define int_add_cmds
+ifneq ($(LOG),)
+$(1)_logging = >>$$($(1)_build_log) 2>&1 || { if test -f $$($(1)_build_log); then cat $$($(1)_build_log); fi; exit 1; }
+endif
+
 $($(1)_fetched):
 	mkdir -p $$(@D) $(SOURCES_PATH)
 	rm -f $$@
@@ -205,23 +219,23 @@ $($(1)_preprocessed): | $($(1)_extracted)
 	echo Preprocessing $(1)...
 	mkdir -p $$(@D) $($(1)_patch_dir)
 	$(foreach patch,$($(1)_patches),cd $(PATCHES_PATH)/$(1); cp $(patch) $($(1)_patch_dir) ;)
-	cd $$(@D); $($(1)_preprocess_cmds)
+	{ cd $$(@D); $($(1)_preprocess_cmds); } $$($(1)_logging)
 	touch $$@
 $($(1)_configured): | $($(1)_dependencies) $($(1)_preprocessed)
 	echo Configuring $(1)...
 	rm -rf $(host_prefix); mkdir -p $(host_prefix)/lib; cd $(host_prefix); $(foreach package,$($(1)_all_dependencies), $(build_TAR) --no-same-owner -xf $($(package)_cached); )
-	mkdir -p $$(@D)
-	+cd $$(@D); $($(1)_config_env) $($(1)_config_cmds)
+	mkdir -p $$($(1)_build_dir)
+	+{ cd $$($(1)_build_dir); export $($(1)_config_env); $($(1)_config_cmds); } $$($(1)_logging)
 	touch $$@
 $($(1)_built): | $($(1)_configured)
 	echo Building $(1)...
 	mkdir -p $$(@D)
-	+cd $$(@D); $($(1)_build_env) $($(1)_build_cmds)
+	+{ cd $$(@D); export $($(1)_build_env); $($(1)_build_cmds); } $$($(1)_logging)
 	touch $$@
 $($(1)_staged): | $($(1)_built)
 	echo Staging $(1)...
 	mkdir -p $($(1)_staging_dir)/$(host_prefix)
-	cd $($(1)_build_dir); $($(1)_stage_env) $($(1)_stage_cmds)
+	+{ cd $($(1)_build_dir); export $($(1)_stage_env); $($(1)_stage_cmds); } $$($(1)_logging)
 	rm -rf $($(1)_extract_dir)
 	touch $$@
 $($(1)_postprocessed): | $($(1)_staged)
@@ -230,11 +244,14 @@ $($(1)_postprocessed): | $($(1)_staged)
 	touch $$@
 $($(1)_cached): | $($(1)_dependencies) $($(1)_postprocessed)
 	echo Caching $(1)...
-	cd $$($(1)_staging_dir)/$(host_prefix); find . | sort | $(build_TAR) --no-recursion -czf $$($(1)_staging_dir)/$$(@F) -T -
+	cd $$($(1)_staging_dir)/$(host_prefix); \
+	  find . ! -name '.stamp_postprocessed' -print0 | TZ=UTC xargs -0r $(build_TOUCH); \
+	  find . ! -name '.stamp_postprocessed' | LC_ALL=C sort | $(build_TAR) --numeric-owner --no-recursion -czf $$($(1)_staging_dir)/$$(@F) -T -
 	mkdir -p $$(@D)
 	rm -rf $$(@D) && mkdir -p $$(@D)
 	mv $$($(1)_staging_dir)/$$(@F) $$(@)
 	rm -rf $($(1)_staging_dir)
+	if test -f $($(1)_build_log); then mv $($(1)_build_log) $$(@D); fi
 $($(1)_cached_checksum): $($(1)_cached)
 	cd $$(@D); $(build_SHA256SUM) $$(<F) > $$(@)
 
@@ -280,6 +297,3 @@ $(foreach package,$(all_packages),$(eval $(call int_config_attach_build_config,$
 
 #create build targets
 $(foreach package,$(all_packages),$(eval $(call int_add_cmds,$(package))))
-
-#special exception: if a toolchain package exists, all non-native packages depend on it
-$(foreach package,$(packages),$(eval $($(package)_extracted): |$($($(host_arch)_$(host_os)_native_toolchain)_cached) $($($(host_arch)_$(host_os)_native_binutils)_cached) ))

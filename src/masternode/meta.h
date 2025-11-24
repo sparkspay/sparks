@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,14 +7,17 @@
 
 #include <serialize.h>
 #include <sync.h>
+#include <threadsafety.h>
 #include <uint256.h>
 
-#include <univalue.h>
-
 #include <atomic>
+#include <map>
 #include <memory>
+#include <vector>
 
 class CConnman;
+class UniValue;
+
 template<typename T>
 class CFlatDB;
 
@@ -73,7 +76,11 @@ public:
     UniValue ToJson() const;
 
 public:
-    const uint256& GetProTxHash() const { LOCK(cs); return proTxHash; }
+    const uint256 GetProTxHash() const
+    {
+        LOCK(cs);
+        return proTxHash;
+    }
     int64_t GetLastDsq() const { return nLastDsq; }
     int GetMixingTxCount() const { return nMixingTxCount; }
 

@@ -8,19 +8,22 @@
 
 #include <coins.h>
 #include <dbwrapper.h>
-#include <chain.h>
-#include <primitives/block.h>
 #include <spentindex.h>
 #include <timestampindex.h>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
+class CBlockFileInfo;
 class CBlockIndex;
-class CCoinsViewDBCursor;
 class uint256;
+namespace Consensus {
+struct Params;
+};
+struct bilingual_str;
 
 //! -dbcache default (MiB)
 static const int64_t nDefaultDbCache = 300;
@@ -62,7 +65,7 @@ public:
     bool HaveCoin(const COutPoint &outpoint) const override;
     uint256 GetBestBlock() const override;
     std::vector<uint256> GetHeadBlocks() const override;
-    bool BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock) override;
+    bool BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock, bool erase = true) override;
     std::unique_ptr<CCoinsViewCursor> Cursor() const override;
 
     //! Attempt to update from an older database format. Returns whether an error occurred.
@@ -104,7 +107,10 @@ public:
 
     bool WriteFlag(const std::string &name, bool fValue);
     bool ReadFlag(const std::string &name, bool &fValue);
-    bool LoadBlockIndexGuts(const Consensus::Params& consensusParams, std::function<CBlockIndex*(const uint256&)> insertBlockIndex);
+    bool LoadBlockIndexGuts(const Consensus::Params& consensusParams, std::function<CBlockIndex*(const uint256&)> insertBlockIndex)
+        EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
 };
+
+std::optional<bilingual_str> CheckLegacyTxindex(CBlockTreeDB& block_tree_db);
 
 #endif // BITCOIN_TXDB_H

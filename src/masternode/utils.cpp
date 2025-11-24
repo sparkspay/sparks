@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -23,9 +23,9 @@ void CMasternodeUtils::DoMaintenance(CConnman& connman, CDeterministicMNManager&
 
     std::vector<CDeterministicMNCPtr> vecDmns; // will be empty when no wallet
 #ifdef ENABLE_WALLET
-    for (auto& pair : cj_ctx.walletman->raw()) {
-        pair.second->GetMixingMasternodesInfo(vecDmns);
-    }
+    cj_ctx.walletman->ForEachCJClientMan([&vecDmns](const std::unique_ptr<CCoinJoinClientManager>& clientman) {
+        clientman->GetMixingMasternodesInfo(vecDmns);
+    });
 #endif // ENABLE_WALLET
 
     // Don't disconnect masternode connections when we have less then the desired amount of outbound nodes
@@ -67,7 +67,7 @@ void CMasternodeUtils::DoMaintenance(CConnman& connman, CDeterministicMNManager&
                 if (pnode->IsInboundConn()) {
                     return;
                 }
-            } else if (GetTime<std::chrono::seconds>() - pnode->m_connected < 5s) {
+            } else if (GetTime<std::chrono::seconds>() - pnode->m_connected < PROBE_WAIT_INTERVAL) {
                 // non-verified, give it some time to verify itself
                 return;
             } else if (pnode->qwatch) {
@@ -81,7 +81,8 @@ void CMasternodeUtils::DoMaintenance(CConnman& connman, CDeterministicMNManager&
         if (fFound) return; // do NOT disconnect mixing masternodes
 #endif // ENABLE_WALLET
         if (fLogIPs) {
-            LogPrint(BCLog::NET_NETCONN, "Closing Masternode connection: peer=%d, addr=%s\n", pnode->GetId(), pnode->addr.ToString());
+            LogPrint(BCLog::NET_NETCONN, "Closing Masternode connection: peer=%d, addr=%s\n", pnode->GetId(),
+                     pnode->addr.ToStringAddrPort());
         } else {
             LogPrint(BCLog::NET_NETCONN, "Closing Masternode connection: peer=%d\n", pnode->GetId());
         }

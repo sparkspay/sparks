@@ -2,7 +2,7 @@ Release Process
 ====================
 
 * [ ] Update translations, see [translation_process.md](https://github.com/sparkspay/sparks/blob/master/doc/translation_process.md#synchronising-translations).
-* [ ] Update manpages, see [gen-manpages.sh](https://github.com/sparkspay/sparks/blob/master/contrib/devtools/README.md#gen-manpagessh).
+* [ ] Update manpages (after rebuilding the binaries), see [gen-manpages.py](https://github.com/bitcoin/bitcoin/blob/master/contrib/devtools/README.md#gen-manpagespy).
 
 Before every minor and major release:
 
@@ -88,7 +88,7 @@ git -C ./guix.sigs pull
 _Note: this step can be skipped if [our CI](https://github.com/sparkspay/sparks/blob/master/ci/test/00_setup_env.sh#L64) still uses bitcoin's SDK package (see SDK_URL)_
 
 Create the macOS SDK tarball, see the [macOS build
-instructions](build-osx.md#deterministic-macos-dmg-notes) for
+instructions](build-osx.md#deterministic-macos-app-notes) for
 details.
 
 ### Build and attest to build outputs:
@@ -96,6 +96,8 @@ details.
 Follow the relevant Guix README.md sections:
 - [Building](/contrib/guix/README.md#building)
 - [Attesting to build outputs](/contrib/guix/README.md#attesting-to-build-outputs)
+
+_Note: we ship releases for only some supported HOSTs so consider providing limited `HOSTS` variable or run `./contrib/containers/guix/scripts/guix-start` instead of `./contrib/guix/guix-build` when building binaries for quicker builds that exclude the supported but not shipped HOSTs_
 
 ### Verify other builders' signatures to your own. (Optional)
 
@@ -176,7 +178,7 @@ Commit your signature for the signed macOS/Windows binaries:
 ```sh
 pushd ./guix.sigs
 git add "${VERSION}/${SIGNER}"/all.SHA256SUMS{,.asc}
-git commit -m "Add ${SIGNER} ${VERSION} signed binaries signatures"
+git commit -m "Add attestations by ${SIGNER} for ${VERSION} codesigned"
 git push  # Assuming you can push to the guix.sigs tree
 popd
 ```

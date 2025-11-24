@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef BITCOIN_MASTERNODE_SYNC_H
@@ -15,6 +15,7 @@ class CGovernanceManager;
 class CMasternodeSync;
 class CNetFulfilledRequestManager;
 class CNode;
+class PeerManager;
 
 static constexpr int MASTERNODE_SYNC_BLOCKCHAIN      = 1;
 static constexpr int MASTERNODE_SYNC_GOVERNANCE      = 4;
@@ -50,10 +51,9 @@ private:
 
     CConnman& connman;
     CNetFulfilledRequestManager& m_netfulfilledman;
-    const CGovernanceManager& m_govman;
 
 public:
-    explicit CMasternodeSync(CConnman& _connman, CNetFulfilledRequestManager& netfulfilledman, const CGovernanceManager& govman);
+    explicit CMasternodeSync(CConnman& _connman, CNetFulfilledRequestManager& netfulfilledman);
 
     void SendGovernanceSyncRequest(CNode* pnode) const;
 
@@ -71,13 +71,13 @@ public:
     void SwitchToNextAsset();
 
     void ProcessMessage(const CNode& peer, std::string_view msg_type, CDataStream& vRecv) const;
-    void ProcessTick();
+    void ProcessTick(const PeerManager& peerman, const CGovernanceManager& govman);
 
     void AcceptedBlockHeader(const CBlockIndex *pindexNew);
     void NotifyHeaderTip(const CBlockIndex *pindexNew, bool fInitialDownload);
-    void UpdatedBlockTip(const CBlockIndex *pindexNew, bool fInitialDownload);
+    void UpdatedBlockTip(const CBlockIndex *pindexTip, const CBlockIndex *pindexNew, bool fInitialDownload);
 
-    void DoMaintenance();
+    void DoMaintenance(const PeerManager& peerman, const CGovernanceManager& govman);
 };
 
 #endif // BITCOIN_MASTERNODE_SYNC_H

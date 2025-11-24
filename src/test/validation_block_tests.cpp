@@ -8,17 +8,10 @@
 #include <consensus/consensus.h>
 #include <consensus/merkle.h>
 #include <consensus/validation.h>
-#include <evo/evodb.h>
-#include <governance/governance.h>
-#include <llmq/blockprocessor.h>
-#include <llmq/chainlocks.h>
-#include <llmq/context.h>
-#include <llmq/instantsend.h>
-#include <miner.h>
+#include <node/miner.h>
 #include <pow.h>
 #include <random.h>
 #include <script/standard.h>
-#include <spork.h>
 #include <test/util/script.h>
 #include <test/util/setup_common.h>
 #include <util/time.h>
@@ -86,6 +79,8 @@ std::shared_ptr<CBlock> MinerTestingSetup::Block(const uint256& prev_hash)
     txCoinbase.vout[1].scriptPubKey = P2SH_OP_TRUE;
     txCoinbase.vout[1].nValue = txCoinbase.vout[0].nValue;
     txCoinbase.vout[0].nValue = 0;
+    // Always pad with OP_0 at the end to avoid bad-cb-length error
+    txCoinbase.vin[0].scriptSig = CScript{} << WITH_LOCK(::cs_main, return m_node.chainman->m_blockman.LookupBlockIndex(prev_hash)->nHeight + 1) << OP_0;
     pblock->vtx[0] = MakeTransactionRef(std::move(txCoinbase));
 
     return pblock;
@@ -98,6 +93,11 @@ std::shared_ptr<CBlock> MinerTestingSetup::FinalizeBlock(std::shared_ptr<CBlock>
     while (!CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus())) {
         ++(pblock->nNonce);
     }
+
+    // submit block header, so that miner can get the block height from the
+    // global state and the node has the topology of the chain
+    BlockValidationState ignored;
+    BOOST_CHECK(Assert(m_node.chainman)->ProcessNewBlockHeaders({pblock->GetBlockHeader()}, ignored, Params()));
 
     return pblock;
 }
@@ -153,13 +153,6 @@ BOOST_AUTO_TEST_CASE(processnewblock_signals_ordering)
     }
 
     bool ignored;
-    BlockValidationState state;
-    std::vector<CBlockHeader> headers;
-    std::transform(blocks.begin(), blocks.end(), std::back_inserter(headers), [](std::shared_ptr<const CBlock> b) { return b->GetBlockHeader(); });
-
-    // Process all the headers so we understand the toplogy of the chain
-    BOOST_CHECK(Assert(m_node.chainman)->ProcessNewBlockHeaders(headers, state, Params()));
-
     // Connect the genesis block and drain any outstanding events
     BOOST_CHECK(Assert(m_node.chainman)->ProcessNewBlock(Params(), std::make_shared<CBlock>(Params().GenesisBlock()), *m_node.sporkman, true, &ignored));
     SyncWithValidationInterfaceQueue();
@@ -228,7 +221,7 @@ BOOST_AUTO_TEST_CASE(mempool_locks_reorg)
 {
     bool ignored;
     auto ProcessBlock = [&](std::shared_ptr<const CBlock> block) -> bool {
-        return Assert(m_node.chainman)->ProcessNewBlock(Params(), block, *m_node.sporkman, /* fForceProcessing */ true, /* fNewBlock */ &ignored);
+        return Assert(m_node.chainman)->ProcessNewBlock(Params(), block, *m_node.sporkman, /*force_processing=*/true, /*new_block=*/&ignored);
     };
 
     // Process all mined blocks
@@ -286,7 +279,7 @@ BOOST_AUTO_TEST_CASE(mempool_locks_reorg)
         {
             LOCK(cs_main);
             for (const auto& tx : txs) {
-                const MempoolAcceptResult result = AcceptToMemoryPool(m_node.chainman->ActiveChainstate(), *m_node.mempool, tx, *m_node.sporkman, false /* bypass_limits */);
+                const MempoolAcceptResult result = m_node.chainman->ProcessTransaction(tx, *m_node.sporkman.get());
                 BOOST_REQUIRE(result.m_result_type == MempoolAcceptResult::ResultType::VALID);
             }
         }

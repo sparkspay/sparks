@@ -5,7 +5,7 @@
 #ifndef BITCOIN_UTIL_SOCK_H
 #define BITCOIN_UTIL_SOCK_H
 
-#include <compat.h>
+#include <compat/compat.h>
 #include <threadinterrupt.h>
 #include <util/time.h>
 
@@ -29,8 +29,7 @@ enum class SocketEventsMode : int8_t {
 };
 
 /* Converts SocketEventsMode value to string with additional check to report modes not compiled for as unknown */
-static std::string SEMToString(const SocketEventsMode val)
-{
+constexpr std::string_view SEMToString(const SocketEventsMode val) {
     switch (val) {
         case (SocketEventsMode::Select):
             return "select";
@@ -52,19 +51,18 @@ static std::string SEMToString(const SocketEventsMode val)
 }
 
 /* Converts string to SocketEventsMode value with additional check to report modes not compiled for as unknown */
-static SocketEventsMode SEMFromString(const std::string str)
-{
+constexpr SocketEventsMode SEMFromString(std::string_view str) {
     if (str == "select") { return SocketEventsMode::Select; }
 #ifdef USE_POLL
-    else if (str == "poll")   { return SocketEventsMode::Poll;   }
+    if (str == "poll")   { return SocketEventsMode::Poll;   }
 #endif /* USE_POLL */
 #ifdef USE_EPOLL
-    else if (str == "epoll")  { return SocketEventsMode::EPoll;  }
+    if (str == "epoll")  { return SocketEventsMode::EPoll;  }
 #endif /* USE_EPOLL */
 #ifdef USE_KQUEUE
-    else if (str == "kqueue") { return SocketEventsMode::KQueue; }
+    if (str == "kqueue") { return SocketEventsMode::KQueue; }
 #endif /* USE_KQUEUE */
-    else { return SocketEventsMode::Unknown; }
+    return SocketEventsMode::Unknown;
 }
 
 /**
@@ -192,6 +190,18 @@ public:
      */
     [[nodiscard]] virtual int GetSockName(sockaddr* name, socklen_t* name_len) const;
 
+    /**
+     * Set the non-blocking option on the socket.
+     * @return true if set successfully
+     */
+    [[nodiscard]] virtual bool SetNonBlocking() const;
+
+    /**
+     * Check if the underlying socket can be used for `select(2)` (or the `Wait()` method).
+     * @return true if selectable
+     */
+    [[nodiscard]] virtual bool IsSelectable() const;
+
     using Event = uint8_t;
 
     /**
@@ -250,7 +260,7 @@ public:
 
     /**
      * Check if still connected.
-     * @param[out] err The error string, if the socket has been disconnected.
+     * @param[out] errmsg The error string, if the socket has been disconnected.
      * @return true if connected
      */
     [[nodiscard]] virtual bool IsConnected(std::string& errmsg) const;

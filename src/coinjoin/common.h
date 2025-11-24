@@ -5,7 +5,7 @@
 #ifndef BITCOIN_COINJOIN_COMMON_H
 #define BITCOIN_COINJOIN_COMMON_H
 
-#include <amount.h>
+#include <consensus/amount.h>
 #include <primitives/transaction.h>
 
 #include <array>
@@ -132,4 +132,4 @@ constexpr int CalculateAmountPriority(CAmount nInputAmount)
 
 } // namespace CoinJoin
 
-#endif
+#endif // BITCOIN_COINJOIN_COMMON_H

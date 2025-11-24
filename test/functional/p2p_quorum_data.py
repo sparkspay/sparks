@@ -34,9 +34,9 @@ ENCRYPTED_CONTRIBUTIONS_MISSING = 6
 
 # Used to overwrite MNAUTH for mininode connections
 fake_mnauth_1 = ["cecf37bf0ec05d2d22cb8227f88074bb882b94cd2081ba318a5a444b1b15b9fd",
-                 "087ba00bf61135f3860c4944a0debabe186ef82628fbe4ceaed1ad51d672c58dde14ea4b321efe0b89257a40322bc972"]
+                 "8e7afdb849e5e2a085b035b62e21c0940c753f2d4501325743894c37162f287bccaffbedd60c36581dabbf127a22e43f"]
 fake_mnauth_2 = ["6ad7ed7a2d6c2c1db30fc364114602b36b2730a9aa96d8f11f1871a9cee37378",
-                 "122463411a86362966a5161805f24cf6a0eef08a586b8e00c4f0ad0b084c5bb3f5c9a60ee5ffc78db2313897e3ab2223"]
+                 "ad38860c03c3d1d875771f41b8a9b933415f72929c21a4276c101d8f0268f6fcdfeed46507c16c00e74f26ce1181e69f"]
 
 # Used to distinguish mininode connections
 uacomment_m3_1 = "MN3_1"
@@ -118,7 +118,7 @@ class QuorumDataInterface(P2PInterface):
 class QuorumDataMessagesTest(SparksTestFramework):
     def set_test_params(self):
         extra_args = [["-llmq-data-recovery=0", "-deprecatedrpc=banscore"]] * 4
-        self.set_sparks_test_params(4, 3, fast_dip3_enforcement=True, extra_args=extra_args)
+        self.set_sparks_test_params(4, 3, extra_args=extra_args)
 
     def restart_mn(self, mn, reindex=False):
         args = self.extra_args[mn.node.index] + ['-masternodeblsprivkey=%s' % mn.keyOperator]
@@ -135,8 +135,7 @@ class QuorumDataMessagesTest(SparksTestFramework):
             self.bump_mocktime(bump_seconds)
             # Test with/without expired request cleanup
             if self.cleanup:
-                node0.generate(1)
-                self.sync_blocks()
+                self.generate(node0, 1, sync_fun=lambda: self.sync_blocks())
 
         def test_basics():
             self.log.info("Testing basics of QGETDATA/QDATA")

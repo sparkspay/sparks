@@ -34,8 +34,8 @@ jobs:
           echo "host_group_id=$(id -g)" >> $GITHUB_OUTPUT
           BRANCH_NAME=$(echo "${GITHUB_REF##*/}" | tr '[:upper:]' '[:lower:]')
           REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          echo "::set-output name=image-tag::${BRANCH_NAME}"
-          echo "::set-output name=repo-name::${REPO_NAME}"
+          echo "image-tag=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          echo "repo-name=${REPO_NAME}" >> $GITHUB_OUTPUT
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -68,7 +68,7 @@ jobs:
 #    if: ${{ contains(github.event.pull_request.labels.*.name, 'guix-build') }}
     strategy:
       matrix:
-        build_target: [x86_64-linux-gnu, arm-linux-gnueabihf, aarch64-linux-gnu, riscv64-linux-gnu, x86_64-w64-mingw32, x86_64-apple-darwin, arm64-apple-darwin]
+        build_target: [x86_64-linux-gnu, arm-linux-gnueabihf, aarch64-linux-gnu, riscv64-linux-gnu, powerpc64-linux-gnu, x86_64-w64-mingw32, x86_64-apple-darwin, arm64-apple-darwin]
 
     timeout-minutes: 480
     steps:
@@ -79,6 +79,14 @@ jobs:
           path: sparks
           fetch-depth: 0
 
+      - name: Cache depends sources
+        uses: actions/cache@v4
+        with:
+          path: sparks/depends/sources
+          key: depends-sources-${{ hashFiles('sparks/depends/packages/*') }}
+          restore-keys: |
+            depends-sources-
+
       - name: Cache Guix and depends
         id: guix-cache-restore
         uses: actions/cache@v3
@@ -86,7 +94,6 @@ jobs:
           path: |
             ${{ github.workspace }}/.cache
             ${{ github.workspace }}/sparks/depends/built
-            ${{ github.workspace }}/sparks/depends/sources
             ${{ github.workspace }}/sparks/depends/work
             /gnu/store
           key: ${{ runner.os }}-guix-${{ matrix.build_target }}-${{ github.sha }}
@@ -103,12 +110,11 @@ jobs:
         run: |
           docker run --privileged -d --rm -t \
             --name guix-daemon \
-            -e ADDITIONAL_GUIX_COMMON_FLAGS="--max-jobs=$(nproc --all)" \
             -v ${{ github.workspace }}/sparks:/src/sparks \
             -v ${{ github.workspace }}/.cache:/home/ubuntu/.cache \
             -w /src/sparks \
             ghcr.io/${{ needs.build-image.outputs.repo-name }}/sparkscore-guix-builder:${{ needs.build-image.outputs.image-tag }} && \
-          docker exec guix-daemon bash -c 'HOSTS=${{ matrix.build_target }} /usr/local/bin/guix-start'
+          docker exec guix-daemon bash -c 'HOSTS=${{ matrix.build_target }} /usr/local/bin/guix-start /src/sparks'
 
       - name: Ensure build passes
         run: |

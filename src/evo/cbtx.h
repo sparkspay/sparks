@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 The Dash Core developers
+// Copyright (c) 2017-2025 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -19,8 +19,9 @@ class CDeterministicMNManager;
 class TxValidationState;
 
 namespace llmq {
-class CQuorumBlockProcessor;
 class CChainLocksHandler;
+class CQuorumBlockProcessor;
+class CQuorumSnapshotManager;
 }// namespace llmq
 
 // Forward declaration from core_io to get rid of circular dependency
@@ -87,20 +88,20 @@ template<> struct is_serializable_enum<CCbTx::Version> : std::true_type {};
 bool CheckCbTx(const CTransaction& tx, const CBlockIndex* pindexPrev, TxValidationState& state);
 
 bool CheckCbTxMerkleRoots(const CBlock& block, const CBlockIndex* pindex, CDeterministicMNManager& dmnman,
-                          const llmq::CQuorumBlockProcessor& quorum_block_processor, BlockValidationState& state,
-                          const CCoinsViewCache& view);
+                          llmq::CQuorumSnapshotManager& qsnapman, const llmq::CQuorumBlockProcessor& quorum_block_processor,
+                          BlockValidationState& state, const CCoinsViewCache& view);
 bool CalcCbTxMerkleRootMNList(const CBlock& block, const CBlockIndex* pindexPrev, uint256& merkleRootRet,
-                              CDeterministicMNManager& dmnman, BlockValidationState& state, const CCoinsViewCache& view);
+                              BlockValidationState& state, CDeterministicMNManager& dmnman,
+                              llmq::CQuorumSnapshotManager& qsnapman, const CCoinsViewCache& view);
 bool CalcCbTxMerkleRootQuorums(const CBlock& block, const CBlockIndex* pindexPrev,
                                const llmq::CQuorumBlockProcessor& quorum_block_processor, uint256& merkleRootRet,
                                BlockValidationState& state);
 
 bool CheckCbTxBestChainlock(const CBlock& block, const CBlockIndex* pindexPrev,
-                            const llmq::CChainLocksHandler& chainlock_handler, BlockValidationState& state, const bool check_clhdiff);
+                            const llmq::CChainLocksHandler& chainlock_handler, BlockValidationState& state);
 bool CalcCbTxBestChainlock(const llmq::CChainLocksHandler& chainlock_handler, const CBlockIndex* pindexPrev,
                            uint32_t& bestCLHeightDiff, CBLSSignature& bestCLSignature);
 
-std::optional<CCbTx> GetCoinbaseTx(const CBlockIndex* pindex);
 std::optional<std::pair<CBLSSignature, uint32_t>> GetNonNullCoinbaseChainlock(const CBlockIndex* pindex);
 
 #endif // BITCOIN_EVO_CBTX_H

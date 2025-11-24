@@ -24,6 +24,8 @@
 #include <util/underlying.h>
 
 #include <QButtonGroup>
+#include <chrono>
+
 #include <QDataWidgetMapper>
 #include <QDir>
 #include <QIntValidator>
@@ -257,20 +259,21 @@ void OptionsDialog::setModel(OptionsModel *_model)
     /* Main */
     connect(ui->prune, &QCheckBox::clicked, this, &OptionsDialog::showRestartWarning);
     connect(ui->prune, &QCheckBox::clicked, this, &OptionsDialog::togglePruneWarning);
-    connect(ui->pruneSize, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &OptionsDialog::showRestartWarning);
-    connect(ui->databaseCache, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &OptionsDialog::showRestartWarning);
-    connect(ui->threadsScriptVerif, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &OptionsDialog::showRestartWarning);
+    connect(ui->pruneSize, qOverload<int>(&QSpinBox::valueChanged), this, &OptionsDialog::showRestartWarning);
+    connect(ui->databaseCache, qOverload<int>(&QSpinBox::valueChanged), this, &OptionsDialog::showRestartWarning);
+    connect(ui->threadsScriptVerif, qOverload<int>(&QSpinBox::valueChanged), this, &OptionsDialog::showRestartWarning);
     /* Wallet */
     connect(ui->showMasternodesTab, &QCheckBox::clicked, this, &OptionsDialog::showRestartWarning);
     connect(ui->showGovernanceTab, &QCheckBox::clicked, this, &OptionsDialog::showRestartWarning);
     connect(ui->spendZeroConfChange, &QCheckBox::clicked, this, &OptionsDialog::showRestartWarning);
     /* Network */
     connect(ui->allowIncoming, &QCheckBox::clicked, this, &OptionsDialog::showRestartWarning);
+    connect(ui->enableServer, &QCheckBox::clicked, this, &OptionsDialog::showRestartWarning);
     connect(ui->connectSocks, &QCheckBox::clicked, this, &OptionsDialog::showRestartWarning);
     connect(ui->connectSocksTor, &QCheckBox::clicked, this, &OptionsDialog::showRestartWarning);
     /* Display */
-    connect(ui->digits, static_cast<void (QValueComboBox::*)()>(&QValueComboBox::valueChanged), [this]{ showRestartWarning(); });
-    connect(ui->lang, static_cast<void (QValueComboBox::*)()>(&QValueComboBox::valueChanged), [this]{ showRestartWarning(); });
+    connect(ui->digits, qOverload<>(&QValueComboBox::valueChanged), [this]{ showRestartWarning(); });
+    connect(ui->lang, qOverload<>(&QValueComboBox::valueChanged), [this]{ showRestartWarning(); });
     connect(ui->thirdPartyTxUrls, &QLineEdit::textChanged, [this]{ showRestartWarning(); });
 
     connect(ui->coinJoinEnabled, &QCheckBox::clicked, [=](bool fChecked) {
@@ -295,8 +298,8 @@ void OptionsDialog::setModel(OptionsModel *_model)
         }
     });
 
-    connect(ui->coinJoinDenomsGoal, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &OptionsDialog::updateCoinJoinDenomGoal);
-    connect(ui->coinJoinDenomsHardCap, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &OptionsDialog::updateCoinJoinDenomHardCap);
+    connect(ui->coinJoinDenomsGoal, qOverload<int>(&QSpinBox::valueChanged), this, &OptionsDialog::updateCoinJoinDenomGoal);
+    connect(ui->coinJoinDenomsHardCap, qOverload<int>(&QSpinBox::valueChanged), this, &OptionsDialog::updateCoinJoinDenomHardCap);
 #endif
 }
 
@@ -324,6 +327,7 @@ void OptionsDialog::setMapper()
 
     /* Wallet */
     mapper->addMapping(ui->coinControlFeatures, OptionsModel::CoinControlFeatures);
+    mapper->addMapping(ui->subFeeFromAmount, OptionsModel::SubFeeFromAmount);
     mapper->addMapping(ui->keepChangeAddress, OptionsModel::KeepChangeAddress);
     mapper->addMapping(ui->showMasternodesTab, OptionsModel::ShowMasternodesTab);
     mapper->addMapping(ui->showGovernanceTab, OptionsModel::ShowGovernanceTab);
@@ -342,6 +346,7 @@ void OptionsDialog::setMapper()
     mapper->addMapping(ui->mapPortUpnp, OptionsModel::MapPortUPnP);
     mapper->addMapping(ui->mapPortNatpmp, OptionsModel::MapPortNatpmp);
     mapper->addMapping(ui->allowIncoming, OptionsModel::Listen);
+    mapper->addMapping(ui->enableServer, OptionsModel::Server);
 
     mapper->addMapping(ui->connectSocks, OptionsModel::ProxyUse);
     mapper->addMapping(ui->proxyIp, OptionsModel::ProxyIP);
@@ -453,7 +458,7 @@ void OptionsDialog::showRestartWarning(bool fPersistent)
         ui->statusLabel->setText(tr("This change would require a client restart."));
         // clear non-persistent status label after 10 seconds
         // Todo: should perhaps be a class attribute, if we extend the use of statusLabel
-        QTimer::singleShot(10000, this, &OptionsDialog::clearStatusLabel);
+        QTimer::singleShot(10s, this, &OptionsDialog::clearStatusLabel);
     }
 }
 
@@ -484,24 +489,20 @@ void OptionsDialog::updateProxyValidationState()
 
 void OptionsDialog::updateDefaultProxyNets()
 {
+    const std::optional<CNetAddr> ui_proxy_netaddr{LookupHost(ui->proxyIp->text().toStdString(), /*fAllowLookup=*/false)};
+    const CService ui_proxy{ui_proxy_netaddr.value_or(CNetAddr{}), ui->proxyPort->text().toUShort()};
+
     Proxy proxy;
-    std::string strProxy;
-    QString strDefaultProxyGUI;
+    bool has_proxy;
 
-    model->node().getProxy(NET_IPV4, proxy);
-    strProxy = proxy.proxy.ToStringIP() + ":" + proxy.proxy.ToStringPort();
-    strDefaultProxyGUI = ui->proxyIp->text() + ":" + ui->proxyPort->text();
-    (strProxy == strDefaultProxyGUI.toStdString()) ? ui->proxyReachIPv4->setChecked(true) : ui->proxyReachIPv4->setChecked(false);
+    has_proxy = model->node().getProxy(NET_IPV4, proxy);
+    ui->proxyReachIPv4->setChecked(has_proxy && proxy.proxy == ui_proxy);
 
-    model->node().getProxy(NET_IPV6, proxy);
-    strProxy = proxy.proxy.ToStringIP() + ":" + proxy.proxy.ToStringPort();
-    strDefaultProxyGUI = ui->proxyIp->text() + ":" + ui->proxyPort->text();
-    (strProxy == strDefaultProxyGUI.toStdString()) ? ui->proxyReachIPv6->setChecked(true) : ui->proxyReachIPv6->setChecked(false);
+    has_proxy = model->node().getProxy(NET_IPV6, proxy);
+    ui->proxyReachIPv6->setChecked(has_proxy && proxy.proxy == ui_proxy);
 
-    model->node().getProxy(NET_ONION, proxy);
-    strProxy = proxy.proxy.ToStringIP() + ":" + proxy.proxy.ToStringPort();
-    strDefaultProxyGUI = ui->proxyIp->text() + ":" + ui->proxyPort->text();
-    (strProxy == strDefaultProxyGUI.toStdString()) ? ui->proxyReachTor->setChecked(true) : ui->proxyReachTor->setChecked(false);
+    has_proxy = model->node().getProxy(NET_ONION, proxy);
+    ui->proxyReachTor->setChecked(has_proxy && proxy.proxy == ui_proxy);
 }
 
 void OptionsDialog::updateCoinJoinVisibility()
@@ -544,7 +545,9 @@ void OptionsDialog::updateWidth()
     // Add 10 per button as padding and use minimum 585 which is what we used in css before
     int nWidth = std::max<int>(585, (nWidthWidestButton + 10) * nButtonsVisible);
     setMinimumWidth(nWidth);
-    resize(nWidth, height());
+
+    // Resize to new minimum width but don't shrink window
+    resize(std::max(width(), nWidth), height());
 }
 
 void OptionsDialog::showEvent(QShowEvent* event)

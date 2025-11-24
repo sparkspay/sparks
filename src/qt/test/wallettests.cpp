@@ -25,6 +25,7 @@
 #include <qt/recentrequeststablemodel.h>
 #include <qt/receiverequestdialog.h>
 
+#include <chrono>
 #include <memory>
 
 #include <QAbstractButton>
@@ -110,8 +111,7 @@ void TestGUI(interfaces::Node& node)
     node.setContext(&test.m_node);
     std::shared_ptr<CWallet> wallet = std::make_shared<CWallet>(node.context()->chain.get(), node.context()->coinjoin_loader.get(), "", CreateMockWalletDatabase());
     AddWallet(wallet);
-    bool firstRun;
-    wallet->LoadWallet(firstRun);
+    wallet->LoadWallet();
     {
         auto spk_man = wallet->GetOrCreateLegacyScriptPubKeyMan();
         LOCK2(wallet->cs_wallet, spk_man->cs_KeyStore);
@@ -202,7 +202,7 @@ void TestGUI(interfaces::Node& node)
 
             QCOMPARE(uri.count("amount=0.00000001"), 2);
             QCOMPARE(receiveRequestDialog->QObject::findChild<QLabel*>("amount_tag")->text(), QString("Amount:"));
-            QCOMPARE(receiveRequestDialog->QObject::findChild<QLabel*>("amount_content")->text(), QString("0.00000001 ") + BitcoinUnits::name(unit));
+            QCOMPARE(receiveRequestDialog->QObject::findChild<QLabel*>("amount_content")->text(), QString::fromStdString("0.00000001 ") + BitcoinUnits::name(unit));
 
             QCOMPARE(uri.count("label=TEST_LABEL_1"), 2);
             QCOMPARE(receiveRequestDialog->QObject::findChild<QLabel*>("label_tag")->text(), QString("Label:"));

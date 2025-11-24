@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2023 The Dash Core developers
+// Copyright (c) 2018-2025 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,15 +8,15 @@
 #include <evo/dmnstate.h>
 
 #include <arith_uint256.h>
+#include <clientversion.h>
 #include <consensus/params.h>
 #include <crypto/common.h>
 #include <evo/dmn_types.h>
-#include <evo/evodb.h>
 #include <evo/providertx.h>
+#include <gsl/pointers.h>
 #include <saltedhasher.h>
 #include <scheduler.h>
 #include <sync.h>
-#include <gsl/pointers.h>
 
 #include <immer/map.hpp>
 
@@ -30,14 +30,15 @@
 class CBlock;
 class CBlockIndex;
 class CChainState;
-class CConnman;
+class CCoinsViewCache;
+class CEvoDB;
 class TxValidationState;
 
 extern RecursiveMutex cs_main;
 
-namespace llmq
-{
-    class CFinalCommitment;
+namespace llmq {
+class CFinalCommitment;
+class CQuorumSnapshotManager;
 } // namespace llmq
 
 class CDeterministicMN
@@ -240,9 +241,10 @@ public:
 
     [[nodiscard]] size_t GetValidMNsCount() const
     {
-        return ranges::count_if(mnMap, [this](const auto& p){ return IsMNValid(*p.second); });
+        return ranges::count_if(mnMap, [](const auto& p) { return IsMNValid(*p.second); });
     }
-    size_t GetIPv4Count() const
+    
+    [[nodiscard]] size_t GetIPv4Count() const
     {
         size_t count = 0;
         for (const auto& p : mnMap) {
@@ -253,7 +255,7 @@ public:
         return count;
     }
 
-    size_t GetIPv6Count() const
+    [[nodiscard]] size_t GetIPv6Count() const
     {
         size_t count = 0;
         for (const auto& p : mnMap) {
@@ -266,21 +268,22 @@ public:
 
     [[nodiscard]] size_t GetAllEvoCount() const
     {
-        return ranges::count_if(mnMap, [this](const auto& p) { return p.second->nType == MnType::Evo; });
+        return ranges::count_if(mnMap, [](const auto& p) { return p.second->nType == MnType::Evo; });
     }
 
     [[nodiscard]] size_t GetValidEvoCount() const
     {
-        return ranges::count_if(mnMap, [this](const auto& p) { return p.second->nType == MnType::Evo && IsMNValid(*p.second); });
+        return ranges::count_if(mnMap,
+                                [](const auto& p) { return p.second->nType == MnType::Evo && IsMNValid(*p.second); });
     }
 
     [[nodiscard]] size_t GetValidWeightedMNsCount(const CChain& chain) const
     {
-        return std::accumulate(mnMap.begin(), mnMap.end(), 0, [this, &chain](auto res, const auto& p) {
+        return std::accumulate(mnMap.begin(), mnMap.end(), 0, [&chain](auto res, const auto& p) {
                                                                 const CBlockIndex* pindex = chain.Tip();
-                                                                if (!IsMNValid(*p.second)) return res;
-                                                                return res + GetMnType(p.second->nType, pindex).voting_weight;
-                                                            });
+            if (!IsMNValid(*p.second)) return res;
+            return res + GetMnType(p.second->nType, pindex).voting_weight;
+        });
     }
 
     /**
@@ -369,15 +372,11 @@ public:
      * Calculates the projected MN payees for the next *count* blocks. The result is not guaranteed to be correct
      * as PoSe banning might occur later
      * @param nCount the number of payees to return. "nCount = max()"" means "all", use it to avoid calling GetValidWeightedMNsCount twice.
-     * @return
      */
     [[nodiscard]] std::vector<CDeterministicMNCPtr> GetProjectedMNPayees(gsl::not_null<const CBlockIndex* const> pindexPrev, const CChain& chain, int nCount = std::numeric_limits<int>::max()) const;
 
     /**
      * Calculate a quorum based on the modifier. The resulting list is deterministically sorted by score
-     * @param maxSize
-     * @param modifier
-     * @return
      */
     [[nodiscard]] std::vector<CDeterministicMNCPtr> CalculateQuorum(size_t maxSize, const uint256& modifier, const bool onlyEvoNodes = false) const;
     [[nodiscard]] std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CalculateScores(const uint256& modifier, const bool onlyEvoNodes) const;
@@ -385,7 +384,6 @@ public:
     /**
      * Calculates the maximum penalty which is allowed at the height of this MN list. It is dynamic and might change
      * for every block.
-     * @return
      */
     [[nodiscard]] int CalcMaxPoSePenalty() const;
 
@@ -394,8 +392,6 @@ public:
      * value later passed to PoSePunish. The percentage should be high enough to take per-block penalty decreasing for MNs
      * into account. This means, if you want to accept 2 failures per payment cycle, you should choose a percentage that
      * is higher then 50%, e.g. 66%.
-     * @param percent
-     * @return
      */
     [[nodiscard]] int CalcPenalty(int percent) const;
 
@@ -403,8 +399,6 @@ public:
      * Punishes a MN for misbehavior. If the resulting penalty score of the MN reaches the max penalty, it is banned.
      * Penalty scores are only increased when the MN is not already banned, which means that after banning the penalty
      * might appear lower then the current max penalty, while the MN is still banned.
-     * @param proTxHash
-     * @param penalty
      */
     void PoSePunish(const uint256& proTxHash, int penalty, bool debugLogs);
 
@@ -612,7 +606,6 @@ private:
     std::atomic<int> to_cleanup {0};
 
     CChainState& m_chainstate;
-    CConnman& connman;
     CEvoDB& m_evoDb;
 
     std::unordered_map<uint256, CDeterministicMNList, StaticSaltedHasher> mnListsCache GUARDED_BY(cs);
@@ -621,20 +614,26 @@ private:
     const CBlockIndex* m_initial_snapshot_index GUARDED_BY(cs) {nullptr};
 
 public:
-    explicit CDeterministicMNManager(CChainState& chainstate, CConnman& _connman, CEvoDB& evoDb) :
-        m_chainstate(chainstate), connman(_connman), m_evoDb(evoDb) {}
+    explicit CDeterministicMNManager(CChainState& chainstate, CEvoDB& evoDb) :
+        m_chainstate(chainstate),
+        m_evoDb(evoDb)
+    {
+    }
     ~CDeterministicMNManager() = default;
 
     bool ProcessBlock(const CBlock& block, gsl::not_null<const CBlockIndex*> pindex, BlockValidationState& state,
-                      const CCoinsViewCache& view, bool fJustCheck, std::optional<MNListUpdates>& updatesRet) EXCLUSIVE_LOCKS_REQUIRED(!cs, cs_main);
+                      const CCoinsViewCache& view, llmq::CQuorumSnapshotManager& qsnapman, bool fJustCheck,
+                      std::optional<MNListUpdates>& updatesRet) EXCLUSIVE_LOCKS_REQUIRED(!cs, cs_main);
     bool UndoBlock(gsl::not_null<const CBlockIndex*> pindex, std::optional<MNListUpdates>& updatesRet) EXCLUSIVE_LOCKS_REQUIRED(!cs);
 
     void UpdatedBlockTip(gsl::not_null<const CBlockIndex*> pindex) EXCLUSIVE_LOCKS_REQUIRED(!cs);
 
     // the returned list will not contain the correct block hash (we can't know it yet as the coinbase TX is not updated yet)
-    bool BuildNewListFromBlock(const CBlock& block, gsl::not_null<const CBlockIndex*> pindexPrev, BlockValidationState& state, const CCoinsViewCache& view,
-                               CDeterministicMNList& mnListRet, bool debugLogs) EXCLUSIVE_LOCKS_REQUIRED(!cs);
-    void HandleQuorumCommitment(const llmq::CFinalCommitment& qc, gsl::not_null<const CBlockIndex*> pQuorumBaseBlockIndex, CDeterministicMNList& mnList, bool debugLogs);
+    bool BuildNewListFromBlock(const CBlock& block, gsl::not_null<const CBlockIndex*> pindexPrev,
+                               BlockValidationState& state, const CCoinsViewCache& view, CDeterministicMNList& mnListRet,
+                               llmq::CQuorumSnapshotManager& qsnapman, bool debugLogs) EXCLUSIVE_LOCKS_REQUIRED(!cs);
+    void HandleQuorumCommitment(const llmq::CFinalCommitment& qc, gsl::not_null<const CBlockIndex*> pQuorumBaseBlockIndex,
+                                CDeterministicMNList& mnList, llmq::CQuorumSnapshotManager& qsnapman, bool debugLogs);
 
     CDeterministicMNList GetListForBlock(gsl::not_null<const CBlockIndex*> pindex) EXCLUSIVE_LOCKS_REQUIRED(!cs) {
         LOCK(cs);

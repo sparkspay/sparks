@@ -5,10 +5,10 @@
 """Test addrman functionality"""
 
 import os
+import re
 import struct
 
-from test_framework.messages import ser_uint256, hash256
-from test_framework.p2p import MAGIC_BYTES
+from test_framework.messages import ser_uint256, hash256, MAGIC_BYTES
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.test_node import ErrorMatch
 from test_framework.util import assert_equal
@@ -31,12 +31,12 @@ def serialize_addrman(
     r += struct.pack("B", format)
     r += struct.pack("B", INCOMPATIBILITY_BASE + lowest_compatible)
     r += ser_uint256(bucket_key)
-    r += struct.pack("i", len_new or len(new))
-    r += struct.pack("i", len_tried or len(tried))
+    r += struct.pack("<i", len_new or len(new))
+    r += struct.pack("<i", len_tried or len(tried))
     ADDRMAN_NEW_BUCKET_COUNT = 1 << 10
-    r += struct.pack("i", ADDRMAN_NEW_BUCKET_COUNT ^ (1 << 30))
+    r += struct.pack("<i", ADDRMAN_NEW_BUCKET_COUNT ^ (1 << 30))
     for _ in range(ADDRMAN_NEW_BUCKET_COUNT):
-        r += struct.pack("i", 0)
+        r += struct.pack("<i", 0)
     checksum = hash256(r)
     r += mock_checksum or checksum
     return r
@@ -56,7 +56,7 @@ class AddrmanTest(BitcoinTestFramework):
         init_error = lambda reason: (
             f"Error: Invalid or corrupt peers.dat \\({reason}\\). If you believe this "
             f"is a bug, please report it to {self.config['environment']['PACKAGE_BUGREPORT']}. "
-            f'As a workaround, you can move the file \\("{peers_dat}"\\) out of the way \\(rename, '
+            f'As a workaround, you can move the file \\("{re.escape(peers_dat)}"\\) out of the way \\(rename, '
             "move, or delete\\) to have a new one created on the next start."
         )
 
@@ -67,17 +67,27 @@ class AddrmanTest(BitcoinTestFramework):
             self.start_node(0, extra_args=["-checkaddrman=1"])
         assert_equal(self.nodes[0].getnodeaddresses(), [])
 
-        self.log.info("Check that addrman from future cannot be read")
+        self.log.info("Check that addrman with negative lowest_compatible cannot be read")
         self.stop_node(0)
-        write_addrman(peers_dat, lowest_compatible=111)
+        write_addrman(peers_dat, lowest_compatible=-32)
         self.nodes[0].assert_start_raises_init_error(
             expected_msg=init_error(
-                "Unsupported format of addrman database: 1. It is compatible with "
-                "formats >=111, but the maximum supported by this version of "
-                f"{self.config['environment']['PACKAGE_NAME']} is 4.: (.+)"
+                "Corrupted addrman database: The compat value \\(0\\) is lower "
+                "than the expected minimum value 32.: (.+)"
             ),
             match=ErrorMatch.FULL_REGEX,
         )
+
+        self.log.info("Check that addrman from future is overwritten with new addrman")
+        self.stop_node(0)
+        write_addrman(peers_dat, lowest_compatible=111)
+        assert_equal(os.path.exists(peers_dat + ".bak"), False)
+        with self.nodes[0].assert_debug_log([
+                f'Creating new peers.dat because the file version was not compatible ("{peers_dat}"). Original backed up to peers.dat.bak',
+        ]):
+            self.start_node(0)
+        assert_equal(self.nodes[0].getnodeaddresses(), [])
+        assert_equal(os.path.exists(peers_dat + ".bak"), True)
 
         self.log.info("Check that corrupt addrman cannot be read (EOF)")
         self.stop_node(0)

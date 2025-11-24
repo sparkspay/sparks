@@ -35,14 +35,14 @@ class WalletEncryptionTest(BitcoinTestFramework):
         assert_raises_rpc_error(-15, "Error: running with an unencrypted wallet, but walletpassphrasechange was called.", self.nodes[0].walletpassphrasechange, 'ff', 'ff')
 
         # Encrypt the wallet
-        assert_raises_rpc_error(-8, "passphrase can not be empty", self.nodes[0].encryptwallet, '')
+        assert_raises_rpc_error(-8, "passphrase cannot be empty", self.nodes[0].encryptwallet, '')
         self.nodes[0].encryptwallet(passphrase)
 
         # Test that the wallet is encrypted
         assert_raises_rpc_error(-13, "Please enter the wallet passphrase with walletpassphrase first", self.nodes[0].signmessage, address, msg)
         assert_raises_rpc_error(-15, "Error: running with an encrypted wallet, but encryptwallet was called.", self.nodes[0].encryptwallet, 'ff')
-        assert_raises_rpc_error(-8, "passphrase can not be empty", self.nodes[0].walletpassphrase, '', 1)
-        assert_raises_rpc_error(-8, "passphrase can not be empty", self.nodes[0].walletpassphrasechange, '', 'ff')
+        assert_raises_rpc_error(-8, "passphrase cannot be empty", self.nodes[0].walletpassphrase, '', 1)
+        assert_raises_rpc_error(-8, "passphrase cannot be empty", self.nodes[0].walletpassphrasechange, '', 'ff')
 
         # Check that walletpassphrase works
         self.nodes[0].walletpassphrase(passphrase, 2)
@@ -79,7 +79,7 @@ class WalletEncryptionTest(BitcoinTestFramework):
         expected_time = self.mocktime + MAX_VALUE - 600
         self.nodes[0].walletpassphrase(passphrase2, MAX_VALUE - 600)
         self.bump_mocktime(1)
-        # give buffer for walletpassphrase, since it iterates over all crypted keys
+        # give buffer for walletpassphrase, since it iterates over all encrypted keys
         expected_time_with_buffer = self.mocktime + MAX_VALUE - 600
         actual_time = self.nodes[0].getwalletinfo()['unlocked_until']
         assert_greater_than_or_equal(actual_time, expected_time)

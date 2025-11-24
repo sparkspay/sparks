@@ -41,6 +41,13 @@ class CPubKey;
 class CScript;
 struct Sections;
 
+/**
+ * Gets all existing output types formatted for RPC help sections.
+ *
+ * @return Comma separated string representing output type names.
+ */
+std::string GetAllOutputTypes();
+
 /** Wrapper for UniValue::VType, which includes typeAny:
  * Used to denote don't care type. */
 struct UniValueType {
@@ -81,10 +88,16 @@ std::vector<unsigned char> ParseHexO(const UniValue& o, std::string strKey);
 
 int32_t ParseInt32V(const UniValue& v, const std::string &strName);
 int64_t ParseInt64V(const UniValue& v, const std::string &strName);
-double ParseDoubleV(const UniValue& v, const std::string &strName);
 bool ParseBoolV(const UniValue& v, const std::string &strName);
 
-CAmount AmountFromValue(const UniValue& value);
+/**
+ * Validate and return a CAmount from a UniValue number or string.
+ *
+ * @param[in] value     UniValue number or string to parse.
+ * @param[in] decimals  Number of significant digits (default: 8).
+ * @returns a CAmount if the various checks pass.
+ */
+CAmount AmountFromValue(const UniValue& value, int decimals = 8);
 
 using RPCArgList = std::vector<std::pair<std::string, UniValue>>;
 std::string HelpExampleCli(const std::string& methodname, const std::string& args);
@@ -148,7 +161,9 @@ struct RPCArg {
          */
         OMITTED,
     };
-    using Fallback = std::variant<Optional, /* default value for optional args */ std::string>;
+    using DefaultHint = std::string;
+    using Default = UniValue;
+    using Fallback = std::variant<Optional, /* hint for default value */ DefaultHint, /* default constant value */ Default>;
     const std::string m_names; //!< The name of the arg (can be empty for inner args, can contain multiple aliases separated by | for named request arguments)
     const Type m_type;
     const bool m_hidden;
@@ -174,7 +189,7 @@ struct RPCArg {
           m_oneline_description{std::move(oneline_description)},
           m_type_str{std::move(type_str)}
     {
-        CHECK_NONFATAL(type != Type::ARR && type != Type::OBJ);
+        CHECK_NONFATAL(type != Type::ARR && type != Type::OBJ && type != Type::OBJ_USER_KEYS);
     }
 
     RPCArg(
@@ -194,7 +209,7 @@ struct RPCArg {
           m_oneline_description{std::move(oneline_description)},
           m_type_str{std::move(type_str)}
     {
-        CHECK_NONFATAL(type == Type::ARR || type == Type::OBJ);
+        CHECK_NONFATAL(type == Type::ARR || type == Type::OBJ || type == Type::OBJ_USER_KEYS);
     }
 
     bool IsOptional() const;
@@ -230,6 +245,7 @@ struct RPCResult {
         NUM,
         BOOL,
         NONE,
+        ANY,        //!< Special type to disable type checks (for testing only)
         STR_AMOUNT, //!< Special string to represent a floating point amount
         STR_HEX,    //!< Special string with only hex chars
         OBJ_DYN,    //!< Special dictionary with keys that are not literals
@@ -302,6 +318,8 @@ struct RPCResult {
     std::string ToStringObj() const;
     /** Return the description string, including the result type. */
     std::string ToDescriptionString() const;
+    /** Check whether the result JSON type matches. */
+    bool MatchesType(const UniValue& result) const;
 };
 
 struct RPCResults {
@@ -340,28 +358,12 @@ public:
     using RPCMethodImpl = std::function<UniValue(const RPCHelpMan&, const JSONRPCRequest&)>;
     RPCHelpMan(std::string name, std::string description, std::vector<RPCArg> args, RPCResults results, RPCExamples examples, RPCMethodImpl fun);
 
+    UniValue HandleRequest(const JSONRPCRequest& request) const;
     std::string ToString() const;
-    UniValue HandleRequest(const JSONRPCRequest& request)
-    {
-        Check(request);
-        return m_fun(*this, request);
-    }
+    /** Return the named args that need to be converted from string to another JSON type */
+    UniValue GetArgMap() const;
     /** If the supplied number of args is neither too small nor too high */
     bool IsValidNumArgs(size_t num_args) const;
-    /**
-     * Check if the given request is valid according to this command or if
-     * the user is asking for help information, and throw help when appropriate.
-     */
-    inline void Check(const JSONRPCRequest& request) const {
-        if (request.fHelp || !IsValidNumArgs(request.params.size())) {
-            throw std::runtime_error(ToString());
-        }
-    }
-
-    // TODO: drop it, that's sparks specific workaround
-    [[ noreturn ]] inline void Throw() const {
-        throw std::runtime_error(ToString());
-    }
 
     std::vector<std::string> GetArgNames() const;
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2024 The Dash Core developers
+// Copyright (c) 2019-2025 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,9 +11,8 @@
 #include <chainparams.h>
 #include <consensus/validation.h>
 #include <masternode/sync.h>
-#include <net_processing.h>
 #include <node/blockstorage.h>
-#include <node/ui_interface.h>
+#include <node/interface_ui.h>
 #include <scheduler.h>
 #include <spork.h>
 #include <txmempool.h>
@@ -23,14 +22,16 @@
 #include <validation.h>
 #include <validationinterface.h>
 
+static bool ChainLocksSigningEnabled(const CSporkManager& sporkman)
+{
+    return sporkman.GetSporkValue(SPORK_19_CHAINLOCKS_ENABLED) == 0;
+}
+
 namespace llmq
 {
-std::unique_ptr<CChainLocksHandler> chainLocksHandler;
-
 CChainLocksHandler::CChainLocksHandler(CChainState& chainstate, CQuorumManager& _qman, CSigningManager& _sigman,
                                        CSigSharesManager& _shareman, CSporkManager& sporkman, CTxMemPool& _mempool,
-                                       const CMasternodeSync& mn_sync, const std::unique_ptr<PeerManager>& peerman,
-                                       bool is_masternode) :
+                                       const CMasternodeSync& mn_sync, bool is_masternode) :
     m_chainstate(chainstate),
     qman(_qman),
     sigman(_sigman),
@@ -38,10 +39,10 @@ CChainLocksHandler::CChainLocksHandler(CChainState& chainstate, CQuorumManager& 
     spork_manager(sporkman),
     mempool(_mempool),
     m_mn_sync(mn_sync),
-    m_peerman(peerman),
     m_is_masternode{is_masternode},
     scheduler(std::make_unique<CScheduler>()),
-    scheduler_thread(std::make_unique<std::thread>(std::thread(util::TraceThread, "cl-schdlr", [&] { scheduler->serviceQueue(); })))
+    scheduler_thread(
+        std::make_unique<std::thread>(std::thread(util::TraceThread, "cl-schdlr", [&] { scheduler->serviceQueue(); })))
 {
 }
 
@@ -51,14 +52,14 @@ CChainLocksHandler::~CChainLocksHandler()
     scheduler_thread->join();
 }
 
-void CChainLocksHandler::Start()
+void CChainLocksHandler::Start(const llmq::CInstantSendManager& isman)
 {
     sigman.RegisterRecoveredSigsListener(this);
     scheduler->scheduleEvery([&]() {
         CheckActiveState();
         EnforceBestChainLock();
         // regularly retry signing the current chaintip as it might have failed before due to missing islocks
-        TrySignChainTip();
+        TrySignChainTip(isman);
     }, std::chrono::seconds{5});
 }
 
@@ -93,31 +94,10 @@ CChainLockSig CChainLocksHandler::GetBestChainLock() const
     return bestChainLock;
 }
 
-PeerMsgRet CChainLocksHandler::ProcessMessage(const CNode& pfrom, const std::string& msg_type, CDataStream& vRecv)
-{
-    if (!AreChainLocksEnabled(spork_manager)) {
-        return {};
-    }
-
-    if (msg_type == NetMsgType::CLSIG) {
-        CChainLockSig clsig;
-        vRecv >> clsig;
-
-        return ProcessNewChainLock(pfrom.GetId(), clsig, ::SerializeHash(clsig));
-    }
-    return {};
-}
-
-PeerMsgRet CChainLocksHandler::ProcessNewChainLock(const NodeId from, const llmq::CChainLockSig& clsig, const uint256& hash)
+MessageProcessingResult CChainLocksHandler::ProcessNewChainLock(const NodeId from, const llmq::CChainLockSig& clsig,
+                                                                const uint256& hash)
 {
     CheckActiveState();
-
-    CInv clsigInv(MSG_CLSIG, hash);
-
-    if (from != -1) {
-        LOCK(cs_main);
-        EraseObjectRequest(from, clsigInv);
-    }
 
     {
         LOCK(cs);
@@ -134,7 +114,7 @@ PeerMsgRet CChainLocksHandler::ProcessNewChainLock(const NodeId from, const llmq
     if (const auto ret = VerifyChainLock(clsig); ret != VerifyRecSigStatus::Valid) {
         LogPrint(BCLog::CHAINLOCKS, "CChainLocksHandler::%s -- invalid CLSIG (%s), status=%d peer=%d\n", __func__, clsig.ToString(), ToUnderlying(ret), from);
         if (from != -1) {
-            return tl::unexpected{10};
+            return MisbehavingError{10};
         }
         return {};
     }
@@ -163,14 +143,12 @@ PeerMsgRet CChainLocksHandler::ProcessNewChainLock(const NodeId from, const llmq
         // Note: make sure to still relay clsig further.
     }
 
-    // Note: do not hold cs while calling RelayInv
-    AssertLockNotHeld(cs);
-    Assert(m_peerman)->RelayInv(clsigInv);
+    CInv clsigInv(MSG_CLSIG, hash);
 
     if (pindex == nullptr) {
         // we don't know the block/header for this CLSIG yet, so bail out for now
         // when the block or the header later comes in, we will enforce the correct chain
-        return {};
+        return clsigInv;
     }
 
     scheduler->scheduleFromNow([&]() {
@@ -180,7 +158,7 @@ PeerMsgRet CChainLocksHandler::ProcessNewChainLock(const NodeId from, const llmq
 
     LogPrint(BCLog::CHAINLOCKS, "CChainLocksHandler::%s -- processed new CLSIG (%s), peer=%d\n",
               __func__, clsig.ToString(), from);
-    return {};
+    return clsigInv;
 }
 
 void CChainLocksHandler::AcceptedBlockHeader(gsl::not_null<const CBlockIndex*> pindexNew)
@@ -205,7 +183,7 @@ void CChainLocksHandler::AcceptedBlockHeader(gsl::not_null<const CBlockIndex*> p
     }
 }
 
-void CChainLocksHandler::UpdatedBlockTip()
+void CChainLocksHandler::UpdatedBlockTip(const llmq::CInstantSendManager& isman)
 {
     // don't call TrySignChainTip directly but instead let the scheduler call it. This way we ensure that cs_main is
     // never locked and TrySignChainTip is not called twice in parallel. Also avoids recursive calls due to
@@ -215,7 +193,7 @@ void CChainLocksHandler::UpdatedBlockTip()
         scheduler->scheduleFromNow([&]() {
             CheckActiveState();
             EnforceBestChainLock();
-            TrySignChainTip();
+            TrySignChainTip(isman);
             tryLockChainTipScheduled = false;
         }, std::chrono::seconds{0});
     }
@@ -237,7 +215,7 @@ void CChainLocksHandler::CheckActiveState()
     }
 }
 
-void CChainLocksHandler::TrySignChainTip()
+void CChainLocksHandler::TrySignChainTip(const llmq::CInstantSendManager& isman)
 {
     Cleanup();
 
@@ -294,7 +272,7 @@ void CChainLocksHandler::TrySignChainTip()
     // considered safe when it is islocked or at least known since 10 minutes (from mempool or block). These checks are
     // performed for the tip (which we try to sign) and the previous 5 blocks. If a ChainLocked block is found on the
     // way down, we consider all TXs to be safe.
-    if (quorumInstantSendManager->IsInstantSendEnabled() && quorumInstantSendManager->RejectConflictingBlocks()) {
+    if (isman.IsInstantSendEnabled() && isman.RejectConflictingBlocks()) {
         const auto* pindexWalk = pindex;
         while (pindexWalk != nullptr) {
             if (pindex->nHeight - pindexWalk->nHeight > 5) {
@@ -325,7 +303,7 @@ void CChainLocksHandler::TrySignChainTip()
                     }
                 }
 
-                if (txAge < WAIT_FOR_ISLOCK_TIMEOUT && !quorumInstantSendManager->IsLocked(txid)) {
+                if (txAge < WAIT_FOR_ISLOCK_TIMEOUT && !isman.IsLocked(txid)) {
                     LogPrint(BCLog::CHAINLOCKS, "CChainLocksHandler::%s -- not signing block %s due to TX %s not being islocked and not old enough. age=%d\n", __func__,
                               pindexWalk->GetBlockHash().ToString(), txid.ToString(), txAge);
                     return;
@@ -521,10 +499,10 @@ void CChainLocksHandler::EnforceBestChainLock()
     uiInterface.NotifyChainLock(clsig->getBlockHash().ToString(), clsig->getHeight());
 }
 
-void CChainLocksHandler::HandleNewRecoveredSig(const llmq::CRecoveredSig& recoveredSig)
+MessageProcessingResult CChainLocksHandler::HandleNewRecoveredSig(const llmq::CRecoveredSig& recoveredSig)
 {
     if (!isEnabled) {
-        return;
+        return {};
     }
 
     CChainLockSig clsig;
@@ -533,17 +511,17 @@ void CChainLocksHandler::HandleNewRecoveredSig(const llmq::CRecoveredSig& recove
 
         if (recoveredSig.getId() != lastSignedRequestId || recoveredSig.getMsgHash() != lastSignedMsgHash) {
             // this is not what we signed, so lets not create a CLSIG for it
-            return;
+            return {};
         }
         if (bestChainLock.getHeight() >= lastSignedHeight) {
             // already got the same or a better CLSIG through the CLSIG message
-            return;
+            return {};
         }
 
 
         clsig = CChainLockSig(lastSignedHeight, lastSignedMsgHash, recoveredSig.sig.Get());
     }
-    ProcessNewChainLock(-1, clsig, ::SerializeHash(clsig));
+    return ProcessNewChainLock(-1, clsig, ::SerializeHash(clsig));
 }
 
 bool CChainLocksHandler::HasChainLock(int nHeight, const uint256& blockHash) const
@@ -677,11 +655,6 @@ void CChainLocksHandler::Cleanup()
 bool AreChainLocksEnabled(const CSporkManager& sporkman)
 {
     return sporkman.IsSporkActive(SPORK_19_CHAINLOCKS_ENABLED);
-}
-
-bool ChainLocksSigningEnabled(const CSporkManager& sporkman)
-{
-    return sporkman.GetSporkValue(SPORK_19_CHAINLOCKS_ENABLED) == 0;
 }
 
 } // namespace llmq

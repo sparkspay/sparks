@@ -5,8 +5,8 @@
 #ifndef BITCOIN_INTERFACES_WALLET_H
 #define BITCOIN_INTERFACES_WALLET_H
 
-#include <amount.h>                    // For CAmount
-#include <fs.h>                        // For fs::path
+#include <consensus/amount.h>          // For CAmount
+#include <fs.h>
 #include <interfaces/chain.h>          // For ChainClient
 #include <pubkey.h>                    // For CKeyID and CScriptID (definitions needed in CTxDestination instantiation)
 #include <script/standard.h>           // For CTxDestination
@@ -14,13 +14,14 @@
 #include <util/message.h>
 #include <util/ui_change_type.h>
 
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
 #include <psbt.h>
-#include <stdint.h>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -37,7 +38,7 @@ struct CRecipient;
 struct PartiallySignedTransaction;
 struct WalletContext;
 struct bilingual_str;
-typedef uint8_t isminefilter;
+using isminefilter = std::underlying_type<isminetype>::type;
 
 namespace interfaces {
 
@@ -135,19 +136,19 @@ public:
     virtual bool setAddressReceiveRequest(const CTxDestination& dest, const std::string& id, const std::string& value) = 0;
 
     //! Lock coin.
-    virtual void lockCoin(const COutPoint& output) = 0;
+    virtual bool lockCoin(const COutPoint& output, const bool write_to_db) = 0;
 
     //! Unlock coin.
-    virtual void unlockCoin(const COutPoint& output) = 0;
+    virtual bool unlockCoin(const COutPoint& output) = 0;
 
     //! Return whether coin is locked.
     virtual bool isLockedCoin(const COutPoint& output) = 0;
 
     //! List locked coins.
-    virtual void listLockedCoins(std::vector<COutPoint>& outputs) = 0;
+    virtual std::vector<COutPoint> listLockedCoins() = 0;
 
     //! List protx coins.
-    virtual void listProTxCoins(std::vector<COutPoint>& vOutpts) = 0;
+    virtual std::vector<COutPoint> listProTxCoins() = 0;
 
     //! Create transaction.
     virtual CTransactionRef createTransaction(const std::vector<CRecipient>& recipients,
@@ -345,6 +346,9 @@ public:
 
    //! Return default wallet directory.
    virtual std::string getWalletDir() = 0;
+
+   //! Restore backup wallet
+   virtual std::unique_ptr<Wallet> restoreWallet(const fs::path& backup_file, const std::string& wallet_name, bilingual_str& error, std::vector<bilingual_str>& warnings) = 0;
 
    //! Return available wallets in wallet directory.
    virtual std::vector<std::string> listWalletDir() = 0;

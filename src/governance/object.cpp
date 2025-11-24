@@ -22,41 +22,16 @@
 
 #include <string>
 
-CGovernanceObject::CGovernanceObject() :
-    cs(),
-    m_obj{},
-    nDeletionTime(0),
-    fCachedLocalValidity(false),
-    strLocalValidityError(),
-    fCachedFunding(false),
-    fCachedValid(true),
-    fCachedDelete(false),
-    fCachedEndorsed(false),
-    fDirtyCache(true),
-    fExpired(false),
-    fUnparsable(false),
-    mapCurrentMNVotes(),
-    fileVotes()
+CGovernanceObject::CGovernanceObject()
 {
     // PARSE JSON DATA STORAGE (VCHDATA)
     LoadData();
 }
 
-CGovernanceObject::CGovernanceObject(const uint256& nHashParentIn, int nRevisionIn, int64_t nTimeIn, const uint256& nCollateralHashIn, const std::string& strDataHexIn) :
+CGovernanceObject::CGovernanceObject(const uint256& nHashParentIn, int nRevisionIn, int64_t nTimeIn,
+                                     const uint256& nCollateralHashIn, const std::string& strDataHexIn) :
     cs(),
-    m_obj{nHashParentIn, nRevisionIn, nTimeIn, nCollateralHashIn, strDataHexIn},
-    nDeletionTime(0),
-    fCachedLocalValidity(false),
-    strLocalValidityError(),
-    fCachedFunding(false),
-    fCachedValid(true),
-    fCachedDelete(false),
-    fCachedEndorsed(false),
-    fDirtyCache(true),
-    fExpired(false),
-    fUnparsable(false),
-    mapCurrentMNVotes(),
-    fileVotes()
+    m_obj{nHashParentIn, nRevisionIn, nTimeIn, nCollateralHashIn, strDataHexIn}
 {
     // PARSE JSON DATA STORAGE (VCHDATA)
     LoadData();
@@ -115,7 +90,7 @@ bool CGovernanceObject::ProcessVote(CMasternodeMetaMan& mn_metaman, CGovernanceM
         exception = CGovernanceException(ostr.str(), GOVERNANCE_EXCEPTION_WARNING);
         return false;
     }
-    if (eSignal > MAX_SUPPORTED_VOTE_SIGNAL) {
+    if (eSignal < VOTE_SIGNAL_NONE || eSignal >= VOTE_SIGNAL_UNKNOWN) {
         std::ostringstream ostr;
         ostr << "CGovernanceObject::ProcessVote -- Unsupported vote signal: " << CGovernanceVoting::ConvertSignalToString(vote.GetSignal());
         LogPrintf("%s\n", ostr.str());
@@ -290,7 +265,7 @@ bool CGovernanceObject::Sign(const CActiveMasternodeManager& mn_activeman)
 bool CGovernanceObject::CheckSignature(const CBLSPublicKey& pubKey) const
 {
     CBLSSignature sig;
-    sig.SetByteVector(m_obj.vchSig, false);
+    sig.SetBytes(m_obj.vchSig, false);
     if (!sig.VerifyInsecure(pubKey, GetSignatureHash(), false)) {
         LogPrintf("CGovernanceObject::CheckSignature -- VerifyInsecure() failed\n");
         return false;

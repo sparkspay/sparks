@@ -4,6 +4,7 @@
 
 #include <util/settings.h>
 
+#include <fs.h>
 #include <test/util/setup_common.h>
 #include <test/util/str.h>
 
@@ -13,6 +14,11 @@
 #include <util/strencodings.h>
 #include <util/string.h>
 #include <util/system.h>
+
+#include <fstream>
+#include <map>
+#include <string>
+#include <system_error>
 #include <vector>
 
 inline bool operator==(const util::SettingsValue& a, const util::SettingsValue& b)
@@ -36,7 +42,7 @@ inline std::ostream& operator<<(std::ostream& os, const std::pair<std::string, u
 
 inline void WriteText(const fs::path& path, const std::string& text)
 {
-    fsbridge::ofstream file;
+    std::ofstream file;
     file.open(path);
     file << text;
 }
@@ -45,7 +51,7 @@ BOOST_FIXTURE_TEST_SUITE(settings_tests, BasicTestingSetup)
 
 BOOST_AUTO_TEST_CASE(ReadWrite)
 {
-    fs::path path = m_args.GetDataDirPath() / "settings.json";
+    fs::path path = m_args.GetDataDirBase() / "settings.json";
 
     WriteText(path, R"({
         "string": "string",
@@ -74,25 +80,26 @@ BOOST_AUTO_TEST_CASE(ReadWrite)
     BOOST_CHECK(values.empty());
     BOOST_CHECK(errors.empty());
 
-    // Check duplicate keys not allowed
+    // Check duplicate keys not allowed and that values returns empty if a duplicate is found.
     WriteText(path, R"({
         "dupe": "string",
         "dupe": "dupe"
     })");
     BOOST_CHECK(!util::ReadSettings(path, values, errors));
-    std::vector<std::string> dup_keys = {strprintf("Found duplicate key dupe in settings file %s", path.string())};
+    std::vector<std::string> dup_keys = {strprintf("Found duplicate key dupe in settings file %s", fs::PathToString(path))};
     BOOST_CHECK_EQUAL_COLLECTIONS(errors.begin(), errors.end(), dup_keys.begin(), dup_keys.end());
+    BOOST_CHECK(values.empty());
 
     // Check non-kv json files not allowed
     WriteText(path, R"("non-kv")");
     BOOST_CHECK(!util::ReadSettings(path, values, errors));
-    std::vector<std::string> non_kv = {strprintf("Found non-object value \"non-kv\" in settings file %s", path.string())};
+    std::vector<std::string> non_kv = {strprintf("Found non-object value \"non-kv\" in settings file %s", fs::PathToString(path))};
     BOOST_CHECK_EQUAL_COLLECTIONS(errors.begin(), errors.end(), non_kv.begin(), non_kv.end());
 
     // Check invalid json not allowed
     WriteText(path, R"(invalid json)");
     BOOST_CHECK(!util::ReadSettings(path, values, errors));
-    std::vector<std::string> fail_parse = {strprintf("Unable to parse settings file %s", path.string())};
+    std::vector<std::string> fail_parse = {strprintf("Unable to parse settings file %s", fs::PathToString(path))};
     BOOST_CHECK_EQUAL_COLLECTIONS(errors.begin(), errors.end(), fail_parse.begin(), fail_parse.end());
 }
 

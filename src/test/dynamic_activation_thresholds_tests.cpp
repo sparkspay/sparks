@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2023 The Dash Core developers
+// Copyright (c) 2021-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,13 +7,7 @@
 #include <chainparams.h>
 #include <consensus/validation.h>
 #include <deploymentstatus.h>
-#include <evo/evodb.h>
-#include <governance/governance.h>
-#include <llmq/blockprocessor.h>
-#include <llmq/chainlocks.h>
-#include <llmq/context.h>
-#include <llmq/instantsend.h>
-#include <miner.h>
+#include <node/miner.h>
 #include <script/interpreter.h>
 #include <spork.h>
 #include <validation.h>

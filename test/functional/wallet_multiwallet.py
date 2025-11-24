@@ -11,6 +11,7 @@ from decimal import Decimal
 import os
 import shutil
 import stat
+import sys
 import time
 
 from test_framework.authproxy import JSONRPCException
@@ -141,7 +142,7 @@ class MultiWalletTest(BitcoinTestFramework):
 
         # should raise rpc error if wallet path can't be created
         err_code = -4 if self.options.descriptors else -1
-        assert_raises_rpc_error(err_code, "boost::filesystem::create_directory:", self.nodes[0].createwallet, "w8/bad")
+        assert_raises_rpc_error(err_code, "filesystem error:" if sys.platform != 'win32' else "create_directories:", self.nodes[0].createwallet, "w8/bad")
 
         # check that all requested wallets were created
         self.stop_node(0)
@@ -182,7 +183,7 @@ class MultiWalletTest(BitcoinTestFramework):
         self.nodes[0].createwallet("w5")
         assert_equal(set(node.listwallets()), {"w4", "w5"})
         w5 = wallet("w5")
-        node.generatetoaddress(nblocks=1, address=w5.getnewaddress())
+        self.generatetoaddress(node, nblocks=1, address=w5.getnewaddress(), sync_fun=self.no_op)
 
         # now if wallets/ exists again, but the rootdir is specified as the walletdir, w4 and w5 should still be loaded
         os.rename(wallet_dir2, wallet_dir())
@@ -214,7 +215,7 @@ class MultiWalletTest(BitcoinTestFramework):
         wallet_bad = wallet("bad")
 
         # check wallet names and balances
-        node.generatetoaddress(nblocks=1, address=wallets[0].getnewaddress())
+        self.generatetoaddress(node, nblocks=1, address=wallets[0].getnewaddress(), sync_fun=self.no_op)
         for wallet_name, wallet in zip(wallet_names, wallets):
             info = wallet.getwalletinfo()
             assert_equal(info['immature_balance'], 500 if wallet is wallets[0] else 0)
@@ -227,7 +228,7 @@ class MultiWalletTest(BitcoinTestFramework):
         assert_raises_rpc_error(-19, "Wallet file not specified", node.getwalletinfo)
 
         w1, w2, w3, w4, *_ = wallets
-        node.generatetoaddress(nblocks=COINBASE_MATURITY + 1, address=w1.getnewaddress())
+        self.generatetoaddress(node, nblocks=COINBASE_MATURITY + 1, address=w1.getnewaddress(), sync_fun=self.no_op)
         assert_equal(w1.getbalance(), 1000)
         assert_equal(w2.getbalance(), 0)
         assert_equal(w3.getbalance(), 0)
@@ -236,7 +237,7 @@ class MultiWalletTest(BitcoinTestFramework):
         w1.sendtoaddress(w2.getnewaddress(), 1)
         w1.sendtoaddress(w3.getnewaddress(), 2)
         w1.sendtoaddress(w4.getnewaddress(), 3)
-        node.generatetoaddress(nblocks=1, address=w1.getnewaddress())
+        self.generatetoaddress(node, nblocks=1, address=w1.getnewaddress(), sync_fun=self.no_op)
         assert_equal(w2.getbalance(), 1)
         assert_equal(w3.getbalance(), 2)
         assert_equal(w4.getbalance(), 3)

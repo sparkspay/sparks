@@ -43,7 +43,11 @@ class TestP2PConn(P2PInterface):
 
 class DIP3V19Test(SparksTestFramework):
     def set_test_params(self):
-        self.set_sparks_test_params(6, 5, fast_dip3_enforcement=True, evo_count=2)
+        self.extra_args = [[
+            '-testactivationheight=v19@200',
+        ]] * 6
+        self.set_sparks_test_params(6, 5, evo_count=2, extra_args=self.extra_args)
+
 
     def run_test(self):
         # Connect all nodes to node1 so that we always have the whole network connected
@@ -52,12 +56,6 @@ class DIP3V19Test(SparksTestFramework):
 
         self.test_node = self.nodes[0].add_p2p_connection(TestP2PConn())
         null_hash = format(0, "064x")
-
-        for i in range(len(self.nodes)):
-            if i != 0:
-                self.connect_nodes(i, 0)
-
-        self.activate_dip8()
 
         self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
@@ -69,7 +67,9 @@ class DIP3V19Test(SparksTestFramework):
         mn_list_before = self.nodes[0].masternodelist()
         pubkeyoperator_list_before = set([mn_list_before[e]["pubkeyoperator"] for e in mn_list_before])
 
-        self.activate_v19(expected_activation_height=900)
+        self.mine_quorum(llmq_type_name='llmq_test', llmq_type=100)
+
+        self.activate_by_name('v19', expected_activation_height=200)
         self.log.info("Activated v19 at height:" + str(self.nodes[0].getblockcount()))
 
         mn_list_after = self.nodes[0].masternodelist()
@@ -78,19 +78,8 @@ class DIP3V19Test(SparksTestFramework):
         self.log.info("pubkeyoperator should still be shown using legacy scheme")
         assert_equal(pubkeyoperator_list_before, pubkeyoperator_list_after)
 
-        self.move_to_next_cycle()
-        self.log.info("Cycle H height:" + str(self.nodes[0].getblockcount()))
-        self.move_to_next_cycle()
-        self.log.info("Cycle H+C height:" + str(self.nodes[0].getblockcount()))
-        self.move_to_next_cycle()
-        self.log.info("Cycle H+2C height:" + str(self.nodes[0].getblockcount()))
-
-        self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
-
         evo_info_0 = self.dynamically_add_masternode(evo=True, rnd=7)
         assert evo_info_0 is not None
-        self.nodes[0].generate(8)
-        self.sync_blocks(self.nodes)
 
         self.log.info("Checking that protxs with duplicate EvoNodes fields are rejected")
         evo_info_1 = self.dynamically_add_masternode(evo=True, rnd=7, should_be_rejected=True)
@@ -100,8 +89,6 @@ class DIP3V19Test(SparksTestFramework):
         assert evo_info_2 is None
         evo_info_3 = self.dynamically_add_masternode(evo=True, rnd=9)
         assert evo_info_3 is not None
-        self.nodes[0].generate(8)
-        self.sync_blocks(self.nodes)
         self.dynamically_evo_update_service(evo_info_0, 9, should_be_rejected=True)
 
         revoke_protx = self.mninfo[-1].proTxHash
@@ -128,20 +115,19 @@ class DIP3V19Test(SparksTestFramework):
     def test_revoke_protx(self, node_idx, revoke_protx, revoke_keyoperator):
         funds_address = self.nodes[0].getnewaddress()
         fund_txid = self.nodes[0].sendtoaddress(funds_address, 1)
-        self.wait_for_instantlock(fund_txid, self.nodes[0])
-        tip = self.nodes[0].generate(1)[0]
+        self.bump_mocktime(10 * 60 + 1) # to make tx safe to include in block
+        tip = self.generate(self.nodes[0], 1)[0]
         assert_equal(self.nodes[0].getrawtransaction(fund_txid, 1, tip)['confirmations'], 1)
-        self.sync_all(self.nodes)
 
         protx_result = self.nodes[0].protx('revoke', revoke_protx, revoke_keyoperator, 1, funds_address)
-        self.wait_for_instantlock(protx_result, self.nodes[0])
-        tip = self.nodes[0].generate(1)[0]
+        self.bump_mocktime(10 * 60 + 1) # to make tx safe to include in block
+        tip = self.generate(self.nodes[0], 1, sync_fun=self.no_op)[0]
         assert_equal(self.nodes[0].getrawtransaction(protx_result, 1, tip)['confirmations'], 1)
         # Revoking a MN results in disconnects. Wait for disconnects to actually happen
         # and then reconnect the corresponding node back to let sync_blocks finish correctly.
         self.wait_until(lambda: self.nodes[node_idx].getconnectioncount() == 0)
         self.connect_nodes(node_idx, 0)
-        self.sync_all(self.nodes)
+        self.sync_all()
         self.log.info(f"Successfully revoked={revoke_protx}")
         for mn in self.mninfo:
             if mn.proTxHash == revoke_protx:

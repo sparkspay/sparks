@@ -25,7 +25,7 @@ llmq_type_strings = {llmq_test: 'llmq_test', llmq_test_v17: 'llmq_test_v17'}
 class QuorumDataRecoveryTest(SparksTestFramework):
     def set_test_params(self):
         extra_args = [["-vbparams=testdummy:0:999999999999:0:10:8:6:5:-1"] for _ in range(9)]
-        self.set_sparks_test_params(9, 7, fast_dip3_enforcement=True, extra_args=extra_args)
+        self.set_sparks_test_params(9, 7, extra_args=extra_args)
         self.set_sparks_llmq_test_params(4, 3)
 
     def restart_mn(self, mn, reindex=False, qvvec_sync=None, qdata_recovery_enabled=True):
@@ -46,7 +46,7 @@ class QuorumDataRecoveryTest(SparksTestFramework):
         self.connect_nodes(mn.node.index, 0)
         if qdata_recovery_enabled:
             # trigger recovery threads and wait for them to start
-            self.nodes[0].generate(1)
+            self.generate(self.nodes[0], 1, sync_fun=self.no_op)
 
             self.bump_mocktime(self.quorum_data_thread_request_timeout_seconds + 1)
             time.sleep(1)
@@ -144,7 +144,6 @@ class QuorumDataRecoveryTest(SparksTestFramework):
         node.sporkupdate("SPORK_18_QUORUM_DKG_ENABLED", 0)
         node.sporkupdate("SPORK_21_QUORUM_ALL_CONNECTED", 0)
         self.wait_for_sporks_same()
-        self.activate_dip8()
 
         logger.info("Test automated DGK data recovery")
         # This two nodes will remain the only ones with valid DKG data
@@ -178,14 +177,14 @@ class QuorumDataRecoveryTest(SparksTestFramework):
         self.test_mns(llmq_test_v17, quorum_hash_recover, valid_mns=[last_resort_v17], all_mns=member_mns_recover_v17)
         # If recovery would be enabled it would trigger after the mocktime bump / mined block
         self.bump_mocktime(self.quorum_data_request_expiration_timeout + 1)
-        node.generate(1)
+        self.generate(node, 1, sync_fun=self.no_op)
         time.sleep(10)
         # Make sure they are still invalid
         self.test_mns(llmq_test, quorum_hash_recover, valid_mns=[last_resort_test], all_mns=member_mns_recover_test)
         self.test_mns(llmq_test_v17, quorum_hash_recover, valid_mns=[last_resort_v17], all_mns=member_mns_recover_v17)
         # Mining a block should not result in a chainlock now because the responsible quorum shouldn't have enough
         # valid members.
-        self.wait_for_chainlocked_block(node, node.generate(1)[0], False, 5)
+        self.wait_for_chainlocked_block(node, self.generate(node, 1, sync_fun=self.no_op)[0], False, 5)
         # Now restart with recovery enabled
         self.restart_mns(mns=recover_members, exclude=exclude_members, reindex=True, qdata_recovery_enabled=True)
         # Validate that all invalid members recover. Note: recover=True leads to mocktime bumps and mining while waiting

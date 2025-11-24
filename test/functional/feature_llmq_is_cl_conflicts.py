@@ -23,7 +23,7 @@ from test_framework.blocktools import create_block_with_mnpayments
 from test_framework.messages import CInv, hash256, msg_clsig, msg_inv, ser_string, tx_from_hex, uint256_from_str
 from test_framework.p2p import P2PInterface
 from test_framework.test_framework import SparksTestFramework
-from test_framework.util import assert_equal, assert_raises_rpc_error, hex_str_to_bytes
+from test_framework.util import assert_equal, assert_raises_rpc_error
 
 
 class TestP2PConn(P2PInterface):
@@ -56,31 +56,20 @@ class TestP2PConn(P2PInterface):
 
 class LLMQ_IS_CL_Conflicts(SparksTestFramework):
     def set_test_params(self):
-        self.set_sparks_test_params(5, 4, fast_dip3_enforcement=True)
+        self.set_sparks_test_params(5, 4, [["-testactivationheight=mn_rr@2000"]] * 5)
         self.set_sparks_llmq_test_params(4, 4)
         self.supports_cli = False
 
     def run_test(self):
-        self.activate_dip8()
-
         self.test_node = self.nodes[0].add_p2p_connection(TestP2PConn())
 
         self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
 
-        self.activate_v19(expected_activation_height=900)
-        self.log.info("Activated v19 at height:" + str(self.nodes[0].getblockcount()))
-        self.move_to_next_cycle()
-        self.log.info("Cycle H height:" + str(self.nodes[0].getblockcount()))
-        self.move_to_next_cycle()
-        self.log.info("Cycle H+C height:" + str(self.nodes[0].getblockcount()))
-        self.move_to_next_cycle()
-        self.log.info("Cycle H+2C height:" + str(self.nodes[0].getblockcount()))
-
-        self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
+        self.mine_cycle_quorum()
 
         # mine single block, wait for chainlock
-        self.nodes[0].generate(1)
+        self.generate(self.nodes[0], 1, sync_fun=self.no_op)
         self.wait_for_chainlocked_block_all_nodes(self.nodes[0].getbestblockhash())
 
         self.test_chainlock_overrides_islock(False)
@@ -99,7 +88,7 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         rawtx2_obj = tx_from_hex(rawtx2)
 
         rawtx1_txid = self.nodes[0].sendrawtransaction(rawtx1)
-        rawtx2_txid = hash256(hex_str_to_bytes(rawtx2))[::-1].hex()
+        rawtx2_txid = hash256(bytes.fromhex(rawtx2))[::-1].hex()
 
         # Create a chained TX on top of tx1
         inputs = []
@@ -127,9 +116,8 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         cl = self.create_chainlock(self.nodes[0].getblockcount() + 1, block)
 
         if mine_confllicting:
-            islock_tip = self.nodes[0].generate(1)[-1]
             # Make sure we won't sent clsig too early
-            self.sync_blocks()
+            islock_tip = self.generate(self.nodes[0], 1, sync_fun=lambda: self.sync_blocks())[-1]
 
         self.test_node.send_clsig(cl)
 
@@ -212,8 +200,8 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         rawtx1 = self.create_raw_tx(self.nodes[0], self.nodes[0], 1, 1, 100)['hex']
         rawtx2 = self.create_raw_tx(self.nodes[0], self.nodes[0], 1, 1, 100)['hex']
 
-        rawtx1_txid = hash256(hex_str_to_bytes(rawtx1))[::-1].hex()
-        rawtx2_txid = hash256(hex_str_to_bytes(rawtx2))[::-1].hex()
+        rawtx1_txid = hash256(bytes.fromhex(rawtx1))[::-1].hex()
+        rawtx2_txid = hash256(bytes.fromhex(rawtx2))[::-1].hex()
 
         # Create an ISLOCK but don't broadcast it yet
         isdlock = self.create_isdlock(rawtx2)
@@ -232,8 +220,7 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
 
         # Mine the conflicting TX into a block
         good_tip = self.nodes[0].getbestblockhash()
-        self.nodes[0].generate(2)
-        self.sync_all()
+        self.generate(self.nodes[0], 2)
 
         # Assert that the conflicting tx got mined and the locked TX is not valid
         assert self.nodes[0].getrawtransaction(rawtx1_txid, True)['confirmations'] > 0
@@ -264,8 +251,7 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         # Should not allow competing txes now
         assert_raises_rpc_error(-26, "tx-txlock-conflict", self.nodes[0].sendrawtransaction, rawtx1)
 
-        islock_tip = self.nodes[0].generate(1)[0]
-        self.sync_all()
+        islock_tip = self.generate(self.nodes[0], 1)[0]
 
         for node in self.nodes:
             self.wait_for_instantlock(rawtx2_txid, node)
@@ -287,7 +273,7 @@ class LLMQ_IS_CL_Conflicts(SparksTestFramework):
         message_hash = block.hash
 
         recSig = self.get_recovered_sig(request_id, message_hash)
-        clsig = msg_clsig(height, block.sha256, hex_str_to_bytes(recSig['sig']))
+        clsig = msg_clsig(height, block.sha256, bytes.fromhex(recSig['sig']))
         return clsig
 
 if __name__ == '__main__':

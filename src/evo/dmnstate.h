@@ -1,16 +1,16 @@
-// Copyright (c) 2018-2023 The Dash Core developers
+// Copyright (c) 2018-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_EVO_DMNSTATE_H
 #define BITCOIN_EVO_DMNSTATE_H
 
-#include <crypto/common.h>
 #include <bls/bls.h>
-#include <pubkey.h>
-#include <netaddress.h>
-#include <script/script.h>
+#include <crypto/sha256.h>
 #include <evo/providertx.h>
+#include <netaddress.h>
+#include <pubkey.h>
+#include <script/script.h>
 
 #include <memory>
 #include <utility>
@@ -377,4 +377,4 @@ public:
 };
 
 
-#endif //BITCOIN_EVO_DMNSTATE_H
+#endif // BITCOIN_EVO_DMNSTATE_H

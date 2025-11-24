@@ -1,15 +1,17 @@
-// Copyright (c) 2017-2024 The Dash Core developers
+// Copyright (c) 2017-2025 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <chainparams.h>
 #include <deploymentstatus.h>
 #include <index/txindex.h>
+#include <net_processing.h>
 #include <node/context.h>
 #include <rpc/blockchain.h>
 #include <rpc/server.h>
 #include <rpc/server_util.h>
 #include <rpc/util.h>
+#include <util/check.h>
 #include <validation.h>
 
 #include <masternode/node.h>
@@ -40,8 +42,8 @@ static RPCHelpMan quorum_list()
     return RPCHelpMan{"quorum list",
         "List of on-chain quorums\n",
         {
-            {"count", RPCArg::Type::NUM, /* default */ "",
-                "Number of quorums to list. Will list active quorums if \"count\" is not specified.\n"
+            {"count", RPCArg::Type::NUM, RPCArg::DefaultHint{"The active quorum count if not specified"},
+                "Number of quorums to list.\n"
                 "Can be CPU/disk heavy when the value is larger than the number of active quorums."
             },
         },
@@ -67,7 +69,7 @@ static RPCHelpMan quorum_list()
     int count = -1;
     if (!request.params[0].isNull()) {
         count = ParseInt32V(request.params[0], "count");
-        if (count < 0) {
+        if (count < -1) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "count can't be negative");
         }
     }
@@ -99,7 +101,7 @@ static RPCHelpMan quorum_list_extended()
     return RPCHelpMan{"quorum listextended",
         "Extended list of on-chain quorums\n",
         {
-            {"height", RPCArg::Type::NUM, /* default */ "", "The height index. Will list active quorums at tip if \"height\" is not specified."},
+            {"height", RPCArg::Type::NUM, RPCArg::DefaultHint{"Tip height if not specified"}, "Active quorums at the height."},
         },
         RPCResult{
             RPCResult::Type::OBJ, "", "",
@@ -204,7 +206,7 @@ static UniValue BuildQuorumInfo(const llmq::CQuorumBlockProcessor& quorum_block_
             const auto& dmn = quorum->members[i];
             UniValue mo(UniValue::VOBJ);
             mo.pushKV("proTxHash", dmn->proTxHash.ToString());
-            mo.pushKV("service", dmn->pdmnState->addr.ToString());
+            mo.pushKV("service", dmn->pdmnState->addr.ToStringAddrPort());
             mo.pushKV("pubKeyOperator", dmn->pdmnState->pubKeyOperator.ToString());
             mo.pushKV("valid", quorum->qc->validMembers[i]);
             if (quorum->qc->validMembers[i]) {
@@ -233,7 +235,7 @@ static RPCHelpMan quorum_info()
         {
             {"llmqType", RPCArg::Type::NUM, RPCArg::Optional::NO, "LLMQ type."},
             {"quorumHash", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Block hash of quorum."},
-            {"includeSkShare", RPCArg::Type::BOOL, /* default */ "", "Include secret key share in output."},
+            {"includeSkShare", RPCArg::Type::BOOL, RPCArg::Default{false}, "Include secret key share in output."},
         },
         RPCResults{},
         RPCExamples{""},
@@ -253,7 +255,7 @@ static RPCHelpMan quorum_info()
         includeSkShare = ParseBoolV(request.params[2], "includeSkShare");
     }
 
-    auto quorum = llmq_ctx.qman->GetQuorum(llmqType, quorumHash);
+    const auto quorum = llmq_ctx.qman->GetQuorum(llmqType, quorumHash);
     if (!quorum) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "quorum not found");
     }
@@ -269,7 +271,7 @@ static RPCHelpMan quorum_dkgstatus()
         "Return the status of the current DKG process.\n"
         "Works only when SPORK_17_QUORUM_DKG_ENABLED spork is ON.\n",
         {
-            {"detail_level", RPCArg::Type::NUM, /* default */ "0",
+            {"detail_level", RPCArg::Type::NUM, RPCArg::Default{0},
                 "Detail level of output.\n"
                 "0=Only show counts. 1=Show member indexes. 2=Show member's ProTxHashes."},
         },
@@ -281,7 +283,6 @@ static RPCHelpMan quorum_dkgstatus()
     const ChainstateManager& chainman = EnsureChainman(node);
     const LLMQContext& llmq_ctx = EnsureLLMQContext(node);
     const CConnman& connman = EnsureConnman(node);
-    CHECK_NONFATAL(node.dmnman);
     CHECK_NONFATAL(node.sporkman);
 
     int detailLevel = 0;
@@ -295,7 +296,7 @@ static RPCHelpMan quorum_dkgstatus()
     llmq::CDKGDebugStatus status;
     llmq_ctx.dkg_debugman->GetLocalDebugStatus(status);
 
-    auto ret = status.ToJson(*node.dmnman, chainman, detailLevel);
+    auto ret = status.ToJson(*CHECK_NONFATAL(node.dmnman), *llmq_ctx.qsnapman, chainman, detailLevel);
 
     CBlockIndex* pindexTip = WITH_LOCK(cs_main, return chainman.ActiveChain().Tip());
     int tipHeight = pindexTip->nHeight;
@@ -323,8 +324,12 @@ static RPCHelpMan quorum_dkgstatus()
                     obj.pushKV("quorumHash", pQuorumBaseBlockIndex->GetBlockHash().ToString());
                     obj.pushKV("pindexTip", pindexTip->nHeight);
 
-                    auto allConnections = llmq::utils::GetQuorumConnections(llmq_params, *node.dmnman, *node.sporkman, pQuorumBaseBlockIndex, proTxHash, false);
-                    auto outboundConnections = llmq::utils::GetQuorumConnections(llmq_params, *node.dmnman, *node.sporkman, pQuorumBaseBlockIndex, proTxHash, true);
+                    auto allConnections = llmq::utils::GetQuorumConnections(llmq_params, *node.dmnman,
+                                                                            *llmq_ctx.qsnapman, *node.sporkman,
+                                                                            pQuorumBaseBlockIndex, proTxHash, false);
+                    auto outboundConnections = llmq::utils::GetQuorumConnections(llmq_params, *node.dmnman,
+                                                                                 *llmq_ctx.qsnapman, *node.sporkman,
+                                                                                 pQuorumBaseBlockIndex, proTxHash, true);
                     std::map<uint256, CAddress> foundConnections;
                     connman.ForEachNode([&](const CNode* pnode) {
                         auto verifiedProRegTxHash = pnode->GetVerifiedProRegTxHash();
@@ -338,7 +343,7 @@ static RPCHelpMan quorum_dkgstatus()
                         ecj.pushKV("proTxHash", ec.ToString());
                         if (foundConnections.count(ec)) {
                             ecj.pushKV("connected", true);
-                            ecj.pushKV("address", foundConnections[ec].ToString());
+                            ecj.pushKV("address", foundConnections[ec].ToStringAddrPort());
                         } else {
                             ecj.pushKV("connected", false);
                         }
@@ -372,9 +377,8 @@ static RPCHelpMan quorum_memberof()
         "Checks which quorums the given masternode is a member of.\n",
         {
             {"proTxHash", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "ProTxHash of the masternode."},
-            {"scanQuorumsCount", RPCArg::Type::NUM, /* default */ "",
+            {"scanQuorumsCount", RPCArg::Type::NUM, RPCArg::DefaultHint{"The active quorum count for each specific quorum type is used"},
                 "Number of quorums to scan for.\n"
-                "If not specified, the active quorum count for each specific quorum type is used.\n"
                 "Can be CPU/disk heavy when the value is larger than the number of active quorums."
             },
         },
@@ -385,7 +389,6 @@ static RPCHelpMan quorum_memberof()
     const NodeContext& node = EnsureAnyNodeContext(request.context);
     const ChainstateManager& chainman = EnsureChainman(node);
     const LLMQContext& llmq_ctx = EnsureLLMQContext(node);
-    CHECK_NONFATAL(node.dmnman);
 
     uint256 protxHash(ParseHashV(request.params[0], "proTxHash"));
     int scanQuorumsCount = -1;
@@ -397,7 +400,7 @@ static RPCHelpMan quorum_memberof()
     }
 
     const CBlockIndex* pindexTip = WITH_LOCK(cs_main, return chainman.ActiveChain().Tip());
-    auto mnList = node.dmnman->GetListForBlock(pindexTip);
+    auto mnList = CHECK_NONFATAL(node.dmnman)->GetListForBlock(pindexTip);
     auto dmn = mnList.GetMN(protxHash);
     if (!dmn) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "masternode not found");
@@ -452,13 +455,13 @@ static UniValue quorum_sign_helper(const JSONRPCRequest& request, Consensus::LLM
     if (fSubmit) {
         return llmq_ctx.sigman->AsyncSignIfMember(llmqType, *llmq_ctx.shareman, id, msgHash, quorumHash);
     } else {
-        llmq::CQuorumCPtr pQuorum;
-
-        if (quorumHash.IsNull()) {
-            pQuorum = llmq::SelectQuorumForSigning(llmq_params_opt.value(), chainman.ActiveChain(), *llmq_ctx.qman, id);
-        } else {
-            pQuorum = llmq_ctx.qman->GetQuorum(llmqType, quorumHash);
-        }
+        const auto pQuorum = [&]() {
+            if (quorumHash.IsNull()) {
+                return llmq::SelectQuorumForSigning(llmq_params_opt.value(), chainman.ActiveChain(), *llmq_ctx.qman, id);
+            } else {
+                return llmq_ctx.qman->GetQuorum(llmqType, quorumHash);
+            }
+        }();
 
         if (pQuorum == nullptr) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "quorum not found");
@@ -491,8 +494,8 @@ static RPCHelpMan quorum_sign()
             {"llmqType", RPCArg::Type::NUM, RPCArg::Optional::NO, "LLMQ type."},
             {"id", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Request id."},
             {"msgHash", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Message hash."},
-            {"quorumHash", RPCArg::Type::STR_HEX, /* default */ "", "The quorum identifier."},
-            {"submit", RPCArg::Type::BOOL, /* default */ "true", "Submits the signature share to the network if this is true. "
+            {"quorumHash", RPCArg::Type::STR_HEX, RPCArg::Default{""}, "The quorum identifier."},
+            {"submit", RPCArg::Type::BOOL, RPCArg::Default{true}, "Submits the signature share to the network if this is true. "
                                                                 "Returns an object containing the signature share if this is false."},
         },
         RPCResults{},
@@ -518,8 +521,8 @@ static RPCHelpMan quorum_platformsign()
         {
             {"id", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Request id."},
             {"msgHash", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Message hash."},
-            {"quorumHash", RPCArg::Type::STR_HEX, /* default */ "", "The quorum identifier."},
-            {"submit", RPCArg::Type::BOOL, /* default */ "true", "Submits the signature share to the network if this is true. "
+            {"quorumHash", RPCArg::Type::STR_HEX, RPCArg::Default{""}, "The quorum identifier."},
+            {"submit", RPCArg::Type::BOOL, RPCArg::Default{true}, "Submits the signature share to the network if this is true. "
                                                                 "Returns an object containing the signature share if this is false."},
         },
         RPCResults{},
@@ -553,10 +556,10 @@ static RPCHelpMan quorum_verify()
             {"id", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Request id."},
             {"msgHash", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Message hash."},
             {"signature", RPCArg::Type::STR, RPCArg::Optional::NO, "Quorum signature to verify."},
-            {"quorumHash", RPCArg::Type::STR_HEX, /* default */ "",
+            {"quorumHash", RPCArg::Type::STR_HEX, RPCArg::Default{""},
                 "The quorum identifier.\n"
                 "Set to \"\" if you want to specify signHeight instead."},
-            {"signHeight", RPCArg::Type::NUM, /* default */ "",
+            {"signHeight", RPCArg::Type::NUM, RPCArg::Default{-1},
                 "The height at which the message was signed.\n"
                 "Only works when quorumHash is \"\"."},
         },
@@ -593,7 +596,7 @@ static RPCHelpMan quorum_verify()
     }
 
     uint256 quorumHash(ParseHashV(request.params[4], "quorumHash"));
-    llmq::CQuorumCPtr quorum = llmq_ctx.qman->GetQuorum(llmqType, quorumHash);
+    const auto quorum = llmq_ctx.qman->GetQuorum(llmqType, quorumHash);
 
     if (!quorum) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "quorum not found");
@@ -732,7 +735,7 @@ static RPCHelpMan quorum_selectquorum()
     ret.pushKV("quorumHash", quorum->qc->quorumHash.ToString());
 
     UniValue recoveryMembers(UniValue::VARR);
-    for (size_t i = 0; i < size_t(quorum->params.recoveryMembers); i++) {
+    for (int i = 0; i < quorum->params.recoveryMembers; ++i) {
         auto dmn = llmq_ctx.shareman->SelectMemberForRecovery(quorum, id, i);
         recoveryMembers.push_back(dmn->proTxHash.ToString());
     }
@@ -750,24 +753,24 @@ static RPCHelpMan quorum_dkgsimerror()
         "as you will get yourself very likely PoSe banned for this.\n",
         {
             {"type", RPCArg::Type::STR, RPCArg::Optional::NO, "Error type."},
-            {"rate", RPCArg::Type::NUM, RPCArg::Optional::NO, "Rate at which to simulate this error type."},
+            {"rate", RPCArg::Type::NUM, RPCArg::Optional::NO, "Rate at which to simulate this error type (between 0 and 100)."},
         },
         RPCResults{},
         RPCExamples{""},
         [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
 {
     std::string type_str = request.params[0].get_str();
-    double rate = ParseDoubleV(request.params[1], "rate");
+    int32_t rate = ParseInt32V(request.params[1], "rate");
 
-    if (rate < 0 || rate > 1) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid rate. Must be between 0 and 1");
+    if (rate < 0 || rate > 100) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid rate. Must be between 0 and 100");
     }
 
     if (const llmq::DKGError::type type = llmq::DKGError::from_string(type_str);
             type == llmq::DKGError::type::_COUNT) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid type. See DKGError class implementation");
     } else {
-        llmq::SetSimulatedDKGErrorRate(type, rate);
+        llmq::SetSimulatedDKGErrorRate(type, static_cast<double>(rate) / 100);
         return UniValue();
     }
 },
@@ -787,14 +790,13 @@ static RPCHelpMan quorum_getdata()
                 "Possible values: 1 - Request quorum verification vector\n"
                 "2 - Request encrypted contributions for member defined by \"proTxHash\". \"proTxHash\" must be specified if this option is used.\n"
                 "3 - Request both, 1 and 2"},
-            {"proTxHash", RPCArg::Type::STR_HEX, /* default */ "", "The proTxHash the contributions will be requested for. Must be member of the specified LLMQ."},
+            {"proTxHash", RPCArg::Type::STR_HEX, RPCArg::Default{""}, "The proTxHash the contributions will be requested for. Must be member of the specified LLMQ."},
         },
         RPCResults{},
         RPCExamples{""},
         [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
 {
     const NodeContext& node = EnsureAnyNodeContext(request.context);
-    const ChainstateManager& chainman = EnsureChainman(node);
     const LLMQContext& llmq_ctx = EnsureLLMQContext(node);
     CConnman& connman = EnsureConnman(node);
 
@@ -816,10 +818,12 @@ static RPCHelpMan quorum_getdata()
         }
     }
 
-    const CBlockIndex* pQuorumBaseBlockIndex = WITH_LOCK(cs_main, return chainman.m_blockman.LookupBlockIndex(quorumHash));
-
+    const auto quorum = llmq_ctx.qman->GetQuorum(llmqType, quorumHash);
+    if (!quorum) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "quorum not found");
+    }
     return connman.ForNode(nodeId, [&](CNode* pNode) {
-        return llmq_ctx.qman->RequestQuorumData(pNode, llmqType, pQuorumBaseBlockIndex, nDataMask, proTxHash);
+        return llmq_ctx.qman->RequestQuorumData(pNode, connman, quorum, nDataMask, proTxHash);
     });
 },
     };
@@ -832,8 +836,8 @@ static RPCHelpMan quorum_rotationinfo()
         "Get quorum rotation information\n",
         {
             {"blockRequestHash", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The blockHash of the request."},
-            {"extraShare", RPCArg::Type::BOOL, /* default */ "false", "Extra share"},
-            {"baseBlockHash...", RPCArg::Type::STR_HEX, /* default*/ "", "baseBlockHashes"},
+            {"extraShare", RPCArg::Type::BOOL, RPCArg::Default{false}, "Extra share"},
+            {"baseBlockHash...", RPCArg::Type::STR_HEX, RPCArg::DefaultHint{"baseBlockHashes …"}, "The list of block hashes"},
         },
         RPCResults{},
         RPCExamples{""},
@@ -842,7 +846,7 @@ static RPCHelpMan quorum_rotationinfo()
     const NodeContext& node = EnsureAnyNodeContext(request.context);
     const ChainstateManager& chainman = EnsureChainman(node);
     const LLMQContext& llmq_ctx = EnsureLLMQContext(node);
-    CHECK_NONFATAL(node.dmnman);
+    ;
 
     llmq::CGetQuorumRotationInfo cmd;
     llmq::CQuorumRotationInfo quorumRotationInfoRet;
@@ -859,7 +863,8 @@ static RPCHelpMan quorum_rotationinfo()
 
     LOCK(cs_main);
 
-    if (!BuildQuorumRotationInfo(*node.dmnman, chainman, *llmq_ctx.qman, *llmq_ctx.quorum_block_processor, cmd, quorumRotationInfoRet, strError)) {
+    if (!BuildQuorumRotationInfo(*CHECK_NONFATAL(node.dmnman), *llmq_ctx.qsnapman, chainman, *llmq_ctx.qman,
+                                 *llmq_ctx.quorum_block_processor, cmd, false, quorumRotationInfoRet, strError)) {
         throw JSONRPCError(RPC_INVALID_REQUEST, strError);
     }
 
@@ -954,7 +959,7 @@ static RPCHelpMan verifychainlock()
         {
             {"blockHash", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The block hash of the ChainLock."},
             {"signature", RPCArg::Type::STR, RPCArg::Optional::NO, "The signature of the ChainLock."},
-            {"blockHeight", RPCArg::Type::NUM, /* default */ "", "The height of the ChainLock. There will be an internal lookup of \"blockHash\" if this is not provided."},
+            {"blockHeight", RPCArg::Type::NUM, RPCArg::DefaultHint{"There will be an internal lookup of \"blockHash\" if this is not provided."}, "The height of the ChainLock."},
         },
         RPCResults{},
         RPCExamples{""},
@@ -966,7 +971,7 @@ static RPCHelpMan verifychainlock()
     const ChainstateManager& chainman = EnsureChainman(node);
 
     int nBlockHeight;
-    CBlockIndex* pIndex{nullptr};
+    const CBlockIndex* pIndex{nullptr};
     if (request.params[2].isNull()) {
         pIndex = WITH_LOCK(cs_main, return chainman.m_blockman.LookupBlockIndex(nBlockHash));
         if (pIndex == nullptr) {
@@ -974,7 +979,7 @@ static RPCHelpMan verifychainlock()
         }
         nBlockHeight = pIndex->nHeight;
     } else {
-        nBlockHeight = ParseInt32V(request.params[2], "blockHeight");
+        nBlockHeight = request.params[2].get_int();
         LOCK(cs_main);
         if (nBlockHeight < 0) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Block height out of range");
@@ -1012,7 +1017,7 @@ static RPCHelpMan verifyislock()
             {"id", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Request id."},
             {"txid", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The transaction id."},
             {"signature", RPCArg::Type::STR, RPCArg::Optional::NO, "The InstantSend Lock signature to verify."},
-            {"maxHeight", RPCArg::Type::NUM, /* default */ "", "The maximum height to search quorums from."},
+            {"maxHeight", RPCArg::Type::NUM, RPCArg::Default{-1}, "The maximum height to search quorums from."},
         },
         RPCResults{},
         RPCExamples{""},
@@ -1040,7 +1045,7 @@ static RPCHelpMan verifyislock()
 
     int maxHeight{-1};
     if (!request.params[3].isNull()) {
-        maxHeight = ParseInt32V(request.params[3], "maxHeight");
+        maxHeight = request.params[3].get_int();
     }
 
     int signHeight;
@@ -1073,7 +1078,8 @@ static RPCHelpMan verifyislock()
     auto llmqType = Params().GetConsensus().llmqTypeDIP0024InstantSend;
     const auto llmq_params_opt = Params().GetLLMQ(llmqType);
     CHECK_NONFATAL(llmq_params_opt.has_value());
-    return VerifyRecoveredSigLatestQuorums(*llmq_params_opt, chainman.ActiveChain(), *llmq_ctx.qman, signHeight, id, txid, sig);
+    return VerifyRecoveredSigLatestQuorums(*llmq_params_opt, chainman.ActiveChain(), *CHECK_NONFATAL(llmq_ctx.qman),
+                                           signHeight, id, txid, sig);
 },
     };
 }
@@ -1094,7 +1100,7 @@ static RPCHelpMan submitchainlock()
 {
     const uint256 nBlockHash(ParseHashV(request.params[0], "blockHash"));
 
-    const int nBlockHeight = ParseInt32V(request.params[2], "blockHeight");
+    const int nBlockHeight = request.params[2].get_int();
     if (nBlockHeight <= 0) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid block height");
     }
@@ -1121,7 +1127,8 @@ static RPCHelpMan submitchainlock()
         throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid signature");
     }
 
-    llmq_ctx.clhandler->ProcessNewChainLock(-1, clsig, ::SerializeHash(clsig));
+    PeerManager& peerman = EnsurePeerman(node);
+    peerman.PostProcessMessage(llmq_ctx.clhandler->ProcessNewChainLock(-1, clsig, ::SerializeHash(clsig)));
     return llmq_ctx.clhandler->GetBestChainLock().getHeight();
 },
     };
@@ -1132,31 +1139,31 @@ void RegisterQuorumsRPCCommands(CRPCTable &tableRPC)
 {
 // clang-format off
 static const CRPCCommand commands[] =
-{ //  category              name                      actor (function)
-  //  --------------------- ------------------------  -----------------------
-    { "evo",                "quorum",                 &quorum_help,            {"command"}  },
-    { "evo",                "quorum", "list",         &quorum_list,            {"count"}  },
-    { "evo",                "quorum", "listextended", &quorum_list_extended,   {"height"}  },
-    { "evo",                "quorum", "info",         &quorum_info,            {"llmqType", "quorumHash", "includeSkShare"}  },
-    { "evo",                "quorum", "dkginfo",      &quorum_dkginfo,         {}  },
-    { "evo",                "quorum", "dkgstatus",    &quorum_dkgstatus,       {"detail_level"}  },
-    { "evo",                "quorum", "memberof",     &quorum_memberof,        {"proTxHash", "scanQuorumsCount"}  },
-    { "evo",                "quorum", "sign",         &quorum_sign,            {"llmqType", "id", "msgHash", "quorumHash", "submit"}  },
-    { "evo",                "quorum", "platformsign", &quorum_platformsign,    {"id", "msgHash", "quorumHash", "submit"}  },
-    { "evo",                "quorum", "verify",       &quorum_verify,          {"llmqType", "id", "msgHash", "signature", "quorumHash", "signHeight"}  },
-    { "evo",                "quorum", "hasrecsig",    &quorum_hasrecsig,       {"llmqType", "id", "msgHash"}  },
-    { "evo",                "quorum", "getrecsig",    &quorum_getrecsig,       {"llmqType", "id", "msgHash"}  },
-    { "evo",                "quorum", "isconflicting",&quorum_isconflicting,   {"llmqType", "id", "msgHash"}  },
-    { "evo",                "quorum", "selectquorum", &quorum_selectquorum,    {"llmqType", "id"}  },
-    { "evo",                "quorum", "dkgsimerror",  &quorum_dkgsimerror,     {"type", "rate"}  },
-    { "evo",                "quorum", "getdata",      &quorum_getdata,         {"nodeId", "llmqType", "quorumHash", "dataMask", "proTxHash"}  },
-    { "evo",                "quorum", "rotationinfo", &quorum_rotationinfo,    {"blockRequestHash", "extraShare", "baseBlockHash..."}  },
-    { "evo",                "submitchainlock",        &submitchainlock,        {"blockHash", "signature", "blockHeight"}  },
-    { "evo",                "verifychainlock",        &verifychainlock,        {"blockHash", "signature", "blockHeight"} },
-    { "evo",                "verifyislock",           &verifyislock,           {"id", "txid", "signature", "maxHeight"}  },
+{ //  category              actor (function)
+  //  --------------------- -----------------------
+    { "evo",                &quorum_help,            },
+    { "evo",                &quorum_list,            },
+    { "evo",                &quorum_list_extended,   },
+    { "evo",                &quorum_info,            },
+    { "evo",                &quorum_dkginfo,         },
+    { "evo",                &quorum_dkgstatus,       },
+    { "evo",                &quorum_memberof,        },
+    { "evo",                &quorum_sign,            },
+    { "evo",                &quorum_platformsign,    },
+    { "evo",                &quorum_verify,          },
+    { "evo",                &quorum_hasrecsig,       },
+    { "evo",                &quorum_getrecsig,       },
+    { "evo",                &quorum_isconflicting,   },
+    { "evo",                &quorum_selectquorum,    },
+    { "evo",                &quorum_dkgsimerror,     },
+    { "evo",                &quorum_getdata,         },
+    { "evo",                &quorum_rotationinfo,    },
+    { "evo",                &submitchainlock,        },
+    { "evo",                &verifychainlock,        },
+    { "evo",                &verifyislock,           },
 };
 // clang-format on
     for (const auto& command : commands) {
-        tableRPC.appendCommand(command.name, command.subname, &command);
+        tableRPC.appendCommand(command.name, &command);
     }
 }

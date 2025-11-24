@@ -1,10 +1,10 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef BITCOIN_GOVERNANCE_CLASSES_H
 #define BITCOIN_GOVERNANCE_CLASSES_H
 
-#include <amount.h>
+#include <consensus/amount.h>
 #include <governance/object.h>
 #include <script/script.h>
 #include <script/standard.h>
@@ -12,35 +12,13 @@
 #include <spork.h>
 
 class CChain;
-class CGovernanceManager;
 class CSuperblock;
-class CSuperblockManager;
 class CTxOut;
 class CTransaction;
 
 using CSuperblock_sptr = std::shared_ptr<CSuperblock>;
 
 CAmount ParsePaymentAmount(const std::string& strAmount);
-
-/**
-*   Superblock Manager
-*
-*   Class for querying superblock information
-*/
-
-class CSuperblockManager
-{
-private:
-    static bool GetBestSuperblock(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, CSuperblock_sptr& pSuperblockRet, int nBlockHeight, const CBlockIndex& pindex);
-
-public:
-    static bool IsSuperblockTriggered(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight, const CChain& chain);
-
-    static bool GetSuperblockPayments(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight, std::vector<CTxOut>& voutSuperblockRet, const CBlockIndex& pindex);
-    static void ExecuteBestSuperblock(CGovernanceManager& govman, const CDeterministicMNList& tip_mn_list, int nBlockHeight, const CBlockIndex& pindex);
-
-    static bool IsValid(CGovernanceManager& govman, const CChain& active_chain, const CDeterministicMNList& tip_mn_list, const CTransaction& txNew, int nBlockHeight, CAmount blockReward);
-};
 
 /**
 *   Governance Object Payment
@@ -103,7 +81,7 @@ private:
 public:
     CSuperblock();
     CSuperblock(int nBlockHeight, std::vector<CGovernancePayment> vecPayments, CSporkManager& spork_manager);
-    explicit CSuperblock(CGovernanceManager& govman, uint256& nHash, CSporkManager& spork_manager);
+    explicit CSuperblock(const CGovernanceObject& obj, uint256& nHash, CSporkManager& spork_manager);
 
     static bool IsValidBlockHeight(int nBlockHeight);
     static void GetNearestSuperblocksHeights(int nBlockHeight, int& nLastSuperblockRet, int& nNextSuperblockRet);
@@ -117,19 +95,19 @@ public:
     // TELL THE ENGINE WE EXECUTED THIS EVENT
     void SetExecuted() { nStatus = SeenObjectStatus::Executed; }
 
-    CGovernanceObject* GetGovernanceObject(CGovernanceManager& govman);
-
     int GetBlockHeight() const
     {
         return nBlockHeight;
     }
 
+    const uint256 GetGovernanceObjHash() const { return nGovObjHash; }
+
     int CountPayments() const { return (int)vecPayments.size(); }
     bool GetPayment(int nPaymentIndex, CGovernancePayment& paymentRet);
     CAmount GetPaymentsTotalAmount();
 
-    bool IsValid(CGovernanceManager& govman, const CChain& active_chain, const CTransaction& txNew, int nBlockHeight, CAmount blockReward);
-    bool IsExpired(const CGovernanceManager& govman) const;
+    bool IsValid(const CChain& active_chain, const CTransaction& txNew, int nBlockHeight, CAmount blockReward);
+    bool IsExpired(int heightToTest) const;
 
     std::vector<uint256> GetProposalHashes() const;
 };

@@ -8,7 +8,7 @@
 
 #include <chainparams.h>
 #include <chainparamsbase.h>
-#include <compat.h>
+#include <compat/compat.h>
 #include <logging.h>
 #include <util/strencodings.h>
 #include <util/system.h>
@@ -56,7 +56,7 @@ static bool WalletAppInit(ArgsManager& args, int argc, char* argv[])
             strUsage += "\n"
                     "sparks-wallet is an offline tool for creating and interacting with " PACKAGE_NAME " wallet files.\n"
                     "By default sparks-wallet will act on wallets in the default mainnet wallet directory in the datadir.\n"
-                    "To change the target wallet, use the -datadir, -wallet and -testnet/-regtest arguments.\n\n"
+                    "To change the target wallet, use the -datadir, -wallet and -regtest/-testnet arguments.\n\n"
                     "Usage:\n"
                     "  sparks-wallet [options] <command>\n";
             strUsage += "\n" + args.GetHelpMessage();

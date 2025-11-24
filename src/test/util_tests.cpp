@@ -5,6 +5,7 @@
 #include <util/system.h>
 
 #include <clientversion.h>
+#include <fs.h>
 #include <hash.h> // For Hash()
 #include <key.h>  // For CKey
 #include <sync.h>
@@ -17,6 +18,7 @@
 #include <util/moneystr.h>
 #include <util/overflow.h>
 #include <util/ranges_set.h>
+#include <util/readwritefile.h>
 #include <util/spanparsing.h>
 #include <util/strencodings.h>
 #include <util/string.h>
@@ -24,6 +26,8 @@
 #include <util/vector.h>
 
 #include <array>
+#include <fstream>
+#include <deque>
 #include <optional>
 #include <random>
 #include <stdint.h>
@@ -33,9 +37,11 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+#include <sys/types.h>
+
 #ifndef WIN32
 #include <signal.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #endif
 
@@ -56,25 +62,25 @@ BOOST_AUTO_TEST_CASE(util_datadir)
 {
     // Use local args variable instead of m_args to avoid making assumptions about test setup
     ArgsManager args;
-    args.ForceSetArg("-datadir", m_path_root.string());
+    args.ForceSetArg("-datadir", fs::PathToString(m_path_root));
 
-    const fs::path dd_norm = args.GetDataDirPath();
+    const fs::path dd_norm = args.GetDataDirBase();
 
-    args.ForceSetArg("-datadir", dd_norm.string() + "/");
+    args.ForceSetArg("-datadir", fs::PathToString(dd_norm) + "/");
     args.ClearPathCache();
-    BOOST_CHECK_EQUAL(dd_norm, args.GetDataDirPath());
+    BOOST_CHECK_EQUAL(dd_norm, args.GetDataDirBase());
 
-    args.ForceSetArg("-datadir", dd_norm.string() + "/.");
+    args.ForceSetArg("-datadir", fs::PathToString(dd_norm) + "/.");
     args.ClearPathCache();
-    BOOST_CHECK_EQUAL(dd_norm, args.GetDataDirPath());
+    BOOST_CHECK_EQUAL(dd_norm, args.GetDataDirBase());
 
-    args.ForceSetArg("-datadir", dd_norm.string() + "/./");
+    args.ForceSetArg("-datadir", fs::PathToString(dd_norm) + "/./");
     args.ClearPathCache();
-    BOOST_CHECK_EQUAL(dd_norm, args.GetDataDirPath());
+    BOOST_CHECK_EQUAL(dd_norm, args.GetDataDirBase());
 
-    args.ForceSetArg("-datadir", dd_norm.string() + "/.//");
+    args.ForceSetArg("-datadir", fs::PathToString(dd_norm) + "/.//");
     args.ClearPathCache();
-    BOOST_CHECK_EQUAL(dd_norm, args.GetDataDirPath());
+    BOOST_CHECK_EQUAL(dd_norm, args.GetDataDirBase());
 }
 
 namespace {
@@ -121,6 +127,11 @@ BOOST_AUTO_TEST_CASE(util_check)
 
     // Check nested Asserts
     BOOST_CHECK_EQUAL(Assert((Assert(x).test() ? 3 : 0)), 3);
+
+    // Check -Wdangling-gsl does not trigger when copying the int. (It would
+    // trigger on "const int&")
+    const int nine{*Assert(std::optional<int>{9})};
+    BOOST_CHECK_EQUAL(9, nine);
 }
 
 BOOST_AUTO_TEST_CASE(util_criticalsection)
@@ -205,6 +216,24 @@ BOOST_AUTO_TEST_CASE(util_HexStr)
         BOOST_CHECK_EQUAL(HexStr(in_s), out_exp);
         BOOST_CHECK_EQUAL(HexStr(in_b), out_exp);
     }
+
+    {
+        auto input = std::string();
+        for (size_t i=0; i<256; ++i) {
+            input.push_back(static_cast<char>(i));
+        }
+
+        auto hex = HexStr(input);
+        BOOST_TEST_REQUIRE(hex.size() == 512);
+        static constexpr auto hexmap = std::string_view("0123456789abcdef");
+        for (size_t i = 0; i < 256; ++i) {
+            auto upper = hexmap.find(hex[i * 2]);
+            auto lower = hexmap.find(hex[i * 2 + 1]);
+            BOOST_TEST_REQUIRE(upper != std::string_view::npos);
+            BOOST_TEST_REQUIRE(lower != std::string_view::npos);
+            BOOST_TEST_REQUIRE(i == upper*16 + lower);
+        }
+    }
 }
 
 BOOST_AUTO_TEST_CASE(span_write_bytes)
@@ -249,17 +278,17 @@ BOOST_AUTO_TEST_CASE(util_ReplaceAll)
 BOOST_AUTO_TEST_CASE(util_TrimString)
 {
     BOOST_CHECK_EQUAL(TrimString(" foo bar "), "foo bar");
-    BOOST_CHECK_EQUAL(TrimString("\t \n  \n \f\n\r\t\v\tfoo \n \f\n\r\t\v\tbar\t  \n \f\n\r\t\v\t\n "), "foo \n \f\n\r\t\v\tbar");
+    BOOST_CHECK_EQUAL(TrimStringView("\t \n  \n \f\n\r\t\v\tfoo \n \f\n\r\t\v\tbar\t  \n \f\n\r\t\v\t\n "), "foo \n \f\n\r\t\v\tbar");
     BOOST_CHECK_EQUAL(TrimString("\t \n foo \n\tbar\t \n "), "foo \n\tbar");
-    BOOST_CHECK_EQUAL(TrimString("\t \n foo \n\tbar\t \n ", "fobar"), "\t \n foo \n\tbar\t \n ");
+    BOOST_CHECK_EQUAL(TrimStringView("\t \n foo \n\tbar\t \n ", "fobar"), "\t \n foo \n\tbar\t \n ");
     BOOST_CHECK_EQUAL(TrimString("foo bar"), "foo bar");
-    BOOST_CHECK_EQUAL(TrimString("foo bar", "fobar"), " ");
+    BOOST_CHECK_EQUAL(TrimStringView("foo bar", "fobar"), " ");
     BOOST_CHECK_EQUAL(TrimString(std::string("\0 foo \0 ", 8)), std::string("\0 foo \0", 7));
-    BOOST_CHECK_EQUAL(TrimString(std::string(" foo ", 5)), std::string("foo", 3));
+    BOOST_CHECK_EQUAL(TrimStringView(std::string(" foo ", 5)), std::string("foo", 3));
     BOOST_CHECK_EQUAL(TrimString(std::string("\t\t\0\0\n\n", 6)), std::string("\0\0", 2));
-    BOOST_CHECK_EQUAL(TrimString(std::string("\x05\x04\x03\x02\x01\x00", 6)), std::string("\x05\x04\x03\x02\x01\x00", 6));
+    BOOST_CHECK_EQUAL(TrimStringView(std::string("\x05\x04\x03\x02\x01\x00", 6)), std::string("\x05\x04\x03\x02\x01\x00", 6));
     BOOST_CHECK_EQUAL(TrimString(std::string("\x05\x04\x03\x02\x01\x00", 6), std::string("\x05\x04\x03\x02\x01", 5)), std::string("\0", 1));
-    BOOST_CHECK_EQUAL(TrimString(std::string("\x05\x04\x03\x02\x01\x00", 6), std::string("\x05\x04\x03\x02\x01\x00", 6)), "");
+    BOOST_CHECK_EQUAL(TrimStringView(std::string("\x05\x04\x03\x02\x01\x00", 6), std::string("\x05\x04\x03\x02\x01\x00", 6)), "");
 }
 
 BOOST_AUTO_TEST_CASE(util_FormatParseISO8601DateTime)
@@ -270,9 +299,6 @@ BOOST_AUTO_TEST_CASE(util_FormatParseISO8601DateTime)
     BOOST_CHECK_EQUAL(ParseISO8601DateTime("1970-01-01T00:00:00Z"), 0);
     BOOST_CHECK_EQUAL(ParseISO8601DateTime("1960-01-01T00:00:00Z"), 0);
     BOOST_CHECK_EQUAL(ParseISO8601DateTime("2011-09-30T23:36:17Z"), 1317425777);
-
-    auto time = GetTimeSeconds();
-    BOOST_CHECK_EQUAL(ParseISO8601DateTime(FormatISO8601DateTime(time)), time);
 }
 
 BOOST_AUTO_TEST_CASE(util_FormatISO8601Date)
@@ -1259,23 +1285,23 @@ BOOST_AUTO_TEST_CASE(util_ReadWriteSettings)
 {
     // Test writing setting.
     TestArgsManager args1;
-    args1.ForceSetArg("-datadir", m_path_root.string());
+    args1.ForceSetArg("-datadir", fs::PathToString(m_path_root));
     args1.LockSettings([&](util::Settings& settings) { settings.rw_settings["name"] = "value"; });
     args1.WriteSettingsFile();
 
     // Test reading setting.
     TestArgsManager args2;
-    args2.ForceSetArg("-datadir", m_path_root.string());
+    args2.ForceSetArg("-datadir", fs::PathToString(m_path_root));
     args2.ReadSettingsFile();
     args2.LockSettings([&](util::Settings& settings) { BOOST_CHECK_EQUAL(settings.rw_settings["name"].get_str(), "value"); });
 
     // Test error logging, and remove previously written setting.
     {
         ASSERT_DEBUG_LOG("Failed renaming settings file");
-        fs::remove(args1.GetDataDirPath() / "settings.json");
-        fs::create_directory(args1.GetDataDirPath() / "settings.json");
+        fs::remove(args1.GetDataDirBase() / "settings.json");
+        fs::create_directory(args1.GetDataDirBase() / "settings.json");
         args2.WriteSettingsFile();
-        fs::remove(args1.GetDataDirPath() / "settings.json");
+        fs::remove(args1.GetDataDirBase() / "settings.json");
     }
 }
 
@@ -1317,6 +1343,11 @@ BOOST_AUTO_TEST_CASE(util_FormatMoney)
 BOOST_AUTO_TEST_CASE(util_ParseMoney)
 {
     BOOST_CHECK_EQUAL(ParseMoney("0.0").value(), 0);
+    BOOST_CHECK_EQUAL(ParseMoney(".").value(), 0);
+    BOOST_CHECK_EQUAL(ParseMoney("0.").value(), 0);
+    BOOST_CHECK_EQUAL(ParseMoney(".0").value(), 0);
+    BOOST_CHECK_EQUAL(ParseMoney(".6789").value(), 6789'0000);
+    BOOST_CHECK_EQUAL(ParseMoney("12345.").value(), COIN * 12345);
 
     BOOST_CHECK_EQUAL(ParseMoney("12345.6789").value(), (COIN/10000)*123456789);
 
@@ -1344,7 +1375,7 @@ BOOST_AUTO_TEST_CASE(util_ParseMoney)
     BOOST_CHECK_EQUAL(ParseMoney("0.00000001 ").value(), COIN/100000000);
     BOOST_CHECK_EQUAL(ParseMoney(" 0.00000001").value(), COIN/100000000);
 
-    // Parsing amount that can not be represented should fail
+    // Parsing amount that cannot be represented should fail
     BOOST_CHECK(!ParseMoney("100000000.00"));
     BOOST_CHECK(!ParseMoney("0.000000001"));
 
@@ -1354,10 +1385,17 @@ BOOST_AUTO_TEST_CASE(util_ParseMoney)
     BOOST_CHECK(!ParseMoney("  "));
 
     // Parsing two numbers should fail
+    BOOST_CHECK(!ParseMoney(".."));
+    BOOST_CHECK(!ParseMoney("0..0"));
     BOOST_CHECK(!ParseMoney("1 2"));
     BOOST_CHECK(!ParseMoney(" 1 2 "));
     BOOST_CHECK(!ParseMoney(" 1.2 3 "));
     BOOST_CHECK(!ParseMoney(" 1 2.3 "));
+
+    // Embedded whitespace should fail
+    BOOST_CHECK(!ParseMoney(" -1 .2  "));
+    BOOST_CHECK(!ParseMoney("  1 .2  "));
+    BOOST_CHECK(!ParseMoney(" +1 .2  "));
 
     // Attempted 63 bit overflow should fail
     BOOST_CHECK(!ParseMoney("92233720368.54775808"));
@@ -1489,8 +1527,12 @@ BOOST_AUTO_TEST_CASE(util_time_GetTime)
     for (const auto& num_sleep : {0ms, 1ms}) {
         UninterruptibleSleep(num_sleep);
         BOOST_CHECK_EQUAL(111, GetTime()); // Deprecated time getter
+        BOOST_CHECK_EQUAL(111, Now<NodeSeconds>().time_since_epoch().count());
+        BOOST_CHECK_EQUAL(111, TicksSinceEpoch<std::chrono::seconds>(NodeClock::now()));
+        BOOST_CHECK_EQUAL(111, TicksSinceEpoch<SecondsDouble>(Now<NodeSeconds>()));
         BOOST_CHECK_EQUAL(111, GetTime<std::chrono::seconds>().count());
         BOOST_CHECK_EQUAL(111000, GetTime<std::chrono::milliseconds>().count());
+        BOOST_CHECK_EQUAL(111000, TicksSinceEpoch<std::chrono::milliseconds>(NodeClock::now()));
         BOOST_CHECK_EQUAL(111000000, GetTime<std::chrono::microseconds>().count());
     }
 
@@ -1604,6 +1646,35 @@ BOOST_AUTO_TEST_CASE(test_ParseInt32)
     BOOST_CHECK(!ParseInt32("32482348723847471234", nullptr));
 }
 
+template <typename T>
+static void RunToIntegralTests()
+{
+    BOOST_CHECK(!ToIntegral<T>(STRING_WITH_EMBEDDED_NULL_CHAR));
+    BOOST_CHECK(!ToIntegral<T>(" 1"));
+    BOOST_CHECK(!ToIntegral<T>("1 "));
+    BOOST_CHECK(!ToIntegral<T>("1a"));
+    BOOST_CHECK(!ToIntegral<T>("1.1"));
+    BOOST_CHECK(!ToIntegral<T>("1.9"));
+    BOOST_CHECK(!ToIntegral<T>("+01.9"));
+    BOOST_CHECK(!ToIntegral<T>("-"));
+    BOOST_CHECK(!ToIntegral<T>("+"));
+    BOOST_CHECK(!ToIntegral<T>(" -1"));
+    BOOST_CHECK(!ToIntegral<T>("-1 "));
+    BOOST_CHECK(!ToIntegral<T>(" -1 "));
+    BOOST_CHECK(!ToIntegral<T>("+1"));
+    BOOST_CHECK(!ToIntegral<T>(" +1"));
+    BOOST_CHECK(!ToIntegral<T>(" +1 "));
+    BOOST_CHECK(!ToIntegral<T>("+-1"));
+    BOOST_CHECK(!ToIntegral<T>("-+1"));
+    BOOST_CHECK(!ToIntegral<T>("++1"));
+    BOOST_CHECK(!ToIntegral<T>("--1"));
+    BOOST_CHECK(!ToIntegral<T>(""));
+    BOOST_CHECK(!ToIntegral<T>("aap"));
+    BOOST_CHECK(!ToIntegral<T>("0x1"));
+    BOOST_CHECK(!ToIntegral<T>("-32482348723847471234"));
+    BOOST_CHECK(!ToIntegral<T>("32482348723847471234"));
+}
+
 BOOST_AUTO_TEST_CASE(test_ToIntegral)
 {
     BOOST_CHECK_EQUAL(ToIntegral<int32_t>("1234").value(), 1'234);
@@ -1616,27 +1687,14 @@ BOOST_AUTO_TEST_CASE(test_ToIntegral)
     BOOST_CHECK_EQUAL(ToIntegral<int32_t>("-1234").value(), -1'234);
     BOOST_CHECK_EQUAL(ToIntegral<int32_t>("-1").value(), -1);
 
-    BOOST_CHECK(!ToIntegral<int32_t>(" 1"));
-    BOOST_CHECK(!ToIntegral<int32_t>("1 "));
-    BOOST_CHECK(!ToIntegral<int32_t>("1a"));
-    BOOST_CHECK(!ToIntegral<int32_t>("1.1"));
-    BOOST_CHECK(!ToIntegral<int32_t>("1.9"));
-    BOOST_CHECK(!ToIntegral<int32_t>("+01.9"));
-    BOOST_CHECK(!ToIntegral<int32_t>(" -1"));
-    BOOST_CHECK(!ToIntegral<int32_t>("-1 "));
-    BOOST_CHECK(!ToIntegral<int32_t>(" -1 "));
-    BOOST_CHECK(!ToIntegral<int32_t>("+1"));
-    BOOST_CHECK(!ToIntegral<int32_t>(" +1"));
-    BOOST_CHECK(!ToIntegral<int32_t>(" +1 "));
-    BOOST_CHECK(!ToIntegral<int32_t>("+-1"));
-    BOOST_CHECK(!ToIntegral<int32_t>("-+1"));
-    BOOST_CHECK(!ToIntegral<int32_t>("++1"));
-    BOOST_CHECK(!ToIntegral<int32_t>("--1"));
-    BOOST_CHECK(!ToIntegral<int32_t>(""));
-    BOOST_CHECK(!ToIntegral<int32_t>("aap"));
-    BOOST_CHECK(!ToIntegral<int32_t>("0x1"));
-    BOOST_CHECK(!ToIntegral<int32_t>("-32482348723847471234"));
-    BOOST_CHECK(!ToIntegral<int32_t>("32482348723847471234"));
+    RunToIntegralTests<uint64_t>();
+    RunToIntegralTests<int64_t>();
+    RunToIntegralTests<uint32_t>();
+    RunToIntegralTests<int32_t>();
+    RunToIntegralTests<uint16_t>();
+    RunToIntegralTests<int16_t>();
+    RunToIntegralTests<uint8_t>();
+    RunToIntegralTests<int8_t>();
 
     BOOST_CHECK(!ToIntegral<int64_t>("-9223372036854775809"));
     BOOST_CHECK_EQUAL(ToIntegral<int64_t>("-9223372036854775808").value(), -9'223'372'036'854'775'807LL - 1LL);
@@ -1915,32 +1973,6 @@ BOOST_AUTO_TEST_CASE(test_ParseUInt64)
     BOOST_CHECK(!ParseUInt64("-1234", &n));
 }
 
-BOOST_AUTO_TEST_CASE(test_ParseDouble)
-{
-    double n;
-    // Valid values
-    BOOST_CHECK(ParseDouble("1234", nullptr));
-    BOOST_CHECK(ParseDouble("0", &n) && n == 0.0);
-    BOOST_CHECK(ParseDouble("1234", &n) && n == 1234.0);
-    BOOST_CHECK(ParseDouble("01234", &n) && n == 1234.0); // no octal
-    BOOST_CHECK(ParseDouble("2147483647", &n) && n == 2147483647.0);
-    BOOST_CHECK(ParseDouble("-2147483648", &n) && n == -2147483648.0);
-    BOOST_CHECK(ParseDouble("-1234", &n) && n == -1234.0);
-    BOOST_CHECK(ParseDouble("1e6", &n) && n == 1e6);
-    BOOST_CHECK(ParseDouble("-1e6", &n) && n == -1e6);
-    // Invalid values
-    BOOST_CHECK(!ParseDouble("", &n));
-    BOOST_CHECK(!ParseDouble(" 1", &n)); // no padding inside
-    BOOST_CHECK(!ParseDouble("1 ", &n));
-    BOOST_CHECK(!ParseDouble("1a", &n));
-    BOOST_CHECK(!ParseDouble("aap", &n));
-    BOOST_CHECK(!ParseDouble("0x1", &n)); // no hex
-    BOOST_CHECK(!ParseDouble(STRING_WITH_EMBEDDED_NULL_CHAR, &n));
-    // Overflow and underflow
-    BOOST_CHECK(!ParseDouble("-1e10000", nullptr));
-    BOOST_CHECK(!ParseDouble("1e10000", nullptr));
-}
-
 BOOST_AUTO_TEST_CASE(test_FormatParagraph)
 {
     BOOST_CHECK_EQUAL(FormatParagraph("", 79, 0), "");
@@ -2043,6 +2075,15 @@ BOOST_AUTO_TEST_CASE(test_ParseFixedPoint)
     BOOST_CHECK(!ParseFixedPoint("1.1e", 8, &amount));
     BOOST_CHECK(!ParseFixedPoint("1.1e-", 8, &amount));
     BOOST_CHECK(!ParseFixedPoint("1.", 8, &amount));
+
+    // Test with 3 decimal places for fee rates in sat/vB.
+    BOOST_CHECK(ParseFixedPoint("0.001", 3, &amount));
+    BOOST_CHECK_EQUAL(amount, CAmount{1});
+    BOOST_CHECK(!ParseFixedPoint("0.0009", 3, &amount));
+    BOOST_CHECK(!ParseFixedPoint("31.00100001", 3, &amount));
+    BOOST_CHECK(!ParseFixedPoint("31.0011", 3, &amount));
+    BOOST_CHECK(!ParseFixedPoint("31.99999999", 3, &amount));
+    BOOST_CHECK(!ParseFixedPoint("31.999999999999999999999", 3, &amount));
 }
 
 static void TestOtherThread(fs::path dirname, std::string lockname, bool *result)
@@ -2085,7 +2126,7 @@ static constexpr char ExitCommand = 'X';
 
 BOOST_AUTO_TEST_CASE(test_LockDirectory)
 {
-    fs::path dirname = m_args.GetDataDirPath() / "lock_dir";
+    fs::path dirname = m_args.GetDataDirBase() / "lock_dir";
     const std::string lockname = ".lock";
 #ifndef WIN32
     // Revert SIGCHLD to default, otherwise boost.test will catch and fail on
@@ -2174,7 +2215,7 @@ BOOST_AUTO_TEST_CASE(test_LockDirectory)
 BOOST_AUTO_TEST_CASE(test_DirIsWritable)
 {
     // Should be able to write to the data dir.
-    fs::path tmpdirname = m_args.GetDataDirPath();
+    fs::path tmpdirname = m_args.GetDataDirBase();
     BOOST_CHECK_EQUAL(DirIsWritable(tmpdirname), true);
 
     // Should not be able to write to a non-existent dir.
@@ -2653,14 +2694,132 @@ BOOST_AUTO_TEST_CASE(message_hash)
 BOOST_AUTO_TEST_CASE(remove_prefix)
 {
     BOOST_CHECK_EQUAL(RemovePrefix("./util/system.h", "./"), "util/system.h");
-    BOOST_CHECK_EQUAL(RemovePrefix("foo", "foo"), "");
+    BOOST_CHECK_EQUAL(RemovePrefixView("foo", "foo"), "");
     BOOST_CHECK_EQUAL(RemovePrefix("foo", "fo"), "o");
-    BOOST_CHECK_EQUAL(RemovePrefix("foo", "f"), "oo");
+    BOOST_CHECK_EQUAL(RemovePrefixView("foo", "f"), "oo");
     BOOST_CHECK_EQUAL(RemovePrefix("foo", ""), "foo");
-    BOOST_CHECK_EQUAL(RemovePrefix("fo", "foo"), "fo");
+    BOOST_CHECK_EQUAL(RemovePrefixView("fo", "foo"), "fo");
     BOOST_CHECK_EQUAL(RemovePrefix("f", "foo"), "f");
-    BOOST_CHECK_EQUAL(RemovePrefix("", "foo"), "");
+    BOOST_CHECK_EQUAL(RemovePrefixView("", "foo"), "");
     BOOST_CHECK_EQUAL(RemovePrefix("", ""), "");
+}
+
+BOOST_AUTO_TEST_CASE(util_ParseByteUnits)
+{
+    auto noop = ByteUnit::NOOP;
+
+    // no multiplier
+    BOOST_CHECK_EQUAL(ParseByteUnits("1", noop).value(), 1);
+    BOOST_CHECK_EQUAL(ParseByteUnits("0", noop).value(), 0);
+
+    BOOST_CHECK_EQUAL(ParseByteUnits("1k", noop).value(), 1000ULL);
+    BOOST_CHECK_EQUAL(ParseByteUnits("1K", noop).value(), 1ULL << 10);
+
+    BOOST_CHECK_EQUAL(ParseByteUnits("2m", noop).value(), 2'000'000ULL);
+    BOOST_CHECK_EQUAL(ParseByteUnits("2M", noop).value(), 2ULL << 20);
+
+    BOOST_CHECK_EQUAL(ParseByteUnits("3g", noop).value(), 3'000'000'000ULL);
+    BOOST_CHECK_EQUAL(ParseByteUnits("3G", noop).value(), 3ULL << 30);
+
+    BOOST_CHECK_EQUAL(ParseByteUnits("4t", noop).value(), 4'000'000'000'000ULL);
+    BOOST_CHECK_EQUAL(ParseByteUnits("4T", noop).value(), 4ULL << 40);
+
+    // check default multiplier
+    BOOST_CHECK_EQUAL(ParseByteUnits("5", ByteUnit::K).value(), 5ULL << 10);
+
+    // NaN
+    BOOST_CHECK(!ParseByteUnits("", noop));
+    BOOST_CHECK(!ParseByteUnits("foo", noop));
+
+    // whitespace
+    BOOST_CHECK(!ParseByteUnits("123m ", noop));
+    BOOST_CHECK(!ParseByteUnits(" 123m", noop));
+
+    // no +-
+    BOOST_CHECK(!ParseByteUnits("-123m", noop));
+    BOOST_CHECK(!ParseByteUnits("+123m", noop));
+
+    // zero padding
+    BOOST_CHECK_EQUAL(ParseByteUnits("020M", noop).value(), 20ULL << 20);
+
+    // fractions not allowed
+    BOOST_CHECK(!ParseByteUnits("0.5T", noop));
+
+    // overflow
+    BOOST_CHECK(!ParseByteUnits("18446744073709551615g", noop));
+
+    // invalid unit
+    BOOST_CHECK(!ParseByteUnits("1x", noop));
+}
+
+BOOST_AUTO_TEST_CASE(util_ReadBinaryFile)
+{
+    fs::path tmpfolder = m_args.GetDataDirBase();
+    fs::path tmpfile = tmpfolder / "read_binary.dat";
+    std::string expected_text;
+    for (int i = 0; i < 30; i++) {
+        expected_text += "0123456789";
+    }
+    {
+        std::ofstream file{tmpfile};
+        file << expected_text;
+    }
+    {
+        // read all contents in file
+        auto [valid, text] = ReadBinaryFile(tmpfile);
+        BOOST_CHECK(valid);
+        BOOST_CHECK_EQUAL(text, expected_text);
+    }
+    {
+        // read half contents in file
+        auto [valid, text] = ReadBinaryFile(tmpfile, expected_text.size() / 2);
+        BOOST_CHECK(valid);
+        BOOST_CHECK_EQUAL(text, expected_text.substr(0, expected_text.size() / 2));
+    }
+    {
+        // read from non-existent file
+        fs::path invalid_file = tmpfolder / "invalid_binary.dat";
+        auto [valid, text] = ReadBinaryFile(invalid_file);
+        BOOST_CHECK(!valid);
+        BOOST_CHECK(text.empty());
+    }
+}
+
+BOOST_AUTO_TEST_CASE(util_WriteBinaryFile)
+{
+    fs::path tmpfolder = m_args.GetDataDirBase();
+    fs::path tmpfile = tmpfolder / "write_binary.dat";
+    std::string expected_text = "bitcoin";
+    auto valid = WriteBinaryFile(tmpfile, expected_text);
+    std::string actual_text;
+    std::ifstream file{tmpfile};
+    file >> actual_text;
+    BOOST_CHECK(valid);
+    BOOST_CHECK_EQUAL(actual_text, expected_text);
+}
+
+BOOST_AUTO_TEST_CASE(clearshrink_test)
+{
+    {
+        std::vector<uint8_t> v = {1, 2, 3};
+        ClearShrink(v);
+        BOOST_CHECK_EQUAL(v.size(), 0);
+        BOOST_CHECK_EQUAL(v.capacity(), 0);
+    }
+
+    {
+        std::vector<bool> v = {false, true, false, false, true, true};
+        ClearShrink(v);
+        BOOST_CHECK_EQUAL(v.size(), 0);
+        BOOST_CHECK_EQUAL(v.capacity(), 0);
+    }
+
+    {
+        std::deque<int> v = {1, 3, 3, 7};
+        ClearShrink(v);
+        BOOST_CHECK_EQUAL(v.size(), 0);
+        // std::deque has no capacity() we can observe.
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

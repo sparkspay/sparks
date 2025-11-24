@@ -2,10 +2,10 @@
 export LC_ALL=C
 set -e -o pipefail
 
-# shellcheck source=../../shell/realpath.bash
+# shellcheck source=contrib/shell/realpath.bash
 source contrib/shell/realpath.bash
 
-# shellcheck source=../../shell/git-utils.bash
+# shellcheck source=contrib/shell/git-utils.bash
 source contrib/shell/git-utils.bash
 
 ################
@@ -51,7 +51,7 @@ fi
 time-machine() {
     # shellcheck disable=SC2086
     guix time-machine --url=https://git.savannah.gnu.org/git/guix.git \
-                      --commit=998eda3067c7d21e0d9bb3310d2f5a14b8f1c681 \
+                      --commit=f0bb724211872cd6158fce6162e0b8c73efed126 \
                       --cores="$JOBS" \
                       --keep-failed \
                       --fallback \

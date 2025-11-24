@@ -7,11 +7,11 @@
 export LC_ALL=C.UTF-8
 
 export CONTAINER_NAME=ci_native_fuzz_valgrind
-export PACKAGES="clang llvm python3 libevent-dev bsdmainutils libboost-dev libboost-system-dev libboost-filesystem-dev libboost-test-dev valgrind"
+export PACKAGES="clang llvm python3 libevent-dev bsdmainutils libboost-dev valgrind"
 export NO_DEPENDS=1
 export RUN_UNIT_TESTS=false
 export RUN_FUNCTIONAL_TESTS=false
 export RUN_FUZZ_TESTS=true
 export FUZZ_TESTS_CONFIG="--valgrind"
 export GOAL="install"
-export BITCOIN_CONFIG="--enable-fuzz --with-sanitizers=fuzzer --enable-suppress-external-warnings CC=clang-16 CXX=clang++-16"
+export BITCOIN_CONFIG="--enable-fuzz --with-sanitizers=fuzzer --enable-suppress-external-warnings CC=clang-18 CXX=clang++-18"

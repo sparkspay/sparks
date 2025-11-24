@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2023 The Dash Core developers
+# Copyright (c) 2023-2025 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -19,14 +19,13 @@ from test_framework.messages import (
 from test_framework.test_framework import SparksTestFramework
 from test_framework.util import (
     assert_equal,
-    assert_greater_than,
     get_bip9_details,
 )
 
 class MnehfTest(SparksTestFramework):
     def set_test_params(self):
-        extra_args = [["-vbparams=testdummy:0:999999999999:0:12:12:12:5:1", "-persistmempool=0"] for _ in range(4)]
-        self.set_sparks_test_params(4, 3, fast_dip3_enforcement=True, extra_args=extra_args)
+        extra_args = [["-vbparams=testdummy:0:999999999999:0:4:4:4:5:1", "-persistmempool=0"]] * 4
+        self.set_sparks_test_params(4, 3, extra_args=extra_args)
 
     def skip_test_if_missing_module(self):
         self.skip_if_no_wallet()
@@ -35,7 +34,7 @@ class MnehfTest(SparksTestFramework):
         for inode in range(self.num_nodes):
             self.log.info(f"Restart node {inode} with {self.extra_args[inode]}")
             if params is not None:
-                self.extra_args[inode][0] = f"-vbparams=testdummy:{params[0]}:{params[1]}:0:12:12:12:5:1"
+                self.extra_args[inode][0] = f"-vbparams=testdummy:{params[0]}:{params[1]}:0:4:4:4:5:1"
                 self.log.info(f"Actual restart options: {self.extra_args[inode]}")
 
         self.restart_node(0)
@@ -44,17 +43,8 @@ class MnehfTest(SparksTestFramework):
             self.stop_node(index)
             self.start_masternode(mn)
         for i in range(1, self.num_nodes):
-                self.connect_nodes(i, 0)
+            self.connect_nodes(i, 0)
 
-    def slowly_generate_batch(self, amount):
-        self.log.info(f"Slowly generate {amount} blocks")
-        while amount > 0:
-            self.log.info(f"Generating batch of blocks {amount} left")
-            next = min(10, amount)
-            amount -= next
-            self.bump_mocktime(next)
-            self.nodes[1].generate(next)
-            self.sync_all()
 
     def create_mnehf(self, versionBit, pubkey=None):
         # request ID = sha256("mnhf", versionBit)
@@ -131,21 +121,18 @@ class MnehfTest(SparksTestFramework):
         node = self.nodes[0]
 
         self.set_sporks()
-        self.activate_v19()
-        self.log.info(f"After v19 activation should be plenty of blocks: {node.getblockcount()}")
-        assert_greater_than(node.getblockcount(), 900)
-        assert_equal(get_bip9_details(node, 'testdummy')['status'], 'defined')
+        self.log.info("Consensus rules assume there're no EHF signal before V20")
+        self.activate_v20()
 
         self.log.info("Mine a quorum...")
         self.mine_quorum()
-        assert_equal(get_bip9_details(node, 'testdummy')['status'], 'defined')
+        self.check_fork('defined')
 
         key = ECKey()
         key.generate()
         pubkey = key.get_pubkey().get_bytes()
         ehf_tx = self.create_mnehf(28, pubkey)
         ehf_unknown_tx = self.create_mnehf(27, pubkey)
-        ehf_invalid_tx = self.create_mnehf(9, pubkey) # deployment that is known as non-EHF
 
         self.log.info("Checking deserialization of CMnEhf by python's code")
         mnehf_payload = CMnEhf()
@@ -155,22 +142,12 @@ class MnehfTest(SparksTestFramework):
         self.log.info("Checking correctness of requestId and quorumHash")
         assert_equal(mnehf_payload.quorumHash, int(self.mninfo[0].node.quorum("selectquorum", 100, 'a0eee872d7d3170dd20d5c5e8380c92b3aa887da5f63d8033289fafa35a90691')["quorumHash"], 16))
 
-        self.send_tx(ehf_tx, expected_error='mnhf-before-v20')
-
-        assert_equal(get_bip9_details(node, 'testdummy')['status'], 'defined')
-        self.activate_v20()
-        assert_equal(get_bip9_details(node, 'testdummy')['status'], 'defined')
-        assert_equal(get_bip9_details(node, 'mn_rr')['status'], 'defined')
-
         ehf_tx_sent = self.send_tx(ehf_tx)
         self.log.info(f"ehf tx: {ehf_tx_sent}")
         ehf_unknown_tx_sent = self.send_tx(ehf_unknown_tx)
         self.log.info(f"unknown ehf tx: {ehf_unknown_tx_sent}")
-        self.send_tx(ehf_invalid_tx, expected_error='bad-mnhf-non-ehf')
         self.sync_all()
-        ehf_blockhash = self.nodes[1].generate(1)[0]
-        self.sync_blocks()
-        self.sync_all()
+        ehf_blockhash = self.generate(self.nodes[1], 1)[0]
 
         self.log.info(f"Check MnEhfTx {ehf_tx_sent} was mined in {ehf_blockhash}")
         assert ehf_tx_sent in node.getblock(ehf_blockhash)['tx']
@@ -181,25 +158,20 @@ class MnehfTest(SparksTestFramework):
         self.log.info(f"mempool: {node.getmempoolinfo()}")
         assert_equal(node.getmempoolinfo()['size'], 0)
 
-        while (node.getblockcount() + 1) % 12 != 0:
+        while (node.getblockcount() + 1) % 4 != 0:
             self.check_fork('defined')
-            node.generate(1)
-            self.sync_all()
+            self.generate(node, 1)
 
 
-        self.restart_all_nodes()
-
-        for _ in range(12):
+        for _ in range(4 // 2):
             self.check_fork('started')
-            node.generate(1)
-            self.sync_all()
+            self.generate(node, 2)
 
 
-        for i in range(12):
+        for i in range(4 // 2):
             self.check_fork('locked_in')
-            node.generate(1)
-            self.sync_all()
-            if i == 7:
+            self.generate(node, 2)
+            if i == 1:
                 self.restart_all_nodes()
 
         self.check_fork('active')
@@ -210,25 +182,21 @@ class MnehfTest(SparksTestFramework):
             inode.invalidateblock(ehf_blockhash)
 
         self.log.info("Expecting for fork to be defined in next blocks because no MnEHF tx here")
-        for _ in range(12):
-            self.check_fork('defined')
-            node.generate(1)
-            self.sync_all()
+        self.generate(node, 4)
+        self.check_fork('defined')
 
 
         self.log.info("Re-sending MnEHF for new fork")
         tx_sent_2 = self.send_tx(ehf_tx)
-        ehf_blockhash_2 = node.generate(1)[0]
-        self.sync_all()
+        ehf_blockhash_2 = self.generate(node, 1)[0]
 
         self.log.info(f"Check MnEhfTx again {tx_sent_2} was mined in {ehf_blockhash_2}")
         assert tx_sent_2 in node.getblock(ehf_blockhash_2)['tx']
 
         self.log.info(f"Generate some more block to jump to `started` status")
-        for _ in range(12):
-            node.generate(1)
+        self.generate(node, 4)
         self.check_fork('started')
-        self.restart_all_nodes()
+        self.restart_node(0)
         self.check_fork('started')
 
 
@@ -243,40 +211,25 @@ class MnehfTest(SparksTestFramework):
 
         self.log.info("Testing duplicate EHF signal with same bit")
         ehf_tx_duplicate = self.send_tx(self.create_mnehf(28, pubkey))
-        tip_blockhash = node.generate(1)[0]
-        self.sync_blocks()
+        tip_blockhash = self.generate(node, 1, sync_fun=lambda: self.sync_blocks())[0]
         block = node.getblock(tip_blockhash)
         assert ehf_tx_duplicate in node.getrawmempool() and ehf_tx_duplicate not in block['tx']
 
         self.log.info("Testing EHF signal with same bit but with newer start time")
-        self.bump_mocktime(int(60 * 60 * 24 * 14))
-        node.generate(1)
-        self.sync_blocks()
+        self.bump_mocktime(int(60 * 60 * 24 * 14), update_schedulers=False)
+        self.generate(node, 1, sync_fun=lambda: self.sync_blocks())
         self.restart_all_nodes(params=[self.mocktime, self.mocktime + 1000000])
+        self.check_fork('defined')
+
+        self.log.info("Wait MNs to sign EHF message")
         self.mine_quorum()
-
-        ehf_tx_new_start = self.create_mnehf(28, pubkey)
-
-        self.log.info("activate MN_RR also by enabling spork 24")
-        assert_equal(get_bip9_details(node, 'mn_rr')['status'], 'defined')
-        self.nodes[0].sporkupdate("SPORK_25_TEST_EHF", 0)
-        self.wait_for_sporks_same()
-
         self.check_fork('defined')
 
-        self.log.info("Mine one block and ensure EHF tx for the new deployment is mined")
-        ehf_tx_sent = self.send_tx(ehf_tx_new_start)
-        tip_blockhash = node.generate(1)[0]
-        self.sync_all()
-        block = node.getblock(tip_blockhash)
-        assert ehf_tx_sent in block['tx']
-
-        self.check_fork('defined')
-        self.slowly_generate_batch(12 * 4)
-        self.check_fork('active')
-        self.log.info(f"bip9: {get_bip9_details(node, 'mn_rr')}")
-        assert_equal(get_bip9_details(node, 'mn_rr')['status'], 'active')
-
+        def check_ehf_activated(self):
+            self.bump_mocktime(1)
+            self.generate(self.nodes[1], 1)
+            return get_bip9_details(self.nodes[0], 'testdummy')['status'] == 'active'
+        self.wait_until(lambda: check_ehf_activated(self))
 
 if __name__ == '__main__':
     MnehfTest().main()

@@ -1,28 +1,30 @@
-// Copyright (c) 2023 The Dash Core developers
+// Copyright (c) 2023-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_EVO_CREDITPOOL_H
 #define BITCOIN_EVO_CREDITPOOL_H
 
-#include <coins.h>
-
-#include <evo/assetlocktx.h>
-#include <evo/evodb.h>
-
+#include <consensus/amount.h>
 #include <saltedhasher.h>
 #include <serialize.h>
 #include <sync.h>
 #include <threadsafety.h>
+#include <tinyformat.h>
 #include <unordered_lru_cache.h>
 #include <util/ranges_set.h>
 
+#include <evo/assetlocktx.h>
+
+#include <gsl/pointers.h>
 #include <optional>
 #include <unordered_set>
 
 class BlockManager;
+class CBlock;
 class CBlockIndex;
 class BlockValidationState;
+class CEvoDB;
 class TxValidationState;
 namespace Consensus {
 struct Params;
@@ -114,9 +116,9 @@ private:
     static constexpr int DISK_SNAPSHOT_PERIOD = 576; // once per day
 
 public:
-    static constexpr int LimitBlocksToTrace = 576;
     static constexpr CAmount LimitAmountLow = 100 * COIN;
     static constexpr CAmount LimitAmountHigh = 1000 * COIN;
+    static constexpr CAmount LimitAmountV22 = 2000 * COIN;
 
     explicit CCreditPoolManager(CEvoDB& _evoDb);
 
@@ -133,11 +135,12 @@ private:
     std::optional<CCreditPool> GetFromCache(const CBlockIndex& block_index);
     void AddToCache(const uint256& block_hash, int height, const CCreditPool& pool);
 
-    CCreditPool ConstructCreditPool(const CBlockIndex* block_index, CCreditPool prev, const Consensus::Params& consensusParams);
+    CCreditPool ConstructCreditPool(const gsl::not_null<const CBlockIndex*> block_index, CCreditPool prev,
+                                    const Consensus::Params& consensusParams);
 };
 
 std::optional<CCreditPoolDiff> GetCreditPoolDiffForBlock(CCreditPoolManager& cpoolman, const BlockManager& blockman, const llmq::CQuorumManager& qman,
                                                          const CBlock& block, const CBlockIndex* pindexPrev, const Consensus::Params& consensusParams,
                                                          const CAmount blockSubsidy, BlockValidationState& state);
 
-#endif
+#endif // BITCOIN_EVO_CREDITPOOL_H

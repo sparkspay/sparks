@@ -19,7 +19,7 @@ from test_framework.util import (
 )
 from test_framework.wallet import MiniWallet
 
-DEFAULT_MEMPOOL_EXPIRY = 336  # hours
+DEFAULT_MEMPOOL_EXPIRY = 24  # hours
 CUSTOM_MEMPOOL_EXPIRY = 10  # hours
 
 
@@ -35,8 +35,8 @@ class MempoolExpiryTest(BitcoinTestFramework):
         self.wallet = MiniWallet(node)
 
         # Add enough mature utxos to the wallet so that all txs spend confirmed coins.
-        self.wallet.generate(4)
-        node.generate(100)
+        self.generate(self.wallet, 4)
+        self.generate(node, 100)
 
         # Send a parent transaction that will expire.
         parent_txid = self.wallet.send_self_transfer(from_node=node)['txid']

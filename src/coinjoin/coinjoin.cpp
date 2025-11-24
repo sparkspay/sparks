@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2024 The Dash Core developers
+// Copyright (c) 2014-2025 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -46,6 +46,7 @@ uint256 CCoinJoinQueue::GetSignatureHash() const
 {
     return SerializeHash(*this, SER_GETHASH, PROTOCOL_VERSION);
 }
+uint256 CCoinJoinQueue::GetHash() const { return SerializeHash(*this, SER_NETWORK, PROTOCOL_VERSION); }
 
 bool CCoinJoinQueue::Sign(const CActiveMasternodeManager& mn_activeman)
 {
@@ -61,22 +62,11 @@ bool CCoinJoinQueue::Sign(const CActiveMasternodeManager& mn_activeman)
 
 bool CCoinJoinQueue::CheckSignature(const CBLSPublicKey& blsPubKey) const
 {
-    if (!CBLSSignature(Span{vchSig}).VerifyInsecure(blsPubKey, GetSignatureHash(), false)) {
+    if (!CBLSSignature(Span{vchSig}, false).VerifyInsecure(blsPubKey, GetSignatureHash(), false)) {
         LogPrint(BCLog::COINJOIN, "CCoinJoinQueue::CheckSignature -- VerifyInsecure() failed\n");
         return false;
     }
 
-    return true;
-}
-
-bool CCoinJoinQueue::Relay(CConnman& connman)
-{
-    connman.ForEachNode([&connman, this](CNode* pnode) {
-        CNetMsgMaker msgMaker(pnode->GetCommonVersion());
-        if (pnode->fSendDSQueue) {
-            connman.PushMessage(pnode, msgMaker.Make(NetMsgType::DSQUEUE, (*this)));
-        }
-    });
     return true;
 }
 
@@ -111,7 +101,7 @@ bool CCoinJoinBroadcastTx::Sign(const CActiveMasternodeManager& mn_activeman)
 
 bool CCoinJoinBroadcastTx::CheckSignature(const CBLSPublicKey& blsPubKey) const
 {
-    if (!CBLSSignature(Span{vchSig}).VerifyInsecure(blsPubKey, GetSignatureHash(), false)) {
+    if (!CBLSSignature(Span{vchSig}, false).VerifyInsecure(blsPubKey, GetSignatureHash(), false)) {
         LogPrint(BCLog::COINJOIN, "CCoinJoinBroadcastTx::CheckSignature -- VerifyInsecure() failed\n");
         return false;
     }
@@ -217,7 +207,10 @@ std::string CCoinJoinBaseSession::GetStateString() const
     }
 }
 
-bool CCoinJoinBaseSession::IsValidInOuts(CChainState& active_chainstate, const CTxMemPool& mempool, const std::vector<CTxIn>& vin, const std::vector<CTxOut>& vout, PoolMessage& nMessageIDRet, bool* fConsumeCollateralRet) const
+bool CCoinJoinBaseSession::IsValidInOuts(CChainState& active_chainstate, const llmq::CInstantSendManager& isman,
+                                         const CTxMemPool& mempool, const std::vector<CTxIn>& vin,
+                                         const std::vector<CTxOut>& vout, PoolMessage& nMessageIDRet,
+                                         bool* fConsumeCollateralRet) const
 {
     std::set<CScript> setScripPubKeys;
     nMessageIDRet = MSG_NOERR;
@@ -278,7 +271,7 @@ bool CCoinJoinBaseSession::IsValidInOuts(CChainState& active_chainstate, const C
 
         Coin coin;
         if (!viewMemPool.GetCoin(txin.prevout, coin) || coin.IsSpent() ||
-            (coin.nHeight == MEMPOOL_HEIGHT && !llmq::quorumInstantSendManager->IsLocked(txin.prevout.hash))) {
+            (coin.nHeight == MEMPOOL_HEIGHT && !isman.IsLocked(txin.prevout.hash))) {
             LogPrint(BCLog::COINJOIN, "CCoinJoinBaseSession::%s -- ERROR: missing, spent or non-locked mempool input! txin=%s\n", __func__, txin.ToString());
             nMessageIDRet = ERR_MISSING_TX;
             return false;
@@ -304,10 +297,11 @@ bool CCoinJoinBaseSession::IsValidInOuts(CChainState& active_chainstate, const C
 
 // Responsibility for checking fee sanity is moved from the mempool to the client (BroadcastTransaction)
 // but CoinJoin still requires ATMP with fee sanity checks so we need to implement them separately
-bool ATMPIfSaneFee(CChainState& active_chainstate, CTxMemPool& pool, const CTransactionRef &tx, CSporkManager& spork_manager, bool test_accept) {
+bool ATMPIfSaneFee(ChainstateManager& chainman, const CTransactionRef& tx, CSporkManager& spork_manager, bool test_accept)
+{
     AssertLockHeld(cs_main);
 
-    const MempoolAcceptResult result = AcceptToMemoryPool(active_chainstate, pool, tx, spork_manager, /* bypass_limits */ false, /* test_accept */ true);
+    const MempoolAcceptResult result = chainman.ProcessTransaction(tx, spork_manager, /*test_accept=*/true);
     if (result.m_result_type != MempoolAcceptResult::ResultType::VALID) {
         /* Fetch fee and fast-fail if ATMP fails regardless */
         return false;
@@ -318,11 +312,12 @@ bool ATMPIfSaneFee(CChainState& active_chainstate, CTxMemPool& pool, const CTran
         /* Don't re-run ATMP if only doing test run */
         return true;
     }
-    return AcceptToMemoryPool(active_chainstate, pool, tx, spork_manager, /* bypass_limits */ false, test_accept).m_result_type == MempoolAcceptResult::ResultType::VALID;
+    return chainman.ProcessTransaction(tx, spork_manager, test_accept).m_result_type == MempoolAcceptResult::ResultType::VALID;
 }
 
 // check to make sure the collateral provided by the client is valid
-bool CoinJoin::IsCollateralValid(CChainState& active_chainstate, CTxMemPool& mempool, const CTransaction& txCollateral, CSporkManager& spork_manager)
+bool CoinJoin::IsCollateralValid(ChainstateManager& chainman, const llmq::CInstantSendManager& isman,
+                                 const CTxMemPool& mempool, const CTransaction& txCollateral, CSporkManager& spork_manager)
 {
     if (txCollateral.vout.empty()) return false;
     if (txCollateral.nLockTime != 0) return false;
@@ -343,12 +338,12 @@ bool CoinJoin::IsCollateralValid(CChainState& active_chainstate, CTxMemPool& mem
         Coin coin;
         auto mempoolTx = mempool.get(txin.prevout.hash);
         if (mempoolTx != nullptr) {
-            if (mempool.isSpent(txin.prevout) || !llmq::quorumInstantSendManager->IsLocked(txin.prevout.hash)) {
+            if (mempool.isSpent(txin.prevout) || !isman.IsLocked(txin.prevout.hash)) {
                 LogPrint(BCLog::COINJOIN, "CoinJoin::IsCollateralValid -- spent or non-locked mempool input! txin=%s\n", txin.ToString());
                 return false;
             }
             nValueIn += mempoolTx->vout[txin.prevout.n].nValue;
-        } else if (GetUTXOCoin(active_chainstate, txin.prevout, coin)) {
+        } else if (GetUTXOCoin(chainman.ActiveChainstate(), txin.prevout, coin)) {
             nValueIn += coin.out.nValue;
         } else {
             LogPrint(BCLog::COINJOIN, "CoinJoin::IsCollateralValid -- Unknown inputs in collateral transaction, txCollateral=%s", txCollateral.ToString()); /* Continued */
@@ -366,8 +361,8 @@ bool CoinJoin::IsCollateralValid(CChainState& active_chainstate, CTxMemPool& mem
 
     {
         LOCK(cs_main);
-        if (!ATMPIfSaneFee(active_chainstate, mempool, MakeTransactionRef(txCollateral), spork_manager, /*test_accept=*/true)) {
-            LogPrint(BCLog::COINJOIN, "CoinJoin::IsCollateralValid -- didn't pass AcceptToMemoryPool()\n");
+        if (!ATMPIfSaneFee(chainman, MakeTransactionRef(txCollateral), spork_manager, /*test_accept=*/true)) {
+            LogPrint(BCLog::COINJOIN, "CoinJoin::IsCollateralValid -- didn't pass ATMPIfSaneFee()\n");
             return false;
         }
     }

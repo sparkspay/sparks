@@ -12,7 +12,6 @@
 #include <qt/rpcconsole.h>
 #include <shutdown.h>
 #include <test/util/setup_common.h>
-#include <univalue.h>
 #include <validation.h>
 
 #if defined(HAVE_CONFIG_H)
@@ -20,10 +19,12 @@
 #endif
 
 #include <QAction>
-#include <QEventLoop>
 #include <QLineEdit>
+#include <QRegularExpression>
 #include <QScopedPointer>
 #include <QSettings>
+#include <QSignalSpy>
+#include <QString>
 #include <QTest>
 #include <QTextEdit>
 #include <QtGlobal>
@@ -31,20 +32,27 @@
 #include <QtTest/QtTestGui>
 
 namespace {
+//! Regex find a string group inside of the console output
+QString FindInConsole(const QString& output, const QString& pattern)
+{
+    const QRegularExpression re(pattern);
+    return re.match(output).captured(1);
+}
+
 //! Call getblockchaininfo RPC and check first field of JSON output.
 void TestRpcCommand(RPCConsole* console)
 {
-    QEventLoop loop;
     QTextEdit* messagesWidget = console->findChild<QTextEdit*>("messagesWidget");
-    QObject::connect(messagesWidget, &QTextEdit::textChanged, &loop, &QEventLoop::quit);
     QLineEdit* lineEdit = console->findChild<QLineEdit*>("lineEdit");
+    QSignalSpy mw_spy(messagesWidget, &QTextEdit::textChanged);
+    QVERIFY(mw_spy.isValid());
     QTest::keyClicks(lineEdit, "getblockchaininfo");
     QTest::keyClick(lineEdit, Qt::Key_Return);
-    loop.exec();
-    QString output = messagesWidget->toPlainText();
-    UniValue value;
-    value.read(output.right(output.size() - output.indexOf("{")).toStdString());
-    QCOMPARE(value["chain"].get_str(), std::string("regtest"));
+    QVERIFY(mw_spy.wait(1000));
+    QCOMPARE(mw_spy.count(), 4);
+    const QString output = messagesWidget->toPlainText();
+    const QString pattern = QStringLiteral("\"chain\": \"(\\w+)\"");
+    QCOMPARE(FindInConsole(output, pattern), QString("regtest"));
 }
 } // namespace
 
@@ -65,7 +73,7 @@ void AppTests::appTests()
 
     fs::create_directories([] {
         BasicTestingSetup test{CBaseChainParams::REGTEST}; // Create a temp data directory to backup the gui settings to
-        return GetDataDir() / "blocks";
+        return gArgs.GetDataDirNet() / "blocks";
     }());
 
     qRegisterMetaType<interfaces::BlockAndHeaderTipInfo>("interfaces::BlockAndHeaderTipInfo");

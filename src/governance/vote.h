@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -20,24 +20,25 @@ class CKeyID;
 class PeerManager;
 
 // INTENTION OF MASTERNODES REGARDING ITEM
-enum vote_outcome_enum_t : uint8_t {
-    VOTE_OUTCOME_NONE      = 0,
-    VOTE_OUTCOME_YES       = 1,
-    VOTE_OUTCOME_NO        = 2,
-    VOTE_OUTCOME_ABSTAIN   = 3
+enum vote_outcome_enum_t : int {
+    VOTE_OUTCOME_NONE = 0,
+    VOTE_OUTCOME_YES,
+    VOTE_OUTCOME_NO,
+    VOTE_OUTCOME_ABSTAIN,
+    VOTE_OUTCOME_UNKNOWN
 };
-
+template<> struct is_serializable_enum<vote_outcome_enum_t> : std::true_type {};
 
 // SIGNAL VARIOUS THINGS TO HAPPEN:
-enum vote_signal_enum_t : uint8_t {
-    VOTE_SIGNAL_NONE       = 0,
-    VOTE_SIGNAL_FUNDING    = 1, //   -- fund this object for it's stated amount
-    VOTE_SIGNAL_VALID      = 2, //   -- this object checks out in sentinel engine
-    VOTE_SIGNAL_DELETE     = 3, //   -- this object should be deleted from memory entirely
-    VOTE_SIGNAL_ENDORSED   = 4, //   -- officially endorsed by the network somehow (delegation)
+enum vote_signal_enum_t : int {
+    VOTE_SIGNAL_NONE = 0,
+    VOTE_SIGNAL_FUNDING,  //   -- fund this object for it's stated amount
+    VOTE_SIGNAL_VALID,    //   -- this object checks out in sentinel engine
+    VOTE_SIGNAL_DELETE,   //   -- this object should be deleted from memory entirely
+    VOTE_SIGNAL_ENDORSED, //   -- officially endorsed by the network somehow (delegation)
+    VOTE_SIGNAL_UNKNOWN
 };
-
-static constexpr int MAX_SUPPORTED_VOTE_SIGNAL = VOTE_SIGNAL_ENDORSED;
+template<> struct is_serializable_enum<vote_signal_enum_t> : std::true_type {};
 
 /**
 * Governance Voting
@@ -65,33 +66,27 @@ class CGovernanceVote
     friend bool operator<(const CGovernanceVote& vote1, const CGovernanceVote& vote2);
 
 private:
-    bool fValid;     //if the vote is currently valid / counted
-    bool fSynced;    //if we've sent this to our peers
-    int nVoteSignal; // see VOTE_ACTIONS above
     COutPoint masternodeOutpoint;
     uint256 nParentHash;
-    int nVoteOutcome; // see VOTE_OUTCOMES above
-    int64_t nTime;
+    vote_outcome_enum_t nVoteOutcome{VOTE_OUTCOME_NONE};
+    vote_signal_enum_t nVoteSignal{VOTE_SIGNAL_NONE};
+    int64_t nTime{0};
     std::vector<unsigned char> vchSig;
     const ChainstateManager* m_chainman;
 
     /** Memory only. */
-    const uint256 hash;
+    const uint256 hash{0};
     void UpdateHash() const;
 
 public:
-    CGovernanceVote();
+    CGovernanceVote() = default;
     CGovernanceVote(const COutPoint& outpointMasternodeIn, const uint256& nParentHashIn, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn, const ChainstateManager& chainman);
-
-    bool IsValid() const { return fValid; }
-
-    bool IsSynced() const { return fSynced; }
 
     int64_t GetTimestamp() const { return nTime; }
 
-    vote_signal_enum_t GetSignal() const { return vote_signal_enum_t(nVoteSignal); }
+    vote_signal_enum_t GetSignal() const { return nVoteSignal; }
 
-    vote_outcome_enum_t GetOutcome() const { return vote_outcome_enum_t(nVoteOutcome); }
+    vote_outcome_enum_t GetOutcome() const { return nVoteOutcome; }
 
     const uint256& GetParentHash() const { return nParentHash; }
 
@@ -108,6 +103,7 @@ public:
     bool Sign(const CActiveMasternodeManager& mn_activeman);
     bool CheckSignature(const CBLSPublicKey& pubKey) const;
     bool IsValid(const CDeterministicMNList& tip_mn_list, bool useVotingKey) const;
+    std::string GetSignatureString() const;
     void Relay(PeerManager& peerman, const CMasternodeSync& mn_sync, const CDeterministicMNList& tip_mn_list) const;
 
     const COutPoint& GetMasternodeOutpoint() const { return masternodeOutpoint; }

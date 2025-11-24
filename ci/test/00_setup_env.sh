@@ -25,8 +25,7 @@ export JOB_NUMBER=${JOB_NUMBER:-1}
 
 echo "Fallback to default values in env (if not yet set)"
 # The number of parallel jobs to pass down to make and test_runner.py
-MAKEJOBS="-j$(nproc)"
-export MAKEJOBS
+export MAKEJOBS=${MAKEJOBS:--j$(nproc)}
 # A folder for the ci system to put temporary files (ccache, datadirs for tests, ...)
 # This folder only exists on the ci host.
 export BASE_SCRATCH_DIR=${BASE_SCRATCH_DIR:-$BASE_ROOT_DIR/ci/scratch}
@@ -44,9 +43,7 @@ export RUN_SECURITY_TESTS=${RUN_SECURITY_TESTS:-false}
 # This is needed because some ci machines have slow CPU or disk, so sanitizers
 # might be slow or a reindex might be waiting on disk IO.
 export TEST_RUNNER_TIMEOUT_FACTOR=${TEST_RUNNER_TIMEOUT_FACTOR:-4}
-export TEST_RUNNER_ENV=${TEST_RUNNER_ENV:-}
 export RUN_FUZZ_TESTS=${RUN_FUZZ_TESTS:-false}
-export RUN_SYMBOL_TESTS=${RUN_SYMBOL_TESTS:-false}
 export EXPECTED_TESTS_DURATION_IN_SECONDS=${EXPECTED_TESTS_DURATION_IN_SECONDS:-1000}
 
 export CONTAINER_NAME=${CONTAINER_NAME:-ci_unnamed}

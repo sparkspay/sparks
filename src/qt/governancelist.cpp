@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2023 The Dash Core developers
+// Copyright (c) 2021-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,6 +13,7 @@
 #include <node/context.h>
 #include <qt/clientmodel.h>
 #include <qt/guiutil.h>
+#include <qt/optionsmodel.h>
 
 #include <univalue.h>
 
@@ -64,7 +65,7 @@ QDateTime Proposal::startDate() const { return m_startDate; }
 
 QDateTime Proposal::endDate() const { return m_endDate; }
 
-float Proposal::paymentAmount() const { return m_paymentAmount; }
+double Proposal::paymentAmount() const { return m_paymentAmount; }
 
 QString Proposal::url() const { return m_url; }
 
@@ -136,8 +137,10 @@ QVariant ProposalModel::data(const QModelIndex& index, int role) const
             return proposal->startDate().date();
         case Column::END_DATE:
             return proposal->endDate().date();
-        case Column::PAYMENT_AMOUNT:
-            return proposal->paymentAmount();
+        case Column::PAYMENT_AMOUNT: {
+            return BitcoinUnits::floorWithUnit(m_display_unit, proposal->paymentAmount() * COIN, false,
+                                               BitcoinUnits::SeparatorStyle::ALWAYS);
+        }
         case Column::IS_ACTIVE:
             return proposal->isActive() ? tr("Yes") : tr("No");
         case Column::VOTING_STATUS:
@@ -284,6 +287,8 @@ const Proposal* ProposalModel::getProposalAt(const QModelIndex& index) const
     return m_data[index.row()];
 }
 
+void ProposalModel::setDisplayUnit(int display_unit) { this->m_display_unit = display_unit; }
+
 //
 // Governance Tab main widget.
 //
@@ -341,6 +346,17 @@ void GovernanceList::setClientModel(ClientModel* model)
 {
     this->clientModel = model;
     updateProposalList();
+    if (model != nullptr) {
+        connect(model->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &GovernanceList::updateDisplayUnit);
+    }
+}
+
+void GovernanceList::updateDisplayUnit()
+{
+    if (this->clientModel) {
+        proposalModel->setDisplayUnit(this->clientModel->getOptionsModel()->getDisplayUnit());
+        ui->govTableView->update();
+    }
 }
 
 void GovernanceList::updateProposalList()
@@ -390,10 +406,11 @@ void GovernanceList::showProposalContextMenu(const QPoint& pos)
     }
 
     // right click menu with option to open proposal url
-    QAction* openProposalUrl = new QAction(proposal->url(), this);
+    QString proposal_url = proposal->url();
+    proposal_url.replace(QChar('&'), QString("&&"));
+
     proposalContextMenu->clear();
-    proposalContextMenu->addAction(openProposalUrl);
-    connect(openProposalUrl, &QAction::triggered, proposal, &Proposal::openUrl);
+    proposalContextMenu->addAction(proposal_url, proposal, &Proposal::openUrl);
     proposalContextMenu->exec(QCursor::pos());
 }
 

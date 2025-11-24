@@ -18,11 +18,14 @@ from test_framework.util import assert_equal, force_finish_mnsync, p2p_port
 
 class LLMQSimplePoSeTest(SparksTestFramework):
     def set_test_params(self):
-        self.set_sparks_test_params(6, 5, fast_dip3_enforcement=True)
+        self.extra_args = [[ f'-testactivationheight=dip0024@9999' ]] * 6
+        self.set_sparks_test_params(6, 5)
         self.set_sparks_llmq_test_params(5, 3)
+        # rotating quorums add instability for this functional tests
 
     def run_test(self):
 
+        self.deaf_mns = []
         self.nodes[0].sporkupdate("SPORK_18_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
 
@@ -30,7 +33,7 @@ class LLMQSimplePoSeTest(SparksTestFramework):
         self.test_no_banning()
 
         # Now lets isolate MNs one by one and verify that punishment/banning happens
-        self.test_banning(self.isolate_mn, 1)
+        self.test_banning(self.isolate_mn, 2)
 
         self.repair_masternodes(False)
 
@@ -44,7 +47,8 @@ class LLMQSimplePoSeTest(SparksTestFramework):
         self.test_no_banning()
 
         # Lets restart masternodes with closed ports and verify that they get banned even though they are connected to other MNs (via outbound connections)
-        self.test_banning(self.close_mn_port, 3)
+        self.test_banning(self.close_mn_port)
+        self.deaf_mns.clear()
 
         self.repair_masternodes(True)
         self.reset_probe_timeouts()
@@ -61,6 +65,7 @@ class LLMQSimplePoSeTest(SparksTestFramework):
 
         self.repair_masternodes(True)
         self.close_mn_port(self.mninfo[0])
+        self.deaf_mns.clear()
         self.test_no_banning(3)
 
     def isolate_mn(self, mn):
@@ -69,12 +74,13 @@ class LLMQSimplePoSeTest(SparksTestFramework):
         return True, True
 
     def close_mn_port(self, mn):
+        self.deaf_mns.append(mn)
         self.stop_node(mn.node.index)
         self.start_masternode(mn, ["-listen=0", "-nobind"])
         self.connect_nodes(mn.node.index, 0)
         # Make sure the to-be-banned node is still connected well via outbound connections
         for mn2 in self.mninfo:
-            if mn2 is not mn:
+            if self.deaf_mns.count(mn2) == 0:
                 self.connect_nodes(mn.node.index, mn2.node.index)
         self.reset_probe_timeouts()
         return False, False
@@ -87,22 +93,23 @@ class LLMQSimplePoSeTest(SparksTestFramework):
         return False, True
 
     def test_no_banning(self, expected_connections=None):
-        for _ in range(3):
+        for i in range(3):
+            self.log.info(f"Testing no PoSe banning in normal conditions {i + 1}/3")
             self.mine_quorum(expected_connections=expected_connections)
-        for mn in self.mninfo:
-            assert not self.check_punished(mn) and not self.check_banned(mn)
+            for mn in self.mninfo:
+                assert not self.check_punished(mn) and not self.check_banned(mn)
 
-    def mine_quorum_no_check(self, expected_good_nodes, mninfos_online):
+    def mine_quorum_less_checks(self, expected_good_nodes, mninfos_online):
         # Unlike in mine_quorum we skip most of the checks and only care about
-        # nodes moving forward from phase to phase and the fact that the quorum is actually mined.
-        self.log.info("Mining a quorum with no checks")
+        # nodes moving forward from phase to phase correctly and the fact that the quorum is actually mined.
+        self.log.info("Mining a quorum with less checks")
         nodes = [self.nodes[0]] + [mn.node for mn in mninfos_online]
 
         # move forward to next DKG
         skip_count = 24 - (self.nodes[0].getblockcount() % 24)
         if skip_count != 0:
-            self.bump_mocktime(1, nodes=nodes)
-            self.nodes[0].generate(skip_count)
+            self.bump_mocktime(skip_count, nodes=nodes)
+            self.generate(self.nodes[0], skip_count, sync_fun=self.no_op)
         self.sync_blocks(nodes)
 
         q = self.nodes[0].getbestblockhash()
@@ -112,7 +119,7 @@ class LLMQSimplePoSeTest(SparksTestFramework):
         self.move_blocks(nodes, 2)
 
         self.log.info("Waiting for phase 2 (contribute)")
-        self.wait_for_quorum_phase(q, 2, expected_good_nodes, None, 0, mninfos_online)
+        self.wait_for_quorum_phase(q, 2, expected_good_nodes, "receivedContributions", expected_good_nodes, mninfos_online)
         self.move_blocks(nodes, 2)
 
         self.log.info("Waiting for phase 3 (complain)")
@@ -124,7 +131,7 @@ class LLMQSimplePoSeTest(SparksTestFramework):
         self.move_blocks(nodes, 2)
 
         self.log.info("Waiting for phase 5 (commit)")
-        self.wait_for_quorum_phase(q, 5, expected_good_nodes, None, 0, mninfos_online)
+        self.wait_for_quorum_phase(q, 5, expected_good_nodes, "receivedPrematureCommitments", expected_good_nodes, mninfos_online)
         self.move_blocks(nodes, 2)
 
         self.log.info("Waiting for phase 6 (mining)")
@@ -136,8 +143,7 @@ class LLMQSimplePoSeTest(SparksTestFramework):
         self.log.info("Mining final commitment")
         self.bump_mocktime(1, nodes=nodes)
         self.nodes[0].getblocktemplate() # this calls CreateNewBlock
-        self.nodes[0].generate(1)
-        self.sync_blocks(nodes)
+        self.generate(self.nodes[0], 1, sync_fun=lambda: self.sync_blocks(nodes))
 
         self.log.info("Waiting for quorum to appear in the list")
         self.wait_for_quorum_list(q, nodes)
@@ -147,19 +153,21 @@ class LLMQSimplePoSeTest(SparksTestFramework):
         quorum_info = self.nodes[0].quorum("info", 100, new_quorum)
 
         # Mine 8 (SIGN_HEIGHT_OFFSET) more blocks to make sure that the new quorum gets eligible for signing sessions
-        self.nodes[0].generate(8)
-        self.sync_blocks(nodes)
+        self.bump_mocktime(8)
+        self.generate(self.nodes[0], 8, sync_fun=lambda: self.sync_blocks(nodes))
         self.log.info("New quorum: height=%d, quorumHash=%s, quorumIndex=%d, minedBlock=%s" % (quorum_info["height"], new_quorum, quorum_info["quorumIndex"], quorum_info["minedBlock"]))
 
         return new_quorum
 
-    def test_banning(self, invalidate_proc, expected_connections):
+    def test_banning(self, invalidate_proc, expected_connections=None):
         mninfos_online = self.mninfo.copy()
         mninfos_valid = self.mninfo.copy()
         expected_contributors = len(mninfos_online)
-        for _ in range(2):
+        for i in range(2):
+            self.log.info(f"Testing PoSe banning due to {invalidate_proc.__name__} {i + 1}/2")
             mn = mninfos_valid.pop()
             went_offline, instant_ban = invalidate_proc(mn)
+            expected_complaints = expected_contributors - 1
             if went_offline:
                 mninfos_online.remove(mn)
                 expected_contributors -= 1
@@ -167,14 +175,23 @@ class LLMQSimplePoSeTest(SparksTestFramework):
             # NOTE: Min PoSe penalty is 100 (see CDeterministicMNList::CalcMaxPoSePenalty()),
             # so nodes are PoSe-banned in the same DKG they misbehave without being PoSe-punished first.
             if instant_ban:
+                assert expected_connections is not None
+                self.log.info("Expecting instant PoSe banning")
                 self.reset_probe_timeouts()
-                self.mine_quorum(expected_connections=expected_connections, expected_members=expected_contributors, expected_contributions=expected_contributors, expected_complaints=expected_contributors-1, expected_commitments=expected_contributors, mninfos_online=mninfos_online, mninfos_valid=mninfos_valid)
+                self.mine_quorum(expected_connections=expected_connections, expected_members=expected_contributors, expected_contributions=expected_contributors, expected_complaints=expected_complaints, expected_commitments=expected_contributors, mninfos_online=mninfos_online, mninfos_valid=mninfos_valid)
+
+                if not self.check_banned(mn):
+                    self.log.info("Instant ban still requires 2 missing DKG round. If it is not banned yet, mine 2nd one")
+                    self.reset_probe_timeouts()
+                    self.mine_quorum(expected_connections=expected_connections, expected_members=expected_contributors, expected_contributions=expected_contributors, expected_complaints=expected_complaints, expected_commitments=expected_contributors, mninfos_online=mninfos_online, mninfos_valid=mninfos_valid)
             else:
                 # It's ok to miss probes/quorum connections up to 5 times.
                 # 6th time is when it should be banned for sure.
-                for _ in range(6):
+                assert expected_connections is None
+                for j in range(6):
+                    self.log.info(f"Accumulating PoSe penalty {j + 1}/6")
                     self.reset_probe_timeouts()
-                    self.mine_quorum_no_check(expected_contributors - 1, mninfos_online)
+                    self.mine_quorum_less_checks(expected_contributors - 1, mninfos_online)
 
             assert self.check_banned(mn)
 
@@ -183,7 +200,7 @@ class LLMQSimplePoSeTest(SparksTestFramework):
                 expected_contributors -= 1
 
     def repair_masternodes(self, restart):
-        # Repair all nodes
+        self.log.info("Repairing all banned and punished masternodes")
         for mn in self.mninfo:
             if self.check_banned(mn) or self.check_punished(mn):
                 addr = self.nodes[0].getnewaddress()
@@ -194,15 +211,14 @@ class LLMQSimplePoSeTest(SparksTestFramework):
                     self.start_masternode(mn)
                 else:
                     mn.node.setnetworkactive(True)
-            self.connect_nodes(mn.node.index, 0)
+                self.connect_nodes(mn.node.index, 0)
 
         # syncing blocks only since node 0 has txes waiting to be mined
         self.sync_blocks()
 
         # Make sure protxes are "safe" to mine even when InstantSend and ChainLocks are no longer functional
         self.bump_mocktime(60 * 10 + 1)
-        self.nodes[0].generate(1)
-        self.sync_all()
+        self.generate(self.nodes[0], 1)
 
         # Isolate and re-connect all MNs (otherwise there might be open connections with no MNAUTH for MNs which were banned before)
         for mn in self.mninfo:

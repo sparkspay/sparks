@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2023 The Dash Core developers
+// Copyright (c) 2016-2025 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -83,15 +83,12 @@ MasternodeList::MasternodeList(QWidget* parent) :
 
     ui->checkBoxMyMasternodesOnly->setEnabled(false);
 
-    QAction* copyProTxHashAction = new QAction(tr("Copy ProTx Hash"), this);
-    QAction* copyCollateralOutpointAction = new QAction(tr("Copy Collateral Outpoint"), this);
     contextMenuDIP3 = new QMenu(this);
-    contextMenuDIP3->addAction(copyProTxHashAction);
-    contextMenuDIP3->addAction(copyCollateralOutpointAction);
+    contextMenuDIP3->addAction(tr("Copy ProTx Hash"), this, &MasternodeList::copyProTxHash_clicked);
+    contextMenuDIP3->addAction(tr("Copy Collateral Outpoint"), this, &MasternodeList::copyCollateralOutpoint_clicked);
+
     connect(ui->tableWidgetMasternodesDIP3, &QTableWidget::customContextMenuRequested, this, &MasternodeList::showContextMenuDIP3);
     connect(ui->tableWidgetMasternodesDIP3, &QTableWidget::doubleClicked, this, &MasternodeList::extraInfoDIP3_clicked);
-    connect(copyProTxHashAction, &QAction::triggered, this, &MasternodeList::copyProTxHash_clicked);
-    connect(copyCollateralOutpointAction, &QAction::triggered, this, &MasternodeList::copyCollateralOutpoint_clicked);
 
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &MasternodeList::updateDIP3ListScheduled);
@@ -171,6 +168,7 @@ void MasternodeList::updateDIP3List()
     NodeContext* node_context = clientModel->node().context();
 
     auto [mnList, pindex] = clientModel->getMasternodeList();
+    if (!pindex) return;
     auto projectedPayees = mnList.GetProjectedMNPayees(pindex, node_context->chainman->ActiveChain());
 
     if (projectedPayees.empty() && mnList.GetValidMNsCount() > 0) {
@@ -211,9 +209,7 @@ void MasternodeList::updateDIP3List()
 
     std::set<COutPoint> setOutpts;
     if (walletModel && ui->checkBoxMyMasternodesOnly->isChecked()) {
-        std::vector<COutPoint> vOutpts;
-        walletModel->wallet().listProTxCoins(vOutpts);
-        for (const auto& outpt : vOutpts) {
+        for (const auto& outpt : walletModel->wallet().listProTxCoins()) {
             setOutpts.emplace(outpt);
         }
     }
@@ -231,7 +227,8 @@ void MasternodeList::updateDIP3List()
         // Address, Protocol, Status, Active Seconds, Last Seen, Pub Key
         auto addr_key = dmn.pdmnState->addr.GetKey();
         QByteArray addr_ba(reinterpret_cast<const char*>(addr_key.data()), addr_key.size());
-        QTableWidgetItem* addressItem = new CMasternodeListWidgetItem<QByteArray>(QString::fromStdString(dmn.pdmnState->addr.ToString()), addr_ba);
+        QTableWidgetItem* addressItem = new CMasternodeListWidgetItem<QByteArray>(
+            QString::fromStdString(dmn.pdmnState->addr.ToStringAddrPort()), addr_ba);
         QTableWidgetItem* typeItem = new QTableWidgetItem(QString::fromStdString(std::string(GetMnType(dmn.nType, node_context->chainman->ActiveChain()[dmn.pdmnState->nRegisteredHeight]).description)));
         QTableWidgetItem* statusItem = new QTableWidgetItem(dmn.pdmnState->IsBanned() ? tr("POSE_BANNED") : tr("ENABLED"));
         QTableWidgetItem* PoSeScoreItem = new CMasternodeListWidgetItem<int>(QString::number(dmn.pdmnState->nPoSePenalty), dmn.pdmnState->nPoSePenalty);
@@ -360,7 +357,8 @@ CDeterministicMNCPtr MasternodeList::GetSelectedDIP3MN()
     uint256 proTxHash;
     proTxHash.SetHex(strProTxHash);
 
-    return clientModel->getMasternodeList().first.GetMN(proTxHash);;
+    // Caller is responsible for nullptr checking return value
+    return clientModel->getMasternodeList().first.GetMN(proTxHash);
 }
 
 void MasternodeList::extraInfoDIP3_clicked()

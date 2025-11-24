@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2025 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,6 +6,7 @@
 #include <core_io.h>
 #include <evo/deterministicmns.h>
 #include <governance/classes.h>
+#include <governance/common.h>
 #include <governance/governance.h>
 #include <governance/validators.h>
 #include <governance/vote.h>
@@ -13,13 +14,14 @@
 #include <masternode/node.h>
 #include <masternode/sync.h>
 #include <messagesigner.h>
-#include <node/context.h>
 #include <net.h>
+#include <node/context.h>
 #include <rpc/blockchain.h>
 #include <rpc/server.h>
 #include <rpc/server_util.h>
 #include <rpc/util.h>
-#include <governance/common.h>
+#include <timedata.h>
+#include <util/check.h>
 #include <util/strencodings.h>
 #include <util/system.h>
 #include <validation.h>
@@ -33,7 +35,7 @@ static RPCHelpMan gobject_count()
     return RPCHelpMan{"gobject count",
         "Count governance objects and votes\n",
         {
-            {"mode", RPCArg::Type::STR, /* default */ "json", "Output format: json (\"json\") or string in free form (\"all\")"},
+            {"mode", RPCArg::Type::STR, RPCArg::DefaultHint{"json"}, "Output format: json (\"json\") or string in free form (\"all\")"},
         },
         RPCResults{},
         RPCExamples{""},
@@ -133,9 +135,9 @@ static RPCHelpMan gobject_prepare()
             {"revision", RPCArg::Type::NUM, RPCArg::Optional::NO, "object revision in the system"},
             {"time", RPCArg::Type::NUM, RPCArg::Optional::NO, "time this object was created"},
             {"data-hex", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "data in hex string form"},
-            {"use-IS", RPCArg::Type::BOOL, /* default */ "false", "Deprecated and ignored"},
-            {"outputHash", RPCArg::Type::STR_HEX, /* default */ "", "the single output to submit the proposal fee from"},
-            {"outputIndex", RPCArg::Type::NUM, /* default */ "", "The output index."},
+            {"use-IS", RPCArg::Type::BOOL, RPCArg::Default{false}, "Deprecated and ignored"},
+            {"outputHash", RPCArg::Type::STR_HEX, RPCArg::Default{""}, "the single output to submit the proposal fee from"},
+            {"outputIndex", RPCArg::Type::NUM, RPCArg::Default{0}, "The output index."},
         },
         RPCResults{},
         RPCExamples{""},
@@ -144,7 +146,7 @@ static RPCHelpMan gobject_prepare()
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
     if (!wallet) return NullUniValue;
 
-    EnsureWalletIsUnlocked(wallet.get());
+    EnsureWalletIsUnlocked(*wallet);
 
     // ASSEMBLE NEW GOVERNANCE OBJECT FROM USER PARAMETERS
 
@@ -193,12 +195,11 @@ static RPCHelpMan gobject_prepare()
 
     const NodeContext& node = EnsureAnyNodeContext(request.context);
     const ChainstateManager& chainman = EnsureChainman(node);
-    CHECK_NONFATAL(node.dmnman);
 
     {
         LOCK(cs_main);
         std::string strError = "";
-        if (!govobj.IsValidLocally(node.dmnman->GetListAtChainTip(), chainman, strError, false))
+        if (!govobj.IsValidLocally(CHECK_NONFATAL(node.dmnman)->GetListAtChainTip(), chainman, strError, false))
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Governance object is not valid - " + govobj.GetHash().ToString() + " - " + strError);
     }
 
@@ -245,7 +246,7 @@ static RPCHelpMan gobject_list_prepared()
         "Returns a list of governance objects prepared by this wallet with \"gobject prepare\" sorted by their creation time.\n"
         + HELP_REQUIRING_PASSPHRASE,
         {
-            {"count", RPCArg::Type::NUM, /* default */ "10", "Maximum number of objects to return."},
+            {"count", RPCArg::Type::NUM, RPCArg::Default{10}, "Maximum number of objects to return."},
         },
         RPCResults{},
         RPCExamples{""},
@@ -253,7 +254,7 @@ static RPCHelpMan gobject_list_prepared()
 {
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
     if (!wallet) return NullUniValue;
-    EnsureWalletIsUnlocked(wallet.get());
+    EnsureWalletIsUnlocked(*wallet);
 
     int64_t nCount = request.params.empty() ? 10 : ParseInt64V(request.params[0], "count");
     if (nCount < 0) {
@@ -302,23 +303,20 @@ static RPCHelpMan gobject_submit()
 {
     const NodeContext& node = EnsureAnyNodeContext(request.context);
     const ChainstateManager& chainman = EnsureChainman(node);
-    CHECK_NONFATAL(node.dmnman);
-    CHECK_NONFATAL(node.govman);
 
     if(!node.mn_sync->IsBlockchainSynced()) {
         throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "Must wait for client to sync with masternode network. Try again in a minute or so.");
     }
 
-    auto mnList = node.dmnman->GetListAtChainTip();
+    auto mnList = CHECK_NONFATAL(node.dmnman)->GetListAtChainTip();
 
     if (node.mn_activeman) {
         const bool fMnFound = mnList.HasValidMNByCollateral(node.mn_activeman->GetOutPoint());
 
-        LogPrint(BCLog::GOBJECT, "gobject_submit -- pubKeyOperator = %s, outpoint = %s, params.size() = %lld, fMnFound = %d\n",
-                 node.mn_activeman->GetPubKey().ToString(node.mn_activeman->IsLegacy()),
-                 node.mn_activeman->GetOutPoint().ToStringShort(),
-                 request.params.size(),
-                 fMnFound);
+        LogPrint(BCLog::GOBJECT, /* Continued */
+                 "gobject_submit -- pubKeyOperator = %s, outpoint = %s, params.size() = %lld, fMnFound = %d\n",
+                 node.mn_activeman->GetPubKey().ToString(false), node.mn_activeman->GetOutPoint().ToStringShort(),
+                 request.params.size(), fMnFound);
     } else {
         LogPrint(BCLog::GOBJECT, "gobject_submit -- pubKeyOperator = N/A, outpoint = N/A, params.size() = %lld, fMnFound = %d\n",
                  request.params.size(),
@@ -372,7 +370,6 @@ static RPCHelpMan gobject_submit()
         }
 
         LOCK2(cs_main, mempool.cs);
-        CHECK_NONFATAL(node.dmnman);
 
         std::string strError;
         if (!govobj.IsValidLocally(node.dmnman->GetListAtChainTip(), chainman, strError, fMissingConfirmations, true) && !fMissingConfirmations) {
@@ -383,7 +380,7 @@ static RPCHelpMan gobject_submit()
 
     // RELAY THIS OBJECT
     // Reject if rate check fails but don't update buffer
-    if (!node.govman->MasternodeRateCheck(govobj)) {
+    if (!CHECK_NONFATAL(node.govman)->MasternodeRateCheck(govobj)) {
         LogPrintf("gobject(submit) -- Object submission rejected because of rate check failure - hash = %s\n", strHash);
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Object creation rate limit exceeded");
     }
@@ -392,9 +389,8 @@ static RPCHelpMan gobject_submit()
 
     PeerManager& peerman = EnsurePeerman(node);
     if (fMissingConfirmations) {
-        CHECK_NONFATAL(node.mn_sync);
         node.govman->AddPostponedObject(govobj);
-        govobj.Relay(peerman, *node.mn_sync);
+        govobj.Relay(peerman, *CHECK_NONFATAL(node.mn_sync));
     } else {
         node.govman->AddGovernanceObject(govobj, peerman);
     }
@@ -404,7 +400,36 @@ static RPCHelpMan gobject_submit()
     };
 }
 
-static UniValue VoteWithMasternodes(const JSONRPCRequest& request, const std::map<uint256, CKey>& keys,
+#ifdef ENABLE_WALLET
+static bool SignVote(const CWallet& wallet, const CKeyID& keyID, CGovernanceVote& vote)
+{
+    // Special implementation for testnet (Harden Spork6 that has not been deployed to other networks)
+    if (Params().NetworkIDString() == CBaseChainParams::TESTNET) {
+        std::vector<unsigned char> signature;
+        if (!wallet.SignSpecialTxPayload(vote.GetSignatureHash(), keyID, signature)) {
+            LogPrintf("SignVote -- SignHash() failed\n");
+            return false;
+        }
+        vote.SetSignature(signature);
+        return true;
+    } // end of testnet implementation
+
+    std::string strMessage{vote.GetSignatureString()};
+    std::string signature;
+    SigningResult err = wallet.SignMessage(strMessage, PKHash{keyID}, signature);
+    if (err != SigningResult::OK) {
+        LogPrintf("SignVote failed due to: %s\n", SigningResultString(err));
+        return false;
+    }
+    const auto opt_decoded = DecodeBase64(signature);
+    CHECK_NONFATAL(opt_decoded.has_value()); // DecodeBase64 should not fail
+
+    vote.SetSignature(std::vector<unsigned char>(opt_decoded->data(), opt_decoded->data() + opt_decoded->size()));
+    return true;
+}
+
+static UniValue VoteWithMasternodes(const JSONRPCRequest& request, const CWallet& wallet,
+                             const std::map<uint256, CKeyID>& votingKeys,
                              const uint256& hash, vote_signal_enum_t eVoteSignal,
                              vote_outcome_enum_t eVoteOutcome)
 {
@@ -421,13 +446,13 @@ static UniValue VoteWithMasternodes(const JSONRPCRequest& request, const std::ma
     int nSuccessful = 0;
     int nFailed = 0;
 
-    auto mnList = node.dmnman->GetListAtChainTip();
+    auto mnList = CHECK_NONFATAL(node.dmnman)->GetListAtChainTip();
 
     UniValue resultsObj(UniValue::VOBJ);
 
-    for (const auto& p : keys) {
+    for (const auto& p : votingKeys) {
         const auto& proTxHash = p.first;
-        const auto& key = p.second;
+        const auto& keyID = p.second;
 
         UniValue statusObj(UniValue::VOBJ);
 
@@ -441,7 +466,8 @@ static UniValue VoteWithMasternodes(const JSONRPCRequest& request, const std::ma
         }
 
         CGovernanceVote vote(dmn->collateralOutpoint, hash, eVoteSignal, eVoteOutcome, *node.chainman);
-        if (!vote.Sign(key, key.GetPubKey().GetID())) {
+
+        if (!SignVote(wallet, keyID, vote) || !vote.CheckSignature(keyID)) {
             nFailed++;
             statusObj.pushKV("result", "failed");
             statusObj.pushKV("errorMessage", "Failure to sign.");
@@ -471,7 +497,14 @@ static UniValue VoteWithMasternodes(const JSONRPCRequest& request, const std::ma
     return returnObj;
 }
 
-#ifdef ENABLE_WALLET
+static bool CheckWalletOwnsKey(const CWallet& wallet, const CKeyID& keyid)
+{
+    const CScript script{GetScriptForDestination(PKHash(keyid))};
+    LOCK(wallet.cs_wallet);
+
+    return wallet.IsMine(script) == isminetype::ISMINE_SPENDABLE;
+}
+
 static RPCHelpMan gobject_vote_many()
 {
     return RPCHelpMan{"gobject vote-many",
@@ -490,7 +523,6 @@ static RPCHelpMan gobject_vote_many()
     if (!wallet) return NullUniValue;
 
     const NodeContext& node = EnsureAnyNodeContext(request.context);
-    CHECK_NONFATAL(node.dmnman);
 
     uint256 hash(ParseHashV(request.params[0], "Object hash"));
     std::string strVoteSignal = request.params[1].get_str();
@@ -508,24 +540,19 @@ static RPCHelpMan gobject_vote_many()
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid vote outcome. Please use one of the following: 'yes', 'no' or 'abstain'");
     }
 
-    EnsureWalletIsUnlocked(wallet.get());
+    EnsureWalletIsUnlocked(*wallet);
 
-    LegacyScriptPubKeyMan* spk_man = wallet->GetLegacyScriptPubKeyMan();
-    if (!spk_man) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "This type of wallet does not support this command");
-    }
+    std::map<uint256, CKeyID> votingKeys;
 
-    std::map<uint256, CKey> votingKeys;
-
-    auto mnList = node.dmnman->GetListAtChainTip();
+    auto mnList = CHECK_NONFATAL(node.dmnman)->GetListAtChainTip();
     mnList.ForEachMN(true, [&](auto& dmn) {
-        CKey votingKey;
-        if (spk_man->GetKey(dmn.pdmnState->keyIDVoting, votingKey)) {
-            votingKeys.emplace(dmn.proTxHash, votingKey);
+        const bool is_mine = CheckWalletOwnsKey(*wallet, dmn.pdmnState->keyIDVoting);
+        if (is_mine) {
+            votingKeys.emplace(dmn.proTxHash, dmn.pdmnState->keyIDVoting);
         }
     });
 
-    return VoteWithMasternodes(request, votingKeys, hash, eVoteSignal, eVoteOutcome);
+    return VoteWithMasternodes(request, *wallet, votingKeys, hash, eVoteSignal, eVoteOutcome);
 },
     };
 }
@@ -549,7 +576,6 @@ static RPCHelpMan gobject_vote_alias()
     if (!wallet) return NullUniValue;
 
     const NodeContext& node = EnsureAnyNodeContext(request.context);
-    CHECK_NONFATAL(node.dmnman);
 
     uint256 hash(ParseHashV(request.params[0], "Object hash"));
     std::string strVoteSignal = request.params[1].get_str();
@@ -567,28 +593,24 @@ static RPCHelpMan gobject_vote_alias()
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid vote outcome. Please use one of the following: 'yes', 'no' or 'abstain'");
     }
 
-    EnsureWalletIsUnlocked(wallet.get());
+    EnsureWalletIsUnlocked(*wallet);
 
     uint256 proTxHash(ParseHashV(request.params[3], "protx-hash"));
-    auto dmn = node.dmnman->GetListAtChainTip().GetValidMN(proTxHash);
+    auto dmn = CHECK_NONFATAL(node.dmnman)->GetListAtChainTip().GetValidMN(proTxHash);
     if (!dmn) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid or unknown proTxHash");
     }
 
-    LegacyScriptPubKeyMan* spk_man = wallet->GetLegacyScriptPubKeyMan();
-    if (!spk_man) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "This type of wallet does not support this command");
-    }
 
-    CKey votingKey;
-    if (!spk_man->GetKey(dmn->pdmnState->keyIDVoting, votingKey)) {
+    const bool is_mine = CheckWalletOwnsKey(*wallet, dmn->pdmnState->keyIDVoting);
+    if (!is_mine) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Private key for voting address %s not known by wallet", EncodeDestination(PKHash(dmn->pdmnState->keyIDVoting))));
     }
 
-    std::map<uint256, CKey> votingKeys;
-    votingKeys.emplace(proTxHash, votingKey);
+    std::map<uint256, CKeyID> votingKeys;
+    votingKeys.emplace(proTxHash, dmn->pdmnState->keyIDVoting);
 
-    return VoteWithMasternodes(request, votingKeys, hash, eVoteSignal, eVoteOutcome);
+    return VoteWithMasternodes(request, *wallet, votingKeys, hash, eVoteSignal, eVoteOutcome);
 },
     };
 }
@@ -665,8 +687,8 @@ static RPCHelpMan gobject_list_helper(const bool make_a_diff)
     return RPCHelpMan{command,
         description,
         {
-            {"signal", RPCArg::Type::STR, /* default */ "valid", "cached signal, possible values: [valid|funding|delete|endorsed|all]"},
-            {"type", RPCArg::Type::STR, /* default */ "all", "object type, possible values: [proposals|triggers|all]"},
+            {"signal", RPCArg::Type::STR, RPCArg::Default{"valid"}, "cached signal, possible values: [valid|funding|delete|endorsed|all]"},
+            {"type", RPCArg::Type::STR, RPCArg::Default{"all"}, "object type, possible values: [proposals|triggers|all]"},
         },
         RPCResults{},
         RPCExamples{""},
@@ -688,11 +710,10 @@ static RPCHelpMan gobject_list_helper(const bool make_a_diff)
 
     const NodeContext& node = EnsureAnyNodeContext(request.context);
     const ChainstateManager& chainman = EnsureChainman(node);
-    CHECK_NONFATAL(node.dmnman);
-    CHECK_NONFATAL(node.govman);
 
     const int64_t last_time = make_a_diff ? node.govman->GetLastDiffTime() : 0;
-    return ListObjects(*node.govman, node.dmnman->GetListAtChainTip(), chainman, strCachedSignal, strType, last_time);
+    return ListObjects(*CHECK_NONFATAL(node.govman), CHECK_NONFATAL(node.dmnman)->GetListAtChainTip(), chainman,
+                       strCachedSignal, strType, last_time);
 },
     };
 }
@@ -729,8 +750,8 @@ static RPCHelpMan gobject_get()
     // FIND THE GOVERNANCE OBJECT THE USER IS LOOKING FOR
     const NodeContext& node = EnsureAnyNodeContext(request.context);
     const ChainstateManager& chainman = EnsureChainman(node);
-    CHECK_NONFATAL(node.dmnman && node.govman);
 
+    CHECK_NONFATAL(node.govman);
     LOCK2(cs_main, node.govman->cs);
     const CGovernanceObject* pGovObj = node.govman->FindConstGovernanceObject(hash);
 
@@ -755,7 +776,7 @@ static RPCHelpMan gobject_get()
     // SHOW (MUCH MORE) INFORMATION ABOUT VOTES FOR GOVERNANCE OBJECT (THAN LIST/DIFF ABOVE)
     // -- FUNDING VOTING RESULTS
 
-    auto tip_mn_list = node.dmnman->GetListAtChainTip();
+    auto tip_mn_list = CHECK_NONFATAL(node.dmnman)->GetListAtChainTip();
 
     UniValue objFundingResult(UniValue::VOBJ);
     objFundingResult.pushKV("AbsoluteYesCount",  pGovObj->GetAbsoluteYesCount(tip_mn_list, VOTE_SIGNAL_FUNDING, *chainman.ActiveTip()));
@@ -808,8 +829,8 @@ static RPCHelpMan gobject_getcurrentvotes()
         "Get only current (tallying) votes for a governance object hash (does not include old votes)\n",
         {
             {"governance-hash", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "object id"},
-            {"txid", RPCArg::Type::STR_HEX, /* default */ "", "masternode collateral txid"},
-            {"vout", RPCArg::Type::STR, /* default */ "", "masternode collateral output index, required if <txid> present"},
+            {"txid", RPCArg::Type::STR_HEX, RPCArg::Default{""}, "masternode collateral txid"},
+            {"vout", RPCArg::Type::STR, RPCArg::Default{""}, "masternode collateral output index, required if <txid> present"},
         },
         RPCResults{},
         RPCExamples{""},
@@ -828,8 +849,8 @@ static RPCHelpMan gobject_getcurrentvotes()
 
     // FIND OBJECT USER IS LOOKING FOR
     const NodeContext& node = EnsureAnyNodeContext(request.context);
-    CHECK_NONFATAL(node.govman);
 
+    CHECK_NONFATAL(node.govman);
     LOCK(node.govman->cs);
     const CGovernanceObject* pGovObj = node.govman->FindConstGovernanceObject(hash);
 
@@ -842,10 +863,9 @@ static RPCHelpMan gobject_getcurrentvotes()
     UniValue bResult(UniValue::VOBJ);
 
     // GET MATCHING VOTES BY HASH, THEN SHOW USERS VOTE INFORMATION
-    CHECK_NONFATAL(node.dmnman);
     std::vector<CGovernanceVote> vecVotes = node.govman->GetCurrentVotes(hash, mnCollateralOutpoint);
     for (const auto& vote : vecVotes) {
-        bResult.pushKV(vote.GetHash().ToString(), vote.ToString(node.dmnman->GetListAtChainTip()));
+        bResult.pushKV(vote.GetHash().ToString(), vote.ToString(CHECK_NONFATAL(node.dmnman)->GetListAtChainTip()));
     }
 
     return bResult;
@@ -926,27 +946,25 @@ static RPCHelpMan voteraw()
 
     const NodeContext& node = EnsureAnyNodeContext(request.context);
     CHECK_NONFATAL(node.govman);
-    GovernanceObject govObjType = WITH_LOCK(node.govman->cs, return [&](){
-        AssertLockHeld(node.govman->cs);
+    GovernanceObject govObjType = [&]() {
+        LOCK(node.govman->cs);
         const CGovernanceObject *pGovObj = node.govman->FindConstGovernanceObject(hashGovObj);
         if (!pGovObj) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Governance object not found");
         }
         return pGovObj->GetObjectType();
-    }());
+    }();
 
 
     int64_t nTime = request.params[5].get_int64();
     std::string strSig = request.params[6].get_str();
-    bool fInvalid = false;
-    std::vector<unsigned char> vchSig = DecodeBase64(strSig.c_str(), &fInvalid);
+    auto opt_vchSig = DecodeBase64(strSig);
 
-    if (fInvalid) {
+    if (!opt_vchSig.has_value()) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Malformed base64 encoding");
     }
 
-    CHECK_NONFATAL(node.dmnman);
-    const auto tip_mn_list = node.dmnman->GetListAtChainTip();
+    const auto tip_mn_list = CHECK_NONFATAL(node.dmnman)->GetListAtChainTip();
     auto dmn = tip_mn_list.GetValidMNByCollateral(outpoint);
 
     if (!dmn) {
@@ -955,7 +973,7 @@ static RPCHelpMan voteraw()
 
     CGovernanceVote vote(outpoint, hashGovObj, eVoteSignal, eVoteOutcome, *node.chainman);
     vote.SetTime(nTime);
-    vote.SetSignature(vchSig);
+    vote.SetSignature(opt_vchSig.value());
 
     bool onlyVotingKeyAllowed = govObjType == GovernanceObject::PROPOSAL && vote.GetSignal() == VOTE_SIGNAL_FUNDING;
 
@@ -1004,7 +1022,6 @@ static RPCHelpMan getgovernanceinfo()
 
     const NodeContext& node = EnsureAnyNodeContext(request.context);
     const ChainstateManager& chainman = EnsureAnyChainman(request.context);
-    CHECK_NONFATAL(node.dmnman);
 
     const auto* pindex = WITH_LOCK(cs_main, return chainman.ActiveChain().Tip());
     int nBlockHeight = pindex->nHeight;
@@ -1018,7 +1035,7 @@ static RPCHelpMan getgovernanceinfo()
     obj.pushKV("superblockmaturitywindow", Params().GetConsensus().nSuperblockMaturityWindow);
     obj.pushKV("lastsuperblock", nLastSuperblock);
     obj.pushKV("nextsuperblock", nNextSuperblock);
-    obj.pushKV("fundingthreshold", int(node.dmnman->GetListAtChainTip().GetValidWeightedMNsCount(chainman.ActiveChain()) / 10));
+    obj.pushKV("fundingthreshold", int(CHECK_NONFATAL(node.dmnman)->GetListAtChainTip().GetValidWeightedMNsCount(chainman.ActiveChain()) / 10));
     obj.pushKV("governancebudget", ValueFromAmount(CSuperblock::GetPaymentsLimit(chainman.ActiveChain(), nNextSuperblock, *node.sporkman)));
 
     return obj;
@@ -1058,31 +1075,31 @@ void RegisterGovernanceRPCCommands(CRPCTable &t)
 {
 // clang-format off
 static const CRPCCommand commands[] =
-{ //  category              name                      actor (function)         argNames
-  //  --------------------- ------------------------  -----------------------  ----------
+{ //  category              actor (function)
+  //  --------------------- -----------------------
     /* Sparks features */
-    { "sparks",               "getgovernanceinfo",          &getgovernanceinfo,       {} },
-    { "sparks",               "getsuperblockbudget",        &getsuperblockbudget,     {"index"} },
-    { "sparks",               "gobject",                    &gobject,                 {"command"} },
-    { "sparks",               "gobject", "count",           &gobject_count,           {"mode"} },
-    { "sparks",               "gobject", "deserialize",     &gobject_deserialize,     {"hex_data"} },
-    { "sparks",               "gobject", "check",           &gobject_check,           {"hex_data"} },
+    { "sparks",               &getgovernanceinfo,         },
+    { "sparks",               &getsuperblockbudget,       },
+    { "sparks",               &gobject,                   },
+    { "sparks",               &gobject_count,             },
+    { "sparks",               &gobject_deserialize,       },
+    { "sparks",               &gobject_check,             },
 #ifdef ENABLE_WALLET
-    { "sparks",               "gobject", "prepare",         &gobject_prepare,         {"parent-hash", "revision", "time", "data-hex", "use-IS", "outputHash", "outputIndex"} },
-    { "sparks",               "gobject", "list-prepared",   &gobject_list_prepared,   {"count"} },
-    { "sparks",               "gobject", "vote-many",       &gobject_vote_many,       {"governance-hash", "vote", "vote-outcome"} },
-    { "sparks",               "gobject", "vote-alias",      &gobject_vote_alias,      {"governance-hash", "vote", "vote-outcome", "protx-hash"} },
+    { "sparks",               &gobject_prepare,           },
+    { "sparks",               &gobject_list_prepared,     },
+    { "sparks",               &gobject_vote_many,         },
+    { "sparks",               &gobject_vote_alias,        },
 #endif
-    { "sparks",               "gobject", "submit",          &gobject_submit,          {"parent-hash", "revision", "time", "data-hex", "fee-txid"} },
-    { "sparks",               "gobject", "list",            &gobject_list,            {"signal", "type"} },
-    { "sparks",               "gobject", "diff",            &gobject_diff,            {"signal", "type"} },
-    { "sparks",               "gobject", "get",             &gobject_get,             {"governance-hash"} },
-    { "sparks",               "gobject", "getcurrentvotes", &gobject_getcurrentvotes, {"governance-hash", "txid", "vout"} },
-    { "sparks",               "voteraw",                    &voteraw,                 {"mn-collateral-tx-hash","mn-collateral-tx-index","governance-hash","vote-signal","vote-outcome","time","vote-sig"} },
+    { "sparks",               &gobject_submit,            },
+    { "sparks",               &gobject_list,              },
+    { "sparks",               &gobject_diff,              },
+    { "sparks",               &gobject_get,               },
+    { "sparks",               &gobject_getcurrentvotes,   },
+    { "sparks",               &voteraw,                   },
 
 };
 // clang-format on
     for (const auto& command : commands) {
-        t.appendCommand(command.name, command.subname, &command);
+        t.appendCommand(command.name, &command);
     }
 }

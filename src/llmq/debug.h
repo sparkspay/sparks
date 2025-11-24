@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2023 The Dash Core developers
+// Copyright (c) 2018-2025 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -20,6 +20,7 @@ class CScheduler;
 
 namespace llmq
 {
+class CQuorumSnapshotManager;
 
 enum class QuorumPhase;
 
@@ -76,8 +77,8 @@ public:
 public:
     CDKGDebugSessionStatus() : statusBitset(0) {}
 
-    UniValue ToJson(CDeterministicMNManager& dmnman, const ChainstateManager& chainman,
-                    int quorumIndex, int detailLevel) const;
+    UniValue ToJson(CDeterministicMNManager& dmnman, CQuorumSnapshotManager& qsnapman,
+                    const ChainstateManager& chainman, int quorumIndex, int detailLevel) const;
 };
 
 class CDKGDebugStatus
@@ -89,8 +90,8 @@ public:
     //std::map<Consensus::LLMQType, CDKGDebugSessionStatus> sessions;
 
 public:
-    UniValue ToJson(CDeterministicMNManager& dmnman, const ChainstateManager& chainman,
-                    int detailLevel) const;
+    UniValue ToJson(CDeterministicMNManager& dmnman, CQuorumSnapshotManager& qsnapman,
+                    const ChainstateManager& chainman, int detailLevel) const;
 };
 
 class CDKGDebugManager

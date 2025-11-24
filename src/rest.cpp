@@ -3,11 +3,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <blockfilter.h>
 #include <chain.h>
 #include <chainparams.h>
 #include <context.h>
 #include <core_io.h>
 #include <httpserver.h>
+#include <index/blockfilterindex.h>
 #include <index/txindex.h>
 #include <llmq/chainlocks.h>
 #include <llmq/context.h>
@@ -17,6 +19,7 @@
 #include <primitives/block.h>
 #include <primitives/transaction.h>
 #include <rpc/blockchain.h>
+#include <rpc/mempool.h>
 #include <rpc/protocol.h>
 #include <rpc/server.h>
 #include <rpc/server_util.h>
@@ -30,6 +33,7 @@
 #include <univalue.h>
 
 static const size_t MAX_GETUTXOS_OUTPOINTS = 15; //allow a max of 15 outpoints to be queried at once
+static constexpr unsigned int MAX_REST_HEADERS_RESULTS = 2000;
 
 enum class RetFormat {
     UNDEF,
@@ -128,6 +132,27 @@ static ChainstateManager* GetChainman(const CoreContext& context, HTTPRequest* r
     return node_context->chainman.get();
 }
 
+/**
+ * Get the node context LLMQContext.
+ *
+ * @param[in]  req The HTTP request, whose status code will be set if node
+ *                 context LLMQContext is not found.
+ * @returns        Pointer to the LLMQContext or nullptr if none found.
+ */
+static LLMQContext* GetLLMQContext(const CoreContext& context, HTTPRequest* req)
+{
+    auto node_context = GetContext<NodeContext>(context);
+    if (!node_context || !node_context->llmq_ctx) {
+        RESTERR(req, HTTP_INTERNAL_SERVER_ERROR,
+                strprintf("%s:%d (%s)\n"
+                          "Internal bug detected: LLMQ context not found!\n"
+                          "You may report this issue here: %s\n",
+                          __FILE__, __LINE__, __func__, PACKAGE_BUGREPORT));
+        return nullptr;
+    }
+    return node_context->llmq_ctx.get();
+}
+
 static RetFormat ParseDataFormat(std::string& param, const std::string& strReq)
 {
     const std::string::size_type pos = strReq.rfind('.');
@@ -188,9 +213,10 @@ static bool rest_headers(const CoreContext& context,
     if (path.size() != 2)
         return RESTERR(req, HTTP_BAD_REQUEST, "No header count specified. Use /rest/headers/<count>/<hash>.<ext>.");
 
-    long count = strtol(path[0].c_str(), nullptr, 10);
-    if (count < 1 || count > 2000)
-        return RESTERR(req, HTTP_BAD_REQUEST, "Header count out of range: " + path[0]);
+    const auto parsed_count{ToIntegral<size_t>(path[0])};
+    if (!parsed_count.has_value() || *parsed_count < 1 || *parsed_count > MAX_REST_HEADERS_RESULTS) {
+        return RESTERR(req, HTTP_BAD_REQUEST, strprintf("Header count is invalid or out of acceptable range (1-%u): %s", MAX_REST_HEADERS_RESULTS, path[0]));
+    }
 
     std::string hashStr = path[1];
     uint256 hash;
@@ -198,8 +224,8 @@ static bool rest_headers(const CoreContext& context,
         return RESTERR(req, HTTP_BAD_REQUEST, "Invalid hash: " + hashStr);
 
     const CBlockIndex* tip = nullptr;
-    std::vector<const CBlockIndex *> headers;
-    headers.reserve(count);
+    std::vector<const CBlockIndex*> headers;
+    headers.reserve(*parsed_count);
     {
         ChainstateManager* maybe_chainman = GetChainman(context, req);
         if (!maybe_chainman) return false;
@@ -210,8 +236,9 @@ static bool rest_headers(const CoreContext& context,
         const CBlockIndex* pindex = chainman.m_blockman.LookupBlockIndex(hash);
         while (pindex != nullptr && active_chain.Contains(pindex)) {
             headers.push_back(pindex);
-            if (headers.size() == (unsigned long)count)
+            if (headers.size() == *parsed_count) {
                 break;
+            }
             pindex = active_chain.Next(pindex);
         }
     }
@@ -241,9 +268,12 @@ static bool rest_headers(const CoreContext& context,
         return true;
     }
     case RetFormat::JSON: {
+        const LLMQContext* llmq_ctx = GetLLMQContext(context, req);
+        if (!llmq_ctx) return false;
+
         UniValue jsonHeaders(UniValue::VARR);
         for (const CBlockIndex *pindex : headers) {
-            jsonHeaders.push_back(blockheaderToJSON(tip, pindex, *llmq::chainLocksHandler, *llmq::quorumInstantSendManager));
+            jsonHeaders.push_back(blockheaderToJSON(tip, pindex, *llmq_ctx->clhandler));
         }
         std::string strJSON = jsonHeaders.write() + "\n";
         req->WriteHeader("Content-Type", "application/json");
@@ -251,7 +281,7 @@ static bool rest_headers(const CoreContext& context,
         return true;
     }
     default: {
-        return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: .bin, .hex, .json)");
+        return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: " + AvailableDataFormatsString() + ")");
     }
     }
 }
@@ -271,12 +301,12 @@ static bool rest_block(const CoreContext& context,
         return RESTERR(req, HTTP_BAD_REQUEST, "Invalid hash: " + hashStr);
 
     CBlock block;
-    CBlockIndex* pblockindex = nullptr;
-    CBlockIndex* tip = nullptr;
+    const CBlockIndex* pblockindex = nullptr;
+    const CBlockIndex* tip = nullptr;
+    ChainstateManager* maybe_chainman = GetChainman(context, req);
+    if (!maybe_chainman) return false;
+    ChainstateManager& chainman = *maybe_chainman;
     {
-        ChainstateManager* maybe_chainman = GetChainman(context, req);
-        if (!maybe_chainman) return false;
-        ChainstateManager& chainman = *maybe_chainman;
         LOCK(cs_main);
         tip = chainman.ActiveChain().Tip();
         pblockindex = chainman.m_blockman.LookupBlockIndex(hash);
@@ -284,7 +314,7 @@ static bool rest_block(const CoreContext& context,
             return RESTERR(req, HTTP_NOT_FOUND, hashStr + " not found");
         }
 
-        if (IsBlockPruned(pblockindex))
+        if (chainman.m_blockman.IsBlockPruned(pblockindex))
             return RESTERR(req, HTTP_NOT_FOUND, hashStr + " not available (pruned data)");
 
         if (!ReadBlockFromDisk(block, pblockindex, Params().GetConsensus()))
@@ -311,7 +341,10 @@ static bool rest_block(const CoreContext& context,
     }
 
     case RetFormat::JSON: {
-        UniValue objBlock = blockToJSON(block, tip, pblockindex, *llmq::chainLocksHandler, *llmq::quorumInstantSendManager, showTxDetails);
+        const LLMQContext* llmq_ctx = GetLLMQContext(context, req);
+        if (!llmq_ctx) return false;
+
+        UniValue objBlock = blockToJSON(chainman.m_blockman, block, tip, pblockindex, *llmq_ctx->clhandler, *llmq_ctx->isman, showTxDetails);
         std::string strJSON = objBlock.write() + "\n";
         req->WriteHeader("Content-Type", "application/json");
         req->WriteReply(HTTP_OK, strJSON);
@@ -334,6 +367,207 @@ static bool rest_block_notxdetails(const CoreContext& context, HTTPRequest* req,
     return rest_block(context, req, strURIPart, false);
 }
 
+static bool rest_filter_header(const CoreContext& context, HTTPRequest* req, const std::string& strURIPart)
+{
+    if (!CheckWarmup(req)) return false;
+
+    std::string param;
+    const RetFormat rf = ParseDataFormat(param, strURIPart);
+
+    std::vector<std::string> uri_parts = SplitString(param, '/');
+    if (uri_parts.size() != 3) {
+        return RESTERR(req, HTTP_BAD_REQUEST, "Invalid URI format. Expected /rest/blockfilterheaders/<filtertype>/<count>/<blockhash>");
+    }
+
+    uint256 block_hash;
+    if (!ParseHashStr(uri_parts[2], block_hash)) {
+        return RESTERR(req, HTTP_BAD_REQUEST, "Invalid hash: " + uri_parts[2]);
+    }
+
+    BlockFilterType filtertype;
+    if (!BlockFilterTypeByName(uri_parts[0], filtertype)) {
+        return RESTERR(req, HTTP_BAD_REQUEST, "Unknown filtertype " + uri_parts[0]);
+    }
+
+    BlockFilterIndex* index = GetBlockFilterIndex(filtertype);
+    if (!index) {
+        return RESTERR(req, HTTP_BAD_REQUEST, "Index is not enabled for filtertype " + uri_parts[0]);
+    }
+
+    const auto parsed_count{ToIntegral<size_t>(uri_parts[1])};
+    if (!parsed_count.has_value() || *parsed_count < 1 || *parsed_count > MAX_REST_HEADERS_RESULTS) {
+        return RESTERR(req, HTTP_BAD_REQUEST, strprintf("Header count is invalid or out of acceptable range (1-%u): %s", MAX_REST_HEADERS_RESULTS, uri_parts[1]));
+    }
+
+    std::vector<const CBlockIndex*> headers;
+    headers.reserve(*parsed_count);
+    {
+        ChainstateManager* maybe_chainman = GetChainman(context, req);
+        if (!maybe_chainman) return false;
+        ChainstateManager& chainman = *maybe_chainman;
+        LOCK(cs_main);
+        CChain& active_chain = chainman.ActiveChain();
+        const CBlockIndex* pindex = chainman.m_blockman.LookupBlockIndex(block_hash);
+        while (pindex != nullptr && active_chain.Contains(pindex)) {
+            headers.push_back(pindex);
+            if (headers.size() == *parsed_count)
+                break;
+            pindex = active_chain.Next(pindex);
+        }
+    }
+
+    bool index_ready = index->BlockUntilSyncedToCurrentChain();
+
+    std::vector<uint256> filter_headers;
+    filter_headers.reserve(*parsed_count);
+    for (const CBlockIndex* pindex : headers) {
+        uint256 filter_header;
+        if (!index->LookupFilterHeader(pindex, filter_header)) {
+            std::string errmsg = "Filter not found.";
+
+            if (!index_ready) {
+                errmsg += " Block filters are still in the process of being indexed.";
+            } else {
+                errmsg += " This error is unexpected and indicates index corruption.";
+            }
+
+            return RESTERR(req, HTTP_NOT_FOUND, errmsg);
+        }
+        filter_headers.push_back(filter_header);
+    }
+
+    switch (rf) {
+    case RetFormat::BINARY: {
+        CDataStream ssHeader{SER_NETWORK, PROTOCOL_VERSION};
+        for (const uint256& header : filter_headers) {
+            ssHeader << header;
+        }
+
+        std::string binaryHeader = ssHeader.str();
+        req->WriteHeader("Content-Type", "application/octet-stream");
+        req->WriteReply(HTTP_OK, binaryHeader);
+        return true;
+    }
+    case RetFormat::HEX: {
+        CDataStream ssHeader{SER_NETWORK, PROTOCOL_VERSION};
+        for (const uint256& header : filter_headers) {
+            ssHeader << header;
+        }
+
+        std::string strHex = HexStr(ssHeader) + "\n";
+        req->WriteHeader("Content-Type", "text/plain");
+        req->WriteReply(HTTP_OK, strHex);
+        return true;
+    }
+    case RetFormat::JSON: {
+        UniValue jsonHeaders(UniValue::VARR);
+        for (const uint256& header : filter_headers) {
+            jsonHeaders.push_back(header.GetHex());
+        }
+
+        std::string strJSON = jsonHeaders.write() + "\n";
+        req->WriteHeader("Content-Type", "application/json");
+        req->WriteReply(HTTP_OK, strJSON);
+        return true;
+    }
+    default: {
+        return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: " + AvailableDataFormatsString() + ")");
+    }
+    }
+}
+
+static bool rest_block_filter(const CoreContext& context, HTTPRequest* req, const std::string& strURIPart)
+{
+    if (!CheckWarmup(req)) return false;
+
+    std::string param;
+    const RetFormat rf = ParseDataFormat(param, strURIPart);
+
+    // request is sent over URI scheme /rest/blockfilter/filtertype/blockhash
+    std::vector<std::string> uri_parts = SplitString(param, '/');
+    if (uri_parts.size() != 2) {
+        return RESTERR(req, HTTP_BAD_REQUEST, "Invalid URI format. Expected /rest/blockfilter/<filtertype>/<blockhash>");
+    }
+
+    uint256 block_hash;
+    if (!ParseHashStr(uri_parts[1], block_hash)) {
+        return RESTERR(req, HTTP_BAD_REQUEST, "Invalid hash: " + uri_parts[1]);
+    }
+
+    BlockFilterType filtertype;
+    if (!BlockFilterTypeByName(uri_parts[0], filtertype)) {
+        return RESTERR(req, HTTP_BAD_REQUEST, "Unknown filtertype " + uri_parts[0]);
+    }
+
+    BlockFilterIndex* index = GetBlockFilterIndex(filtertype);
+    if (!index) {
+        return RESTERR(req, HTTP_BAD_REQUEST, "Index is not enabled for filtertype " + uri_parts[0]);
+    }
+
+    const CBlockIndex* block_index;
+    bool block_was_connected;
+    {
+        ChainstateManager* maybe_chainman = GetChainman(context, req);
+        if (!maybe_chainman) return false;
+        ChainstateManager& chainman = *maybe_chainman;
+        LOCK(cs_main);
+        block_index = chainman.m_blockman.LookupBlockIndex(block_hash);
+        if (!block_index) {
+            return RESTERR(req, HTTP_NOT_FOUND, uri_parts[1] + " not found");
+        }
+        block_was_connected = block_index->IsValid(BLOCK_VALID_SCRIPTS);
+    }
+
+    bool index_ready = index->BlockUntilSyncedToCurrentChain();
+
+    BlockFilter filter;
+    if (!index->LookupFilter(block_index, filter)) {
+        std::string errmsg = "Filter not found.";
+
+        if (!block_was_connected) {
+            errmsg += " Block was not connected to active chain.";
+        } else if (!index_ready) {
+            errmsg += " Block filters are still in the process of being indexed.";
+        } else {
+            errmsg += " This error is unexpected and indicates index corruption.";
+        }
+
+        return RESTERR(req, HTTP_NOT_FOUND, errmsg);
+    }
+
+    switch (rf) {
+    case RetFormat::BINARY: {
+        CDataStream ssResp{SER_NETWORK, PROTOCOL_VERSION};
+        ssResp << filter;
+
+        std::string binaryResp = ssResp.str();
+        req->WriteHeader("Content-Type", "application/octet-stream");
+        req->WriteReply(HTTP_OK, binaryResp);
+        return true;
+    }
+    case RetFormat::HEX: {
+        CDataStream ssResp{SER_NETWORK, PROTOCOL_VERSION};
+        ssResp << filter;
+
+        std::string strHex = HexStr(ssResp) + "\n";
+        req->WriteHeader("Content-Type", "text/plain");
+        req->WriteReply(HTTP_OK, strHex);
+        return true;
+    }
+    case RetFormat::JSON: {
+        UniValue ret(UniValue::VOBJ);
+        ret.pushKV("filter", HexStr(filter.GetEncodedFilter()));
+        std::string strJSON = ret.write() + "\n";
+        req->WriteHeader("Content-Type", "application/json");
+        req->WriteReply(HTTP_OK, strJSON);
+        return true;
+    }
+    default: {
+        return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: " + AvailableDataFormatsString() + ")");
+    }
+    }
+}
+
 // A bit of a hack - dependency on a function defined in rpc/blockchain.cpp
 RPCHelpMan getblockchaininfo();
 
@@ -346,7 +580,8 @@ static bool rest_chaininfo(const CoreContext& context, HTTPRequest* req, const s
 
     switch (rf) {
     case RetFormat::JSON: {
-        JSONRPCRequest jsonRequest(context);
+        JSONRPCRequest jsonRequest;
+        jsonRequest.context = context;
         jsonRequest.params = UniValue(UniValue::VARR);
         UniValue chainInfoObject = getblockchaininfo().HandleRequest(jsonRequest);
         std::string strJSON = chainInfoObject.write() + "\n";
@@ -371,7 +606,10 @@ static bool rest_mempool_info(const CoreContext& context, HTTPRequest* req, cons
 
     switch (rf) {
     case RetFormat::JSON: {
-        UniValue mempoolInfoObject = MempoolInfoToJSON(*mempool, *llmq::quorumInstantSendManager);
+        const LLMQContext* llmq_ctx = GetLLMQContext(context, req);
+        if (!llmq_ctx) return false;
+
+        UniValue mempoolInfoObject = MempoolInfoToJSON(*mempool, *llmq_ctx->isman);
 
         std::string strJSON = mempoolInfoObject.write() + "\n";
         req->WriteHeader("Content-Type", "application/json");
@@ -394,7 +632,10 @@ static bool rest_mempool_contents(const CoreContext& context, HTTPRequest* req, 
 
     switch (rf) {
     case RetFormat::JSON: {
-        UniValue mempoolObject = MempoolToJSON(*mempool, llmq::quorumInstantSendManager.get(), true);
+        const LLMQContext* llmq_ctx = GetLLMQContext(context, req);
+        if (!llmq_ctx) return false;
+
+        UniValue mempoolObject = MempoolToJSON(*mempool, llmq_ctx->isman.get(), true);
 
         std::string strJSON = mempoolObject.write() + "\n";
         req->WriteHeader("Content-Type", "application/json");
@@ -713,6 +954,8 @@ static const struct {
       {"/rest/tx/", rest_tx},
       {"/rest/block/notxdetails/", rest_block_notxdetails},
       {"/rest/block/", rest_block_extended},
+      {"/rest/blockfilter/", rest_block_filter},
+      {"/rest/blockfilterheaders/", rest_filter_header},
       {"/rest/chaininfo", rest_chaininfo},
       {"/rest/mempool/info", rest_mempool_info},
       {"/rest/mempool/contents", rest_mempool_contents},
@@ -724,7 +967,7 @@ static const struct {
 void StartREST(const CoreContext& context)
 {
     for (const auto& up : uri_prefixes) {
-        auto handler = [&context, up](HTTPRequest* req, const std::string& prefix) { return up.handler(context, req, prefix); };
+        auto handler = [context, up](HTTPRequest* req, const std::string& prefix) { return up.handler(context, req, prefix); };
         RegisterHTTPHandler(up.prefix, false, handler);
     }
 }

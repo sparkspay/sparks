@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 The Dash Core developers
+// Copyright (c) 2018-2025 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,15 +6,19 @@
 #define BITCOIN_LLMQ_COMMITMENT_H
 
 #include <bls/bls.h>
-#include <consensus/params.h>
+#include <llmq/params.h>
 #include <primitives/transaction.h>
 #include <util/irange.h>
 #include <util/strencodings.h>
 #include <util/underlying.h>
 
 #include <gsl/pointers.h>
-
 #include <univalue.h>
+
+#include <limits>
+#include <memory>
+#include <string>
+#include <vector>
 
 class CBlockIndex;
 class CDeterministicMNManager;
@@ -23,6 +27,7 @@ class TxValidationState;
 
 namespace llmq
 {
+class CQuorumSnapshotManager;
 
 // This message is an aggregation of all received premature commitments and only valid if
 // enough (>=threshold) premature commitments were aggregated
@@ -30,8 +35,6 @@ namespace llmq
 class CFinalCommitment
 {
 public:
-    static constexpr auto SPECIALTX_TYPE = TRANSACTION_PROVIDER_REGISTER;
-
     static constexpr uint16_t LEGACY_BLS_NON_INDEXED_QUORUM_VERSION = 1;
     static constexpr uint16_t LEGACY_BLS_INDEXED_QUORUM_VERSION = 2;
     static constexpr uint16_t BASIC_BLS_NON_INDEXED_QUORUM_VERSION = 3;
@@ -63,7 +66,8 @@ public:
         return int(std::count(validMembers.begin(), validMembers.end(), true));
     }
 
-    bool Verify(CDeterministicMNManager& dmnman, gsl::not_null<const CBlockIndex*> pQuorumBaseBlockIndex, bool checkSigs) const;
+    bool Verify(CDeterministicMNManager& dmnman, CQuorumSnapshotManager& qsnapman,
+                gsl::not_null<const CBlockIndex*> pQuorumBaseBlockIndex, bool checkSigs) const;
     bool VerifyNull() const;
     bool VerifySizes(const Consensus::LLMQParams& params) const;
 
@@ -173,7 +177,9 @@ public:
     }
 };
 
-bool CheckLLMQCommitment(CDeterministicMNManager& dmnman, const ChainstateManager& chainman, const CTransaction& tx, gsl::not_null<const CBlockIndex*> pindexPrev, TxValidationState& state);
+bool CheckLLMQCommitment(CDeterministicMNManager& dmnman, CQuorumSnapshotManager& qsnapman,
+                         const ChainstateManager& chainman, const CTransaction& tx,
+                         gsl::not_null<const CBlockIndex*> pindexPrev, TxValidationState& state);
 
 uint256 BuildCommitmentHash(Consensus::LLMQType llmqType, const uint256& blockHash, const std::vector<bool>& validMembers, const CBLSPublicKey& pubKey, const uint256& vvecHash);
 

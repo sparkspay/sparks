@@ -1,11 +1,11 @@
-// Copyright (c) 2023 The Dash Core developers
+// Copyright (c) 2023-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_EVO_DMN_TYPES_H
 #define BITCOIN_EVO_DMN_TYPES_H
 
-#include <amount.h>
+#include <consensus/amount.h>
 #include <chain.h>
 #include <chainparams.h>
 #include <validation.h>
@@ -38,6 +38,11 @@ constexpr auto Regular = mntype_struct{
     .collat_amount = 5000 * COIN,
     .description = "Masternode",
 };
+constexpr auto RegularV1 = mntype_struct{
+    .voting_weight = 1,
+    .collat_amount = 25000 * COIN,   // In sparks, at the begining activating masternodes, its collateral is 25000
+    .description = "Masternode",
+};
 //First approach of Evonodes on Sparks
 //Started at when activating v19
 constexpr auto Evo4 = mntype_struct{
@@ -52,12 +57,12 @@ constexpr auto Evo1 = mntype_struct{
     .collat_amount = 25000 * COIN,
     .description = "Evonode",
 };
-//Third approach of Evonodes on Sparks when enabling masternodes again
-//Will start in future
-constexpr auto Evo5 = mntype_struct{
-    .voting_weight = 5,
+//Enabling masternodes again
+//Started at when activating v22
+constexpr auto RegularV2 = mntype_struct{
+    .voting_weight = 1,
     .collat_amount = 25000 * COIN,
-    .description = "Evonode",
+    .description = "Masternode",
 };
 constexpr auto Invalid = mntype_struct{
     .voting_weight = 0,
@@ -69,20 +74,35 @@ constexpr auto Invalid = mntype_struct{
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
     const bool isV20Active{DeploymentActiveAt(*pindex, consensusParams, Consensus::DEPLOYMENT_V20)};
-    if (pindex->nHeight >= consensusParams.V19Height && !isV20Active) {
+    const bool isV19Active{DeploymentActiveAt(*pindex, consensusParams, Consensus::DEPLOYMENT_V19)};
+    if (isV19Active && !isV20Active) {
         return dmn_types::Evo4;
     } else if (isV20Active){
         return dmn_types::Evo1;
     } else {
-        //when enabling masternodes again, should add new condition here and should return Evo5
         return dmn_types::Invalid;
+    }
+}
+
+[[nodiscard]] inline const dmn_types::mntype_struct GetRegularVersion(gsl::not_null<const CBlockIndex*> pindex)
+{
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    const bool isV22Active{DeploymentActiveAt(*pindex, consensusParams, Consensus::DEPLOYMENT_V22)};
+    const bool isV20Active{DeploymentActiveAt(*pindex, consensusParams, Consensus::DEPLOYMENT_V20)};
+    const bool isV19Active{DeploymentActiveAt(*pindex, consensusParams, Consensus::DEPLOYMENT_V19)};
+    if (!isV19Active) {
+        return dmn_types::RegularV1;
+    } else if (isV22Active){
+        return dmn_types::RegularV2;
+    } else {
+        return dmn_types::Regular;
     }
 }
 
 [[nodiscard]] static constexpr bool IsCollateralAmount(CAmount amount)
 {
     return amount == Regular.collat_amount ||
-        amount == Evo4.collat_amount || amount == Evo1.collat_amount || amount == Evo5.collat_amount;
+        amount == Evo4.collat_amount || amount == Evo1.collat_amount || amount == RegularV2.collat_amount;
 }
 
 } // namespace dmn_types
@@ -90,15 +110,12 @@ constexpr auto Invalid = mntype_struct{
 [[nodiscard]] constexpr const dmn_types::mntype_struct GetMnType(MnType type, gsl::not_null<const CBlockIndex*> pindex)
 {
     switch (type) {
-        case MnType::Regular: return dmn_types::Regular;
+        case MnType::Regular: return dmn_types::GetRegularVersion(pindex);
         case MnType::Evo: return dmn_types::GetEvoVersion(pindex);
         default: return dmn_types::Invalid;
     }
 }
 
-[[nodiscard]] constexpr const bool IsValidMnType(MnType type)
-{
-    return type < MnType::COUNT;
-}
+[[nodiscard]] constexpr bool IsValidMnType(MnType type) { return type < MnType::COUNT; }
 
 #endif // BITCOIN_EVO_DMN_TYPES_H

@@ -153,6 +153,116 @@ BOOST_AUTO_TEST_CASE(intarg)
     BOOST_CHECK_EQUAL(m_local_args.GetArg("-bar", 11), 0);
 }
 
+BOOST_AUTO_TEST_CASE(patharg)
+{
+    const auto dir = std::make_pair("-dir", ArgsManager::ALLOW_ANY);
+    SetupArgs({dir});
+    ResetArgs("");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), fs::path{});
+
+    const fs::path root_path{"/"};
+    ResetArgs("-dir=/");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), root_path);
+
+    ResetArgs("-dir=/.");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), root_path);
+
+    ResetArgs("-dir=/./");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), root_path);
+
+    ResetArgs("-dir=/.//");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), root_path);
+
+#ifdef WIN32
+    const fs::path win_root_path{"C:\\"};
+    ResetArgs("-dir=C:\\");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), win_root_path);
+
+    ResetArgs("-dir=C:/");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), win_root_path);
+
+    ResetArgs("-dir=C:\\\\");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), win_root_path);
+
+    ResetArgs("-dir=C:\\.");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), win_root_path);
+
+    ResetArgs("-dir=C:\\.\\");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), win_root_path);
+
+    ResetArgs("-dir=C:\\.\\\\");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), win_root_path);
+#endif
+
+    const fs::path absolute_path{"/home/user/.bitcoin"};
+    ResetArgs("-dir=/home/user/.bitcoin");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), absolute_path);
+
+    ResetArgs("-dir=/root/../home/user/.bitcoin");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), absolute_path);
+
+    ResetArgs("-dir=/home/./user/.bitcoin");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), absolute_path);
+
+    ResetArgs("-dir=/home/user/.bitcoin/");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), absolute_path);
+
+    ResetArgs("-dir=/home/user/.bitcoin//");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), absolute_path);
+
+    ResetArgs("-dir=/home/user/.bitcoin/.");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), absolute_path);
+
+    ResetArgs("-dir=/home/user/.bitcoin/./");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), absolute_path);
+
+    ResetArgs("-dir=/home/user/.bitcoin/.//");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), absolute_path);
+
+    const fs::path relative_path{"user/.bitcoin"};
+    ResetArgs("-dir=user/.bitcoin");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), relative_path);
+
+    ResetArgs("-dir=somewhere/../user/.bitcoin");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), relative_path);
+
+    ResetArgs("-dir=user/./.bitcoin");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), relative_path);
+
+    ResetArgs("-dir=user/.bitcoin/");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), relative_path);
+
+    ResetArgs("-dir=user/.bitcoin//");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), relative_path);
+
+    ResetArgs("-dir=user/.bitcoin/.");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), relative_path);
+
+    ResetArgs("-dir=user/.bitcoin/./");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), relative_path);
+
+    ResetArgs("-dir=user/.bitcoin/.//");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir"), relative_path);
+
+    // Check negated and default argument handling. Specifying an empty argument
+    // is the same as not specifying the argument. This is convenient for
+    // scripting so later command line arguments can override earlier command
+    // line arguments or bitcoin.conf values. Currently the -dir= case cannot be
+    // distinguished from -dir case with no assignment, but #16545 would add the
+    // ability to distinguish these in the future (and treat the no-assign case
+    // like an imperative command or an error).
+    ResetArgs("");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir", "default"), fs::path{"default"});
+    ResetArgs("-dir=override");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir", "default"), fs::path{"override"});
+    ResetArgs("-dir=");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir", "default"), fs::path{"default"});
+    ResetArgs("-dir");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir", "default"), fs::path{"default"});
+    ResetArgs("-nodir");
+    BOOST_CHECK_EQUAL(m_local_args.GetPathArg("-dir", "default"), fs::path{""});
+}
+
 BOOST_AUTO_TEST_CASE(doublesparks)
 {
     const auto foo = std::make_pair("-foo", ArgsManager::ALLOW_ANY);

@@ -4,11 +4,12 @@
 
 #include <consensus/validation.h>
 #include <deploymentstatus.h>
+#include <evo/evodb.h>
 #include <evo/mnhftx.h>
 #include <evo/specialtx.h>
 #include <llmq/commitment.h>
-#include <llmq/signing.h>
 #include <llmq/quorums.h>
+#include <llmq/signing.h>
 #include <node/blockstorage.h>
 
 #include <chain.h>
@@ -23,6 +24,7 @@
 
 static const std::string MNEHF_REQUESTID_PREFIX = "mnhf";
 static const std::string DB_SIGNALS = "mnhf_s";
+static const std::string DB_SIGNALS_v2 = "mnhf_s2";
 
 uint256 MNHFTxPayload::GetRequestId() const
 {
@@ -54,34 +56,35 @@ CMNHFManager::~CMNHFManager()
 
 CMNHFManager::Signals CMNHFManager::GetSignalsStage(const CBlockIndex* const pindexPrev)
 {
-    Signals signals = GetForBlock(pindexPrev);
+    if (!DeploymentActiveAfter(pindexPrev, Params().GetConsensus(), Consensus::DEPLOYMENT_V20)) return {};
+
+    Signals signals_tmp = GetForBlock(pindexPrev);
+
     if (pindexPrev == nullptr) return {};
     const int height = pindexPrev->nHeight + 1;
-    for (auto it = signals.begin(); it != signals.end(); ) {
-        bool found{false};
-        const auto signal_pindex = pindexPrev->GetAncestor(it->second);
+
+    Signals signals_ret;
+
+    for (auto signal : signals_tmp) {
+        bool expired{false};
+        const auto signal_pindex = pindexPrev->GetAncestor(signal.second);
         assert(signal_pindex != nullptr);
         const int64_t signal_time = signal_pindex->GetMedianTimePast();
         for (int index = 0; index < Consensus::MAX_VERSION_BITS_DEPLOYMENTS; ++index) {
             const auto& deployment = Params().GetConsensus().vDeployments[index];
-            if (deployment.bit != it->first) continue;
+            if (deployment.bit != signal.first) continue;
             if (signal_time < deployment.nStartTime) {
                 // new deployment is using the same bit as the old one
-                LogPrintf("CMNHFManager::GetSignalsStage: mnhf signal bit=%d height:%d is expired at height=%d\n", it->first, it->second, height);
-                it = signals.erase(it);
-            } else {
-                ++it;
+                LogPrintf("CMNHFManager::GetSignalsStage: mnhf signal bit=%d height:%d is expired at height=%d\n",
+                          signal.first, signal.second, height);
+                expired = true;
             }
-            found = true;
-            break;
         }
-        if (!found) {
-            // no deployment means we buried it and aren't using the same bit (yet)
-            LogPrintf("CMNHFManager::GetSignalsStage: mnhf signal bit=%d height:%d is not known at height=%d\n", it->first, it->second, height);
-            it = signals.erase(it);
+        if (!expired) {
+            signals_ret.insert(signal);
         }
     }
-    return signals;
+    return signals_ret;
 }
 
 bool MNHFTx::Verify(const llmq::CQuorumManager& qman, const uint256& quorumHash, const uint256& requestId, const uint256& msgHash, TxValidationState& state) const
@@ -92,6 +95,10 @@ bool MNHFTx::Verify(const llmq::CQuorumManager& qman, const uint256& quorumHash,
 
     const Consensus::LLMQType& llmqType = Params().GetConsensus().llmqTypeMnhf;
     const auto quorum = qman.GetQuorum(llmqType, quorumHash);
+
+    if (!quorum) {
+        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-mnhf-missing-quorum");
+    }
 
     const uint256 signHash = llmq::BuildSignHash(llmqType, quorum->qc->quorumHash, requestId, msgHash);
     if (!sig.VerifyInsecure(quorum->qc->quorumPublicKey, signHash)) {
@@ -116,6 +123,10 @@ bool CheckMNHFTx(const ChainstateManager& chainman, const llmq::CQuorumManager& 
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-mnhf-version");
     }
 
+    if (!Params().IsValidMNActivation(mnhfTx.signal.versionBit, pindexPrev->GetMedianTimePast())) {
+        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-mnhf-non-ehf");
+    }
+
     const CBlockIndex* pindexQuorum = WITH_LOCK(::cs_main, return chainman.m_blockman.LookupBlockIndex(mnhfTx.signal.quorumHash));
     if (!pindexQuorum) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-mnhf-quorum-hash");
@@ -137,10 +148,6 @@ bool CheckMNHFTx(const ChainstateManager& chainman, const llmq::CQuorumManager& 
     if (!mnhfTx.signal.Verify(qman, mnhfTx.signal.quorumHash, mnhfTx.GetRequestId(), msgHash, state)) {
         // set up inside Verify
         return false;
-    }
-
-    if (!Params().IsValidMNActivation(mnhfTx.signal.versionBit, pindexPrev->GetMedianTimePast())) {
-        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-mnhf-non-ehf");
     }
 
     return true;
@@ -229,10 +236,7 @@ std::optional<CMNHFManager::Signals> CMNHFManager::ProcessBlock(const CBlock& bl
             return signals;
         }
         for (const auto& versionBit : new_signals) {
-            if (Params().IsValidMNActivation(versionBit, pindex->GetMedianTimePast())) {
-                signals.insert({versionBit, mined_height});
-            }
-
+            signals.insert({versionBit, mined_height});
         }
 
         AddToCache(signals, pindex);
@@ -283,6 +287,9 @@ CMNHFManager::Signals CMNHFManager::GetForBlock(const CBlockIndex* pindex)
     const Consensus::Params& consensusParams{Params().GetConsensus()};
     while (!to_calculate.empty()) {
         const CBlockIndex* pindex_top{to_calculate.top()};
+        if (pindex_top->nHeight % 1000 == 0) {
+            LogPrintf("re-index EHF signals at block %d\n", pindex_top->nHeight);
+        }
         CBlock block;
         if (!ReadBlockFromDisk(block, pindex_top, consensusParams)) {
             throw std::runtime_error("failed-getehfforblock-read");
@@ -319,15 +326,23 @@ std::optional<CMNHFManager::Signals> CMNHFManager::GetFromCache(const CBlockInde
     }
     {
         LOCK(cs_cache);
-        if (ThresholdState::ACTIVE != v20_activation.State(pindex->pprev, Params().GetConsensus(), Consensus::DEPLOYMENT_V20)) {
+        if (!DeploymentActiveAt(*pindex, Params().GetConsensus(), Consensus::DEPLOYMENT_V20)) {
             mnhfCache.insert(blockHash, signals);
             return signals;
         }
     }
-    if (m_evoDb.Read(std::make_pair(DB_SIGNALS, blockHash), signals)) {
+    if (m_evoDb.Read(std::make_pair(DB_SIGNALS_v2, blockHash), signals)) {
         LOCK(cs_cache);
         mnhfCache.insert(blockHash, signals);
         return signals;
+    }
+    if (!DeploymentActiveAt(*pindex, Params().GetConsensus(), Consensus::DEPLOYMENT_MN_RR)) {
+        // before mn_rr activation we are safe
+        if (m_evoDb.Read(std::make_pair(DB_SIGNALS, blockHash), signals)) {
+            LOCK(cs_cache);
+            mnhfCache.insert(blockHash, signals);
+            return signals;
+        }
     }
     return std::nullopt;
 }
@@ -340,11 +355,9 @@ void CMNHFManager::AddToCache(const Signals& signals, const CBlockIndex* const p
         LOCK(cs_cache);
         mnhfCache.insert(blockHash, signals);
     }
-    {
-        LOCK(cs_cache);
-        if (ThresholdState::ACTIVE != v20_activation.State(pindex->pprev, Params().GetConsensus(), Consensus::DEPLOYMENT_V20)) return;
-    }
-    m_evoDb.Write(std::make_pair(DB_SIGNALS, blockHash), signals);
+    if (!DeploymentActiveAt(*pindex, Params().GetConsensus(), Consensus::DEPLOYMENT_V20)) return;
+
+    m_evoDb.Write(std::make_pair(DB_SIGNALS_v2, blockHash), signals);
 }
 
 void CMNHFManager::AddSignal(const CBlockIndex* const pindex, int bit)
@@ -360,6 +373,25 @@ void CMNHFManager::ConnectManagers(gsl::not_null<ChainstateManager*> chainman, g
     assert(m_chainman == nullptr && m_qman == nullptr);
     m_chainman = chainman;
     m_qman = qman;
+}
+
+bool CMNHFManager::ForceSignalDBUpdate()
+{
+    // force ehf signals db update
+    auto dbTx = m_evoDb.BeginTransaction();
+
+    const bool last_legacy = bls::bls_legacy_scheme.load();
+    bls::bls_legacy_scheme.store(false);
+    GetSignalsStage(m_chainman->ActiveChainstate().m_chain.Tip());
+    bls::bls_legacy_scheme.store(last_legacy);
+
+    dbTx->Commit();
+    // flush it to disk
+    if (!m_evoDb.CommitRootTransaction()) {
+        LogPrintf("CMNHFManager::%s -- failed to commit to evoDB\n", __func__);
+        return false;
+    }
+    return true;
 }
 
 std::string MNHFTx::ToString() const

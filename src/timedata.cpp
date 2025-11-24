@@ -9,7 +9,7 @@
 #include <timedata.h>
 
 #include <netaddress.h>
-#include <node/ui_interface.h>
+#include <node/interface_ui.h>
 #include <sync.h>
 #include <tinyformat.h>
 #include <util/system.h>
@@ -99,7 +99,7 @@ void AddTimeData(const CNetAddr& ip, int64_t nOffsetSample)
             }
         }
 
-        if (LogAcceptCategory(BCLog::NET)) {
+        if (LogAcceptCategory(BCLog::NET, BCLog::Level::Debug)) {
             std::string log_message{"time data samples: "};
             for (const int64_t n : vSorted) {
                 log_message += strprintf("%+d  ", n);

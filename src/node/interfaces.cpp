@@ -30,7 +30,7 @@
 #include <node/blockstorage.h>
 #include <node/coin.h>
 #include <node/context.h>
-#include <node/ui_interface.h>
+#include <node/interface_ui.h>
 #include <node/transaction.h>
 #include <policy/feerate.h>
 #include <policy/fees.h>
@@ -43,7 +43,6 @@
 #include <shutdown.h>
 #include <support/allocators/secure.h>
 #include <sync.h>
-#include <timedata.h>
 #include <txmempool.h>
 #include <uint256.h>
 #include <util/check.h>
@@ -67,6 +66,7 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <variant>
 
 using interfaces::BlockTip;
 using interfaces::Chain;
@@ -317,7 +317,7 @@ public:
     }
     bool appInitMain(interfaces::BlockAndHeaderTipInfo* tip_info) override
     {
-        return AppInitMain(m_context_ref, *m_context, tip_info);
+        return AppInitMain(*m_context, tip_info);
     }
     void appShutdown() override
     {
@@ -418,9 +418,10 @@ public:
     bool getHeaderTip(int& height, int64_t& block_time) override
     {
         LOCK(::cs_main);
-        if (::pindexBestHeader) {
-            height = ::pindexBestHeader->nHeight;
-            block_time = ::pindexBestHeader->GetBlockTime();
+        auto best_header = chainman().m_best_header;
+        if (best_header) {
+            height = best_header->nHeight;
+            block_time = best_header->GetBlockTime();
             return true;
         }
         return false;
@@ -479,19 +480,24 @@ public:
     CFeeRate getDustRelayFee() override { return ::dustRelayFee; }
     UniValue executeRpc(const std::string& command, const UniValue& params, const std::string& uri) override
     {
-        JSONRPCRequest req(m_context_ref);
+        JSONRPCRequest req;
+        req.context = *m_context;
         req.params = params;
         req.strMethod = command;
         req.URI = uri;
         return ::tableRPC.execute(req);
     }
-    std::vector<std::pair<std::string, std::string>> listRpcCommands() override { return ::tableRPC.listCommands(); }
+    std::vector<std::string> listRpcCommands() override { return ::tableRPC.listCommands(); }
     void rpcSetTimerInterfaceIfUnset(RPCTimerInterface* iface) override { RPCSetTimerInterfaceIfUnset(iface); }
     void rpcUnsetTimerInterface(RPCTimerInterface* iface) override { RPCUnsetTimerInterface(iface); }
     bool getUnspentOutput(const COutPoint& output, Coin& coin) override
     {
         LOCK(::cs_main);
         return chainman().ActiveChainstate().CoinsTip().GetCoin(output, coin);
+    }
+    TransactionError broadcastTransaction(CTransactionRef tx, CAmount max_tx_fee, bilingual_str& err_string) override
+    {
+        return BroadcastTransaction(*m_context, std::move(tx), err_string, max_tx_fee, /*relay=*/ true, /*wait_callback=*/ false);
     }
     WalletLoader& walletLoader() override
     {
@@ -520,6 +526,10 @@ public:
     std::unique_ptr<Handler> handleShowProgress(ShowProgressFn fn) override
     {
         return MakeHandler(::uiInterface.ShowProgress_connect(fn));
+    }
+    std::unique_ptr<Handler> handleInitWallet(InitWalletFn fn) override
+    {
+        return MakeHandler(::uiInterface.InitWallet_connect(fn));
     }
     std::unique_ptr<Handler> handleNotifyNumConnectionsChanged(NotifyNumConnectionsChangedFn fn) override
     {
@@ -580,15 +590,8 @@ public:
         m_gov.setContext(context);
         m_llmq.setContext(context);
         m_masternodeSync.setContext(context);
-
-        if (context) {
-            m_context_ref = *context;
-        } else {
-            m_context_ref = std::nullopt;
-        }
     }
     NodeContext* m_context{nullptr};
-    CoreContext m_context_ref{std::nullopt};
 };
 
 bool FillBlock(const CBlockIndex* index, const FoundBlock& block, UniqueLock<RecursiveMutex>& lock, const CChain& active)
@@ -615,13 +618,13 @@ public:
     explicit NotificationsProxy(std::shared_ptr<Chain::Notifications> notifications)
         : m_notifications(std::move(notifications)) {}
     virtual ~NotificationsProxy() = default;
-    void TransactionAddedToMempool(const CTransactionRef& tx, int64_t nAcceptTime) override
+    void TransactionAddedToMempool(const CTransactionRef& tx, int64_t nAcceptTime, uint64_t mempool_sequence) override
     {
-        m_notifications->transactionAddedToMempool(tx, nAcceptTime);
+        m_notifications->transactionAddedToMempool(tx, nAcceptTime, mempool_sequence);
     }
-    void TransactionRemovedFromMempool(const CTransactionRef& tx, MemPoolRemovalReason reason) override
+    void TransactionRemovedFromMempool(const CTransactionRef& tx, MemPoolRemovalReason reason, uint64_t mempool_sequence) override
     {
-        m_notifications->transactionRemovedFromMempool(tx, reason);
+        m_notifications->transactionRemovedFromMempool(tx, reason, mempool_sequence);
     }
     void BlockConnected(const std::shared_ptr<const CBlock>& block, const CBlockIndex* index) override
     {
@@ -688,14 +691,14 @@ public:
                 throw;
             }
         };
-        ::tableRPC.appendCommand(m_command.name, m_command.subname, &m_command);
+        ::tableRPC.appendCommand(m_command.name, &m_command);
     }
 
     void disconnect() override final
     {
         if (m_wrapped_command) {
             m_wrapped_command = nullptr;
-            ::tableRPC.removeCommand(m_command.name, m_command.subname, &m_command);
+            ::tableRPC.removeCommand(m_command.name, &m_command);
         }
     }
 
@@ -762,8 +765,8 @@ public:
     std::optional<int> findLocatorFork(const CBlockLocator& locator) override
     {
         LOCK(cs_main);
-        const CChain& active = Assert(m_node.chainman)->ActiveChain();
-        if (CBlockIndex* fork = m_node.chainman->m_blockman.FindForkInGlobalIndex(active, locator)) {
+        const CChainState& active = Assert(m_node.chainman)->ActiveChainstate();
+        if (const CBlockIndex* fork = active.FindForkInGlobalIndex(locator)) {
             return fork->nHeight;
         }
         return std::nullopt;
@@ -771,7 +774,7 @@ public:
     bool checkFinalTx(const CTransaction& tx) override
     {
         LOCK(cs_main);
-        return CheckFinalTx(m_node.chainman->ActiveChain().Tip(), tx);
+        return CheckFinalTxAtTip(*Assert(m_node.chainman->ActiveChain().Tip()), tx);
     }
     bool isInstantSendLockedTx(const uint256& hash) override
     {
@@ -783,7 +786,7 @@ public:
         if (m_node.llmq_ctx == nullptr || m_node.llmq_ctx->clhandler == nullptr) return false;
         return m_node.llmq_ctx->clhandler->HasChainLock(height, hash);
     }
-    std::vector<COutPoint> listMNCollaterials(const std::vector<std::pair<const CTransactionRef&, unsigned int>>& outputs) override
+    std::vector<COutPoint> listMNCollaterials(const std::vector<std::pair<const CTransactionRef&, uint32_t>>& outputs) override
     {
         const CBlockIndex *tip = WITH_LOCK(::cs_main, return chainman().ActiveChain().Tip());
         CDeterministicMNList mnList{};
@@ -861,7 +864,7 @@ public:
         // used to limit the range, and passing min_height that's too low or
         // max_height that's too high will not crash or change the result.
         LOCK(::cs_main);
-        if (CBlockIndex* block = chainman().m_blockman.LookupBlockIndex(block_hash)) {
+        if (const CBlockIndex* block = chainman().m_blockman.LookupBlockIndex(block_hash)) {
             if (max_height && block->nHeight >= *max_height) block = block->GetAncestor(*max_height);
             for (; block->nStatus & BLOCK_HAVE_DATA; block = block->pprev) {
                 // Check pprev to not segfault if min_height is too low
@@ -883,7 +886,7 @@ public:
         auto it = m_node.mempool->GetIter(txid);
         return it && (*it)->GetCountWithDescendants() > 1;
     }
-    bool broadcastTransaction(const CTransactionRef& tx, const CAmount& max_tx_fee, bool relay, std::string& err_string) override
+    bool broadcastTransaction(const CTransactionRef& tx, const CAmount& max_tx_fee, bool relay, bilingual_str& err_string) override
     {
         const TransactionError err = BroadcastTransaction(m_node, tx, err_string, max_tx_fee, relay, /*wait_callback*/ false);
         // Chain clients only care about failures to accept the tx to the mempool. Disregard non-mempool related failures.
@@ -939,7 +942,7 @@ public:
     bool havePruned() override
     {
         LOCK(cs_main);
-        return ::fHavePruned;
+        return m_node.chainman->m_blockman.m_have_pruned;
     }
     bool isReadyToBroadcast() override { return !::fImporting && !::fReindex && !isInitialBlockDownload(); }
     bool isInitialBlockDownload() override {
@@ -975,6 +978,14 @@ public:
     {
         RPCRunLater(name, std::move(fn), seconds);
     }
+    util::SettingsValue getSetting(const std::string& name) override
+    {
+        return gArgs.GetSetting(name);
+    }
+    std::vector<util::SettingsValue> getSettingsList(const std::string& name) override
+    {
+        return gArgs.GetSettingsList(name);
+    }
     util::SettingsValue getRwSetting(const std::string& name) override
     {
         util::SettingsValue result;
@@ -985,7 +996,7 @@ public:
         });
         return result;
     }
-    bool updateRwSetting(const std::string& name, const util::SettingsValue& value) override
+    bool updateRwSetting(const std::string& name, const util::SettingsValue& value, bool write) override
     {
         gArgs.LockSettings([&](util::Settings& settings) {
             if (value.isNull()) {
@@ -994,16 +1005,21 @@ public:
                 settings.rw_settings[name] = value;
             }
         });
-        return gArgs.WriteSettingsFile();
+        return !write || gArgs.WriteSettingsFile();
     }
     void requestMempoolTransactions(Notifications& notifications) override
     {
         if (!m_node.mempool) return;
         LOCK2(::cs_main, m_node.mempool->cs);
         for (const CTxMemPoolEntry& entry : m_node.mempool->mapTx) {
-            notifications.transactionAddedToMempool(entry.GetSharedTx(), 0);
+            notifications.transactionAddedToMempool(entry.GetSharedTx(), /* nAcceptTime = */ 0, /* mempool_sequence = */ 0);
         }
     }
+    bool hasAssumedValidChain() override
+    {
+        return Assert(m_node.chainman)->IsSnapshotActive();
+    }
+
     NodeContext& m_node;
 };
 } // namespace

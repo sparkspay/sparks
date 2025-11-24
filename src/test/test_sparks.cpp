@@ -113,7 +113,7 @@ TestingSetup::TestingSetup(const std::string& chainName) : BasicTestingSetup(cha
         }
         {
             TxValidationState state;
-            if (!ActivateBestChain(state, m_node.sporkman, chainparams)) {
+            if (!ActivateBestChain(state, *m_node.sporkman.get(), chainparams)) {
                 throw std::runtime_error(strprintf("ActivateBestChain failed. (%s)", FormatStateMessage(state)));
             }
         }

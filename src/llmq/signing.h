@@ -6,27 +6,26 @@
 #define BITCOIN_LLMQ_SIGNING_H
 
 #include <bls/bls.h>
-#include <consensus/params.h>
 #include <gsl/pointers.h>
-#include <net_types.h>
+#include <llmq/params.h>
+#include <protocol.h>
 #include <random.h>
 #include <saltedhasher.h>
 #include <sync.h>
 #include <threadinterrupt.h>
-#include <univalue.h>
 #include <unordered_lru_cache.h>
 
 #include <unordered_map>
 
 class CActiveMasternodeManager;
 class CChainState;
-class CConnman;
 class CDataStream;
 class CDBBatch;
 class CDBWrapper;
 class CInv;
 class CNode;
 class PeerManager;
+class UniValue;
 
 using NodeId = int64_t;
 
@@ -143,8 +142,6 @@ public:
     void CleanupOldVotes(int64_t maxAge);
 
 private:
-    void MigrateRecoveredSigs();
-
     bool ReadRecoveredSig(Consensus::LLMQType llmqType, const uint256& id, CRecoveredSig& ret) const;
     void RemoveRecoveredSig(CDBBatch& batch, Consensus::LLMQType llmqType, const uint256& id, bool deleteHashKey, bool deleteTimeKey);
 };
@@ -154,7 +151,7 @@ class CRecoveredSigsListener
 public:
     virtual ~CRecoveredSigsListener() = default;
 
-    virtual void HandleNewRecoveredSig(const CRecoveredSig& recoveredSig) = 0;
+    [[nodiscard]] virtual MessageProcessingResult HandleNewRecoveredSig(const CRecoveredSig& recoveredSig) = 0;
 };
 
 class CSigningManager
@@ -162,11 +159,9 @@ class CSigningManager
 private:
 
     CRecoveredSigsDb db;
-    CConnman& connman;
     const CActiveMasternodeManager* const m_mn_activeman;
     const CChainState& m_chainstate;
     const CQuorumManager& qman;
-    const std::unique_ptr<PeerManager>& m_peerman;
 
     mutable Mutex cs_pending;
     // Incoming and not verified yet
@@ -181,13 +176,13 @@ private:
     std::vector<CRecoveredSigsListener*> recoveredSigsListeners GUARDED_BY(cs_listeners);
 
 public:
-    CSigningManager(CConnman& _connman, const CActiveMasternodeManager* const mn_activeman, const CChainState& chainstate,
-                    const CQuorumManager& _qman, const std::unique_ptr<PeerManager>& peerman, bool fMemory, bool fWipe);
+    CSigningManager(const CActiveMasternodeManager* const mn_activeman, const CChainState& chainstate,
+                    const CQuorumManager& _qman, bool fMemory, bool fWipe);
 
     bool AlreadyHave(const CInv& inv) const;
     bool GetRecoveredSigForGetData(const uint256& hash, CRecoveredSig& ret) const;
 
-    PeerMsgRet ProcessMessage(const CNode& pnode, const std::string& msg_type, CDataStream& vRecv);
+    PeerMsgRet ProcessMessage(const CNode& pnode, PeerManager& peerman, const std::string& msg_type, CDataStream& vRecv);
 
     // This is called when a recovered signature was was reconstructed from another P2P message and is known to be valid
     // This is the case for example when a signature appears as part of InstantSend or ChainLocks
@@ -200,16 +195,18 @@ public:
     void TruncateRecoveredSig(Consensus::LLMQType llmqType, const uint256& id);
 
 private:
-    PeerMsgRet ProcessMessageRecoveredSig(const CNode& pfrom, const std::shared_ptr<const CRecoveredSig>& recoveredSig);
+    PeerMsgRet ProcessMessageRecoveredSig(const CNode& pfrom, PeerManager& peerman,
+                                          const std::shared_ptr<const CRecoveredSig>& recoveredSig);
 
     void CollectPendingRecoveredSigsToVerify(size_t maxUniqueSessions,
             std::unordered_map<NodeId, std::list<std::shared_ptr<const CRecoveredSig>>>& retSigShares,
             std::unordered_map<std::pair<Consensus::LLMQType, uint256>, CQuorumCPtr, StaticSaltedHasher>& retQuorums);
-    void ProcessPendingReconstructedRecoveredSigs();
-    bool ProcessPendingRecoveredSigs(); // called from the worker thread of CSigSharesManager
+    void ProcessPendingReconstructedRecoveredSigs(PeerManager& peerman);
+    bool ProcessPendingRecoveredSigs(PeerManager& peerman); // called from the worker thread of CSigSharesManager
 public:
     // TODO - should not be public!
-    void ProcessRecoveredSig(const std::shared_ptr<const CRecoveredSig>& recoveredSig);
+    void ProcessRecoveredSig(const std::shared_ptr<const CRecoveredSig>& recoveredSig, PeerManager& peerman);
+
 private:
     void Cleanup(); // called from the worker thread of CSigSharesManager
 
@@ -232,10 +229,10 @@ public:
 private:
     std::thread workThread;
     CThreadInterrupt workInterrupt;
-    void WorkThreadMain();
+    void WorkThreadMain(PeerManager& peerman);
 
 public:
-    void StartWorkerThread();
+    void StartWorkerThread(PeerManager& peerman);
     void StopWorkerThread();
     void InterruptWorkerThread();
 };

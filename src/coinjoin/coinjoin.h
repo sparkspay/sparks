@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2024 The Dash Core developers
+// Copyright (c) 2014-2025 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -25,15 +25,16 @@
 
 class CActiveMasternodeManager;
 class CChainState;
-class CConnman;
 class CBLSPublicKey;
 class CBlockIndex;
+class ChainstateManager;
 class CMasternodeSync;
 class CTxMemPool;
 class TxValidationState;
 
 namespace llmq {
 class CChainLocksHandler;
+class CInstantSendManager;
 } // namespace llmq
 
 extern RecursiveMutex cs_main;
@@ -207,6 +208,7 @@ public:
         }
     }
 
+    [[nodiscard]] uint256 GetHash() const;
     [[nodiscard]] uint256 GetSignatureHash() const;
     /** Sign this mixing transaction
      *  return true if all conditions are met:
@@ -218,8 +220,6 @@ public:
     bool Sign(const CActiveMasternodeManager& mn_activeman);
     /// Check if we have a valid Masternode address
     [[nodiscard]] bool CheckSignature(const CBLSPublicKey& blsPubKey) const;
-
-    bool Relay(CConnman& connman);
 
     /// Check if a queue is too old or too far into the future
     [[nodiscard]] bool IsTimeOutOfBounds(int64_t current_time = GetAdjustedTime()) const;
@@ -310,7 +310,9 @@ protected:
 
     virtual void SetNull() EXCLUSIVE_LOCKS_REQUIRED(cs_coinjoin);
 
-    bool IsValidInOuts(CChainState& active_chainstate, const CTxMemPool& mempool, const std::vector<CTxIn>& vin, const std::vector<CTxOut>& vout, PoolMessage& nMessageIDRet, bool* fConsumeCollateralRet) const;
+    bool IsValidInOuts(CChainState& active_chainstate, const llmq::CInstantSendManager& isman,
+                       const CTxMemPool& mempool, const std::vector<CTxIn>& vin, const std::vector<CTxOut>& vout,
+                       PoolMessage& nMessageIDRet, bool* fConsumeCollateralRet) const;
 
 public:
     int nSessionDenom{0}; // Users must submit a denom matching this
@@ -341,6 +343,18 @@ public:
 
     int GetQueueSize() const EXCLUSIVE_LOCKS_REQUIRED(!cs_vecqueue) { LOCK(cs_vecqueue); return vecCoinJoinQueue.size(); }
     bool GetQueueItemAndTry(CCoinJoinQueue& dsqRet) EXCLUSIVE_LOCKS_REQUIRED(!cs_vecqueue);
+
+    bool HasQueue(const uint256& queueHash) EXCLUSIVE_LOCKS_REQUIRED(!cs_vecqueue)
+    {
+        LOCK(cs_vecqueue);
+        return std::any_of(vecCoinJoinQueue.begin(), vecCoinJoinQueue.end(),
+                           [&queueHash](auto q) { return q.GetHash() == queueHash; });
+    }
+    std::optional<CCoinJoinQueue> GetQueueFromHash(const uint256& queueHash) EXCLUSIVE_LOCKS_REQUIRED(!cs_vecqueue)
+    {
+        LOCK(cs_vecqueue);
+        return ranges::find_if_opt(vecCoinJoinQueue, [&queueHash](const auto& q) { return q.GetHash() == queueHash; });
+    }
 };
 
 // Various helpers and dstx manager implementation
@@ -355,8 +369,8 @@ namespace CoinJoin
     constexpr CAmount GetMaxPoolAmount() { return COINJOIN_ENTRY_MAX_SIZE * vecStandardDenominations.front(); }
 
     /// If the collateral is valid given by a client
-    bool IsCollateralValid(CChainState& active_chainstate, CTxMemPool& mempool, const CTransaction& txCollateral, CSporkManager& spork_manager);
-
+    bool IsCollateralValid(ChainstateManager& chainman, const llmq::CInstantSendManager& isman,
+                           const CTxMemPool& mempool, const CTransaction& txCollateral, CSporkManager& spork_manager);
 }
 
 class CDSTXManager
@@ -385,11 +399,11 @@ public:
 private:
     void CheckDSTXes(const CBlockIndex* pindex, const llmq::CChainLocksHandler& clhandler)
         EXCLUSIVE_LOCKS_REQUIRED(!cs_mapdstx);
-    void UpdateDSTXConfirmedHeight(const CTransactionRef& tx, std::optional<int> nHeight);
-
+    void UpdateDSTXConfirmedHeight(const CTransactionRef& tx, std::optional<int> nHeight)
+        EXCLUSIVE_LOCKS_REQUIRED(cs_mapdstx);
 };
 
-bool ATMPIfSaneFee(CChainState& active_chainstate, CTxMemPool& pool,
-                   const CTransactionRef &tx, CSporkManager& spork_manager, bool test_accept = false) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+bool ATMPIfSaneFee(ChainstateManager& chainman, const CTransactionRef& tx, CSporkManager& spork_manager, bool test_accept = false)
+    EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 #endif // BITCOIN_COINJOIN_COINJOIN_H

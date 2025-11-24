@@ -1,23 +1,25 @@
-// Copyright (c) 2017-2024 The Dash Core developers
+// Copyright (c) 2017-2025 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <consensus/validation.h>
 #include <evo/cbtx.h>
 #include <evo/deterministicmns.h>
+#include <evo/simplifiedmns.h>
+#include <evo/specialtx.h>
 #include <llmq/blockprocessor.h>
 #include <llmq/chainlocks.h>
 #include <llmq/commitment.h>
 #include <llmq/options.h>
+#include <llmq/quorums.h>
 #include <node/blockstorage.h>
-#include <evo/simplifiedmns.h>
-#include <evo/specialtx.h>
-#include <consensus/validation.h>
 
 #include <chain.h>
 #include <chainparams.h>
 #include <consensus/merkle.h>
 #include <deploymentstatus.h>
 #include <validation.h>
+
 
 bool CheckCbTx(const CTransaction& tx, const CBlockIndex* pindexPrev, TxValidationState& state)
 {
@@ -60,8 +62,8 @@ bool CheckCbTx(const CTransaction& tx, const CBlockIndex* pindexPrev, TxValidati
 
 // This can only be done after the block has been fully processed, as otherwise we won't have the finished MN list
 bool CheckCbTxMerkleRoots(const CBlock& block, const CBlockIndex* pindex, CDeterministicMNManager& dmnman,
-                          const llmq::CQuorumBlockProcessor& quorum_block_processor, BlockValidationState& state,
-                          const CCoinsViewCache& view)
+                          llmq::CQuorumSnapshotManager& qsnapman, const llmq::CQuorumBlockProcessor& quorum_block_processor,
+                          BlockValidationState& state, const CCoinsViewCache& view)
 {
     if (block.vtx[0]->nType != TRANSACTION_COINBASE) {
         return true;
@@ -85,7 +87,7 @@ bool CheckCbTxMerkleRoots(const CBlock& block, const CBlockIndex* pindex, CDeter
         static int64_t nTimeMerkleQuorum = 0;
 
         uint256 calculatedMerkleRoot;
-        if (!CalcCbTxMerkleRootMNList(block, pindex->pprev, calculatedMerkleRoot, dmnman, state, view)) {
+        if (!CalcCbTxMerkleRootMNList(block, pindex->pprev, calculatedMerkleRoot, state, dmnman, qsnapman, view)) {
             // pass the state returned by the function above
             return false;
         }
@@ -115,7 +117,8 @@ bool CheckCbTxMerkleRoots(const CBlock& block, const CBlockIndex* pindex, CDeter
 }
 
 bool CalcCbTxMerkleRootMNList(const CBlock& block, const CBlockIndex* pindexPrev, uint256& merkleRootRet,
-                              CDeterministicMNManager& dmnman, BlockValidationState& state, const CCoinsViewCache& view)
+                              BlockValidationState& state, CDeterministicMNManager& dmnman,
+                              llmq::CQuorumSnapshotManager& qsnapman, const CCoinsViewCache& view)
 {
     try {
         static std::atomic<int64_t> nTimeDMN = 0;
@@ -125,7 +128,7 @@ bool CalcCbTxMerkleRootMNList(const CBlock& block, const CBlockIndex* pindexPrev
         int64_t nTime1 = GetTimeMicros();
 
         CDeterministicMNList tmpMNList;
-        if (!dmnman.BuildNewListFromBlock(block, pindexPrev, state, view, tmpMNList, false)) {
+        if (!dmnman.BuildNewListFromBlock(block, pindexPrev, state, view, tmpMNList, qsnapman, false)) {
             // pass the state returned by the function above
             return false;
         }
@@ -330,7 +333,7 @@ bool CalcCbTxMerkleRootQuorums(const CBlock& block, const CBlockIndex* pindexPre
 }
 
 bool CheckCbTxBestChainlock(const CBlock& block, const CBlockIndex* pindex,
-                            const llmq::CChainLocksHandler& chainlock_handler, BlockValidationState& state, const bool check_clhdiff)
+                            const llmq::CChainLocksHandler& chainlock_handler, BlockValidationState& state)
 {
     if (block.vtx[0]->nType != TRANSACTION_COINBASE) {
         return true;
@@ -340,44 +343,43 @@ bool CheckCbTxBestChainlock(const CBlock& block, const CBlockIndex* pindex,
     if (!opt_cbTx) {
         return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-cbtx-payload");
     }
+    const auto& cbTx = *opt_cbTx;
 
-    if (opt_cbTx->nVersion < CCbTx::Version::CLSIG_AND_BALANCE) {
+    if (cbTx.nVersion < CCbTx::Version::CLSIG_AND_BALANCE) {
         return true;
     }
 
     auto best_clsig = chainlock_handler.GetBestChainLock();
-    if (best_clsig.getHeight() == pindex->nHeight - 1 && opt_cbTx->bestCLHeightDiff == 0 && opt_cbTx->bestCLSignature == best_clsig.getSig()) {
+    if (best_clsig.getHeight() == pindex->nHeight - 1 && cbTx.bestCLHeightDiff == 0 && cbTx.bestCLSignature == best_clsig.getSig()) {
         // matches our best clsig which still hold values for the previous block
         return true;
     }
 
-    if (check_clhdiff) {
-        auto prevBlockCoinbaseChainlock = GetNonNullCoinbaseChainlock(pindex->pprev);
-        // If std::optional prevBlockCoinbaseChainlock is empty, then up to the previous block, coinbase Chainlock is null.
-        if (prevBlockCoinbaseChainlock.has_value()) {
-            // Previous block Coinbase has a non-null Chainlock: current block's Chainlock must be non-null and at least as new as the previous one
-            if (!opt_cbTx->bestCLSignature.IsValid()) {
-                // IsNull() doesn't exist for CBLSSignature: we assume that a non valid BLS sig is null
-                return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-cbtx-null-clsig");
-            }
-            if (opt_cbTx->bestCLHeightDiff > prevBlockCoinbaseChainlock.value().second + 1) {
-                return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-cbtx-older-clsig");
-            }
+    const auto prevBlockCoinbaseChainlock = GetNonNullCoinbaseChainlock(pindex->pprev);
+    // If std::optional prevBlockCoinbaseChainlock is empty, then up to the previous block, coinbase Chainlock is null.
+    if (prevBlockCoinbaseChainlock.has_value()) {
+        // Previous block Coinbase has a non-null Chainlock: current block's Chainlock must be non-null and at least as new as the previous one
+        if (!cbTx.bestCLSignature.IsValid()) {
+            // IsNull() doesn't exist for CBLSSignature: we assume that a non valid BLS sig is null
+            return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-cbtx-null-clsig");
+        }
+        if (cbTx.bestCLHeightDiff > prevBlockCoinbaseChainlock.value().second + 1) {
+            return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-cbtx-older-clsig");
         }
     }
 
     // IsNull() doesn't exist for CBLSSignature: we assume that a valid BLS sig is non-null
-    if (opt_cbTx->bestCLSignature.IsValid()) {
-        int curBlockCoinbaseCLHeight = pindex->nHeight - static_cast<int>(opt_cbTx->bestCLHeightDiff) - 1;
-        if (best_clsig.getHeight() == curBlockCoinbaseCLHeight && best_clsig.getSig() == opt_cbTx->bestCLSignature) {
+    if (cbTx.bestCLSignature.IsValid()) {
+        int curBlockCoinbaseCLHeight = pindex->nHeight - static_cast<int>(cbTx.bestCLHeightDiff) - 1;
+        if (best_clsig.getHeight() == curBlockCoinbaseCLHeight && best_clsig.getSig() == cbTx.bestCLSignature) {
             // matches our best (but outdated) clsig, no need to verify it again
             return true;
         }
         uint256 curBlockCoinbaseCLBlockHash = pindex->GetAncestor(curBlockCoinbaseCLHeight)->GetBlockHash();
-        if (chainlock_handler.VerifyChainLock(llmq::CChainLockSig(curBlockCoinbaseCLHeight, curBlockCoinbaseCLBlockHash, opt_cbTx->bestCLSignature)) != llmq::VerifyRecSigStatus::Valid) {
+        if (chainlock_handler.VerifyChainLock(llmq::CChainLockSig(curBlockCoinbaseCLHeight, curBlockCoinbaseCLBlockHash, cbTx.bestCLSignature)) != llmq::VerifyRecSigStatus::Valid) {
             return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-cbtx-invalid-clsig");
         }
-    } else if (opt_cbTx->bestCLHeightDiff != 0) {
+    } else if (cbTx.bestCLHeightDiff != 0) {
         // Null bestCLSignature is allowed only with bestCLHeightDiff = 0
         return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-cbtx-cldiff");
     }
@@ -447,9 +449,14 @@ std::string CCbTx::ToString() const
         creditPoolBalance / COIN, creditPoolBalance % COIN);
 }
 
-std::optional<CCbTx> GetCoinbaseTx(const CBlockIndex* pindex)
+std::optional<std::pair<CBLSSignature, uint32_t>> GetNonNullCoinbaseChainlock(const CBlockIndex* pindex)
 {
     if (pindex == nullptr) {
+        return std::nullopt;
+    }
+
+    // There's no CbTx before DIP0003 activation
+    if (!DeploymentActiveAt(*pindex, Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0003)) {
         return std::nullopt;
     }
 
@@ -458,20 +465,14 @@ std::optional<CCbTx> GetCoinbaseTx(const CBlockIndex* pindex)
         return std::nullopt;
     }
 
-    CTransactionRef cbTx = block.vtx[0];
-    return GetTxPayload<CCbTx>(*cbTx);
-}
-
-std::optional<std::pair<CBLSSignature, uint32_t>> GetNonNullCoinbaseChainlock(const CBlockIndex* pindex)
-{
-    auto opt_cbtx = GetCoinbaseTx(pindex);
+    const CTransactionRef cbTx = block.vtx[0];
+    const auto opt_cbtx = GetTxPayload<CCbTx>(*cbTx);
 
     if (!opt_cbtx.has_value()) {
         return std::nullopt;
     }
 
-    CCbTx& cbtx = opt_cbtx.value();
-
+    const CCbTx& cbtx = opt_cbtx.value();
     if (cbtx.nVersion < CCbTx::Version::CLSIG_AND_BALANCE) {
         return std::nullopt;
     }

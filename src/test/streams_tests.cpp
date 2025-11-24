@@ -2,6 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <fs.h>
 #include <streams.h>
 #include <support/allocators/zeroafterfree.h>
 #include <test/util/setup_common.h>
@@ -85,8 +86,8 @@ BOOST_AUTO_TEST_CASE(streams_vector_reader)
     BOOST_CHECK_EQUAL(reader.size(), 5U);
     BOOST_CHECK(!reader.empty());
 
-    // Read a single byte as a signed char.
-    signed char b;
+    // Read a single byte as a int8_t.
+    int8_t b;
     reader >> b;
     BOOST_CHECK_EQUAL(b, -1);
     BOOST_CHECK_EQUAL(reader.size(), 4U);
@@ -197,7 +198,9 @@ BOOST_AUTO_TEST_CASE(streams_serializedata_xor)
 
 BOOST_AUTO_TEST_CASE(streams_buffered_file)
 {
-    FILE* file = fsbridge::fopen("streams_test_tmp", "w+b");
+    fs::path streams_test_filename = m_args.GetDataDirBase() / "streams_test_tmp";
+    FILE* file = fsbridge::fopen(streams_test_filename, "w+b");
+
     // The value at each offset is the offset.
     for (uint8_t j = 0; j < 40; ++j) {
         fwrite(&j, 1, 1, file);
@@ -251,7 +254,7 @@ BOOST_AUTO_TEST_CASE(streams_buffered_file)
         BOOST_CHECK(false);
     } catch (const std::exception& e) {
         BOOST_CHECK(strstr(e.what(),
-                        "Read attempted past buffer limit") != nullptr);
+                           "Attempt to position past buffer limit") != nullptr);
     }
     // The default argument removes the limit completely.
     BOOST_CHECK(bf.SetLimit());
@@ -320,12 +323,61 @@ BOOST_AUTO_TEST_CASE(streams_buffered_file)
     BOOST_CHECK(!bf.SetPos(0));
     // But we should now be positioned at least as far back as allowed
     // by the rewind window (relative to our farthest read position, 40).
-    BOOST_CHECK(bf.GetPos() <= 30);
+    BOOST_CHECK(bf.GetPos() <= 30U);
 
     // We can explicitly close the file, or the destructor will do it.
     bf.fclose();
 
-    fs::remove("streams_test_tmp");
+    fs::remove(streams_test_filename);
+}
+
+BOOST_AUTO_TEST_CASE(streams_buffered_file_skip)
+{
+    fs::path streams_test_filename = m_args.GetDataDirBase() / "streams_test_tmp";
+    FILE* file = fsbridge::fopen(streams_test_filename, "w+b");
+    // The value at each offset is the byte offset (e.g. byte 1 in the file has the value 0x01).
+    for (uint8_t j = 0; j < 40; ++j) {
+        fwrite(&j, 1, 1, file);
+    }
+    rewind(file);
+
+    // The buffer is 25 bytes, allow rewinding 10 bytes.
+    CBufferedFile bf(file, 25, 10, 222, 333);
+
+    uint8_t i;
+    // This is like bf >> (7-byte-variable), in that it will cause data
+    // to be read from the file into memory, but it's not copied to us.
+    bf.SkipTo(7);
+    BOOST_CHECK_EQUAL(bf.GetPos(), 7U);
+    bf >> i;
+    BOOST_CHECK_EQUAL(i, 7);
+
+    // The bytes in the buffer up to offset 7 are valid and can be read.
+    BOOST_CHECK(bf.SetPos(0));
+    bf >> i;
+    BOOST_CHECK_EQUAL(i, 0);
+    bf >> i;
+    BOOST_CHECK_EQUAL(i, 1);
+
+    bf.SkipTo(11);
+    bf >> i;
+    BOOST_CHECK_EQUAL(i, 11);
+
+    // SkipTo() honors the transfer limit; we can't position beyond the limit.
+    bf.SetLimit(13);
+    try {
+        bf.SkipTo(14);
+        BOOST_CHECK(false);
+    } catch (const std::exception& e) {
+        BOOST_CHECK(strstr(e.what(), "Attempt to position past buffer limit") != nullptr);
+    }
+
+    // We can position exactly to the transfer limit.
+    bf.SkipTo(13);
+    BOOST_CHECK_EQUAL(bf.GetPos(), 13U);
+
+    bf.fclose();
+    fs::remove(streams_test_filename);
 }
 
 BOOST_AUTO_TEST_CASE(streams_buffered_file_rand)
@@ -333,8 +385,9 @@ BOOST_AUTO_TEST_CASE(streams_buffered_file_rand)
     // Make this test deterministic.
     SeedInsecureRand(SeedRand::ZEROS);
 
+    fs::path streams_test_filename = m_args.GetDataDirBase() / "streams_test_tmp";
     for (int rep = 0; rep < 50; ++rep) {
-        FILE* file = fsbridge::fopen("streams_test_tmp", "w+b");
+        FILE* file = fsbridge::fopen(streams_test_filename, "w+b");
         size_t fileSize = InsecureRandRange(256);
         for (uint8_t i = 0; i < fileSize; ++i) {
             fwrite(&i, 1, 1, file);
@@ -358,7 +411,7 @@ BOOST_AUTO_TEST_CASE(streams_buffered_file_rand)
             // sizes; the boundaries of the objects can interact arbitrarily
             // with the CBufferFile's internal buffer. These first three
             // cases simulate objects of various sizes (1, 2, 5 bytes).
-            switch (InsecureRandRange(5)) {
+            switch (InsecureRandRange(6)) {
             case 0: {
                 uint8_t a[1];
                 if (currentPos + 1 > fileSize)
@@ -396,6 +449,16 @@ BOOST_AUTO_TEST_CASE(streams_buffered_file_rand)
                 break;
             }
             case 3: {
+                // SkipTo is similar to the "read" cases above, except
+                // we don't receive the data.
+                size_t skip_length{static_cast<size_t>(InsecureRandRange(5))};
+                if (currentPos + skip_length > fileSize) continue;
+                bf.SetLimit(currentPos + skip_length);
+                bf.SkipTo(currentPos + skip_length);
+                currentPos += skip_length;
+                break;
+            }
+            case 4: {
                 // Find a byte value (that is at or ahead of the current position).
                 size_t find = currentPos + InsecureRandRange(8);
                 if (find >= fileSize)
@@ -412,7 +475,7 @@ BOOST_AUTO_TEST_CASE(streams_buffered_file_rand)
                 currentPos++;
                 break;
             }
-            case 4: {
+            case 5: {
                 size_t requestPos = InsecureRandRange(maxPos + 4);
                 bool okay = bf.SetPos(requestPos);
                 // The new position may differ from the requested position
@@ -435,7 +498,7 @@ BOOST_AUTO_TEST_CASE(streams_buffered_file_rand)
                 maxPos = currentPos;
         }
     }
-    fs::remove("streams_test_tmp");
+    fs::remove(streams_test_filename);
 }
 
 BOOST_AUTO_TEST_CASE(streams_hashed)

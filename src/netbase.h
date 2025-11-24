@@ -9,7 +9,7 @@
 #include <config/bitcoin-config.h>
 #endif
 
-#include <compat.h>
+#include <compat/compat.h>
 #include <netaddress.h>
 #include <serialize.h>
 #include <util/sock.h>
@@ -109,24 +109,25 @@ extern DNSLookupFn g_dns_lookup;
  * @param name    The string representing a host. Could be a name or a numerical
  *                IP address (IPv6 addresses in their bracketed form are
  *                allowed).
- * @param[out] vIP The resulting network addresses to which the specified host
- *                 string resolved.
  *
- * @returns Whether or not the specified host string successfully resolved to
- *          any resulting network addresses.
+ * @returns The resulting network addresses to which the specified host
+ *          string resolved.
  *
- * @see Lookup(const std::string&, std::vector<CService>&, uint16_t, bool, unsigned int, DNSLookupFn)
+ * @see Lookup(const std::string&, uint16_t, bool, unsigned int, DNSLookupFn)
  *      for additional parameter descriptions.
  */
-bool LookupHost(const std::string& name, std::vector<CNetAddr>& vIP, unsigned int nMaxSolutions, bool fAllowLookup, DNSLookupFn dns_lookup_function = g_dns_lookup);
+std::vector<CNetAddr> LookupHost(const std::string& name, unsigned int nMaxSolutions, bool fAllowLookup, DNSLookupFn dns_lookup_function = g_dns_lookup);
 
 /**
  * Resolve a host string to its first corresponding network address.
  *
- * @see LookupHost(const std::string&, std::vector<CNetAddr>&, uint16_t, bool, DNSLookupFn)
+ * @returns The resulting network address to which the specified host
+ *          string resolved or std::nullopt if host does not resolve to an address.
+ *
+ * @see LookupHost(const std::string&, unsigned int, bool, DNSLookupFn)
  *      for additional parameter descriptions.
  */
-bool LookupHost(const std::string& name, CNetAddr& addr, bool fAllowLookup, DNSLookupFn dns_lookup_function = g_dns_lookup);
+std::optional<CNetAddr> LookupHost(const std::string& name, bool fAllowLookup, DNSLookupFn dns_lookup_function = g_dns_lookup);
 
 /**
  * Resolve a service string to its corresponding service.
@@ -136,8 +137,6 @@ bool LookupHost(const std::string& name, CNetAddr& addr, bool fAllowLookup, DNSL
  *                disambiguated bracketed form), optionally followed by a uint16_t port
  *                number. (e.g. example.com:8333 or
  *                [2001:db8:85a3:8d3:1319:8a2e:370:7348]:420)
- * @param[out] vAddr The resulting services to which the specified service string
- *                   resolved.
  * @param portDefault The default port for resulting services if not specified
  *                    by the service string.
  * @param fAllowLookup Whether or not hostname lookups are permitted. If yes,
@@ -145,18 +144,18 @@ bool LookupHost(const std::string& name, CNetAddr& addr, bool fAllowLookup, DNSL
  * @param nMaxSolutions The maximum number of results we want, specifying 0
  *                      means "as many solutions as we get."
  *
- * @returns Whether or not the service string successfully resolved to any
- *          resulting services.
+ * @returns The resulting services to which the specified service string
+ *          resolved.
  */
-bool Lookup(const std::string& name, std::vector<CService>& vAddr, uint16_t portDefault, bool fAllowLookup, unsigned int nMaxSolutions, DNSLookupFn dns_lookup_function = g_dns_lookup);
+std::vector<CService> Lookup(const std::string& name, uint16_t portDefault, bool fAllowLookup, unsigned int nMaxSolutions, DNSLookupFn dns_lookup_function = g_dns_lookup);
 
 /**
  * Resolve a service string to its first corresponding service.
  *
- * @see Lookup(const std::string&, std::vector<CService>&, uint16_t, bool, unsigned int, DNSLookupFn)
+ * @see Lookup(const std::string&, uint16_t, bool, unsigned int, DNSLookupFn)
  *      for additional parameter descriptions.
  */
-bool Lookup(const std::string& name, CService& addr, uint16_t portDefault, bool fAllowLookup, DNSLookupFn dns_lookup_function = g_dns_lookup);
+std::optional<CService> Lookup(const std::string& name, uint16_t portDefault, bool fAllowLookup, DNSLookupFn dns_lookup_function = g_dns_lookup);
 
 /**
  * Resolve a service string with a numeric IP to its first corresponding
@@ -164,7 +163,7 @@ bool Lookup(const std::string& name, CService& addr, uint16_t portDefault, bool 
  *
  * @returns The resulting CService if the resolution was successful, [::]:0 otherwise.
  *
- * @see Lookup(const std::string&, std::vector<CService>&, uint16_t, bool, unsigned int, DNSLookupFn)
+ * @see Lookup(const std::string&, uint16_t, bool, unsigned int, DNSLookupFn)
  *      for additional parameter descriptions.
  */
 CService LookupNumeric(const std::string& name, uint16_t portDefault = 0, DNSLookupFn dns_lookup_function = g_dns_lookup);
@@ -173,14 +172,14 @@ CService LookupNumeric(const std::string& name, uint16_t portDefault = 0, DNSLoo
  * Parse and resolve a specified subnet string into the appropriate internal
  * representation.
  *
- * @param strSubnet A string representation of a subnet of the form `network
- *                address [ "/", ( CIDR-style suffix | netmask ) ]`(e.g.
- *                `2001:db8::/32`, `192.0.2.0/255.255.255.0`, or `8.8.8.8`).
- * @param ret The resulting internal representation of a subnet.
- *
- * @returns Whether the operation succeeded or not.
+ * @param[in]  subnet_str  A string representation of a subnet of the form
+ *                         `network address [ "/", ( CIDR-style suffix | netmask ) ]`
+ *                         e.g. "2001:db8::/32", "192.0.2.0/255.255.255.0" or "8.8.8.8".
+ * @param[out] subnet_out  Internal subnet representation, if parsable/resolvable
+ *                         from `subnet_str`.
+ * @returns whether the operation succeeded or not.
  */
-bool LookupSubNet(const std::string& strSubnet, CSubNet& subnet, DNSLookupFn dns_lookup_function = g_dns_lookup);
+bool LookupSubNet(const std::string& subnet_str, CSubNet& subnet_out);
 
 /**
  * Create a TCP socket in the given address family.
@@ -225,8 +224,6 @@ bool ConnectSocketDirectly(const CService &addrConnect, const Sock& sock, int nT
  */
 bool ConnectThroughProxy(const Proxy& proxy, const std::string& strDest, uint16_t port, const Sock& sock, int nTimeout, bool& outProxyConnectionFailed);
 
-/** Enable non-blocking mode for a socket */
-bool SetSocketNonBlocking(const SOCKET& hSocket);
 void InterruptSocks5(bool interrupt);
 
 /**
@@ -237,7 +234,7 @@ void InterruptSocks5(bool interrupt);
  * @param port The destination port.
  * @param auth The credentials with which to authenticate with the specified
  *             SOCKS5 proxy.
- * @param sock The SOCKS5 proxy socket.
+ * @param socket The SOCKS5 proxy socket.
  *
  * @returns Whether or not the operation succeeded.
  *
@@ -248,5 +245,17 @@ void InterruptSocks5(bool interrupt);
  *      Version 5</a>
  */
 bool Socks5(const std::string& strDest, uint16_t port, const ProxyCredentials* auth, const Sock& socket);
+
+//! Upper range of ports classified as "System Ports" under RFC 6335
+static constexpr uint16_t PRIVILEGED_PORTS_THRESHOLD{1023};
+
+/**
+ * Determine if a port is "bad" from the perspective of attempting to connect
+ * to a node on that port.
+ * @see doc/p2p-bad-ports.md
+ * @param[in] port Port to check.
+ * @returns whether the port is bad
+ */
+bool IsBadPort(uint16_t port);
 
 #endif // BITCOIN_NETBASE_H

@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2024 The Dash Core developers
+// Copyright (c) 2014-2025 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -86,7 +86,8 @@ void CCoinJoinServer::ProcessDSACCEPT(CNode& peer, CDataStream& vRecv)
         int64_t nDsqThreshold = m_mn_metaman.GetDsqThreshold(dmn->proTxHash, mnList.GetValidMNsCount());
         if (nLastDsq != 0 && nDsqThreshold > m_mn_metaman.GetDsqCount()) {
             if (fLogIPs) {
-                LogPrint(BCLog::COINJOIN, "DSACCEPT -- last dsq too recent, must wait: peer=%d, addr=%s\n", peer.GetId(), peer.addr.ToString());
+                LogPrint(BCLog::COINJOIN, "DSACCEPT -- last dsq too recent, must wait: peer=%d, addr=%s\n",
+                         peer.GetId(), peer.addr.ToStringAddrPort());
             } else {
                 LogPrint(BCLog::COINJOIN, "DSACCEPT -- last dsq too recent, must wait: peer=%d\n", peer.GetId());
             }
@@ -116,6 +117,11 @@ PeerMsgRet CCoinJoinServer::ProcessDSQUEUE(const CNode& peer, CDataStream& vRecv
 
     CCoinJoinQueue dsq;
     vRecv >> dsq;
+
+    {
+        LOCK(cs_main);
+        Assert(m_peerman)->EraseObjectRequest(peer.GetId(), CInv(MSG_DSQ, dsq.GetHash()));
+    }
 
     if (dsq.masternodeOutpoint.IsNull() && dsq.m_protxHash.IsNull()) {
         return tl::unexpected{100};
@@ -168,17 +174,19 @@ PeerMsgRet CCoinJoinServer::ProcessDSQUEUE(const CNode& peer, CDataStream& vRecv
         LogPrint(BCLog::COINJOIN, "DSQUEUE -- nLastDsq: %d  nDsqThreshold: %d  nDsqCount: %d\n", nLastDsq, nDsqThreshold, m_mn_metaman.GetDsqCount());
         //don't allow a few nodes to dominate the queuing process
         if (nLastDsq != 0 && nDsqThreshold > m_mn_metaman.GetDsqCount()) {
-            LogPrint(BCLog::COINJOIN, "DSQUEUE -- Masternode %s is sending too many dsq messages\n", dmn->pdmnState->addr.ToString());
+            LogPrint(BCLog::COINJOIN, "DSQUEUE -- Masternode %s is sending too many dsq messages\n",
+                     dmn->pdmnState->addr.ToStringAddrPort());
             return {};
         }
         m_mn_metaman.AllowMixing(dmn->proTxHash);
 
-        LogPrint(BCLog::COINJOIN, "DSQUEUE -- new CoinJoin queue (%s) from masternode %s\n", dsq.ToString(), dmn->pdmnState->addr.ToString());
+        LogPrint(BCLog::COINJOIN, "DSQUEUE -- new CoinJoin queue (%s) from masternode %s\n", dsq.ToString(),
+                 dmn->pdmnState->addr.ToStringAddrPort());
 
         TRY_LOCK(cs_vecqueue, lockRecv);
         if (!lockRecv) return {};
         vecCoinJoinQueue.push_back(dsq);
-        dsq.Relay(connman);
+        m_peerman->RelayDSQ(dsq);
     }
     return {};
 }
@@ -323,8 +331,8 @@ void CCoinJoinServer::CommitFinalTransaction()
         // See if the transaction is valid
         TRY_LOCK(cs_main, lockMain);
         mempool.PrioritiseTransaction(hashTx, 0.1 * COIN);
-        if (!lockMain || !ATMPIfSaneFee(m_chainstate, mempool, finalTransaction, m_spork_manager)) {
-            LogPrint(BCLog::COINJOIN, "CCoinJoinServer::CommitFinalTransaction -- AcceptToMemoryPool() error: Transaction not valid\n");
+        if (!lockMain || !ATMPIfSaneFee(m_chainman, finalTransaction, m_spork_manager)) {
+            LogPrint(BCLog::COINJOIN, "CCoinJoinServer::CommitFinalTransaction -- ATMPIfSaneFee() error: Transaction not valid\n");
             WITH_LOCK(cs_coinjoin, SetNull());
             // not much we can do in this case, just notify clients
             RelayCompletedTransaction(ERR_INVALID_TX);
@@ -455,8 +463,8 @@ void CCoinJoinServer::ChargeRandomFees() const
 void CCoinJoinServer::ConsumeCollateral(const CTransactionRef& txref) const
 {
     LOCK(cs_main);
-    if (!ATMPIfSaneFee(m_chainstate, mempool, txref, m_spork_manager, false /* bypass_limits */)) {
-        LogPrint(BCLog::COINJOIN, "%s -- AcceptToMemoryPool failed\n", __func__);
+    if (!ATMPIfSaneFee(m_chainman, txref, m_spork_manager)) {
+        LogPrint(BCLog::COINJOIN, "%s -- ATMPIfSaneFee failed\n", __func__);
     } else {
         Assert(m_peerman)->RelayTransaction(txref->GetHash());
         LogPrint(BCLog::COINJOIN, "%s -- Collateral was consumed\n", __func__);
@@ -511,7 +519,8 @@ void CCoinJoinServer::CheckForCompleteQueue()
         LogPrint(BCLog::COINJOIN, "CCoinJoinServer::CheckForCompleteQueue -- queue is ready, signing and relaying (%s) " /* Continued */
                                      "with %d participants\n", dsq.ToString(), vecSessionCollaterals.size());
         dsq.Sign(*m_mn_activeman);
-        dsq.Relay(connman);
+        m_peerman->RelayDSQ(dsq);
+        WITH_LOCK(cs_vecqueue, vecCoinJoinQueue.push_back(dsq));
     }
 }
 
@@ -547,7 +556,7 @@ bool CCoinJoinServer::IsInputScriptSigValid(const CTxIn& txin) const
         txNew.vin[nTxInIndex].scriptSig = txin.scriptSig;
         LogPrint(BCLog::COINJOIN, "CCoinJoinServer::IsInputScriptSigValid -- verifying scriptSig %s\n", ScriptToAsmStr(txin.scriptSig).substr(0, 24));
         // TODO we're using amount=0 here but we should use the correct amount. This works because Sparks ignores the amount while signing/verifying (only used in Bitcoin/Segwit)
-        if (!VerifyScript(txNew.vin[nTxInIndex].scriptSig, sigPubKey, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, MutableTransactionSignatureChecker(&txNew, nTxInIndex, 0))) {
+        if (!VerifyScript(txNew.vin[nTxInIndex].scriptSig, sigPubKey, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, MutableTransactionSignatureChecker(&txNew, nTxInIndex, 0, MissingDataBehavior::ASSERT_FAIL))) {
             LogPrint(BCLog::COINJOIN, "CCoinJoinServer::IsInputScriptSigValid -- VerifyScript() failed on input %d\n", nTxInIndex);
             return false;
         }
@@ -574,7 +583,7 @@ bool CCoinJoinServer::AddEntry(const CCoinJoinEntry& entry, PoolMessage& nMessag
         return false;
     }
 
-    if (!CoinJoin::IsCollateralValid(m_chainstate, mempool, *entry.txCollateral, m_spork_manager)) {
+    if (!CoinJoin::IsCollateralValid(m_chainman, m_isman, mempool, *entry.txCollateral, m_spork_manager)) {
         LogPrint(BCLog::COINJOIN, "CCoinJoinServer::%s -- ERROR: collateral not valid!\n", __func__);
         nMessageIDRet = ERR_INVALID_COLLATERAL;
         return false;
@@ -608,7 +617,8 @@ bool CCoinJoinServer::AddEntry(const CCoinJoinEntry& entry, PoolMessage& nMessag
     }
 
     bool fConsumeCollateral{false};
-    if (!IsValidInOuts(m_chainstate, mempool, vin, entry.vecTxOut, nMessageIDRet, &fConsumeCollateral)) {
+    if (!IsValidInOuts(m_chainman.ActiveChainstate(), m_isman, mempool, vin, entry.vecTxOut, nMessageIDRet,
+                       &fConsumeCollateral)) {
         LogPrint(BCLog::COINJOIN, "CCoinJoinServer::%s -- ERROR! IsValidInOuts() failed: %s\n", __func__, CoinJoin::GetMessageByID(nMessageIDRet).translated);
         if (fConsumeCollateral) {
             ConsumeCollateral(entry.txCollateral);
@@ -685,7 +695,7 @@ bool CCoinJoinServer::IsAcceptableDSA(const CCoinJoinAccept& dsa, PoolMessage& n
     }
 
     // check collateral
-    if (!fUnitTest && !CoinJoin::IsCollateralValid(m_chainstate, mempool, CTransaction(dsa.txCollateral), m_spork_manager)) {
+    if (!fUnitTest && !CoinJoin::IsCollateralValid(m_chainman, m_isman, mempool, CTransaction(dsa.txCollateral), m_spork_manager)) {
         LogPrint(BCLog::COINJOIN, "CCoinJoinServer::%s -- collateral not valid!\n", __func__);
         nMessageIDRet = ERR_INVALID_COLLATERAL;
         return false;
@@ -724,7 +734,7 @@ bool CCoinJoinServer::CreateNewSession(const CCoinJoinAccept& dsa, PoolMessage& 
                             GetAdjustedTime(), false);
         LogPrint(BCLog::COINJOIN, "CCoinJoinServer::CreateNewSession -- signing and relaying new queue: %s\n", dsq.ToString());
         dsq.Sign(*m_mn_activeman);
-        dsq.Relay(connman);
+        m_peerman->RelayDSQ(dsq);
         LOCK(cs_vecqueue);
         vecCoinJoinQueue.push_back(dsq);
     }

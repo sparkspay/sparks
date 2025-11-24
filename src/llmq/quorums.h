@@ -1,22 +1,21 @@
-// Copyright (c) 2018-2024 The Dash Core developers
+// Copyright (c) 2018-2025 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_LLMQ_QUORUMS_H
 #define BITCOIN_LLMQ_QUORUMS_H
 
-#include <chain.h>
-#include <consensus/params.h>
-#include <saltedhasher.h>
-#include <threadinterrupt.h>
-#include <unordered_lru_cache.h>
+#include <llmq/params.h>
 
 #include <bls/bls.h>
 #include <bls/bls_worker.h>
-
-#include <evo/evodb.h>
-#include <net_types.h>
+#include <ctpl_stl.h>
 #include <gsl/pointers.h>
+#include <protocol.h>
+#include <saltedhasher.h>
+#include <threadinterrupt.h>
+#include <unordered_lru_cache.h>
+#include <util/time.h>
 
 #include <atomic>
 #include <map>
@@ -24,10 +23,14 @@
 
 class CActiveMasternodeManager;
 class CBlockIndex;
+class CChain;
 class CChainState;
 class CConnman;
+class CDataStream;
 class CDeterministicMN;
 class CDeterministicMNManager;
+class CDBWrapper;
+class CEvoDB;
 class CMasternodeSync;
 class CNode;
 class CSporkManager;
@@ -45,6 +48,7 @@ enum class VerifyRecSigStatus
 
 class CDKGSessionManager;
 class CQuorumBlockProcessor;
+class CQuorumSnapshotManager;
 
 /**
  * Object used as a key to store CQuorumDataRequest
@@ -217,8 +221,8 @@ public:
 
 private:
     bool HasVerificationVectorInternal() const EXCLUSIVE_LOCKS_REQUIRED(cs_vvec_shShare);
-    void WriteContributions(CEvoDB& evoDb) const;
-    bool ReadContributions(CEvoDB& evoDb);
+    void WriteContributions(CDBWrapper& db) const;
+    bool ReadContributions(const CDBWrapper& db);
 };
 
 /**
@@ -230,13 +234,15 @@ private:
 class CQuorumManager
 {
 private:
+    mutable Mutex cs_db;
+    std::unique_ptr<CDBWrapper> db GUARDED_BY(cs_db){nullptr};
+
     CBLSWorker& blsWorker;
     CChainState& m_chainstate;
-    CConnman& connman;
     CDeterministicMNManager& m_dmnman;
     CDKGSessionManager& dkgManager;
-    CEvoDB& m_evoDb;
     CQuorumBlockProcessor& quorumBlockProcessor;
+    CQuorumSnapshotManager& m_qsnapman;
     const CActiveMasternodeManager* const m_mn_activeman;
     const CMasternodeSync& m_mn_sync;
     const CSporkManager& m_sporkman;
@@ -248,27 +254,33 @@ private:
     mutable Mutex cs_cleanup;
     mutable std::map<Consensus::LLMQType, unordered_lru_cache<uint256, uint256, StaticSaltedHasher>> cleanupQuorumsCache GUARDED_BY(cs_cleanup);
 
+    mutable Mutex cs_quorumBaseBlockIndexCache;
+    // On mainnet, we have around 62 quorums active at any point; let's cache a little more than double that to be safe.
+    mutable unordered_lru_cache<uint256 /*quorum_hash*/, const CBlockIndex* /*pindex*/, StaticSaltedHasher, 128 /*max_size*/> quorumBaseBlockIndexCache;
+
     mutable ctpl::thread_pool workerPool;
     mutable CThreadInterrupt quorumThreadInterrupt;
 
 public:
-    CQuorumManager(CBLSWorker& _blsWorker, CChainState& chainstate, CConnman& _connman, CDeterministicMNManager& dmnman,
+    CQuorumManager(CBLSWorker& _blsWorker, CChainState& chainstate, CDeterministicMNManager& dmnman,
                    CDKGSessionManager& _dkgManager, CEvoDB& _evoDb, CQuorumBlockProcessor& _quorumBlockProcessor,
-                   const CActiveMasternodeManager* const mn_activeman, const CMasternodeSync& mn_sync, const CSporkManager& sporkman);
-    ~CQuorumManager() { Stop(); };
+                   CQuorumSnapshotManager& qsnapman, const CActiveMasternodeManager* const mn_activeman,
+                   const CMasternodeSync& mn_sync, const CSporkManager& sporkman, bool unit_tests, bool wipe);
+    ~CQuorumManager();
 
     void Start();
     void Stop();
 
-    void TriggerQuorumDataRecoveryThreads(const CBlockIndex* pIndex) const;
+    void TriggerQuorumDataRecoveryThreads(CConnman& connman, const CBlockIndex* pIndex) const;
 
-    void UpdatedBlockTip(const CBlockIndex *pindexNew, bool fInitialDownload) const;
+    void UpdatedBlockTip(const CBlockIndex* pindexNew, CConnman& connman, bool fInitialDownload) const;
 
-    PeerMsgRet ProcessMessage(CNode& pfrom, const std::string& msg_type, CDataStream& vRecv);
+    PeerMsgRet ProcessMessage(CNode& pfrom, CConnman& connman, const std::string& msg_type, CDataStream& vRecv);
 
     static bool HasQuorum(Consensus::LLMQType llmqType, const CQuorumBlockProcessor& quorum_block_processor, const uint256& quorumHash);
 
-    bool RequestQuorumData(CNode* pfrom, Consensus::LLMQType llmqType, const CBlockIndex* pQuorumBaseBlockIndex, uint16_t nDataMask, const uint256& proTxHash = uint256()) const;
+    bool RequestQuorumData(CNode* pfrom, CConnman& connman, const CQuorumCPtr pQuorum, uint16_t nDataMask,
+                           const uint256& proTxHash = uint256()) const;
 
     // all these methods will lock cs_main for a short period of time
     CQuorumCPtr GetQuorum(Consensus::LLMQType llmqType, const uint256& quorumHash) const;
@@ -279,7 +291,8 @@ public:
 
 private:
     // all private methods here are cs_main-free
-    void CheckQuorumConnections(const Consensus::LLMQParams& llmqParams, const CBlockIndex *pindexNew) const;
+    void CheckQuorumConnections(CConnman& connman, const Consensus::LLMQParams& llmqParams,
+                                const CBlockIndex* pindexNew) const;
 
     CQuorumPtr BuildQuorumFromCommitment(Consensus::LLMQType llmqType, gsl::not_null<const CBlockIndex*> pQuorumBaseBlockIndex, bool populate_cache) const;
     bool BuildQuorumContributions(const CFinalCommitmentPtr& fqc, const std::shared_ptr<CQuorum>& quorum) const;
@@ -291,9 +304,11 @@ private:
     size_t GetQuorumRecoveryStartOffset(const CQuorumCPtr pQuorum, const CBlockIndex* pIndex) const;
 
     void StartCachePopulatorThread(const CQuorumCPtr pQuorum) const;
-    void StartQuorumDataRecoveryThread(const CQuorumCPtr pQuorum, const CBlockIndex* pIndex, uint16_t nDataMask) const;
+    void StartQuorumDataRecoveryThread(CConnman& connman, const CQuorumCPtr pQuorum, const CBlockIndex* pIndex,
+                                       uint16_t nDataMask) const;
 
     void StartCleanupOldQuorumDataThread(const CBlockIndex* pIndex) const;
+    void MigrateOldQuorumDB(CEvoDB& evoDb) const;
 };
 
 // when selecting a quorum for signing and verification, we use CQuorumManager::SelectQuorum with this offset as

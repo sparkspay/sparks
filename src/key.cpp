@@ -243,8 +243,7 @@ bool CKey::VerifyPubKey(const CPubKey& pubkey) const {
     unsigned char rnd[8];
     std::string str = "Bitcoin key verification\n";
     GetRandBytes(rnd);
-    uint256 hash;
-    CHash256().Write(MakeUCharSpan(str)).Write(rnd).Finalize(hash);
+    uint256 hash{Hash(str, rnd)};
     std::vector<unsigned char> vchSig;
     Sign(hash, vchSig);
     return pubkey.Verify(hash, vchSig);
@@ -349,11 +348,11 @@ bool CExtKey::Derive(CExtKey &out, unsigned int _nChild) const {
     return key.Derive(out.key, out.chaincode, _nChild, chaincode);
 }
 
-void CExtKey::SetSeed(Span<const uint8_t> seed)
+void CExtKey::SetSeed(Span<const std::byte> seed)
 {
     static const unsigned char hashkey[] = {'B','i','t','c','o','i','n',' ','s','e','e','d'};
     std::vector<unsigned char, secure_allocator<unsigned char>> vout(64);
-    CHMAC_SHA512{hashkey, sizeof(hashkey)}.Write(seed.data(), seed.size()).Finalize(vout.data());
+    CHMAC_SHA512{hashkey, sizeof(hashkey)}.Write(UCharCast(seed.data()), seed.size()).Finalize(vout.data());
     key.Set(vout.data(), vout.data() + 32, true);
     memcpy(chaincode.begin(), vout.data() + 32, 32);
     nDepth = 0;

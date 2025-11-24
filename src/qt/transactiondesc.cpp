@@ -1,5 +1,5 @@
 // Copyright (c) 2011-2019 The Bitcoin Core developers
-// Copyright (c) 2014-2022 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -26,6 +26,8 @@
 #include <stdint.h>
 #include <string>
 
+#include <QLatin1String>
+
 QString TransactionDesc::FormatTxStatus(const interfaces::WalletTx& wtx, const interfaces::WalletTxStatus& status, bool inMempool, int numBlocks)
 {
     if (!status.is_final)
@@ -44,19 +46,20 @@ QString TransactionDesc::FormatTxStatus(const interfaces::WalletTx& wtx, const i
         bool fChainLocked = status.is_chainlocked;
 
         if (nDepth == 0) {
-            strTxStatus = tr("0/unconfirmed, %1").arg((inMempool ? tr("in memory pool") : tr("not in memory pool"))) + (status.is_abandoned ? ", "+tr("abandoned") : "");
+            const QString abandoned{status.is_abandoned ? QLatin1String(", ") + tr("abandoned") : QString()};
+            strTxStatus = tr("0/unconfirmed, %1").arg((inMempool ? tr("in memory pool") : tr("not in memory pool"))) + abandoned;
         } else if (!fChainLocked && nDepth < 6) {
             strTxStatus = tr("%1/unconfirmed").arg(nDepth);
         } else {
             strTxStatus = tr("%1 confirmations").arg(nDepth);
             if (fChainLocked) {
-                strTxStatus += ", " + tr("locked via ChainLocks");
+                strTxStatus += QLatin1String(", ") + tr("locked via ChainLocks");
                 return strTxStatus;
             }
         }
 
         if (status.is_islocked) {
-            strTxStatus += ", " + tr("verified via InstantSend");
+            strTxStatus += QLatin1String(", ") + tr("verified via InstantSend");
         }
 
         return strTxStatus;

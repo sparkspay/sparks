@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 The Dash Core developers
+// Copyright (c) 2022-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,7 +10,7 @@
 /**
  * similar to python's enumerate(iterable).
  * @tparam T type of iterable, automatically deduced
- * @tparam TIter
+ * @tparam TIter begin of containter
  * @param iterable an iterable object, can be a temporary
  * @return struct containing a size_t index, and it's element in iterable
  */

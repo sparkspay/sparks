@@ -5,14 +5,8 @@
 #include <blockfilter.h>
 #include <chainparams.h>
 #include <consensus/validation.h>
-#include <evo/evodb.h>
-#include <governance/governance.h>
 #include <index/blockfilterindex.h>
-#include <llmq/blockprocessor.h>
-#include <llmq/chainlocks.h>
-#include <llmq/context.h>
-#include <llmq/instantsend.h>
-#include <miner.h>
+#include <node/miner.h>
 #include <pow.h>
 #include <script/standard.h>
 #include <spork.h>

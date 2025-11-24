@@ -1,4 +1,4 @@
-// Copyright (c) 2023-2024 The Dash Core developers
+// Copyright (c) 2023-2025 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,15 +14,18 @@
 
 class CActiveMasternodeManager;
 class CBlockPolicyEstimator;
-class CChainState;
 class CCoinJoinServer;
 class CConnman;
 class CDeterministicMNManager;
 class CDSTXManager;
+class ChainstateManager;
 class CMasternodeMetaMan;
 class CMasternodeSync;
 class CTxMemPool;
 class PeerManager;
+namespace llmq {
+class CInstantSendManager;
+};
 
 #ifdef ENABLE_WALLET
 class CCoinJoinClientQueueManager;
@@ -32,9 +35,10 @@ class CoinJoinWalletManager;
 struct CJContext {
     CJContext() = delete;
     CJContext(const CJContext&) = delete;
-    CJContext(CChainState& chainstate, CConnman& connman, CDeterministicMNManager& dmnman, CMasternodeMetaMan& mn_metaman,
-              CTxMemPool& mempool, const CActiveMasternodeManager* const mn_activeman, CSporkManager& spork_manager, const CMasternodeSync& mn_sync,
-              const std::unique_ptr<PeerManager>& peerman, bool relay_txes);
+    CJContext(ChainstateManager& chainman, CConnman& connman, CDeterministicMNManager& dmnman,
+              CMasternodeMetaMan& mn_metaman, CTxMemPool& mempool, const CActiveMasternodeManager* const mn_activeman,
+              CSporkManager& spork_manager, const CMasternodeSync& mn_sync, const llmq::CInstantSendManager& isman,
+              std::unique_ptr<PeerManager>& peerman, bool relay_txes);
     ~CJContext();
 
     const std::unique_ptr<CDSTXManager> dstxman;

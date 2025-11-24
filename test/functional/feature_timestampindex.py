@@ -33,23 +33,21 @@ class TimestampIndexTest(BitcoinTestFramework):
         self.sync_all()
 
     def run_test(self):
-        self.log.info("Test that settings can't be changed without -reindex...")
-        self.stop_node(1)
-        self.nodes[1].assert_start_raises_init_error(["-timestampindex=0"], "You need to rebuild the database using -reindex to change -timestampindex", match=ErrorMatch.PARTIAL_REGEX)
-        self.start_node(1, ["-timestampindex=0", "-reindex"])
+        self.log.info("Test that settings can be disabled without -reindex...")
+        self.restart_node(1, ["-timestampindex=0"])
         self.connect_nodes(0, 1)
         self.sync_all()
+        self.log.info("Test that settings can't be enabled without -reindex...")
         self.stop_node(1)
-        self.nodes[1].assert_start_raises_init_error(["-timestampindex"], "You need to rebuild the database using -reindex to change -timestampindex", match=ErrorMatch.PARTIAL_REGEX)
+        self.nodes[1].assert_start_raises_init_error(["-timestampindex"], "You need to rebuild the database using -reindex to enable -timestampindex", match=ErrorMatch.PARTIAL_REGEX)
         self.start_node(1, ["-timestampindex", "-reindex"])
         self.connect_nodes(0, 1)
         self.sync_all()
 
         self.log.info("Mining 5 blocks...")
-        blockhashes = self.nodes[0].generate(5)
+        blockhashes = self.generate(self.nodes[0], 5)
         low = self.nodes[0].getblock(blockhashes[0])["time"]
         high = self.nodes[0].getblock(blockhashes[4])["time"]
-        self.sync_all()
         self.log.info("Checking timestamp index...")
         hashes = self.nodes[1].getblockhashes(high, low)
         assert_equal(len(hashes), 5)

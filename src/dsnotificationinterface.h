@@ -42,8 +42,9 @@ protected:
     void NotifyHeaderTip(const CBlockIndex *pindexNew, bool fInitialDownload) override;
     void SynchronousUpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) override;
     void UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) override;
-    void TransactionAddedToMempool(const CTransactionRef& tx, int64_t nAcceptTime) override;
-    void TransactionRemovedFromMempool(const CTransactionRef& ptx, MemPoolRemovalReason reason) override;
+    void TransactionAddedToMempool(const CTransactionRef& tx, int64_t nAcceptTime, uint64_t mempool_sequence) override;
+    void TransactionRemovedFromMempool(const CTransactionRef& ptx, MemPoolRemovalReason reason,
+                                       uint64_t mempool_sequence) override;
     void BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex) override;
     void BlockDisconnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexDisconnected) override;
     void NotifyMasternodeListChanged(bool undo, const CDeterministicMNList& oldMNList, const CDeterministicMNListDiff& diff) override;
@@ -61,5 +62,7 @@ private:
     const std::unique_ptr<CJContext>& m_cj_ctx;
     CSporkManager& m_spork_manager;
 };
+
+extern std::unique_ptr<CDSNotificationInterface> g_ds_notification_interface;
 
 #endif // BITCOIN_DSNOTIFICATIONINTERFACE_H

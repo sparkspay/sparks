@@ -85,6 +85,18 @@ D GetRandomDuration(typename std::common_type<D>::type max) noexcept
 };
 constexpr auto GetRandMicros = GetRandomDuration<std::chrono::microseconds>;
 constexpr auto GetRandMillis = GetRandomDuration<std::chrono::milliseconds>;
+
+/**
+ * Return a timestamp in the future sampled from an exponential distribution
+ * (https://en.wikipedia.org/wiki/Exponential_distribution). This distribution
+ * is memoryless and should be used for repeated network events (e.g. sending a
+ * certain type of message) to minimize leaking information to observers.
+ *
+ * The probability of an event occuring before time x is 1 - e^-(x/a) where a
+ * is the average interval between events.
+ * */
+std::chrono::microseconds GetExponentialRand(std::chrono::microseconds now, std::chrono::seconds average_interval);
+
 int GetRandInt(int nMax) noexcept;
 uint256 GetRandHash() noexcept;
 
@@ -195,10 +207,6 @@ public:
         return rand32() % nMax;
     }
 
-    uint32_t operator()(uint32_t nMax) {
-        return rand32(nMax);
-    }
-
     /** Generate random bytes. */
     template <typename B = unsigned char>
     std::vector<B> randbytes(size_t len);
@@ -232,7 +240,7 @@ public:
                                    /* interval [0..0] */ Dur{0};
     };
 
-    // Compatibility with the C++11 UniformRandomBitGenerator concept
+    // Compatibility with the UniformRandomBitGenerator concept
     typedef uint64_t result_type;
     static constexpr uint64_t min() { return 0; }
     static constexpr uint64_t max() { return std::numeric_limits<uint64_t>::max(); }

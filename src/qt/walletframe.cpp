@@ -4,26 +4,31 @@
 
 #include <qt/walletframe.h>
 
-#include <qt/bitcoingui.h>
-#include <qt/createwalletdialog.h>
+#include <fs.h>
+#include <node/interface_ui.h>
+#include <psbt.h>
 #include <qt/governancelist.h>
+#include <qt/guiutil.h>
 #include <qt/masternodelist.h>
 #include <qt/overviewpage.h>
-#include <qt/walletcontroller.h>
+#include <qt/psbtoperationsdialog.h>
 #include <qt/walletmodel.h>
 #include <qt/walletview.h>
 #include <util/system.h>
 
 #include <cassert>
+#include <fstream>
+#include <string>
 
+#include <QApplication>
+#include <QClipboard>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
 
-WalletFrame::WalletFrame(BitcoinGUI* _gui)
-    : QFrame(_gui),
-      gui(_gui),
+WalletFrame::WalletFrame(QWidget* parent)
+    : QFrame(parent),
       m_size_hint(OverviewPage{nullptr}.sizeHint())
 {
     // Leave HBox hook for adding a list view later
@@ -44,11 +49,7 @@ WalletFrame::WalletFrame(BitcoinGUI* _gui)
 
     // A button for create wallet dialog
     QPushButton* create_wallet_button = new QPushButton(tr("Create a new wallet"), walletStack);
-    connect(create_wallet_button, &QPushButton::clicked, [this] {
-        auto activity = new CreateWalletActivity(gui->getWalletController(), this);
-        connect(activity, &CreateWalletActivity::finished, activity, &QObject::deleteLater);
-        activity->create();
-    });
+    connect(create_wallet_button, &QPushButton::clicked, this, &WalletFrame::createWalletButtonClicked);
     no_wallet_layout->addWidget(create_wallet_button, 0, Qt::AlignHCenter | Qt::AlignTop);
     no_wallet_group->setLayout(no_wallet_layout);
 
@@ -77,17 +78,15 @@ void WalletFrame::setClientModel(ClientModel *_clientModel)
     }
 }
 
-bool WalletFrame::addWallet(WalletModel *walletModel)
+bool WalletFrame::addWallet(WalletModel* walletModel, WalletView* walletView)
 {
-    if (!gui || !clientModel || !walletModel) return false;
+    if (!clientModel || !walletModel) return false;
 
     if (mapWalletViews.count(walletModel) > 0) return false;
 
-    WalletView* walletView = new WalletView(this);
     walletView->setClientModel(clientModel);
     walletView->setWalletModel(walletModel);
     walletView->showOutOfSyncWarning(bOutOfSync);
-    walletView->setPrivacy(gui->isPrivacyModeActivated());
 
     WalletView* current_wallet_view = currentWalletView();
     if (current_wallet_view) {
@@ -99,17 +98,6 @@ bool WalletFrame::addWallet(WalletModel *walletModel)
     walletStack->addWidget(walletView);
     mapWalletViews[walletModel] = walletView;
 
-    connect(walletView, &WalletView::outOfSyncWarningClicked, this, &WalletFrame::outOfSyncWarningClicked);
-    connect(walletView, &WalletView::transactionClicked, gui, &BitcoinGUI::gotoHistoryPage);
-    connect(walletView, &WalletView::coinsSent, gui, &BitcoinGUI::gotoHistoryPage);
-    connect(walletView, &WalletView::message, [this](const QString& title, const QString& message, unsigned int style) {
-        gui->message(title, message, style);
-    });
-    connect(walletView, &WalletView::encryptionStatusChanged, gui, &BitcoinGUI::updateWalletStatus);
-    connect(walletView, &WalletView::incomingTransaction, gui, &BitcoinGUI::incomingTransaction);
-    connect(walletView, &WalletView::hdEnabledStatusChanged, gui, &BitcoinGUI::updateWalletStatus);
-    connect(gui, &BitcoinGUI::setPrivacy, walletView, &WalletView::setPrivacy);
-
     return true;
 }
 
@@ -117,10 +105,26 @@ void WalletFrame::setCurrentWallet(WalletModel* wallet_model)
 {
     if (mapWalletViews.count(wallet_model) == 0) return;
 
+    // Stop the effect of hidden widgets on the size hint of the shown one in QStackedWidget.
+    WalletView* view_about_to_hide = currentWalletView();
+    if (view_about_to_hide) {
+        QSizePolicy sp = view_about_to_hide->sizePolicy();
+        sp.setHorizontalPolicy(QSizePolicy::Ignored);
+        view_about_to_hide->setSizePolicy(sp);
+    }
+
     WalletView *walletView = mapWalletViews.value(wallet_model);
-    walletStack->setCurrentWidget(walletView);
     assert(walletView);
-    walletView->updateEncryptionStatus();
+
+    // Set or restore the default QSizePolicy which could be set to QSizePolicy::Ignored previously.
+    QSizePolicy sp = walletView->sizePolicy();
+    sp.setHorizontalPolicy(QSizePolicy::Preferred);
+    walletView->setSizePolicy(sp);
+    walletView->updateGeometry();
+
+    walletStack->setCurrentWidget(walletView);
+
+    Q_EMIT currentWalletSet();
 }
 
 void WalletFrame::removeWallet(WalletModel* wallet_model)
@@ -245,10 +249,40 @@ void WalletFrame::gotoVerifyMessageTab(QString addr)
 
 void WalletFrame::gotoLoadPSBT(bool from_clipboard)
 {
-    WalletView *walletView = currentWalletView();
-    if (walletView) {
-        walletView->gotoLoadPSBT(from_clipboard);
+    std::vector<unsigned char> data;
+
+    if (from_clipboard) {
+        std::string raw = QApplication::clipboard()->text().toStdString();
+        auto result = DecodeBase64(raw);
+        if (!result) {
+            Q_EMIT message(tr("Error"), tr("Unable to decode PSBT from clipboard (invalid base64)"), CClientUIInterface::MSG_ERROR);
+            return;
+        }
+        data = std::move(*result);
+    } else {
+        QString filename = GUIUtil::getOpenFileName(this,
+            tr("Load Transaction Data"), QString(),
+            tr("Partially Signed Transaction (*.psbt)"), nullptr);
+        if (filename.isEmpty()) return;
+        if (GetFileSize(filename.toLocal8Bit().data(), MAX_FILE_SIZE_PSBT) == MAX_FILE_SIZE_PSBT) {
+            Q_EMIT message(tr("Error"), tr("PSBT file must be smaller than 100 MiB"), CClientUIInterface::MSG_ERROR);
+            return;
+        }
+        std::ifstream in{filename.toLocal8Bit().data(), std::ios::binary};
+        data.assign(std::istream_iterator<unsigned char>{in}, {});
     }
+
+    std::string error;
+    PartiallySignedTransaction psbtx;
+    if (!DecodeRawPSBT(psbtx, MakeByteSpan(data), error)) {
+        Q_EMIT message(tr("Error"), tr("Unable to decode PSBT") + "\n" + QString::fromStdString(error), CClientUIInterface::MSG_ERROR);
+        return;
+    }
+
+    PSBTOperationsDialog* dlg = new PSBTOperationsDialog(this, currentWalletModel(), clientModel);
+    dlg->openWithPSBT(psbtx);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->exec();
 }
 
 void WalletFrame::encryptWallet()
@@ -309,9 +343,4 @@ WalletModel* WalletFrame::currentWalletModel() const
 {
     WalletView* wallet_view = currentWalletView();
     return wallet_view ? wallet_view->getWalletModel() : nullptr;
-}
-
-void WalletFrame::outOfSyncWarningClicked()
-{
-    Q_EMIT requestedSyncWarningInfo();
 }

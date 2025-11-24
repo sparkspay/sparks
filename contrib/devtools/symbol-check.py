@@ -13,27 +13,27 @@ Example usage:
 import sys
 from typing import Dict, List
 
-import lief
+import lief #type:ignore
 
-# Debian 11 (Bullseye) EOL: est. 2026 https://wiki.debian.org/LTS
+# Debian 11 (Bullseye) EOL: 2026. https://wiki.debian.org/LTS
 #
-# - libgcc version 10.2.1 (https://packages.debian.org/search?suite=bullseye&arch=any&searchon=names&keywords=libgcc-s1)
-# - libc version 2.31 (https://packages.debian.org/search?suite=bullseye&arch=any&searchon=names&keywords=libc6)
+# - libgcc version 10.2.1 (https://packages.debian.org/bullseye/libgcc-s1)
+# - libc version 2.31 (https://packages.debian.org/source/bullseye/glibc)
 #
 # Ubuntu 20.04 (Focal) EOL: 2030. https://wiki.ubuntu.com/ReleaseTeam
 #
-# - libgcc version 10.3.0 (https://packages.ubuntu.com/focal/libgcc1)
+# - libgcc version 10.5.0 (https://packages.ubuntu.com/focal/libgcc1)
 # - libc version 2.31 (https://packages.ubuntu.com/focal/libc6)
 #
-# CentOS Stream 9 EOL: est. 2027 https://www.centos.org/cl-vs-cs
+# CentOS Stream 9 EOL: 2027. https://www.centos.org/cl-vs-cs/#end-of-life
 #
-# - libgcc version 12.2.1 (https://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages)
-# - libc version 2.34 (https://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages)
+# - libgcc version 12.2.1 (https://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/)
+# - libc version 2.34 (https://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/)
 #
 # See https://gcc.gnu.org/onlinedocs/libstdc++/manual/abi.html for more info.
 
 MAX_VERSIONS = {
-'GCC':       (4,8,0),
+'GCC':       (4,3,0),
 'GLIBC': {
     lief.ELF.ARCH.x86_64: (2,31),
     lief.ELF.ARCH.ARM:    (2,31),
@@ -75,6 +75,25 @@ ELF_INTERPRETER_NAMES: Dict[lief.ELF.ARCH, Dict[lief.ENDIANNESS, str]] = {
     },
 }
 
+ELF_ABIS: Dict[lief.ELF.ARCH, Dict[lief.ENDIANNESS, List[int]]] = {
+    lief.ELF.ARCH.x86_64: {
+        lief.ENDIANNESS.LITTLE: [3,2,0],
+    },
+    lief.ELF.ARCH.ARM: {
+        lief.ENDIANNESS.LITTLE: [3,2,0],
+    },
+    lief.ELF.ARCH.AARCH64: {
+        lief.ENDIANNESS.LITTLE: [3,7,0],
+    },
+    lief.ELF.ARCH.PPC64: {
+        lief.ENDIANNESS.LITTLE: [3,10,0],
+        lief.ENDIANNESS.BIG: [3,2,0],
+    },
+    lief.ELF.ARCH.RISCV: {
+        lief.ENDIANNESS.LITTLE: [4,15,0],
+    },
+}
+
 # Allowed NEEDED libraries
 ELF_ALLOWED_LIBRARIES = {
 # sparksd and sparks-qt
@@ -82,7 +101,6 @@ ELF_ALLOWED_LIBRARIES = {
 'libc.so.6', # C library
 'libpthread.so.0', # threading
 'libm.so.6', # math library
-'librt.so.1', # real-time (clock)
 'libatomic.so.1',
 'ld-linux-x86-64.so.2', # 64-bit dynamic linker
 'ld-linux.so.2', # 32-bit dynamic linker
@@ -144,22 +162,22 @@ PE_ALLOWED_LIBRARIES = {
 'KERNEL32.dll', # win32 base APIs
 'msvcrt.dll', # C standard library for MSVC
 'SHELL32.dll', # shell API
-'USER32.dll', # user interface
 'WS2_32.dll', # sockets
 'bcrypt.dll',
 # bitcoin-qt only
 'dwmapi.dll', # desktop window manager
 'GDI32.dll', # graphics device interface
 'IMM32.dll', # input method editor
-'NETAPI32.dll',
+'NETAPI32.dll', # network management
 'ole32.dll', # component object model
 'OLEAUT32.dll', # OLE Automation API
 'SHLWAPI.dll', # light weight shell API
-'USERENV.dll',
-'UxTheme.dll',
+'USER32.dll', # user interface
+'USERENV.dll', # user management
+'UxTheme.dll', # visual style
 'VERSION.dll', # version checking
 'WINMM.dll', # WinMM audio API
-'WTSAPI32.dll',
+'WTSAPI32.dll', # Remote Desktop
 }
 
 def check_version(max_versions, version, arch) -> bool:
@@ -201,6 +219,11 @@ def check_exported_symbols(binary) -> bool:
         ok = False
     return ok
 
+def check_RUNPATH(binary) -> bool:
+    assert binary.get(lief.ELF.DYNAMIC_TAGS.RUNPATH) is None
+    assert binary.get(lief.ELF.DYNAMIC_TAGS.RPATH) is None
+    return True
+
 def check_ELF_libraries(binary) -> bool:
     ok: bool = True
     for library in binary.libraries:
@@ -219,12 +242,17 @@ def check_MACHO_libraries(binary) -> bool:
     return ok
 
 def check_MACHO_min_os(binary) -> bool:
-    if binary.build_version.minos == [10,15,0]:
+    if binary.build_version.minos == [11,0,0]:
         return True
     return False
 
 def check_MACHO_sdk(binary) -> bool:
-    if binary.build_version.sdk == [11, 0, 0]:
+    if binary.build_version.sdk == [14, 0, 0]:
+        return True
+    return False
+
+def check_MACHO_lld(binary) -> bool:
+    if binary.build_version.tools[0].version == [18, 1, 6]:
         return True
     return False
 
@@ -248,17 +276,26 @@ def check_ELF_interpreter(binary) -> bool:
 
     return binary.concrete.interpreter == expected_interpreter
 
+def check_ELF_ABI(binary) -> bool:
+    expected_abi = ELF_ABIS[binary.header.machine_type][binary.abstract.header.endianness]
+    note = binary.concrete.get(lief.ELF.NOTE_TYPES.ABI_TAG)
+    assert note.details.abi == lief.ELF.NOTE_ABIS.LINUX
+    return note.details.version == expected_abi
+
 CHECKS = {
 lief.EXE_FORMATS.ELF: [
     ('IMPORTED_SYMBOLS', check_imported_symbols),
     ('EXPORTED_SYMBOLS', check_exported_symbols),
     ('LIBRARY_DEPENDENCIES', check_ELF_libraries),
     ('INTERPRETER_NAME', check_ELF_interpreter),
+    ('ABI', check_ELF_ABI),
+    ('RUNPATH', check_RUNPATH),
 ],
 lief.EXE_FORMATS.MACHO: [
     ('DYNAMIC_LIBRARIES', check_MACHO_libraries),
     ('MIN_OS', check_MACHO_min_os),
     ('SDK', check_MACHO_sdk),
+    ('LLD', check_MACHO_lld),
 ],
 lief.EXE_FORMATS.PE: [
     ('DYNAMIC_LIBRARIES', check_PE_libraries),

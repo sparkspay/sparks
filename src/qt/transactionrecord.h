@@ -5,7 +5,7 @@
 #ifndef BITCOIN_QT_TRANSACTIONRECORD_H
 #define BITCOIN_QT_TRANSACTIONRECORD_H
 
-#include <amount.h>
+#include <consensus/amount.h>
 #include <uint256.h>
 #include <key_io.h>
 
@@ -82,6 +82,7 @@ public:
 class TransactionRecord
 {
 public:
+    // Update COMMON_TYPES in TransactionFilterProxyWhen when adding a new type
     enum Type
     {
         Other,

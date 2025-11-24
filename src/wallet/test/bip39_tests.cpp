@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(bip39_vectors)
         CExtKey key;
         CExtPubKey pubkey;
 
-        key.SetSeed(seed);
+        key.SetSeed(MakeByteSpan(seed));
         pubkey = key.Neuter();
 
         // printf("CBitcoinExtKey: %s\n", EncodeExtKey(key).c_str());

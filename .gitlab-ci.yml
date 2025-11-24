@@ -1,8 +1,9 @@
-image: "ubuntu:focal"
+image: "ubuntu:jammy"
 
 variables:
   DOCKER_DRIVER: overlay2
   FAST_MODE: "false" # when "true", only run linter on arm and unit/functional tests on linux64, skip everything else
+  CI_FAILFAST_TEST_LEAVE_DANGLING: "1"  # Gitlab CI does not care about dangling process and setting this variable avoids killing the CI script itself on error
 
 workflow:
   rules:
@@ -40,26 +41,11 @@ builder-image:
   needs:
     - builder-image
   image: $CI_REGISTRY_IMAGE:builder-$CI_COMMIT_REF_SLUG
-  variables:
-    SDK_URL: https://bitcoincore.org/depends-sources/sdks
-    XCODE_VERSION: "12.2"
-    XCODE_BUILD_ID: 12B45b
   before_script:
-    - echo HOST=$HOST
     - |
-      if [ "$HOST" = "x86_64-apple-darwin" ]; then
-        mkdir -p depends/SDKs
-        mkdir -p depends/sdk-sources
-        OSX_SDK_BASENAME="Xcode-${XCODE_VERSION}-${XCODE_BUILD_ID}-extracted-SDK-with-libcxx-headers.tar.gz"
-        OSX_SDK_PATH="depends/sdk-sources/${OSX_SDK_BASENAME}"
-        if [ ! -f "$OSX_SDK_PATH" ]; then
-          echo "Downloading MacOS SDK"
-          curl --location --fail "${SDK_URL}/${OSX_SDK_BASENAME}" -o "$OSX_SDK_PATH"
-        fi
-        if [ -f "$OSX_SDK_PATH" ]; then
-          echo "Extracting MacOS SDK"
-          tar -C depends/SDKs -xf "$OSX_SDK_PATH"
-        fi
+      echo HOST=${HOST}
+      if [[ "${HOST}" == "x86_64-apple-darwin" ]]; then
+        ./contrib/containers/guix/scripts/setup-sdk
       fi
   script:
     - make -j$(nproc) -C depends HOST=$HOST $DEP_OPTS
@@ -73,7 +59,7 @@ builder-image:
       - depends/built
       - depends/sdk-sources
   artifacts:
-    name: depends
+    name: depends-${CI_JOB_NAME}
     when: on_success
     paths:
       - depends/$HOST
@@ -95,14 +81,16 @@ builder-image:
       else
         # CI_EXTERNAL_PULL_REQUEST_IID is false every time until https://gitlab.com/gitlab-org/gitlab/issues/5667 is done
         # Until then, we're using https://github.com/brndnmtthws/labhub atm to mirror Github pull requests as branches into Gitlab,
-        # which allows us to use Gitlab CI for Github. The following check detects such mirrored branches.
-        if [[ $CI_COMMIT_REF_NAME =~ ^pr-[^/]*/[^/]*/[^/]*/[^/]*$ ]]; then
+        # which allows us to use Gitlab CI for Github.
+        if [[ $CI_COMMIT_REF_NAME = "master" ]] || [[ $CI_COMMIT_REF_NAME = "develop" ]] || [[ $CI_COMMIT_REF_NAME =~ ^v([0-9]{1,2}\.)*x$ ]]; then
+          # These names are reserved for protected branches
+          export PULL_REQUEST="false"
+        else
+          # Everything else including experemental "feat/smth" branches must be merged via PRs, treat them as such
           export PULL_REQUEST="true"
           # CI_COMMIT_BEFORE_SHA is also invalid until #5667 is implemented, so we need to figure it out by ourself
           git fetch origin develop
           export CI_COMMIT_BEFORE_SHA="$(git merge-base origin/develop HEAD)"
-        else
-          export PULL_REQUEST="false"
         fi
       fi
     - export COMMIT_RANGE="$CI_COMMIT_BEFORE_SHA..$CI_COMMIT_SHA"
@@ -128,12 +116,14 @@ builder-image:
     paths:
       - cache/ccache
   artifacts:
-    name: binaries
+    name: build-${BUILD_TARGET}
     when: always
     paths:
       - build-ci
     # Exclude some less important binaries to reduce the size of the artifacts
     exclude:
+      - build-ci/dashcore-$BUILD_TARGET/src/**/*.a
+      - build-ci/dashcore-$BUILD_TARGET/src/**/*.o
       - build-ci/sparkscore-$BUILD_TARGET/src/bench/bench_sparks
       - build-ci/sparkscore-$BUILD_TARGET/src/bench/bench_sparks.exe
       - build-ci/sparkscore-$BUILD_TARGET/src/qt/test/test_sparks-qt
@@ -189,13 +179,13 @@ x86_64-w64-mingw32:
   variables:
     HOST: x86_64-w64-mingw32
 
-x86_64-pc-linux-gnu-debug:
+x86_64-pc-linux-gnu_debug:
   extends: .build-depends-template
   variables:
     HOST: x86_64-pc-linux-gnu
     DEP_OPTS: "DEBUG=1"
 
-x86_64-pc-linux-gnu-nowallet:
+x86_64-pc-linux-gnu_nowallet:
   extends:
     - .build-depends-template
     - .skip-in-fast-mode-template
@@ -203,16 +193,13 @@ x86_64-pc-linux-gnu-nowallet:
     HOST: x86_64-pc-linux-gnu
     DEP_OPTS: "NO_WALLET=1"
 
-## TODO: # Skip on non-depends, non-multiprocess PRs
-## if: type != pull_request OR commit_message =~ /depends:|multiprocess:/
-#x86_64-pc-linux-gnu-multiprocess:
-#  extends:
-#    - .build-depends-template
-#    - .skip-in-fast-mode-template
-#  variables:
-#    HOST: x86_64-pc-linux-gnu
-#    DEP_OPTS: "MULTIPROCESS=1"
-#
+x86_64-pc-linux-gnu_multiprocess:
+  extends:
+    - .build-depends-template
+    - .skip-in-fast-mode-template
+  variables:
+    HOST: x86_64-pc-linux-gnu
+    DEP_OPTS: "DEBUG=1 MULTIPROCESS=1"
 
 x86_64-apple-darwin:
   extends:
@@ -242,7 +229,7 @@ win64-build:
 linux64-build:
   extends: .build-template
   needs:
-    - x86_64-pc-linux-gnu-debug
+    - x86_64-pc-linux-gnu_debug
   variables:
     BUILD_TARGET: linux64
 
@@ -251,7 +238,7 @@ linux64_cxx20-build:
     - .build-template
     - .skip-in-fast-mode-template
   needs:
-    - x86_64-pc-linux-gnu-debug
+    - x86_64-pc-linux-gnu_debug
   variables:
     BUILD_TARGET: linux64_cxx20
 
@@ -260,7 +247,7 @@ linux64_sqlite-build:
     - .build-template
     - .skip-in-fast-mode-template
   needs:
-    - x86_64-pc-linux-gnu-debug
+    - x86_64-pc-linux-gnu_debug
   variables:
     BUILD_TARGET: linux64_sqlite
 
@@ -269,7 +256,7 @@ linux64_fuzz-build:
     - .build-template
     - .skip-in-fast-mode-template
   needs:
-    - x86_64-pc-linux-gnu-debug
+    - x86_64-pc-linux-gnu_debug
   variables:
     BUILD_TARGET: linux64_fuzz
 
@@ -278,7 +265,7 @@ linux64_fuzz-build:
 #    - .build-template
 #    - .skip-in-fast-mode-template
 #  needs:
-#    - x86_64-pc-linux-gnu-debug
+#    - x86_64-pc-linux-gnu_debug
 #  variables:
 #    BUILD_TARGET: linux64_asan
 
@@ -287,7 +274,7 @@ linux64_tsan-build:
     - .build-template
     - .skip-in-fast-mode-template
   needs:
-    - x86_64-pc-linux-gnu-debug
+    - x86_64-pc-linux-gnu_debug
   variables:
     BUILD_TARGET: linux64_tsan
 
@@ -296,7 +283,7 @@ linux64_ubsan-build:
     - .build-template
     - .skip-in-fast-mode-template
   needs:
-    - x86_64-pc-linux-gnu-debug
+    - x86_64-pc-linux-gnu_debug
   variables:
     BUILD_TARGET: linux64_ubsan
 
@@ -305,25 +292,25 @@ linux64_nowallet-build:
     - .build-template
     - .skip-in-fast-mode-template
   needs:
-    - x86_64-pc-linux-gnu-nowallet
+    - x86_64-pc-linux-gnu_nowallet
   variables:
     BUILD_TARGET: linux64_nowallet
 
-#linux64_multiprocess-build:
-#  extends:
-#    - .build-template
-#    - .skip-in-fast-mode-template
-#  needs:
-#    - x86_64-pc-linux-gnu-multiprocess
-#  variables:
-#    BUILD_TARGET: linux64_multiprocess
+linux64_multiprocess-build:
+  extends:
+    - .build-template
+    - .skip-in-fast-mode-template
+  needs:
+    - x86_64-pc-linux-gnu_multiprocess
+  variables:
+    BUILD_TARGET: linux64_multiprocess
 
 #linux64_valgrind-build:
 #  extends:
 #    - .build-template
 #    - .skip-in-fast-mode-template
 #  needs:
-#    - x86_64-pc-linux-gnu-debug
+#    - x86_64-pc-linux-gnu_debug
 #  variables:
 #    BUILD_TARGET: linux64_valgrind
 
@@ -381,16 +368,23 @@ linux64_ubsan-test:
   variables:
     BUILD_TARGET: linux64_ubsan
 
-# TODO: enable multiprocess back in CI once it has any value
-# or in case if any new backports to test
-#linux64_multiprocess-test:
-#  extends:
-#    - .test-template
-#    - .skip-in-fast-mode-template
-#  needs:
-#    - linux64_multiprocess-build
-#  variables:
-#    BUILD_TARGET: linux64_multiprocess
+linux64_multiprocess-test:
+  extends:
+    - .test-template
+    - .skip-in-fast-mode-template
+  needs:
+    - linux64_multiprocess-build
+  variables:
+    BUILD_TARGET: linux64_multiprocess
+
+linux64_nowallet-test:
+  extends:
+    - .test-template
+    - .skip-in-fast-mode-template
+  needs:
+    - linux64_nowallet-build
+  variables:
+    BUILD_TARGET: linux64_nowallet
 
 #linux64_valgrind-test:
 #  extends:

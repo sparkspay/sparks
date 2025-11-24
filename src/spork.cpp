@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -146,12 +146,9 @@ PeerMsgRet CSporkManager::ProcessSpork(const CNode& peer, PeerManager& peerman, 
 
     uint256 hash = spork.GetHash();
 
-    std::string strLogMsg;
-    {
-        LOCK(cs_main);
-        EraseObjectRequest(peer.GetId(), CInv(MSG_SPORK, hash));
-        strLogMsg = strprintf("SPORK -- hash: %s id: %d value: %10d peer=%d", hash.ToString(), spork.nSporkID, spork.nValue, peer.GetId());
-    }
+    WITH_LOCK(::cs_main, peerman.EraseObjectRequest(peer.GetId(), CInv(MSG_SPORK, hash)));
+    std::string strLogMsg{strprintf("SPORK -- hash: %s id: %d value: %10d peer=%d", hash.ToString(), spork.nSporkID,
+                                    spork.nValue, peer.GetId())};
 
     if (spork.nTimeSigned > GetAdjustedTime() + 2 * 60 * 60) {
         LogPrint(BCLog::SPORK, "CSporkManager::ProcessSpork -- ERROR: too far into the future\n");

@@ -1,15 +1,15 @@
-FROM phusion/baseimage:focal-1.0.0
+FROM phusion/baseimage:jammy-1.0.4
 LABEL maintainer="Sparks Developers <dev@sparkspay.io>"
 LABEL description="Dockerised SparksCore, built from CI"
 
 ARG USER_ID
 ARG GROUP_ID
 
-ENV HOME /home/sparks
+ENV HOME="/home/sparks"
 
 # add user with specified (or default) user/group ids
-ENV USER_ID ${USER_ID:-1000}
-ENV GROUP_ID ${GROUP_ID:-1000}
+ENV USER_ID="${USER_ID:-1000}"
+ENV GROUP_ID="${GROUP_ID:-1000}"
 RUN groupadd -g ${GROUP_ID} sparks && \
     useradd -u ${USER_ID} -g sparks -s /bin/bash -m -d /home/sparks sparks && \
     mkdir /home/sparks/.sparkscore && \

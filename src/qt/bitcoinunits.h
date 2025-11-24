@@ -1,5 +1,5 @@
 // Copyright (c) 2011-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -7,7 +7,7 @@
 #ifndef BITCOIN_QT_BITCOINUNITS_H
 #define BITCOIN_QT_BITCOINUNITS_H
 
-#include <amount.h>
+#include <consensus/amount.h>
 
 #include <QAbstractListModel>
 #include <QString>

@@ -7,7 +7,7 @@
 #include <config/bitcoin-config.h>
 #endif
 
-#include <compat.h>
+#include <compat/compat.h>
 #include <util/time.h>
 
 #include <util/check.h>
@@ -21,7 +21,7 @@
 
 void UninterruptibleSleep(const std::chrono::microseconds& n) { std::this_thread::sleep_for(n); }
 
-static std::atomic<int64_t> nMockTime(0); //!< For testing
+static std::atomic<std::chrono::seconds> g_mock_time{}; //!< For testing
 
 bool ChronoSanityCheck()
 {
@@ -66,20 +66,16 @@ bool ChronoSanityCheck()
     return true;
 }
 
-template <typename T>
-T GetTime()
+NodeClock::time_point NodeClock::now() noexcept
 {
-    const std::chrono::seconds mocktime{nMockTime.load(std::memory_order_relaxed)};
+    const auto mocktime{g_mock_time.load(std::memory_order_relaxed)};
     const auto ret{
         mocktime.count() ?
             mocktime :
-            std::chrono::duration_cast<T>(std::chrono::system_clock::now().time_since_epoch())};
+            std::chrono::system_clock::now().time_since_epoch()};
     assert(ret > 0s);
-    return ret;
-}
-template std::chrono::seconds GetTime();
-template std::chrono::milliseconds GetTime();
-template std::chrono::microseconds GetTime();
+    return time_point{ret};
+};
 
 template <typename T>
 static T GetSystemTime()
@@ -89,20 +85,16 @@ static T GetSystemTime()
     return now;
 }
 
-void SetMockTime(int64_t nMockTimeIn)
-{
-    Assert(nMockTimeIn >= 0);
-    nMockTime.store(nMockTimeIn, std::memory_order_relaxed);
-}
-
+void SetMockTime(int64_t nMockTimeIn) { SetMockTime(std::chrono::seconds{nMockTimeIn}); }
 void SetMockTime(std::chrono::seconds mock_time_in)
 {
-    nMockTime.store(mock_time_in.count(), std::memory_order_relaxed);
+    Assert(mock_time_in >= 0s);
+    g_mock_time.store(mock_time_in, std::memory_order_relaxed);
 }
 
 std::chrono::seconds GetMockTime()
 {
-    return std::chrono::seconds(nMockTime.load(std::memory_order_relaxed));
+    return g_mock_time.load(std::memory_order_relaxed);
 }
 
 int64_t GetTimeMillis()
@@ -113,11 +105,6 @@ int64_t GetTimeMillis()
 int64_t GetTimeMicros()
 {
     return int64_t{GetSystemTime<std::chrono::microseconds>().count()};
-}
-
-int64_t GetTimeSeconds()
-{
-    return int64_t{GetSystemTime<std::chrono::seconds>().count()};
 }
 
 int64_t GetTime() { return GetTime<std::chrono::seconds>().count(); }

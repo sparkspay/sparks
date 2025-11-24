@@ -94,34 +94,36 @@ LockData& GetLockData() {
 
 static void potential_deadlock_detected(const LockPair& mismatch, const LockStack& s1, const LockStack& s2)
 {
-    std::string strOutput = "";
-    strOutput += "POTENTIAL DEADLOCK DETECTED\n";
-    strOutput += "Previous lock order was:\n";
+    std::string log_message{};
+    log_message += "POTENTIAL DEADLOCK DETECTED\n";
+    log_message += "Previous lock order was:\n";
     for (const LockStackItem& i : s1) {
+        std::string prefix{};
         if (i.first == mismatch.first) {
-            strOutput += " (1)";
+            prefix = " (1)";
         }
         if (i.first == mismatch.second) {
-            strOutput += " (2)";
+            prefix = " (2)";
         }
-        strOutput += strprintf(" %s\n", i.second.ToString());
+        log_message += strprintf("%s %s\n", prefix, i.second.ToString());
     }
 
     std::string mutex_a, mutex_b;
-    strOutput += "Current lock order is:\n";
+    log_message += "Current lock order is:\n";
     for (const LockStackItem& i : s2) {
+        std::string prefix{};
         if (i.first == mismatch.first) {
-            strOutput += " (1)";
+            prefix = " (1)";
             mutex_a = i.second.Name();
         }
         if (i.first == mismatch.second) {
-            strOutput += " (2)";
+            prefix = " (2)";
             mutex_b = i.second.Name();
         }
-        strOutput += strprintf(" %s\n", i.second.ToString());
+        log_message += strprintf("%s %s\n", prefix, i.second.ToString());
     }
 
-    LogPrintf("%s\n", strOutput);
+    LogPrintf("%s\n", log_message);
 
     if (g_debug_lockorder_abort) {
         tfm::format(std::cerr, "Assertion failed: detected inconsistent lock order for %s, details in debug log.\n", s2.back().second.ToString());
@@ -285,12 +287,16 @@ template void AssertLockHeldInternal(const char*, const char*, int, Mutex*);
 template void AssertLockHeldInternal(const char*, const char*, int, RecursiveMutex*);
 template void AssertLockHeldInternal(const char*, const char*, int, SharedMutex*);
 
-void AssertLockNotHeldInternal(const char* pszName, const char* pszFile, int nLine, void* cs)
+template <typename MutexType>
+void AssertLockNotHeldInternal(const char* pszName, const char* pszFile, int nLine, MutexType* cs)
 {
     if (!LockHeld(cs)) return;
     tfm::format(std::cerr, "Assertion failed: lock %s held in %s:%i; locks held:\n%s", pszName, pszFile, nLine, LocksHeld());
     abort();
 }
+template void AssertLockNotHeldInternal(const char*, const char*, int, Mutex*);
+template void AssertLockNotHeldInternal(const char*, const char*, int, RecursiveMutex*);
+template void AssertLockNotHeldInternal(const char*, const char*, int, SharedMutex*);
 
 void DeleteLock(void* cs)
 {

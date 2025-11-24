@@ -21,7 +21,7 @@ ENABLED_CHECKS=(
     "Variable '.*' is assigned a value that is never used."
     "Unused variable"
     "The function '.*' overrides a function in a base class but is not marked with a 'override' specifier."
-# Enabale to catch all warnings
+# Enable to catch all warnings
     ".*"
 )
 
@@ -34,13 +34,14 @@ IGNORED_WARNINGS=(
     "src/rpc/.*cpp:.*: note: Function pointer used here."
     "src/masternode/sync.cpp:.*: warning: Variable 'pnode' can be declared as pointer to const \[constVariableReference\]"
     "src/wallet/bip39.cpp.*: warning: The scope of the variable 'ssCurrentWord' can be reduced. \[variableScope\]"
-
+    "src/.*:.*: warning: Local variable '_' shadows outer function \[shadowFunction\]"
 
     "src/stacktraces.cpp:.*: .*: Parameter 'info' can be declared as pointer to const"
     "src/stacktraces.cpp:.*: note: You might need to cast the function pointer here"
 
     "[note|warning]: Return value 'state.Invalid(.*)' is always false"
     "note: Calling function 'Invalid' returns 0"
+    "note: Shadow variable"
 
 # General catchall, for some reason any value named 'hash' is viewed as never used.
     "Variable 'hash' is assigned a value that is never used."
@@ -79,10 +80,15 @@ ENABLED_CHECKS_REGEXP=$(join_array "|" "${ENABLED_CHECKS[@]}")
 IGNORED_WARNINGS_REGEXP=$(join_array "|" "${IGNORED_WARNINGS[@]}")
 FILES_REGEXP=$(join_array "|" "${FILES[@]}")
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-CPPCHECK_DIR=$SCRIPT_DIR/.cppcheck/
+# Check if CACHE_DIR is set and non-empty, otherwise use default .cppcheck/ directory
+if [[ -n "$CACHE_DIR" ]]; then
+    CPPCHECK_DIR=$CACHE_DIR/cppcheck/
+else
+    CPPCHECK_DIR=$SCRIPT_DIR/.cppcheck/
+fi
 if [ ! -d $CPPCHECK_DIR ]
 then
-    mkdir $CPPCHECK_DIR
+    mkdir -p $CPPCHECK_DIR
 fi
 WARNINGS=$(echo "${FILES}" | \
     xargs cppcheck --enable=all --inline-suppr --suppress=missingIncludeSystem --cppcheck-build-dir=$CPPCHECK_DIR -j "$(getconf _NPROCESSORS_ONLN)" --language=c++ --std=c++17 --template=gcc -D__cplusplus -DENABLE_WALLET -DCLIENT_VERSION_BUILD -DCLIENT_VERSION_IS_RELEASE -DCLIENT_VERSION_MAJOR -DCLIENT_VERSION_MINOR -DCOPYRIGHT_YEAR -DDEBUG -DUSE_EPOLL -DCHAR_BIT=8 -I src/ -q 2>&1 | sort -u | \

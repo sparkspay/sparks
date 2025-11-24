@@ -76,7 +76,7 @@ class InvalidTxRequestTest(BitcoinTestFramework):
         node.p2ps[0].send_blocks_and_test([block1, block2], node, success=True)
 
         self.log.info("Mature the block.")
-        self.nodes[0].generatetoaddress(100, self.nodes[0].get_deterministic_priv_key().address)
+        self.generatetoaddress(self.nodes[0], 100, self.nodes[0].get_deterministic_priv_key().address)
 
         # Iterate through a list of known invalid transaction types, ensuring each is
         # rejected. Some are consensus invalid and some just violate policy.
@@ -174,9 +174,9 @@ class InvalidTxRequestTest(BitcoinTestFramework):
                 tx_orphan_2_valid,  # The valid transaction (with sufficient fee)
             ]
         }
-        # Transactions that do not end up in the mempool
-        # tx_orphan_no_fee, because it has too low fee (p2ps[0] is not disconnected for relaying that tx)
-        # tx_orphan_invaid, because it has negative fee (p2ps[1] is disconnected for relaying that tx)
+        # Transactions that do not end up in the mempool:
+        # tx_orphan_2_no_fee, because it has too low fee (p2ps[0] is not disconnected for relaying that tx)
+        # tx_orphan_2_invalid, because it has negative fee (p2ps[1] is disconnected for relaying that tx)
         if resolve_via_block:
             # This TX has appeared in a block instead of being broadcasted via the mempool
             expected_mempool.remove(tx_withhold.hash)
@@ -185,7 +185,7 @@ class InvalidTxRequestTest(BitcoinTestFramework):
         assert_equal(expected_mempool, set(node.getrawmempool()))
 
         self.log.info('Test orphan pool overflow')
-        # this test is different with bitcoin due to dashpay/dash#3121
+        # this test is different with bitcoin due to sparkspay/sparks#3121
         # we have a limit based on size in megabytes, not by amount of txes
         # one tx is 91byte; 1Mb / 4451byte = 224; need to send at least 225
         orphan_tx_pool = [CTransaction() for _ in range(225)]
@@ -194,7 +194,7 @@ class InvalidTxRequestTest(BitcoinTestFramework):
             for j in range(110):
                 orphan_tx_pool[i].vout.append(CTxOut(nValue=COIN // 10, scriptPubKey=SCRIPT_PUB_KEY_OP_TRUE))
 
-        with node.assert_debug_log(['mapOrphan overflow, removed 1 tx']):
+        with node.assert_debug_log(['orphanage overflow, removed 1 tx']):
             node.p2ps[0].send_txs_and_test(orphan_tx_pool, node, success=False)
 
         rejected_parent = CTransaction()

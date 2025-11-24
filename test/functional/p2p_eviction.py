@@ -42,6 +42,7 @@ class SlowP2PInterface(P2PInterface):
 class P2PEvict(BitcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
+        self.disable_mocktime = True
         self.num_nodes = 1
         # The choice of maxconnections=32 results in a maximum of 21 inbound connections
         # (32 - 10 outbound - 1 feeler). 20 inbound peers are protected from eviction:
@@ -52,7 +53,7 @@ class P2PEvict(BitcoinTestFramework):
         protected_peers = set()  # peers that we expect to be protected from eviction
         current_peer = -1
         node = self.nodes[0]
-        node.generatetoaddress(COINBASE_MATURITY + 1, node.get_deterministic_priv_key().address)
+        self.generatetoaddress(node, COINBASE_MATURITY + 1, node.get_deterministic_priv_key().address)
 
         self.log.info("Create 4 peers and protect them from eviction by sending us a block")
         for _ in range(4):

@@ -1,5 +1,5 @@
 // Copyright (c) 2011-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2024 The Dash Core developers
+// Copyright (c) 2014-2025 The Dash Core developers
 // Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -63,32 +63,16 @@ CoinControlDialog::CoinControlDialog(CCoinControl& coin_control, WalletModel* _m
 
     GUIUtil::disableMacFocusRect(this);
 
-    // context menu actions
-    QAction *copyAddressAction = new QAction(tr("Copy address"), this);
-    QAction *copyLabelAction = new QAction(tr("Copy label"), this);
-    QAction *copyAmountAction = new QAction(tr("Copy amount"), this);
-             copyTransactionHashAction = new QAction(tr("Copy transaction ID"), this);  // we need to enable/disable this
-             lockAction = new QAction(tr("Lock unspent"), this);                        // we need to enable/disable this
-             unlockAction = new QAction(tr("Unlock unspent"), this);                    // we need to enable/disable this
-
     // context menu
     contextMenu = new QMenu(this);
-    contextMenu->addAction(copyAddressAction);
-    contextMenu->addAction(copyLabelAction);
-    contextMenu->addAction(copyAmountAction);
-    contextMenu->addAction(copyTransactionHashAction);
+    contextMenu->addAction(tr("&Copy address"), this, &CoinControlDialog::copyAddress);
+    contextMenu->addAction(tr("Copy &label"), this, &CoinControlDialog::copyLabel);
+    contextMenu->addAction(tr("Copy &amount"), this, &CoinControlDialog::copyAmount);
+    m_copy_transaction_outpoint_action = contextMenu->addAction(tr("Copy transaction &ID and output index"), this, &CoinControlDialog::copyTransactionOutpoint);
     contextMenu->addSeparator();
-    contextMenu->addAction(lockAction);
-    contextMenu->addAction(unlockAction);
-
-    // context menu signals
+    lockAction = contextMenu->addAction(tr("L&ock unspent"), this, &CoinControlDialog::lockCoin);
+    unlockAction = contextMenu->addAction(tr("&Unlock unspent"), this, &CoinControlDialog::unlockCoin);
     connect(ui->treeWidget, &QWidget::customContextMenuRequested, this, &CoinControlDialog::showMenu);
-    connect(copyAddressAction, &QAction::triggered, this, &CoinControlDialog::copyAddress);
-    connect(copyLabelAction, &QAction::triggered, this, &CoinControlDialog::copyLabel);
-    connect(copyAmountAction, &QAction::triggered, this, &CoinControlDialog::copyAmount);
-    connect(copyTransactionHashAction, &QAction::triggered, this, &CoinControlDialog::copyTransactionHash);
-    connect(lockAction, &QAction::triggered, this, &CoinControlDialog::lockCoin);
-    connect(unlockAction, &QAction::triggered, this, &CoinControlDialog::unlockCoin);
 
     // clipboard actions
     QAction *clipboardQuantityAction = new QAction(tr("Copy quantity"), this);
@@ -224,7 +208,7 @@ void CoinControlDialog::buttonToggleLockClicked()
                 item->setIcon(COLUMN_CHECKBOX, QIcon());
             }
             else{
-                model->wallet().lockCoin(outpt);
+                model->wallet().lockCoin(outpt, /*write_to_db=*/true);
                 item->setDisabled(true);
                 item->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("lock_closed", GUIUtil::ThemedColor::RED));
             }
@@ -252,7 +236,7 @@ void CoinControlDialog::showMenu(const QPoint &point)
         // disable some items (like Copy Transaction ID, lock, unlock) for tree roots in context menu
         if (item->data(COLUMN_ADDRESS, TxHashRole).toString().length() == 64) // transaction hash is 64 characters (this means it is a child node, so it is not a parent node in tree mode)
         {
-            copyTransactionHashAction->setEnabled(true);
+            m_copy_transaction_outpoint_action->setEnabled(true);
             if (model->wallet().isLockedCoin(COutPoint(uint256S(item->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString()), item->data(COLUMN_ADDRESS, VOutRole).toUInt())))
             {
                 lockAction->setEnabled(false);
@@ -266,7 +250,7 @@ void CoinControlDialog::showMenu(const QPoint &point)
         }
         else // this means click on parent node in tree mode -> disable all
         {
-            copyTransactionHashAction->setEnabled(false);
+            m_copy_transaction_outpoint_action->setEnabled(false);
             lockAction->setEnabled(false);
             unlockAction->setEnabled(false);
         }
@@ -300,10 +284,14 @@ void CoinControlDialog::copyAddress()
         GUIUtil::setClipboard(contextMenuItem->text(COLUMN_ADDRESS));
 }
 
-// context menu action: copy transaction id
-void CoinControlDialog::copyTransactionHash()
+// context menu action: copy transaction id and vout index
+void CoinControlDialog::copyTransactionOutpoint()
 {
-    GUIUtil::setClipboard(contextMenuItem->data(COLUMN_ADDRESS, TxHashRole).toString());
+    const QString address = contextMenuItem->data(COLUMN_ADDRESS, TxHashRole).toString();
+    const QString vout = contextMenuItem->data(COLUMN_ADDRESS, VOutRole).toString();
+    const QString outpoint = QString("%1:%2").arg(address).arg(vout);
+
+    GUIUtil::setClipboard(outpoint);
 }
 
 // context menu action: lock coin
@@ -313,7 +301,7 @@ void CoinControlDialog::lockCoin()
         contextMenuItem->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
 
     COutPoint outpt(uint256S(contextMenuItem->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString()), contextMenuItem->data(COLUMN_ADDRESS, VOutRole).toUInt());
-    model->wallet().lockCoin(outpt);
+    model->wallet().lockCoin(outpt, /*write_to_db=*/true);
     contextMenuItem->setDisabled(true);
     contextMenuItem->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("lock_closed", GUIUtil::ThemedColor::RED));
     updateLabelLocked();
@@ -439,11 +427,10 @@ void CoinControlDialog::viewItemChanged(QTreeWidgetItem* item, int column)
 // shows count of locked unspent outputs
 void CoinControlDialog::updateLabelLocked()
 {
-    std::vector<COutPoint> vOutpts;
-    model->wallet().listLockedCoins(vOutpts);
-    if (vOutpts.size() > 0)
+    auto locked_coins{model->wallet().listLockedCoins().size()};
+    if (locked_coins > 0)
     {
-       ui->labelLocked->setText(tr("(%1 locked)").arg(vOutpts.size()));
+       ui->labelLocked->setText(tr("(%1 locked)").arg(locked_coins));
        ui->labelLocked->setVisible(true);
     }
     else ui->labelLocked->setVisible(false);
@@ -783,7 +770,7 @@ void CoinControlDialog::updateView()
 
             // CoinJoin rounds
             int nRounds = model->getRealOutpointCoinJoinRounds(output);
-            if (nRounds >= 0 || LogAcceptCategory(BCLog::COINJOIN)) {
+            if (nRounds >= 0 || LogAcceptDebug(BCLog::COINJOIN)) {
                 itemOutput->setText(COLUMN_COINJOIN_ROUNDS, QString::number(nRounds));
             } else {
                 itemOutput->setText(COLUMN_COINJOIN_ROUNDS, tr("n/a"));

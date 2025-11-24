@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <consensus/validation.h>
+#include <node/miner.h>
 #include <test/fuzz/FuzzedDataProvider.h>
 #include <test/fuzz/fuzz.h>
 #include <test/fuzz/util.h>
@@ -24,6 +25,15 @@ struct MockedTxPool : public CTxMemPool {
         LOCK(cs);
         lastRollingFeeUpdate = GetTime();
         blockSinceLastRollingFeeBump = true;
+    }
+};
+
+class DummyChainState final : public CChainState
+{
+public:
+    void SetMempool(CTxMemPool* mempool)
+    {
+        m_mempool = mempool;
     }
 };
 
@@ -50,12 +60,12 @@ struct TransactionsDelta final : public CValidationInterface {
     explicit TransactionsDelta(std::set<CTransactionRef>& r, std::set<CTransactionRef>& a)
         : m_removed{r}, m_added{a} {}
 
-    void TransactionAddedToMempool(const CTransactionRef& tx, int64_t /* nAcceptTime */) override
+    void TransactionAddedToMempool(const CTransactionRef& tx, int64_t /* nAcceptTime */, uint64_t) override
     {
         Assert(m_added.insert(tx).second);
     }
 
-    void TransactionRemovedFromMempool(const CTransactionRef& tx, MemPoolRemovalReason reason) override
+    void TransactionRemovedFromMempool(const CTransactionRef& tx, MemPoolRemovalReason reason, uint64_t) override
     {
         Assert(m_removed.insert(tx).second);
     }
@@ -77,6 +87,30 @@ void SetMempoolConstraints(ArgsManager& args, FuzzedDataProvider& fuzzed_data_pr
                      ToString(fuzzed_data_provider.ConsumeIntegralInRange<unsigned>(0, 999)));
 }
 
+void Finish(FuzzedDataProvider& fuzzed_data_provider, MockedTxPool& tx_pool, const NodeContext& node, CChainState& chainstate)
+{
+    WITH_LOCK(::cs_main, tx_pool.check(chainstate.CoinsTip(), chainstate.m_chain.Height() + 1));
+    {
+        BlockAssembler::Options options;
+        options.nBlockMaxSize = fuzzed_data_provider.ConsumeIntegralInRange(0U, MaxBlockSize(true));
+        options.blockMinFeeRate = CFeeRate{ConsumeMoney(fuzzed_data_provider, /* max */ COIN)};
+
+        auto assembler = BlockAssembler{chainstate, node, *static_cast<CTxMemPool*>(&tx_pool), chainstate.m_params, options};
+        auto block_template = assembler.CreateNewBlock(CScript{} << OP_TRUE, *node.sporkman);
+        Assert(block_template->block.vtx.size() >= 1);
+    }
+    const auto info_all = tx_pool.infoAll();
+    if (!info_all.empty()) {
+        const auto& tx_to_remove = *PickValue(fuzzed_data_provider, info_all).tx;
+        WITH_LOCK(tx_pool.cs, tx_pool.removeRecursive(tx_to_remove, MemPoolRemovalReason::BLOCK /* dummy */));
+        std::vector<uint256> all_txids;
+        tx_pool.queryHashes(all_txids);
+        assert(all_txids.size() < info_all.size());
+        WITH_LOCK(::cs_main, tx_pool.check(chainstate.CoinsTip(), chainstate.m_chain.Height() + 1));
+    }
+    SyncWithValidationInterfaceQueue();
+}
+
 void MockTime(FuzzedDataProvider& fuzzed_data_provider, const CChainState& chainstate)
 {
     const auto time = ConsumeTime(fuzzed_data_provider,
@@ -89,7 +123,7 @@ FUZZ_TARGET_INIT(tx_pool_standard, initialize_tx_pool)
 {
     FuzzedDataProvider fuzzed_data_provider(buffer.data(), buffer.size());
     const auto& node = g_setup->m_node;
-    auto& chainstate = node.chainman->ActiveChainstate();
+    auto& chainstate{static_cast<DummyChainState&>(node.chainman->ActiveChainstate())};
 
     MockTime(fuzzed_data_provider, chainstate);
     SetMempoolConstraints(*node.args, fuzzed_data_provider);
@@ -108,6 +142,8 @@ FUZZ_TARGET_INIT(tx_pool_standard, initialize_tx_pool)
 
     CTxMemPool tx_pool_{/* estimator */ nullptr, /* check_ratio */ 1};
     MockedTxPool& tx_pool = *static_cast<MockedTxPool*>(&tx_pool_);
+
+    chainstate.SetMempool(&tx_pool);
 
     // Helper to query an amount
     const CCoinsViewMemPool amount_view{WITH_LOCK(::cs_main, return &chainstate.CoinsTip()), tx_pool};
@@ -197,13 +233,13 @@ FUZZ_TARGET_INIT(tx_pool_standard, initialize_tx_pool)
         // Make sure ProcessNewPackage on one transaction works and always fully validates the transaction.
         // The result is not guaranteed to be the same as what is returned by ATMP.
         const auto result_package = WITH_LOCK(::cs_main,
-                                    return ProcessNewPackage(node.chainman->ActiveChainstate(), tx_pool, {tx}, *node.sporkman, true));
+                                    return ProcessNewPackage(chainstate, tx_pool, {tx}, *node.sporkman, true));
         auto it = result_package.m_tx_results.find(tx->GetHash());
         Assert(it != result_package.m_tx_results.end());
         Assert(it->second.m_result_type == MempoolAcceptResult::ResultType::VALID ||
                it->second.m_result_type == MempoolAcceptResult::ResultType::INVALID);
 
-        const auto res = WITH_LOCK(::cs_main, return AcceptToMemoryPool(chainstate, tx_pool, tx, *node.sporkman, bypass_limits));
+        const auto res = WITH_LOCK(::cs_main, return AcceptToMemoryPool(chainstate, tx, GetTime(), *node.sporkman, bypass_limits, /*test_accept=*/false));
         const bool accepted = res.m_result_type == MempoolAcceptResult::ResultType::VALID;
         SyncWithValidationInterfaceQueue();
         UnregisterSharedValidationInterface(txr);
@@ -254,24 +290,14 @@ FUZZ_TARGET_INIT(tx_pool_standard, initialize_tx_pool)
             }
         }
     }
-    WITH_LOCK(::cs_main, tx_pool.check(chainstate));
-    const auto info_all = tx_pool.infoAll();
-    if (!info_all.empty()) {
-        const auto& tx_to_remove = *PickValue(fuzzed_data_provider, info_all).tx;
-        WITH_LOCK(tx_pool.cs, tx_pool.removeRecursive(tx_to_remove, /* dummy */ MemPoolRemovalReason::BLOCK));
-        std::vector<uint256> all_txids;
-        tx_pool.queryHashes(all_txids);
-        assert(all_txids.size() < info_all.size());
-        WITH_LOCK(::cs_main, tx_pool.check(chainstate));
-    }
-    SyncWithValidationInterfaceQueue();
+    Finish(fuzzed_data_provider, tx_pool, node, chainstate);
 }
 
 FUZZ_TARGET_INIT(tx_pool, initialize_tx_pool)
 {
     FuzzedDataProvider fuzzed_data_provider(buffer.data(), buffer.size());
     const auto& node = g_setup->m_node;
-    auto& chainstate = node.chainman->ActiveChainstate();
+    auto& chainstate{static_cast<DummyChainState&>(node.chainman->ActiveChainstate())};
 
     MockTime(fuzzed_data_provider, chainstate);
     SetMempoolConstraints(*node.args, fuzzed_data_provider);
@@ -288,6 +314,8 @@ FUZZ_TARGET_INIT(tx_pool, initialize_tx_pool)
 
     CTxMemPool tx_pool_{/* estimator */ nullptr, /* check_ratio */ 1};
     MockedTxPool& tx_pool = *static_cast<MockedTxPool*>(&tx_pool_);
+
+    chainstate.SetMempool(&tx_pool);
 
     LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 300)
     {
@@ -313,13 +341,12 @@ FUZZ_TARGET_INIT(tx_pool, initialize_tx_pool)
         const auto tx = MakeTransactionRef(mut_tx);
         const bool bypass_limits = fuzzed_data_provider.ConsumeBool();
         ::fRequireStandard = fuzzed_data_provider.ConsumeBool();
-        const auto res = WITH_LOCK(::cs_main, return AcceptToMemoryPool(node.chainman->ActiveChainstate(), tx_pool, tx, *node.sporkman, bypass_limits));
+        const auto res = WITH_LOCK(::cs_main, return AcceptToMemoryPool(chainstate, tx, GetTime(), *node.sporkman, bypass_limits, /*test_accept=*/false));
         const bool accepted = res.m_result_type == MempoolAcceptResult::ResultType::VALID;
         if (accepted) {
             txids.push_back(tx->GetHash());
         }
-
-        SyncWithValidationInterfaceQueue();
     }
+    Finish(fuzzed_data_provider, tx_pool, node, chainstate);
 }
 } // namespace

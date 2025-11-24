@@ -171,10 +171,11 @@ static bool RPCAuthorized(const std::string& strAuth, std::string& strAuthUserna
         return false;
     if (strAuth.substr(0, 6) != "Basic ")
         return false;
-    std::string strUserPass64 = TrimString(strAuth.substr(6));
-    bool invalid;
-    std::string strUserPass = DecodeBase64(strUserPass64, &invalid);
-    if (invalid) return false;
+    std::string_view strUserPass64 = TrimStringView(std::string_view{strAuth}.substr(6));
+    auto userpass_data = DecodeBase64(strUserPass64);
+    std::string strUserPass;
+    if (!userpass_data) return false;
+    strUserPass.assign(userpass_data->begin(), userpass_data->end());
 
     if (strUserPass.find(':') != std::string::npos)
         strAuthUsernameOut = strUserPass.substr(0, strUserPass.find(':'));
@@ -201,9 +202,9 @@ static bool HTTPReq_JSONRPC(const CoreContext& context, HTTPRequest* req)
         return rpcRequest.send_reply(HTTP_UNAUTHORIZED);
     }
 
-    JSONRPCRequest jreq(context);
-
-    jreq.peerAddr = req->GetPeer().ToString();
+    JSONRPCRequest jreq;
+    jreq.context = context;
+    jreq.peerAddr = req->GetPeer().ToStringAddrPort();
     if (!RPCAuthorized(authHeader.second, rpcRequest.user)) {
         LogPrintf("ThreadRPCServer incorrect password attempt from %s\n", jreq.peerAddr);
 
@@ -335,7 +336,7 @@ bool StartHTTPRPC(const CoreContext& context)
     if (!InitRPCAuthentication())
         return false;
 
-    auto handle_rpc = [&context](HTTPRequest* req, const std::string&) { return HTTPReq_JSONRPC(context, req); };
+    auto handle_rpc = [context](HTTPRequest* req, const std::string&) { return HTTPReq_JSONRPC(context, req); };
     RegisterHTTPHandler("/", true, handle_rpc);
     if (g_wallet_init_interface.HasWalletSupport()) {
         RegisterHTTPHandler("/wallet/", false, handle_rpc);

@@ -17,6 +17,7 @@ Developer Notes
         - [`debug.log`](#debuglog)
         - [Testnet and Regtest modes](#testnet-and-regtest-modes)
         - [DEBUG_LOCKORDER](#debug_lockorder)
+        - [DEBUG_LOCKCONTENTION](#debug_lockcontention)
         - [Valgrind suppressions file](#valgrind-suppressions-file)
         - [Compiling for test coverage](#compiling-for-test-coverage)
         - [Performance profiling with perf](#performance-profiling-with-perf)
@@ -31,6 +32,7 @@ Developer Notes
     - [C++ data structures](#c-data-structures)
     - [Strings and formatting](#strings-and-formatting)
     - [Shadowing](#shadowing)
+    - [Lifetimebound](#lifetimebound)
     - [Threads and synchronization](#threads-and-synchronization)
     - [Scripts](#scripts)
         - [Shebang](#shebang)
@@ -95,7 +97,10 @@ code.
     Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Renum-caps),
     which recommend using `snake_case`.  Please use what seems appropriate.
   - Class names, function names, and method names are UpperCamelCase
-    (PascalCase). Do not prefix class names with `C`.
+    (PascalCase). Do not prefix class names with `C`. See [Internal interface
+    naming style](#internal-interface-naming-style) for an exception to this
+    convention.
+
   - Test suite naming convention: The Boost test suite in file
     `src/test/foo_tests.cpp` should be named `foo_tests`. Test suite names
     must be unique.
@@ -160,10 +165,80 @@ public:
 } // namespace foo
 ```
 
+Coding Style (C++ functions and methods)
+--------------------
+
+- When ordering function parameters, place input parameters first, then any
+  in-out parameters, followed by any output parameters.
+
+- *Rationale*: API consistency.
+
+- Prefer returning values directly to using in-out or output parameters. Use
+  `std::optional` where helpful for returning values.
+
+- *Rationale*: Less error-prone (no need for assumptions about what the output
+  is initialized to on failure), easier to read, and often the same or better
+  performance.
+
+- Generally, use `std::optional` to represent optional by-value inputs (and
+  instead of a magic default value, if there is no real default). Non-optional
+  input parameters should usually be values or const references, while
+  non-optional in-out and output parameters should usually be references, as
+  they cannot be null.
+
+Coding Style (C++ named arguments)
+------------------------------
+
+When passing named arguments, use a format that clang-tidy understands. The
+argument names can otherwise not be verified by clang-tidy.
+
+For example:
+
+```c++
+void function(Addrman& addrman, bool clear);
+
+int main()
+{
+    function(g_addrman, /*clear=*/false);
+}
+```
+
+### Running clang-tidy
+
+To run clang-tidy on Ubuntu/Debian, install the dependencies:
+
+```sh
+apt install clang-tidy bear clang
+```
+
+Then, pass clang as compiler to configure, and use bear to produce the `compile_commands.json`:
+
+```sh
+./autogen.sh && ./configure CC=clang CXX=clang++ --enable-suppress-external-warnings
+make clean && bear --config src/.bear-tidy-config -- make -j $(nproc)
+```
+
+The output is denoised of errors from external dependencies and includes with
+`--enable-suppress-external-warnings` and `--config src/.bear-tidy-config`. Both
+options may be omitted to view the full list of errors.
+
+To run clang-tidy on all source files:
+
+```sh
+( cd ./src/ && run-clang-tidy  -j $(nproc) )
+```
+
+To run clang-tidy on the changed source lines:
+
+```sh
+git diff | ( cd ./src/ && clang-tidy-diff -p2 -j $(nproc) )
+```
+
 Coding Style (Python)
 ---------------------
 
 Refer to [/test/functional/README.md#style-guidelines](/test/functional/README.md#style-guidelines).
+
 
 Coding Style (Doxygen-compatible comments)
 ------------------------------------------
@@ -280,7 +355,7 @@ produce better debugging builds.
 ### Show sources in debugging
 
 If you have ccache enabled, absolute paths are stripped from debug information
-with the -fdebug-prefix-map and -fmacro-prefix-map options (if supported by the
+with the `-fdebug-prefix-map` and `-fmacro-prefix-map` options (if supported by the
 compiler). This might break source file detection in case you move binaries
 after compilation, debug from the directory other than the project root or use
 an IDE that only supports absolute paths for debugging.
@@ -315,8 +390,10 @@ Run configure with the `--enable-gprof` option, then make.
 If the code is behaving strangely, take a look in the `debug.log` file in the data directory;
 error and debugging messages are written there.
 
-The `-debug=...` command-line option controls debugging; running with just `-debug` or `-debug=1` will turn
-on all categories (and give you a very large `debug.log` file).
+Debug logging can be enabled on startup with the `-debug` and `-loglevel`
+configuration options and toggled while sparksd is running with the `logging`
+RPC.  For instance, launching sparksd with `-debug` or `-debug=1` will turn on
+all log categories and `-loglevel=trace` will turn on all log severity levels.
 
 The Qt code routes `qDebug()` output to `debug.log` under category "qt": run with `-debug=qt`
 to see it.
@@ -338,6 +415,21 @@ configure option adds `-DDEBUG_LOCKORDER` to the compiler flags. This inserts
 run-time checks to keep track of which locks are held and adds warnings to the
 `debug.log` file if inconsistencies are detected.
 
+### DEBUG_LOCKCONTENTION
+
+Defining `DEBUG_LOCKCONTENTION` adds a "lock" logging category to the logging
+RPC that, when enabled, logs the location and duration of each lock contention
+to the `debug.log` file.
+
+The `--enable-debug` configure option adds `-DDEBUG_LOCKCONTENTION` to the
+compiler flags. You may also enable it manually for a non-debug build by running
+configure with `-DDEBUG_LOCKCONTENTION` added to your CPPFLAGS,
+i.e. `CPPFLAGS="-DDEBUG_LOCKCONTENTION"`, then build and run sparksd.
+
+You can then use the `-debug=lock` configuration option at sparksd startup or
+`sparks-cli logging '["lock"]'` at runtime to turn on lock contention logging.
+It can be toggled off again with `sparks-cli logging [] '["lock"]'`.
+
 ### Assertions and Checks
 
 The util file `src/util/check.h` offers helpers to protect against coding and
@@ -353,7 +445,7 @@ other input.
   failure, it will throw an exception, which can be caught to recover from the
   error.
    - For example, a nullptr dereference or any other logic bug in RPC code
-     means that the RPC code is faulty and can not be executed. However, the
+     means that the RPC code is faulty and cannot be executed. However, the
      logic bug can be shown to the user and the program can continue to run.
 * `Assume` should be used to document assumptions when program execution can
   safely continue even if the assumption is violated. In debug builds it
@@ -401,7 +493,7 @@ make cov
 
 Profiling is a good way to get a precise idea of where time is being spent in
 code. One tool for doing profiling on Linux platforms is called
-[`perf`](http://www.brendangregg.com/perf.html), and has been integrated into
+[`perf`](https://www.brendangregg.com/perf.html), and has been integrated into
 the functional test framework. Perf can observe a running process and sample
 (at some frequency) where its execution is.
 
@@ -467,8 +559,19 @@ address sanitizer, libtsan for the thread sanitizer, and libubsan for the
 undefined sanitizer. If you are missing required libraries, the configure script
 will fail with a linker error when testing the sanitizer flags.
 
-The test suite should pass cleanly with the `thread` and `undefined` sanitizers,
-but there are a number of known problems when using the `address` sanitizer. The
+The test suite should pass cleanly with the `thread` and `undefined` sanitizers. You
+may need to use a suppressions file, see `test/sanitizer_suppressions`. They may be
+used as follows:
+```bash
+export LSAN_OPTIONS="suppressions=$(pwd)/test/sanitizer_suppressions/lsan"
+export TSAN_OPTIONS="suppressions=$(pwd)/test/sanitizer_suppressions/tsan:halt_on_error=1:second_deadlock_stack=1"
+export UBSAN_OPTIONS="suppressions=$(pwd)/test/sanitizer_suppressions/ubsan:print_stacktrace=1:halt_on_error=1:report_error_type=1"
+```
+
+See the CI config for more examples, and upstream documentation for more information
+about any additional options.
+
+There are a number of known problems when using the `address` sanitizer. The
 address sanitizer is known to fail in
 [sha256_sse4::Transform](/src/crypto/sha256_sse4.cpp) which makes it unusable
 unless you also use `--disable-asm` when running configure. We would like to fix
@@ -635,10 +738,6 @@ Wallet
 
 - Make sure that no crashes happen with run-time option `-disablewallet`.
 
-- Include `db_cxx.h` (BerkeleyDB header) only when `ENABLE_WALLET` is set.
-
-  - *Rationale*: Otherwise compilation of the disable-wallet build will fail in environments without BerkeleyDB.
-
 General C++
 -------------
 
@@ -649,12 +748,6 @@ Common misconceptions are clarified in those sections:
 
 - Passing (non-)fundamental types in the [C++ Core
   Guideline](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rf-conventional).
-
-- Assertions should not have side-effects.
-
-  - *Rationale*: Even though the source code is set to refuse to compile
-    with assertions disabled, having side-effects in assertions is unexpected and
-    makes the code harder to understand.
 
 - If you use the `.h`, you must link the `.cpp`.
 
@@ -771,11 +864,6 @@ int GetInt(Tabs tab)
 Strings and formatting
 ------------------------
 
-- Be careful of `LogPrint` versus `LogPrintf`. `LogPrint` takes a `category` argument, `LogPrintf` does not.
-
-  - *Rationale*: Confusion of these can result in runtime exceptions due to
-    formatting mismatch, and it is easy to get wrong because of subtly similar naming.
-
 - Use `std::string`, avoid C string manipulation functions.
 
   - *Rationale*: C++ string handling is marginally safer, less scope for
@@ -848,10 +936,67 @@ from using a different variable with the same name),
 please name variables so that their names do not shadow variables defined in the source code.
 
 When using nested cycles, do not name the inner cycle variable the same as in
-the upper cycle, etc.
+the outer cycle, etc.
+
+Lifetimebound
+--------------
+
+The [Clang `lifetimebound`
+attribute](https://clang.llvm.org/docs/AttributeReference.html#lifetimebound)
+can be used to tell the compiler that a lifetime is bound to an object and
+potentially see a compile-time warning if the object has a shorter lifetime from
+the invalid use of a temporary. You can use the attribute by adding a `LIFETIMEBOUND`
+annotation defined in `src/attributes.h`; please grep the codebase for examples.
 
 Threads and synchronization
 ----------------------------
+
+- Prefer `Mutex` type to `RecursiveMutex` one.
+
+- Consistently use [Clang Thread Safety Analysis](https://clang.llvm.org/docs/ThreadSafetyAnalysis.html) annotations to
+  get compile-time warnings about potential race conditions in code. Combine annotations in function declarations with
+  run-time asserts in function definitions:
+
+```C++
+// txmempool.h
+class CTxMemPool
+{
+public:
+    ...
+    mutable RecursiveMutex cs;
+    ...
+    void UpdateTransactionsFromBlock(...) EXCLUSIVE_LOCKS_REQUIRED(::cs_main, cs);
+    ...
+}
+
+// txmempool.cpp
+void CTxMemPool::UpdateTransactionsFromBlock(...)
+{
+    AssertLockHeld(::cs_main);
+    AssertLockHeld(cs);
+    ...
+}
+```
+
+```C++
+// validation.h
+class ChainstateManager
+{
+public:
+    ...
+    bool ProcessNewBlock(...) LOCKS_EXCLUDED(::cs_main);
+    ...
+}
+
+// validation.cpp
+bool ChainstateManager::ProcessNewBlock(...)
+{
+    AssertLockNotHeld(::cs_main);
+    ...
+    LOCK(::cs_main);
+    ...
+}
+```
 
 - Build and run tests with `-DDEBUG_LOCKORDER` to verify that no potential
   deadlocks are introduced.
@@ -878,6 +1023,8 @@ TRY_LOCK(cs_vNodes, lockNodes);
 
 Scripts
 --------------------------
+
+Write scripts in Python rather than bash, when possible.
 
 ### Shebang
 
@@ -1016,6 +1163,9 @@ Current subtrees include:
 
 - src/univalue
   - Upstream at https://github.com/bitcoin-core/univalue ; actively maintained by Core contributors, deviates from upstream https://github.com/jgarzik/univalue
+
+- src/minisketch
+  - Upstream at https://github.com/sipa/minisketch ; maintained by Core contributors.
 
 Upgrading LevelDB
 ---------------------
@@ -1202,7 +1352,7 @@ A few guidelines for introducing and reviewing new RPC interfaces:
 
 - Don't forget to fill in the argument names correctly in the RPC command table.
 
-  - *Rationale*: If not, the call can not be used with name-based arguments.
+  - *Rationale*: If not, the call cannot be used with name-based arguments.
 
 - Add every non-string RPC argument `(method, idx, name)` to the table `vRPCConvertParams` in `rpc/client.cpp`.
 
@@ -1255,6 +1405,12 @@ A few guidelines for introducing and reviewing new RPC interfaces:
   timestamps in the documentation.
 
   - *Rationale*: User-facing consistency.
+
+- Use `fs::path::u8string()` and `fs::u8path()` functions when converting path
+  to JSON strings, not `fs::PathToString` and `fs::PathFromString`
+
+  - *Rationale*: JSON strings are Unicode strings, not byte strings, and
+    RFC8259 requires JSON to be encoded as UTF-8.
 
 Internal interface guidelines
 -----------------------------
@@ -1322,22 +1478,9 @@ communication:
   virtual boost::signals2::scoped_connection connectTipChanged(TipChangedFn fn) = 0;
   ```
 
-- For consistency and friendliness to code generation tools, interface method
-  input and inout parameters should be ordered first and output parameters
-  should come last.
+- Interface methods should not be overloaded.
 
-  Example:
-
-  ```c++
-  // Good: error output param is last
-  virtual bool broadcastTransaction(const CTransactionRef& tx, CAmount max_fee, std::string& error) = 0;
-
-  // Bad: error output param is between input params
-  virtual bool broadcastTransaction(const CTransactionRef& tx, std::string& error, CAmount max_fee) = 0;
-  ```
-
-- For friendliness to code generation tools, interface methods should not be
-  overloaded:
+  *Rationale*: consistency and friendliness to code generation tools.
 
   Example:
 
@@ -1351,9 +1494,12 @@ communication:
   virtual bool disconnect(NodeId id) = 0;
   ```
 
-- For consistency and friendliness to code generation tools, interface method
-  names should be `lowerCamelCase` and standalone function names should be
+### Internal interface naming style
+
+- Interface method names should be `lowerCamelCase` and standalone function names should be
   `UpperCamelCase`.
+
+  *Rationale*: consistency and friendliness to code generation tools.
 
   Examples:
 

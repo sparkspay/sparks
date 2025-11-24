@@ -5,6 +5,7 @@
 #include <chainparams.h>
 #include <chainparamsbase.h>
 #include <key.h>
+#include <psbt.h>
 #include <pubkey.h>
 #include <script/keyorigin.h>
 #include <script/sign.h>
@@ -13,6 +14,7 @@
 #include <test/fuzz/FuzzedDataProvider.h>
 #include <test/fuzz/fuzz.h>
 #include <test/fuzz/util.h>
+#include <util/translation.h>
 
 #include <cassert>
 #include <cstdint>
@@ -41,7 +43,7 @@ FUZZ_TARGET_INIT(script_sign, initialize_script_sign)
         } catch (const std::ios_base::failure&) {
         }
         CDataStream serialized{SER_NETWORK, PROTOCOL_VERSION};
-        SerializeHDKeypaths(serialized, hd_keypaths, fuzzed_data_provider.ConsumeIntegral<uint8_t>());
+        SerializeHDKeypaths(serialized, hd_keypaths, CompactSizeWriter(fuzzed_data_provider.ConsumeIntegral<uint8_t>()));
     }
 
     {
@@ -59,7 +61,7 @@ FUZZ_TARGET_INIT(script_sign, initialize_script_sign)
         }
         CDataStream serialized{SER_NETWORK, PROTOCOL_VERSION};
         try {
-            SerializeHDKeypaths(serialized, hd_keypaths, fuzzed_data_provider.ConsumeIntegral<uint8_t>());
+            SerializeHDKeypaths(serialized, hd_keypaths, CompactSizeWriter(fuzzed_data_provider.ConsumeIntegral<uint8_t>()));
         } catch (const std::ios_base::failure&) {
         }
         std::map<CPubKey, KeyOriginInfo> deserialized_hd_keypaths;
@@ -77,9 +79,7 @@ FUZZ_TARGET_INIT(script_sign, initialize_script_sign)
     }
 
     FillableSigningProvider provider;
-    CKey k;
-    const std::vector<uint8_t> key_data = ConsumeRandomLengthByteVector(fuzzed_data_provider);
-    k.Set(key_data.begin(), key_data.end(), fuzzed_data_provider.ConsumeBool());
+    CKey k = ConsumePrivateKey(fuzzed_data_provider);
     if (k.IsValid()) {
         provider.AddKey(k);
     }
@@ -134,7 +134,7 @@ FUZZ_TARGET_INIT(script_sign, initialize_script_sign)
                 }
                 coins[*outpoint] = *coin;
             }
-            std::map<int, std::string> input_errors;
+            std::map<int, bilingual_str> input_errors;
             // (void)SignTransaction(sign_transaction_tx_to, &provider, coins, fuzzed_data_provider.ConsumeIntegral<int>(), input_errors);
         }
     }

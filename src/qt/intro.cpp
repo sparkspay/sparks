@@ -156,7 +156,7 @@ Intro::Intro(QWidget *parent, int64_t blockchain_size_gb, int64_t chain_state_si
         UpdatePruneLabels(prune_checked);
         UpdateFreeSpaceLabel();
     });
-    connect(ui->pruneGB, QOverload<int>::of(&QSpinBox::valueChanged), [this](int prune_GB) {
+    connect(ui->pruneGB, qOverload<int>(&QSpinBox::valueChanged), [this](int prune_GB) {
         m_prune_target_gb = prune_GB;
         UpdatePruneLabels(ui->prune->isChecked());
         UpdateFreeSpaceLabel();
@@ -269,7 +269,7 @@ bool Intro::showIfNeeded(bool& did_show_intro, int64_t& prune_MiB)
      * (to be consistent with sparksd behavior)
      */
     if(dataDir != GUIUtil::getDefaultDataDirectory()) {
-        gArgs.SoftSetArg("-datadir", GUIUtil::QStringToPath(dataDir).string()); // use OS locale for path setting
+        gArgs.SoftSetArg("-datadir", fs::PathToString(GUIUtil::QStringToPath(dataDir))); // use OS locale for path setting
     }
     return true;
 }
@@ -293,7 +293,7 @@ void Intro::setStatus(int status, const QString &message, quint64 bytesAvailable
         ui->freeSpace->setText("");
     } else {
         m_bytes_available = bytesAvailable;
-        if (ui->prune->isEnabled()) {
+        if (ui->prune->isEnabled() && !(gArgs.IsArgSet("-prune") && gArgs.GetArg("-prune", 0) == 0)) {
             ui->prune->setChecked(m_bytes_available < (m_blockchain_size_gb + m_chain_state_size_gb + 10) * GB_BYTES);
         }
         UpdateFreeSpaceLabel();
@@ -304,7 +304,7 @@ void Intro::setStatus(int status, const QString &message, quint64 bytesAvailable
 
 void Intro::UpdateFreeSpaceLabel()
 {
-    QString freeString = tr("%1 GB of free space available").arg(m_bytes_available / GB_BYTES);
+    QString freeString = tr("%1 GB of space available").arg(m_bytes_available / GB_BYTES);
     if (m_bytes_available < m_required_space_gb * GB_BYTES) {
         freeString += " " + tr("(of %1 GB needed)").arg(m_required_space_gb);
         ui->freeSpace->setStyleSheet(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_ERROR));

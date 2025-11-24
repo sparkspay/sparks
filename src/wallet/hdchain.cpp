@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 
 #include <wallet/hdchain.h>
@@ -140,7 +140,7 @@ void CHDChain::DeriveChildExtKey(uint32_t nAccountIndex, bool fInternal, uint32_
     CExtKey changeKey;              //key at m/purpose'/coin_type'/account'/change
     CExtKey childKey;               //key at m/purpose'/coin_type'/account'/change/address_index
 
-    masterKey.SetSeed(vchSeed);
+    masterKey.SetSeed(MakeByteSpan(vchSeed));
 
     // Use hardened derivation for purpose, coin_type and account
     // (keys >= 0x80000000 are hardened after bip32)

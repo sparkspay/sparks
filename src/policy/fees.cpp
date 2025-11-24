@@ -6,12 +6,30 @@
 #include <policy/fees.h>
 
 #include <clientversion.h>
+#include <consensus/amount.h>
 #include <fs.h>
 #include <logging.h>
+#include <policy/feerate.h>
+#include <primitives/transaction.h>
+#include <random.h>
+#include <serialize.h>
 #include <streams.h>
+#include <sync.h>
+#include <tinyformat.h>
 #include <txmempool.h>
+#include <uint256.h>
 #include <util/serfloat.h>
 #include <util/system.h>
+#include <util/time.h>
+
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <stdexcept>
+#include <utility>
 
 static const char* FEE_ESTIMATES_FILENAME = "fee_estimates.dat";
 
@@ -243,6 +261,11 @@ double TxConfirmStats::EstimateMedianVal(int confTarget, double sufficientTxVal,
     unsigned int curFarBucket = maxbucketindex;
     unsigned int bestFarBucket = maxbucketindex;
 
+    // We'll always group buckets into sets that meet sufficientTxVal --
+    // this ensures that we're using consistent groups between different
+    // confirmation targets.
+    double partialNum = 0;
+
     bool foundAnswer = false;
     unsigned int bins = unconfTxs.size();
     bool newBucketRange = true;
@@ -258,6 +281,7 @@ double TxConfirmStats::EstimateMedianVal(int confTarget, double sufficientTxVal,
         }
         curFarBucket = bucket;
         nConf += confAvg[periodTarget - 1][bucket];
+        partialNum += txCtAvg[bucket];
         totalNum += txCtAvg[bucket];
         failNum += failAvg[periodTarget - 1][bucket];
         for (unsigned int confct = confTarget; confct < GetMaxConfirms(); confct++)
@@ -267,7 +291,14 @@ double TxConfirmStats::EstimateMedianVal(int confTarget, double sufficientTxVal,
         // we can test for success
         // (Only count the confirmed data points, so that each confirmation count
         // will be looking at the same amount of data and same bucket breaks)
-        if (totalNum >= sufficientTxVal / (1 - decay)) {
+
+        if (partialNum < sufficientTxVal / (1 - decay)) {
+            // the buckets we've added in this round aren't sufficient
+            // so keep adding
+            continue;
+        } else {
+            partialNum = 0; // reset for the next range we'll add
+
             double curPct = nConf / (totalNum + failNum + extraNum);
 
             // Check to see if we are no longer getting confirmed at the success rate
@@ -530,10 +561,10 @@ CBlockPolicyEstimator::CBlockPolicyEstimator()
     longStats = std::make_unique<TxConfirmStats>(buckets, bucketMap, LONG_BLOCK_PERIODS, LONG_DECAY, LONG_SCALE);
 
     // If the fee estimation file is present, read recorded estimations
-    fs::path est_filepath = GetDataDir() / FEE_ESTIMATES_FILENAME;
+    fs::path est_filepath = gArgs.GetDataDirNet() / FEE_ESTIMATES_FILENAME;
     CAutoFile est_file(fsbridge::fopen(est_filepath, "rb"), SER_DISK, CLIENT_VERSION);
     if (est_file.IsNull() || !Read(est_file)) {
-        LogPrintf("Failed to read fee estimates from %s. Continue anyway.\n", est_filepath.string());
+        LogPrintf("Failed to read fee estimates from %s. Continue anyway.\n", fs::PathToString(est_filepath));
     }
 }
 
@@ -890,10 +921,10 @@ CFeeRate CBlockPolicyEstimator::estimateSmartFee(int confTarget, FeeCalculation 
 void CBlockPolicyEstimator::Flush() {
     FlushUnconfirmed();
 
-    fs::path est_filepath = GetDataDir() / FEE_ESTIMATES_FILENAME;
+    fs::path est_filepath = gArgs.GetDataDirNet() / FEE_ESTIMATES_FILENAME;
     CAutoFile est_file(fsbridge::fopen(est_filepath, "wb"), SER_DISK, CLIENT_VERSION);
     if (est_file.IsNull() || !Write(est_file)) {
-        LogPrintf("Failed to write fee estimates to %s. Continue anyway.\n", est_filepath.string());
+        LogPrintf("Failed to write fee estimates to %s. Continue anyway.\n", fs::PathToString(est_filepath));
     }
 }
 

@@ -2,7 +2,7 @@
 #       to use 'docker compose run guix_ubuntu' to drop into an
 #       interactive shell
 
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 SHELL ["/bin/bash", "-c"]
 
@@ -18,7 +18,11 @@ RUN apt-get update && \
     sudo \
     wget \
     xz-utils && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/*; \
+    targetLocale="en_US.UTF-8"; \
+    locale-gen ${targetLocale} && \
+    update-locale LC_ALL=${targetLocale} && \
+    update-locale LANG=${targetLocale};
 
 ARG guix_download_path=ftp://ftp.gnu.org/gnu/guix
 ARG guix_version=1.4.0
@@ -26,12 +30,11 @@ ARG guix_checksum_aarch64=72d807392889919940b7ec9632c45a259555e6b0942ea7bfd13110
 ARG guix_checksum_x86_64=236ca7c9c5958b1f396c2924fcc5bc9d6fdebcb1b4cf3c7c6d46d4bf660ed9c9
 ARG builder_count=32
 
-ENV PATH /usr/local/bin:/usr/local/guix/current/bin:$PATH
+ENV PATH="/usr/local/bin:/usr/local/guix/current/bin:$PATH"
 
 # Application Setup
 # https://guix.gnu.org/manual/en/html_node/Application-Setup.html
-ENV GUIX_LOCPATH="/usr/local/guix/profile" \
-    LC_ALL="C"
+ENV GUIX_LOCPATH="/usr/local/guix/profile"
 
 RUN guix_file_name=guix-binary-${guix_version}.$(uname -m)-linux.tar.xz          && \
     eval "guix_checksum=\${guix_checksum_$(uname -m)}"                           && \
@@ -74,18 +77,19 @@ RUN usermod -aG sudo ${USERNAME} && \
     echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # Copy required files to container
-COPY --from=docker_root ./motd.txt           /etc/motd
-COPY --from=docker_root ./scripts/entrypoint /usr/local/bin/entrypoint
-COPY --from=docker_root ./scripts/guix-check /usr/local/bin/guix-check
-COPY --from=docker_root ./scripts/guix-start /usr/local/bin/guix-start
+COPY --from=docker_root ./motd.txt             /etc/motd
+COPY --from=docker_root ./scripts/entrypoint   /usr/local/bin/entrypoint
+COPY --from=docker_root ./scripts/guix-check   /usr/local/bin/guix-check
+COPY --from=docker_root ./scripts/guix-start   /usr/local/bin/guix-start
+COPY --from=docker_root ./scripts/setup-sdk    /usr/local/bin/setup-sdk
 
 # Create directories for mounting to save/restore cache and grant necessary permissions
 RUN mkdir -p \
         /home/${USERNAME}/.cache \
-        /src/sparks/depends/{built,sources,work} && \
+        /src/sparks/depends/{built,sources,work}; \
     chown -R ${USER_ID}:${GROUP_ID} \
         /home/${USERNAME}/.cache \
-        /src
+        /src;
 
 WORKDIR "/src/sparks"
 

@@ -2,6 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <addrman.h>
 #include <chainparams.h>
 #include <chainparamsbase.h>
 #include <net.h>
@@ -10,23 +11,39 @@
 #include <test/fuzz/FuzzedDataProvider.h>
 #include <test/fuzz/fuzz.h>
 #include <test/fuzz/util.h>
+#include <test/fuzz/util/net.h>
 #include <test/util/setup_common.h>
+#include <util/system.h>
 #include <util/translation.h>
 
 #include <cstdint>
 #include <vector>
 
+namespace {
+const TestingSetup* g_setup;
+} // namespace
+
 void initialize_connman()
 {
-    static const auto testing_setup = MakeNoLogFileContext<>();
+    static const auto testing_setup = MakeNoLogFileContext<const TestingSetup>();
+    g_setup = testing_setup.get();
 }
 
 FUZZ_TARGET_INIT(connman, initialize_connman)
 {
     FuzzedDataProvider fuzzed_data_provider{buffer.data(), buffer.size()};
     SetMockTime(ConsumeTime(fuzzed_data_provider));
-    AddrMan addrman(/* asmap */ std::vector<bool>(), /* deterministic */ false, /* consistency_check_ratio */ 0);
-    CConnman connman{fuzzed_data_provider.ConsumeIntegral<uint64_t>(), fuzzed_data_provider.ConsumeIntegral<uint64_t>(), addrman};
+    CConnman connman{fuzzed_data_provider.ConsumeIntegral<uint64_t>(),
+                     fuzzed_data_provider.ConsumeIntegral<uint64_t>(),
+                     *g_setup->m_node.addrman,
+                     *g_setup->m_node.netgroupman,
+                     fuzzed_data_provider.ConsumeBool()};
+
+    const uint64_t max_outbound_limit{fuzzed_data_provider.ConsumeIntegral<uint64_t>()};
+    CConnman::Options options;
+    options.nMaxOutboundLimit = max_outbound_limit;
+    connman.Init(options);
+
     CNetAddr random_netaddr;
     CNode random_node = ConsumeNode(fuzzed_data_provider);
     CSubNet random_subnet;
@@ -44,7 +61,7 @@ FUZZ_TARGET_INIT(connman, initialize_connman)
                 random_string = fuzzed_data_provider.ConsumeRandomLengthString(64);
             },
             [&] {
-                connman.AddNode(random_string);
+                connman.AddNode({random_string, fuzzed_data_provider.ConsumeBool()});
             },
             [&] {
                 connman.CheckIncomingNonce(fuzzed_data_provider.ConsumeIntegral<uint64_t>());
@@ -92,12 +109,6 @@ FUZZ_TARGET_INIT(connman, initialize_connman)
                 (void)connman.OutboundTargetReached(fuzzed_data_provider.ConsumeBool());
             },
             [&] {
-                // Limit now to int32_t to avoid signed integer overflow
-                (void)connman.PoissonNextSendInbound(
-                        std::chrono::microseconds{fuzzed_data_provider.ConsumeIntegral<int32_t>()},
-                        std::chrono::seconds{fuzzed_data_provider.ConsumeIntegral<int>()});
-            },
-            [&] {
                 CSerializedNetMsg serialized_net_msg;
                 serialized_net_msg.m_type = fuzzed_data_provider.ConsumeRandomLengthString(CMessageHeader::COMMAND_SIZE);
                 serialized_net_msg.data = ConsumeRandomLengthByteVector(fuzzed_data_provider);
@@ -113,17 +124,16 @@ FUZZ_TARGET_INIT(connman, initialize_connman)
                 connman.SetTryNewOutboundPeer(fuzzed_data_provider.ConsumeBool());
             });
     }
-    (void)connman.GetAddedNodeInfo();
+    (void)connman.GetAddedNodeInfo(fuzzed_data_provider.ConsumeBool());
     (void)connman.GetExtraFullOutboundCount();
     (void)connman.GetLocalServices();
-    (void)connman.GetMaxOutboundTarget();
+    assert(connman.GetMaxOutboundTarget() == max_outbound_limit);
     (void)connman.GetMaxOutboundTimeframe();
     (void)connman.GetMaxOutboundTimeLeftInCycle();
     (void)connman.GetNetworkActive();
     std::vector<CNodeStats> stats;
     connman.GetNodeStats(stats);
     (void)connman.GetOutboundTargetBytesLeft();
-    (void)connman.GetReceiveFloodSize();
     (void)connman.GetTotalBytesRecv();
     (void)connman.GetTotalBytesSent();
     (void)connman.GetTryNewOutboundPeer();

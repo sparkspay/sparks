@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2024 The Dash Core developers
+// Copyright (c) 2021-2025 The Dash Core developers
 // Copyright (c) 2021-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -40,7 +40,11 @@ enum class LLMQType : uint8_t {
     LLMQ_TEST_PLATFORM = 106,    // 3 members, 2 (66%) threshold, one per hour.
 
     // for devnets only. rotated version (v2) for devnets
-    LLMQ_DEVNET_DIP0024 = 105 // 8 members, 4 (50%) threshold, one per hour. Params might differ when -llmqdevnetparams is used
+    LLMQ_DEVNET_DIP0024 = 105, // 8 members, 4 (50%) threshold, one per hour. Params might differ when -llmqdevnetparams is used
+
+    // Custom quorums for large MN + EvoNode network
+    LLMQ_100_70_REGULAR = 110,   // 100 members, 70 (70%) threshold, regular MNs
+    LLMQ_25_80_EVONODE = 111,    // 25 members, 20 (80%) threshold, EvoNodes
 };
 
 // Configures a LLMQ and its DKG
@@ -57,7 +61,7 @@ struct LLMQParams {
     // the size of the quorum, e.g. 50 or 400
     int size;
 
-    // The minimum number of valid members after the DKK. If less members are determined valid, no commitment can be
+    // The minimum number of valid members after the DKG. If less members are determined valid, no commitment can be
     // created. Should be higher then the threshold to allow some room for failing nodes, otherwise quorum might end up
     // not being able to ever created a recovered signature if more nodes fail after the DKG
     int minSize;
@@ -117,17 +121,13 @@ struct LLMQParams {
     // How many members should we try to send all sigShares to before we give up.
     int recoveryMembers;
 public:
-
-    [[ nodiscard ]] constexpr int max_cycles(int quorums_count) const
+    [[nodiscard]] constexpr int max_cycles(int quorums_count) const
     {
         return useRotation ? quorums_count / signingActiveQuorumCount : quorums_count;
     }
 
     // For how many blocks recent DKG info should be kept
-    [[ nodiscard ]] constexpr int max_store_depth() const
-    {
-        return max_cycles(keepOldKeys) * dkgInterval;
-    }
+    [[nodiscard]] constexpr int max_store_depth() const { return max_cycles(keepOldKeys) * dkgInterval; }
 };
 
 //static_assert(std::is_trivial_v<Consensus::LLMQParams>, "LLMQParams is not a trivial type");
@@ -136,7 +136,7 @@ static_assert(std::is_trivially_copyable_v<Consensus::LLMQParams>, "LLMQParams i
 static_assert(std::is_trivially_assignable_v<Consensus::LLMQParams, Consensus::LLMQParams>, "LLMQParams is not trivially assignable");
 
 
-static constexpr std::array<LLMQParams, 18> available_llmqs = {
+static constexpr std::array<LLMQParams, 20> available_llmqs = {
 
     /**
      * llmq_test
@@ -456,6 +456,7 @@ static constexpr std::array<LLMQParams, 18> available_llmqs = {
     LLMQParams{
         .type = LLMQType::LLMQ_15_60,
         .name = "llmq_15_60",
+        .useRotation = false,
         .size = 15,
         .minSize = 12,
         .threshold = 9,
@@ -476,6 +477,7 @@ static constexpr std::array<LLMQParams, 18> available_llmqs = {
     LLMQParams{
         .type = LLMQType::LLMQ_25_60,
         .name = "llmq_25_60",
+        .useRotation = false,
         .size = 25,
         .minSize = 20,
         .threshold = 15,
@@ -497,6 +499,7 @@ static constexpr std::array<LLMQParams, 18> available_llmqs = {
     LLMQParams{
         .type = LLMQType::LLMQ_25_80,
         .name = "llmq_25_80",
+        .useRotation = false,
         .size = 25,
         .minSize = 23,
         .threshold = 20,
@@ -568,6 +571,50 @@ static constexpr std::array<LLMQParams, 18> available_llmqs = {
 
         .keepOldConnections = 25,
         .keepOldKeys = 24 * 30 * 2, // 2 months of quorums
+        .recoveryMembers = 12,
+    },
+
+    // Regular Masternodes
+    LLMQParams{
+        .type = LLMQType::LLMQ_100_70_REGULAR,
+        .name = "llmq_100_70_regular",
+        .useRotation = true,
+        .size = 100,
+        .minSize = 90,
+        .threshold = 70,
+
+        .dkgInterval = 24,       // DKG every hour
+        .dkgPhaseBlocks = 3,
+        .dkgMiningWindowStart = 15,
+        .dkgMiningWindowEnd = 40,
+        .dkgBadVotesThreshold = 75,
+
+        .signingActiveQuorumCount = 8, // keep multiple active
+
+        .keepOldConnections = 16,
+        .keepOldKeys = 16,
+        .recoveryMembers = 50,
+    },
+
+    // Evolutionnodes
+    LLMQParams{
+        .type = LLMQType::LLMQ_25_80_EVONODE,
+        .name = "llmq_25_80_evnode",
+        .useRotation = false,
+        .size = 25,
+        .minSize = 22,
+        .threshold = 20,
+
+        .dkgInterval = 12,       // faster DKG
+        .dkgPhaseBlocks = 2,
+        .dkgMiningWindowStart = 5,
+        .dkgMiningWindowEnd = 12,
+        .dkgBadVotesThreshold = 18,
+
+        .signingActiveQuorumCount = 4,
+
+        .keepOldConnections = 8,
+        .keepOldKeys = 16,
         .recoveryMembers = 12,
     },
 

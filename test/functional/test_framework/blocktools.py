@@ -4,7 +4,6 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Utilities for manipulating blocks and transactions."""
 
-from binascii import a2b_hex
 from decimal import Decimal
 import io
 import struct
@@ -19,34 +18,47 @@ from .messages import (
     CTransaction,
     CTxIn,
     CTxOut,
+    SEQUENCE_FINAL,
     tx_from_hex,
     from_hex,
     uint256_to_string,
 )
-from .script import CScript, CScriptNum, CScriptOp, OP_TRUE, OP_CHECKSIG
-from .util import assert_equal, hex_str_to_bytes
+from .script import (
+    CScript,
+    CScriptNum,
+    CScriptOp,
+    OP_TRUE
+)
+from .script_util import (
+    key_to_p2pk_script,
+)
+from .util import assert_equal
 from io import BytesIO
 
-MAX_BLOCK_SIGOPS = 20000
+MAX_BLOCK_SIGOPS = 40000
 
 # Genesis block time (regtest)
 TIME_GENESIS_BLOCK = 1417713337
+
+MAX_FUTURE_BLOCK_TIME = 2 * 60 * 60
 
 # Coinbase transaction outputs can only be spent after this number of new blocks (network rule)
 COINBASE_MATURITY = 100
 
 NORMAL_GBT_REQUEST_PARAMS = {"rules": []} # type: ignore[var-annotated]
 
+VERSIONBITS_LAST_OLD_BLOCK_VERSION = 4
+
 def create_block(hashprev=None, coinbase=None, ntime=None, *, version=None, tmpl=None, txlist=None, dip4_activated=False, v20_activated=False):
     """Create a block (with regtest difficulty)."""
     block = CBlock()
     if tmpl is None:
         tmpl = {}
-    block.nVersion = version or tmpl.get('version') or 1
+    block.nVersion = version or tmpl.get('version') or VERSIONBITS_LAST_OLD_BLOCK_VERSION
     block.nTime = ntime or tmpl.get('curtime') or int(time.time() + 600)
     block.hashPrevBlock = hashprev or int(tmpl['previousblockhash'], 0x10)
     if tmpl and not tmpl.get('bits') is None:
-        block.nBits = struct.unpack('>I', a2b_hex(tmpl['bits']))[0]
+        block.nBits = struct.unpack('>I', bytes.fromhex(tmpl['bits']))[0]
     else:
         block.nBits = 0x207fffff  # difficulty retargeting is disabled in REGTEST chainparams
     if coinbase is None:
@@ -63,6 +75,7 @@ def create_block(hashprev=None, coinbase=None, ntime=None, *, version=None, tmpl
     block.calc_sha256()
     return block
 
+# TODO: implement MN_RR support here or remove it
 def create_block_with_mnpayments(mninfo, node, vtx=None, mn_payee=None, mn_amount=None):
     if vtx is None:
         vtx = []
@@ -168,14 +181,14 @@ def create_coinbase(height, pubkey=None, dip4_activated=False, v20_activated=Fal
     If pubkey is passed in, the coinbase output will be a P2PK output;
     otherwise an anyone-can-spend output."""
     coinbase = CTransaction()
-    coinbase.vin.append(CTxIn(COutPoint(0, 0xffffffff), script_BIP34_coinbase_height(height), 0xffffffff))
+    coinbase.vin.append(CTxIn(COutPoint(0, 0xffffffff), script_BIP34_coinbase_height(height), SEQUENCE_FINAL))
     coinbaseoutput = CTxOut()
     coinbaseoutput.nValue = nValue * COIN
     if nValue == 500:
         halvings = int(height / 150)  # regtest
         coinbaseoutput.nValue >>= halvings
     if (pubkey is not None):
-        coinbaseoutput.scriptPubKey = CScript([pubkey, OP_CHECKSIG])
+        coinbaseoutput.scriptPubKey = key_to_p2pk_script(pubkey)
     else:
         coinbaseoutput.scriptPubKey = CScript([OP_TRUE])
     coinbase.vout = [coinbaseoutput]
@@ -196,7 +209,7 @@ def create_tx_with_script(prevtx, n, script_sig=b"", *, amount, script_pub_key=C
     """
     tx = CTransaction()
     assert n < len(prevtx.vout)
-    tx.vin.append(CTxIn(COutPoint(prevtx.sha256, n), script_sig, 0xffffffff))
+    tx.vin.append(CTxIn(COutPoint(prevtx.sha256, n), script_sig, SEQUENCE_FINAL))
     tx.vout.append(CTxOut(amount, script_pub_key))
     tx.calc_sha256()
     return tx
@@ -208,7 +221,7 @@ def create_transaction(node, txid, to_address, *, amount):
     """
     raw_tx = create_raw_transaction(node, txid, to_address, amount=amount)
     tx = CTransaction()
-    tx.deserialize(BytesIO(hex_str_to_bytes(raw_tx)))
+    tx.deserialize(BytesIO(bytes.fromhex(raw_tx)))
     return tx
 
 def create_raw_transaction(node, txid, to_address, *, amount):
@@ -253,12 +266,13 @@ def filter_tip_keys(chaintips):
     return filtered_tips
 
 # Identical to GetMasternodePayment in C++ code
+# TODO: remove it or make **proper** tests for various height
 def get_masternode_payment(nHeight, blockValue, fV20Active):
     ret = int(blockValue / 5)
 
     nMNPIBlock = 350
     nMNPIPeriod = 10
-    nReallocActivationHeight = 2500
+    nReallocActivationHeight = 1
 
     if nHeight > nMNPIBlock:
         ret += int(blockValue / 20)
@@ -283,7 +297,7 @@ def get_masternode_payment(nHeight, blockValue, fV20Active):
         # Block Reward Realocation is not activated yet, nothing to do
         return ret
 
-    nSuperblockCycle = 10
+    nSuperblockCycle = 20
     # Actual realocation starts in the cycle next to one activation happens in
     nReallocStart = nReallocActivationHeight - nReallocActivationHeight % nSuperblockCycle + nSuperblockCycle
 

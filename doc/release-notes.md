@@ -1,8 +1,7 @@
-# Sparks Core version v21.1.1
+# Sparks Core version v22.1.3
 
-This is a new patch version release, bringing important bugfixes.
-
-This release is **optional** but recommended for all nodes.
+This is a new minor version release, bringing various bugfixes and performance improvements.
+This release is **optional** for all nodes, although recommended.
 
 Please report bugs using the issue tracker at GitHub:
 
@@ -20,28 +19,34 @@ sparksd/sparks-qt (on Linux).
 
 ## Downgrade warning
 
-### Downgrade to a version < v21.0.0
+### Downgrade to a version < v22.0.0
 
-Downgrading to a version older than v21.0.0 may not be supported due to changes
-if you are using descriptor wallets.
+Downgrading to a version older than v22.0.0 may not be supported, and will
+likely require a reindex.
 
-### Downgrade to a version < v19.2.0
+# Release Notes
 
-Downgrading to a version older than v19.2.0 is not supported due to changes
-in the evodb database. If you need to use an older version, you must either
-reindex or re-sync the whole chain.
+Bug Fixes
+----------
 
-# Notable changes
+- Fixed crash when processing invalid masternode payment destinations, replacing unsafe assertion with proper error handling (sparks#6740).
 
-- Core now categorizes asset unlock transactions as "Platform Transfers" on the Transactions tab in Sparks-Qt and in the output of the `gettransaction` RPC (#6131)
-- Persist Coinjoin Denoms options changes made via GUI over restarts (#6208)
-- Fix incorrect payment predictions for evonodes in Sparks-Qt and in RPC `masternode winners` (#6222)
-- `creditOutputs` entries in various RPCs that output transaction JSON are shown as objects now instead of being shown as strings (#6229)
-- Updated PGP key for builder 'pasta' to reflect new subkeys. You may need to reimport this key to validate signatures. (#6290)
-- Build failures on Ubuntu 24.10 / clang 19.1.1 resolved (#6328)
-- RPC errors in `masternode payments`, `getblock`, `getblockstats` related to Asset Unlock parsing have been fixed (#6336)
+RPC and Logging Improvements
+----------------------------
 
-# v21.1.0 Change log
+- Fixed misleading error logs that were triggered by legitimate RPC queries for non-existent transaction data, reducing log noise and preventing false alarms (sparks#6744).
+
+Performance Improvements
+------------------------
+
+- Optimized versionbits calculation to avoid unnecessary computations during block operations, significantly improving performance during blockchain reorganizations (sparks#6632).
+
+Documentation Updates
+---------------------
+
+- Updated translation documentation with current Transifex links and fixed typos to help contributors properly access translation resources (sparks#6739).
+
+# v22.1.3 Change log
 
 See detailed [set of changes][set-of-changes].
 
@@ -49,18 +54,22 @@ See detailed [set of changes][set-of-changes].
 
 Thanks to everyone who directly contributed to this release:
 
-- Kittywhiskers Van Gogh
+- Jorge Maldonado Ventura
 - Konstantin Akimov
 - PastaPastaPasta
-- UdjinM6
 
 As well as everyone that submitted issues, reviewed pull requests and helped
 debug the release candidates.
 
 # Older releases
 
-These release are considered obsolete. Old release notes can be found here:
+These releases are considered obsolete. Old release notes can be found here:
 
+- [v22.1.2](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-22.1.2.md) released Apr/15/2025
+- [v22.1.1](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-22.1.1.md) released Feb/17/2025
+- [v22.1.0](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-22.1.0.md) released Feb/10/2025
+- [v22.0.0](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-22.0.0.md) released Dec/12/2024
+- [v21.1.1](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-21.1.1.md) released Oct/22/2024
 - [v21.1.0](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-21.1.0.md) released Aug/8/2024
 - [v21.0.2](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-21.0.2.md) released Aug/1/2024
 - [v21.0.0](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-21.0.0.md) released Jul/25/2024
@@ -109,4 +118,4 @@ These release are considered obsolete. Old release notes can be found here:
 - [v0.10.x](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-0.10.0.md) released Sep/25/2014
 - [v0.9.x](https://github.com/sparkspay/sparks/blob/master/doc/release-notes/sparks/release-notes-0.9.0.md) released Mar/13/2014
 
-[set-of-changes]: https://github.com/sparkspay/sparks/compare/v21.1.0...sparkspay:v21.1.1
+[set-of-changes]: https://github.com/sparkspay/sparks/compare/v22.1.2...sparkspay:v22.1.3

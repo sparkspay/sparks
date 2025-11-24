@@ -1,14 +1,14 @@
-// Copyright (c) 2023 The Dash Core developers
+// Copyright (c) 2023-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_EVO_ASSETLOCKTX_H
 #define BITCOIN_EVO_ASSETLOCKTX_H
 
-#include <bls/bls_ies.h>
-#include <primitives/transaction.h>
+#include <bls/bls.h>
+#include <consensus/amount.h>
 #include <gsl/pointers.h>
-
+#include <primitives/transaction.h>
 #include <serialize.h>
 #include <univalue.h>
 

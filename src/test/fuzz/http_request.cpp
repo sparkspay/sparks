@@ -54,7 +54,7 @@ FUZZ_TARGET(http_request)
     // and is a consequence of our hacky but necessary use of the internal function evhttp_parse_firstline_ in
     // this fuzzing harness. The workaround is not aesthetically pleasing, but it successfully avoids the troublesome
     // code path. " http:// HTTP/1.1\n" was a crashing input prior to this workaround.
-    const std::string http_buffer_str = ToLower({http_buffer.begin(), http_buffer.end()});
+    const std::string http_buffer_str = ToLower(std::string{http_buffer.begin(), http_buffer.end()});
     if (http_buffer_str.find(" http://") != std::string::npos || http_buffer_str.find(" https://") != std::string::npos ||
         evhttp_parse_firstline_(evreq, evbuf) != 1 || evhttp_parse_headers_(evreq, evbuf) != 1) {
         evbuffer_free(evbuf);
@@ -74,7 +74,7 @@ FUZZ_TARGET(http_request)
     const std::string body = http_request.ReadBody();
     assert(body.empty());
     const CService service = http_request.GetPeer();
-    assert(service.ToString() == "[::]:0");
+    assert(service.ToStringAddrPort() == "[::]:0");
 
     evbuffer_free(evbuf);
     evhttp_request_free(evreq);

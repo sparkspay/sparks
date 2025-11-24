@@ -1,10 +1,11 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <masternode/meta.h>
 
 #include <flat-database.h>
+#include <univalue.h>
 #include <util/time.h>
 
 #include <sstream>
@@ -121,9 +122,8 @@ void CMasternodeMetaMan::RemoveGovernanceObject(const uint256& nGovernanceObject
 
 std::vector<uint256> CMasternodeMetaMan::GetAndClearDirtyGovernanceObjectHashes()
 {
-    LOCK(cs);
-    std::vector<uint256> vecTmp = std::move(vecDirtyGovernanceObjectHashes);
-    vecDirtyGovernanceObjectHashes.clear();
+    std::vector<uint256> vecTmp;
+    WITH_LOCK(cs, vecTmp.swap(vecDirtyGovernanceObjectHashes));
     return vecTmp;
 }
 

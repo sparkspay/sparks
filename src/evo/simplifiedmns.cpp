@@ -62,8 +62,12 @@ std::string CSimplifiedMNListEntry::ToString() const
         operatorPayoutAddress = EncodeDestination(dest);
     }
 
-    return strprintf("CSimplifiedMNListEntry(nVersion=%d, nType=%d, proRegTxHash=%s, confirmedHash=%s, service=%s, pubKeyOperator=%s, votingAddress=%s, isValid=%d, payoutAddress=%s, operatorPayoutAddress=%s, platformHTTPPort=%d, platformNodeID=%s)",
-                     nVersion, ToUnderlying(nType), proRegTxHash.ToString(), confirmedHash.ToString(), service.ToString(), pubKeyOperator.ToString(), EncodeDestination(PKHash(keyIDVoting)), isValid, payoutAddress, operatorPayoutAddress, platformHTTPPort, platformNodeID.ToString());
+    return strprintf("CSimplifiedMNListEntry(nVersion=%d, nType=%d, proRegTxHash=%s, confirmedHash=%s, service=%s, "
+                     "pubKeyOperator=%s, votingAddress=%s, isValid=%d, payoutAddress=%s, operatorPayoutAddress=%s, "
+                     "platformHTTPPort=%d, platformNodeID=%s)",
+                     nVersion, ToUnderlying(nType), proRegTxHash.ToString(), confirmedHash.ToString(),
+                     service.ToStringAddrPort(), pubKeyOperator.ToString(), EncodeDestination(PKHash(keyIDVoting)),
+                     isValid, payoutAddress, operatorPayoutAddress, platformHTTPPort, platformNodeID.ToString());
 }
 
 UniValue CSimplifiedMNListEntry::ToJson(bool extended) const
@@ -74,7 +78,7 @@ UniValue CSimplifiedMNListEntry::ToJson(bool extended) const
     obj.pushKV("nType", ToUnderlying(nType));
     obj.pushKV("proRegTxHash", proRegTxHash.ToString());
     obj.pushKV("confirmedHash", confirmedHash.ToString());
-    obj.pushKV("service", service.ToString());
+    obj.pushKV("service", service.ToStringAddrPort());
     obj.pushKV("pubKeyOperator", pubKeyOperator.ToString());
     obj.pushKV("votingAddress", EncodeDestination(PKHash(keyIDVoting)));
     obj.pushKV("isValid", isValid);
@@ -183,14 +187,23 @@ bool CSimplifiedMNListDiff::BuildQuorumsDiff(const CBlockIndex* baseBlockIndex, 
     return true;
 }
 
-void CSimplifiedMNListDiff::BuildQuorumChainlockInfo(const llmq::CQuorumManager& qman, const CBlockIndex* blockIndex)
+bool CSimplifiedMNListDiff::BuildQuorumChainlockInfo(const llmq::CQuorumManager& qman, const CBlockIndex* blockIndex)
 {
     // Group quorums (indexes corresponding to entries of newQuorums) per CBlockIndex containing the expected CL signature in CbTx.
     // We want to avoid to load CbTx now, as more than one quorum will target the same block: hence we want to load CbTxs once per block (heavy operation).
     std::multimap<const CBlockIndex*, uint16_t>  workBaseBlockIndexMap;
 
     for (const auto [idx, e] : enumerate(newQuorums)) {
+        // We assume that we have on hand, quorums that correspond to the hashes queried.
+        // If we cannot find them, something must have gone wrong and we should cease trying
+        // to build any further.
         auto quorum = qman.GetQuorum(e.llmqType, e.quorumHash);
+        if (!quorum) {
+            LogPrintf("%s: ERROR! Unexpected missing quorum with llmqType=%d, quorumHash=%s\n", __func__,
+                      ToUnderlying(e.llmqType), e.quorumHash.ToString());
+            return false;
+        }
+
         // In case of rotation, all rotated quorums rely on the CL sig expected in the cycleBlock (the block of the first DKG) - 8
         // In case of non-rotation, quorums rely on the CL sig expected in the block of the DKG - 8
         const CBlockIndex* pWorkBaseBlockIndex =
@@ -199,7 +212,7 @@ void CSimplifiedMNListDiff::BuildQuorumChainlockInfo(const llmq::CQuorumManager&
         workBaseBlockIndexMap.insert(std::make_pair(pWorkBaseBlockIndex, idx));
     }
 
-    for(auto it = workBaseBlockIndexMap.begin(); it != workBaseBlockIndexMap.end(); ) {
+    for (auto it = workBaseBlockIndexMap.begin(); it != workBaseBlockIndexMap.end();) {
         // Process each key (CBlockIndex containing the expected CL signature in CbTx) of the std::multimap once
         const CBlockIndex* pWorkBaseBlockIndex = it->first;
         const auto cbcl = GetNonNullCoinbaseChainlock(pWorkBaseBlockIndex);
@@ -220,6 +233,8 @@ void CSimplifiedMNListDiff::BuildQuorumChainlockInfo(const llmq::CQuorumManager&
             it_sig->second.insert(idx_set.begin(), idx_set.end());
         }
     }
+
+    return true;
 }
 
 UniValue CSimplifiedMNListDiff::ToJson(bool extended) const
@@ -264,7 +279,8 @@ UniValue CSimplifiedMNListDiff::ToJson(bool extended) const
     }
     obj.pushKV("newQuorums", newQuorumsArr);
 
-    if (const auto opt_cbTxPayload = GetTxPayload<CCbTx>(*cbTx)) {
+    // Do not assert special tx type here since this can be called prior to DIP0003 activation
+    if (const auto opt_cbTxPayload = GetTxPayload<CCbTx>(*cbTx, /*assert_type=*/false)) {
         obj.pushKV("merkleRootMNList", opt_cbTxPayload->merkleRootMNList.ToString());
         if (opt_cbTxPayload->nVersion >= CCbTx::Version::MERKLE_ROOT_QUORUMS) {
             obj.pushKV("merkleRootQuorums", opt_cbTxPayload->merkleRootQuorums.ToString());
@@ -362,7 +378,10 @@ bool BuildSimplifiedMNListDiff(CDeterministicMNManager& dmnman, const Chainstate
     }
 
     if (DeploymentActiveAfter(blockIndex, Params().GetConsensus(), Consensus::DEPLOYMENT_V20)) {
-        mnListDiffRet.BuildQuorumChainlockInfo(qman, blockIndex);
+        if (!mnListDiffRet.BuildQuorumChainlockInfo(qman, blockIndex)) {
+            errorRet = strprintf("failed to build quorum chainlock info");
+            return false;
+        }
     }
 
     // TODO store coinbase TX in CBlockIndex

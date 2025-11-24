@@ -4,6 +4,7 @@
 
 #include <test/fuzz/fuzz.h>
 
+#include <fs.h>
 #include <netaddress.h>
 #include <netbase.h>
 #include <test/util/setup_common.h>
@@ -13,13 +14,42 @@
 
 #include <csignal>
 #include <cstdint>
-#include <string>
 #include <exception>
+#include <fstream>
+#include <functional>
 #include <memory>
+#include <string>
 #include <unistd.h>
 #include <vector>
 
+#if defined(PROVIDE_FUZZ_MAIN_FUNCTION) && defined(__AFL_FUZZ_INIT)
+__AFL_FUZZ_INIT();
+#endif
+
 const std::function<void(const std::string&)> G_TEST_LOG_FUN{};
+
+/**
+ * A copy of the command line arguments that start with `--`.
+ * First `LLVMFuzzerInitialize()` is called, which saves the arguments to `g_args`.
+ * Later, depending on the fuzz test, `G_TEST_COMMAND_LINE_ARGUMENTS()` may be
+ * called by `BasicTestingSetup` constructor to fetch those arguments and store
+ * them in `BasicTestingSetup::m_node::args`.
+ */
+static std::vector<const char*> g_args;
+
+static void SetArgs(int argc, char** argv) {
+    for (int i = 1; i < argc; ++i) {
+        // Only take into account arguments that start with `--`. The others are for the fuzz engine:
+        // `fuzz -runs=1 fuzz_seed_corpus/address_deserialize_v2 --checkaddrman=5`
+        if (strlen(argv[i]) > 2 && argv[i][0] == '-' && argv[i][1] == '-') {
+            g_args.push_back(argv[i]);
+        }
+    }
+}
+
+const std::function<std::vector<const char*>()> G_TEST_COMMAND_LINE_ARGUMENTS = []() {
+    return g_args;
+};
 
 std::map<std::string_view, std::tuple<TypeTestOneInput, TypeInitialize, TypeHidden>>& FuzzTargets()
 {
@@ -59,7 +89,7 @@ void initialize()
     }
     if (const char* out_path = std::getenv("WRITE_ALL_FUZZ_TARGETS_AND_ABORT")) {
         std::cout << "Writing all fuzz target names to '" << out_path << "'." << std::endl;
-        std::ofstream out_stream(out_path, std::ios::binary);
+        std::ofstream out_stream{out_path, std::ios::binary};
         for (const auto& t : FuzzTargets()) {
             if (std::get<2>(t.second)) continue;
             out_stream << t.first << std::endl;
@@ -130,6 +160,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 // This function is used by libFuzzer
 extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
 {
+    SetArgs(*argc, *argv);
     initialize();
     return 0;
 }
@@ -139,21 +170,13 @@ int main(int argc, char** argv)
 {
     initialize();
     static const auto& test_one_input = *Assert(g_test_one_input);
-#ifdef __AFL_INIT
-    // Enable AFL deferred forkserver mode. Requires compilation using
-    // afl-clang-fast++. See fuzzing.md for details.
-    __AFL_INIT();
-#endif
-
 #ifdef __AFL_LOOP
     // Enable AFL persistent mode. Requires compilation using afl-clang-fast++.
     // See fuzzing.md for details.
-    while (__AFL_LOOP(1000)) {
-        std::vector<uint8_t> buffer;
-        if (!read_stdin(buffer)) {
-            continue;
-        }
-        test_one_input(buffer);
+    const uint8_t* buffer = __AFL_FUZZ_TESTCASE_BUF;
+    while (__AFL_LOOP(100000)) {
+        size_t buffer_len = __AFL_FUZZ_TESTCASE_LEN;
+        test_one_input({buffer, buffer_len});
     }
 #else
     std::vector<uint8_t> buffer;
@@ -165,7 +188,7 @@ int main(int argc, char** argv)
         return 0;
     }
     std::signal(SIGABRT, signal_handler);
-    int64_t start_time = GetTimeSeconds();
+    const auto start_time{Now<SteadySeconds>()};
     int tested = 0;
     for (int i = 1; i < argc; ++i) {
         fs::path input_path(*(argv + i));
@@ -186,8 +209,8 @@ int main(int argc, char** argv)
             buffer.clear();
         }
     }
-    int64_t end_time = GetTimeSeconds();
-    std::cout << g_fuzz_target << ": succeeded against " << tested << " files in " << (end_time - start_time) << "s." << std::endl;
+    const auto end_time{Now<SteadySeconds>()};
+    std::cout << g_fuzz_target << ": succeeded against " << tested << " files in " << count_seconds(end_time - start_time) << "s." << std::endl;
 #endif
     return 0;
 }

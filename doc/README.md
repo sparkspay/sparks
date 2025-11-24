@@ -65,6 +65,7 @@ The Sparks Core repo's [root README](/README.md) contains relevant information o
 
 ### Miscellaneous
 - [Assets Attribution](assets-attribution.md)
+- [Assumeutxo design](assumeutxo.md)
 - [sparks.conf Configuration File](sparks-conf.md)
 - [CJDNS Support](cjdns.md)
 - [Files](files.md)
@@ -72,10 +73,12 @@ The Sparks Core repo's [root README](/README.md) contains relevant information o
 - [I2P Support](i2p.md)
 - [Init Scripts (systemd/upstart/openrc)](init.md)
 - [Managing Wallets](managing-wallets.md)
+- [P2P bad ports definition and list](p2p-bad-ports.md)
 - [PSBT support](psbt.md)
 - [Reduce Memory](reduce-memory.md)
 - [Reduce Traffic](reduce-traffic.md)
 - [Tor Support](tor.md)
+- [Transaction Relay Policy](policy/README.md)
 - [ZMQ](zmq.md)
 
 License

@@ -117,8 +117,6 @@ public:
     bool MineBlocksOnDemand() const { return consensus.fPowNoRetargeting; }
     /** Allow multiple addresses to be selected from the same network group (e.g. 192.168.x.x) */
     bool AllowMultipleAddressesFromGroup() const { return fAllowMultipleAddressesFromGroup; }
-    /** Allow nodes with the same address and multiple ports */
-    bool AllowMultiplePorts() const { return fAllowMultiplePorts; }
     /** How long to wait until we allow retrying of a LLMQ connection  */
     int LLMQConnectionRetryTimeout() const { return nLLMQConnectionRetryTimeout; }
     /** Return the network string */
@@ -152,6 +150,7 @@ public:
     int FulfilledRequestExpireTime() const { return nFulfilledRequestExpireTime; }
     const std::vector<std::string>& SporkAddresses() const { return vSporkAddresses; }
     int MinSporkKeys() const { return nMinSporkKeys; }
+    int CreditPoolPeriodBlocks() const { return nCreditPoolPeriodBlocks; }
     [[nodiscard]] std::optional<Consensus::LLMQParams> GetLLMQ(Consensus::LLMQType llmqType) const;
 
 protected:
@@ -175,7 +174,6 @@ protected:
     bool fRequireRoutableExternalIP;
     bool m_is_test_chain;
     bool fAllowMultipleAddressesFromGroup;
-    bool fAllowMultiplePorts;
     bool m_is_mockable_chain;
     int nLLMQConnectionRetryTimeout;
     CCheckpointData checkpointData;
@@ -188,6 +186,8 @@ protected:
     int nMinSporkKeys;
     uint16_t nDefaultPlatformP2PPort;
     uint16_t nDefaultPlatformHTTPPort;
+    /// The number of blocks the credit pool tracks; 576 (one day) on mainnet, reduced on regtest
+    int nCreditPoolPeriodBlocks;
 
     void AddLLMQ(Consensus::LLMQType llmqType);
 };
@@ -210,5 +210,10 @@ const CChainParams &Params();
  * @throws std::runtime_error when the chain is not supported.
  */
 void SelectParams(const std::string& chain);
+
+/**
+ *Set the arguments for chainparams
+ */
+void SetupChainParamsOptions(ArgsManager& argsman);
 
 #endif // BITCOIN_CHAINPARAMS_H

@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
+// Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,14 +11,16 @@
 
 #include <chainparams.h>
 #include <clientversion.h>
-#include <compat.h>
+#include <compat/compat.h>
 #include <init.h>
 #include <interfaces/chain.h>
+#include <interfaces/init.h>
 #include <node/context.h>
-#include <node/ui_interface.h>
+#include <node/interface_ui.h>
 #include <noui.h>
 #include <shutdown.h>
 #include <util/check.h>
+#include <util/syserror.h>
 #include <util/system.h>
 #include <util/strencodings.h>
 #include <util/threadnames.h>
@@ -109,17 +112,15 @@ int fork_daemon(bool nochdir, bool noclose, TokenPipeEnd& endpoint)
 
 #endif
 
-static bool AppInit(int argc, char* argv[])
+static bool AppInit(NodeContext& node, int argc, char* argv[])
 {
-    NodeContext node;
-
     bool fRet = false;
 
     util::ThreadSetInternalName("init");
 
     // If Qt is used, parameters/sparks.conf are parsed in qt/bitcoin.cpp's main()
-    SetupServerArgs(node);
     ArgsManager& args = *Assert(node.args);
+    SetupServerArgs(args);
     std::string error;
     if (!args.ParseParameters(argc, argv, error)) {
         return InitError(Untranslated(strprintf("Error parsing command line arguments: %s\n", error)));
@@ -213,7 +214,7 @@ static bool AppInit(int argc, char* argv[])
                 }
                 break;
             case -1: // Error happened.
-                return InitError(Untranslated(strprintf("fork_daemon() failed: %s\n", strerror(errno))));
+                return InitError(Untranslated(strprintf("fork_daemon() failed: %s\n", SysErrorString(errno))));
             default: { // Parent: wait and exit.
                 int token = daemon_ep.TokenRead();
                 if (token) { // Success
@@ -234,7 +235,7 @@ static bool AppInit(int argc, char* argv[])
             // If locking the data directory failed, exit immediately
             return false;
         }
-        fRet = AppInitInterfaces(node) && AppInitMain(context, node);
+        fRet = AppInitInterfaces(node) && AppInitMain(node);
     } catch (...) {
         PrintExceptionContinue(std::current_exception(), "AppInit()");
     }
@@ -264,10 +265,18 @@ MAIN_FUNCTION
     util::WinCmdLineArgs winArgs;
     std::tie(argc, argv) = winArgs.get();
 #endif
+
+    NodeContext node;
+    int exit_status;
+    std::unique_ptr<interfaces::Init> init = interfaces::MakeNodeInit(node, argc, argv, exit_status);
+    if (!init) {
+        return exit_status;
+    }
+
     SetupEnvironment();
 
     // Connect sparksd signal handlers
     noui_connect();
 
-    return (AppInit(argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE);
+    return (AppInit(node, argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE);
 }

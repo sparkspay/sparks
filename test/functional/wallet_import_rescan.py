@@ -20,6 +20,7 @@ happened previously.
 """
 
 from test_framework.test_framework import BitcoinTestFramework
+from test_framework.governance import EXPECTED_STDERR_NO_GOV_PRUNE
 from test_framework.util import (
     assert_equal,
     set_node_times,
@@ -165,10 +166,9 @@ class ImportRescanTest(BitcoinTestFramework):
             variant.key = self.nodes[1].dumpprivkey(variant.address["address"])
             variant.initial_amount = get_rand_amount()
             variant.initial_txid = self.nodes[0].sendtoaddress(variant.address["address"], variant.initial_amount)
-            self.nodes[0].generate(1)  # Generate one block for each send
+            self.generate(self.nodes[0], 1)  # Generate one block for each send
             variant.confirmation_height = self.nodes[0].getblockcount()
             variant.timestamp = self.nodes[0].getblockheader(self.nodes[0].getbestblockhash())["time"]
-        self.sync_all() # Conclude sync before calling setmocktime to avoid timeouts
 
         # Generate a block further in the future (past the rescan window).
         assert_equal(self.nodes[0].getrawmempool(), [])
@@ -176,8 +176,7 @@ class ImportRescanTest(BitcoinTestFramework):
             self.nodes,
             self.nodes[0].getblockheader(self.nodes[0].getbestblockhash())["time"] + TIMESTAMP_WINDOW + 1,
         )
-        self.nodes[0].generate(1)
-        self.sync_all()
+        self.generate(self.nodes[0], 1)
 
         # For each variation of wallet key import, invoke the import RPC and
         # check the results from getbalance and listtransactions.
@@ -199,7 +198,7 @@ class ImportRescanTest(BitcoinTestFramework):
         for i, variant in enumerate(IMPORT_VARIANTS):
             variant.sent_amount = get_rand_amount()
             variant.sent_txid = self.nodes[0].sendtoaddress(variant.address["address"], variant.sent_amount)
-            self.nodes[0].generate(1)  # Generate one block for each send
+            self.generate(self.nodes[0], 1)  # Generate one block for each send
             variant.confirmation_height = self.nodes[0].getblockcount()
 
         assert_equal(self.nodes[0].getrawmempool(), [])
@@ -213,7 +212,7 @@ class ImportRescanTest(BitcoinTestFramework):
             variant.check(variant.sent_txid, variant.sent_amount, variant.confirmation_height)
         for i, import_node in enumerate(IMPORT_NODES, 2):
             if import_node.prune:
-                self.stop_node(i, expected_stderr='Warning: You are starting with governance validation disabled. This is expected because you are running a pruned node.')
+                self.stop_node(i, expected_stderr=EXPECTED_STDERR_NO_GOV_PRUNE)
 
 
 

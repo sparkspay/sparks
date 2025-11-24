@@ -72,10 +72,11 @@ class UpgradeWalletTest(BitcoinTestFramework):
     def test_upgradewallet(self, wallet, previous_version, requested_version=None, expected_version=None):
         unchanged = expected_version == previous_version
         new_version = previous_version if unchanged else expected_version if expected_version else requested_version
-        assert_equal(wallet.getwalletinfo()["walletversion"], previous_version)
+        old_wallet_info = wallet.getwalletinfo()
+        assert_equal(old_wallet_info["walletversion"], previous_version)
         assert_equal(wallet.upgradewallet(requested_version),
             {
-                "wallet_name": "",
+                "wallet_name": old_wallet_info["walletname"],
                 "previous_version": previous_version,
                 "current_version": new_version,
                 "result": "Already at latest version. Wallet version unchanged." if unchanged else "Wallet upgraded successfully from version {} to version {}.".format(previous_version, new_version),
@@ -96,8 +97,7 @@ class UpgradeWalletTest(BitcoinTestFramework):
         assert_equal(wallet.getwalletinfo()["walletversion"], previous_version)
 
     def run_test(self):
-        self.nodes[0].generatetoaddress(COINBASE_MATURITY + 1, self.nodes[0].getnewaddress())
-        self.dumb_sync_blocks()
+        self.generatetoaddress(self.nodes[0], COINBASE_MATURITY + 1, self.nodes[0].getnewaddress(), sync_fun=lambda: self.dumb_sync_blocks())
         # # Sanity check the test framework:
         res = self.nodes[0].getblockchaininfo()
         assert_equal(res['blocks'], COINBASE_MATURITY + 1)
@@ -108,8 +108,7 @@ class UpgradeWalletTest(BitcoinTestFramework):
         # Send coins to old wallets for later conversion checks.
         v18_2_wallet  = v18_2_node.get_wallet_rpc(self.default_wallet_name)
         v18_2_address = v18_2_wallet.getnewaddress()
-        node_master.generatetoaddress(COINBASE_MATURITY + 1, v18_2_address)
-        self.dumb_sync_blocks()
+        self.generatetoaddress(node_master, COINBASE_MATURITY + 1, v18_2_address, sync_fun=lambda: self.dumb_sync_blocks())
         v18_2_balance = v18_2_wallet.getbalance()
 
         self.log.info("Test upgradewallet RPC...")
@@ -234,6 +233,22 @@ class UpgradeWalletTest(BitcoinTestFramework):
 
         assert_equal(120200, wallet.getwalletinfo()['walletversion'])
 
+        if self.is_sqlite_compiled():
+            self.log.info("Checking that descriptor wallets do nothing, successfully")
+            self.nodes[0].createwallet(wallet_name="desc_upgrade", descriptors=True)
+            desc_wallet = self.nodes[0].get_wallet_rpc("desc_upgrade")
+            self.test_upgradewallet(desc_wallet, previous_version=120200, expected_version=120200)
+
+            self.log.info("Checking that descriptor wallets without privkeys do nothing, successfully")
+            self.nodes[0].createwallet(wallet_name="desc_upgrade_nopriv", descriptors=True, disable_private_keys=True)
+            desc_wallet = self.nodes[0].get_wallet_rpc("desc_upgrade_nopriv")
+            self.test_upgradewallet(desc_wallet, previous_version=120200, expected_version=120200)
+
+        if self.is_bdb_compiled():
+            self.log.info("Upgrading a wallet with private keys disabled")
+            self.nodes[0].createwallet(wallet_name="privkeys_disabled_upgrade", disable_private_keys=True, descriptors=False)
+            disabled_wallet = self.nodes[0].get_wallet_rpc("privkeys_disabled_upgrade")
+            self.test_upgradewallet(disabled_wallet, previous_version=120200, expected_version=120200)
 
 if __name__ == '__main__':
     UpgradeWalletTest().main()

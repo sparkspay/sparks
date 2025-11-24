@@ -1,6 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2024 The Dash Core developers
+// Copyright (c) 2014-2025 The Dash Core developers
 // Copyright (c) 2016-2025 The Sparks Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -193,7 +193,8 @@ public:
         consensus.DATATXHeight = 1337600; // 0000000425ef35325cd88be91b7cb35b6a215c41edf1d883c6aa00f43aaac1d1
         consensus.DIP0024Height = 1386100; // 0000000633967f4b173e84427426c898a3817ebc177de2b7c22ba0fa2b09b1c8
         consensus.V19Height = 1547800; // 0000003db5bd9c33d765d714fbc7ac207d3a65d00b5081e676c61c3139050348
-        consensus.MinBIP9WarningHeight = 1547800 + 2016; // V19 activation height + miner confirmation window
+        consensus.V20Height = 1623900; // 000000006e4702d0d0cba4937f08d98db27725b6453d45cf7899f5cee9cd0a8a
+        consensus.MinBIP9WarningHeight = 1623900 + 2016; // V20 activation height + miner confirmation window
         consensus.nPowTargetTimespan = 60 * 60; // Sparks: 1 hour, 24 blocks
         consensus.nPowTargetSpacing = 2 * 60; // Sparks: 120 seconds
         consensus.fPowAllowMinDifficultyBlocks = false;
@@ -207,12 +208,6 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].min_activation_height = 0; // No activation delay
 
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].bit = 12;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nStartTime = 1747612800;     // Monday May 19, 2025
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nTimeout = 1779148800;        // Tuesday May 19, 2026
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nWindowSize = 100;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nThresholdStart = 60;       // 60% of 100
-
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].bit = 13;
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = -2; //Never activate
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nTimeout = 0;
@@ -220,11 +215,23 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nWindowSize = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdStart = 0;     // 60% of 100
 
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].bit = 14;
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nStartTime = 1776470400;   // Saturday April 18, 2026
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nTimeout = 1808006400; // Sunday April 18, 2027
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nThresholdStart = 60;     // 60% of 100
+
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].bit = 15;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nStartTime = 1764547200;   // Monday December 01, 2025
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nTimeout = 1796083200; // Tuesday December 01, 2026
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nThresholdStart = 60;     // 60% of 100
+
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000fde0fc3dee70a9");//1580000
+        consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000fe6190a18bbda3");//1715000
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x000000072b5fe92e4b1ef1014777dfd379352d67037b5888de2c26b60ad03b28"); //1580000
+        consensus.defaultAssumeValid = uint256S("0x0000000037a8d12f09385205af585545a3cdfc4ef59554b8de59e6b204febe73"); //1715000
 
         //Sparks stuff
         consensus.nSPKHeight = 100000;
@@ -253,7 +260,7 @@ public:
         nDefaultPlatformP2PPort = 26700;
         nDefaultPlatformHTTPPort = 443;
         nPruneAfterHeight = 100000;
-        m_assumed_blockchain_size = 45;
+        m_assumed_blockchain_size = 50;
         m_assumed_chain_state_size = 1;
 
         genesis = CreateGenesisBlock(1513902562, 682979, 0x1e0ffff0, 1, 50 * COIN);
@@ -302,15 +309,14 @@ public:
         AddLLMQ(Consensus::LLMQType::LLMQ_20_70);
         consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_25_60;
         consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_20_75;
-        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_20_70;
-        consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_25_80;
+        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_25_80_EVONODE;
+        consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_100_70_REGULAR;
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
         fRequireRoutableExternalIP = true;
         m_is_test_chain = false;
         fAllowMultipleAddressesFromGroup = false;
-        fAllowMultiplePorts = false;
         nLLMQConnectionRetryTimeout = 60;
         m_is_mockable_chain = false;
 
@@ -320,6 +326,8 @@ public:
 
         vSporkAddresses = {"GM2oPRsX7nPeSuXGqtB7shojo1F5zWbPfS"};
         nMinSporkKeys = 1;
+
+        nCreditPoolPeriodBlocks = 576;
 
         checkpointData = {
             {
@@ -357,15 +365,16 @@ public:
                 {1500000, uint256S("0x0000000e63ff8de7019208e19a6d915c9b2841fcb06f181d8004a6838008ac07")},
                 {1590000, uint256S("0x00000001f9fa78b6b0b8fe46194b8a5b3e24f7d41a60e533fbe8d0a005a891c0")},
                 {1610000, uint256S("0x00000003d9b75654f7b55a0d90c65e063b0cad03539f6d025f7f1367f112eaf5")},
+                {1715000, uint256S("0x0000000037a8d12f09385205af585545a3cdfc4ef59554b8de59e6b204febe73")},
            }
         };
 
-        // getchaintxstats 1580000 000000072b5fe92e4b1ef1014777dfd379352d67037b5888de2c26b60ad03b28
+        // getchaintxstats 1715000 0000000037a8d12f09385205af585545a3cdfc4ef59554b8de59e6b204febe73
         chainTxData = ChainTxData{
-                1747995639, // * UNIX timestamp of last known number of transactions (Block 1580000)
-                2398124,   // * total number of transactions between genesis and that timestamp
+                1760440787, // * UNIX timestamp of last known number of transactions (Block 1715000)
+                2553289,   // * total number of transactions between genesis and that timestamp
                             //   (the tx=... number in the ChainStateFlushed debug.log lines)
-                0.0102041118947479,      // * estimated number of transactions per second after that timestamp
+                0.01035732912270357,      // * estimated number of transactions per second after that timestamp
         };
     }
 };
@@ -412,7 +421,8 @@ public:
         consensus.DATATXHeight = 140; // 00000ccdb0f5e0cb489dd14698e09489c79d0dcd8412ae263d3b9da59f2fbcfc
         consensus.DIP0024Height = 2430; // 0000030485d7c29b8315cae01793d5ef5c314f7db633dca3fa7e94791c910fe8
         consensus.V19Height = 12560; // 00000ff3c6008732e8d62f38276c4ebfab0b096972385c6e5c5b213752cd333c
-        consensus.MinBIP9WarningHeight = 12560 + 2016;  // v19 activation height + miner confirmation window
+        consensus.V20Height = 39390; // 00000030127a9859a650b52b7a0ac3b06deeda235f7c8ffee1643edf5ce67c97
+        consensus.MinBIP9WarningHeight = 39390 + 2016;  // v20 activation height + miner confirmation window
         consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 20
         consensus.nPowTargetTimespan = 5 * 60; // Sparks: 5 minutes, 50 blocks
         consensus.nPowTargetSpacing = 0.1 * 60; // Sparks: 30 seconds
@@ -427,14 +437,6 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].min_activation_height = 0; // No activation delay
 
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].bit = 12;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nStartTime = 1741003200;     // Monday, March 03, 2025 12:00:00
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nWindowSize = 10;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nThresholdStart = 8;         // 80% of 10
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nThresholdMin = 6;           // 60% of 10
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nFalloffCoeff = 5;            // this corresponds to 10 periods
-
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].bit = 13;
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = -2; //Never activate
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nTimeout = 0;
@@ -443,11 +445,23 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdMin = 0;         // 60% of 10
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nFalloffCoeff = 0;          // this corresponds to 10 periods
 
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].bit = 14;
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nStartTime = 1763164800;   // Sat Nov 15 2025 00:00:00
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nThresholdStart = 60;     // 60% of 100
+
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].bit = 15;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nStartTime = 1762560000;   // Saturday Nov 08 2025 00:00:00 GMT
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nThresholdStart = 60;     // 60% of 100
+
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000b7990b7b7"); //47000
+        consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000f6190f637"); //63000
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x000009a6d2be24c757b06d5fa9b392b97f1b07d3847b49fdfaf84fe2d4c1412c"); //47000
+        consensus.defaultAssumeValid = uint256S("0x000007e89fef52cdd963e01a7a6180be38efb60ad4a35acc576336183ab3b7ed"); //63000
 
         //Sparks stuff
         consensus.nSPKHeight = 100;
@@ -468,7 +482,7 @@ public:
         nDefaultPort = 8891;
 
         nPruneAfterHeight = 1000;
-        m_assumed_blockchain_size = 4;
+        m_assumed_blockchain_size = 5;
         m_assumed_chain_state_size = 1;
 
         genesis = CreateGenesisBlock(1513902563, 109775, 0x1e0ffff0, 1, 50 * COIN);
@@ -513,15 +527,14 @@ public:
         AddLLMQ(Consensus::LLMQType::LLMQ_25_67);       
         consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_TEST;
         consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_20_75;
-        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_20_70;
-        consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_TEST;
+        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_25_80_EVONODE;
+        consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_100_70_REGULAR;
         
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
         fRequireRoutableExternalIP = true;
         m_is_test_chain = true;
         fAllowMultipleAddressesFromGroup = false;
-        fAllowMultiplePorts = true;
         nLLMQConnectionRetryTimeout = 60;
         m_is_mockable_chain = false;
 
@@ -532,11 +545,14 @@ public:
         vSporkAddresses = {"nFnDXRQFZWscibREq3EAh5GiPuKc92D2Ac"};
         nMinSporkKeys = 1;
 
+        nCreditPoolPeriodBlocks = 576;
+
         checkpointData = {
             {
                 {0, uint256S("0x000005f15ec2b9e4495efb539fb5b113338df946291cccd8dfd192bb68cd6dcf")},
                 {34000, uint256S("0x00000615aae61e30e5fc677250ae233af7986ace3bca5c3b27c149932f4743d3")},
                 {45000, uint256S("0x00000a291ff12eac9057974dec66b6e7ac8717b2a7170dbae28272006ba1f595")},
+                {63000, uint256S("0x000007e89fef52cdd963e01a7a6180be38efb60ad4a35acc576336183ab3b7ed")},
             }
         };
 
@@ -544,12 +560,12 @@ public:
             // TODO to be specified in a future patch.
         };
 
-        // getchaintxstats 47000 000009a6d2be24c757b06d5fa9b392b97f1b07d3847b49fdfaf84fe2d4c1412c
+        // getchaintxstats 63000 000007e89fef52cdd963e01a7a6180be38efb60ad4a35acc576336183ab3b7ed
         chainTxData = ChainTxData{
-                1747996561, // * UNIX timestamp of last known number of transactions (Block 47000)
-                131511,    // * total number of transactions between genesis and that timestamp
+                1760441521, // * UNIX timestamp of last known number of transactions (Block 63000)
+                172908,    // * total number of transactions between genesis and that timestamp
                             //   (the tx=... number in the ChainStateFlushed debug.log lines)
-                0.003540464263965448,       // * estimated number of transactions per second after that timestamp
+                0.003402079469925984,       // * estimated number of transactions per second after that timestamp
         };
     }
 };
@@ -578,24 +594,25 @@ public:
         consensus.nGovernanceMinQuorum = 1;
         consensus.nGovernanceFilterElements = 500;
         consensus.nMasternodeMinimumConfirmations = 1;
-        consensus.BIP34Height = 1; // BIP34 activated immediately on devnet
-        consensus.BIP65Height = 1; // BIP65 activated immediately on devnet
-        consensus.BIP66Height = 1; // BIP66 activated immediately on devnet
-        consensus.BIP147Height = 1; // BIP147 activated immediately on devnet
-        consensus.CSVHeight = 1; // BIP68 activated immediately on devnet
+        consensus.BIP34Height = 1;   // BIP34 activated immediately on devnet
+        consensus.BIP65Height = 1;   // BIP65 activated immediately on devnet
+        consensus.BIP66Height = 1;   // BIP66 activated immediately on devnet
+        consensus.BIP147Height = 1;  // BIP147 activated immediately on devnet
+        consensus.CSVHeight = 1;     // BIP68 activated immediately on devnet
         consensus.DIP0001Height = 2; // DIP0001 activated immediately on devnet
         consensus.DIP0003Height = 2; // DIP0003 activated immediately on devnet
         consensus.DIP0003EnforcementHeight = 2; // DIP0003 activated immediately on devnet
         consensus.DIP0003EnforcementHash = uint256();
         consensus.DIP0008Height = 2; // DIP0008 activated immediately on devnet
-        consensus.BRRHeight = 300;
-        consensus.DIP0020Height = 300;
+        consensus.BRRHeight = 300;     // BRR (realloc) activated immediately on devnet
+        consensus.DIP0020Height = 300; // DIP0020 activated immediately on devnet
         consensus.IPV6MNHeight = 300;
         consensus.DATATXHeight = 300;
-        consensus.DIP0024Height = 300;
-        consensus.DIP0024QuorumsHeight = 300;
-        consensus.V19Height = 300;
-        consensus.MinBIP9WarningHeight = 300 + 2016; // v19 activation height + miner confirmation window
+        consensus.DIP0024Height = 300; // DIP0024 activated immediately on devnet
+        consensus.DIP0024QuorumsHeight = 300; // DIP0024 activated immediately on devnet
+        consensus.V19Height = 300;     // V19 activated immediately on devnet
+        consensus.V20Height = 300;     // V20 activated immediately on devnet
+        consensus.MinBIP9WarningHeight = 300 + 2016; // v20 activation height + miner confirmation window
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 1
         consensus.nPowTargetTimespan = 24 * 60 * 60; // Sparks: 1 day
         consensus.nPowTargetSpacing = 2.5 * 60; // Sparks: 2.5 minutes
@@ -610,14 +627,6 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].min_activation_height = 0; // No activation delay
 
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].bit = 9;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nStartTime = 1661990400; // Sep 1st, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nWindowSize = 120;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nThresholdStart = 80; // 80% of 100
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nThresholdMin = 60;   // 60% of 100
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nFalloffCoeff = 5;     // this corresponds to 10 periods
-
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].bit = 10;
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = 0; //Never activate
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nTimeout = 0;
@@ -625,6 +634,22 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdStart = 0; // 80% of 100
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdMin = 0;   // 60% of 100
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nFalloffCoeff = 0;     // this corresponds to 10 periods
+
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].bit = 11;
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nStartTime = 1704067200;   // January 1, 2024
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nWindowSize = 120;
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nThresholdStart = 80;     // 80% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nThresholdMin = 60;       // 60% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nFalloffCoeff = 5;          // this corresponds to 10 periods
+
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].bit = 12;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nStartTime = 1763164800;   // Sat Nov 15 2025 00:00:00
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nWindowSize = 120;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nThresholdStart = 80;     // 80% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nThresholdMin = 60;       // 60% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nFalloffCoeff = 5;          // this corresponds to 10 periods
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x000000000000000000000000000000000000000000000000000000000000000");
@@ -698,7 +723,6 @@ public:
         fRequireRoutableExternalIP = true;
         m_is_test_chain = true;
         fAllowMultipleAddressesFromGroup = true;
-        fAllowMultiplePorts = true;
         nLLMQConnectionRetryTimeout = 60;
         m_is_mockable_chain = false;
 
@@ -708,6 +732,8 @@ public:
 
         vSporkAddresses = {"yjPtiKh2uwk3bDutTEA2q9mCtXyiZRWn55"};
         nMinSporkKeys = 1;
+
+        nCreditPoolPeriodBlocks = 576;
 
         checkpointData = (CCheckpointData) {
             {
@@ -820,7 +846,7 @@ public:
         consensus.nGovernanceMinQuorum = 1;
         consensus.nGovernanceFilterElements = 100;
         consensus.nMasternodeMinimumConfirmations = 1;
-        consensus.BIP34Height = 500; // BIP34 activated on regtest (Used in functional tests)
+        consensus.BIP34Height = 1;   // Always active unless overridden
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in functional tests)
         consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in functional tests)
@@ -841,6 +867,7 @@ public:
         consensus.DIP0024Height = 900;
         consensus.DIP0024QuorumsHeight = 900;
         consensus.V19Height = 900;
+        consensus.V20Height = 900;
         consensus.MinBIP9WarningHeight = 0;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = true;
@@ -854,14 +881,6 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].min_activation_height = 0; // No activation delay
 
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].bit = 9;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nStartTime = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nWindowSize = 400;
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nThresholdStart = 384; // 80% of 480
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nThresholdMin = 288;   // 60% of 480
-        consensus.vDeployments[Consensus::DEPLOYMENT_V20].nFalloffCoeff = 5;     // this corresponds to 10 periods
-
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].bit = 10;
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nStartTime = 0; //Never activate
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nTimeout = 0;
@@ -869,6 +888,22 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdStart = 0; // 80% of 12
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nThresholdMin = 0;   // 60% of 7
         consensus.vDeployments[Consensus::DEPLOYMENT_MN_RR].nFalloffCoeff = 0;     // this corresponds to 10 periods
+
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].bit = 11;
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nWindowSize = 200;
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nThresholdStart = 200 / 5 * 4;     // 80% of window size
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nThresholdMin = 200 / 5 * 3;       // 60% of window size
+        consensus.vDeployments[Consensus::DEPLOYMENT_WITHDRAWALS].nFalloffCoeff = 5;          // this corresponds to 10 periods
+
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].bit = 12;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nWindowSize = 200;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nThresholdStart = 200 / 5 * 4;     // 80% of window size
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nThresholdMin = 200 / 5 * 3;       // 60% of window size
+        consensus.vDeployments[Consensus::DEPLOYMENT_V22].nFalloffCoeff = 5;          // this corresponds to 10 periods
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");
@@ -898,8 +933,6 @@ public:
 
         UpdateActivationParametersFromArgs(args);
         UpdateDIP3ParametersFromArgs(args);
-        UpdateDIP8ParametersFromArgs(args);
-        UpdateBIP147ParametersFromArgs(args);
         UpdateBudgetParametersFromArgs(args);
 
         genesis = CreateGenesisBlock(1513902564, 3483397, 0x1e0ffff0, 1, 50 * COIN);
@@ -915,7 +948,6 @@ public:
         fRequireRoutableExternalIP = false;
         m_is_test_chain = true;
         fAllowMultipleAddressesFromGroup = true;
-        fAllowMultiplePorts = true;
         nLLMQConnectionRetryTimeout = 1; // must be lower then the LLMQ signing session timeout so that tests have control over failing behavior
         m_is_mockable_chain = true;
 
@@ -926,6 +958,8 @@ public:
         // privKey: cP4EKFyJsHT39LDqgdcB43Y3YXjNyjb5Fuas1GQSeAtjnZWmZEQK
         vSporkAddresses = {"nCYRgPB26SYEf37EmUPnZSqT6Uy4UjqWNm"};
         nMinSporkKeys = 1;
+
+        nCreditPoolPeriodBlocks = 100;
 
         checkpointData = {
             {
@@ -939,8 +973,8 @@ public:
                 {AssumeutxoHash{uint256S("0x9b2a277a3e3b979f1a539d57e949495d7f8247312dbc32bce6619128c192b44b")}, 110},
             },
             {
-                210,
-                {AssumeutxoHash{uint256S("0xd4c97d32882583b057efc3dce673e44204851435e6ffcef20346e69cddc7c91e")}, 210},
+                200,
+                {AssumeutxoHash{uint256S("0x8a5bdd92252fc6b24663244bbe958c947bb036dc1f94ccd15439f48d8d1cb4e3")}, 200},
             },
         };
 
@@ -1016,21 +1050,6 @@ public:
     void UpdateDIP3ParametersFromArgs(const ArgsManager& args);
 
     /**
-     * Allows modifying the DIP8 activation height
-     */
-    void UpdateDIP8Parameters(int nActivationHeight)
-    {
-        consensus.DIP0008Height = nActivationHeight;
-    }
-    void UpdateDIP8ParametersFromArgs(const ArgsManager& args);
-
-    void UpdateBIP147Parameters(int nActivationHeight)
-    {
-        consensus.BIP147Height = nActivationHeight;
-    }
-    void UpdateBIP147ParametersFromArgs(const ArgsManager& args);
-
-    /**
      * Allows modifying the budget regtest parameters.
      */
     void UpdateBudgetParameters(int nMasternodePaymentsStartBlock, int nBudgetPaymentsStartBlock, int nSuperblockStartBlock)
@@ -1066,8 +1085,51 @@ public:
     void UpdateLLMQInstantSendDIP0024FromArgs(const ArgsManager& args);
 };
 
+static void MaybeUpdateHeights(const ArgsManager& args, Consensus::Params& consensus)
+{
+    for (const std::string& arg : args.GetArgs("-testactivationheight")) {
+        const auto found{arg.find('@')};
+        if (found == std::string::npos) {
+            throw std::runtime_error(strprintf("Invalid format (%s) for -testactivationheight=name@height.", arg));
+        }
+        const auto name{arg.substr(0, found)};
+        const auto value{arg.substr(found + 1)};
+        int32_t height;
+        if (!ParseInt32(value, &height) || height < 0 || height >= std::numeric_limits<int>::max()) {
+            throw std::runtime_error(strprintf("Invalid height value (%s) for -testactivationheight=name@height.", arg));
+        }
+        if (name == "bip147") {
+            consensus.BIP147Height = int{height};
+        } else if (name == "bip34") {
+            consensus.BIP34Height = int{height};
+        } else if (name == "dersig") {
+            consensus.BIP66Height = int{height};
+        } else if (name == "cltv") {
+            consensus.BIP65Height = int{height};
+        } else if (name == "csv") {
+            consensus.CSVHeight = int{height};
+        } else if (name == "brr") {
+            consensus.BRRHeight = int{height};
+        } else if (name == "dip0001") {
+            consensus.DIP0001Height = int{height};
+        } else if (name == "dip0008") {
+            consensus.DIP0008Height = int{height};
+        } else if (name == "dip0024") {
+            consensus.DIP0024QuorumsHeight = int{height};
+        } else if (name == "v19") {
+            consensus.V19Height = int{height};
+        } else if (name == "v20") {
+            consensus.V20Height = int{height};
+        } else {
+            throw std::runtime_error(strprintf("Invalid name (%s) for -testactivationheight=name@height.", arg));
+        }
+    }
+}
+
 void CRegTestParams::UpdateActivationParametersFromArgs(const ArgsManager& args)
 {
+    MaybeUpdateHeights(args, consensus);
+
     if (!args.IsArgSet("-vbparams")) return;
 
     for (const std::string& strDeployment : args.GetArgs("-vbparams")) {
@@ -1143,35 +1205,6 @@ void CRegTestParams::UpdateDIP3ParametersFromArgs(const ArgsManager& args)
     }
     LogPrintf("Setting DIP3 parameters to activation=%ld, enforcement=%ld\n", nDIP3ActivationHeight, nDIP3EnforcementHeight);
     UpdateDIP3Parameters(nDIP3ActivationHeight, nDIP3EnforcementHeight);
-}
-
-void CRegTestParams::UpdateDIP8ParametersFromArgs(const ArgsManager& args)
-{
-    if (!args.IsArgSet("-dip8params")) return;
-
-    std::string strParams = args.GetArg("-dip8params", "");
-    std::vector<std::string> vParams = SplitString(strParams, ':');
-    if (vParams.size() != 1) {
-        throw std::runtime_error("DIP8 parameters malformed, expecting <activation>");
-    }
-    int nDIP8ActivationHeight;
-    if (!ParseInt32(vParams[0], &nDIP8ActivationHeight)) {
-        throw std::runtime_error(strprintf("Invalid activation height (%s)", vParams[0]));
-    }
-    LogPrintf("Setting DIP8 parameters to activation=%ld\n", nDIP8ActivationHeight);
-    UpdateDIP8Parameters(nDIP8ActivationHeight);
-}
-
-void CRegTestParams::UpdateBIP147ParametersFromArgs(const ArgsManager& args)
-{
-    if (!args.IsArgSet("-bip147height")) return;
-    int nBIP147Height;
-    const std::string strParams = args.GetArg("-bip147height", "");
-    if (!ParseInt32(strParams, &nBIP147Height)) {
-        throw std::runtime_error(strprintf("Invalid activation height (%s)", strParams));
-    }
-    LogPrintf("Setting BIP147 parameters to activation=%lld\n", nBIP147Height);
-    UpdateBIP147Parameters(nBIP147Height);
 }
 
 void CRegTestParams::UpdateBudgetParametersFromArgs(const ArgsManager& args)
@@ -1416,4 +1449,28 @@ void SelectParams(const std::string& network)
 {
     SelectBaseParams(network);
     globalChainParams = CreateChainParams(gArgs, network);
+}
+
+void SetupChainParamsOptions(ArgsManager& argsman)
+{
+    SetupChainParamsBaseOptions(argsman);
+
+    argsman.AddArg("-budgetparams=<masternode>:<budget>:<superblock>", "Override masternode, budget and superblock start heights (regtest-only)", ArgsManager::ALLOW_ANY | ArgsManager::DEBUG_ONLY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-dip3params=<activation>:<enforcement>", "Override DIP3 activation and enforcement heights (regtest-only)", ArgsManager::ALLOW_ANY | ArgsManager::DEBUG_ONLY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-highsubsidyblocks=<n>", "The number of blocks with a higher than normal subsidy to mine at the start of a chain. Block after that height will have fixed subsidy base. (default: 0, devnet-only)", ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-highsubsidyfactor=<n>", "The factor to multiply the normal block subsidy by while in the highsubsidyblocks window of a chain (default: 1, devnet-only)", ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-llmqchainlocks=<quorum name>", "Override the default LLMQ type used for ChainLocks. Allows using ChainLocks with smaller LLMQs. (default: llmq_devnet, devnet-only)", ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-llmqdevnetparams=<size>:<threshold>", "Override the default LLMQ size for the LLMQ_DEVNET quorum (devnet-only)", ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-llmqinstantsenddip0024=<quorum name>", "Override the default LLMQ type used for InstantSendDIP0024. (default: llmq_devnet_dip0024, devnet-only)", ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-llmqplatform=<quorum name>", "Override the default LLMQ type used for Platform. (default: llmq_devnet_platform, devnet-only)", ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-llmqmnhf=<quorum name>", "Override the default LLMQ type used for EHF. (default: llmq_devnet, devnet-only)", ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-llmqtestinstantsenddip0024=<quorum name>", "Override the default LLMQ type used for InstantSendDIP0024. Used mainly to test Platform. (default: llmq_test_dip0024, regtest-only)", ArgsManager::ALLOW_ANY | ArgsManager::DEBUG_ONLY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-llmqtestinstantsendparams=<size>:<threshold>", "Override the default LLMQ size for the LLMQ_TEST_INSTANTSEND quorums (default: 3:2, regtest-only)", ArgsManager::ALLOW_ANY | ArgsManager::DEBUG_ONLY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-llmqtestparams=<size>:<threshold>", "Override the default LLMQ size for the LLMQ_TEST quorum (default: 3:2, regtest-only)", ArgsManager::ALLOW_ANY | ArgsManager::DEBUG_ONLY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-minimumdifficultyblocks=<n>", "The number of blocks that can be mined with the minimum difficulty at the start of a chain (default: 0, devnet-only)", ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-powtargetspacing=<n>", "Override the default PowTargetSpacing value in seconds (default: 2.5 minutes, devnet-only)", ArgsManager::ALLOW_INT, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-testactivationheight=name@height.", "Set the activation height of 'name' (bip147, bip34, dersig, cltv, csv, brr, dip0001, dip0008, dip0024, v19, v20, mn_rr). (regtest-only)", ArgsManager::ALLOW_ANY | ArgsManager::DEBUG_ONLY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-vbparams=<deployment>:<start>:<end>(:min_activation_height(:<window>:<threshold/thresholdstart>(:<thresholdmin>:<falloffcoeff>:<mnactivation>)))",
+                 "Use given start/end times and min_activation_height for specified version bits deployment (regtest-only). "
+                 "Specifying window, threshold/thresholdstart, thresholdmin, falloffcoeff and mnactivation is optional.", ArgsManager::ALLOW_ANY | ArgsManager::DEBUG_ONLY, OptionsCategory::CHAINPARAMS);
 }

@@ -9,7 +9,7 @@ from test_framework.util import assert_equal, assert_raises_rpc_error
 from test_framework.messages import hash256
 from test_framework.p2p import P2PInterface
 from test_framework.test_framework import SparksTestFramework
-from test_framework.util import assert_equal, assert_raises_rpc_error, hex_str_to_bytes
+from test_framework.util import assert_equal, assert_raises_rpc_error
 
 '''
 rpc_mnauth.py
@@ -20,15 +20,13 @@ Tests mnauth RPC command
 
 class FakeMNAUTHTest(SparksTestFramework):
     def set_test_params(self):
-        self.set_sparks_test_params(2, 1, fast_dip3_enforcement=True)
+        self.set_sparks_test_params(2, 1)
 
     def run_test(self):
-
         masternode = self.mninfo[0]
         masternode.node.add_p2p_connection(P2PInterface())
 
         protx_hash = masternode.proTxHash
-        #TODO: Fix that with basic BLS
         public_key = masternode.pubKeyOperator
 
         # The peerinfo should not yet contain verified_proregtx_hash/verified_pubkey_hash
@@ -42,7 +40,7 @@ class FakeMNAUTHTest(SparksTestFramework):
         assert "verified_proregtx_hash" in peerinfo
         assert "verified_pubkey_hash" in peerinfo
         assert_equal(peerinfo["verified_proregtx_hash"], protx_hash)
-        assert_equal(peerinfo["verified_pubkey_hash"], hash256(hex_str_to_bytes(public_key))[::-1].hex())
+        assert_equal(peerinfo["verified_pubkey_hash"], hash256(bytes.fromhex(public_key))[::-1].hex())
         # Test some error cases
         null_hash = "0000000000000000000000000000000000000000000000000000000000000000"
         assert_raises_rpc_error(-8, "proTxHash invalid", masternode.node.mnauth,

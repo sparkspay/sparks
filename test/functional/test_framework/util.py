@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # Copyright (c) 2014-2020 The Bitcoin Core developers
-# Copyright (c) 2014-2023 The Dash Core developers
+# Copyright (c) 2014-2024 The Dash Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Helpful routines for regression testing."""
 
 from base64 import b64encode
-from binascii import unhexlify
 from decimal import Decimal, ROUND_DOWN
 from subprocess import CalledProcessError
 import hashlib
@@ -14,6 +13,7 @@ import inspect
 import json
 import logging
 import os
+import random
 import shutil
 import re
 import time
@@ -36,17 +36,35 @@ def assert_approx(v, vexp, vspan=0.00001):
         raise AssertionError("%s > [%s..%s]" % (str(v), str(vexp - vspan), str(vexp + vspan)))
 
 
-def assert_fee_amount(fee, tx_size, fee_per_kB):
-    """Assert the fee was in range"""
-    target_fee = round(tx_size * fee_per_kB / 1000, 8)
+def assert_fee_amount(fee, tx_size, feerate_SPARKS_kvB):
+    """Assert the fee is in range."""
+    feerate_SPARKS_vB = feerate_SPARKS_kvB / 1000
+    target_fee = satoshi_round(tx_size * feerate_SPARKS_vB)
     if fee < target_fee:
         raise AssertionError("Fee of %s SPARKS too low! (Should be %s SPARKS)" % (str(fee), str(target_fee)))
     # allow the wallet's estimation to be at most 2 bytes off
-    if fee > (tx_size + 2) * fee_per_kB / 1000:
+    if fee > (tx_size + 2) * feerate_SPARKS_vB:
         raise AssertionError("Fee of %s SPARKS too high! (Should be %s SPARKS)" % (str(fee), str(target_fee)))
 
 
+def summarise_dict_differences(thing1, thing2):
+    if not isinstance(thing1, dict) or not isinstance(thing2, dict):
+        return thing1, thing2
+    d1, d2 = {}, {}
+    for k in sorted(thing1.keys()):
+        if k not in thing2:
+            d1[k] = thing1[k]
+        elif thing1[k] != thing2[k]:
+            d1[k], d2[k] = summarise_dict_differences(thing1[k], thing2[k])
+    for k in sorted(thing2.keys()):
+        if k not in thing1:
+            d2[k] = thing2[k]
+    return d1, d2
+
 def assert_equal(thing1, thing2, *args):
+    if thing1 != thing2 and not args and isinstance(thing1, dict) and isinstance(thing2, dict):
+        d1,d2 = summarise_dict_differences(thing1, thing2)
+        raise AssertionError("not(%s == %s)\n  in particular not(%s == %s)" % (thing1, thing2, d1, d2))
     if thing1 != thing2 or any(thing1 != arg for arg in args):
         raise AssertionError("not(%s)" % " == ".join(str(arg) for arg in (thing1, thing2) + args))
 
@@ -215,12 +233,14 @@ def count_bytes(hex_string):
     return len(bytearray.fromhex(hex_string))
 
 
-def hex_str_to_bytes(hex_str):
-    return unhexlify(hex_str.encode('ascii'))
-
-
 def str_to_b64str(string):
     return b64encode(string.encode('utf-8')).decode('ascii')
+
+
+def random_bitflip(data):
+    data = list(data)
+    data[random.randrange(len(data))] ^= (1 << (random.randrange(8)))
+    return bytes(data)
 
 
 def satoshi_round(amount):
@@ -269,6 +289,7 @@ def wait_until_helper(predicate, *, attempts=float('inf'), timeout=float('inf'),
     else:
         return False
 
+
 def sha256sum_file(filename):
     h = hashlib.sha256()
     with open(filename, 'rb') as f:
@@ -277,6 +298,11 @@ def sha256sum_file(filename):
             h.update(d)
             d = f.read(4096)
     return h.digest()
+
+# TODO: Remove and use random.randbytes(n) directly
+def random_bytes(n):
+    """Return a random bytes object of length n."""
+    return random.randbytes(n)
 
 # RPC/P2P connection constants and functions
 ############################################
@@ -356,19 +382,7 @@ def initialize_datadir(dirname, n, chain):
 
 
 def write_config(config_path, *, n, chain, extra_config=""):
-    # Translate chain subdirectory name to config name
-    if chain == 'testnet3':
-        chain_name_conf_arg = 'testnet'
-        chain_name_conf_section = 'test'
-        chain_name_conf_arg_value = '1'
-    elif chain == 'devnet':
-        chain_name_conf_arg = 'devnet'
-        chain_name_conf_section = 'devnet'
-        chain_name_conf_arg_value = 'devnet1'
-    else:
-        chain_name_conf_arg = chain
-        chain_name_conf_section = chain
-        chain_name_conf_arg_value = '1'
+    (chain_name_conf_arg, chain_name_conf_arg_value, chain_name_conf_section) = get_chain_conf_names(chain)
     with open(config_path, 'w', encoding='utf8') as f:
         if chain_name_conf_arg:
             f.write("{}={}\n".format(chain_name_conf_arg, chain_name_conf_arg_value))
@@ -469,6 +483,24 @@ def get_chain_folder(datadir, chain):
         pass
     return chain
 
+def get_chain_conf_names(chain):
+    """
+    Translate chain name to config names
+    """
+    if chain == 'testnet3':
+        arg = 'testnet'
+        value = '1'
+        section = 'test'
+    elif chain == 'devnet':
+        arg = 'devnet'
+        value = 'devnet1'
+        section = 'devnet'
+    else:
+        arg = chain
+        value = '1'
+        section = chain
+    return (arg, value, section)
+
 def get_bip9_details(node, key):
     """Return extra info about bip9 softfork"""
     return node.getblockchaininfo()['softforks'][key]['bip9']
@@ -484,15 +516,18 @@ def set_node_times(nodes, t):
         node.mocktime = t
         node.setmocktime(t)
 
+def check_node_connections(*, node, num_in, num_out):
+    info = node.getnetworkinfo()
+    assert_equal(info["connections_in"], num_in)
+    assert_equal(info["connections_out"], num_out)
+
 
 def force_finish_mnsync(node):
     """
     Masternodes won't accept incoming connections while IsSynced is false.
     Force them to switch to this state to speed things up.
     """
-    while True:
-        if node.mnsync("status")['IsSynced']:
-            break
+    while not node.mnsync("status")['IsSynced']:
         node.mnsync("next")
 
 # Transaction/Block functions
@@ -513,10 +548,10 @@ def find_output(node, txid, amount, *, blockhash=None):
 
 # Helper to create at least "count" utxos
 # Pass in a fee that is sufficient for relay and mining new transactions.
-def create_confirmed_utxos(fee, node, count):
+def create_confirmed_utxos(test_framework, fee, node, count, **kwargs):
     to_generate = int(0.5 * count) + 101
     while to_generate > 0:
-        node.generate(min(25, to_generate))
+        test_framework.generate(node, min(25, to_generate), **kwargs)
         to_generate -= 25
     utxos = node.listunspent()
     iterations = count - len(utxos)
@@ -537,11 +572,33 @@ def create_confirmed_utxos(fee, node, count):
         node.sendrawtransaction(signed_tx)
 
     while (node.getmempoolinfo()['size'] > 0):
-        node.generate(1)
+        test_framework.generate(node, 1, **kwargs)
 
     utxos = node.listunspent()
     assert len(utxos) >= count
     return utxos
+
+
+def chain_transaction(node, parent_txids, vouts, value, fee, num_outputs):
+    """Build and send a transaction that spends the given inputs (specified
+    by lists of parent_txid:vout each), with the desired total value and fee,
+    equally divided up to the desired number of outputs.
+
+    Returns a tuple with the txid and the amount sent per output.
+    """
+    send_value = satoshi_round((value - fee)/num_outputs)
+    inputs = []
+    for (txid, vout) in zip(parent_txids, vouts):
+        inputs.append({'txid' : txid, 'vout' : vout})
+    outputs = {}
+    for _ in range(num_outputs):
+        outputs[node.getnewaddress()] = send_value
+    rawtx = node.createrawtransaction(inputs, outputs)
+    signedtx = node.signrawtransactionwithwallet(rawtx)
+    txid = node.sendrawtransaction(signedtx['hex'])
+    fulltx = node.getrawtransaction(txid, 1)
+    assert len(fulltx['vout']) == num_outputs  # make sure we didn't generate a change output
+    return (txid, send_value)
 
 
 # Create large OP_RETURN txouts that can be appended to a transaction
@@ -558,7 +615,7 @@ def gen_return_txouts():
     from .messages import CTxOut
     txout = CTxOut()
     txout.nValue = 0
-    txout.scriptPubKey = hex_str_to_bytes(script_pubkey)
+    txout.scriptPubKey = bytes.fromhex(script_pubkey)
     for _ in range(128):
         txouts.append(txout)
     return txouts
@@ -587,18 +644,29 @@ def create_lots_of_big_transactions(node, txouts, utxos, num, fee):
     return txids
 
 
-def mine_large_block(node, utxos=None):
+def mine_large_block(test_framework, mini_wallet, node):
     # generate a 66k transaction,
     # and 14 of them is close to the 1MB block limit
-    num = 14
     txouts = gen_return_txouts()
-    utxos = utxos if utxos is not None else []
-    if len(utxos) < num:
-        utxos.clear()
-        utxos.extend(node.listunspent())
-    fee = 100 * node.getnetworkinfo()["relayfee"]
-    create_lots_of_big_transactions(node, txouts, utxos, num, fee=fee)
-    node.generate(1)
+    from .messages import COIN
+    fee = 100 * int(node.getnetworkinfo()["relayfee"] * COIN)
+    for _ in range(14):
+        tx = mini_wallet.create_self_transfer(from_node=node, fee_rate=0, mempool_valid=False)['tx']
+        tx.vout[0].nValue -= fee
+        tx.vout.extend(txouts)
+        mini_wallet.sendrawtransaction(from_node=node, tx_hex=tx.serialize().hex())
+    test_framework.generate(node, 1)
+
+
+def generate_to_height(test_framework, node, target_height):
+    """Generates blocks until a given target block height has been reached.
+       To prevent timeouts, only up to 200 blocks are generated per RPC call.
+       Can be used to activate certain soft-forks (e.g. CSV, CLTV)."""
+    current_height = node.getblockcount()
+    while current_height < target_height:
+        nblocks = min(200, target_height - current_height)
+        current_height += len(test_framework.generate(node, nblocks))
+    assert_equal(node.getblockcount(), target_height)
 
 
 def find_vout_for_address(node, txid, addr):

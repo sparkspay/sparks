@@ -18,6 +18,7 @@
 #include <test/util/net.h>
 #include <test/util/setup_common.h>
 #include <test/util/validation.h>
+#include <txorphanage.h>
 #include <validationinterface.h>
 #include <version.h>
 
@@ -63,7 +64,9 @@ void initialize_process_message()
 {
     Assert(GetNumMsgTypes() == getAllNetMessageTypes().size()); // If this fails, add or remove the message type below
 
-    static const auto testing_setup = MakeNoLogFileContext<const TestingSetup>();
+    static const auto testing_setup = MakeNoLogFileContext<const TestingSetup>(
+            /*chain_name=*/CBaseChainParams::REGTEST,
+            /*extra_args=*/{"-txreconciliation"});
     g_setup = testing_setup.get();
     for (int i = 0; i < 2 * COINBASE_MATURITY; i++) {
         MineBlock(g_setup->m_node, CScript() << OP_TRUE);
@@ -79,6 +82,8 @@ void fuzz_target(FuzzBufferType buffer, const std::string& LIMIT_TO_MESSAGE_TYPE
     TestChainState& chainstate = *static_cast<TestChainState*>(&g_setup->m_node.chainman->ActiveChainstate());
     SetMockTime(1610000000); // any time to successfully reset ibd
     chainstate.ResetIbd();
+
+    LOCK(NetEventsInterface::g_msgproc_mutex);
 
     const std::string random_message_type{fuzzed_data_provider.ConsumeBytesAsString(CMessageHeader::COMMAND_SIZE).c_str()};
     if (!LIMIT_TO_MESSAGE_TYPE.empty() && random_message_type != LIMIT_TO_MESSAGE_TYPE) {
@@ -98,12 +103,8 @@ void fuzz_target(FuzzBufferType buffer, const std::string& LIMIT_TO_MESSAGE_TYPE
         g_setup->m_node.peerman->ProcessMessage(p2p_node, random_message_type, random_bytes_data_stream, GetTime<std::chrono::microseconds>(), std::atomic<bool>{false});
     } catch (const std::ios_base::failure& e) {
     }
-    {
-        LOCK(p2p_node.cs_sendProcessing);
-        g_setup->m_node.peerman->SendMessages(&p2p_node);
-    }
+    g_setup->m_node.peerman->SendMessages(&p2p_node);
     SyncWithValidationInterfaceQueue();
-    LOCK2(::cs_main, g_cs_orphans); // See init.cpp for rationale for implicit locking order requirement
     g_setup->m_node.connman->StopNodes();
 }
 
@@ -175,6 +176,7 @@ FUZZ_TARGET_MSG(sendcmpct);
 FUZZ_TARGET_MSG(senddsq);
 FUZZ_TARGET_MSG(sendheaders);
 FUZZ_TARGET_MSG(sendheaders2);
+FUZZ_TARGET_MSG(sendtxrcncl);
 FUZZ_TARGET_MSG(spork);
 FUZZ_TARGET_MSG(ssc);
 FUZZ_TARGET_MSG(tx);

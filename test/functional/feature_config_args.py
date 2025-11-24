@@ -23,7 +23,7 @@ class ConfArgsTest(BitcoinTestFramework):
 
         inc_conf_file_path = os.path.join(self.nodes[0].datadir, 'include.conf')
         with open(os.path.join(self.nodes[0].datadir, 'sparks.conf'), 'a', encoding='utf-8') as conf:
-            conf.write('includeconf={}\n'.format(inc_conf_file_path))
+            conf.write(f'includeconf={inc_conf_file_path}\n')
 
         self.nodes[0].assert_start_raises_init_error(
             expected_msg='Error: Error parsing command line arguments: Invalid parameter -sparks_cli=1',
@@ -42,13 +42,13 @@ class ConfArgsTest(BitcoinTestFramework):
         if self.is_wallet_compiled():
             with open(inc_conf_file_path, 'w', encoding='utf8') as conf:
                 conf.write("wallet=foo\n")
-            self.nodes[0].assert_start_raises_init_error(expected_msg='Error: Config setting for -wallet only applied on %s network when in [%s] section.' % (self.chain, self.chain))
+            self.nodes[0].assert_start_raises_init_error(expected_msg=f'Error: Config setting for -wallet only applied on {self.chain} network when in [{self.chain}] section.')
 
         main_conf_file_path = os.path.join(self.options.tmpdir, 'node0', 'sparks_main.conf')
-        util.write_config(main_conf_file_path, n=0, chain='', extra_config='includeconf={}\n'.format(inc_conf_file_path))
+        util.write_config(main_conf_file_path, n=0, chain='', extra_config=f'includeconf={inc_conf_file_path}\n')
         with open(inc_conf_file_path, 'w', encoding='utf-8') as conf:
             conf.write('acceptnonstdtxn=1\n')
-        self.nodes[0].assert_start_raises_init_error(extra_args=["-conf={}".format(main_conf_file_path)], expected_msg='Error: acceptnonstdtxn is not currently supported for main chain')
+        self.nodes[0].assert_start_raises_init_error(extra_args=[f"-conf={main_conf_file_path}"], expected_msg='Error: acceptnonstdtxn is not currently supported for main chain')
 
         with open(inc_conf_file_path, 'w', encoding='utf-8') as conf:
             conf.write('nono\n')
@@ -68,14 +68,14 @@ class ConfArgsTest(BitcoinTestFramework):
 
         inc_conf_file2_path = os.path.join(self.nodes[0].datadir, 'include2.conf')
         with open(os.path.join(self.nodes[0].datadir, 'sparks.conf'), 'a', encoding='utf-8') as conf:
-            conf.write('includeconf={}\n'.format(inc_conf_file2_path))
+            conf.write(f'includeconf={inc_conf_file2_path}\n')
 
         with open(inc_conf_file_path, 'w', encoding='utf-8') as conf:
             conf.write('testnot.datadir=1\n')
         with open(inc_conf_file2_path, 'w', encoding='utf-8') as conf:
             conf.write('[testnet]\n')
         self.restart_node(0)
-        self.nodes[0].stop_node(expected_stderr='Warning: ' + inc_conf_file_path + ':1 Section [testnot] is not recognized.' + os.linesep + inc_conf_file2_path + ':1 Section [testnet] is not recognized.')
+        self.nodes[0].stop_node(expected_stderr=f'Warning: {inc_conf_file_path}:1 Section [testnot] is not recognized.{os.linesep}{inc_conf_file2_path}:1 Section [testnet] is not recognized.')
 
         with open(inc_conf_file_path, 'w', encoding='utf-8') as conf:
             conf.write('')  # clear
@@ -84,7 +84,7 @@ class ConfArgsTest(BitcoinTestFramework):
 
     def test_invalid_command_line_options(self):
         self.nodes[0].assert_start_raises_init_error(
-            expected_msg='Error: No proxy server specified. Use -proxy=<ip> or -proxy=<ip:port>.',
+            expected_msg='Error: Error parsing command line arguments: Can not set -proxy with no value. Please specify value with -proxy=value.',
             extra_args=['-proxy'],
         )
 
@@ -104,8 +104,8 @@ class ConfArgsTest(BitcoinTestFramework):
                     'Command-line arg: rpcpassword=****',
                     'Command-line arg: rpcuser=****',
                     'Command-line arg: torpassword=****',
-                    'Config file arg: %s="1"' % self.chain,
-                    'Config file arg: [%s] server="1"' % self.chain,
+                    f'Config file arg: {self.chain}="1"',
+                    f'Config file arg: [{self.chain}] server="1"',
                 ],
                 unexpected_msgs=[
                     'alice:f7efda5c189b999524f151318c0c86$d5b51b3beffbc0',
@@ -177,27 +177,24 @@ class ConfArgsTest(BitcoinTestFramework):
         # No peers.dat exists and -dnsseed=0
         # We expect the node will fallback immediately to fixed seeds
         assert not os.path.exists(os.path.join(default_data_dir, "peers.dat"))
-        start = time.time()
         with self.nodes[0].assert_debug_log(expected_msgs=[
                 "Loaded 0 addresses from peers.dat",
                 "DNS seeding disabled",
-                "Adding fixed seeds as -dnsseed=0, -addnode is not provided and all -seednode(s) attempted\n",
+                "Adding fixed seeds as -dnsseed=0 (or IPv4/IPv6 connections are disabled via -onlynet) and neither -addnode nor -seednode are provided\n",
         ]):
             self.start_node(0, extra_args=['-dnsseed=0', '-fixedseeds=1'])
-        assert time.time() - start < 60
         self.stop_node(0)
+        self.nodes[0].assert_start_raises_init_error(['-dnsseed=1', '-onlynet=i2p', '-i2psam=127.0.0.1:7656'], "Error: Incompatible options: -dnsseed=1 was explicitly specified, but -onlynet forbids connections to IPv4/IPv6")
 
         # No peers.dat exists and dns seeds are disabled.
         # We expect the node will not add fixed seeds when explicitly disabled.
         assert not os.path.exists(os.path.join(default_data_dir, "peers.dat"))
-        start = time.time()
         with self.nodes[0].assert_debug_log(expected_msgs=[
                 "Loaded 0 addresses from peers.dat",
                 "DNS seeding disabled",
                 "Fixed seeds are disabled",
         ]):
             self.start_node(0, extra_args=['-dnsseed=0', '-fixedseeds=0'])
-        assert time.time() - start < 60
         self.stop_node(0)
 
         # No peers.dat exists and -dnsseed=0, but a -addnode is provided
@@ -215,11 +212,43 @@ class ConfArgsTest(BitcoinTestFramework):
         ]):
             self.nodes[0].setmocktime(start + 65)
 
+    def test_connect_with_seednode(self):
+        self.log.info('Test -connect with -seednode')
+        seednode_ignored = ['-seednode is ignored when -connect is used\n']
+        dnsseed_ignored = ['-dnsseed is ignored when -connect is used and -proxy is specified\n']
+        addcon_thread_started = ['addcon thread start\n']
+        self.stop_node(0)
+
+        # When -connect is supplied, expanding addrman via getaddr calls to ADDR_FETCH(-seednode)
+        # nodes is irrelevant and -seednode is ignored.
+        with self.nodes[0].assert_debug_log(expected_msgs=seednode_ignored):
+            self.start_node(0, extra_args=['-connect=fakeaddress1', '-seednode=fakeaddress2'])
+
+        # With -proxy, an ADDR_FETCH connection is made to a peer that the dns seed resolves to.
+        # ADDR_FETCH connections are not used when -connect is used.
+        with self.nodes[0].assert_debug_log(expected_msgs=dnsseed_ignored):
+            self.restart_node(0, extra_args=['-connect=fakeaddress1', '-dnsseed=1', '-proxy=1.2.3.4'])
+
+        # If the user did not disable -dnsseed, but it was soft-disabled because they provided -connect,
+        # they shouldn't see a warning about -dnsseed being ignored.
+        with self.nodes[0].assert_debug_log(expected_msgs=addcon_thread_started,
+                unexpected_msgs=dnsseed_ignored):
+            self.restart_node(0, extra_args=['-connect=fakeaddress1', '-proxy=1.2.3.4'])
+
+        # We have to supply expected_msgs as it's a required argument
+        # The expected_msg must be something we are confident will be logged after the unexpected_msg
+        # These cases test for -connect being supplied but only to disable it
+        for connect_arg in ['-connect=0', '-noconnect']:
+            with self.nodes[0].assert_debug_log(expected_msgs=addcon_thread_started,
+                    unexpected_msgs=seednode_ignored):
+                self.restart_node(0, extra_args=[connect_arg, '-seednode=fakeaddress2'])
+
     def run_test(self):
         self.test_log_buffer()
         self.test_args_log()
         self.test_seed_peers()
         self.test_networkactive()
+        self.test_connect_with_seednode()
 
 
         self.test_config_file_parser()
@@ -234,7 +263,7 @@ class ConfArgsTest(BitcoinTestFramework):
 
         # Check that using -datadir argument on non-existent directory fails
         self.nodes[0].datadir = new_data_dir
-        self.nodes[0].assert_start_raises_init_error(['-datadir=' + new_data_dir], 'Error: Specified data directory "' + new_data_dir + '" does not exist.')
+        self.nodes[0].assert_start_raises_init_error([f'-datadir={new_data_dir}'], f'Error: Specified data directory "{new_data_dir}" does not exist.')
 
         # Check that using non-existent datadir in conf file fails
         conf_file = os.path.join(default_data_dir, "sparks.conf")
@@ -242,22 +271,25 @@ class ConfArgsTest(BitcoinTestFramework):
         # datadir needs to be set before [chain] section
         conf_file_contents = open(conf_file, encoding='utf8').read()
         with open(conf_file, 'w', encoding='utf8') as f:
-            f.write("datadir=" + new_data_dir + "\n")
+            f.write(f"datadir={new_data_dir}\n")
             f.write(conf_file_contents)
 
-        self.nodes[0].assert_start_raises_init_error(['-conf=' + conf_file], 'Error: Error reading configuration file: specified data directory "' + new_data_dir + '" does not exist.')
+        self.nodes[0].assert_start_raises_init_error([f'-conf={conf_file}'], f'Error: Error reading configuration file: specified data directory "{new_data_dir}" does not exist.')
+
+        # Check that an explicitly specified config file that cannot be opened fails
+        none_existent_conf_file = os.path.join(default_data_dir, "none_existent_sparks.conf")
+        self.nodes[0].assert_start_raises_init_error(['-conf=' + none_existent_conf_file], 'Error: Error reading configuration file: specified config file "' + none_existent_conf_file + '" could not be opened.')
 
         # Create the directory and ensure the config file now works
         os.mkdir(new_data_dir)
-        # Temporarily disabled, because this test would access the user's home dir (~/.bitcoin)
-        self.start_node(0, ['-conf='+conf_file])
+        self.start_node(0, [f'-conf={conf_file}'])
         self.stop_node(0)
         assert os.path.exists(os.path.join(new_data_dir, self.chain, 'blocks'))
 
         # Ensure command line argument overrides datadir in conf
         os.mkdir(new_data_dir_2)
         self.nodes[0].datadir = new_data_dir_2
-        self.start_node(0, ['-datadir='+new_data_dir_2, '-conf='+conf_file])
+        self.start_node(0, [f'-datadir={new_data_dir_2}', f'-conf={conf_file}'])
         assert os.path.exists(os.path.join(new_data_dir_2, self.chain, 'blocks'))
 
 

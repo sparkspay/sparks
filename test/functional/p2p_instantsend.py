@@ -18,7 +18,7 @@ Tests InstantSend functionality (prevent doublespend for unconfirmed transaction
 
 class InstantSendTest(SparksTestFramework):
     def set_test_params(self):
-        self.set_sparks_test_params(8, 4, fast_dip3_enforcement=True)
+        self.set_sparks_test_params(8, 4)
         # set sender,  receiver,  isolated nodes
         self.isolated_idx = 1
         self.receiver_idx = 2
@@ -27,15 +27,7 @@ class InstantSendTest(SparksTestFramework):
     def run_test(self):
         self.nodes[0].spork("SPORK_18_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
-        self.activate_v19(expected_activation_height=900)
-        self.log.info("Activated v19 at height:" + str(self.nodes[0].getblockcount()))
-        self.move_to_next_cycle()
-        self.log.info("Cycle H height:" + str(self.nodes[0].getblockcount()))
-        self.move_to_next_cycle()
-        self.log.info("Cycle H+C height:" + str(self.nodes[0].getblockcount()))
-        self.move_to_next_cycle()
-        self.log.info("Cycle H+2C height:" + str(self.nodes[0].getblockcount()))
-        (quorum_info_i_0, quorum_info_i_1) = self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
+        (quorum_info_i_0, quorum_info_i_1) = self.mine_cycle_quorum()
 
         self.test_mempool_doublespend()
         self.test_block_doublespend()
@@ -51,8 +43,7 @@ class InstantSendTest(SparksTestFramework):
         for node in self.nodes:
             self.wait_for_instantlock(is_id, node)
         self.bump_mocktime(1)
-        self.nodes[0].generate(2)
-        self.sync_all()
+        self.generate(self.nodes[0], 2)
 
         # create doublespending transaction, but don't relay it
         dblspnd_tx = self.create_raw_tx(sender, isolated, 0.5, 1, 100)
@@ -71,11 +62,11 @@ class InstantSendTest(SparksTestFramework):
         dblspnd_txid = isolated.sendrawtransaction(dblspnd_tx['hex'])
         # generate block on isolated node with doublespend transaction
         self.bump_mocktime(599)
-        wrong_early_block = isolated.generate(1)[0]
+        wrong_early_block = self.generate(isolated, 1, sync_fun=self.no_op)[0]
         assert not "confirmation" in isolated.getrawtransaction(dblspnd_txid, 1)
         isolated.invalidateblock(wrong_early_block)
         self.bump_mocktime(1)
-        wrong_block = isolated.generate(1)[0]
+        wrong_block = self.generate(isolated, 1, sync_fun=self.no_op)[0]
         assert_equal(isolated.getrawtransaction(dblspnd_txid, 1)["confirmations"], 1)
         # connect isolated block to network
         self.reconnect_isolated_node(self.isolated_idx, 0)
@@ -96,8 +87,7 @@ class InstantSendTest(SparksTestFramework):
         self.bump_mocktime(1)
         # make sure the above TX is on node0
         self.sync_mempools([n for n in self.nodes if n is not isolated])
-        self.nodes[0].generate(2)
-        self.sync_all()
+        self.generate(self.nodes[0], 2)
 
     def test_mempool_doublespend(self):
         sender = self.nodes[self.sender_idx]
@@ -112,8 +102,7 @@ class InstantSendTest(SparksTestFramework):
         for node in self.nodes:
             self.wait_for_instantlock(is_id, node)
         self.bump_mocktime(1)
-        self.nodes[0].generate(2)
-        self.sync_all()
+        self.generate(self.nodes[0], 2)
 
         # create doublespending transaction, but don't relay it
         dblspnd_tx = self.create_raw_tx(sender, isolated, 0.5, 1, 100)
@@ -145,8 +134,7 @@ class InstantSendTest(SparksTestFramework):
         assert_equal(receiver.getwalletinfo()["balance"], 0)
         # mine more blocks
         self.bump_mocktime(1)
-        self.nodes[0].generate(2)
-        self.sync_all()
+        self.generate(self.nodes[0], 2)
 
 if __name__ == '__main__':
     InstantSendTest().main()

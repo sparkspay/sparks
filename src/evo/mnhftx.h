@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2023 The Dash Core developers
+// Copyright (c) 2021-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,14 +7,12 @@
 
 #include <bls/bls.h>
 #include <gsl/pointers.h>
-#include <primitives/transaction.h>
 #include <sync.h>
 #include <threadsafety.h>
 #include <univalue.h>
 
 #include <optional>
 #include <saltedhasher.h>
-#include <unordered_map>
 #include <unordered_lru_cache.h>
 #include <versionbits.h>
 
@@ -22,6 +20,7 @@ class BlockValidationState;
 class CBlock;
 class CBlockIndex;
 class CEvoDB;
+class CTransaction;
 class ChainstateManager;
 class TxValidationState;
 namespace llmq {
@@ -109,8 +108,6 @@ private:
     // versionBit <-> height
     unordered_lru_cache<uint256, Signals, StaticSaltedHasher> mnhfCache GUARDED_BY(cs_cache) {MNHFCacheSize};
 
-    // This cache is used only for v20 activation to avoid double lock through VersionBitsConditionChecker::SignalHeight
-    VersionBitsCache v20_activation GUARDED_BY(cs_cache);
 public:
     explicit CMNHFManager(CEvoDB& evoDb);
     ~CMNHFManager();
@@ -157,6 +154,8 @@ public:
      * @pre Must be called before LLMQContext (containing llmq::CQuorumManager) is destroyed.
      */
     void DisconnectManagers() { m_chainman = nullptr; m_qman = nullptr; };
+
+    bool ForceSignalDBUpdate() EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 private:
     void AddToCache(const Signals& signals, const CBlockIndex* const pindex);

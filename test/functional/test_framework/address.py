@@ -12,7 +12,7 @@
 import unittest
 
 from .script import hash160, hash256, CScript
-from .util import assert_equal, hex_str_to_bytes
+from .util import assert_equal
 
 # Note unlike in bitcoin, this address isn't bech32 since we don't (at this time) support bech32.
 ADDRESS_BCRT1_UNSPENDABLE = 'yVg3NBUHNEhgDceqwVUjsZHreC5PBHnUo9'
@@ -25,17 +25,15 @@ chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
 def byte_to_base58(b, version):
     result = ''
-    str = b.hex()
-    str = chr(version).encode('latin-1').hex() + str
-    checksum = hash256(hex_str_to_bytes(str)).hex()
-    str += checksum[:8]
-    value = int('0x' + str, 0)
+    b = bytes([version]) + b  # prepend version
+    b += hash256(b)[:4]       # append checksum
+    value = int.from_bytes(b, 'big')
     while value > 0:
         result = chars[value % 58] + result
         value //= 58
-    while (str[:2] == '00'):
+    while b[0] == 0:
         result = chars[0] + result
-        str = str[2:]
+        b = b[1:]
     return result
 
 
@@ -89,14 +87,14 @@ def script_to_p2sh(script, main=False):
 
 def check_key(key):
     if (type(key) is str):
-        key = hex_str_to_bytes(key)  # Assuming this is hex string
+        key = bytes.fromhex(key)  # Assuming this is hex string
     if (type(key) is bytes and (len(key) == 33 or len(key) == 65)):
         return key
     assert False
 
 def check_script(script):
     if (type(script) is str):
-        script = hex_str_to_bytes(script)  # Assuming this is hex string
+        script = bytes.fromhex(script)  # Assuming this is hex string
     if (type(script) is bytes or type(script) is CScript):
         return script
     assert False

@@ -1,8 +1,8 @@
 package=native_libmultiprocess
-$(package)_version=5741d750a04e644a03336090d8979c6d033e32c0
+$(package)_version=6aca5f389bacf2942394b8738bbe15d6c9edfb9b
 $(package)_download_path=https://github.com/chaincodelabs/libmultiprocess/archive
 $(package)_file_name=$($(package)_version).tar.gz
-$(package)_sha256_hash=ac848db49a6ed53e423c62d54bd87f1f08cbb0326254a8667e10bbfe5bf032a4
+$(package)_sha256_hash=2efeed53542bc1d8af3291f2b6f0e5d430d86a5e04e415ce33c136f2c226a51d
 $(package)_dependencies=native_capnp
 
 define $(package)_config_cmds
@@ -14,5 +14,5 @@ define $(package)_build_cmds
 endef
 
 define $(package)_stage_cmds
-  $(MAKE) DESTDIR=$($(package)_staging_dir) install
+  $(MAKE) DESTDIR=$($(package)_staging_dir) install-bin
 endef

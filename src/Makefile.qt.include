@@ -59,6 +59,7 @@ QT_MOC_CPP = \
   qt/moc_editaddressdialog.cpp \
   qt/moc_governancelist.cpp \
   qt/moc_guiutil.cpp \
+  qt/moc_initexecutor.cpp \
   qt/moc_intro.cpp \
   qt/moc_macdockiconhandler.cpp \
   qt/moc_macnotificationhandler.cpp \
@@ -70,6 +71,7 @@ QT_MOC_CPP = \
   qt/moc_optionsmodel.cpp \
   qt/moc_overviewpage.cpp \
   qt/moc_peertablemodel.cpp \
+  qt/moc_peertablesortproxy.cpp \
   qt/moc_paymentserver.cpp \
   qt/moc_psbtoperationsdialog.cpp \
   qt/moc_qrdialog.cpp \
@@ -88,6 +90,7 @@ QT_MOC_CPP = \
   qt/moc_transactiondesc.cpp \
   qt/moc_transactiondescdialog.cpp \
   qt/moc_transactionfilterproxy.cpp \
+  qt/moc_transactionoverviewwidget.cpp \
   qt/moc_transactiontablemodel.cpp \
   qt/moc_transactionview.cpp \
   qt/moc_utilitydialog.cpp \
@@ -132,6 +135,7 @@ BITCOIN_QT_H = \
   qt/governancelist.h \
   qt/guiconstants.h \
   qt/guiutil.h \
+  qt/initexecutor.h \
   qt/intro.h \
   qt/macdockiconhandler.h \
   qt/macnotificationhandler.h \
@@ -146,6 +150,7 @@ BITCOIN_QT_H = \
   qt/overviewpage.h \
   qt/paymentserver.h \
   qt/peertablemodel.h \
+  qt/peertablesortproxy.h \
   qt/psbtoperationsdialog.h \
   qt/qrdialog.h \
   qt/qrimagewidget.h \
@@ -165,6 +170,7 @@ BITCOIN_QT_H = \
   qt/transactiondesc.h \
   qt/transactiondescdialog.h \
   qt/transactionfilterproxy.h \
+  qt/transactionoverviewwidget.h \
   qt/transactionrecord.h \
   qt/transactiontablemodel.h \
   qt/transactionview.h \
@@ -273,6 +279,7 @@ BITCOIN_QT_BASE_CPP = \
   qt/clientmodel.cpp \
   qt/csvmodelwriter.cpp \
   qt/guiutil.cpp \
+  qt/initexecutor.cpp \
   qt/intro.cpp \
   qt/modaloverlay.cpp \
   qt/networkstyle.cpp \
@@ -280,6 +287,7 @@ BITCOIN_QT_BASE_CPP = \
   qt/optionsdialog.cpp \
   qt/optionsmodel.cpp \
   qt/peertablemodel.cpp \
+  qt/peertablesortproxy.cpp \
   qt/qvalidatedlineedit.cpp \
   qt/qvaluecombobox.cpp \
   qt/rpcconsole.cpp \
@@ -427,7 +435,7 @@ RES_ANIMATION = $(wildcard $(srcdir)/qt/res/animation/spinner-*.png)
 
 BITCOIN_RC = qt/res/sparks-qt-res.rc
 
-BITCOIN_QT_INCLUDES = -DQT_NO_KEYWORDS
+BITCOIN_QT_INCLUDES = -DQT_NO_KEYWORDS -DQT_USE_QSTRINGBUILDER
 
 qt_libbitcoinqt_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(BITCOIN_QT_INCLUDES) \
   $(QT_INCLUDES) $(QT_DBUS_INCLUDES) $(QR_CFLAGS)
@@ -468,7 +476,7 @@ if ENABLE_ZMQ
 bitcoin_qt_ldadd += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
 endif
 bitcoin_qt_ldadd += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_CONSENSUS) $(LIBBITCOIN_CRYPTO) $(LIBDASHBLS) $(LIBUNIVALUE) $(LIBLEVELDB) $(LIBLEVELDB_SSE42) $(LIBMEMENV) \
-  $(BACKTRACE_LIB) $(BOOST_LIBS) $(QT_LIBS) $(QT_DBUS_LIBS) $(QR_LIBS) $(BDB_LIBS) $(MINIUPNPC_LIBS) $(NATPMP_LIBS) $(SQLITE_LIBS) $(LIBSECP256K1) \
+  $(BACKTRACE_LIB) $(QT_LIBS) $(QT_DBUS_LIBS) $(QR_LIBS) $(BDB_LIBS) $(MINIUPNPC_LIBS) $(NATPMP_LIBS) $(SQLITE_LIBS) $(LIBSECP256K1) \
   $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(GMP_LIBS)
 bitcoin_qt_ldflags = $(LDFLAGS_WRAP_EXCEPTIONS) $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
 bitcoin_qt_libtoolflags = $(AM_LIBTOOLFLAGS) --tag CXX

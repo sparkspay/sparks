@@ -9,7 +9,6 @@ feature_llmq_evo.py
 Checks EvoNodes
 
 '''
-from _decimal import Decimal
 from io import BytesIO
 
 from test_framework.p2p import P2PInterface
@@ -17,7 +16,7 @@ from test_framework.messages import CBlock, CBlockHeader, CCbTx, CMerkleBlock, f
     QuorumId, ser_uint256
 from test_framework.test_framework import SparksTestFramework
 from test_framework.util import (
-    assert_equal, assert_greater_than_or_equal, p2p_port
+    assert_equal, assert_greater_than_or_equal,
 )
 
 
@@ -46,7 +45,7 @@ class TestP2PConn(P2PInterface):
 
 class LLMQEvoNodesTest(SparksTestFramework):
     def set_test_params(self):
-        self.set_sparks_test_params(5, 4, fast_dip3_enforcement=True, evo_count=5)
+        self.set_sparks_test_params(5, 4, [["-testactivationheight=mn_rr@400"]] * 5, evo_count=5)
         self.set_sparks_llmq_test_params(4, 4)
 
     def run_test(self):
@@ -57,12 +56,6 @@ class LLMQEvoNodesTest(SparksTestFramework):
         self.test_node = self.nodes[0].add_p2p_connection(TestP2PConn())
         null_hash = format(0, "064x")
 
-        for i in range(len(self.nodes)):
-            if i != 0:
-                self.connect_nodes(i, 0)
-
-        self.activate_dip8()
-
         self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
         self.nodes[0].sporkupdate("SPORK_2_INSTANTSEND_ENABLED", 1)
         self.wait_for_sporks_same()
@@ -71,32 +64,16 @@ class LLMQEvoNodesTest(SparksTestFramework):
         b_0 = self.nodes[0].getbestblockhash()
         self.test_getmnlistdiff(null_hash, b_0, {}, [], expectedUpdated)
 
-        self.log.info("Test that EvoNodes registration is rejected before v19")
-        self.test_evo_is_rejected_before_v19()
-
         self.test_masternode_count(expected_mns_count=4, expected_evo_count=0)
-
-        self.activate_v19(expected_activation_height=900)
-        self.log.info("Activated v19 at height:" + str(self.nodes[0].getblockcount()))
 
         self.nodes[0].sporkupdate("SPORK_2_INSTANTSEND_ENABLED", 0)
         self.wait_for_sporks_same()
-
-        self.move_to_next_cycle()
-        self.log.info("Cycle H height:" + str(self.nodes[0].getblockcount()))
-        self.move_to_next_cycle()
-        self.log.info("Cycle H+C height:" + str(self.nodes[0].getblockcount()))
-        self.move_to_next_cycle()
-        self.log.info("Cycle H+2C height:" + str(self.nodes[0].getblockcount()))
-
-        self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
 
         evo_protxhash_list = list()
         for i in range(self.evo_count):
             evo_info = self.dynamically_add_masternode(evo=True)
             evo_protxhash_list.append(evo_info.proTxHash)
-            self.nodes[0].generate(8)
-            self.sync_blocks(self.nodes)
+            self.generate(self.nodes[0], 8, sync_fun=lambda: self.sync_blocks())
 
             expectedUpdated.append(evo_info.proTxHash)
             b_i = self.nodes[0].getbestblockhash()
@@ -114,37 +91,35 @@ class LLMQEvoNodesTest(SparksTestFramework):
         self.test_evo_protx_are_in_mnlist(evo_protxhash_list)
 
         self.log.info("Test that EvoNodes are paid 4x blocks in a row")
-        self.test_evo_payments(window_analysis=48)
+        self.test_evo_payments(window_analysis=48, mnrr_active=False)
         self.test_masternode_winners()
 
-        self.activate_v20()
         self.activate_mn_rr()
-        self.log.info("Activated MN RewardReallocation at height:" + str(self.nodes[0].getblockcount()))
+        self.log.info("Activated MN RewardReallocation, current height:" + str(self.nodes[0].getblockcount()))
 
         # Generate a few blocks to make EvoNode/MN analysis on a pure MN RewardReallocation window
         self.bump_mocktime(1)
-        self.nodes[0].generate(4)
-        self.sync_blocks()
+        self.generate(self.nodes[0], 4, sync_fun=lambda: self.sync_blocks())
 
         self.log.info("Test that EvoNodes are paid 1 block in a row after MN RewardReallocation activation")
-        self.test_evo_payments(window_analysis=48, v20active=True)
+        self.test_evo_payments(window_analysis=48, mnrr_active=True)
         self.test_masternode_winners(mn_rr_active=True)
 
         self.log.info(self.nodes[0].masternodelist())
 
         return
 
-    def test_evo_payments(self, window_analysis, v20active=False):
+    def test_evo_payments(self, window_analysis, mnrr_active):
         current_evo = None
         consecutive_payments = 0
-        n_payments = 0 if v20active else 4
+        n_payments = 0 if mnrr_active else 4
         for i in range(0, window_analysis):
             payee = self.get_mn_payee_for_block(self.nodes[0].getbestblockhash())
             if payee is not None and payee.evo:
                 if current_evo is not None and payee.proTxHash == current_evo.proTxHash:
                     # same EvoNode
                     assert consecutive_payments > 0
-                    if not v20active:
+                    if not mnrr_active:
                         consecutive_payments += 1
                     consecutive_payments_rpc = self.nodes[0].protx('info', current_evo.proTxHash)['state']['consecutivePayments']
                     assert_equal(consecutive_payments, consecutive_payments_rpc)
@@ -159,7 +134,7 @@ class LLMQEvoNodesTest(SparksTestFramework):
                     consecutive_payments_rpc = self.nodes[0].protx('info', payee.proTxHash)['state']['consecutivePayments']
                     # if EvoNode is the one we start "for" loop with,
                     # we have no idea how many times it was paid before - rely on rpc results here
-                    new_payment_value = 0 if v20active else 1
+                    new_payment_value = 0 if mnrr_active else 1
                     consecutive_payments = consecutive_payments_rpc if i == 0 and current_evo is None else new_payment_value
                     current_evo = payee
                     assert_equal(consecutive_payments, consecutive_payments_rpc)
@@ -174,7 +149,7 @@ class LLMQEvoNodesTest(SparksTestFramework):
                 current_evo = None
                 consecutive_payments = 0
 
-            self.nodes[0].generate(1)
+            self.generate(self.nodes[0], 1, sync_fun=self.no_op)
             if i % 8 == 0:
                 self.sync_blocks()
 
@@ -210,38 +185,6 @@ class LLMQEvoNodesTest(SparksTestFramework):
                     found = True
                     assert_equal(mn_list.get(mn)['type'], "Evo")
             assert_equal(found, True)
-
-    def test_evo_is_rejected_before_v19(self):
-        bls = self.nodes[0].bls('generate')
-        collateral_address = self.nodes[0].getnewaddress()
-        funds_address = self.nodes[0].getnewaddress()
-        owner_address = self.nodes[0].getnewaddress()
-        voting_address = self.nodes[0].getnewaddress()
-        reward_address = self.nodes[0].getnewaddress()
-
-        collateral_amount = 4000
-        outputs = {collateral_address: collateral_amount, funds_address: 1}
-        collateral_txid = self.nodes[0].sendmany("", outputs)
-        self.nodes[0].generate(8)
-        self.sync_all(self.nodes)
-
-        rawtx = self.nodes[0].getrawtransaction(collateral_txid, 1)
-        collateral_vout = 0
-        for txout in rawtx['vout']:
-            if txout['value'] == Decimal(collateral_amount):
-                collateral_vout = txout['n']
-                break
-        assert collateral_vout is not None
-
-        ipAndPort = '127.0.0.1:%d' % p2p_port(len(self.nodes))
-        operatorReward = len(self.nodes)
-
-        try:
-            self.nodes[0].protx('register_evo', collateral_txid, collateral_vout, ipAndPort, owner_address, bls['public'], voting_address, operatorReward, reward_address, funds_address, True)
-            # this should never succeed
-            assert False
-        except:
-            self.log.info("protx_evo rejected")
 
     def test_masternode_count(self, expected_mns_count, expected_evo_count):
         mn_count = self.nodes[0].masternode('count')

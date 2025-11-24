@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2023 The Dash Core developers
+// Copyright (c) 2021-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,6 +7,7 @@
 
 #include <governance/object.h>
 #include <primitives/transaction.h>
+#include <qt/bitcoinunits.h>
 #include <sync.h>
 #include <util/system.h>
 
@@ -48,6 +49,7 @@ private:
     QTimer* timer;
 
 private Q_SLOTS:
+    void updateDisplayUnit();
     void updateProposalList();
     void updateProposalCount() const;
     void showProposalContextMenu(const QPoint& pos);
@@ -65,7 +67,7 @@ private:
     QString m_title;
     QDateTime m_startDate;
     QDateTime m_endDate;
-    float m_paymentAmount;
+    double m_paymentAmount;
     QString m_url;
 
 public:
@@ -74,7 +76,7 @@ public:
     QString hash() const;
     QDateTime startDate() const;
     QDateTime endDate() const;
-    float paymentAmount() const;
+    double paymentAmount() const;
     QString url() const;
     bool isActive() const;
     QString votingStatus(int nAbsVoteReq) const;
@@ -92,6 +94,7 @@ class ProposalModel : public QAbstractTableModel
 private:
     QList<const Proposal*> m_data;
     int nAbsVoteReq = 0;
+    int m_display_unit{BitcoinUnits::SPK};
 
 public:
     explicit ProposalModel(QObject* parent = nullptr) :
@@ -119,6 +122,8 @@ public:
     void setVotingParams(int nAbsVoteReq);
 
     const Proposal* getProposalAt(const QModelIndex& index) const;
+
+    void setDisplayUnit(int display_unit);
 };
 
 #endif // BITCOIN_QT_GOVERNANCELIST_H

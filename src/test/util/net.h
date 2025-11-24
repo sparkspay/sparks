@@ -5,16 +5,31 @@
 #ifndef BITCOIN_TEST_UTIL_NET_H
 #define BITCOIN_TEST_UTIL_NET_H
 
-#include <compat.h>
-#include <netaddress.h>
+#include <compat/compat.h>
 #include <net.h>
+#include <net_permissions.h>
+#include <net_processing.h>
+#include <netaddress.h>
+#include <node/connection_types.h>
+#include <node/eviction.h>
+#include <sync.h>
 #include <util/sock.h>
 
+#include <algorithm>
 #include <array>
 #include <cassert>
+#include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <vector>
+
+class FastRandomContext;
+
+template <typename C>
+class Span;
 
 struct ConnmanTestMsg : public CConnman {
     using CConnman::CConnman;
@@ -24,11 +39,20 @@ struct ConnmanTestMsg : public CConnman {
         m_peer_connect_timeout = timeout;
     }
 
+    std::vector<CNode*> TestNodes()
+    {
+        LOCK(m_nodes_mutex);
+        return m_nodes;
+    }
+
     void AddTestNode(CNode& node)
     {
         LOCK(m_nodes_mutex);
         m_nodes.push_back(&node);
+
+        if (node.IsManualOrFullOutboundConn()) ++m_network_conn_counts[node.addr.GetNetwork()];
     }
+
     void ClearTestNodes()
     {
         LOCK(m_nodes_mutex);
@@ -41,15 +65,22 @@ struct ConnmanTestMsg : public CConnman {
     void Handshake(CNode& node,
                    bool successfully_connected,
                    ServiceFlags remote_services,
-                   NetPermissionFlags permission_flags,
+                   ServiceFlags local_services,
                    int32_t version,
-                   bool relay_txs);
+                   bool relay_txs)
+        EXCLUSIVE_LOCKS_REQUIRED(NetEventsInterface::g_msgproc_mutex);
 
-    void ProcessMessagesOnce(CNode& node) { m_msgproc->ProcessMessages(&node, flagInterruptMsgProc); }
+    void ProcessMessagesOnce(CNode& node) EXCLUSIVE_LOCKS_REQUIRED(NetEventsInterface::g_msgproc_mutex) { m_msgproc->ProcessMessages(&node, flagInterruptMsgProc); }
 
     void NodeReceiveMsgBytes(CNode& node, Span<const uint8_t> msg_bytes, bool& complete) const;
 
-    bool ReceiveMsgFrom(CNode& node, CSerializedNetMsg& ser_msg) const;
+    bool ReceiveMsgFrom(CNode& node, CSerializedNetMsg&& ser_msg) const;
+    void FlushSendBuffer(CNode& node) const;
+
+    bool AlreadyConnectedPublic(const CAddress& addr) { return AlreadyConnectedToAddress(addr); };
+
+    CNode* ConnectNodePublic(PeerManager& peerman, const char* pszDest, ConnectionType conn_type)
+        EXCLUSIVE_LOCKS_REQUIRED(!m_unused_i2p_sessions_mutex);
 };
 
 constexpr ServiceFlags ALL_SERVICE_FLAGS[]{
@@ -59,6 +90,7 @@ constexpr ServiceFlags ALL_SERVICE_FLAGS[]{
     NODE_COMPACT_FILTERS,
     NODE_NETWORK_LIMITED,
     NODE_HEADERS_COMPRESSED,
+    NODE_P2P_V2,
 };
 
 constexpr NetPermissionFlags ALL_NET_PERMISSION_FLAGS[]{
@@ -168,6 +200,10 @@ public:
         std::memset(name, 0x0, *name_len);
         return 0;
     }
+
+    bool SetNonBlocking() const override { return true; }
+
+    bool IsSelectable() const override { return true; }
 
     bool Wait(std::chrono::milliseconds timeout,
               Event requested,

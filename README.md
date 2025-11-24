@@ -10,7 +10,7 @@ https://www.sparkspay.io
 For an immediately usable, binary version of the Sparks Core software, see
 https://www.sparkspay.io/downloads/.
 
-Further information about Sparks Core is available in the [doc folder](/doc).
+Further information about Sparks Core is available in [./doc/](/doc).
 
 What is Sparks?
 -------------
@@ -42,6 +42,19 @@ completely stable.
 
 The contribution workflow is described in [CONTRIBUTING.md](CONTRIBUTING.md)
 and useful hints for developers can be found in [doc/developer-notes.md](doc/developer-notes.md).
+
+Build / Compile from Source
+---------------------------
+
+The `./configure`, `make`, and `cmake` steps, as well as build dependencies, are in [./doc/](/doc) as well:
+
+- **Linux**: [./doc/build-unix.md](/doc/build-unix.md) \
+  Ubuntu, Debian, Fedora, Arch, and others
+- **macOS**: [./doc/build-osx.md](/doc/build-osx.md)
+- **Windows**: [./doc/build-windows.md](/doc/build-windows.md)
+- **OpenBSD**: [./doc/build-openbsd.md](/doc/build-openbsd.md)
+- **FreeBSD**: [./doc/build-freebsd.md](/doc/build-freebsd.md)
+- **NetBSD**: [./doc/build-netbsd.md](/doc/build-netbsd.md)
 
 Testing
 -------
@@ -76,7 +89,7 @@ Translations
 ------------
 
 Changes to translations as well as new translations can be submitted to
-[Sparks Core's Transifex page](https://www.transifex.com/projects/p/sparks/).
+[Sparks Core's Transifex page](https://explore.transifex.com/sparks/sparks/).
 
 Translations are periodically pulled from Transifex and merged into the git repository. See the
 [translation process](doc/translation_process.md) for details on how this works.

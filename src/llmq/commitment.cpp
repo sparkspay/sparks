@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 The Dash Core developers
+// Copyright (c) 2018-2025 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -27,7 +27,8 @@ CFinalCommitment::CFinalCommitment(const Consensus::LLMQParams& params, const ui
 {
 }
 
-bool CFinalCommitment::Verify(CDeterministicMNManager& dmnman, gsl::not_null<const CBlockIndex*> pQuorumBaseBlockIndex, bool checkSigs) const
+bool CFinalCommitment::Verify(CDeterministicMNManager& dmnman, CQuorumSnapshotManager& qsnapman,
+                              gsl::not_null<const CBlockIndex*> pQuorumBaseBlockIndex, bool checkSigs) const
 {
     const auto& llmq_params_opt = Params().GetLLMQ(llmqType);
     if (!llmq_params_opt.has_value()) {
@@ -81,8 +82,8 @@ bool CFinalCommitment::Verify(CDeterministicMNManager& dmnman, gsl::not_null<con
         LogPrint(BCLog::LLMQ, "CFinalCommitment -- q[%s] invalid vvecSig\n", quorumHash.ToString());
         return false;
     }
-    auto members = utils::GetAllQuorumMembers(llmqType, dmnman, pQuorumBaseBlockIndex);
-    if (LogAcceptCategory(BCLog::LLMQ)) {
+    auto members = utils::GetAllQuorumMembers(llmqType, dmnman, qsnapman, pQuorumBaseBlockIndex);
+    if (LogAcceptDebug(BCLog::LLMQ)) {
         std::stringstream ss;
         std::stringstream ss2;
         for (const auto i: irange::range(llmq_params.size)) {
@@ -106,7 +107,7 @@ bool CFinalCommitment::Verify(CDeterministicMNManager& dmnman, gsl::not_null<con
     // sigs are only checked when the block is processed
     if (checkSigs) {
         uint256 commitmentHash = BuildCommitmentHash(llmq_params.type, quorumHash, validMembers, quorumPublicKey, quorumVvecHash);
-        if (LogAcceptCategory(BCLog::LLMQ)) {
+        if (LogAcceptDebug(BCLog::LLMQ)) {
             std::stringstream ss3;
             for (const auto &mn: members) {
                 ss3 << mn->proTxHash.ToString().substr(0, 4) << " | ";
@@ -166,7 +167,9 @@ bool CFinalCommitment::VerifySizes(const Consensus::LLMQParams& params) const
     return true;
 }
 
-bool CheckLLMQCommitment(CDeterministicMNManager& dmnman, const ChainstateManager& chainman, const CTransaction& tx, gsl::not_null<const CBlockIndex*> pindexPrev, TxValidationState& state)
+bool CheckLLMQCommitment(CDeterministicMNManager& dmnman, CQuorumSnapshotManager& qsnapman,
+                         const ChainstateManager& chainman, const CTransaction& tx,
+                         gsl::not_null<const CBlockIndex*> pindexPrev, TxValidationState& state)
 {
     const auto opt_qcTx = GetTxPayload<CFinalCommitmentTxPayload>(tx);
     if (!opt_qcTx) {
@@ -181,7 +184,7 @@ bool CheckLLMQCommitment(CDeterministicMNManager& dmnman, const ChainstateManage
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-qc-commitment-type");
     }
 
-    if (LogAcceptCategory(BCLog::LLMQ)) {
+    if (LogAcceptDebug(BCLog::LLMQ)) {
         std::stringstream ss;
         for (const auto i: irange::range(llmq_params_opt->size)) {
             ss << "v[" << i << "]=" << qcTx.commitment.validMembers[i];
@@ -219,7 +222,7 @@ bool CheckLLMQCommitment(CDeterministicMNManager& dmnman, const ChainstateManage
         return true;
     }
 
-    if (!qcTx.commitment.Verify(dmnman, pQuorumBaseBlockIndex, false)) {
+    if (!qcTx.commitment.Verify(dmnman, qsnapman, pQuorumBaseBlockIndex, false)) {
         LogPrint(BCLog::LLMQ, "CFinalCommitment -- h[%d] invalid qcTx.commitment[%s] Verify failed\n", pindexPrev->nHeight, qcTx.commitment.quorumHash.ToString());
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-qc-invalid");
     }

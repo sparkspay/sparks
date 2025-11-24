@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2025 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -16,14 +16,14 @@
 #endif
 
 #include <attributes.h>
-#include <compat.h>
 #include <compat/assumptions.h>
+#include <compat/compat.h>
+#include <consensus/amount.h>
 #include <fs.h>
 #include <logging.h>
 #include <sync.h>
 #include <util/settings.h>
 #include <util/time.h>
-#include <amount.h>
 
 #include <exception>
 #include <map>
@@ -75,7 +75,13 @@ void DirectoryCommit(const fs::path &dirname);
 bool TruncateFile(FILE *file, unsigned int length);
 int RaiseFileDescriptorLimit(int nMinFD);
 void AllocateFileRange(FILE *file, unsigned int offset, unsigned int length);
+
+/**
+ * Rename src to dest.
+ * @return true if the rename was successful.
+ */
 [[nodiscard]] bool RenameOver(fs::path src, fs::path dest);
+
 bool LockDirectory(const fs::path& directory, const std::string lockfile_name, bool probe_only=false);
 void UnlockDirectory(const fs::path& directory, const std::string& lockfile_name);
 bool DirIsWritable(const fs::path& directory);
@@ -92,11 +98,11 @@ std::streampos GetFileSize(const char* path, std::streamsize max = std::numeric_
 /** Release all directory locks. This is used for unit testing only, at runtime
  * the global destructor will take care of the locks.
  */
+/** Sparks: We also use this to release locks earlier when restarting the client */
 void ReleaseDirectoryLocks();
 
 bool TryCreateDirectories(const fs::path& p);
 fs::path GetDefaultDataDir();
-const fs::path &GetDataDir(bool fNetSpecific = true);
 // Return true if -datadir option points to a valid directory or is not specified.
 bool CheckDataDirOption();
 fs::path GetConfigFile(const std::string& confPath);
@@ -125,7 +131,7 @@ UniValue RunCommandParseJSON(const std::string& str_command, const std::string& 
  * the datadir if they are not absolute.
  *
  * @param path The path to be conditionally prefixed with datadir.
- * @param net_specific Forwarded to GetDataDir().
+ * @param net_specific Use network specific datadir variant
  * @return The normalized path.
  */
 fs::path AbsPathForConfigVal(const fs::path& path, bool net_specific = true);
@@ -173,12 +179,19 @@ struct SectionInfo
 class ArgsManager
 {
 public:
+    /**
+     * Flags controlling how config and command line arguments are validated and
+     * interpreted.
+     */
     enum Flags : uint32_t {
-        // Boolean options can accept negation syntax -noOPTION or -noOPTION=1
-        ALLOW_BOOL = 0x01,
-        ALLOW_INT = 0x02,
-        ALLOW_STRING = 0x04,
-        ALLOW_ANY = ALLOW_BOOL | ALLOW_INT | ALLOW_STRING,
+        ALLOW_ANY = 0x01,         //!< disable validation
+        ALLOW_BOOL = 0x02,        //!< unimplemented, draft implementation in #16545
+        ALLOW_INT = 0x04,         //!< unimplemented, draft implementation in #16545
+        ALLOW_STRING = 0x08,      //!< unimplemented, draft implementation in #16545
+        ALLOW_LIST = 0x10,        //!< unimplemented, draft implementation in #16545
+        DISALLOW_NEGATION = 0x20, //!< disallow -nofoo syntax
+        DISALLOW_ELISION = 0x40,  //!< disallow -foo syntax that doesn't assign any value
+
         DEBUG_ONLY = 0x100,
         /* Some options would cause cross-contamination if values for
          * mainnet were used while running on regtest/testnet (or vice-versa).
@@ -207,7 +220,7 @@ protected:
     std::map<OptionsCategory, std::map<std::string, Arg>> m_available_args GUARDED_BY(cs_args);
     bool m_accept_any_command GUARDED_BY(cs_args){true};
     std::list<SectionInfo> m_config_sections GUARDED_BY(cs_args);
-    fs::path m_cached_blocks_path GUARDED_BY(cs_args);
+    mutable fs::path m_cached_blocks_path GUARDED_BY(cs_args);
     mutable fs::path m_cached_datadir_path GUARDED_BY(cs_args);
     mutable fs::path m_cached_network_datadir_path GUARDED_BY(cs_args);
 
@@ -220,6 +233,7 @@ protected:
      */
     bool UseDefaultSection(const std::string& arg) const EXCLUSIVE_LOCKS_REQUIRED(cs_args);
 
+ public:
     /**
      * Get setting value.
      *
@@ -234,7 +248,6 @@ protected:
      */
     std::vector<util::SettingsValue> GetSettingsList(const std::string& arg) const;
 
-public:
     ArgsManager();
     ~ArgsManager();
 
@@ -283,16 +296,23 @@ public:
      *
      * @return Blocks path which is network specific
      */
-    const fs::path& GetBlocksDirPath();
+    const fs::path GetBlocksDirPath() const;
 
     /**
      * Get data directory path
      *
-     * @param net_specific Append network identifier to the returned path
      * @return Absolute path on success, otherwise an empty path when a non-directory path would be returned
      * @post Returned directory path is created unless it is empty
      */
-    const fs::path& GetDataDirPath(bool net_specific = true) const;
+    const fs::path GetDataDirBase() const { return GetDataDir(false); }
+
+    /**
+     * Get data directory path with appended network identifier
+     *
+     * @return Absolute path on success, otherwise an empty path when a non-directory path would be returned
+     * @post Returned directory path is created unless it is empty
+     */
+    const fs::path GetDataDirNet() const { return GetDataDir(true); }
 
     fs::path GetBackupsDirPath();
 
@@ -334,6 +354,18 @@ public:
      * @return command-line argument or default value
      */
     std::string GetArg(const std::string& strArg, const std::string& strDefault) const;
+
+    /**
+     * Return path argument or default value
+     *
+     * @param arg Argument to get a path from (e.g., "-datadir", "-blocksdir" or "-walletdir")
+     * @param default_value Optional default value to return instead of the empty path.
+     * @return normalized path if argument is set, with redundant "." and ".."
+     * path components and trailing separators removed (see patharg unit test
+     * for examples or implementation for details). If argument is empty or not
+     * set, default_value is returned unchanged.
+     */
+    fs::path GetPathArg(std::string arg, const fs::path& default_value = {}) const;
 
     /**
      * Return integer argument or default value
@@ -464,6 +496,15 @@ public:
     void LogArgs() const;
 
 private:
+    /**
+     * Get data directory path
+     *
+     * @param net_specific Append network identifier to the returned path
+     * @return Absolute path on success, otherwise an empty path when a non-directory path would be returned
+     * @post Returned directory path is created unless it is empty
+     */
+    const fs::path GetDataDir(bool net_specific) const;
+
     // Helper function for LogArgs().
     void logArgsPrefix(
         const std::string& prefix,

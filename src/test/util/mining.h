@@ -7,11 +7,17 @@
 
 #include <memory>
 #include <string>
+#include <vector>
+#include <spork.h>
 
 class CBlock;
+class CChainParams;
 class CScript;
 class CTxIn;
 struct NodeContext;
+
+/** Create a blockchain, starting from genesis */
+std::vector<std::shared_ptr<CBlock>> CreateBlockChain(size_t total_height, const CChainParams& params, CSporkManager& spork_manager);
 
 /** Returns the generated coin */
 CTxIn MineBlock(const NodeContext&, const CScript& coinbase_scriptPubKey);

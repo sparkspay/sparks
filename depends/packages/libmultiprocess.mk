@@ -10,8 +10,8 @@ endif
 
 define $(package)_set_vars :=
 ifneq ($(host),$(build))
-$(package)_cmake_opts := -DCAPNP_EXECUTABLE="$$(native_capnp_prefixbin)/capnp"
-$(package)_cmake_opts += -DCAPNPC_CXX_EXECUTABLE="$$(native_capnp_prefixbin)/capnpc-c++"
+$(package)_config_opts := -DCAPNP_EXECUTABLE="$$(native_capnp_prefixbin)/capnp"
+$(package)_config_opts += -DCAPNPC_CXX_EXECUTABLE="$$(native_capnp_prefixbin)/capnpc-c++"
 endif
 endef
 
@@ -20,9 +20,9 @@ define $(package)_config_cmds
 endef
 
 define $(package)_build_cmds
-  $(MAKE)
+  $(MAKE) multiprocess
 endef
 
 define $(package)_stage_cmds
-  $(MAKE) DESTDIR=$($(package)_staging_dir) install
+  $(MAKE) DESTDIR=$($(package)_staging_dir) install-lib
 endef

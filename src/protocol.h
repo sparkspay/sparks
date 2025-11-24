@@ -3,10 +3,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef __cplusplus
-#error This header can only be compiled as C++.
-#endif
-
 #ifndef BITCOIN_PROTOCOL_H
 #define BITCOIN_PROTOCOL_H
 
@@ -15,10 +11,11 @@
 #include <serialize.h>
 #include <streams.h>
 #include <uint256.h>
-#include <version.h>
+#include <util/expected.h>
+#include <util/time.h>
 
+#include <cstdint>
 #include <limits>
-#include <stdint.h>
 #include <string>
 
 /** Message header.
@@ -251,6 +248,12 @@ extern const char* GETCFCHECKPT;
  * evenly spaced filter headers for blocks on the requested chain.
  */
 extern const char* CFCHECKPT;
+/**
+ * Contains a 4-byte version number and an 8-byte salt.
+ * The salt is used to compute short txids needed for efficient
+ * txreconciliation, as described by BIP 330.
+ */
+extern const char* SENDTXRCNCL;
 
 // Sparks message types
 // NOTE: do NOT declare non-implmented here, we don't want them to be exposed to the outside
@@ -325,6 +328,9 @@ enum ServiceFlags : uint64_t {
     // description will be provided
     NODE_HEADERS_COMPRESSED = (1 << 11),
 
+    // NODE_P2P_V2 means the node supports BIP324 transport
+    NODE_P2P_V2 = (1 << 12),
+
     // Bits 24-31 are reserved for temporary experiments. Just pick a bit that
     // isn't getting used, or one not being used much, and notify the
     // bitcoin-development mailing list. Remember that service bits are just
@@ -392,7 +398,7 @@ static inline bool MayHaveUsefulAddressDB(ServiceFlags services)
 /** A CService with information about it as peer */
 class CAddress : public CService
 {
-    static constexpr uint32_t TIME_INIT{100000000};
+    static constexpr std::chrono::seconds TIME_INIT{100000000};
 
     /** Historically, CAddress disk serialization stored the CLIENT_VERSION, optionally OR'ed with
      *  the ADDRV2_FORMAT flag to indicate V2 serialization. The first field has since been
@@ -422,7 +428,7 @@ class CAddress : public CService
 public:
     CAddress() : CService{} {};
     explicit CAddress(CService ipIn, ServiceFlags nServicesIn) : CService{ipIn}, nServices{nServicesIn} {};
-    CAddress(CService ipIn, ServiceFlags nServicesIn, uint32_t nTimeIn) : CService{ipIn}, nTime{nTimeIn}, nServices{nServicesIn} {};
+    CAddress(CService ipIn, ServiceFlags nServicesIn, NodeSeconds time) : CService{ipIn}, nTime{time}, nServices{nServicesIn} {};
 
     SERIALIZE_METHODS(CAddress, obj)
     {
@@ -455,8 +461,7 @@ public:
             use_v2 = s.GetVersion() & ADDRV2_FORMAT;
         }
 
-        SER_READ(obj, obj.nTime = TIME_INIT);
-        READWRITE(obj.nTime);
+        READWRITE(Using<LossyChronoFormatter<uint32_t>>(obj.nTime));
         // nServices is serialized as CompactSize in V2; as uint64_t in V1.
         if (use_v2) {
             uint64_t services_tmp;
@@ -471,8 +476,8 @@ public:
         SerReadWriteMany(os, ser_action, ReadWriteAsHelper<CService>(obj));
     }
 
-    //! Always included in serialization, except in the network format on INIT_PROTO_VERSION.
-    uint32_t nTime{TIME_INIT};
+    //! Always included in serialization. The behavior is unspecified if the value is not representable as uint32_t.
+    NodeSeconds nTime{TIME_INIT};
     //! Serialized as uint64_t in V1, and as CompactSize in V2.
     ServiceFlags nServices{NODE_NONE};
 
@@ -518,6 +523,7 @@ enum GetDataMsg : uint32_t {
     MSG_CLSIG = 29,
     /* MSG_ISLOCK = 30, */                            // Non-deterministic InstantSend and not used anymore
     MSG_ISDLOCK = 31,
+    MSG_DSQ = 32,
 };
 
 /** inv message data */
@@ -560,5 +566,57 @@ public:
     uint256 hash;
 };
 
+struct MisbehavingError
+{
+    int score;
+    std::string message;
+
+    MisbehavingError(int s) : score{s} {}
+
+     // Constructor does a perfect forwarding reference
+    template <typename T>
+    MisbehavingError(int s, T&& msg) :
+        score{s},
+        message{std::forward<T>(msg)}
+    {}
+};
+
+// TODO: replace usages of PeerMsgRet to MessageProcessingResult which is cover this one
+using PeerMsgRet = tl::expected<void, MisbehavingError>;
+
+/**
+ * This struct is a helper to return values from handlers that are processing
+ * network messages but implemented outside of net_processing.cpp,
+ * for example llmq's messages.
+ *
+ * These handlers do not supposed to know anything about PeerManager to avoid
+ * circular dependencies.
+ *
+ * See `PeerManagerImpl::PostProcessMessage` to see how each type of return code
+ * is processed.
+ */
+struct MessageProcessingResult
+{
+    //! @m_error triggers Misbehaving error with score and optional message if not nullopt
+    std::optional<MisbehavingError> m_error;
+
+    //! @m_inventory will relay this inventory to connected peers if not nullopt
+    std::optional<CInv> m_inventory;
+
+    //! @m_transactions will relay transactions to peers which is ready to accept it (some peers does not accept transactions)
+    std::vector<uint256> m_transactions;
+
+    //! @m_to_erase triggers EraseObjectRequest from PeerManager for this inventory if not nullopt
+    std::optional<CInv> m_to_erase;
+
+    MessageProcessingResult() = default;
+    MessageProcessingResult(MisbehavingError error) :
+        m_error(error)
+    {}
+    MessageProcessingResult(CInv inv) :
+        m_inventory(inv)
+    {
+    }
+};
 
 #endif // BITCOIN_PROTOCOL_H

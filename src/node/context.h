@@ -29,6 +29,7 @@ class CScheduler;
 class CSporkManager;
 class CTxMemPool;
 class CMNHFManager;
+class NetGroupManager;
 class PeerManager;
 struct CJContext;
 struct LLMQContext;
@@ -36,6 +37,7 @@ struct LLMQContext;
 namespace interfaces {
 class Chain;
 class ChainClient;
+class Init;
 class WalletLoader;
 namespace CoinJoin {
 class Loader;
@@ -53,9 +55,12 @@ class Loader;
 //! any member functions. It should just be a collection of references that can
 //! be used without pulling in unwanted dependencies or functionality.
 struct NodeContext {
+    //! Init interface for initializing current process and connecting to other processes.
+    interfaces::Init* init{nullptr};
     std::unique_ptr<AddrMan> addrman;
     std::unique_ptr<CConnman> connman;
     std::unique_ptr<CTxMemPool> mempool;
+    std::unique_ptr<const NetGroupManager> netgroupman;
     std::unique_ptr<CBlockPolicyEstimator> fee_estimator;
     std::unique_ptr<PeerManager> peerman;
     std::unique_ptr<ChainstateManager> chainman;

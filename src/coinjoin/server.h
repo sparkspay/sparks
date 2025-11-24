@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2025 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,15 +7,16 @@
 
 #include <coinjoin/coinjoin.h>
 
-#include <net_types.h>
+#include <protocol.h>
 #include <spork.h>
 
 class CActiveMasternodeManager;
-class CChainState;
 class CCoinJoinServer;
+class CConnman;
 class CDataStream;
 class CDeterministicMNManager;
 class CDSTXManager;
+class ChainstateManager;
 class CMasternodeMetaMan;
 class CNode;
 class CTxMemPool;
@@ -28,7 +29,7 @@ class UniValue;
 class CCoinJoinServer : public CCoinJoinBaseSession, public CCoinJoinBaseManager
 {
 private:
-    CChainState& m_chainstate;
+    ChainstateManager& m_chainman;
     CConnman& connman;
     CDeterministicMNManager& m_dmnman;
     CDSTXManager& m_dstxman;
@@ -37,7 +38,8 @@ private:
     CSporkManager& m_spork_manager;
     const CActiveMasternodeManager* const m_mn_activeman;
     const CMasternodeSync& m_mn_sync;
-    const std::unique_ptr<PeerManager>& m_peerman;
+    const llmq::CInstantSendManager& m_isman;
+    std::unique_ptr<PeerManager>& m_peerman;
 
     // Mixing uses collateral transactions to trust parties entering the pool
     // to behave honestly. If they don't it takes their money.
@@ -92,10 +94,11 @@ private:
     void SetNull() override EXCLUSIVE_LOCKS_REQUIRED(cs_coinjoin);
 
 public:
-    explicit CCoinJoinServer(CChainState& chainstate, CConnman& _connman, CDeterministicMNManager& dmnman, CDSTXManager& dstxman,
-                             CMasternodeMetaMan& mn_metaman, CTxMemPool& mempool, const CActiveMasternodeManager* const mn_activeman,
-                             CSporkManager& spork_manager, const CMasternodeSync& mn_sync, const std::unique_ptr<PeerManager>& peerman) :
-        m_chainstate(chainstate),
+    explicit CCoinJoinServer(ChainstateManager& chainman, CConnman& _connman, CDeterministicMNManager& dmnman,
+                             CDSTXManager& dstxman, CMasternodeMetaMan& mn_metaman, CTxMemPool& mempool,
+                             const CActiveMasternodeManager* const mn_activeman, const CMasternodeSync& mn_sync,
+                             CSporkManager& spork_manager, const llmq::CInstantSendManager& isman, std::unique_ptr<PeerManager>& peerman) :
+        m_chainman(chainman),
         connman(_connman),
         m_dmnman(dmnman),
         m_dstxman(dstxman),
@@ -104,6 +107,7 @@ public:
         m_mn_activeman(mn_activeman),
         m_spork_manager(spork_manager),
         m_mn_sync(mn_sync),
+        m_isman{isman},
         m_peerman(peerman),
         vecSessionCollaterals(),
         fUnitTest(false)

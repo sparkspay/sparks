@@ -96,7 +96,7 @@ There is an included test suite that is useful for testing code changes when dev
 To run the test suite (recommended), you will need to have Python 3 installed:
 
 ```bash
-pkg install python3
+pkg install python3 databases/py-sqlite3
 ```
 ---
 
@@ -131,6 +131,6 @@ This explicitly enables the GUI and disables legacy wallet support. If `qt5` is 
 **Important**: Use `gmake` (the non-GNU `make` will exit with an error).
 
 ```bash
-gmake # use -jX here for parallelism
+gmake # use "-j N" for N parallel jobs
 gmake check # Run tests if Python 3 is available
 ```

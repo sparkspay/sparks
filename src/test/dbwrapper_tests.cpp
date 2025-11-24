@@ -6,6 +6,7 @@
 #include <random.h>
 #include <test/util/setup_common.h>
 #include <uint256.h>
+#include <util/string.h>
 
 #include <memory>
 
@@ -27,7 +28,7 @@ BOOST_AUTO_TEST_CASE(dbwrapper)
 {
     // Perform tests both obfuscated and non-obfuscated.
     for (const bool obfuscate : {false, true}) {
-        fs::path ph = m_args.GetDataDirPath() / (obfuscate ? "dbwrapper_obfuscate_true" : "dbwrapper_obfuscate_false");
+        fs::path ph = m_args.GetDataDirBase() / (obfuscate ? "dbwrapper_obfuscate_true" : "dbwrapper_obfuscate_false");
         CDBWrapper dbw(ph, (1 << 20), true, false, obfuscate);
         uint8_t key{'k'};
         uint256 in = InsecureRand256();
@@ -46,7 +47,7 @@ BOOST_AUTO_TEST_CASE(dbwrapper_basic_data)
 {
     // Perform tests both obfuscated and non-obfuscated.
     for (bool obfuscate : {false, true}) {
-        fs::path ph = m_args.GetDataDirPath() / (obfuscate ? "dbwrapper_1_obfuscate_true" : "dbwrapper_1_obfuscate_false");
+        fs::path ph = m_args.GetDataDirBase() / (obfuscate ? "dbwrapper_1_obfuscate_true" : "dbwrapper_1_obfuscate_false");
         CDBWrapper dbw(ph, (1 << 20), false, true, obfuscate);
 
         uint256 res;
@@ -127,7 +128,7 @@ BOOST_AUTO_TEST_CASE(dbwrapper_batch)
 {
     // Perform tests both obfuscated and non-obfuscated.
     for (const bool obfuscate : {false, true}) {
-        fs::path ph = m_args.GetDataDirPath() / (obfuscate ? "dbwrapper_batch_obfuscate_true" : "dbwrapper_batch_obfuscate_false");
+        fs::path ph = m_args.GetDataDirBase() / (obfuscate ? "dbwrapper_batch_obfuscate_true" : "dbwrapper_batch_obfuscate_false");
         CDBWrapper dbw(ph, (1 << 20), true, false, obfuscate);
 
         uint8_t key{'i'};
@@ -163,7 +164,7 @@ BOOST_AUTO_TEST_CASE(dbwrapper_iterator)
 {
     // Perform tests both obfuscated and non-obfuscated.
     for (const bool obfuscate : {false, true}) {
-        fs::path ph = m_args.GetDataDirPath() / (obfuscate ? "dbwrapper_iterator_obfuscate_true" : "dbwrapper_iterator_obfuscate_false");
+        fs::path ph = m_args.GetDataDirBase() / (obfuscate ? "dbwrapper_iterator_obfuscate_true" : "dbwrapper_iterator_obfuscate_false");
         CDBWrapper dbw(ph, (1 << 20), true, false, obfuscate);
 
         // The two keys are intentionally chosen for ordering
@@ -203,8 +204,8 @@ BOOST_AUTO_TEST_CASE(dbwrapper_iterator)
 BOOST_AUTO_TEST_CASE(existing_data_no_obfuscate)
 {
     // We're going to share this fs::path between two wrappers
-    fs::path ph = m_args.GetDataDirPath() / "existing_data_no_obfuscate";
-    create_directories(ph);
+    fs::path ph = m_args.GetDataDirBase() / "existing_data_no_obfuscate";
+    fs::create_directories(ph);
 
     // Set up a non-obfuscated wrapper to write some initial data.
     std::unique_ptr<CDBWrapper> dbw = std::make_unique<CDBWrapper>(ph, (1 << 10), false, false, false);
@@ -244,8 +245,8 @@ BOOST_AUTO_TEST_CASE(existing_data_no_obfuscate)
 BOOST_AUTO_TEST_CASE(existing_data_reindex)
 {
     // We're going to share this fs::path between two wrappers
-    fs::path ph = m_args.GetDataDirPath() / "existing_data_reindex";
-    create_directories(ph);
+    fs::path ph = m_args.GetDataDirBase() / "existing_data_reindex";
+    fs::create_directories(ph);
 
     // Set up a non-obfuscated wrapper to write some initial data.
     std::unique_ptr<CDBWrapper> dbw = std::make_unique<CDBWrapper>(ph, (1 << 10), false, false, false);
@@ -279,7 +280,7 @@ BOOST_AUTO_TEST_CASE(existing_data_reindex)
 
 BOOST_AUTO_TEST_CASE(iterator_ordering)
 {
-    fs::path ph = m_args.GetDataDirPath() / "iterator_ordering";
+    fs::path ph = m_args.GetDataDirBase() / "iterator_ordering";
     CDBWrapper dbw(ph, (1 << 20), true, false, false);
     for (int x=0x00; x<256; ++x) {
         uint8_t key = x;
@@ -325,12 +326,6 @@ struct StringContentsSerializer {
     StringContentsSerializer() {}
     explicit StringContentsSerializer(const std::string& inp) : str(inp) {}
 
-    StringContentsSerializer& operator+=(const std::string& s) {
-        str += s;
-        return *this;
-    }
-    StringContentsSerializer& operator+=(const StringContentsSerializer& s) { return *this += s.str; }
-
     template<typename Stream>
     void Serialize(Stream& s) const
     {
@@ -344,44 +339,34 @@ struct StringContentsSerializer {
     {
         str.clear();
         uint8_t c{0};
-        while (true) {
-            try {
-                s >> c;
-                str.push_back(c);
-            } catch (const std::ios_base::failure&) {
-                break;
-            }
+        while (!s.eof()) {
+            s >> c;
+            str.push_back(c);
         }
     }
 };
 
 BOOST_AUTO_TEST_CASE(iterator_string_ordering)
 {
-    char buf[10];
-
-    fs::path ph = m_args.GetDataDirPath() / "iterator_string_ordering";
+    fs::path ph = m_args.GetDataDirBase() / "iterator_string_ordering";
     CDBWrapper dbw(ph, (1 << 20), true, false, false);
-    for (int x=0x00; x<10; ++x) {
-        for (int y = 0; y < 10; y++) {
-            snprintf(buf, sizeof(buf), "%d", x);
-            StringContentsSerializer key(buf);
-            for (int z = 0; z < y; z++)
+    for (int x = 0; x < 10; ++x) {
+        for (int y = 0; y < 10; ++y) {
+            std::string key{ToString(x)};
+            for (int z = 0; z < y; ++z)
                 key += key;
             uint32_t value = x*x;
-            BOOST_CHECK(dbw.Write(key, value));
+            BOOST_CHECK(dbw.Write(StringContentsSerializer{key}, value));
         }
     }
 
     std::unique_ptr<CDBIterator> it(const_cast<CDBWrapper&>(dbw).NewIterator());
     for (const int seek_start : {0, 5}) {
-        snprintf(buf, sizeof(buf), "%d", seek_start);
-        StringContentsSerializer seek_key(buf);
-        it->Seek(seek_key);
-        for (unsigned int x=seek_start; x<10; ++x) {
-            for (int y = 0; y < 10; y++) {
-                snprintf(buf, sizeof(buf), "%d", x);
-                std::string exp_key(buf);
-                for (int z = 0; z < y; z++)
+        it->Seek(StringContentsSerializer{ToString(seek_start)});
+        for (unsigned int x = seek_start; x < 10; ++x) {
+            for (int y = 0; y < 10; ++y) {
+                std::string exp_key{ToString(x)};
+                for (int z = 0; z < y; ++z)
                     exp_key += exp_key;
                 StringContentsSerializer key;
                 uint32_t value;
@@ -405,7 +390,7 @@ BOOST_AUTO_TEST_CASE(unicodepath)
     // On Windows this test will fail if the directory is created using
     // the ANSI CreateDirectoryA call and the code page isn't UTF8.
     // It will succeed if created with CreateDirectoryW.
-    fs::path ph = m_args.GetDataDirPath() / "test_runner_₿_🏃_20191128_104644";
+    fs::path ph = m_args.GetDataDirBase() / "test_runner_∋_🏃_20191128_104644";
     CDBWrapper dbw(ph, (1 << 20));
 
     fs::path lockPath = ph / "LOCK";

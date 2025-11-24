@@ -143,7 +143,7 @@ public:
     virtual bool hasChainLock(int height, const uint256& hash) = 0;
 
     //! Return list of MN Collateral from outputs
-    virtual std::vector<COutPoint> listMNCollaterials(const std::vector<std::pair<const CTransactionRef&, unsigned int>>& outputs) = 0;
+    virtual std::vector<COutPoint> listMNCollaterials(const std::vector<std::pair<const CTransactionRef&, uint32_t>>& outputs) = 0;
     //! Return whether node has the block and optionally return block metadata
     //! or contents.
     virtual bool findBlock(const uint256& hash, const FoundBlock& block={}) = 0;
@@ -198,7 +198,7 @@ public:
     virtual bool broadcastTransaction(const CTransactionRef& tx,
         const CAmount& max_tx_fee,
         bool relay,
-        std::string& err_string) = 0;
+        bilingual_str& err_string) = 0;
 
     //! Calculate mempool ancestor and descendant counts for the given transaction.
     virtual void getTransactionAncestry(const uint256& txid, size_t& ancestors, size_t& descendants) = 0;
@@ -258,8 +258,8 @@ public:
     {
     public:
         virtual ~Notifications() {}
-        virtual void transactionAddedToMempool(const CTransactionRef& tx, int64_t nAcceptTime) {}
-        virtual void transactionRemovedFromMempool(const CTransactionRef& tx, MemPoolRemovalReason reason) {}
+        virtual void transactionAddedToMempool(const CTransactionRef& tx, int64_t nAcceptTime, uint64_t mempool_sequence) {}
+        virtual void transactionRemovedFromMempool(const CTransactionRef& tx, MemPoolRemovalReason reason, uint64_t mempool_sequence) {}
         virtual void blockConnected(const CBlock& block, int height) {}
         virtual void blockDisconnected(const CBlock& block, int height) {}
         virtual void updatedBlockTip() {}
@@ -285,11 +285,18 @@ public:
     //! Run function after given number of seconds. Cancel any previous calls with same name.
     virtual void rpcRunLater(const std::string& name, std::function<void()> fn, int64_t seconds) = 0;
 
+    //! Get settings value.
+    virtual util::SettingsValue getSetting(const std::string& arg) = 0;
+
+    //! Get list of settings values.
+    virtual std::vector<util::SettingsValue> getSettingsList(const std::string& arg) = 0;
+
     //! Return <datadir>/settings.json setting value.
     virtual util::SettingsValue getRwSetting(const std::string& name) = 0;
 
-    //! Write a setting to <datadir>/settings.json.
-    virtual bool updateRwSetting(const std::string& name, const util::SettingsValue& value) = 0;
+    //! Write a setting to <datadir>/settings.json. Optionally just update the
+    //! setting in memory and do not write the file.
+    virtual bool updateRwSetting(const std::string& name, const util::SettingsValue& value, bool write=true) = 0;
 
     //! Synchronously send transactionAddedToMempool notifications about all
     //! current mempool transactions to the specified handler and return after
@@ -300,6 +307,9 @@ public:
     //! to be prepared to handle this by ignoring notifications about unknown
     //! removed transactions and already added new transactions.
     virtual void requestMempoolTransactions(Notifications& notifications) = 0;
+
+    //! Return true if an assumed-valid chain is in use.
+    virtual bool hasAssumedValidChain() = 0;
 };
 
 //! Interface to let node manage chain clients (wallets, or maybe tools for

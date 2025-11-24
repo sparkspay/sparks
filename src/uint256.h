@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2020 The Bitcoin Core developers
-// Copyright (c) 2014-2023 The Dash Core developers
+// Copyright (c) 2014-2024 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -23,6 +23,7 @@ class base_blob
 {
 protected:
     static constexpr int WIDTH = BITS / 8;
+    static_assert(BITS % 8 == 0, "base_blob currently only supports whole bytes.");
     std::array<uint8_t, WIDTH> m_data;
     static_assert(WIDTH == sizeof(m_data), "Sanity check");
 

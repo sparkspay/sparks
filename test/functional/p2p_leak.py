@@ -4,8 +4,8 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test message sending before handshake completion.
 
-A node should never send anything other than VERSION/VERACK until it's
-received a VERACK.
+Before receiving a VERACK, a node should not send anything but VERSION/VERACK
+and feature negotiation messages ( SENDADDRV2).
 
 This test connects to a node and sends it a few messages, trying to entice it
 into sending us something it shouldn't.
@@ -18,12 +18,19 @@ from test_framework.messages import (
     msg_ping,
     msg_version,
 )
-from test_framework.p2p import P2PInterface
+from test_framework.p2p import (
+    P2PInterface,
+    P2P_SUBVERSION,
+    P2P_SERVICES,
+    P2P_VERSION_RELAY,
+)
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import (
     assert_equal,
     assert_greater_than_or_equal,
 )
+
+PEER_TIMEOUT = 3
 
 
 class LazyPeer(P2PInterface):
@@ -31,10 +38,11 @@ class LazyPeer(P2PInterface):
         super().__init__()
         self.unexpected_msg = False
         self.ever_connected = False
+        self.got_sendaddrv2 = False
 
     def bad_message(self, message):
         self.unexpected_msg = True
-        self.log.info("should not have received message: %s" % message.msgtype)
+        print("should not have received message: %s" % message.msgtype)
 
     def on_open(self):
         self.ever_connected = True
@@ -59,6 +67,7 @@ class LazyPeer(P2PInterface):
     def on_cmpctblock(self, message): self.bad_message(message)
     def on_getblocktxn(self, message): self.bad_message(message)
     def on_blocktxn(self, message): self.bad_message(message)
+    def on_sendaddrv2(self, message): self.got_sendaddrv2 = True
 
 
 # Peer that sends a version but not a verack.
@@ -89,36 +98,50 @@ class P2PVersionStore(P2PInterface):
 class P2PLeakTest(BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
+        self.disable_mocktime = True
+        self.extra_args = [[f"-peertimeout={PEER_TIMEOUT}"]]
 
-    def setup_network(self):
-        self.disable_mocktime()
-        self.setup_nodes()
+
+    def create_old_version(self, nversion):
+        old_version_msg = msg_version()
+        old_version_msg.nVersion = nversion
+        old_version_msg.strSubVer = P2P_SUBVERSION
+        old_version_msg.nServices = P2P_SERVICES
+        old_version_msg.relay = P2P_VERSION_RELAY
+        return old_version_msg
+
 
     def run_test(self):
-        # Another peer that never sends a version, nor any other messages. It shouldn't receive anything from the node.
+        self.log.info('Check that the node doesn\'t send unexpected messages before handshake completion')
+        # Peer that never sends a version, nor any other messages. It shouldn't receive anything from the node.
         no_version_idle_peer = self.nodes[0].add_p2p_connection(LazyPeer(), send_version=False, wait_for_verack=False)
 
         # Peer that sends a version but not a verack.
         no_verack_idle_peer = self.nodes[0].add_p2p_connection(NoVerackIdlePeer(), wait_for_verack=False)
 
-        # Wait until we got the verack in response to the version. Though, don't wait for the node to receive the
-        # verack, since we never sent one
+        # Wait until the peer gets the verack in response to the version. Though, don't wait for the node to receive the
+        # verack, since the peer never sent one
         no_verack_idle_peer.wait_for_verack()
 
         no_version_idle_peer.wait_until(lambda: no_version_idle_peer.ever_connected)
         no_verack_idle_peer.wait_until(lambda: no_verack_idle_peer.version_received)
 
         # Mine a block and make sure that it's not sent to the connected peers
-        self.nodes[0].generate(nblocks=1)
+        self.generate(self.nodes[0], nblocks=1)
 
-        #Give the node enough time to possibly leak out a message
-        time.sleep(5)
+        # Give the node enough time to possibly leak out a message
+        time.sleep(PEER_TIMEOUT + 2)
 
-        self.nodes[0].disconnect_p2ps()
+        # Make sure only expected messages came in
+        assert not no_version_idle_peer.unexpected_msg
+        assert not no_version_idle_peer.got_sendaddrv2
 
-        # Make sure no unexpected messages came in
-        assert no_version_idle_peer.unexpected_msg == False
-        assert no_verack_idle_peer.unexpected_msg == False
+        assert not no_verack_idle_peer.unexpected_msg
+        assert no_verack_idle_peer.got_sendaddrv2
+
+        # Expect peers to be disconnected due to timeout
+        assert not no_version_idle_peer.is_connected
+        assert not no_verack_idle_peer.is_connected
 
         self.log.info('Check that the version message does not leak the local address of the node')
         p2p_version_store = self.nodes[0].add_p2p_connection(P2PVersionStore())
@@ -129,14 +152,12 @@ class P2PLeakTest(BitcoinTestFramework):
         assert_equal(ver.addrFrom.port, 0)
         assert_equal(ver.addrFrom.ip, '0.0.0.0')
         assert_equal(ver.nStartingHeight, 201)
-        assert_equal(ver.nRelay, 1)
+        assert_equal(ver.relay, 1)
 
         self.log.info('Check that old peers are disconnected')
         p2p_old_peer = self.nodes[0].add_p2p_connection(P2PInterface(), send_version=False, wait_for_verack=False)
-        old_version_msg = msg_version()
-        old_version_msg.nVersion = 31799
         with self.nodes[0].assert_debug_log(['peer=3 using obsolete version 31799; disconnecting']):
-            p2p_old_peer.send_message(old_version_msg)
+            p2p_old_peer.send_message(self.create_old_version(31799))
             p2p_old_peer.wait_for_disconnect()
 
 

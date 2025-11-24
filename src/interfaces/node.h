@@ -5,7 +5,7 @@
 #ifndef BITCOIN_INTERFACES_NODE_H
 #define BITCOIN_INTERFACES_NODE_H
 
-#include <amount.h>     // For CAmount
+#include <consensus/amount.h> // For CAmount
 #include <net.h>        // For NodeId
 #include <net_types.h>  // For banmap_t
 #include <netaddress.h> // For Network
@@ -35,10 +35,11 @@ class UniValue;
 class Proxy;
 struct bilingual_str;
 enum class SynchronizationState;
+enum class TransactionError;
 struct CNodeStateStats;
 struct NodeContext;
 
-enum vote_signal_enum_t : uint8_t;
+enum vote_signal_enum_t : int;
 
 namespace interfaces {
 class Handler;
@@ -253,7 +254,7 @@ public:
     virtual UniValue executeRpc(const std::string& command, const UniValue& params, const std::string& uri) = 0;
 
     //! List rpc commands.
-    virtual std::vector<std::pair<std::string, std::string>> listRpcCommands() = 0;
+    virtual std::vector<std::string> listRpcCommands() = 0;
 
     //! Set RPC timer interface if unset.
     virtual void rpcSetTimerInterfaceIfUnset(RPCTimerInterface* iface) = 0;
@@ -263,6 +264,9 @@ public:
 
     //! Get unspent outputs associated with a transaction.
     virtual bool getUnspentOutput(const COutPoint& output, Coin& coin) = 0;
+
+    //! Broadcast transaction.
+    virtual TransactionError broadcastTransaction(CTransactionRef tx, CAmount max_tx_fee, bilingual_str& err_string) = 0;
 
     //! Get wallet loader.
     virtual WalletLoader& walletLoader() = 0;
@@ -304,6 +308,10 @@ public:
     //! Register handler for progress messages.
     using ShowProgressFn = std::function<void(const std::string& title, int progress, bool resume_possible)>;
     virtual std::unique_ptr<Handler> handleShowProgress(ShowProgressFn fn) = 0;
+
+    //! Register handler for wallet client constructed messages.
+    using InitWalletFn = std::function<void()>;
+    virtual std::unique_ptr<Handler> handleInitWallet(InitWalletFn fn) = 0;
 
     //! Register handler for number of connections changed messages.
     using NotifyNumConnectionsChangedFn = std::function<void(int new_num_connections)>;

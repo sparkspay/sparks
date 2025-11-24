@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2024 The Dash Core developers
+// Copyright (c) 2019-2025 The Dash Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,14 +6,13 @@
 #define BITCOIN_LLMQ_INSTANTSEND_H
 
 #include <llmq/signing.h>
-#include <unordered_lru_cache.h>
 
-#include <chain.h>
-#include <coins.h>
+#include <consensus/params.h>
 #include <net_types.h>
 #include <primitives/transaction.h>
 #include <threadinterrupt.h>
 #include <txmempool.h>
+#include <unordered_lru_cache.h>
 
 #include <gsl/pointers.h>
 
@@ -21,7 +20,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
+class CBlockIndex;
 class CChainState;
+class CConnman;
 class CDBWrapper;
 class CMasternodeSync;
 class CSporkManager;
@@ -112,11 +113,11 @@ private:
     uint256 GetInstantSendLockHashByTxidInternal(const uint256& txid) const EXCLUSIVE_LOCKS_REQUIRED(cs_db);
 
 
+    void Upgrade(bool unitTests) EXCLUSIVE_LOCKS_REQUIRED(!cs_db);
+
 public:
     explicit CInstantSendDb(bool unitTests, bool fWipe);
     ~CInstantSendDb();
-
-    void Upgrade(const CTxMemPool& mempool) EXCLUSIVE_LOCKS_REQUIRED(!cs_db);
 
     /**
      * This method is called when an InstantSend Lock is processed and adds the lock to the database
@@ -199,17 +200,14 @@ private:
 
     CChainLocksHandler& clhandler;
     CChainState& m_chainstate;
-    CConnman& connman;
     CQuorumManager& qman;
     CSigningManager& sigman;
     CSigSharesManager& shareman;
     CSporkManager& spork_manager;
     CTxMemPool& mempool;
     const CMasternodeSync& m_mn_sync;
-    const std::unique_ptr<PeerManager>& m_peerman;
 
     const bool m_is_masternode;
-    std::atomic<bool> fUpgradedDB{false};
 
     std::thread workThread;
     CThreadInterrupt workInterrupt;
@@ -255,20 +253,26 @@ private:
     std::unordered_set<uint256, StaticSaltedHasher> pendingRetryTxs GUARDED_BY(cs_pendingRetry);
 
 public:
-    explicit CInstantSendManager(CChainLocksHandler& _clhandler, CChainState& chainstate, CConnman& _connman,
-                                 CQuorumManager& _qman, CSigningManager& _sigman, CSigSharesManager& _shareman,
-                                 CSporkManager& sporkman, CTxMemPool& _mempool, const CMasternodeSync& mn_sync,
-                                 const std::unique_ptr<PeerManager>& peerman, bool is_masternode, bool unitTests, bool fWipe) :
+    explicit CInstantSendManager(CChainLocksHandler& _clhandler, CChainState& chainstate, CQuorumManager& _qman,
+                                 CSigningManager& _sigman, CSigSharesManager& _shareman, CSporkManager& sporkman,
+                                 CTxMemPool& _mempool, const CMasternodeSync& mn_sync, bool is_masternode,
+                                 bool unitTests, bool fWipe) :
         db(unitTests, fWipe),
-        clhandler(_clhandler), m_chainstate(chainstate), connman(_connman), qman(_qman), sigman(_sigman),
-        shareman(_shareman), spork_manager(sporkman), mempool(_mempool), m_mn_sync(mn_sync), m_peerman(peerman),
+        clhandler(_clhandler),
+        m_chainstate(chainstate),
+        qman(_qman),
+        sigman(_sigman),
+        shareman(_shareman),
+        spork_manager(sporkman),
+        mempool(_mempool),
+        m_mn_sync(mn_sync),
         m_is_masternode{is_masternode}
     {
         workInterrupt.reset();
     }
     ~CInstantSendManager() = default;
 
-    void Start();
+    void Start(PeerManager& peerman);
     void Stop();
     void InterruptWorkerThread() { workInterrupt(); };
 
@@ -288,18 +292,15 @@ private:
                            const Consensus::Params& params) EXCLUSIVE_LOCKS_REQUIRED(!cs_inputReqests);
     void TrySignInstantSendLock(const CTransaction& tx) EXCLUSIVE_LOCKS_REQUIRED(!cs_creating);
 
-    PeerMsgRet ProcessMessageInstantSendLock(const CNode& pfrom, const CInstantSendLockPtr& islock);
-    bool ProcessPendingInstantSendLocks()
+    PeerMsgRet ProcessMessageInstantSendLock(const CNode& pfrom, PeerManager& peerman, const CInstantSendLockPtr& islock);
+    bool ProcessPendingInstantSendLocks(PeerManager& peerman)
         EXCLUSIVE_LOCKS_REQUIRED(!cs_creating, !cs_inputReqests, !cs_nonLocked, !cs_pendingLocks, !cs_pendingRetry);
 
-    std::unordered_set<uint256, StaticSaltedHasher> ProcessPendingInstantSendLocks(const Consensus::LLMQParams& llmq_params,
-                                                                                   int signOffset,
-                                                                                   const std::unordered_map<uint256,
-                                                                                   std::pair<NodeId, CInstantSendLockPtr>,
-                                                                                   StaticSaltedHasher>& pend,
-                                                                                   bool ban)
+    std::unordered_set<uint256, StaticSaltedHasher> ProcessPendingInstantSendLocks(
+        const Consensus::LLMQParams& llmq_params, PeerManager& peerman, int signOffset,
+        const std::unordered_map<uint256, std::pair<NodeId, CInstantSendLockPtr>, StaticSaltedHasher>& pend, bool ban)
         EXCLUSIVE_LOCKS_REQUIRED(!cs_creating, !cs_inputReqests, !cs_nonLocked, !cs_pendingLocks, !cs_pendingRetry);
-    void ProcessInstantSendLock(NodeId from, const uint256& hash, const CInstantSendLockPtr& islock)
+    void ProcessInstantSendLock(NodeId from, PeerManager& peerman, const uint256& hash, const CInstantSendLockPtr& islock)
         EXCLUSIVE_LOCKS_REQUIRED(!cs_creating, !cs_inputReqests, !cs_nonLocked, !cs_pendingLocks, !cs_pendingRetry);
 
     void AddNonLockedTx(const CTransactionRef& tx, const CBlockIndex* pindexMined)
@@ -311,16 +312,14 @@ private:
     void TruncateRecoveredSigsForInputs(const CInstantSendLock& islock)
         EXCLUSIVE_LOCKS_REQUIRED(!cs_inputReqests);
 
-    void RemoveMempoolConflictsForLock(const uint256& hash, const CInstantSendLock& islock)
+    void RemoveMempoolConflictsForLock(PeerManager& peerman, const uint256& hash, const CInstantSendLock& islock)
         EXCLUSIVE_LOCKS_REQUIRED(!cs_inputReqests, !cs_nonLocked, !cs_pendingRetry);
     void ResolveBlockConflicts(const uint256& islockHash, const CInstantSendLock& islock)
         EXCLUSIVE_LOCKS_REQUIRED(!cs_inputReqests, !cs_nonLocked, !cs_pendingLocks, !cs_pendingRetry);
-    static void AskNodesForLockedTx(const uint256& txid, const CConnman& connman, const PeerManager& peerman,
-                                    bool is_masternode);
     void ProcessPendingRetryLockTxs()
         EXCLUSIVE_LOCKS_REQUIRED(!cs_creating, !cs_inputReqests, !cs_nonLocked, !cs_pendingRetry);
 
-    void WorkThreadMain()
+    void WorkThreadMain(PeerManager& peerman)
         EXCLUSIVE_LOCKS_REQUIRED(!cs_creating, !cs_inputReqests, !cs_nonLocked, !cs_pendingLocks, !cs_pendingRetry);
 
     void HandleFullyConfirmedBlock(const CBlockIndex* pindex)
@@ -331,12 +330,12 @@ public:
     bool IsWaitingForTx(const uint256& txHash) const EXCLUSIVE_LOCKS_REQUIRED(!cs_pendingLocks);
     CInstantSendLockPtr GetConflictingLock(const CTransaction& tx) const;
 
-    void HandleNewRecoveredSig(const CRecoveredSig& recoveredSig) override
+    [[nodiscard]] MessageProcessingResult HandleNewRecoveredSig(const CRecoveredSig& recoveredSig) override
         EXCLUSIVE_LOCKS_REQUIRED(!cs_creating, !cs_inputReqests, !cs_pendingLocks);
 
-    PeerMsgRet ProcessMessage(const CNode& pfrom, std::string_view msg_type, CDataStream& vRecv);
+    PeerMsgRet ProcessMessage(const CNode& pfrom, PeerManager& peerman, std::string_view msg_type, CDataStream& vRecv);
 
-    void TransactionAddedToMempool(const CTransactionRef& tx)
+    void TransactionAddedToMempool(PeerManager& peerman, const CTransactionRef& tx)
         EXCLUSIVE_LOCKS_REQUIRED(!cs_creating, !cs_inputReqests, !cs_nonLocked, !cs_pendingLocks, !cs_pendingRetry);
     void TransactionRemovedFromMempool(const CTransactionRef& tx);
     void BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex)
@@ -366,9 +365,6 @@ public:
     bool IsInstantSendMempoolSigningEnabled() const;
     bool RejectConflictingBlocks() const;
 };
-
-extern std::unique_ptr<CInstantSendManager> quorumInstantSendManager;
-
 } // namespace llmq
 
 #endif // BITCOIN_LLMQ_INSTANTSEND_H

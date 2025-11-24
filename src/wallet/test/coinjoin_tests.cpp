@@ -4,14 +4,15 @@
 
 #include <test/util/setup_common.h>
 
-#include <amount.h>
 #include <coinjoin/client.h>
 #include <coinjoin/coinjoin.h>
 #include <coinjoin/context.h>
 #include <coinjoin/options.h>
 #include <coinjoin/util.h>
+#include <consensus/amount.h>
 #include <node/context.h>
 #include <util/translation.h>
+#include <policy/settings.h>
 #include <validation.h>
 #include <wallet/wallet.h>
 
@@ -132,18 +133,19 @@ public:
         CreateAndProcessBlock({}, GetScriptForRawPubKey(coinbaseKey.GetPubKey()));
         wallet = std::make_unique<CWallet>(m_node.chain.get(), m_node.coinjoin_loader.get(), "", CreateMockWalletDatabase());
         wallet->SetupLegacyScriptPubKeyMan();
-        bool firstRun;
-        wallet->LoadWallet(firstRun);
+        wallet->LoadWallet();
         AddWallet(wallet);
         {
             LOCK2(wallet->cs_wallet, cs_main);
             wallet->GetLegacyScriptPubKeyMan()->AddKeyPubKey(coinbaseKey, coinbaseKey.GetPubKey());
             wallet->SetLastBlockProcessed(m_node.chainman->ActiveChain().Height(), m_node.chainman->ActiveChain().Tip()->GetBlockHash());
-            WalletRescanReserver reserver(*wallet);
-            reserver.reserve();
-            CWallet::ScanResult result = wallet->ScanForWalletTransactions(m_node.chainman->ActiveChain().Genesis()->GetBlockHash(),  0 /* start_height */, {} /* max_height */, reserver, true /* fUpdate */);
-            BOOST_CHECK_EQUAL(result.status, CWallet::ScanResult::SUCCESS);
         }
+        WalletRescanReserver reserver(*wallet);
+        reserver.reserve();
+        CWallet::ScanResult result = wallet->ScanForWalletTransactions(/*start_block=*/wallet->chain().getBlockHash(0),
+                                                                       /*start_height=*/0, /*max_height=*/{}, reserver,
+                                                                       /*fUpdate=*/true);
+        BOOST_CHECK_EQUAL(result.status, CWallet::ScanResult::SUCCESS);
     }
 
     ~CTransactionBuilderTestSetup()
@@ -209,8 +211,8 @@ public:
 
 BOOST_FIXTURE_TEST_CASE(coinjoin_manager_start_stop_tests, CTransactionBuilderTestSetup)
 {
-    BOOST_CHECK_EQUAL(m_node.cj_ctx->walletman->raw().size(), 1);
-    auto& cj_man = m_node.cj_ctx->walletman->raw().begin()->second;
+    CCoinJoinClientManager* cj_man = m_node.cj_ctx->walletman->Get("");
+    BOOST_REQUIRE(cj_man != nullptr);
     BOOST_CHECK_EQUAL(cj_man->IsMixing(), false);
     BOOST_CHECK_EQUAL(cj_man->StartMixing(), true);
     BOOST_CHECK_EQUAL(cj_man->IsMixing(), true);
@@ -232,7 +234,7 @@ BOOST_FIXTURE_TEST_CASE(CTransactionBuilderTest, CTransactionBuilderTestSetup)
     // Tests with single outpoint tallyItem
     {
         CompactTallyItem tallyItem = GetTallyItem({4999});
-        CTransactionBuilder txBuilder(wallet, tallyItem);
+        CTransactionBuilder txBuilder(*wallet, tallyItem);
 
         BOOST_CHECK_EQUAL(txBuilder.CountOutputs(), 0);
         BOOST_CHECK_EQUAL(txBuilder.GetAmountInitial(), tallyItem.nAmount);
@@ -269,7 +271,7 @@ BOOST_FIXTURE_TEST_CASE(CTransactionBuilderTest, CTransactionBuilderTestSetup)
     // Tests with multiple outpoint tallyItem
     {
         CompactTallyItem tallyItem = GetTallyItem({10000, 20000, 30000, 40000, 50000});
-        CTransactionBuilder txBuilder(wallet, tallyItem);
+        CTransactionBuilder txBuilder(*wallet, tallyItem);
         std::vector<CTransactionBuilderOutput*> vecOutputs;
         bilingual_str strResult;
 

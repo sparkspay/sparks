@@ -135,8 +135,8 @@ bool IsQuorumTypeEnabledInternal(Consensus::LLMQType llmqType, gsl::not_null<con
             if (fDIP0008IsActive) {
                 return false;
             }
-            return !fDIP0024IsActive || !fHaveDIP0024Quorums ||
-                    Params().NetworkIDString() == CBaseChainParams::TESTNET;
+            return !fDIP0024IsActive || !fHaveDIP0024Quorums || Params().NetworkIDString() == CBaseChainParams::TESTNET ||
+                   Params().NetworkIDString() == CBaseChainParams::DEVNET;
         case Consensus::LLMQType::LLMQ_TEST_INSTANTSEND:
             return !fDIP0024IsActive || !fHaveDIP0024Quorums ||
                     consensusParams.llmqTypeDIP0024InstantSend == Consensus::LLMQType::LLMQ_TEST_INSTANTSEND;

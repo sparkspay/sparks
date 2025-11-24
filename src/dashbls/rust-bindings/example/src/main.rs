@@ -35,7 +35,7 @@ fn check_bip32_legacy_scheme() {
         .expect("cannot get extended public key");
 
     let scheme = LegacySchemeMPL::new();
-    let message = b"dash is og";
+    let message = b"sparks is og";
     let signature = scheme.sign(&private_key.private_key(), message);
 
     assert!(scheme.verify(&public_key.public_key(), message, &signature));
