@@ -149,9 +149,11 @@ static const int MAX_BLOCKTXN_DEPTH = 10;
  *  degree of disordering of blocks on disk (which make reindexing and pruning harder). We'll probably
  *  want to make this a per-peer adaptive value at some point. */
 static const unsigned int BLOCK_DOWNLOAD_WINDOW = 1024;
-/** Block download timeout base, expressed in multiples of the block interval (i.e. 10 min) */
-static constexpr double BLOCK_DOWNLOAD_TIMEOUT_BASE = 1;
-/** Additional block download timeout per parallel downloading peer (i.e. 5 min) */
+/** Block download timeout base, expressed in multiples of nPowTargetSpacing.
+ *  Bitcoin uses 1 (~600s with 10 min blocks). Sparks uses shorter spacing (e.g. 30s on testnet),
+ *  so a larger multiplier restores reasonable wall-clock timeouts during IBD. */
+static constexpr double BLOCK_DOWNLOAD_TIMEOUT_BASE = 5;
+/** Additional block download timeout per parallel peer, in multiples of nPowTargetSpacing. */
 static constexpr double BLOCK_DOWNLOAD_TIMEOUT_PER_PEER = 0.5;
 /** Maximum number of headers to announce when relaying blocks with headers message.*/
 static const unsigned int MAX_BLOCKS_TO_ANNOUNCE = 8;

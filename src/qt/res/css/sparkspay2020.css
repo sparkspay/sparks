@@ -83,18 +83,22 @@ background-color:transparent;
 background-color:transparent;
 }
 
-.QValidatedLineEdit, .QLineEdit { /* Text Entry Fields */
+.QValidatedLineEdit,
+QLineEdit { /* Text Entry Fields (QLineEdit matches subclasses e.g. AmountLineEdit) */
 min-height:25px;
 outline:0;
 background-color:#fcfcfc;
+color:#333333;
 }
 
-.QLineEdit:!focus {
+QLineEdit:!focus {
 /* font-size:12px; */
 }
 
-.QValidatedLineEdit:disabled, .QLineEdit:disabled {
+.QValidatedLineEdit:disabled,
+QLineEdit:disabled {
 background-color:#f2f2f2;
+color:#888888;
 }
 
 /*******************************************************/
@@ -131,7 +135,7 @@ border:1px solid #82C3E6;
 padding: 3px 5px 3px 5px;
 background:#fcfcfc;
 min-height:25px;
-color:#818181;
+color:#333333;
 }
 
 QComboBox:checked {
@@ -139,8 +143,8 @@ background:#f2f2f2;
 }
 
 QComboBox:editable {
-background: #000000;
-color:#616161;
+background: #fcfcfc;
+color: #333333;
 border:0px solid transparent;
 }
 
@@ -163,7 +167,7 @@ padding-left:1px;
 QComboBox QAbstractItemView::item { margin:4px; }
 
 QComboBox::item {
-color:#818181;
+color:#333333;
 }
 
 QComboBox::item:alternate {
@@ -187,7 +191,7 @@ border:1px solid #82C3E6;
 padding: 3px 5px 3px 5px;
 background:#fcfcfc;
 min-height:25px;
-color:#818181;
+color:#333333;
 }
 
 QAbstractSpinBox::up-button {
@@ -224,6 +228,12 @@ padding-bottom:2px;
 
 QAbstractSpinBox::down-arrow {
 image:url(':/images/sparkspay2020/drkblue_downArrow_small');
+}
+
+QTextEdit,
+QPlainTextEdit {
+background-color:#fcfcfc;
+color:#333333;
 }
 
 QCheckBox {
@@ -301,16 +311,18 @@ border:0px;
 .QTableView { /* Table - has to be selected as a class otherwise it throws off QCalendarWidget */
 background:transparent;
 border:0px solid #fff;
+color:#333333;
 }
 
 QTableView::item { /* Table Item */
 background-color:#fcfcfc;
+color:#333333;
 /* font-size:12px; */
 }
 
 QTableView::item:selected { /* Table Item Selected */
 background-color:#f0f0f0;
-color:#333;
+color:#333333;
 }
 
 QScrollBar { /* Scroll Bar */
@@ -502,6 +514,7 @@ padding-right:10px;
 QDialog#SignVerifyMessageDialog QPlainTextEdit { /* Message Signing Text */
 border:1px solid #82C3E6;
 background-color:#fff;
+color:#333333;
 }
 
 QDialog#SignVerifyMessageDialog QPushButton#pasteButton_SM { /* Paste Button */
@@ -709,6 +722,7 @@ border:0;
 
 QDialog#RPCConsole QLineEdit#lineEdit { /* Console Input */
 margin-right:5px;
+color:#333333;
 }
 
 QDialog#RPCConsole QPushButton#clearButton { /* Console Clear Button */
@@ -1589,6 +1603,7 @@ background-color:#F8F6F6;
 
 QDialog#ReceiveRequestDialog QTextEdit { /* Contents of Receive Coin Dialog */
 border:1px solid #d7d7d7;
+color:#333333;
 }
 
 /* General QR-code DIALOG */
@@ -1599,6 +1614,7 @@ background-color:#F8F6F6;
 
 QDialog#QRDialog QTextEdit { /* Contents of QR-code Dialog */
 border:1px solid #d7d7d7;
+color:#333333;
 }
 
 /* TRANSACTIONS PAGE */
@@ -1646,6 +1662,7 @@ background-color:#F8F6F6;
 
 QDialog#TransactionDescDialog QTextEdit { /* Contents of Receive Coin Dialog */
 border:1px solid #d7d7d7;
+color:#333333;
 }
 
 QToolTip {
@@ -1790,17 +1807,19 @@ QTableView
 .QTableView { /* Table - has to be selected as a class otherwise it throws off QCalendarWidget */
     background-color: #eaeaec;
     border-color: #dcdcdc;
+    color: #333333;
 }
 
 QTableView::item { /* Table Item */
     background-color: #eaeaec;
     border-color: #c7c7c7;
+    color: #333333;
 }
 
 QTableView::item:selected { /* Table Item Selected */
     background-color: #ff0000;
     border-color: #d2d2d2;
-    color: #000;
+    color: #ffffff;
 }
 
 /******************************************************
@@ -1886,6 +1905,8 @@ QComboBox,
 QPlainTextEdit,
 QLineEdit {
     border-color: #ff0000;
+    color: #333333;
+    background-color: #fcfcfc;
 }
 
 BitcoinAmountField:hover:!focus,
@@ -1894,6 +1915,7 @@ QComboBox:hover:!focus,
 QPlainTextEdit:hover:!focus,
 QLineEdit:hover:!focus {   
     border-color: #ff0000;
+    background-color: #fcfcfc;
 }
 
 
@@ -1904,6 +1926,7 @@ QComboBox:focus,
 QPlainTextEdit:focus,
 QLineEdit:focus {
     border-color: #ff0000;
+    background-color: #fcfcfc;
 }
 
 BitcoinAmountField:disabled,
@@ -1912,6 +1935,8 @@ QComboBox:disabled,
 QPlainTextEdit:disabled,
 QLineEdit:disabled {
     border-color: #ff0000;
+    color: #888888;
+    background-color: #f2f2f2;
 }
 
 /******************************************************
@@ -1924,16 +1949,17 @@ QComboBox QListView {
 }
 
 QComboBox::item {
-    color: #000;
+    color: #333333;
 }
 
 QComboBox::item:alternate {
-    background-color: #6d0000;
+    background-color: #e8e8ea;
+    color: #333333;
 }
 
 QComboBox::item:selected {
     background-color: #ff0000;
-    color: #000;
+    color: #ffffff;
 }
 
 QComboBox::down-arrow {
